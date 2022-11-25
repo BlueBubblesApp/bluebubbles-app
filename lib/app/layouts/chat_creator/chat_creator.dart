@@ -19,8 +19,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
+
+class SelectedContact {
+  final String displayName;
+  final String address;
+
+  const SelectedContact({required this.displayName, required this.address});
+}
 
 class ChatCreator extends StatefulWidget {
   const ChatCreator({
@@ -39,12 +47,14 @@ class ChatCreator extends StatefulWidget {
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   late final TextEditingController addressController = TextEditingController(text: widget.initialText);
   final FocusNode addressNode = FocusNode();
+  final ScrollController addressScrollController = ScrollController();
 
   ConversationViewController? fakeController;
   List<Contact> contacts = [];
   List<Contact> filteredContacts = [];
   List<Chat> existingChats = [];
   List<Chat> filteredChats = [];
+  RxList<SelectedContact> selectedContacts = <SelectedContact>[].obs;
   Timer? _debounce;
 
   @override
@@ -93,6 +103,16 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     });
   }
 
+  void addSelected(SelectedContact c) {
+    selectedContacts.add(c);
+    addressController.text = "";
+  }
+
+  void addSelectedList(Iterable<SelectedContact> c) {
+    selectedContacts.addAll(c);
+    addressController.text = "";
+  }
+
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -135,59 +155,133 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             },
           ),
       ],
-      bodySlivers: [
-        SliverList(
-          delegate: SliverChildListDelegate([
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
-              child: Row(
-                children: [
-                  Text(
-                    "To: ",
-                    style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: ThemeSwitcher.getScrollPhysics(),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: context.width - 50),
-                            child: TextField(
-                              textCapitalization: TextCapitalization.sentences,
-                              focusNode: addressNode,
-                              autocorrect: false,
-                              controller: addressController,
-                              style: context.theme.textTheme.bodyMedium,
-                              maxLines: 1,
-                              selectionControls: iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
-                              autofocus: kIsWeb || kIsDesktop,
-                              enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                              textInputAction: TextInputAction.next,
-                              cursorColor: context.theme.colorScheme.primary,
-                              cursorHeight: context.theme.textTheme.bodyMedium!.fontSize! * 1.25,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                fillColor: Colors.transparent,
-                                hintText: "Enter a name...",
-                                hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+      stickyPrefix: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
+        child: Row(
+          children: [
+            Text(
+              "To: ",
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: ThemeSwitcher.getScrollPhysics(),
+                controller: addressScrollController,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeIn,
+                      alignment: Alignment.centerLeft,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: context.theme.textTheme.bodyMedium!.fontSize! + 20),
+                        child: Obx(() => ListView.builder(
+                          itemCount: selectedContacts.length,
+                          shrinkWrap: true,
+                          scrollDirection: Axis.horizontal,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            final e = selectedContacts[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                              child: Material(
+                                key: ValueKey(e.address),
+                                color: context.theme.colorScheme.properSurface,
+                                borderRadius: BorderRadius.circular(5),
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () {
+                                    selectedContacts.remove(e);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Text(
+                                          e.displayName,
+                                          style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.primary)
+                                        ),
+                                        const SizedBox(width: 5.0),
+                                        Icon(
+                                          iOS ? CupertinoIcons.xmark : Icons.close,
+                                          size: 15.0,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                              onSubmitted: (String value) {
-                                // controller.focusNode.requestFocus();
-                              },
-                            ),
-                          ),
-                        ],
+                            );
+                          },
+                        )),
                       ),
                     ),
-                  ),
-                ]
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: context.width - 50),
+                      child: FocusScope(
+                        child: Focus(
+                          onKey: (_, ev) {
+                            if (ev is RawKeyDownEvent) {
+                              if (ev.logicalKey == LogicalKeyboardKey.backspace
+                                  && (addressController.selection.start == 0 || addressController.text.isEmpty)) {
+                                selectedContacts.removeLast();
+                                return KeyEventResult.handled;
+                              }
+                            }
+                            return KeyEventResult.ignored;
+                          },
+                          child: TextField(
+                            textCapitalization: TextCapitalization.sentences,
+                            focusNode: addressNode,
+                            autocorrect: false,
+                            controller: addressController,
+                            style: context.theme.textTheme.bodyMedium,
+                            maxLines: 1,
+                            selectionControls: iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
+                            autofocus: kIsWeb || kIsDesktop,
+                            enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
+                            textInputAction: TextInputAction.done,
+                            cursorColor: context.theme.colorScheme.primary,
+                            cursorHeight: context.theme.textTheme.bodyMedium!.fontSize! * 1.25,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              fillColor: Colors.transparent,
+                              hintText: "Enter a name...",
+                              hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+                            ),
+                            onSubmitted: (String value) {
+                              final text = addressController.text;
+                              if (text.isEmail || text.isPhoneNumber) {
+                                addSelected(SelectedContact(
+                                  displayName: text,
+                                  address: text,
+                                ));
+                              } else if (filteredContacts.length == 1) {
+                                final possibleAddresses = [...filteredContacts.first.phones, ...filteredContacts.first.emails];
+                                if (possibleAddresses.length == 1) {
+                                  addSelected(SelectedContact(
+                                    displayName: filteredContacts.first.displayName,
+                                    address: possibleAddresses.first,
+                                  ));
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ]),
+          ],
         ),
+      ),
+      bodySlivers: [
         SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
@@ -207,11 +301,24 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                 );
               }
               final chat = filteredChats[index];
-              return ChatCreatorTile(
-                key: ValueKey(chat.guid),
-                title: chat.properTitle,
-                subtitle: chat.getChatCreatorSubtitle(),
-                chat: chat,
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    addSelectedList(chat.participants
+                        .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
+                        .map((e) => SelectedContact(
+                      displayName: e.displayName,
+                      address: e.address,
+                    )));
+                  },
+                  child: ChatCreatorTile(
+                    key: ValueKey(chat.guid),
+                    title: chat.properTitle,
+                    subtitle: chat.getChatCreatorSubtitle(),
+                    chat: chat,
+                  ),
+                ),
               );
             },
             childCount: filteredChats.length.clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity).toInt()
@@ -227,15 +334,39 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                 key: ValueKey(contact.id),
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ...contact.phones.map((e) => ChatCreatorTile(
-                    title: contact.displayName,
-                    subtitle: e,
-                    contact: contact,
+                  ...contact.phones.map((e) => Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
+                        addSelected(SelectedContact(
+                          displayName: contact.displayName,
+                          address: e
+                        ));
+                      },
+                      child: ChatCreatorTile(
+                        title: contact.displayName,
+                        subtitle: e,
+                        contact: contact,
+                      ),
+                    ),
                   )),
-                  ...contact.emails.map((e) => ChatCreatorTile(
-                    title: contact.displayName,
-                    subtitle: e,
-                    contact: contact,
+                  ...contact.emails.map((e) => Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
+                        addSelected(SelectedContact(
+                          displayName: contact.displayName,
+                          address: e
+                        ));
+                      },
+                      child: ChatCreatorTile(
+                        title: contact.displayName,
+                        subtitle: e,
+                        contact: contact,
+                      ),
+                    ),
                   )),
                 ]
               );
