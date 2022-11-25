@@ -15,9 +15,9 @@ String? sanitizeServerAddress({String? address}) {
   Uri? uri = Uri.tryParse(sanitized);
   if (uri?.scheme.isEmpty ?? false) {
     if (sanitized.contains("ngrok.io") || sanitized.contains("trycloudflare.com")) {
-      uri = Uri.tryParse("https://$serverAddress");
+      uri = Uri.tryParse("https://$sanitized");
     } else {
-      uri = Uri.tryParse("http://$serverAddress");
+      uri = Uri.tryParse("http://$sanitized");
     }
   }
 
