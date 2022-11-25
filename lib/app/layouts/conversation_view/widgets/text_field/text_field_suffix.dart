@@ -63,21 +63,26 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                       ? context.theme.colorScheme.outline : context.theme.colorScheme.primary,
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
-                  maximumSize: Size(32, 32),
-                  minimumSize: Size(32, 32),
+                  maximumSize: const Size(32, 32),
+                  minimumSize: const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: Center(
-                  child: Obx(() => !widget.controller.showRecording.value ? Icon(
-                    !material ? CupertinoIcons.waveform : Icons.mic_none,
-                    color: iOS ? Colors.white : context.theme.colorScheme.properOnSurface,
-                    size: 25,
-                  ) : Icon(
-                    iOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
-                    color: iOS ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface,
-                    size: 25,
-                  )),
-                ),
+                child: iOS ?
+                  Padding(
+                    padding: const EdgeInsets.only(left: 1),
+                    child: Icon(
+                      CupertinoIcons.stop_fill,
+                      color: context.theme.colorScheme.onPrimary,
+                      size: 15,
+                    )
+                  ) :
+                  Center(
+                    child:  Icon(
+                      Icons.stop_circle,
+                      color: context.theme.colorScheme.properOnSurface,
+                      size: 15,
+                    ),
+                  ),
                 onPressed: () async {
                   widget.controller.showRecording.toggle();
                   if (widget.controller.showRecording.value) {
