@@ -103,18 +103,25 @@ class ContactsService extends GetxService {
     // match handles to contacts and save match
     final handlesToSearch = List<Handle>.from(handles);
     for (Contact c in contacts) {
-      final handle = cs.matchContactToHandle(c, handlesToSearch);
-      if (handle != null) {
-        handlesToSearch.removeWhere((e) => e.address == handle.address);
-        if (!kIsWeb) {
-          // we have changes if the handle doesn't have an associated contact,
-          // even if there were no contact changes in the first place
-          if (handles.firstWhere((e) => e.address == handle.address).contactRelation.target == null) {
+      final handles = cs.matchContactToHandles(c, handlesToSearch);
+      final addresses = handles.map((e) => e.address).toList();
+      if (handles.isNotEmpty) {
+        handlesToSearch.removeWhere((e) => addresses.contains(e.address));
+
+        // we have changes if the handle doesn't have an associated contact,
+        // even if there were no contact changes in the first place
+        final matches = handles.where((e) => addresses.contains(e.address));
+        for (Handle h in matches) {
+          if (kIsWeb) {
+            h.webContact = c;
+            continue;
+          }
+
+          if (h.contactRelation.target == null) {
             hasChanges = true;
           }
-          handles.firstWhere((e) => e.address == handle.address).contactRelation.target = c;
-        } else {
-          handles.firstWhere((e) => e.address == handle.address).webContact = c;
+
+          h.contactRelation.target = c;
         }
       }
     }
@@ -135,32 +142,38 @@ class ContactsService extends GetxService {
     }
   }
 
-  Handle? matchContactToHandle(Contact c, List<Handle> handles) {
+  List<Handle> matchContactToHandles(Contact c, List<Handle> handles) {
     final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
-    Handle? handle;
+    List<Handle> handleMatches = [];
+    int maxResults = c.phones.length + c.emails.length;
     for (Handle h in handles) {
+      // Match emails
       if (h.address.contains("@") && c.emails.contains(h.address)) {
-        handle = h;
-        break;
-      } else {
-        final numericAddress = h.address.numericOnly();
-        // if address is direct match
-        if (c.phones.contains(numericAddress)) {
-          handle = h;
-          break;
-        }
-        // try to match last 11 - 7 digits
-        for (String p in numericPhones) {
-          final matchLengths = [11, 10, 9, 8, 7];
-          if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
-            handle = h;
-            break;
-          }
-        }
-        if (handle != null) break;
+        handleMatches.add(h);
+        continue;
       }
+
+      final numericAddress = h.address.numericOnly();
+
+      // Match phone numbers (exact)
+      if (c.phones.contains(numericAddress)) {
+        handleMatches.add(h);
+        continue;
+      }
+
+      // try to match last 11 - 7 digits
+      for (String p in numericPhones) {
+        final matchLengths = [11, 10, 9, 8, 7];
+        if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
+          handleMatches.add(h);
+          continue;
+        }
+      }
+
+      if (handleMatches.length >= maxResults) break;
     }
-    return handle;
+
+    return handleMatches;
   }
 
   Contact? matchHandleToContact(Handle h) {
@@ -231,10 +244,15 @@ class ContactsService extends GetxService {
       }
       final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
       for (Contact c in contacts) {
-        final handle = cs.matchContactToHandle(c, handlesToSearch);
-        if (handle != null) {
-          handlesToSearch.removeWhere((e) => e.address == handle.address);
-          handles.firstWhere((e) => e.address == handle.address).webContact = c;
+        final handles = cs.matchContactToHandles(c, handlesToSearch);
+        final addresses = handles.map((e) => e.address).toList();
+        if (handles.isNotEmpty) {
+          handlesToSearch.removeWhere((e) => addresses.contains(e.address));
+          for (Handle h in handles) {
+            if (addresses.contains(h.address)) {
+              h.webContact = c;
+            }
+          }
         }
       }
       eventDispatcher.emit('update-contacts', null);
