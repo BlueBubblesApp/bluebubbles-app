@@ -117,7 +117,7 @@ class _ContactCardState extends OptimizedState<ContactCard> with AutomaticKeepAl
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Flexible(
+                Expanded(
                   child:  Text(
                     contact?.displayName ?? 'Unknown',
                     style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
@@ -126,7 +126,7 @@ class _ContactCardState extends OptimizedState<ContactCard> with AutomaticKeepAl
                     softWrap: true,
                   ),
                 ),
-                Container(width: 2),
+                const SizedBox(width: 2),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
