@@ -54,23 +54,35 @@ class _ContactCardState extends OptimizedState<ContactCard> with AutomaticKeepAl
         indices.add(i);
       }
     }
+
     if (indices.isNotEmpty) {
       avatarLines.add(lines[indices.first - 1].trim());
     }
+
     for (int i in indices) {
       avatarLines.add(lines[i].trim());
     }
-    lines.removeRange(indices.first - 1, indices.last + 1);
+
+    if (indices.isNotEmpty) {
+      lines.removeRange(indices.first - 1, indices.last + 1);
+    }
+
     final avatarStr = avatarLines.join();
+
     try {
       contact = as.parseAppleContact(appleContact);
     } catch (ex) {
       contact = Contact(displayName: "Invalid Contact", id: randomString(8));
     }
+
     if (contact != null) {
-      contact = Contact.fromMap(contact!.toMap()
-        ..addEntries([MapEntry('avatar', "/${avatarStr.split("/").sublist(1).join('/').trim()}")]));
+      final map = contact!.toMap();
+      if (avatarStr.isNotEmpty) {
+        map["avatar"] = "/${avatarStr.split("/").sublist(1).join('/').trim()}";
+      }
+      contact = Contact.fromMap(map);
     }
+
     if (!kIsWeb && widget.file.path != null) setState(() {});
   }
 
