@@ -28,7 +28,11 @@ class MethodChannelService extends GetxService {
     background = headless;
     channel = MethodChannel('com.bluebubbles.messaging');
     channel.setMethodCallHandler(_callHandler);
-    if (!kIsWeb && !kIsDesktop && headless) await channel.invokeMethod('MessagingBackground#initialized');
+    if (!kIsWeb && !kIsDesktop && headless) {
+      try {
+        await channel.invokeMethod('MessagingBackground#initialized');
+      } catch (_) {}
+    }
     if (!kIsWeb && !kIsDesktop && !headless) {
       try {
         if (ss.settings.colorsFromMedia.value) {
