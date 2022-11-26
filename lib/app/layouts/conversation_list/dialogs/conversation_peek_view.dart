@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -164,34 +165,36 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                 (route) => route.isFirst,
                               );
                             },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: context.theme.colorScheme.properSurface,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              width: min(context.width - 50, 500),
-                              height: min(context.height / 2, context.height - itemHeight * 5),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  reverse: true,
-                                  itemBuilder: (context, index) {
-                                    return AbsorbPointer(
-                                      absorbing: true,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                                        child: MessageHolder(
-                                          key: Key(widget.messages[index].guid!),
-                                          cvController: cvController,
-                                          message: widget.messages[index],
-                                          oldMessageGuid: index == widget.messages.length - 1 ? null : widget.messages[index + 1].guid,
-                                          newMessageGuid: index == 0 ? null : widget.messages[index - 1].guid,
-                                        )
-                                      ),
-                                    );
-                                  },
-                                  itemCount: widget.messages.length,
+                            child: DeferredPointerHandler(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                width: min(context.width - 50, 500),
+                                height: min(context.height / 2, context.height - itemHeight * 5),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    reverse: true,
+                                    itemBuilder: (context, index) {
+                                      return AbsorbPointer(
+                                        absorbing: true,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                                          child: MessageHolder(
+                                            key: Key(widget.messages[index].guid!),
+                                            cvController: cvController,
+                                            message: widget.messages[index],
+                                            oldMessageGuid: index == widget.messages.length - 1 ? null : widget.messages[index + 1].guid,
+                                            newMessageGuid: index == 0 ? null : widget.messages[index - 1].guid,
+                                          )
+                                        ),
+                                      );
+                                    },
+                                    itemCount: widget.messages.length,
+                                  ),
                                 ),
                               ),
                             ),
