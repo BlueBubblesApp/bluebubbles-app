@@ -21,6 +21,8 @@ class ReactionWidget extends StatelessWidget {
   final String reactionType;
   final List<Message>? reactions;
 
+  static const double iosSize = 35;
+
   @override
   Widget build(BuildContext context) {
     if (ss.settings.skin.value != Skins.iOS) {
@@ -108,8 +110,8 @@ class ReactionWidget extends StatelessWidget {
           child: ClipPath(
             clipper: ReactionBorderClipper(isFromMe: messageIsFromMe),
             child: Container(
-              width: 34.5,
-              height: 34.5,
+              width: iosSize + 2,
+              height: iosSize + 2,
               color: context.theme.colorScheme.background,
             ),
           ),
@@ -117,13 +119,13 @@ class ReactionWidget extends StatelessWidget {
         ClipPath(
           clipper: ReactionClipper(isFromMe: messageIsFromMe),
           child: Container(
-            width: 32.5,
-            height: 32.5,
+            width: iosSize,
+            height: iosSize,
             color: reactionIsFromMe ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
             alignment: messageIsFromMe ? Alignment.topRight : Alignment.topLeft,
             child: SizedBox(
-              width: 32.5*0.8,
-              height: 32.5*0.8,
+              width: iosSize*0.8,
+              height: iosSize*0.8,
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(6.5),
