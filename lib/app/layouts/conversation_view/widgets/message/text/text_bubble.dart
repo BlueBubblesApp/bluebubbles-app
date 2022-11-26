@@ -93,6 +93,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           colors: getBubbleColors(),
         ),
       ),
+      // alignment: Alignment.center,
       child: FutureBuilder<List<InlineSpan>>(
         future: buildEnrichedMessageSpans(
           context,
@@ -137,13 +138,16 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
                 ),
               );
             }
-            return Padding(
-              padding: (message.fullText.length == 1) ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
-              child: RichText(
-                text: TextSpan(
-                  children: snapshot.data!,
-                ),
-              )
+            return Center(
+              widthFactor: 1,
+              child: Padding(
+                padding: message.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
+                child: RichText(
+                  text: TextSpan(
+                    children: snapshot.data!,
+                  ),
+                )
+              ),
             );
           }
           return const SizedBox.shrink();
