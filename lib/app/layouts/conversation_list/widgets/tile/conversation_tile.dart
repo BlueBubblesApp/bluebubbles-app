@@ -186,7 +186,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     forceDelete = false;
     cachedDisplayName = controller.chat.displayName;
     cachedParticipants = controller.chat.handles;
-    title = controller.chat.getTitle() ?? title;
+    title = controller.chat.getTitle();
     // run query after render has completed
     updateObx(() {
       final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
@@ -258,9 +258,13 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    subtitle = controller.chat.latestMessageGetter != null
-        ? MessageHelper.getNotificationText(controller.chat.latestMessageGetter!)
-        : controller.chat.latestMessageText ?? "";
+    final latest = controller.chat.latestMessageGetter;
+    if (latest != null) {
+      subtitle = MessageHelper.getNotificationText(controller.chat.latestMessageGetter!);
+      cachedLatestMessageGuid = latest.guid!;
+    } else {
+      subtitle = controller.chat.latestMessageText ?? "";
+    }
     // run query after render has completed
     updateObx(() {
       final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
@@ -271,12 +275,9 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       sub = latestMessageQuery.listen((Query<Message> query) {
         final message = query.findFirst();
         // check if we really need to update this widget
-        if (message?.guid != cachedLatestMessageGuid) {
-          message?.handle = message.getHandle();
-          String newSubtitle = controller.chat.latestMessageText ?? "";
-          if (message != null) {
-            newSubtitle = MessageHelper.getNotificationText(message);
-          }
+        if (message != null && message.guid != cachedLatestMessageGuid) {
+          message.handle = message.getHandle();
+          String newSubtitle = MessageHelper.getNotificationText(message);
           if (newSubtitle != subtitle) {
             setState(() {
               subtitle = newSubtitle;
