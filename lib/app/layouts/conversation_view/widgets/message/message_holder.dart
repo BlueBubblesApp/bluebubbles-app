@@ -195,139 +195,143 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         // large timestamp between messages
         TimestampSeparator(olderMessage: olderMessage, message: message),
         // use stack so avatar can be placed at bottom
-        Stack(
-          alignment: Alignment.bottomLeft,
-          clipBehavior: Clip.none,
+        Row(
           children: [
-            // avatar, if needed
-            if (message.showTail(newerMessage)
-                && (showAvatar || ss.settings.alwaysShowAvatars.value)
-                && !message.isFromMe! && !message.isGroupEvent)
-              Padding(
-                padding: const EdgeInsets.only(left: 5.0, bottom: 2.0),
-                child: ContactAvatarWidget(
-                  handle: message.handle,
-                  size: iOS ? 30 : 35,
-                  fontSize: context.theme.textTheme.bodyLarge!.fontSize!,
-                  borderThickness: 0.1,
-                ),
-              ),
-            Row(
-              children: [
-                if (!message.isFromMe! && !message.isGroupEvent)
-                  SelectCheckbox(message: message, controller: widget.cvController),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                    children: [
-                      // message column
-                      ...messageParts.mapIndexed((index, e) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                          children: [
-                            // add previous edits if needed
-                            if (e.isEdited)
-                              Padding(
-                                padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
-                                child: Obx(() => AnimatedSize(
-                                  duration: const Duration(milliseconds: 250),
-                                  alignment: Alignment.bottomCenter,
-                                  curve: controller.showEdits.value ? Curves.easeOutBack : Curves.easeOut,
-                                  child: controller.showEdits.value ? Opacity(
-                                    opacity: 0.75,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: e.edits.map((edit) => ClipPath(
-                                        clipper: TailClipper(
-                                          isFromMe: message.isFromMe!,
-                                          showTail: message.showTail(newerMessage) && e.part == controller.parts.length - 1,
-                                          connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
-                                              || (e.part == 0 && controller.parts.length > 1),
-                                          connectUpper: iOS ? false : e.part != 0,
-                                        ),
-                                        child: TextBubble(
-                                          parentController: controller,
-                                          message: edit,
-                                        ),
-                                      )).toList(),
+            if (!message.isFromMe! && !message.isGroupEvent)
+              SelectCheckbox(message: message, controller: widget.cvController),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  // message column
+                  ...messageParts.mapIndexed((index, e) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
+                        // add previous edits if needed
+                        if (e.isEdited)
+                          Padding(
+                            padding: showAvatar || ss.settings.alwaysShowAvatars.value
+                                ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                            child: Obx(() => AnimatedSize(
+                              duration: const Duration(milliseconds: 250),
+                              alignment: Alignment.bottomCenter,
+                              curve: controller.showEdits.value ? Curves.easeOutBack : Curves.easeOut,
+                              child: controller.showEdits.value ? Opacity(
+                                opacity: 0.75,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: e.edits.map((edit) => ClipPath(
+                                    clipper: TailClipper(
+                                      isFromMe: message.isFromMe!,
+                                      showTail: message.showTail(newerMessage) && e.part == controller.parts.length - 1,
+                                      connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
+                                          || (e.part == 0 && controller.parts.length > 1),
+                                      connectUpper: iOS ? false : e.part != 0,
                                     ),
-                                  ) : Container(
-                                    height: 0,
-                                    constraints: BoxConstraints(
-                                      maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30
-                                  )),
-                                )),
-                              ),
-                            if (iOS && index == 0 && !widget.isReplyThread
-                                && olderMessage != null
-                                && message.threadOriginatorGuid != null
-                                && message.showUpperMessage(olderMessage!)
-                                && getActiveMwc(message.threadOriginatorGuid!) != null)
-                              Padding(
-                                padding: EdgeInsets.only(left: chat.isGroup && getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe! ? 35 : 0),
-                                child: DecoratedBox(
-                                  decoration: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? ReplyLineDecoration(
-                                    isFromMe: message.isFromMe!,
-                                    color: context.theme.colorScheme.properSurface,
-                                    connectUpper: false,
-                                    connectLower: true,
-                                    context: context,
-                                  ) : const BoxDecoration(),
-                                  child: Container(
-                                    width: double.infinity,
-                                    alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!
-                                        ? Alignment.centerRight : Alignment.centerLeft,
-                                    child: ReplyBubble(
-                                      parentController: getActiveMwc(message.threadOriginatorGuid!)!,
-                                      part: message.normalizedThreadPart,
-                                      showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
-                                          && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                                    child: TextBubble(
+                                      parentController: controller,
+                                      message: edit,
                                     ),
-                                  ),
+                                  )).toList(),
+                                ),
+                              ) : Container(
+                                height: 0,
+                                constraints: BoxConstraints(
+                                  maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30
+                              )),
+                            )),
+                          ),
+                        if (iOS && index == 0 && !widget.isReplyThread
+                            && olderMessage != null
+                            && message.threadOriginatorGuid != null
+                            && message.showUpperMessage(olderMessage!)
+                            && getActiveMwc(message.threadOriginatorGuid!) != null)
+                          Padding(
+                            padding: EdgeInsets.only(left: chat.isGroup && getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe! ? 35 : 0),
+                            child: DecoratedBox(
+                              decoration: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? ReplyLineDecoration(
+                                isFromMe: message.isFromMe!,
+                                color: context.theme.colorScheme.properSurface,
+                                connectUpper: false,
+                                connectLower: true,
+                                context: context,
+                              ) : const BoxDecoration(),
+                              child: Container(
+                                width: double.infinity,
+                                alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!
+                                    ? Alignment.centerRight : Alignment.centerLeft,
+                                child: ReplyBubble(
+                                  parentController: getActiveMwc(message.threadOriginatorGuid!)!,
+                                  part: message.normalizedThreadPart,
+                                  showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
+                                      && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
                                 ),
                               ),
-                            // show sender, if needed
-                            if (chat.isGroup
+                            ),
+                          ),
+                        // show sender, if needed
+                        if (chat.isGroup
+                            && !message.isFromMe!
+                            && showSender
+                            && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
+                          Padding(
+                            padding: showAvatar || ss.settings.alwaysShowAvatars.value
+                                ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                            child: MessageSender(olderMessage: olderMessage, message: message),
+                          ),
+                        // add a box to account for height of reactions if
+                        // a sender wasn't added and there are reactions
+                        if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
+                            && !(chat.isGroup
                                 && !message.isFromMe!
                                 && showSender
-                                && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
-                              Padding(
-                                padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
-                                child: MessageSender(olderMessage: olderMessage, message: message),
+                                && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
+                          const SizedBox(height: 15),
+                        if (!iOS && index == 0 && !widget.isReplyThread
+                            && olderMessage != null
+                            && message.threadOriginatorGuid != null
+                            && message.showUpperMessage(olderMessage!)
+                            && getActiveMwc(message.threadOriginatorGuid!) != null)
+                          Padding(
+                            padding: showAvatar || ss.settings.alwaysShowAvatars.value
+                                ? const EdgeInsets.only(left: 45.0, right: 10) : const EdgeInsets.symmetric(horizontal: 10),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.fromBorderSide(BorderSide(color: context.theme.colorScheme.properSurface)),
                               ),
-                            // add a box to account for height of reactions if
-                            // a sender wasn't added and there are reactions
-                            if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
-                                && !(chat.isGroup
-                                    && !message.isFromMe!
-                                    && showSender
-                                    && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
-                              const SizedBox(height: 15),
-                            if (!iOS && index == 0 && !widget.isReplyThread
-                                && olderMessage != null
-                                && message.threadOriginatorGuid != null
-                                && message.showUpperMessage(olderMessage!)
-                                && getActiveMwc(message.threadOriginatorGuid!) != null)
+                              child: ReplyBubble(
+                                parentController: getActiveMwc(message.threadOriginatorGuid!)!,
+                                part: message.normalizedThreadPart,
+                                showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
+                                    && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                              ),
+                            ),
+                          ),
+                        Stack(
+                          alignment: Alignment.bottomLeft,
+                          children: [
+                            // avatar, if needed
+                            if (message.showTail(newerMessage)
+                                && e.part == controller.parts.length - 1
+                                && (showAvatar || ss.settings.alwaysShowAvatars.value)
+                                && !message.isFromMe! && !message.isGroupEvent)
                               Padding(
-                                padding: showAvatar ? const EdgeInsets.only(left: 45.0, right: 10) : const EdgeInsets.symmetric(horizontal: 10),
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(25),
-                                    border: Border.fromBorderSide(BorderSide(color: context.theme.colorScheme.properSurface)),
-                                  ),
-                                  child: ReplyBubble(
-                                    parentController: getActiveMwc(message.threadOriginatorGuid!)!,
-                                    part: message.normalizedThreadPart,
-                                    showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
-                                        && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
-                                  ),
+                                padding: const EdgeInsets.only(left: 5.0),
+                                child: ContactAvatarWidget(
+                                  handle: message.handle,
+                                  size: iOS ? 30 : 35,
+                                  fontSize: context.theme.textTheme.bodyLarge!.fontSize!,
+                                  borderThickness: 0.1,
                                 ),
                               ),
                             Padding(
-                              padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                              padding: showAvatar || ss.settings.alwaysShowAvatars.value
+                                  ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
                               child: DecoratedBox(
                                 decoration: iOS && !widget.isReplyThread && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
                                     || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null))
@@ -461,126 +465,124 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                             ),
                                           // swipe to reply
                                           if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
-                                            Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                                            Obx(() => SlideToReply(width: replyOffsets[index].value.abs(), isFromMe: message.isFromMe!)),
                                         ].conditionalReverse(message.isFromMe!),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            )),
-                            // message properties (replies, edits, effect)
-                            Padding(
-                              padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
-                              child: MessageProperties(
-                                globalKey: keys.length > index ? keys[index] : null,
-                                parentController: controller,
-                                part: e
-                              ),
+                              )),
                             ),
                           ],
                         ),
-                      )),
-                      // delivered / read receipt
-                      Padding(
-                        padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
-                        child: Obx(() => DeliveredIndicator(parentController: controller, forceShow: tapped.value)),
-                      ),
-                    ],
-                  ),
-                ),
-                if (message.isFromMe! && !message.isGroupEvent)
-                  SelectCheckbox(message: message, controller: widget.cvController),
-                Obx(() {
-                  if (message.error > 0) {
-                    int errorCode = message.error;
-                    String errorText = "An unknown internal error occurred.";
-                    if (errorCode == 22) {
-                      errorText = "The recipient is not registered with iMessage!";
-                    } else if (message.guid!.startsWith("error-")) {
-                      errorText = message.guid!.split('-')[1];
-                    }
+                        // message properties (replies, edits, effect)
+                        Padding(
+                          padding: showAvatar || ss.settings.alwaysShowAvatars.value
+                              ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                          child: MessageProperties(
+                            globalKey: keys.length > index ? keys[index] : null,
+                            parentController: controller,
+                            part: e
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                  // delivered / read receipt
+                  Obx(() => DeliveredIndicator(parentController: controller, forceShow: tapped.value)),
+                ],
+              ),
+            ),
+            if (message.isFromMe! && !message.isGroupEvent)
+              SelectCheckbox(message: message, controller: widget.cvController),
+            Obx(() {
+              if (message.error > 0) {
+                int errorCode = message.error;
+                String errorText = "An unknown internal error occurred.";
+                if (errorCode == 22) {
+                  errorText = "The recipient is not registered with iMessage!";
+                } else if (message.guid!.startsWith("error-")) {
+                  errorText = message.guid!.split('-')[1];
+                }
 
-                    return IconButton(
-                      icon: Icon(
-                        iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline,
-                        color: context.theme.colorScheme.error,
-                      ),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              backgroundColor: context.theme.colorScheme.properSurface,
-                              title: Text("Message failed to send", style: context.theme.textTheme.titleLarge),
-                              content: Text("Error ($errorCode): $errorText", style: context.theme.textTheme.bodyLarge),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: Text(
-                                    "Retry",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
-                                  ),
-                                  onPressed: () async {
-                                    // Remove the original message and notification
-                                    Navigator.of(context).pop();
-                                    service.removeMessage(message);
-                                    Message.delete(message.guid!);
-                                    await notif.clearFailedToSend();
-                                    // Re-send
-                                    message.id = null;
-                                    message.error = 0;
-                                    message.dateCreated = DateTime.now();
-                                    outq.queue(OutgoingItem(
-                                      type: QueueType.sendMessage,
-                                      chat: chat,
-                                      message: message,
-                                    ));
-                                  },
-                                ),
-                                TextButton(
-                                  child: Text(
-                                    "Remove",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
-                                  ),
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                    // Delete the message from the DB
-                                    Message.delete(message.guid!);
-                                    // Remove the message from the Bloc
-                                    service.removeMessage(message);
-                                    await notif.clearFailedToSend();
-                                    // Get the "new" latest info
-                                    List<Message> latest = Chat.getMessages(chat, limit: 1);
-                                    chat.latestMessage = latest.first;
-                                    chat.latestMessageDate = latest.first.dateCreated;
-                                    chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
-                                    chat.save();
-                                  },
-                                ),
-                                TextButton(
-                                  child: Text(
-                                    "Cancel",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
-                                  ),
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                    await notif.clearFailedToSend();
-                                  },
-                                )
-                              ],
-                            );
-                          },
+                return IconButton(
+                  icon: Icon(
+                    iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+                    color: context.theme.colorScheme.error,
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          backgroundColor: context.theme.colorScheme.properSurface,
+                          title: Text("Message failed to send", style: context.theme.textTheme.titleLarge),
+                          content: Text("Error ($errorCode): $errorText", style: context.theme.textTheme.bodyLarge),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text(
+                                "Retry",
+                                style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                              ),
+                              onPressed: () async {
+                                // Remove the original message and notification
+                                Navigator.of(context).pop();
+                                service.removeMessage(message);
+                                Message.delete(message.guid!);
+                                await notif.clearFailedToSend();
+                                // Re-send
+                                message.id = null;
+                                message.error = 0;
+                                message.dateCreated = DateTime.now();
+                                outq.queue(OutgoingItem(
+                                  type: QueueType.sendMessage,
+                                  chat: chat,
+                                  message: message,
+                                ));
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                "Remove",
+                                style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                              ),
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                // Delete the message from the DB
+                                Message.delete(message.guid!);
+                                // Remove the message from the Bloc
+                                service.removeMessage(message);
+                                await notif.clearFailedToSend();
+                                // Get the "new" latest info
+                                List<Message> latest = Chat.getMessages(chat, limit: 1);
+                                chat.latestMessage = latest.first;
+                                chat.latestMessageDate = latest.first.dateCreated;
+                                chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
+                                chat.save();
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                "Cancel",
+                                style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                              ),
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                await notif.clearFailedToSend();
+                              },
+                            )
+                          ],
                         );
                       },
                     );
-                  }
-                  return const SizedBox.shrink();
-                }),
-                // slide to view timestamp
-                if (!samsung)
-                  MessageTimestamp(controller: controller, cvController: widget.cvController),
-              ],
-            ),
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            }),
+            // slide to view timestamp
+            if (!samsung)
+              MessageTimestamp(controller: controller, cvController: widget.cvController),
           ],
         ),
       ],
