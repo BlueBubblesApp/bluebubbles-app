@@ -17,7 +17,7 @@ class ChatsService extends GetxService {
   late final StreamSubscription countSub;
 
   final RxBool hasChats = false.obs;
-  final Completer<void> loadedAllChats = Completer();
+  Completer<void> loadedAllChats = Completer();
   final RxBool loadedChatBatch = false.obs;
   final RxList<Chat> chats = <Chat>[].obs;
 
@@ -44,7 +44,7 @@ class ChatsService extends GetxService {
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
     })).data['data']['total'];
-
+    loadedAllChats = Completer();
     if (currentCount != 0) {
       hasChats.value = true;
     } else {
