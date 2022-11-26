@@ -228,7 +228,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             if (ev is RawKeyDownEvent) {
                               if (ev.logicalKey == LogicalKeyboardKey.backspace
                                   && (addressController.selection.start == 0 || addressController.text.isEmpty)) {
-                                selectedContacts.removeLast();
+                                if (selectedContacts.isNotEmpty) {
+                                  selectedContacts.removeLast();
+                                }
                                 return KeyEventResult.handled;
                               }
                             }
