@@ -48,7 +48,7 @@ extension NonZero on int? {
 }
 
 extension FriendlySize on double {
-  String getFriendlySize({decimals = 2}) {
+  String getFriendlySize({decimals = 2, bool withPostfix = true}) {
     double size = this / 1024000.0;
     String postfix = "MB";
 
@@ -60,6 +60,6 @@ extension FriendlySize on double {
       postfix = "GB";
     }
 
-    return "${size.toStringAsFixed(decimals)} $postfix";
+    return "${size.toStringAsFixed(decimals)}${withPostfix ? "  $postfix" : ""}";
   }
 }
