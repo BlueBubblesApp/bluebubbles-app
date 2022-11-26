@@ -575,7 +575,7 @@ class Chat {
     });
   }
 
-  Chat toggleHasUnread(bool hasUnread, {bool clearLocalNotifications = true}) {
+  Chat toggleHasUnread(bool hasUnread, {bool clearLocalNotifications = true, bool privateMark = true}) {
     if ((hasUnread && cm.isChatActive(guid)) || hasUnreadMessage == hasUnread) {
       return this;
     }
@@ -587,7 +587,7 @@ class Chat {
       if (clearLocalNotifications && !hasUnread) {
         mcs.invokeMethod("clear-chat-notifs", {"chatGuid": guid});
       }
-      if (ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
+      if (privateMark && ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
         if (!hasUnread && autoSendReadReceipts!) {
           http.markChatRead(guid);
         } else {
