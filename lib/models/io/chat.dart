@@ -776,9 +776,9 @@ class Chat {
   }
 
   void _deduplicateParticipants() {
-    if (participants.isEmpty) return;
-    final ids = participants.map((e) => e.address).toSet();
-    participants.retainWhere((element) => ids.remove(element.address));
+    if (_participants.isEmpty) return;
+    final ids = _participants.map((e) => e.address).toSet();
+    _participants.retainWhere((element) => ids.remove(element.address));
   }
 
   Chat togglePin(bool isPinned) {
