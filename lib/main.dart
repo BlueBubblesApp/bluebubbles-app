@@ -277,16 +277,12 @@ Future<Null> initApp(bool isBubble) async {
         } else if (useCustomPath == true && Platform.isWindows) {
           customStorePath ??= "C:\\bluebubbles_app";
           objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-          if (kIsDesktop) {
-            await objectBoxDirectory.create(recursive: true);
-          }
+          await objectBoxDirectory.create(recursive: true);
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
           store = await openStore(directory: join(customStorePath, "objectbox"));
         } else {
           try {
-            if (kIsDesktop) {
-              await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
-            }
+            await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
           } catch (e, s) {
