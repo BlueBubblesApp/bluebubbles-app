@@ -381,9 +381,9 @@ class ChatLeading extends StatelessWidget {
                 ),
               if (unreadIcon != null && ss.settings.skin.value == Skins.Samsung)
                 Positioned(
-                  top: 30,
-                  right: 20,
-                  height: height,
+                  top: 0,
+                  right: 0,
+                  height: height * 0.75,
                   child: FittedBox(
                     alignment: Alignment.centerRight,
                     child: unreadIcon,
