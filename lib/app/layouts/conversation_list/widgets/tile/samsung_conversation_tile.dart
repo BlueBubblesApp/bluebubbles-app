@@ -177,17 +177,6 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (controller.chat.isPinned!)
-            Icon(
-                Icons.star,
-                size: 15, color: context.theme.colorScheme.tertiary
-            ),
-          if (muteType == "mute")
-            Icon(
-              Icons.notifications_off,
-              color: context.theme.colorScheme.onBackground,
-              size: 15,
-            ),
           Obx(() {
             String indicatorText = "";
             if (ss.settings.statusIndicatorsOnChats.value) {
@@ -210,6 +199,21 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
               overflow: TextOverflow.clip,
             );
           }),
+          if (controller.chat.isPinned!)
+            const SizedBox(width: 5.0),
+          if (controller.chat.isPinned!)
+            Icon(
+                Icons.star,
+                size: 15, color: context.theme.colorScheme.tertiary
+            ),
+          if (muteType == "mute")
+            const SizedBox(width: 5.0),
+          if (muteType == "mute")
+            Icon(
+              Icons.notifications_off,
+              color: context.theme.colorScheme.onBackground,
+              size: 15,
+            ),
         ],
       ),
     );
