@@ -253,127 +253,127 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Stack(
-              alignment: Alignment.bottomCenter,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        iOS ? CupertinoIcons.square_arrow_up_on_square : material ? Icons.add_circle_outline : Icons.add,
-                        color: context.theme.colorScheme.outline,
-                        size: 28,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () async {
-                        if (kIsDesktop) {
-                          final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
-                          if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
+                IconButton(
+                  icon: Icon(
+                    iOS ? CupertinoIcons.square_arrow_up_on_square : material ? Icons.add_circle_outline : Icons.add,
+                    color: context.theme.colorScheme.outline,
+                    size: 28,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () async {
+                    if (kIsDesktop) {
+                      final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
+                      if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
 
-                          for (pf.PlatformFile e in res.files) {
-                            if (e.size / 1024000 > 1000) {
-                              showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
-                              continue;
-                            }
-                            controller.pickedAttachments.add(PlatformFile(
-                              path: e.path,
-                              name: e.name,
-                              size: e.size,
-                              bytes: await readByteStream(e.readStream!),
-                            ));
-                          }
-                          Get.back();
-                        } else if (kIsWeb) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text("What would you like to do?", style: context.theme.textTheme.titleLarge),
-                              content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  ListTile(
-                                    title: Text("Upload file", style: Theme.of(context).textTheme.bodyLarge),
-                                    onTap: () async {
-                                      final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
-                                      if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                      for (pf.PlatformFile e in res.files) {
+                        if (e.size / 1024000 > 1000) {
+                          showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+                          continue;
+                        }
+                        controller.pickedAttachments.add(PlatformFile(
+                          path: e.path,
+                          name: e.name,
+                          size: e.size,
+                          bytes: await readByteStream(e.readStream!),
+                        ));
+                      }
+                      Get.back();
+                    } else if (kIsWeb) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text("What would you like to do?", style: context.theme.textTheme.titleLarge),
+                          content: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              ListTile(
+                                title: Text("Upload file", style: Theme.of(context).textTheme.bodyLarge),
+                                onTap: () async {
+                                  final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                                  if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                      for (pf.PlatformFile e in res.files) {
-                                        if (e.size / 1024000 > 1000) {
-                                          showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
-                                          continue;
-                                        }
-                                        controller.pickedAttachments.add(PlatformFile(
-                                          path: null,
-                                          name: e.name,
-                                          size: e.size,
-                                          bytes: e.bytes!,
-                                        ));
-                                      }
-                                      Get.back();
-                                    },
-                                  ),
-                                  ListTile(
-                                    title: Text("Send location", style: Theme.of(context).textTheme.bodyLarge),
-                                    onTap: () async {
-                                      Share.location(chat);
-                                      Get.back();
-                                    },
-                                  ),
-                                ]
+                                  for (pf.PlatformFile e in res.files) {
+                                    if (e.size / 1024000 > 1000) {
+                                      showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+                                      continue;
+                                    }
+                                    controller.pickedAttachments.add(PlatformFile(
+                                      path: null,
+                                      name: e.name,
+                                      size: e.size,
+                                      bytes: e.bytes!,
+                                    ));
+                                  }
+                                  Get.back();
+                                },
                               ),
-                              backgroundColor: context.theme.colorScheme.properSurface,
-                            )
-                          );
-                        } else {
-                          if (!showAttachmentPicker) {
-                            controller.focusNode.unfocus();
-                            controller.subjectFocusNode.unfocus();
-                          }
-                          setState(() {
-                            showAttachmentPicker = !showAttachmentPicker;
-                          });
+                              ListTile(
+                                title: Text("Send location", style: Theme.of(context).textTheme.bodyLarge),
+                                onTap: () async {
+                                  Share.location(chat);
+                                  Get.back();
+                                },
+                              ),
+                            ]
+                          ),
+                          backgroundColor: context.theme.colorScheme.properSurface,
+                        )
+                      );
+                    } else {
+                      if (!showAttachmentPicker) {
+                        controller.focusNode.unfocus();
+                        controller.subjectFocusNode.unfocus();
+                      }
+                      setState(() {
+                        showAttachmentPicker = !showAttachmentPicker;
+                      });
+                    }
+                  },
+                ),
+                if (!Platform.isAndroid)
+                  IconButton(
+                    icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
+                    onPressed: () async {
+                      GiphyGif? gif = await GiphyGet.getGif(
+                        context: context,
+                        apiKey: GIPHY_API_KEY,
+                        tabColor: context.theme.primaryColor,
+                      );
+                      if (gif?.images?.original != null) {
+                        final response = await http.downloadGiphy(gif!.images!.original!.url);
+                        if (response.statusCode == 200) {
+                          try {
+                            final Uint8List data = response.data;
+                            controller.pickedAttachments.add(PlatformFile(
+                              path: null,
+                              name: "${gif.title ?? randomString(8)}.gif",
+                              size: data.length,
+                              bytes: data,
+                            ));
+                            return;
+                          } catch (_) {}
                         }
-                      },
-                    ),
-                    if (!Platform.isAndroid)
-                      IconButton(
-                        icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
-                        onPressed: () async {
-                          GiphyGif? gif = await GiphyGet.getGif(
-                            context: context,
-                            apiKey: GIPHY_API_KEY,
-                            tabColor: context.theme.primaryColor,
-                          );
-                          if (gif?.images?.original != null) {
-                            final response = await http.downloadGiphy(gif!.images!.original!.url);
-                            if (response.statusCode == 200) {
-                              try {
-                                final Uint8List data = response.data;
-                                controller.pickedAttachments.add(PlatformFile(
-                                  path: null,
-                                  name: "${gif.title ?? randomString(8)}.gif",
-                                  size: data.length,
-                                  bytes: data,
-                                ));
-                                return;
-                              } catch (_) {}
-                            }
-                          } else {
-                            showSnackbar("Error", "Something went wrong, please try again.");
-                          }
-                        }
-                      ),
-                    if (kIsDesktop)
-                      IconButton(
-                        icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
-                        onPressed: () async {
-                          await Share.location(chat);
-                        },
-                      ),
-                    Expanded(
-                      child: _TextFields(
+                      } else {
+                        showSnackbar("Error", "Something went wrong, please try again.");
+                      }
+                    }
+                  ),
+                if (kIsDesktop)
+                  IconButton(
+                    icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
+                    onPressed: () async {
+                      await Share.location(chat);
+                    },
+                  ),
+                Expanded(
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      _TextFields(
                         key: controller.textFieldKey,
                         chat: chat,
                         subjectTextController: subjectTextController,
@@ -382,49 +382,59 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         recorderController: recorderController,
                         sendMessage: sendMessage,
                       ),
-                    ),
-                    if (samsung)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 5.0),
-                        child: TextFieldSuffix(
-                          chat: chat,
-                          subjectTextController: subjectTextController,
-                          textController: controller.textController,
-                          controller: controller,
-                          recorderController: recorderController,
-                          sendMessage: sendMessage,
+                      Obx(() => AnimatedSize(
+                        duration: const Duration(milliseconds: 500),
+                        curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
+                        child: !controller.showRecording.value ? const SizedBox.shrink() : Positioned(
+                          top: 0,
+                          bottom: 0,
+                          left: 0,
+                          right: samsung ? 0 : 50,
+                          child: Builder(
+                            builder: (context) {
+                              final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+                              final textFieldSize = box?.size ?? const Size(250, 35);
+                              return AudioWaveforms(
+                                size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
+                                recorderController: recorderController,
+                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                                waveStyle: const WaveStyle(
+                                  waveColor: Colors.white,
+                                  waveCap: StrokeCap.square,
+                                  spacing: 4.0,
+                                  showBottom: true,
+                                  extendWaveform: true,
+                                  showMiddleLine: false,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.fromBorderSide(BorderSide(
+                                    color: context.theme.colorScheme.outline,
+                                    width: 1,
+                                  )),
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: context.theme.colorScheme.properSurface,
+                                ),
+                              );
+                            }
+                          ),
                         ),
-                      ),
-                  ]
-                ),
-                Obx(() => AnimatedContainer(
-                  height: 50,
-                  duration: const Duration(milliseconds: 500),
-                  curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
-                  width: controller.showRecording.value ? 250 : 0,
-                  child: AudioWaveforms(
-                    size: const Size(220, 40),
-                    recorderController: recorderController,
-                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                    waveStyle: const WaveStyle(
-                      waveColor: Colors.white,
-                      waveCap: StrokeCap.square,
-                      spacing: 4.0,
-                      showBottom: true,
-                      extendWaveform: true,
-                      showMiddleLine: false,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.fromBorderSide(BorderSide(
-                        color: context.theme.colorScheme.outline,
-                        width: 1,
                       )),
-                      borderRadius: BorderRadius.circular(20),
-                      color: context.theme.colorScheme.properSurface,
+                    ],
+                  ),
+                ),
+                if (samsung)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 5.0),
+                    child: TextFieldSuffix(
+                      chat: chat,
+                      subjectTextController: subjectTextController,
+                      textController: controller.textController,
+                      controller: controller,
+                      recorderController: recorderController,
+                      sendMessage: sendMessage,
                     ),
                   ),
-                )),
-              ],
+              ]
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 250),
