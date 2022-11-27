@@ -177,7 +177,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     final insertIndex = _messages.indexOf(message);
     listKey.currentState!.insertItem(
       insertIndex,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
     );
 
     if (insertIndex == 0 && showSmartReplies) {
