@@ -110,14 +110,15 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
   Widget build(BuildContext context) {
     return GestureDetector(
       key: globalKey,
-      onDoubleTap: message.guid!.startsWith('temp') ? null : ss.settings.doubleTapForDetails.value
+      onDoubleTap: ss.settings.doubleTapForDetails.value || message.guid!.startsWith('temp')
         ? () => openPopup(context)
         : ss.settings.enableQuickTapback.value && cm.activeChat!.chat.isIMessage
         ? () => sendTapback(null, widget.part.part)
         : null,
-      onLongPress: message.guid!.startsWith('temp') ? null : ss.settings.doubleTapForDetails.value &&
+      onLongPress: ss.settings.doubleTapForDetails.value &&
         ss.settings.enableQuickTapback.value &&
-        cm.activeChat!.chat.isIMessage
+        cm.activeChat!.chat.isIMessage &&
+        !message.guid!.startsWith('temp')
         ? () => sendTapback(null, widget.part.part)
         : () => openPopup(context),
       onSecondaryTapUp: (details) async {

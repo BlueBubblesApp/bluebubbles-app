@@ -87,7 +87,8 @@ class MessagesService extends GetxController {
   }
 
   void updateMessage(Message updated, {String? oldGuid}) {
-    final toUpdate = struct.getMessage(oldGuid ?? updated.guid!)!;
+    final toUpdate = struct.getMessage(oldGuid ?? updated.guid!);
+    if (toUpdate == null) return;
     updated = updated.mergeWith(toUpdate);
     struct.removeMessage(oldGuid ?? updated.guid!);
     struct.removeAttachments(toUpdate.attachments.map((e) => e!.guid!));
