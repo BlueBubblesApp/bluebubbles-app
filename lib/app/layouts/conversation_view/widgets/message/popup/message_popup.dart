@@ -86,7 +86,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   void initState() {
     super.initState();
     controller.forward();
-    final remainingHeight = max(Get.height - Get.statusBarHeight - 120 - widget.size.height, itemHeight);
+    final remainingHeight = max(Get.height - Get.statusBarHeight - 135 - widget.size.height, itemHeight);
     numberToShow = min(remainingHeight ~/ itemHeight, 5);
 
     updateObx(() {
@@ -104,7 +104,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         }
       }
       setState(() {
-        if (iOS) messageOffset = itemHeight * numberToShow + 50;
+        if (iOS) messageOffset = itemHeight * numberToShow + 40;
       });
     });
   }
@@ -350,7 +350,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     minSierra &&
                     chat.isIMessage)
                   Positioned(
-                    bottom: iOS ? itemHeight * numberToShow + 45 + widget.size.height : context.height - widget.childPosition.dy,
+                    bottom: iOS ? itemHeight * numberToShow + 35 + widget.size.height : context.height - widget.childPosition.dy,
                     right: message.isFromMe! ? 15 : null,
                     left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
                     child: AnimatedSize(
