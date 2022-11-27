@@ -197,7 +197,7 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
     return Padding(
       padding: const EdgeInsets.only(right: 3),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
