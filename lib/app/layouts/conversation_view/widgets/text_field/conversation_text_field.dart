@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
@@ -372,6 +373,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                 Expanded(
                   child: Stack(
                     alignment: Alignment.centerLeft,
+                    clipBehavior: Clip.none,
                     children: [
                       _TextFields(
                         key: controller.textFieldKey,
@@ -419,6 +421,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                           ),
                         ),
                       )),
+                      SendAnimation(parentController: controller),
                     ],
                   ),
                 ),

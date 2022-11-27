@@ -1,6 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/material_header.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
 import 'package:bluebubbles/app/wrappers/gradient_background_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -202,7 +201,6 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                             ),
                           ],
                         ),
-                        SendAnimation(parentController: controller),
                       ],
                     ),
                   ),

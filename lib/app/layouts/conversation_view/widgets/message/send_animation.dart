@@ -22,7 +22,6 @@ class SendAnimation extends CustomStateful<ConversationViewController> {
 class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, ConversationViewController> {
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
-  double offset = 0;
   Control control = Control.stop;
   double textFieldSize = 0;
 
@@ -30,24 +29,9 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
   void initState() {
     super.initState();
     controller.sendFunc = send;
-    KeyboardVisibilityController().onChange.listen((bool visible) async {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
-        textFieldSize = box?.size.height ?? 0;
-        final textFieldPos = box?.localToGlobal(Offset.zero);
-        if (visible) {
-          setState(() {
-            offset = 10;
-          });
-        } else {
-          if (textFieldSize != 0 && textFieldPos != null) {
-            setState(() {
-              offset = Get.height - textFieldPos.dy - textFieldSize;
-            });
-          }
-        }
-      }
+    updateObx(() {
+      final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+      textFieldSize = box?.size.height ?? 0;
     });
   }
 
@@ -125,7 +109,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     final typicalWidth = ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30;
     return AnimatedPositioned(
       duration: Duration(milliseconds: message != null ? 400 : 0),
-      bottom: message != null ? textFieldSize + offset + 15 : offset,
+      bottom: message != null ? textFieldSize + 17.5 : 0,
       right: 5,
       curve: Curves.easeInOutCubic,
       onEnd: () {
@@ -165,7 +149,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
                   text: TextSpan(
                     children: buildMessageSpans(
                       context,
-                      MessagePart(part: 0, text: message!.text),
+                      MessagePart(part: 0, text: message!.text, subject: message!.subject),
                       message!,
                     ),
                   ),
