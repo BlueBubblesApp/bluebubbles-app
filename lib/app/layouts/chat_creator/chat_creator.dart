@@ -1,29 +1,25 @@
 import 'dart:async';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
-import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
-import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:slugify/slugify.dart';
 import 'package:tuple/tuple.dart';
 
@@ -65,6 +61,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   String? oldText;
   ConversationViewController? oldController;
   Timer? _debounce;
+  Completer<void>? createCompleter;
 
   @override
   void initState() {
@@ -604,9 +601,90 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         null,
                       );
                     } else {
-
+                      if (!(createCompleter?.isCompleted ?? true)) return;
+                      createCompleter = Completer();
+                      final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : e.address.numericOnly()).toList();
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                            title: Text(
+                              "Creating a new iMessage chat...",
+                              style: context.theme.textTheme.titleLarge,
+                            ),
+                            content: Container(
+                              height: 70,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      );
+                      http.createChat(participants, textController.text).then((response) async {
+                        Chat newChat = Chat.fromMap(response.data["data"]);
+                        final saved = await cm.fetchChat(newChat.guid);
+                        if (saved == null) {
+                          return showSnackbar("Error", "Failed to save chat!");
+                        }
+                        newChat = saved;
+                        createCompleter?.complete();
+                        Navigator.of(context).pop();
+                        ns.pushAndRemoveUntil(
+                          Get.context!,
+                          ConversationView(chat: newChat),
+                          (route) => route.isFirst,
+                          customRoute: PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => TitleBarWrapper(
+                              child: ConversationView(
+                                chat: newChat,
+                                fromChatCreator: true,
+                              ),
+                            ),
+                            transitionDuration: Duration.zero,
+                          ),
+                        );
+                      }).catchError((error) {
+                        Navigator.of(context).pop();
+                        showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              title: Text(
+                                "Failed to create chat!",
+                                style: context.theme.textTheme.titleLarge,
+                              ),
+                              content: Text(
+                                error is Response
+                                    ? "Reason: (${error.data["error"]["type"]}) -> ${error.data["error"]["message"]}"
+                                    : error.toString(),
+                                style: context.theme.textTheme.bodyLarge,
+                              ),
+                              actions: [
+                                TextButton(
+                                  child: Text(
+                                    "OK",
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                )
+                              ],
+                            );
+                          }
+                        );
+                        if (!createCompleter!.isCompleted) {
+                          createCompleter?.completeError(error);
+                        }
+                      });
                     }
-                    print(textController.text);
                   }
                 ),
               ),

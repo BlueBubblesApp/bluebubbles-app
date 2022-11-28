@@ -192,7 +192,8 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
       final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
       sub = titleQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst()!;
+        final chat = query.findFirst();
+        if (chat == null) return;
         // check if we really need to update this widget
         if (chat.displayName != cachedDisplayName
             || chat.handles.length != cachedParticipants.length) {

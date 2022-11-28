@@ -296,7 +296,8 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
       final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
       sub = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst()!;
+        final chat = query.findFirst();
+        if (chat == null) return;
         if (chat.hasUnreadMessage != unread) {
           setState(() {
             unread = chat.hasUnreadMessage!;
