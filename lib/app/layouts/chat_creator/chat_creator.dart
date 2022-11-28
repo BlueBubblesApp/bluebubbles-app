@@ -60,6 +60,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   List<Chat> filteredChats = [];
   final RxList<SelectedContact> selectedContacts = <SelectedContact>[].obs;
   final Rxn<ConversationViewController> fakeController = Rxn(null);
+  bool iMessage = true;
+  bool sms = false;
   String? oldText;
   ConversationViewController? oldController;
   Timer? _debounce;
@@ -86,7 +88,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               || e.phones.firstWhereOrNull((e) => e.toLowerCase().numericOnly().contains(query)) != null
               || e.emails.firstWhereOrNull((e) => e.toLowerCase().contains(query)) != null).toList();
           final ids = _contacts.map((e) => e.id);
-          final _chats = existingChats.where((e) => (e.title?.toLowerCase().contains(query) ?? false)
+          final _chats = existingChats.where((e) => ((iMessage && e.isIMessage) || (sms && !e.isIMessage))
+              && (e.title?.toLowerCase().contains(query) ?? false)
               || e.participants.firstWhereOrNull((e) => ids.contains(e.contact?.id)
                   || e.address.contains(query)
                   || e.displayName.toLowerCase().contains(query)) != null);
@@ -106,12 +109,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       filteredContacts = List<Contact>.from(contacts);
       if (chats.loadedAllChats.isCompleted) {
         existingChats = chats.chats;
-        filteredChats = List<Chat>.from(existingChats);
+        filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
       } else {
         chats.loadedAllChats.future.then((_) {
           existingChats = chats.chats;
           setState(() {
-            filteredChats = List<Chat>.from(existingChats);
+            filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
           });
         });
       }
@@ -387,6 +390,51 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              child: ToggleButtons(
+                constraints: BoxConstraints(minWidth: (context.width - 35) / 2),
+                children: [
+                  Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text("iMessage"),
+                      ),
+                      const Icon(CupertinoIcons.chat_bubble, size: 16),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text("SMS"),
+                      ),
+                      const Icon(Icons.messenger_outline, size: 16),
+                    ],
+                  ),
+                ],
+                borderRadius: BorderRadius.circular(20),
+                selectedBorderColor: context.theme.colorScheme.bubble(context, iMessage),
+                selectedColor: context.theme.colorScheme.bubble(context, iMessage),
+                isSelected: [iMessage, sms],
+                onPressed: (index) {
+                  if (index == 0) {
+                    setState(() {
+                      iMessage = true;
+                      sms = false;
+                      filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
+                    });
+                  } else {
+                    setState(() {
+                      iMessage = false;
+                      sms = true;
+                      filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
+                    });
+                  }
+                },
+              ),
+            ),
             Expanded(
               child: Stack(
                 children: [
@@ -506,41 +554,57 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             ),
             Padding(
               padding: const EdgeInsets.only(left: 5.0, top: 5.0, bottom: 5.0),
-              child: TextFieldComponent(
-                subjectTextController: TextEditingController(),
-                textController: textController,
-                controller: null,
-                recorderController: RecorderController(),
-                sendMessage: ({String? effect}) async {
-                  if (fakeController.value?.chat != null) {
-                    ns.pushAndRemoveUntil(
-                      Get.context!,
-                      ConversationView(chat: fakeController.value!.chat),
-                      (route) => route.isFirst,
-                      customRoute: PageRouteBuilder(
-                        pageBuilder: (_, __, ___) => TitleBarWrapper(
-                          child: ConversationView(
-                            chat: fakeController.value!.chat,
-                            fromChatCreator: true,
-                          )
+              child: Theme(
+                data: context.theme.copyWith(
+                  // in case some components still use legacy theming
+                  primaryColor: context.theme.colorScheme.bubble(context, iMessage),
+                  colorScheme: context.theme.colorScheme.copyWith(
+                    primary: context.theme.colorScheme.bubble(context, iMessage),
+                    onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
+                    surface: ss.settings.monetTheming.value == Monet.full
+                        ? null
+                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                    onSurface: ss.settings.monetTheming.value == Monet.full
+                        ? null
+                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                  ),
+                ),
+                child: TextFieldComponent(
+                  subjectTextController: TextEditingController(),
+                  textController: textController,
+                  controller: null,
+                  recorderController: RecorderController(),
+                  sendMessage: ({String? effect}) async {
+                    if (fakeController.value?.chat != null) {
+                      ns.pushAndRemoveUntil(
+                        Get.context!,
+                        ConversationView(chat: fakeController.value!.chat),
+                        (route) => route.isFirst,
+                        customRoute: PageRouteBuilder(
+                          pageBuilder: (_, __, ___) => TitleBarWrapper(
+                            child: ConversationView(
+                              chat: fakeController.value!.chat,
+                              fromChatCreator: true,
+                            )
+                          ),
+                          transitionDuration: Duration.zero,
                         ),
-                        transitionDuration: Duration.zero,
-                      ),
-                    );
-                    await Future.delayed(const Duration(milliseconds: 500));
-                    await fakeController.value!.send(
-                      [],
-                      textController.text,
-                      "",
-                      null,
-                      null,
-                      null,
-                    );
-                  } else {
+                      );
+                      await Future.delayed(const Duration(milliseconds: 500));
+                      await fakeController.value!.send(
+                        [],
+                        textController.text,
+                        "",
+                        null,
+                        null,
+                        null,
+                      );
+                    } else {
 
+                    }
+                    print(textController.text);
                   }
-                  print(textController.text);
-                }
+                ),
               ),
             ),
           ],
