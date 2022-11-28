@@ -144,7 +144,7 @@ class SocketService extends GetxService {
         Logger.info("Socket connect error, fetching new URL...");
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection
-        _reconnectTimer = Timer(Duration(seconds: 5), () async {
+        _reconnectTimer = Timer(const Duration(seconds: 5), () async {
           if (state.value == SocketState.connected) return;
 
           await fdb.fetchNewUrl();
@@ -157,7 +157,6 @@ class SocketService extends GetxService {
   }
 
   void handleCustomEvent(String event, Map<String, dynamic> data) async {
-    // todo once event handlers are written
     switch (event) {
       case "new-message":
         if (!isNullOrEmpty(data)!) {

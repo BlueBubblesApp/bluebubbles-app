@@ -14,10 +14,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   } else if (item is Handle?) {
     address = item?.address;
     cc = item?.country ?? cc;
-    // todo
-  }/* else if (item is UniqueContact?) {
-    address = item?.address;
-  }*/ else {
+  } else {
     return item.toString();
   }
 
