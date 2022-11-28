@@ -326,28 +326,34 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   }
 }
 
-class ChatLeading extends StatelessWidget {
+class ChatLeading extends StatefulWidget {
   final ConversationTileController controller;
   final Widget? unreadIcon;
 
   ChatLeading({required this.controller, this.unreadIcon});
 
   @override
+  ChatLeadingState createState() => ChatLeadingState();
+}
+
+class ChatLeadingState extends OptimizedState<ChatLeading> {
+
+  @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (unreadIcon != null && ss.settings.skin.value == Skins.iOS)
-          unreadIcon!,
+        if (widget.unreadIcon != null && iOS)
+          widget.unreadIcon!,
         Obx(() {
-          final showTypingIndicator = cvc(controller.chat).showTypingIndicator.value;
+          final showTypingIndicator = cvc(widget.controller.chat).showTypingIndicator.value;
           double height = Theme.of(context).textTheme.labelLarge!.fontSize! * 1.25;
           return Stack(
             clipBehavior: Clip.none,
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(top: 2, right: 2),
-                child: controller.isSelected ? Container(
+                child: widget.controller.isSelected ? Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
                     color: context.theme.colorScheme.primary,
@@ -362,10 +368,10 @@ class ChatLeading extends StatelessWidget {
                     ),
                   ),
                 ) : ContactAvatarGroupWidget(
-                  chat: controller.chat,
+                  chat: widget.controller.chat,
                   size: 40,
                   editable: false,
-                  onTap: () => controller.onTap(context),
+                  onTap: () => widget.controller.onTap(context),
                 ),
               ),
               if (showTypingIndicator)
@@ -380,14 +386,14 @@ class ChatLeading extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (unreadIcon != null && ss.settings.skin.value == Skins.Samsung)
+              if (widget.unreadIcon != null && samsung)
                 Positioned(
                   top: 0,
                   right: 0,
                   height: height * 0.75,
                   child: FittedBox(
                     alignment: Alignment.centerRight,
-                    child: unreadIcon,
+                    child: widget.unreadIcon,
                   ),
                 ),
             ],
