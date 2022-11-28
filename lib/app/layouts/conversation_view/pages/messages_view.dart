@@ -357,16 +357,17 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                         newerMessage = _messages[index - 1];
                       }
 
+                      final message = _messages[index];
                       final messageWidget = Padding(
                         padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                         child: AutoScrollTag(
-                          key: ValueKey("${_messages[index].guid!}-scrolling"),
+                          key: ValueKey("${message.guid!}-scrolling"),
                           index: index,
                           controller: scrollController,
                           highlightColor: context.theme.colorScheme.surface.withOpacity(0.7),
                           child: MessageHolder(
                             cvController: controller,
-                            message: _messages[index],
+                            message: message,
                             oldMessageGuid: olderMessage?.guid,
                             newMessageGuid: newerMessage?.guid,
                           ),
@@ -389,7 +390,18 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                                 ),
                               ),
                             ),
-                            child: messageWidget,
+                            child: AnimatedBuilder(
+                              animation: animation,
+                              builder: (context, child) {
+                                return Opacity(
+                                  opacity: message.guid!.contains("temp")
+                                      && (!isNullOrEmpty(message.text)! || !isNullOrEmpty(message.subject)!)
+                                      && !animation.isCompleted ? 0 : 1,
+                                  child: child,
+                                );
+                              },
+                              child: messageWidget,
+                            )
                           ),
                         );
                       }

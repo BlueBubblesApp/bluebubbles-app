@@ -106,14 +106,16 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
 
   @override
   Widget build(BuildContext context) {
-    final typicalWidth = ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30;
+    final typicalWidth = message?.isBigEmoji ?? false
+        ? context.width : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
     return AnimatedPositioned(
       duration: Duration(milliseconds: message != null ? 400 : 0),
-      bottom: message != null ? textFieldSize + 17.5 : 0,
+      bottom: message != null ? textFieldSize + 12.5 : 0,
       right: 5,
       curve: Curves.easeInOutCubic,
-      onEnd: () {
+      onEnd: () async {
         if (message != null) {
+          await Future.delayed(const Duration(milliseconds: 100));
           setState(() {
             tween = Tween<double>(begin: 1, end: 0);
             control = Control.stop;
@@ -140,17 +142,27 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
                 constraints: BoxConstraints(
                   maxWidth: max(ns.width(context) * value, typicalWidth),
                   minWidth: ns.width(context) * value > typicalWidth ? ns.width(context) * value : 0.0,
-                  minHeight: 30,
+                  minHeight: 40,
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
-                color: context.theme.colorScheme.primary.darkenAmount(0.2),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15)
+                    .add(EdgeInsets.only(
+                      left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10,
+                      right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0
+                    )),
+                color: !message!.isBigEmoji ? context.theme.colorScheme.primary.darkenAmount(0.2) : null,
                 duration: Duration(milliseconds: ns.width(context) * value > typicalWidth ? 0 : 150),
-                child: RichText(
-                  text: TextSpan(
-                    children: buildMessageSpans(
-                      context,
-                      MessagePart(part: 0, text: message!.text, subject: message!.subject),
-                      message!,
+                child: Center(
+                  widthFactor: 1,
+                  child: Padding(
+                    padding: message!.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
+                    child: RichText(
+                      text: TextSpan(
+                        children: buildMessageSpans(
+                          context,
+                          MessagePart(part: 0, text: message!.text, subject: message!.subject),
+                          message!,
+                        ),
+                      ),
                     ),
                   ),
                 )
