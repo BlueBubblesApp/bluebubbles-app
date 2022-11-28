@@ -1,9 +1,13 @@
 import 'dart:async';
 
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
@@ -46,6 +50,7 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   late final TextEditingController addressController = TextEditingController(text: widget.initialText);
+  final TextEditingController textController = TextEditingController();
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -497,6 +502,45 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                     );
                   }),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 5.0, top: 5.0, bottom: 5.0),
+              child: TextFieldComponent(
+                subjectTextController: TextEditingController(),
+                textController: textController,
+                controller: null,
+                recorderController: RecorderController(),
+                sendMessage: ({String? effect}) async {
+                  if (fakeController.value?.chat != null) {
+                    ns.pushAndRemoveUntil(
+                      Get.context!,
+                      ConversationView(chat: fakeController.value!.chat),
+                      (route) => route.isFirst,
+                      customRoute: PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => TitleBarWrapper(
+                          child: ConversationView(
+                            chat: fakeController.value!.chat,
+                            fromChatCreator: true,
+                          )
+                        ),
+                        transitionDuration: Duration.zero,
+                      ),
+                    );
+                    await Future.delayed(const Duration(milliseconds: 500));
+                    await fakeController.value!.send(
+                      [],
+                      textController.text,
+                      "",
+                      null,
+                      null,
+                      null,
+                    );
+                  } else {
+
+                  }
+                  print(textController.text);
+                }
               ),
             ),
           ],

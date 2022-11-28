@@ -17,7 +17,6 @@ import 'package:universal_io/io.dart';
 class TextFieldSuffix extends StatefulWidget {
   const TextFieldSuffix({
     Key? key,
-    required this.chat,
     required this.subjectTextController,
     required this.textController,
     required this.controller,
@@ -25,10 +24,9 @@ class TextFieldSuffix extends StatefulWidget {
     required this.sendMessage,
   }) : super(key: key);
 
-  final Chat chat;
   final TextEditingController subjectTextController;
   final TextEditingController textController;
-  final ConversationViewController controller;
+  final ConversationViewController? controller;
   final RecorderController recorderController;
   final Future<void> Function({String? effect}) sendMessage;
 
@@ -37,6 +35,8 @@ class TextFieldSuffix extends StatefulWidget {
 }
 
 class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
+
+  bool get isChatCreator => widget.controller == null;
 
   void deleteAudioRecording(String path) {
     File(path).delete();
@@ -50,17 +50,17 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
         return Obx(() {
           bool canSend = widget.textController.text.isNotEmpty ||
               widget.subjectTextController.text.isNotEmpty ||
-              widget.controller.pickedAttachments.isNotEmpty;
+              (widget.controller?.pickedAttachments.isNotEmpty ?? false);
           return Padding(
             padding: const EdgeInsets.all(3.0),
             child: AnimatedCrossFade(
-              crossFadeState: canSend
+              crossFadeState: canSend || isChatCreator
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 150),
               firstChild: TextButton(
                 style: TextButton.styleFrom(
-                  backgroundColor: !iOS ? null : !widget.controller.showRecording.value
+                  backgroundColor: !iOS ? null : !isChatCreator && !widget.controller!.showRecording.value
                       ? context.theme.colorScheme.outline : context.theme.colorScheme.primary,
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
@@ -68,7 +68,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   minimumSize: const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: Obx(() => !widget.controller.showRecording.value ? 
+                child: Obx(() => !isChatCreator && !widget.controller!.showRecording.value ?
                   (iOS ?
                     const CupertinoIconWrapper(icon: Icon(
                       CupertinoIcons.waveform,
@@ -95,8 +95,9 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   )
                 ),
                 onPressed: () async {
-                  widget.controller.showRecording.toggle();
-                  if (widget.controller.showRecording.value) {
+                  if (widget.controller == null) return;
+                  widget.controller!.showRecording.toggle();
+                  if (widget.controller!.showRecording.value) {
                     await widget.recorderController.record();
                   } else {
                     final path = await widget.recorderController.stop();
@@ -144,7 +145,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                                   style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
                               ),
                               onPressed: () async {
-                                await widget.controller.send(
+                                await widget.controller!.send(
                                   [file],
                                   "", "", null, null, null,
                                 );
@@ -161,15 +162,15 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
               ),
               secondChild: SendButton(
                 sendMessage: widget.sendMessage,
-                onLongPress: () {
+                onLongPress: isChatCreator ? () {} : () {
                   sendEffectAction(
                     context,
-                    widget.controller,
+                    widget.controller!,
                     widget.textController.text.trim(),
                     widget.subjectTextController.text.trim(),
-                    widget.controller.replyToMessage?.item1.guid,
-                    widget.controller.replyToMessage?.item2,
-                    widget.controller.chat.guid,
+                    widget.controller!.replyToMessage?.item1.guid,
+                    widget.controller!.replyToMessage?.item2,
+                    widget.controller!.chat.guid,
                     widget.sendMessage,
                   );
                 },

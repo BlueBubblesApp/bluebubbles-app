@@ -74,7 +74,7 @@ class NavigatorService extends GetxService {
   }
 
   /// Push a new route, popping all previous routes, on the chat list right side navigator
-  Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate) async {
+  Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate, {PageRoute? customRoute}) async {
     if (Get.keys.containsKey(2) && isTabletMode(context)) {
       await Get.offUntil(
           GetPageRoute(
@@ -85,7 +85,7 @@ class NavigatorService extends GetxService {
           predicate,
           id: 2);
     } else {
-      await Navigator.of(context).pushAndRemoveUntil(ThemeSwitcher.buildPageRoute(
+      await Navigator.of(context).pushAndRemoveUntil(customRoute ?? ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ), predicate);
     }

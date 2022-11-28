@@ -24,6 +24,7 @@ ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<Con
 class ConversationViewController extends StatefulController with SingleGetTickerProviderMixin {
   final Chat chat;
   late final String tag;
+  late final bool fromChatCreator;
   final AutoScrollController scrollController = AutoScrollController();
 
   ConversationViewController(this.chat, {String? tag_}) {

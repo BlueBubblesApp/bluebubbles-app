@@ -68,7 +68,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
     // Load the initial chat drafts
     getDrafts();
-    if (ss.settings.autoOpenKeyboard.value) {
+    if (controller.fromChatCreator) {
+      controller.focusNode.requestFocus();
+    } else if (ss.settings.autoOpenKeyboard.value) {
       updateObx(() {
         controller.focusNode.requestFocus();
       });
@@ -383,9 +385,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                     alignment: Alignment.centerLeft,
                     clipBehavior: Clip.none,
                     children: [
-                      _TextFields(
+                      TextFieldComponent(
                         key: controller.textFieldKey,
-                        chat: chat,
                         subjectTextController: subjectTextController,
                         textController: controller.textController,
                         controller: controller,
@@ -435,7 +436,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                   Padding(
                     padding: const EdgeInsets.only(right: 5.0),
                     child: TextFieldSuffix(
-                      chat: chat,
                       subjectTextController: subjectTextController,
                       textController: controller.textController,
                       controller: controller,
@@ -462,10 +462,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   }
 }
 
-class _TextFields extends StatelessWidget {
-  const _TextFields({
+class TextFieldComponent extends StatelessWidget {
+  const TextFieldComponent({
     Key? key,
-    required this.chat,
     required this.subjectTextController,
     required this.textController,
     required this.controller,
@@ -473,21 +472,22 @@ class _TextFields extends StatelessWidget {
     required this.sendMessage,
   }) : super(key: key);
 
-  final Chat chat;
   final TextEditingController subjectTextController;
   final TextEditingController textController;
-  final ConversationViewController controller;
+  final ConversationViewController? controller;
   final RecorderController recorderController;
   final Future<void> Function({String? effect}) sendMessage;
 
   bool get iOS => ss.settings.skin.value == Skins.iOS;
   bool get samsung => ss.settings.skin.value == Skins.Samsung;
+  Chat? get chat => controller?.chat;
+  bool get isChatCreator => controller == null;
 
   @override
   Widget build(BuildContext context) {
     return FocusScope(
       child: Focus(
-        onKey: (_, ev) => handleKey(_, ev, context),
+        onKey: (_, ev) => isChatCreator ? KeyEventResult.ignored : handleKey(_, ev, context),
         child: Padding(
           padding: const EdgeInsets.only(right: 5.0),
           child: Container(
@@ -509,28 +509,32 @@ class _TextFields extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ReplyHolder(controller: controller),
-                  PickedAttachmentsHolder(
-                    controller: controller,
-                    textController: textController,
-                    subjectTextController: subjectTextController,
-                  ),
-                  Obx(() {
-                    if (controller.pickedAttachments.isNotEmpty && iOS) {
-                      return Divider(
-                        height: 1.5,
-                        thickness: 1.5,
-                        color: context.theme.colorScheme.properSurface,
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
-                  if (ss.settings.enablePrivateAPI.value &&
+                  if (!isChatCreator)
+                    ReplyHolder(controller: controller!),
+                  if (!isChatCreator)
+                    PickedAttachmentsHolder(
+                      controller: controller!,
+                      textController: textController,
+                      subjectTextController: subjectTextController,
+                    ),
+                  if (!isChatCreator)
+                    Obx(() {
+                      if (controller!.pickedAttachments.isNotEmpty && iOS) {
+                        return Divider(
+                          height: 1.5,
+                          thickness: 1.5,
+                          color: context.theme.colorScheme.properSurface,
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
+                  if (!isChatCreator && 
+                      ss.settings.enablePrivateAPI.value &&
                       ss.settings.privateSubjectLine.value &&
-                      chat.isIMessage)
+                      chat!.isIMessage)
                     CustomCupertinoTextField(
                       textCapitalization: TextCapitalization.sentences,
-                      focusNode: controller.subjectFocusNode,
+                      focusNode: controller!.subjectFocusNode,
                       autocorrect: true,
                       controller: subjectTextController,
                       scrollPhysics: const CustomBouncingScrollPhysics(),
@@ -558,13 +562,14 @@ class _TextFields extends StatelessWidget {
                         HapticFeedback.selectionClick();
                       },
                       onSubmitted: (String value) {
-                        controller.focusNode.requestFocus();
+                        controller!.focusNode.requestFocus();
                       },
                       // onContentCommitted: onContentCommit,
                     ),
-                  if (ss.settings.enablePrivateAPI.value &&
+                  if (!isChatCreator && 
+                      ss.settings.enablePrivateAPI.value &&
                       ss.settings.privateSubjectLine.value &&
-                      chat.isIMessage && iOS)
+                      chat!.isIMessage && iOS)
                     Divider(
                       height: 1.5,
                       thickness: 1.5,
@@ -573,7 +578,7 @@ class _TextFields extends StatelessWidget {
                     ),
                   CustomCupertinoTextField(
                     textCapitalization: TextCapitalization.sentences,
-                    focusNode: controller.focusNode,
+                    focusNode: controller?.focusNode,
                     autocorrect: true,
                     controller: textController,
                     scrollPhysics: const CustomBouncingScrollPhysics(),
@@ -581,9 +586,10 @@ class _TextFields extends StatelessWidget {
                     keyboardType: TextInputType.multiline,
                     maxLines: 14,
                     minLines: 1,
-                    placeholder: ss.settings.recipientAsPlaceholder.value == true
-                        ? chat.getTitle()
-                        : chat.isTextForwarding
+                    placeholder: isChatCreator ? "New Message"
+                        : ss.settings.recipientAsPlaceholder.value == true
+                        ? chat!.getTitle()
+                        : chat!.isTextForwarding
                         ? "Text Forwarding"
                         : "iMessage",
                     padding: EdgeInsets.all(iOS ? 10 : 12.5),
@@ -604,15 +610,14 @@ class _TextFields extends StatelessWidget {
                       HapticFeedback.selectionClick();
                     },
                     onSubmitted: (String value) {
-                      controller.focusNode.requestFocus();
-                      if (isNullOrEmpty(value)! && controller.pickedAttachments.isEmpty) return;
+                      controller?.focusNode.requestFocus();
+                      if (isNullOrEmpty(value)! && (controller?.pickedAttachments.isEmpty ?? false)) return;
                       sendMessage.call();
                     },
                     // onContentCommitted: onContentCommit,
-                    suffix: samsung ? null : Padding(
+                    suffix: samsung && !isChatCreator ? null : Padding(
                       padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
                       child: TextFieldSuffix(
-                        chat: chat,
                         subjectTextController: subjectTextController,
                         textController: textController,
                         controller: controller,
@@ -652,12 +657,12 @@ class _TextFields extends StatelessWidget {
 
       // Down arrow
       if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364 || webData?.code == "ArrowDown" || androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
-        if (controller.emojiSelectedIndex.value < controller.emojiMatches.length - 1) {
-          controller.emojiSelectedIndex.value++;
-          if (controller.emojiSelectedIndex.value >= downMovementIndex &&
-              controller.emojiSelectedIndex < controller.emojiMatches.length - maxShown + downMovementIndex + 1) {
-            controller.emojiScrollController
-                .jumpTo(max((controller.emojiSelectedIndex.value - downMovementIndex) * 48, controller.emojiScrollController.offset));
+        if (controller!.emojiSelectedIndex.value < controller!.emojiMatches.length - 1) {
+          controller!.emojiSelectedIndex.value++;
+          if (controller!.emojiSelectedIndex.value >= downMovementIndex &&
+              controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + downMovementIndex + 1) {
+            controller!.emojiScrollController
+                .jumpTo(max((controller!.emojiSelectedIndex.value - downMovementIndex) * 48, controller!.emojiScrollController.offset));
           }
           return KeyEventResult.handled;
         }
@@ -665,12 +670,12 @@ class _TextFields extends StatelessWidget {
 
       // Up arrow
       if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362 || webData?.code == "ArrowUp" || androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
-        if (controller.emojiSelectedIndex.value > 0) {
-          controller.emojiSelectedIndex.value--;
-          if (controller.emojiSelectedIndex.value >= upMovementIndex &&
-              controller.emojiSelectedIndex < controller.emojiMatches.length - maxShown + upMovementIndex + 1) {
-            controller.emojiScrollController
-                .jumpTo(min((controller.emojiSelectedIndex.value - upMovementIndex) * 48, controller.emojiScrollController.offset));
+        if (controller!.emojiSelectedIndex.value > 0) {
+          controller!.emojiSelectedIndex.value--;
+          if (controller!.emojiSelectedIndex.value >= upMovementIndex &&
+              controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + upMovementIndex + 1) {
+            controller!.emojiScrollController
+                .jumpTo(min((controller!.emojiSelectedIndex.value - upMovementIndex) * 48, controller!.emojiScrollController.offset));
           }
           return KeyEventResult.handled;
         }
@@ -678,28 +683,26 @@ class _TextFields extends StatelessWidget {
 
       // Tab
       if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab" || androidData?.physicalKey == PhysicalKeyboardKey.tab) {
-        if (controller.emojiMatches.length > controller.emojiSelectedIndex.value) {
-          eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': controller.emojiSelectedIndex.value, 'chatGuid': chat.guid});
-          controller.emojiSelectedIndex.value = 0;
-          controller.emojiScrollController.jumpTo(0);
+        if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
+          controller!.emojiSelectedIndex.value = 0;
+          controller!.emojiScrollController.jumpTo(0);
           return KeyEventResult.handled;
         }
       }
 
       // Enter
       if (windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") {
-        if (controller.emojiMatches.length > controller.emojiSelectedIndex.value) {
-          eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': controller.emojiSelectedIndex.value, 'chatGuid': chat.guid});
-          controller.emojiSelectedIndex.value = 0;
-          controller.emojiScrollController.jumpTo(0);
+        if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
+          controller!.emojiSelectedIndex.value = 0;
+          controller!.emojiScrollController.jumpTo(0);
           return KeyEventResult.handled;
         }
       }
 
       // Escape
       if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
-        if (controller.replyToMessage != null) {
-          controller.replyToMessage = null;
+        if (controller!.replyToMessage != null) {
+          controller!.replyToMessage = null;
           return KeyEventResult.handled;
         }
       }
@@ -718,7 +721,7 @@ class _TextFields extends StatelessWidget {
     }
     if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
       sendMessage();
-      controller.focusNode.requestFocus();
+      controller!.focusNode.requestFocus();
       return KeyEventResult.handled;
     }
 
@@ -728,7 +731,7 @@ class _TextFields extends StatelessWidget {
           (ev.isControlPressed)) {
         Pasteboard.image.then((image) {
           if (image != null) {
-            controller.pickedAttachments.add(PlatformFile(
+            controller!.pickedAttachments.add(PlatformFile(
               name: "${randomString(8)}.png",
               bytes: image,
               size: image.length,
@@ -747,7 +750,7 @@ class _TextFields extends StatelessWidget {
             r.onLoadEnd.listen((e) {
               if (r.result != null && r.result is Uint8List) {
                 Uint8List data = r.result as Uint8List;
-                controller.pickedAttachments.add(PlatformFile(
+                controller!.pickedAttachments.add(PlatformFile(
                   name: "${randomString(8)}.png",
                   bytes: data,
                   size: data.length,
@@ -763,12 +766,12 @@ class _TextFields extends StatelessWidget {
     if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
       if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(subjectTextController.text)!) {
         sendMessage();
-        controller.focusNode.previousFocus(); // I genuinely don't know why this works
+        controller!.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
       } else {
         subjectTextController.text = "";
         textController.text = ""; // Stop pressing physical enter with enterIsSend from creating newlines
-        controller.focusNode.previousFocus(); // I genuinely don't know why this works
+        controller!.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
       }
     }
