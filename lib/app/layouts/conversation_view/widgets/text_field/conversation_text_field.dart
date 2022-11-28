@@ -384,15 +384,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         recorderController: recorderController,
                         sendMessage: sendMessage,
                       ),
-                      Obx(() => AnimatedSize(
-                        duration: const Duration(milliseconds: 500),
-                        curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
-                        child: !controller.showRecording.value ? const SizedBox.shrink() : Positioned(
-                          top: 0,
-                          bottom: 0,
-                          left: 0,
-                          right: samsung ? 0 : 50,
-                          child: Builder(
+                      Positioned(
+                        top: 0,
+                        bottom: 0,
+                        child: Obx(() => AnimatedSize(
+                          duration: const Duration(milliseconds: 500),
+                          curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
+                          child: !controller.showRecording.value ? const SizedBox.shrink() : Builder(
                             builder: (context) {
                               final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
                               final textFieldSize = box?.size ?? const Size(250, 35);
@@ -419,8 +417,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                               );
                             }
                           ),
-                        ),
-                      )),
+                        ))
+                      ),
                       SendAnimation(parentController: controller),
                     ],
                   ),
