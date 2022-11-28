@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/custom/custom_cupertino_alert_dialog.dart';
@@ -646,59 +647,35 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
   
   void newConvo() {
-    // todo
-    /*Handle? handle = message.handle;
-    String? address = handle?.address ?? "";
-    Contact? contact = handle?.contact;
-    UniqueContact uniqueContact;
-    if (contact == null) {
-      uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
-    } else {
-      uniqueContact = UniqueContact(address: address, displayName: contact.displayName);
-    }
+    Handle? handle = message.handle;
+    if (handle == null) return;
     popDetails();
-    Navigator.pushReplacement(
+    eventDispatcher.emit("update-highlight", null);
+    ns.pushAndRemoveUntil(
       context,
-      cupertino.CupertinoPageRoute(
-        builder: (BuildContext context) {
-          eventDispatcher.emit("update-highlight", null);
-          return ConversationView(
-            isCreator: true,
-            selected: [uniqueContact],
-          );
-        },
+      ChatCreator(
+        initialSelected: [SelectedContact(displayName: handle.displayName, address: handle.address)]
       ),
-    );*/
+      (route) => route.isFirst,
+    );
   }
   
   void forward() {
-    // todo
-    /*popDetails();
-    Navigator.pushReplacement(
+    popDetails();
+    eventDispatcher.emit("update-highlight", null);
+    ns.pushAndRemoveUntil(
       context,
-      cupertino.CupertinoPageRoute(
-        builder: (BuildContext context) {
-          List<PlatformFile> existingAttachments = [];
-          if (!message.isUrlPreview()) {
-            existingAttachments = message.attachments
-                .map((attachment) => PlatformFile(
-                      name: attachment!.transferName!,
-                      path: kIsWeb ? null : attachment.path,
-                      bytes: attachment.bytes,
-                      size: attachment.totalBytes!,
-                    ))
-                .toList();
-          }
-          eventDispatcher.emit("update-highlight", null);
-          return ConversationView(
-            isCreator: true,
-            existingText: message.text,
-            existingAttachments: existingAttachments,
-            previousChat: widget.currentChat?.chat,
-          );
-        },
+      ChatCreator(
+        initialText: message.text,
+        initialAttachments: message.attachments.map((attachment) => PlatformFile(
+          name: attachment!.transferName!,
+          path: kIsWeb ? null : attachment.path,
+          bytes: attachment.bytes,
+          size: attachment.totalBytes!,
+        )).toList(),
       ),
-    );*/
+      (route) => route.isFirst,
+    );
   }
   
   void redownload() {

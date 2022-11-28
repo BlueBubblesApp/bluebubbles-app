@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -83,15 +83,14 @@ class IntentsService extends GetxService {
 
   Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
     if (guid == null) {
-      /*ns.pushAndRemoveUntil(
+      ns.pushAndRemoveUntil(
         Get.context!,
-        ConversationView(
-          existingAttachments: attachments,
-          existingText: text,
-          isCreator: true,
+        ChatCreator(
+          initialAttachments: attachments,
+          initialText: text,
         ),
         (route) => route.isFirst,
-      );*/
+      );
     } else if (guid == "-1") {
       ns.key.currentState!.popUntil((route) => route.isFirst);
     } else if (guid == "-2") {

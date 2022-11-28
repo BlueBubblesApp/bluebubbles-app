@@ -470,6 +470,7 @@ class TextFieldComponent extends StatelessWidget {
     required this.controller,
     required this.recorderController,
     required this.sendMessage,
+    this.initialAttachments = const [],
   }) : super(key: key);
 
   final TextEditingController subjectTextController;
@@ -477,6 +478,7 @@ class TextFieldComponent extends StatelessWidget {
   final ConversationViewController? controller;
   final RecorderController recorderController;
   final Future<void> Function({String? effect}) sendMessage;
+  final List<PlatformFile> initialAttachments;
 
   bool get iOS => ss.settings.skin.value == Skins.iOS;
   bool get samsung => ss.settings.skin.value == Skins.Samsung;
@@ -511,11 +513,12 @@ class TextFieldComponent extends StatelessWidget {
                 children: [
                   if (!isChatCreator)
                     ReplyHolder(controller: controller!),
-                  if (!isChatCreator)
+                  if (initialAttachments.isNotEmpty || !isChatCreator)
                     PickedAttachmentsHolder(
-                      controller: controller!,
+                      controller: controller,
                       textController: textController,
                       subjectTextController: subjectTextController,
+                      initialAttachments: initialAttachments,
                     ),
                   if (!isChatCreator)
                     Obx(() {

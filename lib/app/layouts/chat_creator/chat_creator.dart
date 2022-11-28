@@ -35,18 +35,20 @@ class ChatCreator extends StatefulWidget {
     Key? key,
     this.initialText = "",
     this.initialAttachments = const [],
+    this.initialSelected = const [],
   }) : super(key: key);
 
-  final String initialText;
+  final String? initialText;
   final List<PlatformFile> initialAttachments;
+  final List<SelectedContact> initialSelected;
 
   @override
   ChatCreatorState createState() => ChatCreatorState();
 }
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
-  late final TextEditingController addressController = TextEditingController(text: widget.initialText);
-  final TextEditingController textController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  late final TextEditingController textController = TextEditingController(text: widget.initialText);
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -54,7 +56,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   List<Contact> filteredContacts = [];
   List<Chat> existingChats = [];
   List<Chat> filteredChats = [];
-  final RxList<SelectedContact> selectedContacts = <SelectedContact>[].obs;
+  late final RxList<SelectedContact> selectedContacts = List<SelectedContact>.from(widget.initialSelected).obs;
   final Rxn<ConversationViewController> fakeController = Rxn(null);
   bool iMessage = true;
   bool sms = false;
@@ -101,9 +103,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     });
 
     updateObx(() {
-      final query = (contactBox.query()..order(Contact_.displayName)).build();
-      contacts = query.find();
-      filteredContacts = List<Contact>.from(contacts);
+      if (widget.initialAttachments.isEmpty) {
+        final query = (contactBox.query()..order(Contact_.displayName)).build();
+        contacts = query.find();
+        filteredContacts = List<Contact>.from(contacts);
+      }
       if (chats.loadedAllChats.isCompleted) {
         existingChats = chats.chats;
         filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
@@ -575,6 +579,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   textController: textController,
                   controller: null,
                   recorderController: RecorderController(),
+                  initialAttachments: widget.initialAttachments,
                   sendMessage: ({String? effect}) async {
                     if (fakeController.value?.chat != null) {
                       ns.pushAndRemoveUntil(

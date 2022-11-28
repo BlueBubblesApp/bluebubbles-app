@@ -18,9 +18,11 @@ class PickedAttachment extends StatefulWidget {
     Key? key,
     required this.data,
     required this.controller,
+    required this.onRemove,
   }) : super(key: key);
   final PlatformFile data;
-  final ConversationViewController controller;
+  final ConversationViewController? controller;
+  final Function(PlatformFile) onRemove;
 
   @override
   State<PickedAttachment> createState() => _PickedAttachmentState();
@@ -146,9 +148,13 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
                               size: 18,
                             ),
                             onPressed: () {
-                              widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
-                              widget.controller.chat.textFieldAttachments.removeWhere((e) => e == widget.data.path);
-                              widget.controller.chat.save(updateTextFieldAttachments: true);
+                              if (widget.controller != null) {
+                                widget.controller!.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
+                                widget.controller!.chat.textFieldAttachments.removeWhere((e) => e == widget.data.path);
+                                widget.controller!.chat.save(updateTextFieldAttachments: true);
+                              } else {
+                                widget.onRemove.call(widget.data);
+                              }
                             },
                           ),
                         ),
@@ -179,7 +185,13 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
                   size: 18,
                 ),
                 onPressed: () {
-                  widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
+                  if (widget.controller != null) {
+                    widget.controller!.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
+                    widget.controller!.chat.textFieldAttachments.removeWhere((e) => e == widget.data.path);
+                    widget.controller!.chat.save(updateTextFieldAttachments: true);
+                  } else {
+                    widget.onRemove.call(widget.data);
+                  }
                 },
               ),
             ),

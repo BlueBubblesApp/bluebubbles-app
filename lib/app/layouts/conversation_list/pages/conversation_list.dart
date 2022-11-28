@@ -100,7 +100,7 @@ class ConversationListController extends StatefulController {
     eventDispatcher.emit("update-highlight", null);
     ns.pushAndRemoveUntil(
       context,
-      ChatCreator(),
+      const ChatCreator(),
       (route) => route.isFirst,
     );
   }
