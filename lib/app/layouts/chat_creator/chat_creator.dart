@@ -425,12 +425,16 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                       sms = false;
                       filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
                     });
+                    cm.setAllInactive();
+                    fakeController.value = null;
                   } else {
                     setState(() {
                       iMessage = false;
                       sms = true;
                       filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
                     });
+                    cm.setAllInactive();
+                    fakeController.value = null;
                   }
                 },
               ),
