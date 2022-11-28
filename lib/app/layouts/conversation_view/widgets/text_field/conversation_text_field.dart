@@ -223,6 +223,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   }
 
   Future<void> sendMessage({String? effect}) async {
+    if (controller.textController.text.isEmpty
+        && subjectTextController.text.isEmpty) {
+      if (controller.replyToMessage != null) {
+        return showSnackbar("Error", "Replies must be sent with a text message!");
+      } else if (effect != null) {
+        return showSnackbar("Error", "Effects must be sent with a text message!");
+      }
+    }
     await controller.send(
       controller.pickedAttachments,
       controller.textController.text,
