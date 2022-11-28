@@ -50,7 +50,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
   void updateContent() async {
     content = as.getContent(attachment, onComplete: onComplete);
     // If we can download it, do so
-    if (content is Attachment && message.error == 0 && await as.canAutoDownload()) {
+    if (content is Attachment && message.error == 0 && !message.guid!.contains("temp") && await as.canAutoDownload()) {
       if (mounted) {
         setState(() {
           content = attachmentDownloader.startDownload(content, onComplete: onComplete);
@@ -72,7 +72,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
       color: Colors.transparent,
       child: InkWell(
         onTap: content is PlatformFile ? null : () async {
-          if (content is Attachment) {
+          if (content is Attachment && message.error == 0 && !message.guid!.contains("temp")) {
             setState(() {
               content = attachmentDownloader.startDownload(content, onComplete: onComplete);
             });
@@ -148,18 +148,18 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 height: 40,
                                 width: 40,
                                 child: Center(
-                                  child: Icon(message.error > 0
+                                  child: Obx(() => Icon(message.error > 0
                                       ? (iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline)
-                                      : (iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined), size: 30)
+                                      : (iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined), size: 30))
                                 ),
                               ),
                               const SizedBox(height: 5),
-                              Text(
+                              Obx(() => Text(
                                 message.error > 0 ? "Send Failed!" : (_content.mimeType ?? ""),
                                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                              ),
+                              )),
                               const SizedBox(height: 10),
                               Text(
                                 _content.getFriendlySize(),
