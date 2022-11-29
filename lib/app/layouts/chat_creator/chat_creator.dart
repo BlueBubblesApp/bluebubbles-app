@@ -397,7 +397,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
               child: ToggleButtons(
-                constraints: BoxConstraints(minWidth: (context.width - 35) / 2),
+                constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
                 children: [
                   Row(
                     children: [
