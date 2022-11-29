@@ -22,8 +22,8 @@ class NavigatorService extends GetxService {
   set maxWidthRight(double w) => _widthChatListRight = w;
   set maxWidthSettings(double w) => _widthSettings = w;
 
-  bool isTabletMode(BuildContext context) => (!context.isPhone || context.isLandscape) &&
-      ss.settings.tabletMode.value;
+  bool isTabletMode(BuildContext context) => (!context.isPhone || context.width / context.height > 0.8) &&
+      ss.settings.tabletMode.value && context.width > 600;
 
   /// grab the available screen width, returning the split screen width if applicable
   /// this should *always* be used in place of context.width or similar

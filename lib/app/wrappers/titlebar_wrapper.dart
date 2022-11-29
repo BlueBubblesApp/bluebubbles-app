@@ -27,7 +27,7 @@ class TitleBarWrapper extends StatelessWidget {
     }
 
     bool showAltLayout = ss.settings.tabletMode.value
-        && (!context.isPhone || context.isLandscape)
+        && (!context.isPhone || context.width / context.height > 0.8)
         && context.width > 600;
 
     if (showAltLayout && hideInSplitView) {

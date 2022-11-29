@@ -134,11 +134,11 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
 
   /// Whether or not to use tablet mode
   bool get showAltLayout => ss.settings.tabletMode.value
-      && (!context.isPhone || context.isLandscape)
+      && (!context.isPhone || context.width / context.height > 0.8)
       && context.width > 600;
 
   bool get showAltLayoutContextless => ss.settings.tabletMode.value
-      && (!Get.context!.isPhone || Get.context!.isLandscape)
+      && (!Get.context!.isPhone || Get.context!.width / Get.context!.height > 0.8)
       && Get.context!.width > 600;
 
   bool get iOS => ss.settings.skin.value == Skins.iOS;
