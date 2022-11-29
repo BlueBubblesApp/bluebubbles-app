@@ -189,8 +189,12 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
     ///                                                   |-> stack: stickers & reactions
     ///                                             - message properties
     ///                                          - delivered indicator
-    return Padding(
-      padding: showSender ? const EdgeInsets.only(top: 5.0) : showAvatar ? const EdgeInsets.only(bottom: 5.0) : EdgeInsets.zero,
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 100),
+      padding: message.guid!.contains("temp") ? EdgeInsets.zero : EdgeInsets.only(
+        top: olderMessage != null && !message.sameSender(olderMessage!) ? 5.0 : 0,
+        bottom: newerMessage != null && !message.sameSender(newerMessage!) ? 5.0 : 0,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

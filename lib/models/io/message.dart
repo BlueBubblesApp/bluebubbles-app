@@ -757,9 +757,8 @@ class Message {
   bool showTail(Message? newer) {
     // if there is no newer, or if the newer is a different sender
     if (newer == null || !sameSender(newer) || newer.isGroupEvent) return true;
-    // if newer is over a minute newer, or if newer hasn't delivered yet
-    return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1
-        || dateDelivered != null && dateDelivered == null;
+    // if newer is over a minute newer
+    return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1;
   }
 
   bool sameSender(Message? other) {
