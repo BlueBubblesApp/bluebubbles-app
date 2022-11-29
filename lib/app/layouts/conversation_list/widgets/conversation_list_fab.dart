@@ -41,7 +41,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
 
   @override
   Widget build(BuildContext context) {
-    final widget = Column(
+    final widget = Obx(() => Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         if (ss.settings.cameraFAB.value && iOS)
@@ -79,7 +79,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
           ),
         ),
       ],
-    );
+    ));
 
     return ThemeSwitcher(
       iOSSkin: widget,

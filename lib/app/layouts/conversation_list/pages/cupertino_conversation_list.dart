@@ -51,11 +51,11 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
     return Scaffold(
       backgroundColor: backgroundColor,
       extendBodyBehindAppBar: !showArchived && !showUnknown,
-      floatingActionButton: !ss.settings.moveChatCreatorToHeader.value
+      floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
           && !showArchived
           && !showUnknown
           ? ConversationListFAB(parentController: controller)
-          : null,
+          : const SizedBox.shrink()),
       appBar: showArchived || showUnknown ? AppBar(
         leading: buildBackButton(context),
         elevation: 0,

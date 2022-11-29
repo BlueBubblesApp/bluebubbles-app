@@ -97,7 +97,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               mainAxisAlignment: MainAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                ss.settings.moveChatCreatorToHeader.value
+                                Obx(() => ss.settings.moveChatCreatorToHeader.value
                                     && !showArchived
                                     && !showUnknown ? GestureDetector(
                                   onLongPress: ss.settings.cameraFAB.value
@@ -109,7 +109,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                       color: context.theme.colorScheme.properOnSurface,
                                     ),
                                   ),
-                                ) : const SizedBox.shrink(),
+                                ) : const SizedBox.shrink()),
                                 if (!showArchived && !showUnknown)
                                   const OverflowMenu(),
                               ],

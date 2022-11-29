@@ -166,10 +166,6 @@ class Attachment {
     return "${getPath()}.jpg";
   }
 
-  String getCompressedPath() {
-    return "${getPath()}.${ss.compressionQuality}.compressed";
-  }
-
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,

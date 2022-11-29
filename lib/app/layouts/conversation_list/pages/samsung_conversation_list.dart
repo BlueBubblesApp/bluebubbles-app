@@ -56,10 +56,10 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
       },
       child: Scaffold(
         backgroundColor: backgroundColor,
-        floatingActionButton: !ss.settings.moveChatCreatorToHeader.value
+        floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
             && !showArchived && !showUnknown
             ? ConversationListFAB(parentController: controller)
-            : null,
+            : const SizedBox.shrink()),
         body: SafeArea(
           child: NotificationListener<ScrollEndNotification>(
             onNotification: (_) {

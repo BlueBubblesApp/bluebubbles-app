@@ -289,7 +289,7 @@ class AttachmentsService extends GetxService {
     final thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
-      quality: ss.compressionQuality,
+      quality: 25,
     );
     if (!isNullOrEmpty(thumbnail)!) {
       return thumbnail;

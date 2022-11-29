@@ -50,7 +50,7 @@ class CupertinoHeader extends StatelessWidget {
                       const SyncIndicator(),
                     ],
                   ),
-                  Row(
+                  Obx(() => Row(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -117,14 +117,14 @@ class CupertinoHeader extends StatelessWidget {
                         ),
                       if (ss.settings.moveChatCreatorToHeader.value)
                         const SizedBox(width: 10.0),
-                      Material(
+                      const Material(
                         color: Colors.transparent,
-                        shape: const CircleBorder(),
+                        shape: CircleBorder(),
                         clipBehavior: Clip.antiAlias,
-                        child: const OverflowMenu(),
+                        child: OverflowMenu(),
                       ),
                     ],
-                  )
+                  ))
                 ],
               ),
             ),
