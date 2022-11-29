@@ -122,7 +122,7 @@ dependencies:
   giphy_get: ^3.1.0
   flutter_dotenv: ^5.0.2
   image: ^3.2.0
-  launch_at_startup: ^0.1.8
+  launch_at_startup: ^0.2.0
   async_task: ^1.0.18
   filesystem_picker: ^3.0.0
   version: ^3.0.2
@@ -279,7 +279,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.10.0.0
+  msix_version: 1.10.1.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

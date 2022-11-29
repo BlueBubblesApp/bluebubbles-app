@@ -230,6 +230,8 @@ class DesktopPanel extends StatelessWidget {
                                             .map((s) => SettingsManager().settings.actionList.indexOf(s))
                                             .toList();
                                         SettingsManager().settings.selectedActionIndices.value = selectedIndices;
+
+                                        saveSettings();
                                       },
                                       children: List.generate(
                                         ReactionTypes.toList().length + 1,
@@ -267,6 +269,7 @@ class DesktopPanel extends StatelessWidget {
                                                         .remove(index)) {
                                                       SettingsManager().settings.selectedActionIndices.add(index);
                                                     }
+                                                    saveSettings();
                                                   },
                                                   child: AnimatedContainer(
                                                     margin: EdgeInsets.symmetric(vertical: 5),

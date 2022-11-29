@@ -8,7 +8,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';

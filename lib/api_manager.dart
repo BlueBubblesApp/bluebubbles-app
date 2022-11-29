@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:dio/dio.dart';

@@ -1326,7 +1326,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           ),
                           ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                  primary: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
+                                  backgroundColor: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
                               onPressed: () {
                                 data = data.toggle();
                               },
