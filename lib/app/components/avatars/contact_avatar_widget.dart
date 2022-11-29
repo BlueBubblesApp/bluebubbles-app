@@ -145,7 +145,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
       ];
     }
 
-    return MouseRegion(
+    return Obx(() => MouseRegion(
       cursor: !widget.editable
           || !ss.settings.colorfulAvatars.value
           || widget.handle == null ? MouseCursor.defer : SystemMouseCursors.click,
@@ -218,6 +218,6 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
