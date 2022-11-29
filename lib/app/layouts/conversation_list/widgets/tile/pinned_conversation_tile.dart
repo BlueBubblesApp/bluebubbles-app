@@ -324,7 +324,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     forceDelete = false;
     cachedDisplayName = controller.chat.displayName;
     cachedParticipants = controller.chat.handles;
-    title = controller.chat.getTitle() ?? title;
+    title = controller.chat.getTitle();
     // run query after render has completed
     updateObx(() {
       final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))

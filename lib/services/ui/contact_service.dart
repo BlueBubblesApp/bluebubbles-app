@@ -20,7 +20,7 @@ class ContactsService extends GetxService {
 
   Future<void> init({bool headless = false}) async {
     if (headless) return;
-    if (!kIsWeb) {
+    if (!kIsWeb && !kIsDesktop) {
       contacts = Contact.getContacts();
       handles = Handle.find();
     } else {

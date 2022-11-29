@@ -102,7 +102,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
         handleId: 0,
       ),
       selected: message,
-      reaction: ReactionTypes.toList().firstWhere((e) => e == reaction),
+      reaction: reaction,
     ));
   }
 
