@@ -801,8 +801,9 @@ class Chat {
 
   Chat toggleArchived(bool isArchived) {
     if (id == null) return this;
+    isPinned = false;
     this.isArchived = isArchived;
-    save(updateIsArchived: true);
+    save(updateIsPinned: true, updateIsArchived: true);
     chats.updateChat(this);
     chats.sort();
     return this;
