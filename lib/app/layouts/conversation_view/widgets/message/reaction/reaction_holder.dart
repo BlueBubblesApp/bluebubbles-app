@@ -42,8 +42,7 @@ class _ReactionHolderState extends OptimizedState<ReactionHolder> {
           child: DeferPointer(
             child: ReactionWidget(
               messageIsFromMe: widget.message.isFromMe!,
-              reactionIsFromMe: e.isFromMe!,
-              reactionType: e.associatedMessageType!,
+              reaction: e,
               reactions: reactions.toList(),
             ),
           ),

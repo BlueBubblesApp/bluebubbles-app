@@ -509,8 +509,7 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
       top: -sqrt(widget.width / 2),
       right: -sqrt(widget.width / 2) - widget.width * 0.15,
       child: ReactionWidget(
-        reactionType: latestMessage!.associatedMessageType!,
-        reactionIsFromMe: false,
+        reaction: latestMessage!,
         messageIsFromMe: true,
       ),
     ) : const SizedBox.shrink();

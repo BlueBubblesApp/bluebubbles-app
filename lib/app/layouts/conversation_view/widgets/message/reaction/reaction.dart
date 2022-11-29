@@ -1,27 +1,71 @@
+import 'dart:async';
+
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:defer_pointer/defer_pointer.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
-class ReactionWidget extends StatelessWidget {
+class ReactionWidget extends StatefulWidget {
   const ReactionWidget({
     Key? key,
     required this.messageIsFromMe,
-    required this.reactionIsFromMe,
-    required this.reactionType,
+    required this.reaction,
     this.reactions,
   }) : super(key: key);
 
   final bool messageIsFromMe;
-  final bool reactionIsFromMe;
-  final String reactionType;
+  final Message reaction;
   final List<Message>? reactions;
 
+  @override
+  ReactionWidgetState createState() => ReactionWidgetState();
+}
+
+class ReactionWidgetState extends OptimizedState<ReactionWidget> {
+  late Message reaction = widget.reaction;
+  late final StreamSubscription<Query<Message>> sub;
+
+  List<Message>? get reactions => widget.reactions;
+  bool get reactionIsFromMe => reaction.isFromMe!;
+  bool get messageIsFromMe => widget.messageIsFromMe;
+  String get reactionType => reaction.associatedMessageType!;
+
   static const double iosSize = 35;
+
+  @override
+  void initState() {
+    super.initState();
+    updateObx(() {
+      if (!kIsWeb) {
+        final messageQuery = messageBox.query(Message_.id.equals(reaction.id!)).watch();
+        sub = messageQuery.listen((Query<Message> query) {
+          final _message = messageBox.get(reaction.id!);
+          if (_message != null) {
+            if ((_message.guid != reaction.guid && reaction.guid!.contains("temp")) || _message.error != reaction.error) {
+              setState(() {
+                reaction = _message;
+              });
+            }
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +143,7 @@ class ReactionWidget extends StatelessWidget {
       );
     }
     return Stack(
-      alignment: messageIsFromMe ? Alignment.topRight : Alignment.topLeft,
+      alignment: messageIsFromMe ? Alignment.centerRight : Alignment.centerLeft,
       fit: StackFit.passthrough,
       clipBehavior: Clip.none,
       children: [
@@ -121,7 +165,9 @@ class ReactionWidget extends StatelessWidget {
           child: Container(
             width: iosSize,
             height: iosSize,
-            color: reactionIsFromMe ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
+            color: reactionIsFromMe
+                ? context.theme.colorScheme.primary.darkenAmount(reaction.guid!.startsWith("temp") ? 0.2 : 0)
+                : context.theme.colorScheme.properSurface,
             alignment: messageIsFromMe ? Alignment.topRight : Alignment.topLeft,
             child: SizedBox(
               width: iosSize*0.8,
@@ -139,6 +185,105 @@ class ReactionWidget extends StatelessWidget {
               ),
             )
           )
+        ),
+        Positioned(
+          left: !messageIsFromMe ? 0 : -75,
+          right: messageIsFromMe ? 0 : -75,
+          child: Obx(() {
+            if (reaction.error > 0) {
+              int errorCode = reaction.error;
+              String errorText = "An unknown internal error occurred.";
+              if (errorCode == 22) {
+                errorText = "The recipient is not registered with iMessage!";
+              } else if (reaction.guid!.startsWith("error-")) {
+                errorText = reaction.guid!.split('-')[1];
+              }
+
+              return DeferPointer(
+                child: GestureDetector(
+                  child: Icon(
+                    ss.settings.skin.value == Skins.iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+                    color: context.theme.colorScheme.error,
+                  ),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          backgroundColor: context.theme.colorScheme.properSurface,
+                          title: Text("Message failed to send", style: context.theme.textTheme.titleLarge),
+                          content: Text("Error ($errorCode): $errorText", style: context.theme.textTheme.bodyLarge),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text(
+                                  "Retry",
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                              ),
+                              onPressed: () async {
+                                // Remove the original message and notification
+                                Navigator.of(context).pop();
+                                Message.delete(reaction.guid!);
+                                await notif.clearFailedToSend();
+                                getActiveMwc(reaction.associatedMessageGuid!)?.removeAssociatedMessage(reaction);
+                                // Re-send
+                                final selected = getActiveMwc(reaction.associatedMessageGuid!)!.message;
+                                outq.queue(OutgoingItem(
+                                  type: QueueType.sendMessage,
+                                  chat: cm.activeChat!.chat,
+                                  message: Message(
+                                    associatedMessageGuid: selected.guid,
+                                    associatedMessageType: reaction.associatedMessageType,
+                                    dateCreated: DateTime.now(),
+                                    hasAttachments: false,
+                                    isFromMe: true,
+                                    handleId: 0,
+                                  ),
+                                  selected: selected,
+                                  reaction: reaction.associatedMessageType!,
+                                ));
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                  "Remove",
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                              ),
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                // Delete the message from the DB
+                                Message.delete(reaction.guid!);
+                                // Remove the message from the Bloc
+                                getActiveMwc(reaction.associatedMessageGuid!)?.removeAssociatedMessage(reaction);
+                                await notif.clearFailedToSend();
+                                // Get the "new" latest info
+                                final chat = cm.activeChat!.chat;
+                                List<Message> latest = Chat.getMessages(chat, limit: 1);
+                                chat.latestMessage = latest.first;
+                                chat.latestMessageDate = latest.first.dateCreated;
+                                chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
+                                chat.save();
+                              },
+                            ),
+                            TextButton(
+                              child: Text(
+                                  "Cancel",
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                              ),
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                await notif.clearFailedToSend();
+                              },
+                            )
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
         )
       ],
     );

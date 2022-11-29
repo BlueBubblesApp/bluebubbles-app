@@ -218,49 +218,67 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 7.5),
                                       child: ReactionWidget(
-                                        reactionType: ReactionTypes.LOVE,
+                                        reaction: Message(
+                                          guid: "",
+                                          associatedMessageType: ReactionTypes.LOVE,
+                                          isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LOVE
+                                        ),
                                         messageIsFromMe: true,
-                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LOVE
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 7.5),
                                       child: ReactionWidget(
-                                          reactionType: ReactionTypes.LIKE,
-                                          messageIsFromMe: true,
-                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LIKE
+                                        reaction: Message(
+                                            guid: "",
+                                            associatedMessageType: ReactionTypes.LIKE,
+                                            isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LIKE
+                                        ),
+                                        messageIsFromMe: true,
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 7.5),
                                       child: ReactionWidget(
-                                          reactionType: ReactionTypes.DISLIKE,
-                                          messageIsFromMe: true,
-                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.DISLIKE
+                                        reaction: Message(
+                                            guid: "",
+                                            associatedMessageType: ReactionTypes.DISLIKE,
+                                            isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.DISLIKE
+                                        ),
+                                        messageIsFromMe: true,
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 7.5),
                                       child: ReactionWidget(
-                                          reactionType: ReactionTypes.LAUGH,
-                                          messageIsFromMe: true,
-                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LAUGH
+                                        reaction: Message(
+                                            guid: "",
+                                            associatedMessageType: ReactionTypes.LAUGH,
+                                            isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LAUGH
+                                        ),
+                                        messageIsFromMe: true,
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 7.5),
                                       child: ReactionWidget(
-                                          reactionType: ReactionTypes.EMPHASIZE,
-                                          messageIsFromMe: true,
-                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.EMPHASIZE
+                                        reaction: Message(
+                                            guid: "",
+                                            associatedMessageType: ReactionTypes.EMPHASIZE,
+                                            isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.EMPHASIZE
+                                        ),
+                                        messageIsFromMe: true,
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 7.5),
                                       child: ReactionWidget(
-                                          reactionType: ReactionTypes.QUESTION,
-                                          messageIsFromMe: true,
-                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.QUESTION
+                                        reaction: Message(
+                                            guid: "",
+                                            associatedMessageType: ReactionTypes.QUESTION,
+                                            isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.QUESTION
+                                        ),
+                                        messageIsFromMe: true,
                                       ),
                                     ),
                                   ],
