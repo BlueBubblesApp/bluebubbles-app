@@ -1,6 +1,3 @@
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
@@ -81,7 +78,7 @@ class OverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() => PopupMenuButton<int>(
       color: context.theme.colorScheme.properSurface.lightenOrDarken(ss.settings.skin.value == Skins.Samsung ? 20 : 0),
-      shape: ss.settings.skin.value != Skins.Material ? RoundedRectangleBorder(
+      shape: ss.settings.skin.value != Skins.Material ? const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(20.0),
         ),
@@ -98,7 +95,7 @@ class OverflowMenu extends StatelessWidget {
             )
           );
         } else if (value == 2) {
-          Navigator.of(context).push(
+          Navigator.of(kIsDesktop ? Get.context! : context).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
                 return SettingsPage();
