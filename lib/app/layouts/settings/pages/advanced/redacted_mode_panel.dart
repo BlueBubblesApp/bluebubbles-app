@@ -1,7 +1,14 @@
+import 'dart:math';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_sender.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,6 +20,39 @@ class RedactedModePanel extends StatefulWidget {
 }
 
 class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
+  final message = Message(
+    guid: "redacted-mode-demo",
+    dateDelivered: DateTime.now().toLocal(),
+    dateCreated: DateTime.now().toLocal(),
+    isFromMe: false,
+    hasReactions: true,
+    hasAttachments: true,
+    text: "This is a preview of Redacted Mode settings.",
+    handle: Handle(
+      id: Random.secure().nextInt(10000),
+      address: "John Doe",
+    ),
+    associatedMessages: [
+      Message(
+        dateCreated: DateTime.now().toLocal(),
+        guid: "redacted-mode-demo",
+        text: "Jane Doe liked a message you sent",
+        associatedMessageType: "like",
+        isFromMe: true,
+      ),
+    ],
+    attachments: [
+      Attachment(
+        guid: "redacted-mode-demo-attachment",
+        originalROWID: Random.secure().nextInt(10000),
+        transferName: "assets/icon/icon.png",
+        mimeType: "image/png",
+        width: 100,
+        height: 100,
+      )
+    ],
+  );
+  final RxInt placeholder = 0.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -38,54 +78,111 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                   ),
                 ],
               ),
-              // todo
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10),
-              //   child: AbsorbPointer(
-              //     absorbing: true,
-              //     child: MessageWidget(
-              //       newerMessage: null,
-              //       olderMessage: null,
-              //       isFirstSentMessage: false,
-              //       showHandle: true,
-              //       showHero: false,
-              //       showReplies: false,
-              //       autoplayEffect: false,
-              //       message: Message(
-              //         guid: "redacted-mode-demo",
-              //         dateDelivered: DateTime.now().toLocal(),
-              //         dateCreated: DateTime.now().toLocal(),
-              //         isFromMe: false,
-              //         hasReactions: true,
-              //         hasAttachments: true,
-              //         text: "This is a preview of Redacted Mode settings.",
-              //         handle: Handle(
-              //           id: Random.secure().nextInt(10000),
-              //           address: "John Doe",
-              //         ),
-              //         associatedMessages: [
-              //           Message(
-              //             dateCreated: DateTime.now().toLocal(),
-              //             guid: "redacted-mode-demo",
-              //             text: "Jane Doe liked a message you sent",
-              //             associatedMessageType: "like",
-              //             isFromMe: true,
-              //           ),
-              //         ],
-              //         attachments: [
-              //           Attachment(
-              //             guid: "redacted-mode-demo-attachment",
-              //             originalROWID: Random.secure().nextInt(10000),
-              //             transferName: "assets/icon/icon.png",
-              //             mimeType: "image/png",
-              //             width: 100,
-              //             height: 100,
-              //           )
-              //         ],
-              //       ),
-              //     ),
-              //   ),
-              // ),
+              Theme(
+                data: context.theme.copyWith(
+                  // in case some components still use legacy theming
+                  primaryColor: context.theme.colorScheme.bubble(context, true),
+                  colorScheme: context.theme.colorScheme.copyWith(
+                    primary: context.theme.colorScheme.bubble(context, true),
+                    onPrimary: context.theme.colorScheme.onBubble(context, true),
+                    surface: ss.settings.monetTheming.value == Monet.full
+                        ? null
+                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                    onSurface: ss.settings.monetTheming.value == Monet.full
+                        ? null
+                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                  ),
+                ),
+                child: Builder(
+                  builder: (context) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                      child: AbsorbPointer(
+                        child: Obx(() {
+                          // used to update preview real-time
+                          // ignore: unused_local_variable
+                          final _placeholder = placeholder.value;
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              ContactAvatarWidget(
+                                handle: message.handle,
+                                size: iOS ? 30 : 35,
+                                fontSize: context.theme.textTheme.bodyLarge!.fontSize!,
+                                borderThickness: 0.1,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 5.0),
+                                    child: MessageSender(olderMessage: null, message: message),
+                                  ),
+                                  ClipPath(
+                                    clipper: TailClipper(
+                                      isFromMe: false,
+                                      showTail: false,
+                                      connectLower: false,
+                                      connectUpper: false,
+                                    ),
+                                    child: Container(
+                                      constraints: BoxConstraints(
+                                        maxWidth: ns.width(context) * 0.3,
+                                        maxHeight: context.height * 0.3,
+                                        minHeight: 40,
+                                        minWidth: 40,
+                                      ),
+                                      padding: const EdgeInsets.only(left: 10),
+                                      color: context.theme.colorScheme.properSurface,
+                                      child: Center(
+                                        widthFactor: 1,
+                                        heightFactor: 1,
+                                        child: ImageViewer(
+                                          file: as.getContent(message.attachments.first!),
+                                          attachment: message.attachments.first!,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  ClipPath(
+                                    clipper: TailClipper(
+                                      isFromMe: false,
+                                      showTail: true,
+                                      connectLower: false,
+                                      connectUpper: false,
+                                    ),
+                                    child: Container(
+                                      constraints: BoxConstraints(
+                                        maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
+                                        minHeight: 40,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(left: 10)),
+                                      color: context.theme.colorScheme.properSurface,
+                                      child: Center(
+                                        widthFactor: 1,
+                                        child: RichText(
+                                          text: TextSpan(
+                                            children: buildMessageSpans(
+                                              context,
+                                              MessagePart(part: 0, text: message.text, subject: message.subject),
+                                              message,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                    );
+                  }
+                ),
+              ),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
@@ -309,6 +406,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
   }
 
   void saveSettings() {
+    placeholder.value += 1;
     ss.saveSettings();
   }
 }
