@@ -46,6 +46,7 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                     map["data"]["colorScheme"][widget.tuple.item1.key] = result.value;
                     widget.currentTheme.data = ThemeStruct.fromMap(map).data;
                     widget.currentTheme.save();
+                    print(widget.currentTheme.data.extensions);
                     if (widget.currentTheme.name == ss.prefs.getString("selected-dark")) {
                       ts.changeTheme(_context, dark: widget.currentTheme);
                     } else if (widget.currentTheme.name == ss.prefs.getString("selected-light")) {

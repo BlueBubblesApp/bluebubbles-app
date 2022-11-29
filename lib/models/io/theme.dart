@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
-import 'package:universal_io/io.dart';
 
 @Entity()
 class ThemeStruct {
@@ -179,6 +178,8 @@ class ThemeStruct {
         "inverseSurface": data.colorScheme.inverseSurface.value,
         "onInverseSurface": data.colorScheme.onInverseSurface.value,
         "inversePrimary": data.colorScheme.inversePrimary.value,
+        "smsBubble": (data.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor?.value,
+        "onSmsBubble": (data.extensions[BubbleColors] as BubbleColors?)?.onSmsBubbleColor?.value,
         "brightness": data.colorScheme.brightness.index,
       },
     },
@@ -268,6 +269,11 @@ class ThemeStruct {
               receivedBubbleColor: HexColor(json["name"] == "OLED Dark" ? "323332" : "e9e9e8"),
               onReceivedBubbleColor: json["name"] == "OLED Dark" ? Colors.white : Colors.black,
             ),
+          if (json["name"] != "OLED Dark" && json["name"] != "Bright White")
+            BubbleColors(
+              smsBubbleColor: map["colorScheme"]["smsBubble"] == null ? null : Color(map["colorScheme"]["smsBubble"]),
+              onSmsBubbleColor: map["colorScheme"]["onSmsBubble"] == null ? null : Color(map["colorScheme"]["onSmsBubble"]),
+            ),
           BubbleText(
             bubbleText: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
@@ -313,6 +319,8 @@ class ThemeStruct {
       "onSurfaceVariant": finalData.colorScheme.onSurfaceVariant,
       "inverseSurface": finalData.colorScheme.inverseSurface,
       "onInverseSurface": finalData.colorScheme.onInverseSurface,
+      "smsBubble": (finalData.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor ?? HexColor("43CC47"),
+      "onSmsBubble": (finalData.extensions[BubbleColors] as BubbleColors?)?.onSmsBubbleColor ?? Colors.white,
       // the following get their own customization card, rather than
       // being paired like the above
       "outline": finalData.colorScheme.outline,
@@ -341,6 +349,8 @@ class ThemeStruct {
     "onSurfaceVariant": "onSurfaceVariant is used for any text or icon that is on top of a surfaceVariant colored element.\n\nNote: We use an algorithm internally to determine whether surface or surfaceVariant will be more visible on the background color.",
     "inverseSurface": "inverseSurface is an attention-grabbing background color. We use this on snackbars / toast messages.",
     "onInverseSurface": "onInverseSurface is used for any text or icon that is on top of an inverseSurface colored element.",
+    "smsBubble": "smsBubble is used for the background color of sent SMS / Text Forwarding messages.",
+    "onSmsBubble": "onSmsBubble is used for any text or icon that is on top of a smsBubble colored element.",
     // the following get their own customization card, rather than
     // being paired like the above
     "outline": "outline is used for most outlined elements, as well as most small label-style text.",

@@ -31,12 +31,12 @@ class HexColor extends Color {
 @immutable
 class BubbleColors extends ThemeExtension<BubbleColors> {
   const BubbleColors({
-    required this.iMessageBubbleColor,
-    required this.oniMessageBubbleColor,
-    required this.smsBubbleColor,
-    required this.onSmsBubbleColor,
-    required this.receivedBubbleColor,
-    required this.onReceivedBubbleColor,
+    this.iMessageBubbleColor,
+    this.oniMessageBubbleColor,
+    this.smsBubbleColor,
+    this.onSmsBubbleColor,
+    this.receivedBubbleColor,
+    this.onReceivedBubbleColor,
   });
 
   final Color? iMessageBubbleColor;
@@ -161,7 +161,7 @@ extension ColorSchemeHelpers on ColorScheme {
 
   Color get smsBubble => HSLColor.fromColor(primary).colorfulness > HSLColor.fromColor(primaryContainer).colorfulness ? primary : primaryContainer;
 
-  Color get onSmsBubble => iMessageBubble == primary ? onPrimary : onPrimaryContainer;
+  Color get onSmsBubble => iMessageBubble == primary ? onPrimaryContainer : onPrimary;
 
   Color bubble(BuildContext context, bool iMessage) => ss.settings.monetTheming.value != Monet.none
       ? (iMessage ? iMessageBubble : smsBubble)
