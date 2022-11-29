@@ -88,10 +88,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               || e.emails.firstWhereOrNull((e) => e.toLowerCase().contains(query)) != null).toList();
           final ids = _contacts.map((e) => e.id);
           final _chats = existingChats.where((e) => ((iMessage && e.isIMessage) || (sms && !e.isIMessage))
-              && (e.title?.toLowerCase().contains(query) ?? false)
-              || e.participants.firstWhereOrNull((e) => ids.contains(e.contact?.id)
+              && ((e.title?.toLowerCase().contains(query) ?? false)
+                  || e.participants.firstWhereOrNull((e) => ids.contains(e.contact?.id)
                   || e.address.contains(query)
-                  || e.displayName.toLowerCase().contains(query)) != null);
+                  || e.displayName.toLowerCase().contains(query)) != null));
           return Tuple2(_contacts, _chats);
         }, Priority.animation);
         _debounce = null;
