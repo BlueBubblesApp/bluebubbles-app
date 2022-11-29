@@ -269,7 +269,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
               children: [
                 IconButton(
                   icon: Icon(
-                    iOS ? CupertinoIcons.square_arrow_up_on_square : material ? Icons.add_circle_outline : Icons.add,
+                    iOS ? CupertinoIcons.square_arrow_up_on_square_fill : material ? Icons.add_circle_outline : Icons.add,
                     color: context.theme.colorScheme.outline,
                     size: 28,
                   ),
