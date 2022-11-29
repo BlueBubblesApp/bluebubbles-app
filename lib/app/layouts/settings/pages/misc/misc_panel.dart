@@ -47,7 +47,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             bool didAuthenticate = await localAuth.authenticate(
                                 localizedReason:
                                 'Please authenticate to ${val == true ? "enable" : "disable"} security',
-                                options: AuthenticationOptions(stickyAuth: true));
+                                options: const AuthenticationOptions(stickyAuth: true));
                             if (didAuthenticate) {
                               ss.settings.shouldSecure.value = val;
                               if (val == false) {
@@ -105,7 +105,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             onChanged: (val) async {
                               var localAuth = LocalAuthentication();
                               bool didAuthenticate = await localAuth.authenticate(
-                                  localizedReason: 'Please authenticate to change your security level', options: AuthenticationOptions(stickyAuth: true));
+                                  localizedReason: 'Please authenticate to change your security level', options: const AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 if (val != null) {
                                   ss.settings.securityLevel.value = val;
@@ -190,7 +190,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                   }),
                   Obx(() {
                     if (iOS) {
-                      return SettingsTile(
+                      return const SettingsTile(
                         title: "Scroll Speed Multiplier",
                         subtitle: "Controls how fast scrolling occurs",
                       );
@@ -228,7 +228,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  SettingsTile(
+                  const SettingsTile(
                     title: "API Timeout Duration",
                     subtitle: "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
                     isThreeLine: true,
@@ -258,7 +258,18 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       "Note: Attachment uploads will timeout after ${ss.settings.apiTimeout.value ~/ 1000 * 12} seconds",
                       style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                     )),
-                  )
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      ss.settings.cancelQueuedMessages.toggle();
+                      saveSettings();
+                    },
+                    initialVal: ss.settings.cancelQueuedMessages.value,
+                    title: "Cancel Queued Messages on Failure",
+                    subtitle: "Cancel messages queued to send in a chat if one fails before them",
+                    backgroundColor: tileColor,
+                    isThreeLine: true,
+                  )),
                 ],
               ),
               SettingsHeader(
@@ -351,7 +362,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                     ),
                   Obx(() {
                     if (iOS) {
-                      return SettingsTile(
+                      return const SettingsTile(
                         title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         isThreeLine: true,
@@ -378,7 +389,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           backgroundColor: tileColor,
                         );
                       } else {
-                        return SizedBox.shrink();
+                        return const SizedBox.shrink();
                       }
                     },
                   ),
@@ -400,7 +411,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       trailing: Obx(() => refreshingContacts.value == null
                           ? const SizedBox.shrink()
                           : refreshingContacts.value == true ? Container(
-                          constraints: BoxConstraints(
+                          constraints: const BoxConstraints(
                             maxHeight: 20,
                             maxWidth: 20,
                           ),

@@ -502,7 +502,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
               if (message.isFromMe! && !message.isGroupEvent)
                 SelectCheckbox(message: message, controller: widget.cvController),
               Obx(() {
-                if (message.error > 0) {
+                if (message.error > 0 || message.guid!.startsWith("error-")) {
                   int errorCode = message.error;
                   String errorText = "An unknown internal error occurred.";
                   if (errorCode == 22) {

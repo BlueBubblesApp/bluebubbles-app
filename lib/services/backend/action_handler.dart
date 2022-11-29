@@ -97,7 +97,7 @@ class ActionHandler extends GetxService {
           await notif.createFailedToSend();
         }
         await Message.replaceMessage(tempGuid, m);
-        completer.complete();
+        completer.completeError(error);
       });
     } else {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, partIndex: m.associatedMessagePart).then((response) async {
@@ -119,7 +119,7 @@ class ActionHandler extends GetxService {
           await notif.createFailedToSend();
         }
         await Message.replaceMessage(tempGuid, m);
-        completer.complete();
+        completer.completeError(error);
       });
     }
 
@@ -173,7 +173,7 @@ class ActionHandler extends GetxService {
       }
       await Message.replaceMessage(tempGuid, m);
       attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);
-      completer.complete();
+      completer.completeError(error);
     });
 
     return completer.future;

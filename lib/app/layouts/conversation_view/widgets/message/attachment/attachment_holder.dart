@@ -148,14 +148,14 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 height: 40,
                                 width: 40,
                                 child: Center(
-                                  child: Obx(() => Icon(message.error > 0
+                                  child: Obx(() => Icon(message.error > 0 || message.guid!.startsWith("error-")
                                       ? (iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline)
                                       : (iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined), size: 30))
                                 ),
                               ),
                               const SizedBox(height: 5),
                               Obx(() => Text(
-                                message.error > 0 ? "Send Failed!" : (_content.mimeType ?? ""),
+                                message.error > 0 || message.guid!.startsWith("error-") ? "Send Failed!" : (_content.mimeType ?? ""),
                                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,

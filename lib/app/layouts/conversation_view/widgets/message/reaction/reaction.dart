@@ -190,7 +190,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
           left: !messageIsFromMe ? 0 : -75,
           right: messageIsFromMe ? 0 : -75,
           child: Obx(() {
-            if (reaction.error > 0) {
+            if (reaction.error > 0 || reaction.guid!.startsWith("error-")) {
               int errorCode = reaction.error;
               String errorText = "An unknown internal error occurred.";
               if (errorCode == 22) {
