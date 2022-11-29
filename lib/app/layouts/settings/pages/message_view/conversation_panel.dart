@@ -1,11 +1,14 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
+import 'package:universal_io/io.dart';
 
 class ConversationPanel extends StatefulWidget {
 
@@ -14,6 +17,7 @@ class ConversationPanel extends StatefulWidget {
 }
 
 class _ConversationPanelState extends OptimizedState<ConversationPanel> {
+  final RxnBool gettingIcons = RxnBool(null);
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +100,54 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       backgroundColor: tileColor,
                       isThreeLine: true,
                     )),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    SettingsTile(
+                      title: "Sync Group Chat Icons",
+                      trailing: Obx(() => gettingIcons.value == null
+                          ? const SizedBox.shrink()
+                          : gettingIcons.value == true ? Container(
+                          constraints: const BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
+                      ),
+                      onTap: () async {
+                        gettingIcons.value = true;
+                        for (Chat c in chats.chats.where((c) => c.isGroup)) {
+                          final response = await http.getChatIcon(c.guid).catchError((err) async {
+                            Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
+                            return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
+                          });
+                          if (response.statusCode != 200 || isNullOrEmpty(response.data)!) continue;
+                          Logger.debug("Got chat icon for chat ${c.getTitle()}");
+                          File file = File(c.customAvatarPath ?? "${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+                          if (c.customAvatarPath == null) {
+                            await file.create(recursive: true);
+                          }
+                          await file.writeAsBytes(response.data);
+                          c.customAvatarPath = file.path;
+                          c.save(updateCustomAvatarPath: true);
+                        }
+                        gettingIcons.value = false;
+                      },
+                      subtitle: "Get iMessage group chat icons from the server",
+                    ),
+                  if (!kIsWeb)
+                    const SettingsSubtitle(
+                      subtitle: "Note: Overrides any custom avatars set for group chats.",
+                    ),
                 ],
               ),
               SettingsHeader(
