@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -178,18 +179,22 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                   child: ListView.builder(
                                     shrinkWrap: true,
                                     reverse: true,
+                                    physics: ThemeSwitcher.getScrollPhysics(),
                                     itemBuilder: (context, index) {
                                       return AbsorbPointer(
                                         absorbing: true,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                                          child: MessageHolder(
-                                            key: Key(widget.messages[index].guid!),
-                                            cvController: cvController,
-                                            message: widget.messages[index],
-                                            oldMessageGuid: index == widget.messages.length - 1 ? null : widget.messages[index + 1].guid,
-                                            newMessageGuid: index == 0 ? null : widget.messages[index - 1].guid,
-                                          )
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                                            child: MessageHolder(
+                                              key: Key(widget.messages[index].guid!),
+                                              cvController: cvController,
+                                              message: widget.messages[index],
+                                              oldMessageGuid: index == widget.messages.length - 1 ? null : widget.messages[index + 1].guid,
+                                              newMessageGuid: index == 0 ? null : widget.messages[index - 1].guid,
+                                            ),
+                                          ),
                                         ),
                                       );
                                     },
