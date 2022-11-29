@@ -50,7 +50,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
         return Obx(() {
           bool canSend = widget.textController.text.isNotEmpty ||
               widget.subjectTextController.text.isNotEmpty ||
-              (widget.controller?.pickedAttachments.isNotEmpty ?? false);
+              (widget.controller?.pickedAttachments.isNotEmpty ?? false.obs.value);
           return Padding(
             padding: const EdgeInsets.all(3.0),
             child: AnimatedCrossFade(
@@ -58,9 +58,9 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 150),
-              firstChild: Obx(() => TextButton(
+              firstChild: TextButton(
                 style: TextButton.styleFrom(
-                  backgroundColor: !iOS || (iOS && !widget.controller!.showRecording.value)
+                  backgroundColor: !iOS || (iOS && !isChatCreator && !widget.controller!.showRecording.value)
                       ? null
                       : !isChatCreator && !widget.controller!.showRecording.value
                       ? context.theme.colorScheme.outline
@@ -117,14 +117,14 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                           ),
                           actions: <Widget>[
                             TextButton(
-                                child: Text(
-                                    "Discard",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
-                                ),
-                                onPressed: () {
-                                  deleteAudioRecording(file.path!);
-                                  Get.back();
-                                }
+                              child: Text(
+                                  "Discard",
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                              ),
+                              onPressed: () {
+                                deleteAudioRecording(file.path!);
+                                Get.back();
+                              },
                             ),
                             TextButton(
                               child: Text(
@@ -146,7 +146,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     );
                   }
                 },
-              )),
+              ),
               secondChild: SendButton(
                 sendMessage: widget.sendMessage,
                 onLongPress: isChatCreator ? () {} : () {

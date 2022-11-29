@@ -445,25 +445,25 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                 },
               ),
             ),
-            Theme(
-              data: context.theme.copyWith(
-                // in case some components still use legacy theming
-                primaryColor: context.theme.colorScheme.bubble(context, iMessage),
-                colorScheme: context.theme.colorScheme.copyWith(
-                  primary: context.theme.colorScheme.bubble(context, iMessage),
-                  onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
-                  surface: ss.settings.monetTheming.value == Monet.full
-                      ? null
-                      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-                  onSurface: ss.settings.monetTheming.value == Monet.full
-                      ? null
-                      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+            Expanded(
+              child: Theme(
+                data: context.theme.copyWith(
+                  // in case some components still use legacy theming
+                  primaryColor: context.theme.colorScheme.bubble(context, iMessage),
+                  colorScheme: context.theme.colorScheme.copyWith(
+                    primary: context.theme.colorScheme.bubble(context, iMessage),
+                    onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
+                    surface: ss.settings.monetTheming.value == Monet.full
+                        ? null
+                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                    onSurface: ss.settings.monetTheming.value == Monet.full
+                        ? null
+                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                  ),
                 ),
-              ),
-              child: Expanded(
                 child: Stack(
                   children: [
-                    Obx(() => CustomScrollView(
+                    CustomScrollView(
                       shrinkWrap: true,
                       physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                           ? const NeverScrollableScrollPhysics()
@@ -562,7 +562,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                           ),
                         ),
                       ],
-                    )),
+                    ),
                     Obx(() {
                       return AnimatedSwitcher(
                         duration: const Duration(milliseconds: 150),

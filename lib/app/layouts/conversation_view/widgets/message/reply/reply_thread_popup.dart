@@ -53,7 +53,7 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
                   body: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                     child: Container(
-                      color: context.theme.colorScheme.properSurface.withAlpha(150),
+                      color: context.theme.colorScheme.background.withAlpha(150),
                       child: SafeArea(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),

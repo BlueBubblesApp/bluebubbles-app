@@ -53,16 +53,22 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
             contentPadding: const EdgeInsets.only(left: 0),
             minVerticalPadding: 10,
             horizontalTitleGap: 10,
-            title: ChatTitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodyLarge!.copyWith(
-                  fontWeight: controller.shouldHighlight.value
-                      ? FontWeight.w600
-                      : FontWeight.w500,
-                  color: controller.shouldHighlight.value
-                      ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
-                      : null
-              ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ChatTitle(
+                  parentController: controller,
+                  style: context.theme.textTheme.bodyLarge!.copyWith(
+                      fontWeight: controller.shouldHighlight.value
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: controller.shouldHighlight.value
+                          ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
+                          : null
+                  ),
+                ),
+                CupertinoTrailing(parentController: controller),
+              ],
             ),
             subtitle: controller.subtitle ?? ChatSubtitle(
               parentController: controller,
@@ -76,12 +82,6 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
             leading: ChatLeading(
               controller: controller,
               unreadIcon: UnreadIcon(parentController: controller),
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                CupertinoTrailing(parentController: controller),
-              ],
             ),
           )),
         ),
@@ -171,7 +171,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 15, top: 10),
+      padding: const EdgeInsets.only(right: 15),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.end,
@@ -187,7 +187,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
             return Text(
               (cachedLatestMessage?.error ?? 0) > 0
                   ? "Error"
-                  : "${indicatorText.isNotEmpty ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
+                  : "${indicatorText.isNotEmpty && indicatorText != "None" ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
               textAlign: TextAlign.right,
               style: context.theme.textTheme.bodySmall!.copyWith(
                 color: (cachedLatestMessage?.error ?? 0) > 0

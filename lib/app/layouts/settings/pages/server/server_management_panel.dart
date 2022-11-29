@@ -391,7 +391,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            Get.reload<SocketService>(force: true);
+                            socket.restartSocket();
                           },
                           onClose: () {
                             Get.back();
@@ -405,7 +405,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            Get.reload<SocketService>(force: true);
+                            socket.restartSocket();
                           },
                           onClose: () {
                             Get.back();
@@ -441,7 +441,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
 
                         ss.saveSettings();
                         ss.saveFCMData(data);
-                        Get.reload<SocketService>(force: true);
+                        socket.restartSocket();
                       }
                     },
                   ),

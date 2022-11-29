@@ -24,7 +24,7 @@ class SocketService extends GetxService {
   final Rx<SocketState> state = SocketState.disconnected.obs;
   SocketState _lastState = SocketState.disconnected;
   Timer? _reconnectTimer;
-  late final Socket socket;
+  late Socket socket;
   
   String get serverAddress => ss.settings.serverAddress.value;
   String get password => ss.settings.guidAuthKey.value;
@@ -98,6 +98,11 @@ class SocketService extends GetxService {
     state.value = SocketState.disconnected;
   }
 
+  void restartSocket() {
+    closeSocket();
+    startSocket();
+  }
+
   void forgetConnection() {
     closeSocket();
     ss.settings.guidAuthKey.value = "";
@@ -148,7 +153,7 @@ class SocketService extends GetxService {
           if (state.value == SocketState.connected) return;
 
           await fdb.fetchNewUrl();
-          Get.reload<SocketService>(force: true);
+          restartSocket();
         });
         return;
       default:
