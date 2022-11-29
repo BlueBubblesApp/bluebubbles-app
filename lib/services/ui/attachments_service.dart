@@ -38,6 +38,14 @@ class AttachmentsService extends GetxService {
         return attachment;
       }
     }
+    if (attachment.guid?.contains("demo") ?? false) {
+      return PlatformFile(
+        name: attachment.transferName!,
+        path: null,
+        size: attachment.totalBytes ?? 0,
+        bytes: Uint8List.fromList([]),
+      );
+    }
     if (kIsWeb || attachment.guid == null) {
       if (attachment.bytes == null && (autoDownload ?? ss.settings.autoDownload.value)) {
         return attachmentDownloader.startDownload(attachment, onComplete: onComplete);
