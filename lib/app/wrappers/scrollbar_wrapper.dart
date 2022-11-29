@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -33,21 +32,18 @@ class ScrollbarWrapper extends StatelessWidget {
     enableCustomMouseWheelScrolling: ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb),
     customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
       scrollAmountMultiplier: (reverse ? -1 : 1) * ss.settings.betterScrollingMultiplier.value,
-      scrollDuration: Duration(milliseconds: 140),
+      scrollDuration: const Duration(milliseconds: 140),
       mouseWheelTurnsThrottleTimeMs: 35,
     ),
     scrollController: controller,
     child: showScrollbar
-      ? MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: RawScrollbar(
+      ? RawScrollbar(
             controller: controller,
             thumbColor: context.theme.colorScheme.properSurface.withOpacity(0.5),
             thickness: 10,
-            radius: Radius.circular(5),
+            radius: const Radius.circular(5),
             child: child,
-          ),
-        )
+          )
       : ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: showScrollbar),
           child: child,
