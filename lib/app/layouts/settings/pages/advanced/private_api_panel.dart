@@ -209,68 +209,71 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             ),
                             AnimatedSizeAndFade.showHide(
                               show: ss.settings.enableQuickTapback.value,
-                              child: SettingsOptions<String>(
-                                title: "Quick Tapback",
-                                options: ReactionTypes.toList(),
-                                cupertinoCustomWidgets: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: ReactionWidget(
-                                      reactionType: ReactionTypes.LOVE,
-                                      messageIsFromMe: true,
-                                      reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LOVE
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: ReactionWidget(
-                                        reactionType: ReactionTypes.LIKE,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 5.0),
+                                child: SettingsOptions<String>(
+                                  title: "Quick Tapback",
+                                  options: ReactionTypes.toList(),
+                                  cupertinoCustomWidgets: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                      child: ReactionWidget(
+                                        reactionType: ReactionTypes.LOVE,
                                         messageIsFromMe: true,
-                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LIKE
+                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LOVE
+                                      ),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: ReactionWidget(
-                                        reactionType: ReactionTypes.DISLIKE,
-                                        messageIsFromMe: true,
-                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.DISLIKE
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                      child: ReactionWidget(
+                                          reactionType: ReactionTypes.LIKE,
+                                          messageIsFromMe: true,
+                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LIKE
+                                      ),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: ReactionWidget(
-                                        reactionType: ReactionTypes.LAUGH,
-                                        messageIsFromMe: true,
-                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LAUGH
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                      child: ReactionWidget(
+                                          reactionType: ReactionTypes.DISLIKE,
+                                          messageIsFromMe: true,
+                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.DISLIKE
+                                      ),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: ReactionWidget(
-                                        reactionType: ReactionTypes.EMPHASIZE,
-                                        messageIsFromMe: true,
-                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.EMPHASIZE
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                      child: ReactionWidget(
+                                          reactionType: ReactionTypes.LAUGH,
+                                          messageIsFromMe: true,
+                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LAUGH
+                                      ),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: ReactionWidget(
-                                        reactionType: ReactionTypes.QUESTION,
-                                        messageIsFromMe: true,
-                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.QUESTION
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                      child: ReactionWidget(
+                                          reactionType: ReactionTypes.EMPHASIZE,
+                                          messageIsFromMe: true,
+                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.EMPHASIZE
+                                      ),
                                     ),
-                                  ),
-                                ],
-                                initial: ss.settings.quickTapbackType.value,
-                                textProcessing: (val) => val,
-                                onChanged: (val) {
-                                  if (val == null) return;
-                                  ss.settings.quickTapbackType.value = val;
-                                  saveSettings();
-                                },
-                                backgroundColor: tileColor,
-                                secondaryColor: headerColor,
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                      child: ReactionWidget(
+                                          reactionType: ReactionTypes.QUESTION,
+                                          messageIsFromMe: true,
+                                          reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.QUESTION
+                                      ),
+                                    ),
+                                  ],
+                                  initial: ss.settings.quickTapbackType.value,
+                                  textProcessing: (val) => val,
+                                  onChanged: (val) {
+                                    if (val == null) return;
+                                    ss.settings.quickTapbackType.value = val;
+                                    saveSettings();
+                                  },
+                                  backgroundColor: tileColor,
+                                  secondaryColor: headerColor,
+                                ),
                               ),
                             ),
                             AnimatedSizeAndFade.showHide(
