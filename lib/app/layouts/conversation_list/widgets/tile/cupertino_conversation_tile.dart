@@ -77,14 +77,19 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
               controller: controller,
               unreadIcon: UnreadIcon(parentController: controller),
             ),
-            trailing: CupertinoTrailing(parentController: controller),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                CupertinoTrailing(parentController: controller),
+              ],
+            ),
           )),
         ),
       ),
     );
 
     return kIsDesktop || kIsWeb ? Obx(() => AnimatedContainer(
-      duration: Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 100),
       decoration: BoxDecoration(
         color: controller.shouldPartialHighlight.value
             ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
