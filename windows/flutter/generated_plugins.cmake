@@ -12,6 +12,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_native_view
   geolocator_windows
   local_auth_windows
+  local_notifier
   maps_launcher
   objectbox_flutter_libs
   pasteboard
@@ -23,7 +24,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   secure_application
   system_tray
   url_launcher_windows
-  win_toast
   window_manager
 )
 

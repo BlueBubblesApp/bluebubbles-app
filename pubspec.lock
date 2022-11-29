@@ -1306,7 +1306,7 @@ packages:
       name: launch_at_startup
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.8"
+    version: "0.2.0"
   libphonenumber:
     dependency: transitive
     description:
@@ -1391,6 +1391,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.3"
+  local_notifier:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "78d87ac4b89ad68854dad27aea0b819758d7228d"
+      resolved-ref: "78d87ac4b89ad68854dad27aea0b819758d7228d"
+      url: "https://github.com/jjoelj/local_notifier.git"
+    source: git
+    version: "0.1.5"
   location:
     dependency: "direct main"
     description:
@@ -1959,7 +1968,7 @@ packages:
       name: screen_retriever
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.2"
+    version: "0.1.4"
   scroll_to_index:
     dependency: "direct main"
     description:
@@ -2580,16 +2589,7 @@ packages:
       name: win32_registry
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.2"
-  win_toast:
-    dependency: "direct main"
-    description:
-      path: "packages/win_toast"
-      ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      resolved-ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      url: "https://github.com/jjoelj/flutter-plugins.git"
-    source: git
-    version: "0.0.2"
+    version: "1.0.2"
   window_manager:
     dependency: "direct main"
     description:
