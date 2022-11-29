@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/custom/custom_cupertino_alert_dialog.dart';
@@ -705,78 +706,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
   
   Future<void> remindLater() async {
-    DateTime? finalDate;
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            "Select Reminder Time",
-            style: context.theme.textTheme.titleLarge,
-          ),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Wrap(
-              alignment: WrapAlignment.center,
-              children: [
-                TextButton(
-                  child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text("1 Hour", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                  onPressed: () {
-                    finalDate = DateTime.now().toLocal().add(const Duration(hours: 1));
-                    Navigator.of(context).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text("1 Day", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                  onPressed: () {
-                    finalDate = DateTime.now().toLocal().add(const Duration(days: 1));
-                    Navigator.of(context).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text("1 Week", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                  onPressed: () {
-                    finalDate = DateTime.now().toLocal().add(const Duration(days: 7));
-                    Navigator.of(context).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text("Custom", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                  onPressed: () async {
-                    final messageDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now().toLocal(),
-                        firstDate: DateTime.now().toLocal(),
-                        lastDate: DateTime.now().toLocal().add(const Duration(days: 365)));
-                    if (messageDate != null) {
-                      final messageTime =
-                      await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                      if (messageTime != null) {
-                        finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day,
-                            messageTime.hour, messageTime.minute);
-                      }
-                    }
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            )
-          ]),
-          backgroundColor: context.theme.colorScheme.properSurface,
-        );
-      },
-    );
+    final finalDate = await showTimeframePicker("Select Reminder Time", context);
     if (finalDate != null) {
-      if (!finalDate!.isAfter(DateTime.now().toLocal())) {
+      if (!finalDate.isAfter(DateTime.now().toLocal())) {
         showSnackbar("Error", "Select a date in the future");
         return;
       }
-      await notif.createReminder(chat, message, finalDate!);
+      await notif.createReminder(chat, message, finalDate);
       popDetails();
       showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
     }

@@ -263,10 +263,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     child: Icon(iOS ? CupertinoIcons.doc_text : Icons.note_outlined),
                   ),
                   onTap: () async {
-                    final tuple = await showTimeframePicker(context);
-                    int days = tuple.item1;
-                    int hours = tuple.item2;
-                    if (hours == 0 && days == 0) return;
+                    final date = await showTimeframePicker("Select Timeframe", context);
+                    if (date == null) return;
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -286,11 +284,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       barrierDismissible: false,
                     );
                     final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true)).reversed
-                        .where((e) => DateTime.now().isWithin(
-                          e.dateCreated!,
-                          hours: hours != 0 ? hours : null,
-                          days: days != 0 ? days : null
-                        ));
+                        .where((e) => e.dateCreated!.isAfter(date));
                     if (messages.isEmpty) {
                       Get.back();
                       showSnackbar("Error", "No messages found!");
@@ -322,10 +316,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     showSnackbar("Success", "Saved transcript to the downloads folder");
                   },
                   onLongPress: () async {
-                    final tuple = await showTimeframePicker(context);
-                    int days = tuple.item1;
-                    int hours = tuple.item2;
-                    if (hours == 0 && days == 0) return;
+                    final date = await showTimeframePicker("Select Timeframe", context);
+                    if (date == null) return;
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -345,11 +337,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       barrierDismissible: false,
                     );
                     final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true)).reversed
-                        .where((e) => DateTime.now().isWithin(
-                          e.dateCreated!,
-                          hours: hours != 0 ? hours : null,
-                          days: days != 0 ? days : null
-                        ));
+                        .where((e) => e.dateCreated!.isAfter(date));
                     if (messages.isEmpty) {
                       Get.back();
                       showSnackbar("Error", "No messages found!");

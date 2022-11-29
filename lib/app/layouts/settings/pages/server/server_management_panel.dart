@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -100,6 +101,7 @@ class ServerManagementPanel extends CustomStateful<ServerManagementPanelControll
 }
 
 class _ServerManagementPanelState extends CustomState<ServerManagementPanel, void, ServerManagementPanelController> {
+  IncrementalSyncManager? manager;
 
   @override
   Widget build(BuildContext context) {
@@ -124,47 +126,47 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                           child: AnimatedOpacity(
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             opacity: controller.opacity.value,
                             child: SelectableText.rich(
                               TextSpan(
                                   children: [
-                                    TextSpan(text: "Connection Status: "),
+                                    const TextSpan(text: "Connection Status: "),
                                     TextSpan(text: describeEnum(socket.state.value).toUpperCase(), style: TextStyle(color: getIndicatorColor(socket.state.value))),
-                                    TextSpan(text: "\n\n"),
+                                    const TextSpan(text: "\n\n"),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "Private API Status: "),
+                                      const TextSpan(text: "Private API Status: "),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED", style: TextStyle(color: getIndicatorColor(controller.privateAPIStatus.value
                                           ? SocketState.connected
                                           : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "\n\n"),
+                                      const TextSpan(text: "\n\n"),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "Private API Helper Bundle Status: "),
+                                      const TextSpan(text: "Private API Helper Bundle Status: "),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED", style: TextStyle(color: getIndicatorColor(controller.helperBundleStatus.value
                                           ? SocketState.connected
                                           : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "\n\n"),
+                                      const TextSpan(text: "\n\n"),
                                     TextSpan(text: "Server URL: ${redact ? "Redacted" : ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
                                       ..onTap = () {
                                         Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
                                         showSnackbar('Copied', "Address copied to clipboard");
                                       }),
-                                    TextSpan(text: "\n\n"),
+                                    const TextSpan(text: "\n\n"),
                                     TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
-                                    TextSpan(text: "\n\n"),
+                                    const TextSpan(text: "\n\n"),
                                     TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
-                                    TextSpan(text: "\n\n"),
+                                    const TextSpan(text: "\n\n"),
                                     TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
                                     if (controller.iCloudAccount.value != null)
-                                      TextSpan(text: "\n\n"),
+                                      const TextSpan(text: "\n\n"),
                                     if (controller.iCloudAccount.value != null)
                                       TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                                    const TextSpan(text: "\n\n"),
+                                    const TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                   ]
                               ),
                               onTap: () {
@@ -186,7 +188,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           title: "Show Stats",
                           subtitle: "Show iMessage statistics",
                           backgroundColor: tileColor,
-                          leading: SettingsLeadingIcon(
+                          leading: const SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.chart_bar_square,
                             materialIcon: Icons.stacked_bar_chart,
                           ),
@@ -231,7 +233,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
-                    leading: SettingsLeadingIcon(
+                    leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.qrcode,
                       materialIcon: Icons.qr_code,
                     ),
@@ -381,7 +383,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     title: "Re-configure with BlueBubbles Server",
                     subtitle: kIsWeb || kIsDesktop ? "Click for manual entry" : "Tap to scan QR code\nLong press for manual entry",
                     isThreeLine: kIsWeb || kIsDesktop ? false : true,
-                    leading: SettingsLeadingIcon(
+                    leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
                     ),
@@ -459,17 +461,32 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       subtitle: socket.state.value == SocketState.connected
                           ? "Tap to sync messages" : "Disconnected, cannot sync",
                       backgroundColor: tileColor,
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.arrow_2_circlepath,
                         materialIcon: Icons.sync,
                       ),
                       onTap: () async {
                         if (socket.state.value != SocketState.connected) return;
-                        showDialog(
-                          context: context,
-                          builder: (context) => SyncDialog(),
-                        );
-                      })
+                        if (manager != null) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => SyncDialog(manager: manager!),
+                          );
+                        } else {
+                          final date = await showTimeframePicker("How Far Back?", context, showHourPicker: false);
+                          if (date == null) return;
+                          try {
+                            manager = IncrementalSyncManager(date.millisecondsSinceEpoch);
+                            showDialog(
+                              context: context,
+                              builder: (context) => SyncDialog(manager: manager!),
+                            );
+                            await manager!.start();
+                          } catch (_) {}
+                          Navigator.of(context).pop();
+                          manager = null;
+                        }
+                      }),
                     ),
                 ]
               ),
@@ -488,7 +505,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     subtitle: controller.fetchStatus.value ?? (socket.state.value == SocketState.connected
                         ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
                     backgroundColor: tileColor,
-                    leading: SettingsLeadingIcon(
+                    leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.doc_plaintext,
                       materialIcon: Icons.article,
                     ),
@@ -548,7 +565,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           ? "Restart the iMessage app"
                           : "Disconnected, cannot restart",
                       backgroundColor: tileColor,
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chat_bubble,
                         materialIcon: Icons.sms,
                       ),
@@ -574,7 +591,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       trailing: Obx(() => (!controller.isRestartingMessages.value)
                           ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                           : Container(
-                          constraints: BoxConstraints(
+                          constraints: const BoxConstraints(
                             maxHeight: 20,
                             maxWidth: 20,
                           ),
@@ -603,7 +620,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               ? "Restart the Private API"
                               : "Disconnected, cannot restart",
                           backgroundColor: tileColor,
-                          leading: SettingsLeadingIcon(
+                          leading: const SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.exclamationmark_shield,
                             materialIcon: Icons.gpp_maybe,
                           ),
@@ -629,7 +646,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           trailing: (!controller.isRestartingPrivateAPI.value)
                               ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                               : Container(
-                              constraints: BoxConstraints(
+                              constraints: const BoxConstraints(
                                 maxHeight: 20,
                                 maxWidth: 20,
                               ),
@@ -652,7 +669,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       subtitle: (controller.isRestarting.value)
                           ? "Restart in progress..."
                           : "This will briefly disconnect you",
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.desktopcomputer,
                         materialIcon: Icons.dvr,
                       ),
@@ -688,7 +705,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       trailing: (!controller.isRestarting.value)
                           ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                           : Container(
-                          constraints: BoxConstraints(
+                          constraints: const BoxConstraints(
                             maxHeight: 20,
                             maxWidth: 20,
                           ),
@@ -712,7 +729,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           title: "Check for Server Updates",
                           subtitle: "Check for new BlueBubbles Server updates",
                           backgroundColor: tileColor,
-                          leading: SettingsLeadingIcon(
+                          leading: const SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.desktopcomputer,
                             materialIcon: Icons.dvr,
                           ),
@@ -730,11 +747,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       mainAxisSize: MainAxisSize.min,
                                       children: <Widget>[
-                                        SizedBox(
+                                        const SizedBox(
                                           height: 15.0,
                                         ),
                                         Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyLarge),
-                                        SizedBox(
+                                        const SizedBox(
                                           height: 15.0,
                                         ),
                                         if (metadata.isNotEmpty)
