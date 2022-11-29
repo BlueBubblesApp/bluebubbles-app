@@ -51,7 +51,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
           bool canSend = widget.textController.text.isNotEmpty ||
               widget.subjectTextController.text.isNotEmpty ||
               (widget.controller?.pickedAttachments.isNotEmpty ?? false.obs.value);
-          bool showRecording = widget.controller!.showRecording.value;
+          bool? showRecording = widget.controller?.showRecording.value;
           return Padding(
             padding: const EdgeInsets.all(3.0),
             child: AnimatedCrossFade(
@@ -61,9 +61,9 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
               duration: const Duration(milliseconds: 150),
               firstChild: kIsDesktop ? const SizedBox(height: 32, width: 32) : TextButton(
                 style: TextButton.styleFrom(
-                  backgroundColor: !iOS || (iOS && !isChatCreator && !showRecording)
+                  backgroundColor: !iOS || (iOS && !isChatCreator && !showRecording!)
                       ? null
-                      : !isChatCreator && !showRecording
+                      : !isChatCreator && !showRecording!
                       ? context.theme.colorScheme.outline
                       : context.theme.colorScheme.primary,
                   shape: const CircleBorder(),
