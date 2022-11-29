@@ -67,7 +67,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     ss.settings.guidAuthKey.value = password;
     ss.settings.save();
     try {
-      Get.reload<SocketService>(force: true);
+      socket.restartSocket();
     } catch (e) {
       error = e.toString();
       if (mounted) setState(() {});

@@ -57,7 +57,7 @@ class MethodChannelService extends GetxService {
           ss.settings.save();
 
           if (!background) {
-            Get.reload<SocketService>(force: true);
+            socket.restartSocket();
           }
         }
         return true;
