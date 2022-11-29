@@ -582,7 +582,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                 ),
                 if (!kIsWeb && !kIsDesktop)
                   Obx(() {
-                    if (controller.refreshRates.length > 1) {
+                    if (controller.refreshRates.length > 2) {
                       return SettingsHeader(
                           headerColor: headerColor,
                           tileColor: tileColor,
@@ -593,26 +593,32 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       return const SizedBox.shrink();
                     }
                   }),
-                if (!kIsWeb && !kIsDesktop && controller.refreshRates.length > 2)
-                  SettingsSection(
-                    backgroundColor: tileColor,
-                    children: [
-                      Obx(() => SettingsOptions<int>(
-                        initial: controller.currentMode.value,
-                        onChanged: (val) async {
-                          if (val == null) return;
-                          controller.currentMode.value = val;
-                          ss.settings.refreshRate.value = controller.currentMode.value;
-                          saveSettings();
-                        },
-                        options: controller.refreshRates,
-                        textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
-                        title: "Display",
+                if (!kIsWeb && !kIsDesktop)
+                  Obx(() {
+                    if (controller.refreshRates.length > 2) {
+                      return SettingsSection(
                         backgroundColor: tileColor,
-                        secondaryColor: headerColor,
-                      )),
-                    ],
-                  ),
+                        children: [
+                          Obx(() => SettingsOptions<int>(
+                            initial: controller.currentMode.value,
+                            onChanged: (val) async {
+                              if (val == null) return;
+                              controller.currentMode.value = val;
+                              ss.settings.refreshRate.value = controller.currentMode.value;
+                              saveSettings();
+                            },
+                            options: controller.refreshRates,
+                            textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
+                            title: "Display",
+                            backgroundColor: tileColor,
+                            secondaryColor: headerColor,
+                          )),
+                        ],
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  }),
                 SettingsHeader(
                     headerColor: headerColor,
                     tileColor: tileColor,
