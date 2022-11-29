@@ -54,29 +54,33 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
             minVerticalPadding: 10,
             horizontalTitleGap: 10,
             title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ChatTitle(
-                  parentController: controller,
-                  style: context.theme.textTheme.bodyLarge!.copyWith(
-                      fontWeight: controller.shouldHighlight.value
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: controller.shouldHighlight.value
-                          ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
-                          : null
+                Expanded(
+                  child: ChatTitle(
+                    parentController: controller,
+                    style: context.theme.textTheme.bodyLarge!.copyWith(
+                        fontWeight: controller.shouldHighlight.value
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: controller.shouldHighlight.value
+                            ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
+                            : null
+                    ),
                   ),
                 ),
                 CupertinoTrailing(parentController: controller),
               ],
             ),
-            subtitle: controller.subtitle ?? ChatSubtitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodySmall!.copyWith(
-                color: controller.shouldHighlight.value
-                    ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
-                    : context.theme.colorScheme.outline,
-                height: 1.5,
+            subtitle: Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: controller.subtitle ?? ChatSubtitle(
+                parentController: controller,
+                style: context.theme.textTheme.bodySmall!.copyWith(
+                  color: controller.shouldHighlight.value
+                      ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
+                      : context.theme.colorScheme.outline,
+                  height: 1.5,
+                ),
               ),
             ),
             leading: ChatLeading(
