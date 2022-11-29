@@ -58,7 +58,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 150),
-              firstChild: TextButton(
+              firstChild: kIsDesktop ? const SizedBox(height: 32, width: 32) : TextButton(
                 style: TextButton.styleFrom(
                   backgroundColor: !iOS || (iOS && !isChatCreator && !widget.controller!.showRecording.value)
                       ? null
