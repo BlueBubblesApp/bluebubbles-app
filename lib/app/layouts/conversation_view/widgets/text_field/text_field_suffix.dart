@@ -58,42 +58,29 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 150),
-              firstChild: TextButton(
+              firstChild: Obx(() => TextButton(
                 style: TextButton.styleFrom(
-                  backgroundColor: !iOS ? null : !isChatCreator && !widget.controller!.showRecording.value
-                      ? context.theme.colorScheme.outline : context.theme.colorScheme.primary,
+                  backgroundColor: !iOS || (iOS && !widget.controller!.showRecording.value)
+                      ? null
+                      : !isChatCreator && !widget.controller!.showRecording.value
+                      ? context.theme.colorScheme.outline
+                      : context.theme.colorScheme.primary,
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
                   maximumSize: const Size(32, 32),
                   minimumSize: const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: Obx(() => !isChatCreator && !widget.controller!.showRecording.value ?
-                  (iOS ?
-                    const CupertinoIconWrapper(icon: Icon(
-                      CupertinoIcons.waveform,
-                      color: Colors.white,
-                      size: 20,
-                    )) :
-                    Icon(
-                      Icons.mic_none,
-                      color: context.theme.colorScheme.properOnSurface,
-                      size: 20,
-                    )
-                  ) : iOS ?
-                  CupertinoIconWrapper(icon: Icon(
-                    CupertinoIcons.stop_fill,
-                    color: context.theme.colorScheme.onPrimary,
+                child: !isChatCreator && !widget.controller!.showRecording.value
+                  ? CupertinoIconWrapper(icon: Icon(
+                    iOS ? CupertinoIcons.mic : Icons.mic_none,
+                    color: iOS ? context.theme.colorScheme.outline : context.theme.colorScheme.properOnSurface,
+                    size: 20,
+                  )) : CupertinoIconWrapper(icon: Icon(
+                    iOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
+                    color: iOS ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface,
                     size: 15,
-                  )) :
-                  Center(
-                    child: Icon(
-                      Icons.stop_circle,
-                      color: context.theme.colorScheme.properOnSurface,
-                      size: 15,
-                    ),
-                  )
-                ),
+                  )),
                 onPressed: () async {
                   if (widget.controller == null) return;
                   widget.controller!.showRecording.toggle();
@@ -159,7 +146,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     );
                   }
                 },
-              ),
+              )),
               secondChild: SendButton(
                 sendMessage: widget.sendMessage,
                 onLongPress: isChatCreator ? () {} : () {
