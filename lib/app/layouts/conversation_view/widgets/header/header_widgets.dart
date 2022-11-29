@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'dart:typed_data';
 
+import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -7,6 +9,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class ManualMark extends StatefulWidget {
   const ManualMark({required this.controller});
@@ -28,41 +31,91 @@ class ManualMarkState extends OptimizedState<ManualMark> {
     final manualMark = ss.settings.enablePrivateAPI.value && ss.settings.privateManualMarkAsRead.value;
     return Obx(() {
       if (!manualMark && !widget.controller.inSelectMode.value) return const SizedBox.shrink();
-      return IconButton(
-        icon: Icon(
-          widget.controller.inSelectMode.value ? (iOS ? CupertinoIcons.trash : Icons.delete_outlined)
-              : marking ? (iOS ? CupertinoIcons.arrow_2_circlepath : Icons.sync)
-              : marked ? (iOS ? CupertinoIcons.app : Icons.mark_chat_read_outlined)
-              : (iOS ? CupertinoIcons.app_badge : Icons.mark_chat_unread_outlined),
-          color: !iOS ? context.theme.colorScheme.onBackground
-              : (!marked && !marking || widget.controller.inSelectMode.value)
-              ? context.theme.colorScheme.primary
-              : context.theme.colorScheme.outline,
-        ),
-        onPressed: () async {
-          if (widget.controller.inSelectMode.value) {
-            for (Message m in widget.controller.selected) {
-              ms(chat.guid).removeMessage(m);
-              Message.softDelete(m.guid!);
-            }
-            widget.controller.inSelectMode.value = false;
-            widget.controller.selected.clear();
-            return;
-          }
-          if (marking) return;
-          setState(() {
-            marking = true;
-          });
-          if (!marked) {
-            await http.markChatRead(chat.guid);
-          } else {
-            await http.markChatUnread(chat.guid);
-          }
-          setState(() {
-            marking = false;
-            marked = !marked;
-          });
-        },
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(
+              widget.controller.inSelectMode.value ? (iOS ? CupertinoIcons.trash : Icons.delete_outlined)
+                  : marking ? (iOS ? CupertinoIcons.arrow_2_circlepath : Icons.sync)
+                  : marked ? (iOS ? CupertinoIcons.app : Icons.mark_chat_read_outlined)
+                  : (iOS ? CupertinoIcons.app_badge : Icons.mark_chat_unread_outlined),
+              color: !iOS ? context.theme.colorScheme.onBackground
+                  : (!marked && !marking || widget.controller.inSelectMode.value)
+                  ? context.theme.colorScheme.primary
+                  : context.theme.colorScheme.outline,
+            ),
+            onPressed: () async {
+              if (widget.controller.inSelectMode.value) {
+                for (Message m in widget.controller.selected) {
+                  ms(chat.guid).removeMessage(m);
+                  Message.softDelete(m.guid!);
+                }
+                widget.controller.inSelectMode.value = false;
+                widget.controller.selected.clear();
+                return;
+              }
+              if (marking) return;
+              setState(() {
+                marking = true;
+              });
+              if (!marked) {
+                await http.markChatRead(chat.guid);
+              } else {
+                await http.markChatUnread(chat.guid);
+              }
+              setState(() {
+                marking = false;
+                marked = !marked;
+              });
+            },
+          ),
+          if (widget.controller.inSelectMode.value)
+            IconButton(
+              icon: Icon(
+                iOS ? CupertinoIcons.arrow_right : Icons.forward_outlined,
+                color: !iOS ? context.theme.colorScheme.onBackground : context.theme.colorScheme.primary,
+              ),
+              onPressed: () async {
+                List<PlatformFile> attachments = [];
+                String text = "";
+                widget.controller.selected.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+                for (Message m in widget.controller.selected) {
+                  final _attachments = m.attachments
+                      .where((e) => as.getContent(e!, autoDownload: false) is PlatformFile)
+                      .map((e) => as.getContent(e!, autoDownload: false) as PlatformFile);
+                  for (PlatformFile a in _attachments) {
+                    Uint8List? bytes = a.bytes;
+                    bytes ??= await File(a.path!).readAsBytes();
+                    attachments.add(PlatformFile(
+                      name: a.name,
+                      path: a.path,
+                      size: bytes.length,
+                      bytes: bytes,
+                    ));
+                  }
+                  if (!isNullOrEmpty(m.text)!) {
+                    if (text.isEmpty) {
+                      text = m.text!;
+                    } else {
+                      text = "$text\n\n${m.text}";
+                    }
+                  }
+                }
+                widget.controller.inSelectMode.value = false;
+                widget.controller.selected.clear();
+                eventDispatcher.emit("update-highlight", null);
+                ns.pushAndRemoveUntil(
+                  context,
+                  ChatCreator(
+                    initialText: text,
+                    initialAttachments: attachments,
+                  ),
+                  (route) => route.isFirst,
+                );
+              },
+            ),
+        ],
       );
     });
   }
