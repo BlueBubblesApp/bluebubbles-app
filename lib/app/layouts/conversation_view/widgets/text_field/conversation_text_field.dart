@@ -11,7 +11,6 @@ import 'package:bluebubbles/app/components/custom/custom_cupertino_text_field.da
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -155,7 +154,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final newEmojiText = _controller.text;
     if (newEmojiText.contains(":") && newEmojiText != oldEmojiText) {
       oldEmojiText = newEmojiText;
-      final regExp = RegExp(r"(?<=^| |\n):[^: \n]{2,}((?=[ \n]|$)|:)", multiLine: true);
+      final regExp = RegExp(r"(?<=^| |\n|[^a-zA-Z]):[^: \n]{2,}((?=[ \n]|$)|:)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
       List<Emoji> allMatches = [];
       String emojiName = "";
@@ -684,20 +683,27 @@ class TextFieldComponent extends StatelessWidget {
         }
       }
 
-      // Tab
-      if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab" || androidData?.physicalKey == PhysicalKeyboardKey.tab) {
+      // Tab or Enter
+      if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab" || androidData?.physicalKey == PhysicalKeyboardKey.tab ||
+          windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter" || androidData?.physicalKey == PhysicalKeyboardKey.enter) {
         if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
+          int index = controller!.emojiSelectedIndex.value;
+          String text = controller!.textController.text;
+          RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+          Iterable<RegExpMatch> matches = regExp.allMatches(text);
+          if (matches.isNotEmpty && matches.any((m) => m.start < controller!.textController.selection.start)) {
+            RegExpMatch match = matches.lastWhere((m) => m.start < controller!.textController.selection.start);
+            String char = controller!.emojiMatches[index].char;
+            String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
+            controller!.textController.text = _text;
+            controller!.textController.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
+          } else {
+            // If the user moved the cursor before trying to insert an emoji, reset the picker
+            controller!.emojiScrollController.jumpTo(0);
+          }
           controller!.emojiSelectedIndex.value = 0;
-          controller!.emojiScrollController.jumpTo(0);
-          return KeyEventResult.handled;
-        }
-      }
+          controller!.emojiMatches.value = <Emoji>[];
 
-      // Enter
-      if (windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") {
-        if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
-          controller!.emojiSelectedIndex.value = 0;
-          controller!.emojiScrollController.jumpTo(0);
           return KeyEventResult.handled;
         }
       }
