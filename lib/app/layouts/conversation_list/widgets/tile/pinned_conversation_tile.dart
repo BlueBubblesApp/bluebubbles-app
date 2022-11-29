@@ -138,12 +138,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                               MuteIcon(width: maxWidth, parentController: controller),
                             ],
                           ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: maxWidth * 0.075,
-                            ),
-                            child: ChatTitle(parentController: controller),
-                          ),
+                          ChatTitle(parentController: controller),
                         ],
                       ),
                       PinnedIndicators(width: maxWidth, controller: controller),
