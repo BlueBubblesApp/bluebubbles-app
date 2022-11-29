@@ -52,6 +52,8 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: ss.settings.denseChatTiles.value,
+            visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+            minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
             title: ChatTitle(
               parentController: controller,
               style: context.theme.textTheme.bodyMedium!.copyWith(
@@ -74,7 +76,6 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
                 height: 1.5,
               ).apply(fontSizeFactor: 1.05),
             ),
-            minVerticalPadding: 10,
             contentPadding: const EdgeInsets.only(left: 6, right: 16),
             leading: ChatLeading(controller: controller),
             trailing: MaterialTrailing(parentController: controller),

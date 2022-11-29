@@ -43,6 +43,8 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: ss.settings.denseChatTiles.value,
+            visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+            minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
             title: ChatTitle(
               parentController: controller,
               style: context.theme.textTheme.bodyMedium!.copyWith(
@@ -58,7 +60,6 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
                 height: 1.5,
               ),
             ),
-            minVerticalPadding: 10,
             leading: ChatLeading(controller: controller, unreadIcon: UnreadIcon(parentController: controller)),
             trailing: SamsungTrailing(parentController: controller),
           ),

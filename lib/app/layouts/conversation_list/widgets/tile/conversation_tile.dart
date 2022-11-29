@@ -319,8 +319,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           ),
         ),
         overflow: TextOverflow.ellipsis,
-        maxLines: ss.settings.skin.value == Skins.Material
-            ? 3 : 2,
+        maxLines: ss.settings.denseChatTiles.value ? 1 : material ? 3 : 2,
       );
     });
   }

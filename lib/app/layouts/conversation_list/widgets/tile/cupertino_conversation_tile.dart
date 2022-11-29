@@ -51,7 +51,8 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
             enableFeedback: true,
             dense: ss.settings.denseChatTiles.value,
             contentPadding: const EdgeInsets.only(left: 0),
-            minVerticalPadding: 10,
+            visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+            minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
             horizontalTitleGap: 10,
             title: Row(
               children: [
