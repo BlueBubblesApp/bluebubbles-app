@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+/lib/generated_plugin_registrant.dart
 
 # IntelliJ related
 *.iml
