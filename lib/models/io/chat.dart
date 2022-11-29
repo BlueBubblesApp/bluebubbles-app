@@ -494,6 +494,9 @@ class Chat {
     // generate names for group chats or DMs
     List<String> titles = participants.map((e) => e.displayName.trim().split(isGroup && e.contact != null ? " " : String.fromCharCode(65532)).first).toList();
     if (titles.isEmpty) {
+      if (chatIdentifier!.startsWith("urn:biz")) {
+        return "Business Chat";
+      }
       return chatIdentifier!;
     } else if (titles.length == 1) {
       return titles[0];

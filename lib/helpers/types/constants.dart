@@ -46,6 +46,7 @@ const balloonBundleIdMap = {
     'com.apple.mobileslideshow.PhotosMessagesApp': 'Photo Slideshow',
     'com.contextoptional.OpenTable.Messages': 'OpenTable',
     'com.apple.PassbookUIService.PeerPaymentMessagesExtension': 'Apple Pay',
+    'com.apple.icloud.apps.messages.business.extension': 'Business Interactive Message',
   }
 };
 

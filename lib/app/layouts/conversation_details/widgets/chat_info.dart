@@ -172,7 +172,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
             child: Row(
               mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
               children: [
-                if (!kIsWeb && !kIsDesktop 
+                if (!kIsWeb && !kIsDesktop && !chat.chatIdentifier!.startsWith("urn:biz")
                     && ((chat.participants.first.contact?.phones.isNotEmpty ?? false) 
                         || !chat.participants.first.address.contains("@")))
                   Expanded(

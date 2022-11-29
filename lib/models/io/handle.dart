@@ -41,11 +41,13 @@ class Handle {
         return "";
       }
     }
+    if (address.startsWith("urn:biz")) return "Business";
     if (contact != null) return contact!.displayName;
     return address.contains("@") ? address : (formattedAddress ?? address);
   }
   String? get initials {
     // Remove any numbers, certain symbols, and non-alphabet characters
+    if (address.startsWith("urn:biz")) return null;
     String importantChars = displayName.toUpperCase().replaceAll(RegExp(r'[^a-zA-Z _-]'), "").trim();
     if (importantChars.isEmpty) return null;
 
