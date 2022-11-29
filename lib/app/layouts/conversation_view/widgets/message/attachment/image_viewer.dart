@@ -34,6 +34,7 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
   @override
   void initState() {
     super.initState();
+    if (attachment.guid!.contains("demo")) return;
     data = controller.imageData[attachment.guid];
     updateObx(() {
       initBytes();
@@ -62,6 +63,9 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (attachment.guid!.contains("demo")) {
+      return Image.asset(attachment.transferName!, fit: BoxFit.cover);
+    }
     if (data == null) {
       return SizedBox(
         width: min((attachment.width?.toDouble() ?? ns.width(context) * 0.5), ns.width(context) * 0.5),
