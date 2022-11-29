@@ -174,7 +174,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
               height: iosSize*0.8,
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(6.5),
+                  padding: const EdgeInsets.all(6.5).add(EdgeInsets.only(right: reactionType == "emphasize" ? 1 : 0)),
                   child: SvgPicture.asset(
                     'assets/reactions/$reactionType-black.svg',
                     color: reactionType == "love"

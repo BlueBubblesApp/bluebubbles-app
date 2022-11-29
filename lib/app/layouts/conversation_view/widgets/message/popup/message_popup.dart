@@ -408,7 +408,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                 popDetails();
                                               },
                                               child: Padding(
-                                                padding: const EdgeInsets.all(6.5),
+                                                padding: const EdgeInsets.all(6.5).add(EdgeInsets.only(right: e == "emphasize" ? 2.5 : 0)),
                                                 child: iOS ? SvgPicture.asset(
                                                   'assets/reactions/$e-black.svg',
                                                   color: e == "love" && currentlySelectedReaction == e
@@ -1281,6 +1281,7 @@ class ReactionDetails extends StatelessWidget {
                       child: Padding(
                         padding: ss.settings.skin.value == Skins.iOS
                             ? const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0)
+                            .add(EdgeInsets.only(right: message.associatedMessageType == "emphasize" ? 1 : 0))
                             : EdgeInsets.zero,
                         child: ss.settings.skin.value == Skins.iOS ? SvgPicture.asset(
                           'assets/reactions/${message.associatedMessageType}-black.svg',
