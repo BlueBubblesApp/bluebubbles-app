@@ -185,35 +185,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Compresses chat tile size on the conversation list page",
                           isThreeLine: true,
                         )),
-                    Obx(() {
-                      if (iOS) {
-                        return Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    }),
-                    Obx(() {
-                      if (iOS) {
-                        return SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.reducedForehead.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.reducedForehead.value,
-                          title: "Reduced Forehead",
-                          backgroundColor: tileColor,
-                          subtitle: "Reduces the appbar size on conversation pages",
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    }),
                     Container(
                       color: tileColor,
                       child: Padding(

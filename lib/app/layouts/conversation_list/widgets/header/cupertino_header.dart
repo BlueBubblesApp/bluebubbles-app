@@ -20,8 +20,6 @@ class CupertinoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
         ? 20
-        : ss.settings.reducedForehead.value
-        ? 20
         : kIsDesktop
         ? 40
         : kToolbarHeight + 30;
@@ -145,8 +143,6 @@ class CupertinoMiniHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
-        ? 20
-        : ss.settings.reducedForehead.value
         ? 20
         : kIsDesktop
         ? 40

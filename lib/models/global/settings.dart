@@ -29,7 +29,6 @@ class Settings {
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
-  final RxBool reducedForehead = false.obs;
   final RxBool preCachePreviewImages = true.obs;
   final RxBool showConnectionIndicator = false.obs;
   final RxBool showSyncIndicator = true.obs;
@@ -195,7 +194,6 @@ class Settings {
       'doubleTapForDetails': doubleTapForDetails.value,
       'denseChatTiles': denseChatTiles.value,
       'smartReply': smartReply.value,
-      'reducedForehead': reducedForehead.value,
       'preCachePreviewImages': preCachePreviewImages.value,
       'showConnectionIndicator': showConnectionIndicator.value,
       'showSyncIndicator': showSyncIndicator.value,
@@ -311,7 +309,6 @@ class Settings {
     ss.settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     ss.settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     ss.settings.smartReply.value = map['smartReply'] ?? false;
-    ss.settings.reducedForehead.value = map['reducedForehead'] ?? false;
     ss.settings.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
     ss.settings.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
     ss.settings.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
@@ -426,7 +423,6 @@ class Settings {
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
-    s.reducedForehead.value = map['reducedForehead'] ?? false;
     s.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
     s.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
     s.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
