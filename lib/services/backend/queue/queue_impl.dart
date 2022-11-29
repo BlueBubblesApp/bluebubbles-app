@@ -8,10 +8,13 @@ abstract class Queue extends GetxService {
   bool isProcessing = false;
   List<QueueItem> items = [];
 
-  void queue(QueueItem item) {
+  void queue(QueueItem item) async {
+    await prepItem(item);
     items.add(item);
     if (!isProcessing) processNextItem();
   }
+
+  Future<void> prepItem(QueueItem _);
 
   Future<void> processNextItem() async {
     if (items.isEmpty) {

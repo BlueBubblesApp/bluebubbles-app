@@ -13,10 +13,10 @@ import 'package:universal_io/io.dart';
 ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>() : Get.put(ActionHandler());
 
 class ActionHandler extends GetxService {
-  final List<Tuple2<String, RxDouble>> attachmentProgress = [];
-
-  Future<void> sendMessage(Chat c, Message m, Message? selected, String? r) async {
-    if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return;
+  final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
+  
+  Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r) async {
+    if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
 
     final List<Message> messages = <Message>[];
 
@@ -42,53 +42,53 @@ class ActionHandler extends GetxService {
 
       for (Message message in messages) {
         message.generateTempGuid();
-        c.addMessage(message);
+        await c.addMessage(message);
       }
     } else {
       m.generateTempGuid();
-      c.addMessage(m);
+      await c.addMessage(m);
       messages.add(m);
     }
+    return messages;
+  }
 
+  Future<void> sendMessage(Chat c, Message m, Message? selected, String? r) async {
     final completer = Completer<void>();
-
     if (r == null) {
-      messages.forEachIndexed((index, element) {
-        http.sendMessage(
-            c.guid,
-            element.guid!,
-            element.text!,
-            subject: element.subject,
-            method: (ss.settings.enablePrivateAPI.value
-                && ss.settings.privateAPISend.value)
-                || (element.subject?.isNotEmpty ?? false)
-                || element.threadOriginatorGuid != null
-                || element.expressiveSendStyleId != null
-                ? "private-api" : "apple-script",
-            selectedMessageGuid: element.threadOriginatorGuid,
-            effectId: element.expressiveSendStyleId,
-            partIndex: int.tryParse(element.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-        ).then((response) async {
-          final newMessage = Message.fromMap(response.data['data']);
-          try {
-            await Message.replaceMessage(element.guid, newMessage);
-            Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${element.guid}", tag: "MessageStatus");
-          } catch (_) {
-            Logger.info("Message match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
-          }
-          if (index == messages.length - 1) completer.complete();
-        }).catchError((error) async {
-          Logger.error('Failed to send message! Error: ${error.toString()}');
+      http.sendMessage(
+        c.guid,
+        m.guid!,
+        m.text!,
+        subject: m.subject,
+        method: (ss.settings.enablePrivateAPI.value
+            && ss.settings.privateAPISend.value)
+            || (m.subject?.isNotEmpty ?? false)
+            || m.threadOriginatorGuid != null
+            || m.expressiveSendStyleId != null
+            ? "private-api" : "apple-script",
+        selectedMessageGuid: m.threadOriginatorGuid,
+        effectId: m.expressiveSendStyleId,
+        partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
+      ).then((response) async {
+        final newMessage = Message.fromMap(response.data['data']);
+        try {
+          await Message.replaceMessage(m.guid, newMessage);
+          Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+        } catch (_) {
+          Logger.info("Message match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+        }
+        completer.complete();
+      }).catchError((error) async {
+        Logger.error('Failed to send message! Error: ${error.toString()}');
 
-          final tempGuid = element.guid;
-          element = handleSendError(error, element);
+        final tempGuid = m.guid;
+        m = handleSendError(error, m);
 
-          if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
-            await notif.createFailedToSend();
-          }
-          await Message.replaceMessage(tempGuid, element);
-          if (index == messages.length - 1) completer.complete();
-        });
+        if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
+          await notif.createFailedToSend();
+        }
+        await Message.replaceMessage(tempGuid, m);
+        completer.complete();
       });
     } else {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, partIndex: m.associatedMessagePart).then((response) async {
@@ -116,13 +116,11 @@ class ActionHandler extends GetxService {
 
     return completer.future;
   }
-
-  Future<void> sendAttachment(Chat c, Message m) async {
-    if (m.attachments.isEmpty || m.attachments.firstOrNull?.bytes == null) return;
+  
+  Future<void> prepAttachment(Chat c, Message m) async {
     final attachment = m.attachments.first!;
     final progress = Tuple2(attachment.guid!, 0.0.obs);
     attachmentProgress.add(progress);
-
     // Save the attachment to storage and DB
     if (!kIsWeb) {
       String pathName = "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
@@ -130,7 +128,12 @@ class ActionHandler extends GetxService {
       await file.writeAsBytes(attachment.bytes!);
     }
     await c.addMessage(m);
+  }
 
+  Future<void> sendAttachment(Chat c, Message m) async {
+    if (m.attachments.isEmpty || m.attachments.firstOrNull?.bytes == null) return;
+    final attachment = m.attachments.first!;
+    final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
     http.sendAttachmentBytes(c.guid, attachment.guid!, attachment.bytes!, attachment.transferName!,
         onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length
@@ -147,7 +150,7 @@ class ActionHandler extends GetxService {
       } catch (_) {
         Logger.info("Attachment match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
       }
-      attachmentProgress.removeWhere((e) => e.item1 == m.guid);
+      attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);
 
       completer.complete();
     }).catchError((error) async {
@@ -160,7 +163,7 @@ class ActionHandler extends GetxService {
         await notif.createFailedToSend();
       }
       await Message.replaceMessage(tempGuid, m);
-      attachmentProgress.removeWhere((e) => e.item1 == m.guid);
+      attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);
       completer.complete();
     });
 

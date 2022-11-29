@@ -10,6 +10,9 @@ IncomingQueue inq = Get.isRegistered<IncomingQueue>() ? Get.find<IncomingQueue>(
 class IncomingQueue extends Queue {
 
   @override
+  Future<void> prepItem(QueueItem _) async {}
+
+  @override
   Future<void> handleQueueItem(QueueItem _) async {
     assert(_ is IncomingItem);
     final item = _ as IncomingItem;

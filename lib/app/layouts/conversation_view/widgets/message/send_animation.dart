@@ -64,14 +64,11 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
       );
       message.generateTempGuid();
       message.attachments.first!.guid = message.guid;
-      final completer = Completer<void>();
       outq.queue(OutgoingItem(
         type: QueueType.sendAttachment,
         chat: controller.chat,
         message: message,
-        completer: completer,
       ));
-      await completer.future;
     }
 
     if (text.isNotEmpty || subject.isNotEmpty) {
