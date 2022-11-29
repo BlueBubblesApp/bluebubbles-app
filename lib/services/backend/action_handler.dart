@@ -27,17 +27,26 @@ class ActionHandler extends GetxService {
       final match = parseLinks(m.text!.replaceAll("\n", " ")).firstOrNull;
       if (match != null) {
         if (match.start == 0) {
-          mainText = m.text!.substring(match.start, match.end);
-          secondaryText = m.text!.substring(match.end);
+          mainText = m.text!.substring(0, match.end).trimRight();
+          secondaryText = m.text!.substring(match.end).trimLeft();
         } else if (match.end == m.text!.length) {
-          mainText = m.text!.substring(0, match.start);
-          secondaryText = m.text!.substring(match.start, match.end);
+          mainText = m.text!.substring(0, match.start).trimRight();
+          secondaryText = m.text!.substring(match.start).trimLeft();
         }
       }
 
       messages.add(m..text = mainText);
-      if (secondaryText != null) {
-        messages.add(m..text = secondaryText..subject = null);
+      if (!isNullOrEmpty(secondaryText)!) {
+        messages.add(Message(
+          text: secondaryText,
+          threadOriginatorGuid: m.threadOriginatorGuid,
+          threadOriginatorPart: "${m.threadOriginatorPart ?? 0}:0:0",
+          expressiveSendStyleId: m.expressiveSendStyleId,
+          dateCreated: DateTime.now(),
+          hasAttachments: false,
+          isFromMe: true,
+          handleId: 0,
+        ));
       }
 
       for (Message message in messages) {

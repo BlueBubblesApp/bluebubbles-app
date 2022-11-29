@@ -10,16 +10,16 @@ OutgoingQueue outq = Get.isRegistered<OutgoingQueue>() ? Get.find<OutgoingQueue>
 class OutgoingQueue extends Queue {
 
   @override
-  Future<void> prepItem(QueueItem _) async {
+  Future<dynamic> prepItem(QueueItem _) async {
     assert(_ is OutgoingItem);
     final item = _ as OutgoingItem;
 
     switch (item.type) {
       case QueueType.sendMessage:
-        await ah.prepMessage(item.chat, item.message, item.selected, item.reaction);
+        return await ah.prepMessage(item.chat, item.message, item.selected, item.reaction);
         break;
       case QueueType.sendAttachment:
-        await ah.prepAttachment(item.chat, item.message);
+        return await ah.prepAttachment(item.chat, item.message);
         break;
       default:
         Logger.info("Unhandled queue event: ${describeEnum(item.type)}");

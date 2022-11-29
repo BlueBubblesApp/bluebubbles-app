@@ -79,7 +79,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         threadOriginatorPart: "${part ?? 0}:0:0",
         expressiveSendStyleId: effectId,
         dateCreated: DateTime.now(),
-        hasAttachments: true,
+        hasAttachments: false,
         isFromMe: true,
         handleId: 0,
       );
