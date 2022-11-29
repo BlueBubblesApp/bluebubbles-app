@@ -100,6 +100,24 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       backgroundColor: tileColor,
                       isThreeLine: true,
                     )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      ss.settings.repliesToPrevious.value = val;
+                      saveSettings();
+                    },
+                    initialVal: ss.settings.repliesToPrevious.value,
+                    title: "Show Replies To Previous Message",
+                    subtitle: "Shows replies to the previous message in the thread rather than the original",
+                    backgroundColor: tileColor,
+                    isThreeLine: true,
+                  )),
                   if (!kIsWeb)
                     Container(
                       color: tileColor,

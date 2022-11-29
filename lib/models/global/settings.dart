@@ -63,6 +63,7 @@ class Settings {
   final RxInt apiTimeout = 15000.obs;
   final RxBool allowUpsideDownRotation = false.obs;
   final RxBool cancelQueuedMessages = false.obs;
+  final RxBool repliesToPrevious = false.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -231,6 +232,7 @@ class Settings {
       'apiTimeout': apiTimeout.value,
       'allowUpsideDownRotation': allowUpsideDownRotation.value,
       'cancelQueuedMessages': cancelQueuedMessages.value,
+      'repliesToPrevious': repliesToPrevious.value,
       'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -343,6 +345,7 @@ class Settings {
     ss.settings.apiTimeout.value = map['apiTimeout'] ?? 15000;
     ss.settings.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
+    ss.settings.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     ss.settings.swipeToReply.value = map['swipeToReply'] ?? false;
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -459,6 +462,7 @@ class Settings {
     s.apiTimeout.value = map['apiTimeout'] ?? 15000;
     s.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
+    s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;

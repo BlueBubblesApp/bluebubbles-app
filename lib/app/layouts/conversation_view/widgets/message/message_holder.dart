@@ -55,8 +55,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Message get message => controller.message;
   Message? get olderMessage => controller.oldMessage;
   Message? get newerMessage => controller.newMessage;
-  Message? get threadOriginator => message.threadOriginatorGuid == null
-      ? null : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
+  Message? get replyTo => message.threadOriginatorGuid == null
+      ? null
+      : ss.settings.repliesToPrevious.value
+      ? (service.struct.getPreviousReply(message.threadOriginatorGuid!, message.guid!) ?? service.struct.getThreadOriginator(message.threadOriginatorGuid!))
+      : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
   Chat get chat => widget.cvController.chat;
   MessagesService get service => ms(widget.cvController.chat.guid);
   bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.settings.swipeToReply.value && chat.isIMessage && !widget.isReplyThread;
@@ -255,11 +258,12 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               && olderMessage != null
                               && message.threadOriginatorGuid != null
                               && message.showUpperMessage(olderMessage!)
-                              && getActiveMwc(message.threadOriginatorGuid!) != null)
+                              && replyTo != null
+                              && getActiveMwc(replyTo!.guid!) != null)
                             Padding(
-                              padding: EdgeInsets.only(left: chat.isGroup && getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe! ? 35 : 0),
+                              padding: EdgeInsets.only(left: chat.isGroup && replyTo!.isFromMe! ? 35 : 0),
                               child: DecoratedBox(
-                                decoration: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? ReplyLineDecoration(
+                                decoration: replyTo!.isFromMe == message.isFromMe ? ReplyLineDecoration(
                                   isFromMe: message.isFromMe!,
                                   color: context.theme.colorScheme.properSurface,
                                   connectUpper: false,
@@ -268,13 +272,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 ) : const BoxDecoration(),
                                 child: Container(
                                   width: double.infinity,
-                                  alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!
-                                      ? Alignment.centerRight : Alignment.centerLeft,
+                                  alignment: replyTo!.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
                                   child: ReplyBubble(
-                                    parentController: getActiveMwc(message.threadOriginatorGuid!)!,
-                                    part: message.normalizedThreadPart,
-                                    showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
-                                        && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                                    parentController: getActiveMwc(replyTo!.guid!)!,
+                                    part: replyTo!.guid! == message.threadOriginatorGuid ? message.normalizedThreadPart : 0,
+                                    showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS) && !replyTo!.isFromMe!,
                                   ),
                                 ),
                               ),
@@ -301,7 +303,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               && olderMessage != null
                               && message.threadOriginatorGuid != null
                               && message.showUpperMessage(olderMessage!)
-                              && getActiveMwc(message.threadOriginatorGuid!) != null)
+                              && replyTo != null)
                             Padding(
                               padding: showAvatar || ss.settings.alwaysShowAvatars.value
                                   ? const EdgeInsets.only(left: 45.0, right: 10) : const EdgeInsets.symmetric(horizontal: 10),
@@ -311,10 +313,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   border: Border.fromBorderSide(BorderSide(color: context.theme.colorScheme.properSurface)),
                                 ),
                                 child: ReplyBubble(
-                                  parentController: getActiveMwc(message.threadOriginatorGuid!)!,
-                                  part: message.normalizedThreadPart,
+                                  parentController: getActiveMwc(replyTo!.guid!)!,
+                                  part: replyTo!.guid! == message.threadOriginatorGuid ? message.normalizedThreadPart : 0,
                                   showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
-                                      && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                                      && !replyTo!.isFromMe!,
                                 ),
                               ),
                             ),

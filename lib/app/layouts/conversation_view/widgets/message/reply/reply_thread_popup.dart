@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -37,45 +38,47 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
                 onSurface: ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
               ),
             ),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-              child: AnnotatedRegion<SystemUiOverlayStyle>(
-                value: SystemUiOverlayStyle(
-                  systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-                  systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
-                  statusBarColor: Colors.transparent, // status bar color
-                  statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
-                ),
-                child: Scaffold(
-                  backgroundColor: Colors.transparent,
-                  body: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Container(
-                      color: context.theme.colorScheme.background.withAlpha(150),
-                      child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Center(
-                            child: SingleChildScrollView(
-                              controller: controller,
-                              child: Column(
-                                children: _messages.mapIndexed((index, e) => AbsorbPointer(
-                                  absorbing: true,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                                    child: MessageHolder(
-                                      cvController: cvc(service.chat, tag: service.chat.guid),
-                                      message: _messages[index],
-                                      oldMessageGuid: index > 0 ? _messages[index - 1].guid : null,
-                                      newMessageGuid: index < _messages.length - 1 ? _messages[index + 1].guid : null,
-                                      isReplyThread: true,
-                                      replyPart: index == 0 ? originatorPart : null,
+            child: DeferredPointerHandler(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+                child: AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: SystemUiOverlayStyle(
+                    systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+                    systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+                    statusBarColor: Colors.transparent, // status bar color
+                    statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
+                  ),
+                  child: Scaffold(
+                    backgroundColor: Colors.transparent,
+                    body: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        color: context.theme.colorScheme.background.withAlpha(150),
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Center(
+                              child: SingleChildScrollView(
+                                controller: controller,
+                                child: Column(
+                                  children: _messages.mapIndexed((index, e) => AbsorbPointer(
+                                    absorbing: true,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                                      child: MessageHolder(
+                                        cvController: cvc(service.chat, tag: service.chat.guid),
+                                        message: _messages[index],
+                                        oldMessageGuid: index > 0 ? _messages[index - 1].guid : null,
+                                        newMessageGuid: index < _messages.length - 1 ? _messages[index + 1].guid : null,
+                                        isReplyThread: true,
+                                        replyPart: index == 0 ? originatorPart : null,
+                                      ),
                                     ),
-                                  ),
-                                )).toList(),
-                              )
+                                  )).toList(),
+                                )
+                              ),
                             ),
                           ),
                         ),

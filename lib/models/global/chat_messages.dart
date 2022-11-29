@@ -78,4 +78,13 @@ class ChatMessages {
   Message? getThreadOriginator(String guid) {
     return _threads[guid]?[guid];
   }
+
+  Message? getPreviousReply(String threadGuid, String messageGuid) {
+    final thread = threads(threadGuid)..sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+    final index = thread.indexWhere((element) => element.guid == messageGuid);
+    if (index != -1) {
+      return thread[index - 1];
+    }
+    return null;
+  }
 }
