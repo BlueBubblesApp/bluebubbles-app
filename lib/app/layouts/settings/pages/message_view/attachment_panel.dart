@@ -182,29 +182,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           )),
                     ],
                   ),
-                if (!kIsWeb)
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Advanced"),
-                if (!kIsWeb)
-                  SettingsSection(
-                    backgroundColor: tileColor,
-                    children: [
-                      Obx(() => SettingsSwitch(
-                            onChanged: (bool val) {
-                              ss.settings.preCachePreviewImages.value = val;
-                              saveSettings();
-                            },
-                            initialVal: ss.settings.preCachePreviewImages.value,
-                            title: "Cache Preview Images",
-                            subtitle: "Caches URL preview images for faster load times",
-                            backgroundColor: tileColor,
-                          )),
-                    ],
-                  ),
               ],
             ),
           ),

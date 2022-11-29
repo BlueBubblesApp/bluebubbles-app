@@ -340,19 +340,6 @@ class Chat {
         // Save the metadata to the object
         message.metadata = meta!.toJson();
 
-        // If pre-caching is enabled, fetch the image and save it
-        if (ss.settings.preCachePreviewImages.value &&
-            message.metadata!.containsKey("image") &&
-            !isNullOrEmpty(message.metadata!["image"])!) {
-          // Save from URL
-          File? newFile = await saveImageFromUrl(message.guid!, message.metadata!["image"]);
-
-          // If we downloaded a file, set the new metadata path
-          if (newFile != null && await newFile.exists()) {
-            message.metadata!["image"] = newFile.path;
-          }
-        }
-
         message.save();
       });
     }
