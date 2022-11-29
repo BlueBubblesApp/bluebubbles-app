@@ -107,18 +107,16 @@ class MessageHelper {
 
   static String getNotificationText(Message message, {bool withSender = false}) {
     if (message.isGroupEvent) return message.groupEventText;
-    String sender = !withSender ? "" : "${message.isFromMe! ? "You" : message.handle?.displayName ?? "Someone"}: ";
+    if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
+      return "Message sent with Invisible Ink";
+    }
+    String sender = !withSender ? "" : "${message.isFromMe! ? "You" : (message.handle?.displayName ?? "Someone")}: ";
 
     if (message.isInteractive) {
       return "$sender${message.interactiveText}";
     }
-
     if (isNullOrEmpty(message.fullText)! && !message.hasAttachments) {
       return "${sender}Empty message";
-    }
-
-    if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
-      return "Message sent with Invisible Ink";
     }
 
     // If there are attachments, return the number of attachments
@@ -129,7 +127,7 @@ class MessageHelper {
       return "$output: ${_getAttachmentText(message.realAttachments)}";
     } else if (!isNullOrEmpty(message.associatedMessageGuid)!) {
       // It's a reaction message, get the sender
-      String sender = message.isFromMe! ? "You" : message.handle?.displayName ?? "Someone";
+      String sender = message.isFromMe! ? "You" : (message.handle?.displayName ?? "Someone");
       // fetch the associated message object
       Message? associatedMessage = Message.findOne(guid: message.associatedMessageGuid);
       if (associatedMessage != null) {
@@ -142,8 +140,11 @@ class MessageHelper {
           // now we check if theres a subject or text and construct out message based off that
         } else if (associatedMessage.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
           return "$sender $verb a message with Invisible Ink";
-        } else if (!isNullOrEmpty(message.fullText)!) {
-          return '$sender $verb “${message.fullText}”';
+        } else if (!isNullOrEmpty(associatedMessage.subject?.trim())! || !isNullOrEmpty(associatedMessage.text?.trim())!) {
+          final messageText = (associatedMessage.subject ?? "")
+              + (!isNullOrEmpty(associatedMessage.subject?.trim())! ? "\n" : "")
+              + (associatedMessage.text ?? "");
+          return '$sender $verb “$messageText”';
           // if it has an attachment, we should fetch the attachments and get the attachment text
         } else if (associatedMessage.hasAttachments) {
           return '$sender $verb ${_getAttachmentText(associatedMessage.fetchAttachments()!)}';
