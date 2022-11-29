@@ -722,7 +722,7 @@ class Message {
       text = "$name removed $other from the conversation";
     } else if (itemType == 1 && groupActionType == 0) {
       text = "$name added $other to the conversation";
-    } else if (itemType == 3 && groupActionType == 1) {
+    } else if (itemType == 3 && (groupActionType ?? 0) > 0) {
       text = "$name changed the group photo";
     } else if (itemType == 3) {
       text = "$name left the conversation";
