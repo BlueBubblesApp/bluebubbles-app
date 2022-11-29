@@ -14,6 +14,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,6 +40,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   bool showMoreParticipants = false;
   late Chat chat = widget.chat;
   late StreamSubscription<Query<Chat>> sub;
+  final RxList<String> selected = <String>[].obs;
 
   bool get shouldShowMore => chat.participants.length > 5;
   List<Handle> get clippedParticipants => showMoreParticipants
@@ -145,6 +147,38 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
           initialHeader: null,
           iosSubtitle: iosSubtitle,
           materialSubtitle: materialSubtitle,
+          actions: [
+            Obx(() {
+              if (selected.isNotEmpty) {
+                return IconButton(
+                  icon: Icon(iOS ? CupertinoIcons.xmark : Icons.close, color: context.theme.colorScheme.onBackground),
+                  onPressed: () {
+                    selected.clear();
+                  },
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            }),
+            Obx(() {
+              if (selected.isNotEmpty) {
+                return IconButton(
+                  icon: Icon(iOS ? CupertinoIcons.cloud_download : Icons.file_download, color: context.theme.colorScheme.onBackground),
+                  onPressed: () {
+                    final attachments = media.where((e) => selected.contains(e.guid!));
+                    for (Attachment a in attachments) {
+                      final file = as.getContent(a, autoDownload: false);
+                      if (file is PlatformFile) {
+                        as.saveToDisk(file);
+                      }
+                    }
+                  },
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            }),
+          ],
           bodySlivers: [
             SliverToBoxAdapter(
               child: ChatInfo(chat: chat),
@@ -246,9 +280,56 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, int index) {
-                      return MediaGalleryCard(
-                        attachment: media[index],
-                      );
+                      return Obx(() => AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: EdgeInsets.all(selected.contains(media[index].guid) ? 10 : 0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: GestureDetector(
+                          onTap: selected.isNotEmpty ? () {
+                            if (selected.contains(media[index].guid)) {
+                              selected.remove(media[index].guid!);
+                            } else {
+                              selected.add(media[index].guid!);
+                            }
+                          } : null,
+                          onLongPress: () {
+                            if (selected.contains(media[index].guid)) {
+                              selected.remove(media[index].guid!);
+                            } else {
+                              selected.add(media[index].guid!);
+                            }
+                          },
+                          child: AbsorbPointer(
+                            absorbing: selected.isNotEmpty,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                MediaGalleryCard(
+                                  attachment: media[index],
+                                ),
+                                if (selected.contains(media[index].guid))
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: context.theme.colorScheme.primary
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Icon(
+                                        iOS ? CupertinoIcons.check_mark : Icons.check,
+                                        color: context.theme.colorScheme.onPrimary,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ));
                     },
                     childCount: media.length,
                   ),
