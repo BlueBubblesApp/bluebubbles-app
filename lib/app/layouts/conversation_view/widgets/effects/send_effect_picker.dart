@@ -318,8 +318,8 @@ void sendEffectAction(
                                             child: Container(
                                               key: key,
                                               constraints: BoxConstraints(
-                                                maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
-                                                minHeight: 30,
+                                                maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
+                                                minHeight: 40,
                                               ),
                                               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
                                               color: context.theme.colorScheme.primary.darkenAmount(0.2),

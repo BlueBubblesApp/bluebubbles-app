@@ -28,7 +28,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   late final String tag;
   late final StreamSubscription<Query<Message>> sub;
 
-  static const maxBubbleSizeFactor = 0.6;
+  static const maxBubbleSizeFactor = 0.75;
 
   MessageWidgetController(this.message) {
     tag = message.guid!;
