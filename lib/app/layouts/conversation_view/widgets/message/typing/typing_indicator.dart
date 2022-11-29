@@ -4,7 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -101,11 +101,12 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> with SingleT
   Widget buildCupertinoDot(int index) => AnimatedBuilder(
     animation: animation,
     builder: (context, child) {
+      final amt = (math.sin(animation.value + (index) * math.pi / 4).abs() * 20).clamp(1, 20).toDouble();
       return Container(
         decoration: BoxDecoration(
-          color: context.theme.colorScheme.properSurface.lightenOrDarken(
-            (math.sin(animation.value + (index) * math.pi / 4).abs() * 20).clamp(1, 20).toDouble()
-          ),
+          color: ts.inDarkMode(context)
+              ? context.theme.colorScheme.properSurface.lightenPercent(amt)
+              : context.theme.colorScheme.properSurface.darkenPercent(amt),
           shape: BoxShape.circle,
         ),
         width: 10,
