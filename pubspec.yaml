@@ -143,6 +143,7 @@ dependencies:
   screen_retriever: ^0.1.4
   flutter_acrylic: ^1.0.0+2
   expandable_page_view: ^1.0.17
+  windows_taskbar: ^1.1.0+1
   animated_size_and_fade: ^3.0.0
   idb_shim: ^2.0.1+1
   chunked_stream: ^1.4.1

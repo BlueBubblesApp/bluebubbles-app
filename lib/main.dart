@@ -3,9 +3,6 @@ import 'dart:isolate';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/types/classes/country_codes.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -15,8 +12,6 @@ import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/layouts/startup/splash_screen.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/intents.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -32,6 +27,7 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
 import 'package:screen_retriever/screen_retriever.dart';
@@ -42,6 +38,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:windows_taskbar/windows_taskbar.dart';
 
 late final Store store;
 late final Box<Attachment> attachmentBox;
@@ -81,7 +78,6 @@ Future<Null> initApp(bool bubble) async {
   Logger.info('Startup Logs');
   await ts.init();
   await mcs.init();
-  notif.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();
@@ -89,16 +85,65 @@ Future<Null> initApp(bool bubble) async {
   StackTrace? stacktrace;
 
   /* ----- APPDATA MIGRATION ----- */
-  if ((Platform.isLinux || Platform.isWindows) && !kIsWeb) {
-    // Migrate to new appdata location if this function returns the new place and we still have the old place
-    if (basename(fs.appDocDir.absolute.path) == "bluebubbles") {
-      Directory oldAppData = Platform.isWindows
-          ? Directory(join(dirname(dirname(fs.appDocDir.absolute.path)), "com.bluebubbles\\bluebubbles_app"))
-          : Directory(join(dirname(fs.appDocDir.absolute.path), "bluebubbles_app"));
-      if (await oldAppData.exists() && !await Directory(join(fs.appDocDir.path, "objectbox")).exists()) {
-        Logger.info("Copying appData to new directory");
-        await copyDirectory(oldAppData, fs.appDocDir);
-        Logger.info("Finished migrating appData");
+  if ((Platform.isLinux || Platform.isWindows) && kIsDesktop) {
+    //ignore: unnecessary_cast, we need this as a workaround
+    Directory appData = fs.appDocDir as Directory;
+    if (!await Directory(join(appData.path, "objectbox")).exists()) {
+      // Migrate to new appdata location if this function returns the new place and we still have the old place
+      if (basename(appData.absolute.path) == "bluebubbles") {
+        Directory oldAppData =
+        Platform.isWindows
+            ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"))
+            : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
+        bool storeApp = basename(dirname(dirname(appData.absolute.path))) != "Roaming";
+        if (await oldAppData.exists()) {
+          Logger.info("Copying appData to new directory");
+          copyDirectory(oldAppData, appData);
+          Logger.info("Finished migrating appData");
+        } else if (Platform.isWindows) {
+          // Find the other appdata.
+          String appDataRoot = p.joinAll(p.split(appData.absolute.path).slice(0, 4));
+          if (storeApp) {
+            // If current app is store, we first look for new location nonstore appdata in case people are installing
+            // diff versions
+            oldAppData = Directory(join(appDataRoot, "Roaming", "BlueBubbles", "bluebubbles"));
+            // If that doesn't exist, we look in the old non-store location
+            if (!await oldAppData.exists()) {
+              oldAppData = Directory(join(appDataRoot, "Roaming", "com.bluebubbles", "bluebubbles_app"));
+            }
+            if (await oldAppData.exists()) {
+              Logger.info("Copying appData from NONSTORE location to new directory");
+              copyDirectory(oldAppData, appData);
+              Logger.info("Finished migrating appData");
+            }
+          } else {
+            oldAppData = Directory(join(
+                appDataRoot,
+                "Local",
+                "Packages",
+                "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw",
+                "LocalCache",
+                "Roaming",
+                "BlueBubbles",
+                "bluebubbles"));
+            if (!await oldAppData.exists()) {
+              oldAppData = Directory(join(
+                  appDataRoot,
+                  "Local",
+                  "Packages",
+                  "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw",
+                  "LocalCache",
+                  "Roaming",
+                  "com.bluebubbles",
+                  "bluebubbles_app"));
+            }
+            if (await oldAppData.exists()) {
+              Logger.info("Copying appData from STORE location to new directory");
+              copyDirectory(oldAppData, appData);
+              Logger.info("Finished migrating appData");
+            }
+          }
+        }
       }
     }
   }
@@ -115,13 +160,16 @@ Future<Null> initApp(bool bubble) async {
           Logger.error(e);
           Logger.error(s);
           Logger.info("Failed to attach to existing store, opening from path");
-          store = await openStore(directory: objectBoxDirectory.path);
+          try {
+            store = await openStore(directory: objectBoxDirectory.path);
+          } catch (e, s) {
+            Logger.error(e);
+            Logger.error(s);
+          }
         }
       } else {
         try {
-          if (kIsDesktop) {
-            await objectBoxDirectory.create(recursive: true);
-          }
+          await objectBoxDirectory.create(recursive: true);
           Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
           store = await openStore(directory: objectBoxDirectory.path);
         } catch (e, s) {
@@ -129,7 +177,7 @@ Future<Null> initApp(bool bubble) async {
           Logger.error(s);
           if (Platform.isWindows) {
             Logger.info("Failed to open store from default path. Using custom path");
-            final customStorePath = "C:\\bluebubbles_app";
+            const customStorePath = "C:\\bluebubbles_app";
             ss.prefs.setBool("use-custom-path", true);
             ss.prefs.setString("custom-path", customStorePath);
             objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
@@ -163,6 +211,7 @@ Future<Null> initApp(bool bubble) async {
     if (!kIsWeb) {
       await cs.init();
     }
+    await notif.init();
     await intents.init();
     chats.init();
     socket;
@@ -477,9 +526,25 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         });
       }
 
-      /* ----- SYSTEM TRAY INITIALIZATION ----- */
       if (kIsDesktop) {
+        /* ----- CONTACT IMAGE CACHE DELETION ----- */
+        if (Platform.isWindows) {
+          Directory temp = Directory(join(fs.appDocDir.path, "temp"));
+          if (await temp.exists()) await temp.delete(recursive: true);
+        }
+
+        /* ----- SYSTEM TRAY INITIALIZATION ----- */
         await initSystemTray();
+
+        /* ----- RESET WINDOWS NOTIFICATION BADGE ----- */
+        if (Platform.isWindows) {
+          await WindowsTaskbar.resetOverlayIcon();
+        }
+
+        /* ----- WINDOWS NOTIFICATIONS INITIALIZATION ----- */
+        if (Platform.isWindows) {
+          await localNotifier.setup(appName: "BlueBubbles");
+        }
       }
 
       if (!ss.settings.finishedSetup.value) {
