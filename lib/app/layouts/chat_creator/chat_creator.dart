@@ -98,6 +98,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         setState(() {
           filteredContacts = List<Contact>.from(tuple.item1);
           filteredChats = List<Chat>.from(tuple.item2);
+          if (addressController.text.isNotEmpty) {
+            filteredChats.sort((a, b) => a.participants.length.compareTo(b.participants.length));
+          }
         });
       });
     });
@@ -392,7 +395,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
               child: ToggleButtons(
                 constraints: BoxConstraints(minWidth: (context.width - 35) / 2),
                 children: [
@@ -409,7 +412,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                     children: [
                       const Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Text("SMS"),
+                        child: Text("SMS Forwarding"),
                       ),
                       const Icon(Icons.messenger_outline, size: 16),
                     ],
@@ -420,6 +423,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                 selectedColor: context.theme.colorScheme.bubble(context, iMessage),
                 isSelected: [iMessage, sms],
                 onPressed: (index) {
+                  selectedContacts.clear();
+                  addressController.text = "";
                   if (index == 0) {
                     setState(() {
                       iMessage = true;
@@ -440,125 +445,141 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                 },
               ),
             ),
-            Expanded(
-              child: Stack(
-                children: [
-                  Obx(() => CustomScrollView(
-                    shrinkWrap: true,
-                    physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                        ? const NeverScrollableScrollPhysics()
-                        : ThemeSwitcher.getScrollPhysics(),
-                    slivers: <Widget>[
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
+            Theme(
+              data: context.theme.copyWith(
+                // in case some components still use legacy theming
+                primaryColor: context.theme.colorScheme.bubble(context, iMessage),
+                colorScheme: context.theme.colorScheme.copyWith(
+                  primary: context.theme.colorScheme.bubble(context, iMessage),
+                  onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
+                  surface: ss.settings.monetTheming.value == Monet.full
+                      ? null
+                      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                  onSurface: ss.settings.monetTheming.value == Monet.full
+                      ? null
+                      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                ),
+              ),
+              child: Expanded(
+                child: Stack(
+                  children: [
+                    Obx(() => CustomScrollView(
+                      shrinkWrap: true,
+                      physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                          ? const NeverScrollableScrollPhysics()
+                          : ThemeSwitcher.getScrollPhysics(),
+                      slivers: <Widget>[
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                              if (filteredChats.isEmpty) {
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        "Loading existing chats...",
+                                        style: context.theme.textTheme.labelLarge,
+                                      ),
+                                    ),
+                                    buildProgressIndicator(context, size: 15),
+                                  ],
+                                );
+                              }
+                              final chat = filteredChats[index];
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    addSelectedList(chat.participants
+                                        .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
+                                        .map((e) => SelectedContact(
+                                      displayName: e.displayName,
+                                      address: e.address,
+                                    )));
+                                  },
+                                  child: ChatCreatorTile(
+                                    key: ValueKey(chat.guid),
+                                    title: chat.properTitle,
+                                    subtitle: !chat.isGroup ? chat.participants.first.address : chat.getChatCreatorSubtitle(),
+                                    chat: chat,
+                                  ),
+                                ),
+                              );
+                            },
+                            childCount: filteredChats.length.clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity).toInt()
+                          ),
+                        ),
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
                                 (context, index) {
-                            if (filteredChats.isEmpty) {
+                              final contact = filteredContacts[index];
+                              contact.phones = getUniqueNumbers(contact.phones);
+                              contact.emails = getUniqueEmails(contact.emails);
                               return Column(
+                                key: ValueKey(contact.id),
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      "Loading existing chats...",
-                                      style: context.theme.textTheme.labelLarge,
+                                  ...contact.phones.map((e) => Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
+                                        addSelected(SelectedContact(
+                                            displayName: contact.displayName,
+                                            address: e
+                                        ));
+                                      },
+                                      child: ChatCreatorTile(
+                                        title: contact.displayName,
+                                        subtitle: e,
+                                        contact: contact,
+                                      ),
                                     ),
-                                  ),
-                                  buildProgressIndicator(context, size: 15),
+                                  )),
+                                  ...contact.emails.map((e) => Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
+                                        addSelected(SelectedContact(
+                                            displayName: contact.displayName,
+                                            address: e
+                                        ));
+                                      },
+                                      child: ChatCreatorTile(
+                                        title: contact.displayName,
+                                        subtitle: e,
+                                        contact: contact,
+                                      ),
+                                    ),
+                                  )),
                                 ],
                               );
-                            }
-                            final chat = filteredChats[index];
-                            return Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  addSelectedList(chat.participants
-                                      .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
-                                      .map((e) => SelectedContact(
-                                    displayName: e.displayName,
-                                    address: e.address,
-                                  )));
-                                },
-                                child: ChatCreatorTile(
-                                  key: ValueKey(chat.guid),
-                                  title: chat.properTitle,
-                                  subtitle: chat.getChatCreatorSubtitle(),
-                                  chat: chat,
-                                ),
-                              ),
-                            );
-                          },
-                          childCount: filteredChats.length.clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity).toInt()
+                            },
+                            childCount: filteredContacts.length,
+                          ),
                         ),
-                      ),
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                            final contact = filteredContacts[index];
-                            contact.phones = getUniqueNumbers(contact.phones);
-                            contact.emails = getUniqueEmails(contact.emails);
-                            return Column(
-                              key: ValueKey(contact.id),
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ...contact.phones.map((e) => Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                      addSelected(SelectedContact(
-                                          displayName: contact.displayName,
-                                          address: e
-                                      ));
-                                    },
-                                    child: ChatCreatorTile(
-                                      title: contact.displayName,
-                                      subtitle: e,
-                                      contact: contact,
-                                    ),
-                                  ),
-                                )),
-                                ...contact.emails.map((e) => Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                      addSelected(SelectedContact(
-                                          displayName: contact.displayName,
-                                          address: e
-                                      ));
-                                    },
-                                    child: ChatCreatorTile(
-                                      title: contact.displayName,
-                                      subtitle: e,
-                                      contact: contact,
-                                    ),
-                                  ),
-                                )),
-                              ],
-                            );
-                          },
-                          childCount: filteredContacts.length,
+                      ],
+                    )),
+                    Obx(() {
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 150),
+                        child: fakeController.value == null ? const SizedBox.shrink() : Container(
+                          color: context.theme.colorScheme.background,
+                          child: MessagesView(
+                            controller: fakeController.value!,
+                          ),
                         ),
-                      ),
-                    ],
-                  )),
-                  Obx(() {
-                    return AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 150),
-                      child: fakeController.value == null ? const SizedBox.shrink() : Container(
-                        color: context.theme.colorScheme.background,
-                        child: MessagesView(
-                          controller: fakeController.value!,
-                        ),
-                      ),
-                    );
-                  }),
-                ],
+                      );
+                    }),
+                  ],
+                ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 5.0, top: 5.0, bottom: 5.0),
+              padding: const EdgeInsets.only(left: 5.0, top: 10.0, bottom: 5.0),
               child: Theme(
                 data: context.theme.copyWith(
                   // in case some components still use legacy theming
