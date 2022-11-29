@@ -149,68 +149,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Attachment Preview Quality"),
-                if (!kIsWeb)
-                  SettingsSection(backgroundColor: tileColor, children: [
-                    if (!kIsWeb)
-                      Obx(() => SettingsSlider(
-                          startingVal: ss.settings.previewCompressionQuality.value.toDouble(),
-                          update: (double val) {
-                            ss.settings.previewCompressionQuality.value = val.toInt();
-                          },
-                          onChangeEnd: (double val) {
-                            saveSettings();
-                          },
-                          formatValue: ((double val) => "${val.toInt()}%"),
-                          backgroundColor: tileColor,
-                          leading: Obx(() => Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(5),
-                                    child: ImageFiltered(
-                                      imageFilter: ImageFilter.blur(
-                                        sigmaX: (1 - ss.settings.previewCompressionQuality.value / 100),
-                                        sigmaY: (1 - ss.settings.previewCompressionQuality.value / 100),
-                                      ),
-                                      child: Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: BoxDecoration(
-                                          color: iOS
-                                              ? Colors.grey
-                                              : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(5),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Icon(
-                                            iOS
-                                                ? CupertinoIcons.sparkles
-                                                : Icons.auto_awesome,
-                                            color: iOS
-                                                ? Colors.white
-                                                : Colors.grey,
-                                            size: iOS ? 23 : 30),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )),
-                          min: 10,
-                          max: 100,
-                          divisions: 18)),
-                    if (!kIsWeb)
-                      const SettingsSubtitle(
-                        subtitle: "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times.",
-                        unlimitedSpace: true,
-                      ),
-                  ]),
-                if (!kIsWeb)
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
                       text: "Attachment Viewer"),
                 if (!kIsWeb)
                   SettingsSection(

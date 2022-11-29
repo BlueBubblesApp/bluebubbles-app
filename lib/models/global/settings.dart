@@ -43,7 +43,6 @@ class Settings {
   final RxBool swipableConversationTiles = false.obs;
   final RxBool colorblindMode = false.obs;
   final RxBool showDeliveryTimestamps = false.obs;
-  final RxInt previewCompressionQuality = 50.obs;
   final RxBool filteredChatList = false.obs;
   final RxBool startVideosMuted = true.obs;
   final RxBool startVideosMutedFullscreen = true.obs;
@@ -208,7 +207,6 @@ class Settings {
       'swipableConversationTiles': swipableConversationTiles.value,
       'colorblindMode': colorblindMode.value,
       'showDeliveryTimestamps': showDeliveryTimestamps.value,
-      'previewCompressionQuality': previewCompressionQuality.value,
       'filteredChatList': filteredChatList.value,
       'startVideosMuted': startVideosMuted.value,
       'startVideosMutedFullscreen': startVideosMutedFullscreen.value,
@@ -323,7 +321,6 @@ class Settings {
     ss.settings.swipableConversationTiles.value = map['swipableConversationTiles'] ?? false;
     ss.settings.colorblindMode.value = map['colorblindMode'] ?? false;
     ss.settings.showDeliveryTimestamps.value = map['showDeliveryTimestamps'] ?? false;
-    ss.settings.previewCompressionQuality.value = map['previewCompressionQuality'] ?? 50;
     ss.settings.filteredChatList.value = map['filteredChatList'] ?? false;
     ss.settings.startVideosMuted.value = map['startVideosMuted'] ?? true;
     ss.settings.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'] ?? true;
@@ -437,7 +434,6 @@ class Settings {
     s.swipableConversationTiles.value = map['swipableConversationTiles'] ?? false;
     s.colorblindMode.value = map['colorblindMode'] ?? false;
     s.showDeliveryTimestamps.value = map['showDeliveryTimestamps'] ?? false;
-    s.previewCompressionQuality.value = map['previewCompressionQuality'] ?? 50;
     s.filteredChatList.value = map['filteredChatList'] ?? false;
     s.startVideosMuted.value = map['startVideosMuted'] ?? true;
     s.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'] ?? true;
