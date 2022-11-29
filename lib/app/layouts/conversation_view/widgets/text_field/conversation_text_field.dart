@@ -141,13 +141,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       _debounceTyping?.cancel();
       oldText = newText;
       // don't send a bunch of duplicate events for every typing change
-      if (_debounceTyping == null) {
+      if (_debounceTyping == null && ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
         socket.sendMessage("started-typing", {"chatGuid": chatGuid});
+        _debounceTyping = Timer(const Duration(seconds: 3), () {
+          socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
+          _debounceTyping = null;
+        });
       }
-      _debounceTyping = Timer(const Duration(seconds: 3), () {
-        socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
-        _debounceTyping = null;
-      });
     }
     // emoji picker
     final _controller = subject ? subjectTextController : controller.textController;
@@ -218,7 +218,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.textController.dispose();
     subjectTextController.dispose();
     recorderController.dispose();
-    socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
+    if (ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+      socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
+    }
 
     super.dispose();
   }
