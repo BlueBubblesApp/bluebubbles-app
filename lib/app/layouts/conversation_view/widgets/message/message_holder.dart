@@ -396,11 +396,13 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                       child: GestureDetector(
                                                         behavior: HitTestBehavior.deferToChild,
                                                         onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
-                                                          if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
-                                                            return;
-                                                          }
                                                           final offset = replyOffsets[index];
                                                           offset.value += details.delta.dx * 0.5;
+                                                          if (message.isFromMe!) {
+                                                            offset.value = offset.value.clamp(-double.infinity, 0);
+                                                          } else {
+                                                            offset.value = offset.value.clamp(0, double.infinity);
+                                                          }
                                                           if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
                                                             HapticFeedback.lightImpact();
                                                             gaveHapticFeedback = true;
