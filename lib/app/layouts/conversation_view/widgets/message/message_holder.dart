@@ -261,7 +261,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               && replyTo != null
                               && getActiveMwc(replyTo!.guid!) != null)
                             Padding(
-                              padding: EdgeInsets.only(left: chat.isGroup && replyTo!.isFromMe! ? 35 : 0),
+                              padding: EdgeInsets.only(left: (showAvatar || ss.settings.alwaysShowAvatars.value) && replyTo!.isFromMe! ? 35 : 0),
                               child: DecoratedBox(
                                 decoration: replyTo!.isFromMe == message.isFromMe ? ReplyLineDecoration(
                                   isFromMe: message.isFromMe!,
