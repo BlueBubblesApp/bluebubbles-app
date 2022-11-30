@@ -587,7 +587,7 @@ class Chat {
     save(updateHasUnreadMessage: true);
 
     try {
-      if (clearLocalNotifications && !hasUnread) {
+      if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
         mcs.invokeMethod("clear-chat-notifs", {"chatGuid": guid});
       }
       if (privateMark && ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {

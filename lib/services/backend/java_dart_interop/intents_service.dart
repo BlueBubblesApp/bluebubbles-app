@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
@@ -83,6 +84,7 @@ class IntentsService extends GetxService {
 
   Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
     if (guid == null) {
+      await uiStartup.future;
       ns.pushAndRemoveUntil(
         Get.context!,
         ChatCreator(
@@ -128,6 +130,7 @@ class IntentsService extends GetxService {
       }
 
       if (!chatIsOpen) {
+        await uiStartup.future;
         ns.pushAndRemoveUntil(
           Get.context!,
           ConversationView(

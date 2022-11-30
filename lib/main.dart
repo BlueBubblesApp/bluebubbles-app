@@ -52,6 +52,7 @@ late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 final Completer<void> storeStartup = Completer();
+final Completer<void> uiStartup = Completer();
 
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
@@ -69,7 +70,7 @@ Future<Null> bubble() async {
 Future<Null> initApp(bool bubble) async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
-  ls.isBubble = false;
+  ls.isBubble = bubble;
   ls.isUiThread = true;
   await ss.init();
   await fs.init();
@@ -521,6 +522,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     });
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
+      uiStartup.complete();
       /* ----- SERVER VERSION CHECK ----- */
       if (kIsWeb && ss.settings.finishedSetup.value) {
         int version = (await ss.getServerDetails()).item4;
