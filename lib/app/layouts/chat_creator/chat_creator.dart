@@ -619,7 +619,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                       );
                       await Future.delayed(const Duration(milliseconds: 500));
                       await fakeController.value!.send(
-                        [],
+                        widget.initialAttachments,
                         textController.text,
                         "",
                         null,

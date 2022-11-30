@@ -27,6 +27,7 @@ import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:universal_io/io.dart';
 
 class MessagePopup extends StatefulWidget {
   final Offset childPosition;
@@ -661,22 +662,33 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     );
   }
   
-  void forward() {
+  void forward() async {
     popDetails();
-    eventDispatcher.emit("update-highlight", null);
-    ns.pushAndRemoveUntil(
-      context,
-      ChatCreator(
-        initialText: message.text,
-        initialAttachments: message.attachments.map((attachment) => PlatformFile(
-          name: attachment!.transferName!,
-          path: kIsWeb ? null : attachment.path,
-          bytes: attachment.bytes,
-          size: attachment.totalBytes!,
-        )).toList(),
-      ),
-      (route) => route.isFirst,
-    );
+    List<PlatformFile> attachments = [];
+    final _attachments = message.attachments
+        .where((e) => as.getContent(e!, autoDownload: false) is PlatformFile)
+        .map((e) => as.getContent(e!, autoDownload: false) as PlatformFile);
+    for (PlatformFile a in _attachments) {
+      Uint8List? bytes = a.bytes;
+      bytes ??= await File(a.path!).readAsBytes();
+      attachments.add(PlatformFile(
+        name: a.name,
+        path: a.path,
+        size: bytes.length,
+        bytes: bytes,
+      ));
+    }
+    if (attachments.isNotEmpty) {
+      eventDispatcher.emit("update-highlight", null);
+      ns.pushAndRemoveUntil(
+        context,
+        ChatCreator(
+          initialText: message.text,
+          initialAttachments: attachments,
+        ),
+        (route) => route.isFirst,
+      );
+    }
   }
   
   void redownload() {
