@@ -80,17 +80,24 @@ class MethodChannelService extends GetxService {
       case "reply":
         await storeStartup.future;
         Logger.info("Received reply to message from FCM");
-        Map<String, dynamic> data = jsonDecode(call.arguments);
+        final data = call.arguments as Map?;
+        if (data == null) return;
         Chat? chat = Chat.findOne(guid: data["chat"]);
         if (chat == null) {
           return false;
         } else {
           final Completer<void> completer = Completer();
           outq.queue(OutgoingItem(
-              type: QueueType.sendMessage,
-              completer: completer,
-              chat: chat,
-              message: Message(text: data["text"])
+            type: QueueType.sendMessage,
+            completer: completer,
+            chat: chat,
+            message: Message(
+              text: data['text'],
+              dateCreated: DateTime.now(),
+              hasAttachments: false,
+              isFromMe: true,
+              handleId: 0,
+            ),
           ));
           await completer.future;
           return true;

@@ -87,10 +87,7 @@ class MessageHelper {
 
   static Future<void> handleNotification(Message message, Chat chat, {bool findExisting = true}) async {
     // if from me
-    if (message.isFromMe! || message.handle == null) {
-      chat.toggleHasUnread(false, privateMark: false);
-      return;
-    }
+    if (message.isFromMe! || message.handle == null) return;
     // See if there is an existing message for the given GUID
     if (findExisting && Message.findOne(guid: message.guid) != null) return;
     // if needing to mute
@@ -98,10 +95,7 @@ class MessageHelper {
     // if the chat is active
     if (ls.isAlive && cm.isChatActive(chat.guid)) return;
     // if app is alive, on chat list, but notifying on chat list is disabled
-    if (ls.isAlive && cm.activeChat == null && !ss.settings.notifyOnChatList.value) {
-      chat.toggleHasUnread(true);
-      return;
-    }
+    if (ls.isAlive && cm.activeChat == null && !ss.settings.notifyOnChatList.value) return;
     await notif.createNotification(chat, message);
   }
 
