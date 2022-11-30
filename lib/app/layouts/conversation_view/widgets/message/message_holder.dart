@@ -298,7 +298,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               && olderMessage != null
                               && message.threadOriginatorGuid != null
                               && message.showUpperMessage(olderMessage!)
-                              && replyTo != null)
+                              && replyTo != null
+                              && getActiveMwc(replyTo!.guid!) != null)
                             Padding(
                               padding: showAvatar || ss.settings.alwaysShowAvatars.value
                                   ? const EdgeInsets.only(left: 45.0, right: 10) : const EdgeInsets.symmetric(horizontal: 10),
