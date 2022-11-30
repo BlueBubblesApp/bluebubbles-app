@@ -64,6 +64,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   List<Message> reactions = [];
   late double messageOffset = Get.height - widget.childPosition.dy - widget.size.height;
+  late double materialOffset = widget.childPosition.dy + EdgeInsets.fromWindowPadding(
+    WidgetsBinding.instance.window.viewInsets,
+    WidgetsBinding.instance.window.devicePixelRatio,
+  ).bottom;
   late int numberToShow = 5;
   late Chat? dmChat = chats.chats
     .firstWhereOrNull((chat) => !chat.isGroup
@@ -353,7 +357,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     minSierra &&
                     chat.isIMessage)
                   Positioned(
-                    bottom: iOS ? itemHeight * numberToShow + 35 + widget.size.height : context.height - widget.childPosition.dy,
+                    bottom: iOS
+                        ? itemHeight * numberToShow + 35 + widget.size.height
+                        : context.height - materialOffset,
                     right: message.isFromMe! ? 15 : null,
                     left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
                     child: AnimatedSize(
@@ -474,7 +480,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     left: !message.isFromMe!
                         ? widget.childPosition.dx + widget.size.width + (reactions.isNotEmpty ? 25 : 10)
                         : widget.childPosition.dx - 45,
-                    top: widget.childPosition.dy,
+                    top: materialOffset,
                     child: Material(
                       color: context.theme.colorScheme.primary,
                       borderRadius: BorderRadius.circular(20),
