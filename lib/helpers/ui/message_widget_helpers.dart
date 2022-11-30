@@ -169,8 +169,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
                   if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     url = "http://$url";
                   }
-
-                  await launchUrlString(url);
+                  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
                 } else if (type == "map") {
                   await MapsLauncher.launchQuery(text);
                 } else if (type == "phone") {
