@@ -291,14 +291,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
                               child: MessageSender(olderMessage: olderMessage, message: message),
                             ),
-                          // add a box to account for height of reactions if
-                          // a sender wasn't added and there are reactions
-                          if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
-                              && !(chat.isGroup
-                                  && !message.isFromMe!
-                                  && showSender
-                                  && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
-                            const SizedBox(height: 15),
+                          // add a box to account for height of reactions
+                          if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty)
+                            const SizedBox(height: 15.0),
                           if (!iOS && index == 0 && !widget.isReplyThread
                               && olderMessage != null
                               && message.threadOriginatorGuid != null
