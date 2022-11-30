@@ -35,8 +35,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
   Message get message => widget.controller.message;
 
   void openPopup(BuildContext context) async {
-    widget.cvController.focusNode.unfocus();
-    widget.cvController.subjectFocusNode.unfocus();
+    if (iOS) {
+      widget.cvController.focusNode.unfocus();
+      widget.cvController.subjectFocusNode.unfocus();
+    }
     HapticFeedback.lightImpact();
     final size = globalKey.currentContext?.size;
     final childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
