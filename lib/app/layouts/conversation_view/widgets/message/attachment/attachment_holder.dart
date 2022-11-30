@@ -206,8 +206,13 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               tappable: false,
                               openColor: Colors.black,
                               closedColor: context.theme.colorScheme.properSurface,
-                              closedShape: iOS ? const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                              closedShape: iOS ? RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(20.0),
+                                  topRight: const Radius.circular(20.0),
+                                  bottomLeft: message.isFromMe! ? const Radius.circular(20.0) : Radius.zero,
+                                  bottomRight: !message.isFromMe! ? const Radius.circular(20.0) : Radius.zero,
+                                ),
                               ) : const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(5.0)),
                               ),
