@@ -112,6 +112,9 @@ class MessageHelper {
     if (isNullOrEmpty(message.fullText)! && !message.hasAttachments) {
       return "${sender}Empty message";
     }
+    if (message.hasAttachments && message.attachments.isEmpty) {
+      message.fetchAttachments();
+    }
 
     // If there are attachments, return the number of attachments
     if (message.realAttachments.isNotEmpty) {
