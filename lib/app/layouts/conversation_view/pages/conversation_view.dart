@@ -44,7 +44,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
 
   @override
   void dispose() {
-    cm.setAllInactive();
+    if (cm.activeChat?.chat.guid == chat.guid) cm.setAllInactive();
     controller.close();
     super.dispose();
   }
