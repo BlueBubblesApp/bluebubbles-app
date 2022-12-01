@@ -37,6 +37,14 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
     });
   }
 
+  @override
+  void dispose() {
+    if (attachment == null) {
+      controller?.dispose();
+    }
+    super.dispose();
+  }
+
   void initBytes() async {
     if (attachment != null) controller = cvController.audioPlayers[attachment!.guid];
     if (controller == null) {
