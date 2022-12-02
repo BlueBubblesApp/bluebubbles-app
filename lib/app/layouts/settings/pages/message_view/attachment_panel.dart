@@ -116,13 +116,16 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
+                      const SettingsSubtitle(
+                        subtitle: "Set where videos start playing muted",
+                      ),
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
                               ss.settings.startVideosMuted.value = val;
                               saveSettings();
                             },
                             initialVal: ss.settings.startVideosMuted.value,
-                            title: "Mute Videos by Default in Attachment Preview",
+                            title: "Mute in Attachment Preview",
                             backgroundColor: tileColor,
                           )),
                       Container(
@@ -138,7 +141,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                               saveSettings();
                             },
                             initialVal: ss.settings.startVideosMutedFullscreen.value,
-                            title: "Mute Videos by Default in Fullscreen Player",
+                            title: "Mute in Fullscreen Player",
                             backgroundColor: tileColor,
                           )),
                     ],
