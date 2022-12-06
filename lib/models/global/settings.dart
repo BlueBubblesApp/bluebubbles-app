@@ -93,11 +93,6 @@ class Settings {
   final RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
 
   // Slideable action settings
-  final RxBool iosShowPin = RxBool(true);
-  final RxBool iosShowAlert = RxBool(true);
-  final RxBool iosShowDelete = RxBool(true);
-  final RxBool iosShowMarkRead = RxBool(true);
-  final RxBool iosShowArchive = RxBool(true);
   final Rx<MaterialSwipeAction> materialRightAction = MaterialSwipeAction.pin.obs;
   final Rx<MaterialSwipeAction> materialLeftAction = MaterialSwipeAction.archive.obs;
 
@@ -254,11 +249,6 @@ class Settings {
       'generateFakeMessageContent': generateFakeMessageContent.value,
       'enableQuickTapback': enableQuickTapback.value,
       'quickTapbackType': quickTapbackType.value,
-      'iosShowPin': iosShowPin.value,
-      'iosShowAlert': iosShowAlert.value,
-      'iosShowDelete': iosShowDelete.value,
-      'iosShowMarkRead': iosShowMarkRead.value,
-      'iosShowArchive': iosShowArchive.value,
       'materialRightAction': materialRightAction.value.index,
       'materialLeftAction': materialLeftAction.value.index,
       'shouldSecure': shouldSecure.value,
@@ -366,11 +356,6 @@ class Settings {
     ss.settings.generateFakeMessageContent.value = map['generateFakeMessageContent'] ?? false;
     ss.settings.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     ss.settings.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
-    ss.settings.iosShowPin.value = map['iosShowPin'] ?? true;
-    ss.settings.iosShowAlert.value = map['iosShowAlert'] ?? true;
-    ss.settings.iosShowDelete.value = map['iosShowDelete'] ?? true;
-    ss.settings.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
-    ss.settings.iosShowArchive.value = map['iosShowArchive'] ?? true;
     ss.settings.materialRightAction.value = map['materialRightAction'] != null
         ? MaterialSwipeAction.values[map['materialRightAction']]
         : MaterialSwipeAction.pin;
@@ -483,11 +468,6 @@ class Settings {
     s.generateFakeMessageContent.value = map['generateFakeMessageContent'] ?? false;
     s.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     s.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
-    s.iosShowPin.value = map['iosShowPin'] ?? true;
-    s.iosShowAlert.value = map['iosShowAlert'] ?? true;
-    s.iosShowDelete.value = map['iosShowDelete'] ?? true;
-    s.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
-    s.iosShowArchive.value = map['iosShowArchive'] ?? true;
     s.materialRightAction.value = map['materialRightAction'] != null
         ? MaterialSwipeAction.values[map['materialRightAction']]
         : MaterialSwipeAction.pin;
