@@ -95,7 +95,7 @@ class OverflowMenu extends StatelessWidget {
             )
           );
         } else if (value == 2) {
-          Navigator.of(kIsDesktop ? Get.context! : context).push(
+          Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
                 return SettingsPage();

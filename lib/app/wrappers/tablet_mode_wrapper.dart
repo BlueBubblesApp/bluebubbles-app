@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -63,8 +62,7 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
     }
     return LayoutBuilder(
       builder: (context, BoxConstraints constraints) {
-        _maxWidth ??= constraints.maxWidth - widget.dividerWidth;
-
+        _maxWidth = constraints.maxWidth - widget.dividerWidth;
         return TitleBarWrapper(
           child: SizedBox(
             width: constraints.maxWidth,
@@ -79,48 +77,49 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     child: Container(
-                        color: context.theme.colorScheme.properSurface,
-                        width: widget.dividerWidth,
-                        height: constraints.maxHeight,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(height: 4, width: 4, decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25),
-                              color: context.theme.colorScheme.properOnSurface,
-                            )),
-                            const SizedBox(height: 20),
-                            Container(height: 4, width: 4, decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25),
-                              color: context.theme.colorScheme.properOnSurface,
-                            )),
-                            const SizedBox(height: 20),
-                            Container(height: 4, width: 4, decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25),
-                              color: context.theme.colorScheme.properOnSurface,
-                            )),
-                          ],
-                        )),
+                      color: context.theme.colorScheme.properSurface,
+                      width: widget.dividerWidth,
+                      height: constraints.maxHeight,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(height: 4, width: 4, decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            color: context.theme.colorScheme.properOnSurface,
+                          )),
+                          const SizedBox(height: 20),
+                          Container(height: 4, width: 4, decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            color: context.theme.colorScheme.properOnSurface,
+                          )),
+                          const SizedBox(height: 20),
+                          Container(height: 4, width: 4, decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            color: context.theme.colorScheme.properOnSurface,
+                          )),
+                        ],
+                      ),
+                    ),
                     onPanUpdate: (DragUpdateDetails details) {
                       _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
                       ns.listener.refresh();
                     },
                   ),
                 ) : Container(
-                  width: widget.dividerWidth,
-                  height: constraints.maxHeight,
-                  color: context.theme.colorScheme.properSurface
+                    width: widget.dividerWidth,
+                    height: constraints.maxHeight,
+                    color: context.theme.colorScheme.properSurface
                 ),
                 SizedBox(
                   width: _width2,
                   child: widget.right,
                 ),
               ],
-            ),
-          )),
+            )),
+          ),
         );
-      }
+      },
     );
   }
 }
