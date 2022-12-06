@@ -371,7 +371,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(45, 9157460167218193355),
+      lastPropertyId: const IdUid(46, 55112057161128513),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -551,6 +551,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(45, 9157460167218193355),
             name: 'dbPayloadData',
             type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(46, 55112057161128513),
+            name: 'dbMetadata',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -675,7 +680,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(17, 2547083341603323785),
       name: 'Contact',
-      lastPropertyId: const IdUid(9, 4255445772578528269),
+      lastPropertyId: const IdUid(10, 3612117664568604198),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -708,6 +713,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(8, 765867408744391809),
             name: 'avatar',
             type: 23,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(10, 3612117664568604198),
+            name: 'dbStructuredName',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -1249,7 +1259,10 @@ ModelDefinition getObjectBoxModel() {
           final dbPayloadDataOffset = object.dbPayloadData == null
               ? null
               : fbb.writeString(object.dbPayloadData!);
-          fbb.startTable(46);
+          final dbMetadataOffset = object.dbMetadata == null
+              ? null
+              : fbb.writeString(object.dbMetadata!);
+          fbb.startTable(47);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1285,6 +1298,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(42, object.dateEdited?.millisecondsSinceEpoch);
           fbb.addOffset(43, dbMessageSummaryInfoOffset);
           fbb.addOffset(44, dbPayloadDataOffset);
+          fbb.addOffset(45, dbMetadataOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1352,7 +1366,9 @@ ModelDefinition getObjectBoxModel() {
             ..dbMessageSummaryInfo =
                 const fb.StringReader(asciiOptimization: true)
                     .vTableGetNullable(buffer, rootOffset, 90)
-            ..dbPayloadData = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 92);
+            ..dbPayloadData = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 92)
+            ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 94);
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
           object.chat.attach(store);
@@ -1510,13 +1526,17 @@ ModelDefinition getObjectBoxModel() {
               object.emails.map(fbb.writeString).toList(growable: false));
           final avatarOffset =
               object.avatar == null ? null : fbb.writeListInt8(object.avatar!);
-          fbb.startTable(10);
+          final dbStructuredNameOffset = object.dbStructuredName == null
+              ? null
+              : fbb.writeString(object.dbStructuredName!);
+          fbb.startTable(11);
           fbb.addInt64(0, object.dbId ?? 0);
           fbb.addOffset(1, idOffset);
           fbb.addOffset(2, displayNameOffset);
           fbb.addOffset(3, phonesOffset);
           fbb.addOffset(5, emailsOffset);
           fbb.addOffset(7, avatarOffset);
+          fbb.addOffset(9, dbStructuredNameOffset);
           fbb.finish(fbb.endTable());
           return object.dbId ?? 0;
         },
@@ -1531,15 +1551,16 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 6, ''),
               displayName: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, ''),
-              phones: const fb.ListReader<String>(
-                      fb.StringReader(asciiOptimization: true),
-                      lazy: false)
-                  .vTableGet(buffer, rootOffset, 10, []),
+              phones:
+                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                      .vTableGet(buffer, rootOffset, 10, []),
               emails:
                   const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
                       .vTableGet(buffer, rootOffset, 14, []),
               avatar: const fb.Uint8ListReader(lazy: false)
-                  .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?);
+                  .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?)
+            ..dbStructuredName = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 22);
 
           return object;
         })
@@ -1921,6 +1942,10 @@ class Message_ {
   /// see [Message.dbPayloadData]
   static final dbPayloadData =
       QueryStringProperty<Message>(_entities[5].properties[34]);
+
+  /// see [Message.dbMetadata]
+  static final dbMetadata =
+      QueryStringProperty<Message>(_entities[5].properties[35]);
 }
 
 /// [ScheduledMessage] entity fields to define ObjectBox queries.
@@ -2019,4 +2044,8 @@ class Contact_ {
   /// see [Contact.avatar]
   static final avatar =
       QueryByteVectorProperty<Contact>(_entities[9].properties[5]);
+
+  /// see [Contact.dbStructuredName]
+  static final dbStructuredName =
+      QueryStringProperty<Contact>(_entities[9].properties[6]);
 }

@@ -316,6 +316,11 @@ class Message {
   set dbPayloadData(String? json) => payloadData = json == null
       ? null : PayloadData.fromJson(jsonDecode(json));
 
+  String? get dbMetadata => metadata == null
+      ? null : jsonEncode(metadata);
+  set dbMetadata(String? json) => metadata = json == null
+      ? null : jsonDecode(json) as Map<String, dynamic>;
+
   Message({
     this.id,
     this.originalROWID,

@@ -32,12 +32,11 @@ class Attachment {
   final message = ToOne<Message>();
 
   Map<String, dynamic>? metadata;
-  String? get dbMetadata {
-    return (metadata == null ? null : jsonEncode(metadata));
-  }
-  set dbMetadata(String? value) {
-    metadata = (value == null) ? null : jsonDecode(value) as Map<String, dynamic>;
-  }
+
+  String? get dbMetadata => metadata == null
+      ? null : jsonEncode(metadata);
+  set dbMetadata(String? json) => metadata = json == null
+      ? null : jsonDecode(json) as Map<String, dynamic>;
 
   Attachment({
     this.id,

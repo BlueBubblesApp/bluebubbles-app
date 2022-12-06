@@ -351,7 +351,7 @@
     },
     {
       "id": "13:4148278195232901830",
-      "lastPropertyId": "45:9157460167218193355",
+      "lastPropertyId": "46:55112057161128513",
       "name": "Message",
       "properties": [
         {
@@ -534,6 +534,11 @@
           "id": "45:9157460167218193355",
           "name": "dbPayloadData",
           "type": 9
+        },
+        {
+          "id": "46:55112057161128513",
+          "name": "dbMetadata",
+          "type": 9
         }
       ],
       "relations": []
@@ -651,7 +656,7 @@
     },
     {
       "id": "17:2547083341603323785",
-      "lastPropertyId": "9:4255445772578528269",
+      "lastPropertyId": "10:3612117664568604198",
       "name": "Contact",
       "properties": [
         {
@@ -686,6 +691,11 @@
           "id": "8:765867408744391809",
           "name": "avatar",
           "type": 23
+        },
+        {
+          "id": "10:3612117664568604198",
+          "name": "dbStructuredName",
+          "type": 9
         }
       ],
       "relations": []

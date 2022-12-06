@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
@@ -33,9 +32,11 @@ class Contact {
   List<String> emails;
   StructuredName? structuredName;
   Uint8List? avatar;
-  
-  Map<String, String>? get dbStructuredName => structuredName?.toMap();
-  set dbStructuredName(Map<String, String>? map) => StructuredName.fromMap(map);
+
+  String? get dbStructuredName => structuredName == null
+      ? null : jsonEncode(structuredName!.toMap());
+  set dbStructuredName(String? json) => structuredName = json == null
+      ? null : StructuredName.fromMap(jsonDecode(json));
 
   String? get initials {
     String initials = (structuredName?.givenName.characters.firstOrNull ?? "") + (structuredName?.familyName.characters.firstOrNull ?? "");
