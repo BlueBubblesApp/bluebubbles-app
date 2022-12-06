@@ -37,12 +37,11 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
   final focusNode = FocusNode();
   late final PageController controller;
   late final messageService = widget.currentChat == null ? null : ms(widget.currentChat!.chat.guid);
+  late List<Attachment> attachments = widget.currentChat == null
+      ? [attachment] : messageService!.struct.attachments.where((e) => e.mimeStart == "image" || e.mimeStart == "video").toList();
 
   int currentIndex = 0;
   ScrollPhysics? physics;
-
-  List<Attachment> get attachments => widget.currentChat == null
-      ? [attachment] : messageService!.struct.attachments.where((e) => e.mimeStart == "image" || e.mimeStart == "video").toList();
   Attachment get attachment => widget.attachment;
 
   @override
