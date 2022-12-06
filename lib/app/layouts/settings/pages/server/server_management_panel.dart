@@ -177,7 +177,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                     if (controller.timeSync.value != null)
                                       const TextSpan(text: "Server Time Sync: "),
                                     if (controller.timeSync.value != null)
-                                      TextSpan(text: "${controller.timeSync.value}s", style: TextStyle(color: getIndicatorColor(controller.timeSync.value! < 1
+                                      TextSpan(text: "${controller.timeSync.value!.toStringAsFixed(3)}s", style: TextStyle(color: getIndicatorColor(controller.timeSync.value! < 1
                                           ? SocketState.connected
                                           : SocketState.disconnected))),
                                     const TextSpan(text: "\n\n"),
