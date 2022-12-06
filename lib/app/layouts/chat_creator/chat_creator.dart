@@ -398,6 +398,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
               child: ToggleButtons(
                 constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
+                fillColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
+                splashColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
                 children: [
                   Row(
                     children: [

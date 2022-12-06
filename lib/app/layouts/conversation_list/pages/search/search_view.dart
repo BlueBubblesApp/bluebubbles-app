@@ -244,6 +244,8 @@ class SearchViewState extends OptimizedState<SearchView> {
                 padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
                 child: ToggleButtons(
                   constraints: BoxConstraints(minWidth: (context.width - 35) / 2),
+                  fillColor: context.theme.colorScheme.primary.withOpacity(0.2),
+                  splashColor: context.theme.colorScheme.primary.withOpacity(0.2),
                   children: [
                     Row(
                       children: [
