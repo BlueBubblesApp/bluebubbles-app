@@ -76,7 +76,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
             child: Obx(() => CustomScrollView(
               controller: controller.iosScrollController,
               physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                  ? NeverScrollableScrollPhysics()
+                  ? const NeverScrollableScrollPhysics()
                   : ts.scrollPhysics,
               slivers: <Widget>[
                 if (!showArchived && !showUnknown)
@@ -105,8 +105,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   double spaceBetween = (colCount - 1) * 30;
                   double maxWidth = ((ns.width(context) - 50 - spaceBetween) / colCount).floorToDouble();
                   TextStyle style = context.theme.textTheme.bodyMedium!;
-                  double height =
-                      usedRowCount * (maxWidth * 1.15 + 10 + style.height! * style.fontSize! * 2);
+                  double height = usedRowCount * (maxWidth * 1.15 + style.fontSize! * 2.25);
 
                   return SliverPadding(
                     padding: const EdgeInsets.only(top: 10),
@@ -117,7 +116,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                             height: height,
                             child: PageView.builder(
                               clipBehavior: Clip.none,
-                              physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                               scrollDirection: Axis.horizontal,
                               controller: _controller,
                               itemBuilder: (context, index) {
@@ -156,7 +155,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                   onDotClicked: kIsDesktop || kIsWeb ? (page) => _controller.animateToPage(
                                     page,
                                     curve: Curves.linear,
-                                    duration: Duration(milliseconds: 150),
+                                    duration: const Duration(milliseconds: 150),
                                   ) : null,
                                   effect: ColorTransitionEffect(
                                     activeDotColor: context.theme.colorScheme.primary,
