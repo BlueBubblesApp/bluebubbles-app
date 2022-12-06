@@ -552,7 +552,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               if (val == null) return;
                               controller.currentMode.value = val;
                               ss.settings.refreshRate.value = controller.currentMode.value;
-                              saveSettings();
+                              ss.saveSettings(null, true);
                             },
                             options: controller.refreshRates,
                             textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",

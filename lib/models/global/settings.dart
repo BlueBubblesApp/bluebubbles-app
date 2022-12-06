@@ -137,7 +137,7 @@ class Settings {
 
   Future<DisplayMode> getDisplayMode() async {
     List<DisplayMode> modes = await FlutterDisplayMode.supported;
-    return modes.firstWhereOrNull((element) => element.refreshRate == refreshRate.value) ?? DisplayMode.auto;
+    return modes.firstWhereOrNull((element) => element.refreshRate.round() == refreshRate.value) ?? DisplayMode.auto;
   }
 
   Settings save() {
