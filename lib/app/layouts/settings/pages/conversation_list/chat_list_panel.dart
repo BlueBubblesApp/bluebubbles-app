@@ -46,7 +46,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           },
                           initialVal: ss.settings.showConnectionIndicator.value,
                           title: "Show Connection Indicator",
-                          subtitle: "Enables a connection status indicator at the top left",
+                          subtitle: "Show a visual status indicator when the app is not connected to the server",
                           backgroundColor: tileColor,
                         )),
                     Container(
@@ -65,24 +65,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           title: "Show Sync Indicator in Chat List",
                           subtitle:
                               "Enables a small indicator at the top left to show when the app is syncing messages",
-                          backgroundColor: tileColor,
-                          isThreeLine: true,
-                        )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
-                    Obx(() => SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.colorblindMode.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.colorblindMode.value,
-                          title: "Colorblind Mode",
-                          subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),

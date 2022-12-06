@@ -40,7 +40,6 @@ class Settings {
   final RxBool swipeToOpenKeyboard = false.obs;
   final RxBool openKeyboardOnSTB = false.obs;
   final RxBool swipableConversationTiles = false.obs;
-  final RxBool colorblindMode = false.obs;
   final RxBool showDeliveryTimestamps = false.obs;
   final RxBool filteredChatList = false.obs;
   final RxBool startVideosMuted = true.obs;
@@ -200,7 +199,6 @@ class Settings {
       'swipeToOpenKeyboard': swipeToOpenKeyboard.value,
       'openKeyboardOnSTB': openKeyboardOnSTB.value,
       'swipableConversationTiles': swipableConversationTiles.value,
-      'colorblindMode': colorblindMode.value,
       'showDeliveryTimestamps': showDeliveryTimestamps.value,
       'filteredChatList': filteredChatList.value,
       'startVideosMuted': startVideosMuted.value,
@@ -310,7 +308,6 @@ class Settings {
     ss.settings.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'] ?? false;
     ss.settings.openKeyboardOnSTB.value = map['openKeyboardOnSTB'] ?? false;
     ss.settings.swipableConversationTiles.value = map['swipableConversationTiles'] ?? false;
-    ss.settings.colorblindMode.value = map['colorblindMode'] ?? false;
     ss.settings.showDeliveryTimestamps.value = map['showDeliveryTimestamps'] ?? false;
     ss.settings.filteredChatList.value = map['filteredChatList'] ?? false;
     ss.settings.startVideosMuted.value = map['startVideosMuted'] ?? true;
@@ -419,7 +416,6 @@ class Settings {
     s.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'] ?? false;
     s.openKeyboardOnSTB.value = map['openKeyboardOnSTB'] ?? false;
     s.swipableConversationTiles.value = map['swipableConversationTiles'] ?? false;
-    s.colorblindMode.value = map['colorblindMode'] ?? false;
     s.showDeliveryTimestamps.value = map['showDeliveryTimestamps'] ?? false;
     s.filteredChatList.value = map['filteredChatList'] ?? false;
     s.startVideosMuted.value = map['startVideosMuted'] ?? true;
