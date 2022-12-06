@@ -80,8 +80,8 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                   child: Center(
                     heightFactor: 1,
                     widthFactor: 1,
-                    child: ss.settings.hideAttachments.value ? const Padding(
-                      padding: EdgeInsets.all(8),
+                    child: ss.settings.redactedMode.value && ss.settings.hideAttachments.value ? const Padding(
+                      padding: EdgeInsets.all(15),
                       child: Text("Interactive Message")
                     ) : Opacity(
                       opacity: message.guid!.startsWith("temp") ? 0.5 : 1,
