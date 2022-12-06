@@ -23,7 +23,7 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
   @override
   Object? invoke(covariant OpenSettingsIntent intent) {
     if (ss.settings.finishedSetup.value) {
-      Navigator.of(context).push(
+      Navigator.of(Get.context!).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
             return SettingsPage();

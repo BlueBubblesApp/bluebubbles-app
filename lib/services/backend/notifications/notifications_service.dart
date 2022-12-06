@@ -32,6 +32,7 @@ class NotificationsService extends GetxService {
 
   /// For desktop use only
   static LocalNotification? allToast;
+  static List<String> pushedNotifications = [];
   static Map<String, List<LocalNotification>> notifications = {};
   static Map<String, int> notificationCounts = {};
 
@@ -124,8 +125,8 @@ class NotificationsService extends GetxService {
   }
 
   Future<void> createNotification(Chat chat, Message message) async {
-    if (chat.shouldMuteNotification(message) || message.isFromMe!) return;
-
+    if (chat.shouldMuteNotification(message) || message.isFromMe! || pushedNotifications.contains(message.guid!)) return;
+    pushedNotifications.add(message.guid!);
     final isGroup = chat.isGroup;
     final guid = chat.guid;
     final contactName = message.handle?.displayName ?? "Unknown";
@@ -225,8 +226,8 @@ class NotificationsService extends GetxService {
 
         // Create a temp file with the avatar
         String path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");
-        File(path).createSync(recursive: true);
-        File(path).writeAsBytesSync(avatar);
+        await File(path).create(recursive: true);
+        await File(path).writeAsBytes(avatar);
 
         const int charsPerLineEst = 30;
 

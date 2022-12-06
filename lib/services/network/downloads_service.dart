@@ -130,7 +130,7 @@ class AttachmentDownloadController extends GetxController {
     if (kIsDesktop) {
       if (attachment.bytes != null) {
         File _file = await File(attachment.path).create(recursive: true);
-        _file.writeAsBytesSync(attachment.bytes!.toList());
+        await _file.writeAsBytes(attachment.bytes!.toList());
       }
     }
     if (ss.settings.autoSave.value
