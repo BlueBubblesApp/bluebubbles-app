@@ -68,6 +68,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
   @override
   Widget build(BuildContext context) {
     final bool showTail = message.showTail(newerMessage) && part.part == controller.parts.length - 1;
+    final bool hideAttachments = ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -95,7 +96,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
               minWidth: 40,
             ),
             child: Padding(
-              padding: content is PlatformFile
+              padding: content is PlatformFile && !hideAttachments
                   ? (showTail ? EdgeInsets.zero : EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0))
                   : const EdgeInsets.symmetric(vertical: 10, horizontal: 15)
                   .add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
@@ -139,20 +140,21 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               );
                             }),
                           );
-                        } else if (content is Attachment) {
-                          final Attachment _content = content;
+                        } else if (content is Attachment || hideAttachments) {
+                          final Attachment _content = hideAttachments ? attachment : content;
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              SizedBox(
-                                height: 40,
-                                width: 40,
-                                child: Center(
-                                  child: Obx(() => Icon(message.error > 0 || message.guid!.startsWith("error-")
-                                      ? (iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline)
-                                      : (iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined), size: 30))
+                              if (!hideAttachments)
+                                SizedBox(
+                                  height: 40,
+                                  width: 40,
+                                  child: Center(
+                                    child: Obx(() => Icon(message.error > 0 || message.guid!.startsWith("error-")
+                                        ? (iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline)
+                                        : (iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined), size: 30))
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 5),
                               Obx(() => Text(
                                 message.error > 0 || message.guid!.startsWith("error-") ? "Send Failed!" : (_content.mimeType ?? ""),

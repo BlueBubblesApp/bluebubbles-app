@@ -28,7 +28,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
 
   if (!isNullOrEmpty(part.subject)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      "${part.subject}\n",
+      "${part.displaySubject}\n",
       textStyle.apply(fontWeightDelta: 2),
     ));
   }
@@ -36,33 +36,33 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
     part.mentions.forEachIndexed((i, e) {
       final range = part.mentions[i].range;
       textSpans.addAll(MessageHelper.buildEmojiText(
-        part.text!.substring(i == 0 ? 0 : part.mentions[i - 1].range.last, range.first),
+        part.displayText!.substring(i == 0 ? 0 : part.mentions[i - 1].range.last, range.first),
         textStyle,
       ));
       textSpans.addAll(MessageHelper.buildEmojiText(
-          part.text!.substring(range.first, range.last),
-          textStyle.apply(fontWeightDelta: 2, color: message.isFromMe! ? null : context.theme.colorScheme.bubble(context, true)),
-          recognizer: TapGestureRecognizer()..onTap = () async {
-            if (kIsDesktop || kIsWeb) return;
-            final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
-            if (handle?.contact == null && handle != null) {
-              await mcs.invokeMethod("open-contact-form",
-                  {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
-            } else if (handle?.contact != null) {
-              await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
-            }
+        part.displayText!.substring(range.first, range.last),
+        textStyle.apply(fontWeightDelta: 2, color: message.isFromMe! ? null : context.theme.colorScheme.bubble(context, true)),
+        recognizer: TapGestureRecognizer()..onTap = () async {
+          if (kIsDesktop || kIsWeb) return;
+          final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
+          if (handle?.contact == null && handle != null) {
+            await mcs.invokeMethod("open-contact-form",
+                {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+          } else if (handle?.contact != null) {
+            await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
           }
+        }
       ));
       if (i == part.mentions.length - 1) {
         textSpans.addAll(MessageHelper.buildEmojiText(
-          part.text!.substring(range.last),
+          part.displayText!.substring(range.last),
           textStyle,
         ));
       }
     });
   } else {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      part.text!,
+      part.displayText!,
       textStyle,
     ));
   }
@@ -128,7 +128,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   // render subject
   if (!isNullOrEmpty(part.subject)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      "${part.subject}\n",
+      "${part.displaySubject}\n",
       textStyle.apply(fontWeightDelta: 2),
     ));
   }
@@ -137,9 +137,9 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
     linkIndexMatches.forEachIndexed((i, e) {
       final type = linkIndexMatches[i].item1;
       final range = linkIndexMatches[i].item2;
-      final text = part.text!.substring(range.first, range.last);
+      final text = part.displayText!.substring(range.first, range.last);
       textSpans.addAll(MessageHelper.buildEmojiText(
-        part.text!.substring(i == 0 ? 0 : linkIndexMatches[i - 1].item2.last, range.first),
+        part.displayText!.substring(i == 0 ? 0 : linkIndexMatches[i - 1].item2.last, range.first),
         textStyle,
       ));
       if (type.contains("mention")) {
@@ -189,14 +189,14 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
       }
       if (i == linkIndexMatches.length - 1) {
         textSpans.addAll(MessageHelper.buildEmojiText(
-          part.text!.substring(range.last),
+          part.displayText!.substring(range.last),
           textStyle,
         ));
       }
     });
   } else {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      part.text!,
+      part.displayText!,
       textStyle,
     ));
   }

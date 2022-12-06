@@ -1,6 +1,8 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 
 class MessagePart {
   MessagePart({
@@ -18,7 +20,31 @@ class MessagePart {
   }
 
   String? subject;
+  late final String fakeSubject = faker.lorem.words(subject?.split(" ").length ?? 0).join(" ");
+  String? get displaySubject {
+    if (subject == null) return null;
+    if (ss.settings.redactedMode.value) {
+      if (ss.settings.generateFakeMessageContent.value) {
+        return fakeSubject;
+      } else if (ss.settings.hideContactInfo.value) {
+        return "";
+      }
+    }
+    return text;
+  }
   String? text;
+  late final String fakeText = faker.lorem.words(text?.split(" ").length ?? 0).join(" ");
+  String? get displayText {
+    if (text == null) return null;
+    if (ss.settings.redactedMode.value) {
+      if (ss.settings.generateFakeMessageContent.value) {
+        return fakeText;
+      } else if (ss.settings.hideContactInfo.value) {
+        return "";
+      }
+    }
+    return text;
+  }
   List<Attachment> attachments;
   List<Mention> mentions;
   bool isUnsent;
