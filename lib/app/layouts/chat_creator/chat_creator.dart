@@ -211,7 +211,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: ss.settings.skin.value == Skins.Material ? tileColor : headerColor,
+        backgroundColor: context.theme.colorScheme.background,
         appBar: PreferredSize(
           preferredSize: Size(ns.width(context), 50),
           child: AppBar(
@@ -223,7 +223,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             scrolledUnderElevation: 3,
             surfaceTintColor: context.theme.colorScheme.primary,
             leading: buildBackButton(context),
-            backgroundColor: headerColor,
+            backgroundColor: context.theme.colorScheme.background,
             centerTitle: ss.settings.skin.value == Skins.iOS,
             title: Text(
               "New Conversation",

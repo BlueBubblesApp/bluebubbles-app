@@ -151,8 +151,8 @@ class SearchViewState extends OptimizedState<SearchView> {
       initialHeader: null,
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
-      tileColor: tileColor,
-      headerColor: headerColor,
+      tileColor: context.theme.colorScheme.background,
+      headerColor: context.theme.colorScheme.background,
       bodySlivers: [
         SliverList(
           delegate: SliverChildListDelegate([
