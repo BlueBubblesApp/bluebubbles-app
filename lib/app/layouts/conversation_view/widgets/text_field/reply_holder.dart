@@ -25,12 +25,13 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
       if (reply != null) {
         return Container(
           color: context.theme.colorScheme.properSurface,
+          padding: EdgeInsets.only(left: !iOS ? 20.0 : 0, right: iOS ? 8.0 : 0),
           child: Row(
             children: [
               if (iOS)
                 IconButton(
-                  constraints: BoxConstraints(maxWidth: 30),
-                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  constraints: const BoxConstraints(maxWidth: 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                   icon: Icon(
                     CupertinoIcons.xmark_circle_fill,
                     color: context.theme.colorScheme.properOnSurface,
@@ -41,8 +42,6 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
                   },
                   iconSize: 17,
                 ),
-              if (!iOS)
-                const SizedBox(width: 20),
               Expanded(
                 child: Text.rich(
                   TextSpan(children: [
@@ -70,8 +69,8 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
               ),
               if (!iOS)
                 IconButton(
-                  constraints: BoxConstraints(maxWidth: 30),
-                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  constraints: const BoxConstraints(maxWidth: 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                   icon: Icon(
                     Icons.close,
                     color: context.theme.colorScheme.properOnSurface,
