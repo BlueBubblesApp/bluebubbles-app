@@ -169,6 +169,10 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       if (!mounted) return;
       listKey.currentState!.insertItem(i, duration: const Duration(milliseconds: 0));
     });
+    // should only happen when a reaction is the most recent message
+    if (oldLength == 0) {
+      setState(() {});
+    }
   }
 
   void handleNewMessage(Message message) {
