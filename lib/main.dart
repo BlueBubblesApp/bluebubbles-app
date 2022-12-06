@@ -414,72 +414,76 @@ class Main extends StatelessWidget {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
-        builder: (context, child) => SecureApplication(
-          child: Builder(
-            builder: (context) {
-              if (ss.canAuthenticate && !ls.isAlive) {
-                if (ss.settings.shouldSecure.value) {
-                  SecureApplicationProvider.of(context, listen: false)!.lock();
-                  if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                    SecureApplicationProvider.of(context, listen: false)!.secure();
+        builder: (context, child) => SafeArea(
+          top: false,
+          bottom: false,
+          child: SecureApplication(
+            child: Builder(
+              builder: (context) {
+                if (ss.canAuthenticate && !ls.isAlive) {
+                  if (ss.settings.shouldSecure.value) {
+                    SecureApplicationProvider.of(context, listen: false)!.lock();
+                    if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                      SecureApplicationProvider.of(context, listen: false)!.secure();
+                    }
                   }
                 }
-              }
-              return SecureGate(
-                blurr: 0,
-                opacity: 1.0,
-                lockedBuilder: (context, controller) {
-                  final localAuth = LocalAuthentication();
-                  localAuth.authenticate(
-                      localizedReason: 'Please authenticate to unlock BlueBubbles',
-                      options: const AuthenticationOptions(stickyAuth: true)
-                  ).then((result) {
-                    if (result) {
-                      SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
-                    }
-                  });
-                  return Container(
-                    color: context.theme.colorScheme.background,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: Text(
-                              "BlueBubbles is currently locked. Please unlock to access your messages.",
-                              style: context.theme.textTheme.titleLarge,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Container(height: 20.0),
-                          ClipOval(
-                            child: Material(
-                              color: context.theme.colorScheme.primary, // button color
-                              child: InkWell(
-                                child: SizedBox(
-                                    width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
-                                onTap: () async {
-                                  final localAuth = LocalAuthentication();
-                                  bool didAuthenticate = await localAuth.authenticate(
-                                      localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                      options: const AuthenticationOptions(stickyAuth: true)
-                                  );
-                                  if (didAuthenticate) {
-                                    controller!.authSuccess(unlock: true);
-                                  }
-                                },
+                return SecureGate(
+                  blurr: 0,
+                  opacity: 1.0,
+                  lockedBuilder: (context, controller) {
+                    final localAuth = LocalAuthentication();
+                    localAuth.authenticate(
+                        localizedReason: 'Please authenticate to unlock BlueBubbles',
+                        options: const AuthenticationOptions(stickyAuth: true)
+                    ).then((result) {
+                      if (result) {
+                        SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
+                      }
+                    });
+                    return Container(
+                      color: context.theme.colorScheme.background,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                              child: Text(
+                                "BlueBubbles is currently locked. Please unlock to access your messages.",
+                                style: context.theme.textTheme.titleLarge,
+                                textAlign: TextAlign.center,
                               ),
                             ),
-                          ),
-                        ],
+                            Container(height: 20.0),
+                            ClipOval(
+                              child: Material(
+                                color: context.theme.colorScheme.primary, // button color
+                                child: InkWell(
+                                  child: SizedBox(
+                                      width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                  onTap: () async {
+                                    final localAuth = LocalAuthentication();
+                                    bool didAuthenticate = await localAuth.authenticate(
+                                        localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                        options: const AuthenticationOptions(stickyAuth: true)
+                                    );
+                                    if (didAuthenticate) {
+                                      controller!.authSuccess(unlock: true);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: child ?? Container(),
-              );
-            },
+                    );
+                  },
+                  child: child ?? Container(),
+                );
+              },
+            ),
           ),
         ),
         defaultTransition: Transition.cupertino,
