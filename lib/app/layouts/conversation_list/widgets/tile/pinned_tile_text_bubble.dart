@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -39,17 +40,12 @@ class PinnedTileTextBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final hideInfo = ss.settings.redactedMode.value
-        && ss.settings.hideMessageContent.value;
-    final generateContent = ss.settings.redactedMode.value
-        && ss.settings.generateFakeMessageContent.value;
-
-    if (hideInfo || !(chat.hasUnreadMessage ?? false)) return const SizedBox.shrink();
+    final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
+    if (!(chat.hasUnreadMessage ?? false)) return const SizedBox.shrink();
 
     final lastMessage = chat.latestMessageGetter;
     String messageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
-    if (generateContent) messageText = chat.fakeLatestMessageText ?? "";
+    if (hideInfo) messageText = faker.lorem.words(messageText.split(" ").length).join(" ");
 
     if (lastMessage?.associatedMessageGuid != null
         || (lastMessage?.isFromMe ?? false)

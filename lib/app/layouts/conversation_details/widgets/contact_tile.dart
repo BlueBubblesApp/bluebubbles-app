@@ -30,7 +30,6 @@ class ContactTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool redactedMode = ss.settings.redactedMode.value;
     final bool hideInfo = redactedMode && ss.settings.hideContactInfo.value;
-    final bool generateName = redactedMode && ss.settings.generateFakeContactNames.value;
     final bool isEmail = handle.address.isEmail;
     final child = InkWell(
       onLongPress: () {
@@ -54,7 +53,7 @@ class ContactTile extends StatelessWidget {
             ),
           ),
         ),
-        subtitle: contact == null || hideInfo || generateName ? null : Text(
+        subtitle: contact == null || hideInfo ? null : Text(
           handle.formattedAddress ?? handle.address,
           style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
         ),

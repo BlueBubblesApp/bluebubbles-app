@@ -181,41 +181,39 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           ),
           clipBehavior: Clip.antiAlias,
           alignment: Alignment.center,
-          child: Builder(
-            builder: (context) {
-              final avatar = contact?.avatar;
-              if (isNullOrEmpty(avatar)!) {
-                String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
-                if (!isNullOrEmpty(initials)!) {
-                  return Text(
-                    initials!,
-                    key: Key("$keyPrefix-avatar-text"),
-                    style: TextStyle(
-                      fontSize: widget.fontSize ?? 18,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  );
-                } else {
-                  return Obx(() => Icon(
-                    ss.settings.skin.value == Skins.iOS
-                        ? CupertinoIcons.person_fill
-                        : Icons.person,
+          child: Obx(() {
+            final hide = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+            final iOS = ss.settings.skin.value == Skins.iOS;
+            final avatar = contact?.avatar;
+            if (isNullOrEmpty(avatar)! || hide) {
+              String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
+              if (!isNullOrEmpty(initials)! && !hide) {
+                return Text(
+                  initials!,
+                  key: Key("$keyPrefix-avatar-text"),
+                  style: TextStyle(
+                    fontSize: widget.fontSize ?? 18,
                     color: Colors.white,
-                    key: Key("$keyPrefix-avatar-icon"),
-                    size: size / 2,
-                  ));
-                }
+                  ),
+                  textAlign: TextAlign.center,
+                );
               } else {
-                return Image.memory(
-                  avatar!,
-                  cacheHeight: size.toInt() * 2,
-                  cacheWidth: size.toInt() * 2,
-                  filterQuality: FilterQuality.none,
+                return Icon(
+                  iOS ? CupertinoIcons.person_fill : Icons.person,
+                  color: Colors.white,
+                  key: Key("$keyPrefix-avatar-icon"),
+                  size: size / 2,
                 );
               }
+            } else {
+              return Image.memory(
+                avatar!,
+                cacheHeight: size.toInt() * 2,
+                cacheWidth: size.toInt() * 2,
+                filterQuality: FilterQuality.none,
+              );
             }
-          ),
+          }),
         ),
       ),
     ));

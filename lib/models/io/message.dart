@@ -231,8 +231,6 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
         if (isNewer) {
           inputChat.latestMessage = messages[0];
           inputChat.latestMessageText = MessageHelper.getNotificationText(messages[0]);
-          inputChat.fakeLatestMessageText =
-              faker.lorem.words((inputChat.latestMessageText ?? "").split(" ").length).join(" ");
           inputChat.latestMessageDate = messages[0].dateCreated;
 
           // Save the chat with the new info

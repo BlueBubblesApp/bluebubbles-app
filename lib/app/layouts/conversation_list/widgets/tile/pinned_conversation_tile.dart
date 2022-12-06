@@ -356,22 +356,15 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideInfo = ss.settings.redactedMode.value
-          && ss.settings.hideContactInfo.value;
-      final generateNames = ss.settings.redactedMode.value
-          && ss.settings.generateFakeContactNames.value;
-      
+      final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
       final style = context.theme.textTheme.bodyMedium!.apply(
           color: controller.shouldHighlight.value
               ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
               : context.theme.colorScheme.outline,
           fontSizeFactor: controller.chat.isPinned! ? 0.95 : 1,
       );
-
-      if (hideInfo) return const SizedBox.shrink();
-
       String _title = title;
-      if (generateNames) {
+      if (hideInfo) {
         _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
       }
 

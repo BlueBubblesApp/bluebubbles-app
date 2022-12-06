@@ -294,15 +294,10 @@ class Chat {
   bool? hasUnreadMessage;
   DateTime? latestMessageDate;
   String? latestMessageText;
-  String? fakeLatestMessageText;
   String? title;
   String get properTitle {
-    if (ss.settings.redactedMode.value) {
-      if (ss.settings.generateFakeContactNames.value) {
-        return getTitle();
-      } else if (ss.settings.hideContactInfo.value) {
-        return "";
-      }
+    if (ss.settings.redactedMode.value && ss.settings.hideContactInfo.value) {
+      return getTitle();
     }
     title ??= getTitle();
     return title!;
@@ -350,7 +345,6 @@ class Chat {
     this.latestMessage,
     this.latestMessageDate,
     this.latestMessageText,
-    this.fakeLatestMessageText,
     this.autoSendReadReceipts = true,
     this.autoSendTypingIndicators = true,
     this.textFieldText,
@@ -378,7 +372,6 @@ class Chat {
       hasUnreadMessage: json["hasUnreadMessage"] ?? false,
       latestMessage: message,
       latestMessageText: latestText,
-      fakeLatestMessageText: faker.lorem.words(latestText?.split(" ").length ?? 1).join(" "),
       latestMessageDate: parseDate(json['latestMessageDate']) ?? message?.dateCreated,
       displayName: json["displayName"],
       customAvatar: json['_customAvatarPath'],
@@ -642,7 +635,6 @@ class Chat {
     if (isNewer && checkForMessageText) {
       latestMessage = message;
       latestMessageText = MessageHelper.getNotificationText(message);
-      fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
       latestMessageDate = message.dateCreated;
     }
 
@@ -913,7 +905,6 @@ class Chat {
     }
     chatIdentifier ??= other.chatIdentifier;
     displayName ??= other.displayName;
-    fakeLatestMessageText ??= other.fakeLatestMessageText;
     if (handles.isEmpty) {
       handles.addAll(other.handles);
     }

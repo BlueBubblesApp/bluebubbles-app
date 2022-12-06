@@ -24,6 +24,7 @@ Below are the last few BlueBubbles App release changelogs
 
 * Swipe actions on conversation tiles in iOS theme - use long-press for same functionality instead
 * Auto-play message effects - not reliable and seamless enough for prime-time
+* Reduced number of options in redacted mode
 
 ### What's Next?
 

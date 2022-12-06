@@ -244,6 +244,11 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
 
   @override
   Widget build(BuildContext context) {
+    final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+    String _title = title;
+    if (hideInfo) {
+      _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
+    }
     final children = [
       IgnorePointer(
         ignoring: true,
@@ -268,7 +273,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
               text: TextSpan(
                 style: context.theme.textTheme.bodyMedium,
                 children: MessageHelper.buildEmojiText(
-                  title,
+                  _title,
                   context.theme.textTheme.bodyMedium!,
                 ),
               ),

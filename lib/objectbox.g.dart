@@ -167,11 +167,6 @@ final _entities = <ModelEntity>[
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(14, 130925169208448361),
-            name: 'fakeLatestMessageText',
-            type: 9,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(15, 4266631519717388837),
             name: 'title',
             type: 9,
@@ -836,7 +831,8 @@ ModelDefinition getObjectBoxModel() {
         7968765094195569385,
         8252364803444354563,
         4143511131199296878,
-        172817608355620424
+        172817608355620424,
+        130925169208448361
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -947,10 +943,6 @@ ModelDefinition getObjectBoxModel() {
           final latestMessageTextOffset = object.latestMessageText == null
               ? null
               : fbb.writeString(object.latestMessageText!);
-          final fakeLatestMessageTextOffset =
-              object.fakeLatestMessageText == null
-                  ? null
-                  : fbb.writeString(object.fakeLatestMessageText!);
           final titleOffset =
               object.title == null ? null : fbb.writeString(object.title!);
           final displayNameOffset = object.displayName == null
@@ -977,7 +969,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addBool(10, object.hasUnreadMessage);
           fbb.addInt64(11, object.latestMessageDate?.millisecondsSinceEpoch);
           fbb.addOffset(12, latestMessageTextOffset);
-          fbb.addOffset(13, fakeLatestMessageTextOffset);
           fbb.addOffset(14, titleOffset);
           fbb.addOffset(15, displayNameOffset);
           fbb.addOffset(17, customAvatarPathOffset);
@@ -1015,7 +1006,6 @@ ModelDefinition getObjectBoxModel() {
                   const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
               latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
               latestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 28),
-              fakeLatestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 30),
               autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
               autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
               textFieldText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 46),
@@ -1655,40 +1645,36 @@ class Chat_ {
   static final latestMessageText =
       QueryStringProperty<Chat>(_entities[1].properties[9]);
 
-  /// see [Chat.fakeLatestMessageText]
-  static final fakeLatestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[10]);
-
   /// see [Chat.title]
-  static final title = QueryStringProperty<Chat>(_entities[1].properties[11]);
+  static final title = QueryStringProperty<Chat>(_entities[1].properties[10]);
 
   /// see [Chat.displayName]
   static final displayName =
-      QueryStringProperty<Chat>(_entities[1].properties[12]);
+      QueryStringProperty<Chat>(_entities[1].properties[11]);
 
   /// see [Chat.customAvatarPath]
   static final customAvatarPath =
-      QueryStringProperty<Chat>(_entities[1].properties[13]);
+      QueryStringProperty<Chat>(_entities[1].properties[12]);
 
   /// see [Chat.pinIndex]
   static final pinIndex =
-      QueryIntegerProperty<Chat>(_entities[1].properties[14]);
+      QueryIntegerProperty<Chat>(_entities[1].properties[13]);
 
   /// see [Chat.autoSendReadReceipts]
   static final autoSendReadReceipts =
-      QueryBooleanProperty<Chat>(_entities[1].properties[15]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[14]);
 
   /// see [Chat.autoSendTypingIndicators]
   static final autoSendTypingIndicators =
-      QueryBooleanProperty<Chat>(_entities[1].properties[16]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[15]);
 
   /// see [Chat.textFieldText]
   static final textFieldText =
-      QueryStringProperty<Chat>(_entities[1].properties[17]);
+      QueryStringProperty<Chat>(_entities[1].properties[16]);
 
   /// see [Chat.textFieldAttachments]
   static final textFieldAttachments =
-      QueryStringVectorProperty<Chat>(_entities[1].properties[18]);
+      QueryStringVectorProperty<Chat>(_entities[1].properties[17]);
 
   /// see [Chat.handles]
   static final handles =

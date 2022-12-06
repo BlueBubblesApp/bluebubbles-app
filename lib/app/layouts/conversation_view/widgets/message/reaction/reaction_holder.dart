@@ -26,7 +26,7 @@ class _ReactionHolderState extends OptimizedState<ReactionHolder> {
   @override
   Widget build(BuildContext context) {
     // If the reactions are empty, return nothing
-    if (reactions.isEmpty || (ss.settings.redactedMode.value && ss.settings.hideReactions.value)) {
+    if (reactions.isEmpty) {
       return const SizedBox.shrink();
     }
 

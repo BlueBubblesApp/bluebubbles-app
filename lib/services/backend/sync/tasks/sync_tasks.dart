@@ -269,7 +269,6 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
       chat.latestMessage = lastMessage;
       chat.latestMessageDate = lastMessage.dateCreated;
       chat.latestMessageText = newMsgText ?? MessageHelper.getNotificationText(lastMessage);
-      chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText!).split(" ").length).join(" ");
       
       // Mark the chat as unread if we updated the last message & it's not from us
       if (toggleUnread && !(lastMessage.isFromMe ?? false)) {

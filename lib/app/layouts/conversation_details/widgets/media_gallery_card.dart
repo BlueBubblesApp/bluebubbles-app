@@ -138,17 +138,12 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
   Widget build(BuildContext context) {
     super.build(context);
 
-    final bool hideAttachments =
-        ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
-    final bool hideAttachmentTypes =
-        ss.settings.redactedMode.value && ss.settings.hideAttachmentTypes.value;
+    final bool hideAttachments = ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
 
     late Widget child;
     bool addPadding = true;
 
-    if (hideAttachmentTypes) {
-      child = const SizedBox.shrink();
-    } else if (hideAttachments) {
+    if (hideAttachments) {
       child = Text(
         attachment.mimeType ?? "Unknown",
         textAlign: TextAlign.center,

@@ -65,7 +65,6 @@ class _AttachmentPickerFileState extends OptimizedState<AttachmentPickerFile> wi
   @override
   Widget build(BuildContext context) {
     final hideAttachments = ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
-    final hideAttachmentTypes = ss.settings.redactedMode.value && ss.settings.hideAttachmentTypes.value;
 
     super.build(context);
     return Obx(() {
@@ -106,10 +105,11 @@ class _AttachmentPickerFileState extends OptimizedState<AttachmentPickerFile> wi
                 Positioned.fill(
                   child: Container(
                     color: context.theme.colorScheme.properSurface,
-                    child: hideAttachments && !hideAttachmentTypes ? Text(
-                      mime(path)!,
+                    alignment: Alignment.center,
+                    child: Text(
+                      mime(path) ?? "",
                       textAlign: TextAlign.center,
-                    ) : null,
+                    ),
                   ),
                 ),
               if (containsThis || widget.data.type == AssetType.video)

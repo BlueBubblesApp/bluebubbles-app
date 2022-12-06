@@ -14,6 +14,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -213,15 +214,9 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideInfo = ss.settings.redactedMode.value
-          && ss.settings.hideContactInfo.value;
-      final generateNames = ss.settings.redactedMode.value
-          && ss.settings.generateFakeContactNames.value;
-
-      if (hideInfo) return const SizedBox.shrink();
-
+      final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
       String _title = title;
-      if (generateNames) {
+      if (hideInfo) {
         _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
       }
 
@@ -249,6 +244,7 @@ class ChatSubtitle extends CustomStateful<ConversationTileController> {
 
 class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTileController> {
   String subtitle = "Unknown";
+  String fakeText = faker.lorem.words(1).join(" ");
   late final StreamSubscription<Query<Message>> sub;
   String? cachedLatestMessageGuid = "";
 
@@ -266,6 +262,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
     } else {
       subtitle = controller.chat.latestMessageText ?? "";
     }
+    fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
     // run query after render has completed
     updateObx(() {
       final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
@@ -282,6 +279,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           if (newSubtitle != subtitle) {
             setState(() {
               subtitle = newSubtitle;
+              fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
             });
           }
         }
@@ -299,17 +297,8 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideContent = ss.settings.redactedMode.value
-          && ss.settings.hideMessageContent.value;
-      final generateContent = ss.settings.redactedMode.value
-          && ss.settings.generateFakeMessageContent.value;
-
-      if (hideContent) return const SizedBox.shrink();
-
-      String _subtitle = subtitle;
-      if (generateContent) {
-        _subtitle = controller.chat.fakeLatestMessageText ?? "";
-      }
+      final hideContent = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
+      String _subtitle = hideContent ? fakeText : subtitle;
 
       return RichText(
         text: TextSpan(

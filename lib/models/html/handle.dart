@@ -22,12 +22,8 @@ class Handle {
 
   Contact? get contact => webContact;
   String get displayName {
-    if (ss.settings.redactedMode.value) {
-      if (ss.settings.generateFakeContactNames.value) {
-        return fakeName;
-      } else if (ss.settings.hideContactInfo.value) {
-        return "";
-      }
+    if (ss.settings.redactedMode.value && ss.settings.hideContactInfo.value) {
+      return fakeName;
     }
     if (contact != null) return contact!.displayName;
     return address.contains("@") ? address : (formattedAddress ?? address);

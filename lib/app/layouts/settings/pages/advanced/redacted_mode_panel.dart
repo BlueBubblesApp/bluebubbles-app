@@ -73,7 +73,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                   const Padding(
                     padding: EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                     child: Text(
-                        "Redacted Mode hides your personal information, such as contact names, message content, and more. This is useful when taking screenshots to send to developers."
+                        "Redacted Mode hides sensitive information, such as contact names, message content, and more. This is useful when taking screenshots to send to developers."
                     ),
                   ),
                 ],
@@ -137,9 +137,13 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                                       child: Center(
                                         widthFactor: 1,
                                         heightFactor: 1,
-                                        child: ImageViewer(
-                                          file: as.getContent(message.attachments.first!),
-                                          attachment: message.attachments.first!,
+                                        child: AnimatedOpacity(
+                                          duration: const Duration(milliseconds: 150),
+                                          opacity: ss.settings.redactedMode.value && ss.settings.hideAttachments.value ? 0 : 1,
+                                          child: ImageViewer(
+                                            file: as.getContent(message.attachments.first!),
+                                            attachment: message.attachments.first!,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -207,7 +211,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                         tileColor: tileColor,
                         iosSubtitle: iosSubtitle,
                         materialSubtitle: materialSubtitle,
-                        text: "Hide Content"
+                        text: "Customization"
                     ),
                     SettingsSection(
                       backgroundColor: tileColor,
@@ -220,46 +224,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           initialVal: ss.settings.hideMessageContent.value,
                           title: "Hide Message Content",
                           backgroundColor: tileColor,
-                          subtitle: "Removes any trace of message text",
-                        ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
-                        SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.hideReactions.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.hideReactions.value,
-                          title: "Hide Reactions",
-                          backgroundColor: tileColor,
-                          subtitle: "Removes any trace of reactions from messages",
-                        ),
-                      ],
-                    ),
-                    SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Hide Emojis & Attachments",
-                    ),
-                    SettingsSection(
-                      backgroundColor: tileColor,
-                      children: [
-                        SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.hideEmojis.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.hideEmojis.value,
-                          title: "Hide Big Emojis",
-                          backgroundColor: tileColor,
-                          subtitle: "Replaces large emojis with placeholder boxes",
+                          subtitle: "Replace message text with generated lorem ipsum",
                         ),
                         Container(
                           color: tileColor,
@@ -276,47 +241,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           initialVal: ss.settings.hideAttachments.value,
                           title: "Hide Attachments",
                           backgroundColor: tileColor,
-                          subtitle: "Replaces attachments with placeholder boxes",
-                        ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
-                        SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.hideAttachmentTypes.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.hideAttachmentTypes.value,
-                          title: "Hide Attachment Types",
-                          backgroundColor: tileColor,
-                          subtitle: "Removes the attachment file type text from the placeholder box",
-                          isThreeLine: true,
-                        ),
-                      ],
-                    ),
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Hide Contact Info"
-                    ),
-                    SettingsSection(
-                      backgroundColor: tileColor,
-                      children: [
-                        SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.hideContactPhotos.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.hideContactPhotos.value,
-                          title: "Hide Contact Photos",
-                          backgroundColor: tileColor,
-                          subtitle: "Replaces message bubbles with empty bubbles",
+                          subtitle: "Replace attachments with placeholder boxes",
                         ),
                         Container(
                           color: tileColor,
@@ -333,65 +258,8 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           initialVal: ss.settings.hideContactInfo.value,
                           title: "Hide Contact Info",
                           backgroundColor: tileColor,
-                          subtitle: "Removes any trace of contact names, numbers, and emails",
+                          subtitle: "Replace contact info with fake names and hide contact photos",
                           isThreeLine: true,
-                        ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
-                        SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.removeLetterAvatars.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.removeLetterAvatars.value,
-                          title: "Remove Letter Avatars",
-                          backgroundColor: tileColor,
-                          subtitle: "Replaces letter avatars with generic person avatars",
-                        ),
-                      ],
-                    ),
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Generate Fake Info"
-                    ),
-                    SettingsSection(
-                      backgroundColor: tileColor,
-                      children: [
-                        SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.generateFakeContactNames.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.generateFakeContactNames.value,
-                          title: "Generate Fake Contact Names",
-                          backgroundColor: tileColor,
-                          subtitle: "Replaces contact names, numbers, and emails with auto-generated fake names",
-                          isThreeLine: true,
-                        ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
-                        SettingsSwitch(
-                          onChanged: (bool val) {
-                            ss.settings.generateFakeMessageContent.value = val;
-                            saveSettings();
-                          },
-                          initialVal: ss.settings.generateFakeMessageContent.value,
-                          title: "Generate Fake Message Content",
-                          backgroundColor: tileColor,
-                          subtitle: "Replaces message text with lorem-ipsum text",
                         ),
                       ],
                     ),

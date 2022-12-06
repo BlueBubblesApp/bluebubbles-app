@@ -209,6 +209,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
 
   @override
   Widget build(BuildContext context) {
+    final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -227,13 +228,18 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Obx(() {
-              final _title = controller.inSelectMode.value ? "${controller.selected.length} selected" : title;
+              String _title = title;
+              if (controller.inSelectMode.value) {
+                _title = "${controller.selected.length} selected";
+              } else if (hideInfo) {
+                _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
+              }
               return Text(
                 _title,
                 style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
               );
             }),
-            if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)))
+            if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)) && !hideInfo)
               Text(
                 controller.chat.isGroup
                   ? "${controller.chat.participants.length} recipients"

@@ -63,11 +63,11 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
     }
 
     return Obx(() {
+        final hide = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
         final avatarSize = widget.size * ss.settings.avatarScale.value;
         final maxAvatars = ss.settings.maxAvatarsInGroupWidget.value;
 
-        if (widget.chat.customAvatarPath != null
-            && !(ss.settings.redactedMode.value && ss.settings.hideContactPhotos.value)) {
+        if (widget.chat.customAvatarPath != null && !hide) {
           dynamic file = File(widget.chat.customAvatarPath!);
           return CircleAvatar(
             key: Key("${participants.first.address}-avatar"),

@@ -25,6 +25,11 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
 
   @override
   Widget build(BuildContext context) {
+    final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+    String _title = chat.properTitle;
+    if (hideInfo) {
+      _title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +48,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
             padding: const EdgeInsets.only(top: 12.0),
             child: Center(
               child: Text(
-                chat.properTitle,
+                _title,
                 style: context.theme.textTheme.headlineMedium!.copyWith(
                   fontWeight: FontWeight.bold,
                   color: context.theme.colorScheme.onBackground
@@ -77,7 +82,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 onLongPress: () {
                   showChangeName(chat, "local", context);
                 },
-                title: Text(chat.properTitle, style: context.theme.textTheme.bodyLarge!),
+                title: Text(_title, style: context.theme.textTheme.bodyLarge!),
                 trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
               ),
             ),

@@ -76,16 +76,10 @@ class Settings {
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
-  final RxBool hideMessageContent = true.obs;
-  final RxBool hideReactions = false.obs;
   final RxBool hideAttachments = true.obs;
-  final RxBool hideEmojis = false.obs;
-  final RxBool hideAttachmentTypes = false.obs;
-  final RxBool hideContactPhotos = true.obs;
   final RxBool hideContactInfo = true.obs;
-  final RxBool removeLetterAvatars = true.obs;
   final RxBool generateFakeContactNames = false.obs;
-  final RxBool generateFakeMessageContent = false.obs;
+  final RxBool hideMessageContent = false.obs;
 
   // Quick tapback settings
   final RxBool enableQuickTapback = false.obs;
@@ -236,15 +230,10 @@ class Settings {
       'privateSubjectLine': privateSubjectLine.value,
       'redactedMode': redactedMode.value,
       'hideMessageContent': hideMessageContent.value,
-      'hideReactions': hideReactions.value,
       'hideAttachments': hideAttachments.value,
-      'hideEmojis': hideEmojis.value,
-      'hideAttachmentTypes': hideAttachmentTypes.value,
-      'hideContactPhotos': hideContactPhotos.value,
       'hideContactInfo': hideContactInfo.value,
-      'removeLetterAvatars': removeLetterAvatars.value,
       'generateFakeContactNames': generateFakeContactNames.value,
-      'generateFakeMessageContent': generateFakeMessageContent.value,
+      'generateFakeMessageContent': hideMessageContent.value,
       'enableQuickTapback': enableQuickTapback.value,
       'quickTapbackType': quickTapbackType.value,
       'materialRightAction': materialRightAction.value.index,
@@ -342,15 +331,10 @@ class Settings {
     ss.settings.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     ss.settings.redactedMode.value = map['redactedMode'] ?? false;
     ss.settings.hideMessageContent.value = map['hideMessageContent'] ?? true;
-    ss.settings.hideReactions.value = map['hideReactions'] ?? false;
     ss.settings.hideAttachments.value = map['hideAttachments'] ?? true;
-    ss.settings.hideEmojis.value = map['hideEmojis'] ?? false;
-    ss.settings.hideAttachmentTypes.value = map['hideAttachmentTypes'] ?? false;
-    ss.settings.hideContactPhotos.value = map['hideContactPhotos'] ?? true;
     ss.settings.hideContactInfo.value = map['hideContactInfo'] ?? true;
-    ss.settings.removeLetterAvatars.value = map['removeLetterAvatars'] ?? true;
     ss.settings.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
-    ss.settings.generateFakeMessageContent.value = map['generateFakeMessageContent'] ?? false;
+    ss.settings.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
     ss.settings.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     ss.settings.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
     ss.settings.materialRightAction.value = map['materialRightAction'] != null
@@ -453,15 +437,10 @@ class Settings {
     s.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     s.redactedMode.value = map['redactedMode'] ?? false;
     s.hideMessageContent.value = map['hideMessageContent'] ?? true;
-    s.hideReactions.value = map['hideReactions'] ?? false;
     s.hideAttachments.value = map['hideAttachments'] ?? true;
-    s.hideEmojis.value = map['hideEmojis'] ?? false;
-    s.hideAttachmentTypes.value = map['hideAttachmentTypes'] ?? false;
-    s.hideContactPhotos.value = map['hideContactPhotos'] ?? true;
     s.hideContactInfo.value = map['hideContactInfo'] ?? true;
-    s.removeLetterAvatars.value = map['removeLetterAvatars'] ?? true;
     s.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
-    s.generateFakeMessageContent.value = map['generateFakeMessageContent'] ?? false;
+    s.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
     s.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     s.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
     s.materialRightAction.value = map['materialRightAction'] != null
