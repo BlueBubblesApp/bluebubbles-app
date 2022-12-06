@@ -12,6 +12,11 @@ import 'package:universal_io/io.dart';
 
 ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>() : Get.put(ActionHandler());
 
+Future<void> saveFileIsolate(Tuple2<String, Uint8List> data) async {
+  final file = await File(data.item1).create(recursive: true);
+  await file.writeAsBytes(data.item2);
+}
+
 class ActionHandler extends GetxService {
   final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
   
@@ -133,8 +138,7 @@ class ActionHandler extends GetxService {
     // Save the attachment to storage and DB
     if (!kIsWeb) {
       String pathName = "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
-      final file = await File(pathName).create(recursive: true);
-      await file.writeAsBytes(attachment.bytes!);
+      await compute(saveFileIsolate, Tuple2(pathName, attachment.bytes!));
     }
     await c.addMessage(m);
   }
