@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -346,14 +347,36 @@ class SearchViewState extends OptimizedState<SearchView> {
                       ),
                     ) : null,
                   ),
-                  child: ConversationTile(
-                    chat: chat,
-                    subtitle: RichText(
-                      text: TextSpan(children: spans),
+                  child: ListTile(
+                    title: RichText(
+                      text: TextSpan(
+                        children: MessageHelper.buildEmojiText(
+                          chat.getTitle(),
+                          context.theme.textTheme.bodyLarge!,
+                        ),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    controller: fakeController,
-                    inSelectMode: true,
-                    onSelect: (_) {
+                    subtitle: RichText(
+                      text: TextSpan(
+                        children: spans,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: ss.settings.denseChatTiles.value ? 1 : material ? 3 : 2,
+                    ),
+                    leading: ContactAvatarGroupWidget(
+                      chat: chat,
+                      size: 40,
+                      editable: false,
+                      onTap: () {},
+                    ),
+                    trailing: Text(
+                      buildDate(message.dateCreated),
+                      textAlign: TextAlign.right,
+                      style: context.theme.textTheme.bodySmall,
+                      overflow: TextOverflow.clip,
+                    ),
+                    onTap: () {
                       final service = ms(chat.guid);
                       service.method = local ? "local" : "network";
                       service.struct.addMessages([message]);
