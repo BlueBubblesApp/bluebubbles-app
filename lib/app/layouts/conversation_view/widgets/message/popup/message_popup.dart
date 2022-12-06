@@ -248,6 +248,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       messageInfo();
                     } else if (value == 4) {
                       downloadOriginal();
+                    } else if (value == 5) {
+                      createContact();
                     }
                   },
                   itemBuilder: (context) {
@@ -265,6 +267,14 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                           value: 1,
                           child: Text(
                             'Forward',
+                            style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                          ),
+                        ),
+                      if (!message.isFromMe! && message.handle != null && message.handle!.contact == null)
+                        PopupMenuItem(
+                          value: 5,
+                          child: Text(
+                            'Create Contact',
                             style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                           ),
                         ),
@@ -291,7 +301,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                               (element.uti?.contains("tiff") ?? false))
                               .isNotEmpty)
                         PopupMenuItem(
-                          value: 3,
+                          value: 4,
                           child: Text(
                             'Download Original',
                             style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
@@ -641,6 +651,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         },
       ),
     );
+  }
+
+  void createContact() async {
+    popDetails();
+    await mcs.invokeMethod("open-contact-form",
+        {'address': message.handle!.address, 'addressType': message.handle!.address.isEmail ? 'email' : 'phone'});
   }
   
   void showThread() {
@@ -1058,6 +1074,27 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               ),
               trailing: Icon(
                 ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!message.isFromMe! && message.handle != null && message.handle!.contact == null)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: createContact,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Create Contact",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.person_crop_circle_badge_plus
+                    : Icons.contact_page_outlined,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
