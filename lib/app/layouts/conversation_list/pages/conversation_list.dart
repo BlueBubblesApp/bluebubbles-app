@@ -1,6 +1,4 @@
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';
@@ -12,19 +10,16 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/samsung_c
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/cupertino_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/material_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/samsung_conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,15 +71,8 @@ class ConversationListController extends StatefulController {
       }
     }
 
-    File file = File("${fs.appDocDir.path}/attachments/${randomString(16)}.png");
-    await file.create(recursive: true);
-    await mcs.invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-    if (!(await file.exists())) return;
-    if ((await file.length()) == 0) {
-      await file.delete();
-      return;
-    }
+    final file = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (file == null) return;
 
     openNewChatCreator(context, existing: [
       PlatformFile(
@@ -100,7 +88,7 @@ class ConversationListController extends StatefulController {
     eventDispatcher.emit("update-highlight", null);
     ns.pushAndRemoveUntil(
       context,
-      const ChatCreator(),
+      ChatCreator(initialAttachments: existing ?? []),
       (route) => route.isFirst,
     );
   }
@@ -224,9 +212,9 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                   return false;
                 },
                 pages: [
-                  CupertinoPage(
+                  const CupertinoPage(
                     name: "initial",
-                    child: const InitialWidgetRight(),
+                    child: InitialWidgetRight(),
                   ),
                 ],
               ),
