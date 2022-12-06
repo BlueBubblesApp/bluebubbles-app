@@ -684,7 +684,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         bytes: bytes,
       ));
     }
-    if (attachments.isNotEmpty) {
+    if (attachments.isNotEmpty || !isNullOrEmpty(message.text)!) {
       eventDispatcher.emit("update-highlight", null);
       ns.pushAndRemoveUntil(
         context,
