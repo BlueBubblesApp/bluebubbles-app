@@ -523,6 +523,14 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       uiStartup.complete();
+      ErrorWidget.builder = (FlutterErrorDetails error) {
+        Logger.error(error.exception);
+        Logger.error("Stacktrace: ${error.stack.toString()}");
+        return Text(
+          "An unexpected error occurred when rendering.",
+          style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.error)
+        );
+      };
       /* ----- SERVER VERSION CHECK ----- */
       if (kIsWeb && ss.settings.finishedSetup.value) {
         int version = (await ss.getServerDetails()).item4;
