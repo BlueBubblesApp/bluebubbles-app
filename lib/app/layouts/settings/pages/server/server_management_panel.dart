@@ -734,41 +734,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             materialIcon: Icons.dvr,
                           ),
                           onTap: () async {
-                            final response = await http.checkUpdate();
-                            if (response.statusCode == 200) {
-                              bool available = response.data['data']['available'] ?? false;
-                              Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                  title: Text("Update Check", style: context.theme.textTheme.titleLarge),
-                                  content: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        const SizedBox(
-                                          height: 15.0,
-                                        ),
-                                        Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyLarge),
-                                        const SizedBox(
-                                          height: 15.0,
-                                        ),
-                                        if (metadata.isNotEmpty)
-                                          Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}", style: context.theme.textTheme.bodyLarge)
-                                      ]
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                        child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                        onPressed: () => Navigator.of(context).pop()
-                                    ),
-                                  ]
-                                ),
-                              );
-                            } else {
-                              showSnackbar("Error", "Failed to check for updates!");
-                            }
+                            await ss.checkServerUpdate();
                           },
                         ),
                       ],

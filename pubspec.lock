@@ -261,15 +261,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.3.5"
-  chewie_audio:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: BlueBubbles
-      resolved-ref: cfdbd7b2f944c580dbdbb76f9ee9cd4306c3e41d
-      url: "https://github.com/BlueBubblesApp/chewie_audio.git"
-    source: git
-    version: "1.2.0"
   chunked_stream:
     dependency: "direct main"
     description:
@@ -522,15 +513,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.0+1"
-  dynamic_cached_fonts:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: main
-      resolved-ref: "68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5"
-      url: "https://github.com/jjoelj/dynamic_cached_fonts"
-    source: git
-    version: "0.4.0"
   dynamic_color:
     dependency: "direct main"
     description:
@@ -643,27 +625,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.0"
-  firebase_core:
-    dependency: transitive
-    description:
-      name: firebase_core
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.20.1"
-  firebase_core_platform_interface:
-    dependency: transitive
-    description:
-      name: firebase_core_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.5.0"
-  firebase_core_web:
-    dependency: transitive
-    description:
-      name: firebase_core_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.7.1"
   firebase_dart:
     dependency: "direct main"
     description:
@@ -671,27 +632,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.10+1"
-  firebase_storage:
-    dependency: transitive
-    description:
-      name: firebase_storage
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "10.3.5"
-  firebase_storage_platform_interface:
-    dependency: transitive
-    description:
-      name: firebase_storage_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.1.13"
-  firebase_storage_web:
-    dependency: transitive
-    description:
-      name: firebase_storage_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.3.3"
   fixnum:
     dependency: transitive
     description:
@@ -732,13 +672,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0+2"
-  flutter_cache_manager:
-    dependency: transitive
-    description:
-      name: flutter_cache_manager
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.3.0"
   flutter_contacts:
     dependency: "direct main"
     description:
@@ -1020,6 +953,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
+  github:
+    dependency: "direct main"
+    description:
+      name: github
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "9.7.0"
   glob:
     dependency: transitive
     description:
@@ -1715,13 +1655,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.3.0"
-  pedantic:
-    dependency: transitive
-    description:
-      name: pedantic
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.11.1"
   permission_handler:
     dependency: "direct main"
     description:
@@ -2247,6 +2180,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.10.0"
+  store_checker:
+    dependency: "direct main"
+    description:
+      name: store_checker
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.0"
   stream_channel:
     dependency: transitive
     description:

@@ -8,7 +8,8 @@ class NetworkTasks {
       await fcm.registerDevice();
       await sync.startIncrementalSync();
       await ss.getServerDetails(refresh: true);
-      ss.checkServerUpdate(context: Get.context!);
+      ss.checkServerUpdate();
+      ss.checkClientUpdate();
 
       if (kIsWeb && chats.chats.isEmpty) {
         Get.reload<ChatsService>(force: true);
