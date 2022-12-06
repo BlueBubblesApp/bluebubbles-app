@@ -36,6 +36,7 @@ class ServerManagementPanelController extends StatefulController {
   final RxBool privateAPIStatus = RxBool(false);
   final RxBool helperBundleStatus = RxBool(false);
   final RxnString proxyService = RxnString();
+  final RxnDouble timeSync = RxnDouble();
   final RxMap<String, dynamic> stats = RxMap({});
 
   // Restart trackers
@@ -57,11 +58,12 @@ class ServerManagementPanelController extends StatefulController {
     }
   }
 
-  void getServerStats() {
+  void getServerStats() async {
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    await http.ping();
+    int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+    latency.value = later - now;
     http.serverInfo().then((response) {
-      int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-      latency.value = later - now;
       macOSVersion.value = response.data['data']['os_version'];
       serverVersion.value = response.data['data']['server_version'];
       Version version = Version.parse(serverVersion.value!);
@@ -70,6 +72,7 @@ class ServerManagementPanelController extends StatefulController {
       helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
       proxyService.value = response.data['data']['proxy_service'];
       iCloudAccount.value = response.data['data']['detected_icloud'];
+      timeSync.value = response.data['data']['macos_time_sync'];
 
       http.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
@@ -165,6 +168,18 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                       const TextSpan(text: "\n\n"),
                                     if (controller.iCloudAccount.value != null)
                                       TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
+                                    if (controller.proxyService.value != null)
+                                      const TextSpan(text: "\n\n"),
+                                    if (controller.proxyService.value != null)
+                                      TextSpan(text: "Proxy Service: ${controller.proxyService.value!.capitalizeFirst}"),
+                                    if (controller.timeSync.value != null)
+                                      const TextSpan(text: "\n\n"),
+                                    if (controller.timeSync.value != null)
+                                      const TextSpan(text: "Server Time Sync: "),
+                                    if (controller.timeSync.value != null)
+                                      TextSpan(text: "${controller.timeSync.value}s", style: TextStyle(color: getIndicatorColor(controller.timeSync.value! < 1
+                                          ? SocketState.connected
+                                          : SocketState.disconnected))),
                                     const TextSpan(text: "\n\n"),
                                     const TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                   ]
