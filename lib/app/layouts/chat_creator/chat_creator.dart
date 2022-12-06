@@ -490,6 +490,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                 );
                               }
                               final chat = filteredChats[index];
+                              final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                              String _title = chat.properTitle;
+                              if (hideInfo) {
+                                _title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+                              }
                               return Material(
                                 color: Colors.transparent,
                                 child: InkWell(
@@ -503,8 +508,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                   },
                                   child: ChatCreatorTile(
                                     key: ValueKey(chat.guid),
-                                    title: chat.properTitle,
-                                    subtitle: !chat.isGroup
+                                    title: _title,
+                                    subtitle: hideInfo ? "" : !chat.isGroup
                                         ? (chat.participants.first.formattedAddress ?? chat.participants.first.address)
                                         : chat.getChatCreatorSubtitle(),
                                     chat: chat,
@@ -521,6 +526,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               final contact = filteredContacts[index];
                               contact.phones = getUniqueNumbers(contact.phones);
                               contact.emails = getUniqueEmails(contact.emails);
+                              final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
                               return Column(
                                 key: ValueKey(contact.id),
                                 mainAxisSize: MainAxisSize.min,
@@ -536,8 +542,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         ));
                                       },
                                       child: ChatCreatorTile(
-                                        title: contact.displayName,
-                                        subtitle: e,
+                                        title: hideInfo ? "Contact" : contact.displayName,
+                                        subtitle: hideInfo ? "" : e,
                                         contact: contact,
                                         format: true,
                                       ),
@@ -554,8 +560,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         ));
                                       },
                                       child: ChatCreatorTile(
-                                        title: contact.displayName,
-                                        subtitle: e,
+                                        title: hideInfo ? "Contact" : contact.displayName,
+                                        subtitle: hideInfo ? "" : e,
                                         contact: contact,
                                       ),
                                     ),
