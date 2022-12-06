@@ -356,7 +356,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         tabColor: context.theme.primaryColor,
                       );
                       if (gif?.images?.original != null) {
-                        final response = await http.downloadGiphy(gif!.images!.original!.url);
+                        final response = await http.downloadFromUrl(gif!.images!.original!.url);
                         if (response.statusCode == 200) {
                           try {
                             final Uint8List data = response.data;

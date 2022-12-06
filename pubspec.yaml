@@ -110,11 +110,6 @@ dependencies:
   flutter_improved_scrolling: ^0.0.3
   desktop_drop: ^0.3.3
   particles_flutter: ^0.1.4
-  # used for percent progress when downloading font
-  dynamic_cached_fonts:
-    git:
-      url: https://github.com/jjoelj/dynamic_cached_fonts
-      ref: main
   confetti: ^0.7.0
   supercharged: ^2.1.1
   pdf: ^3.8.2

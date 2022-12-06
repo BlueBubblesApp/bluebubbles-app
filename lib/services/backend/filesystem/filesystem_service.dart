@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
-import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -40,16 +39,19 @@ class FilesystemService extends GetxService {
     packageInfo = await PackageInfo.fromPlatform();
   }
 
-  void checkFont() {
-    if (kIsWeb) {
-      try {
-        DynamicCachedFonts.loadCachedFont(
-            "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
-            fontFamily: "Apple Color Emoji").then((_) {
-          fontExistsOnDisk.value = true;
-        });
-      } on StateError catch (_) {
-        fontExistsOnDisk.value = false;
+  void checkFont() async {
+    if (!kIsWeb) {
+      final file = File("${fs.appDocDir.path}/font/apple.ttf");
+      final exists = await file.exists();
+      if (exists) {
+        final bytes = await file.readAsBytes();
+        fontExistsOnDisk.value = true;
+        final fontLoader = FontLoader("Apple Color Emoji");
+        final cachedFontBytes = ByteData.view(bytes.buffer);
+        fontLoader.addFont(
+          Future<ByteData>.value(cachedFontBytes),
+        );
+        await fontLoader.load();
       }
     } else {
       final idbFactory = idbFactoryBrowser;

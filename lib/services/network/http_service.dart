@@ -720,12 +720,13 @@ class HttpService extends GetxService {
     });
   }
 
-  Future<Response> downloadGiphy(String url, {CancelToken? cancelToken}) async {
+  Future<Response> downloadFromUrl(String url, {Function(int, int)? progress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           url,
-          options: Options(responseType: ResponseType.bytes),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
           cancelToken: cancelToken,
+          onReceiveProgress: progress,
       );
       return returnSuccessOrError(response);
     });

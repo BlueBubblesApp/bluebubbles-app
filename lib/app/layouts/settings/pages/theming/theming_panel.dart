@@ -1,6 +1,7 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/custom_avatar_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -8,7 +9,6 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -659,24 +659,42 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                   ],
                                 ),
                               );
-                              final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
-                                fontFamily: "Apple Color Emoji",
-                                url:
+                              final response = await http.downloadFromUrl(
                                 "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
-                              );
-                              dynamicCachedFont.load().listen((data) {
-                                if (data is FileInfo) {
-                                  fs.fontExistsOnDisk.value = true;
-                                  showSnackbar("Notice", "Font loaded");
-                                } else if (data is DownloadProgress) {
-                                  controller.downloadingFont.value = true;
-                                  controller.progress.value = data.progress;
-                                  controller.totalSize.value = data.totalSize;
-                                  if (controller.progress.value == 1.0) {
-                                    controller.downloadingFont.value = false;
+                                progress: (current, total) {
+                                  if (current <= total) {
+                                    controller.downloadingFont.value = true;
+                                    controller.progress.value = current / total;
+                                    controller.totalSize.value = total;
                                   }
-                                }
+                                },
+                              ).catchError((err) {
+                                Logger.error(err.toString());
+                                showSnackbar("Error", "Failed to fetch font");
                               });
+                              Navigator.of(context).pop();
+                              controller.downloadingFont.value = false;
+                              if (response.statusCode == 200) {
+                                try {
+                                  final Uint8List data = response.data;
+                                  final file = File("${fs.appDocDir.path}/font/apple.ttf");
+                                  await file.create(recursive: true);
+                                  await file.writeAsBytes(data);
+                                  fs.fontExistsOnDisk.value = true;
+                                  final fontLoader = FontLoader("Apple Color Emoji");
+                                  final cachedFontBytes = ByteData.view(data.buffer);
+                                  fontLoader.addFont(
+                                    Future<ByteData>.value(cachedFontBytes),
+                                  );
+                                  await fontLoader.load();
+                                  showSnackbar("Notice", "Font loaded");
+                                } catch (e) {
+                                  Logger.error(e);
+                                  showSnackbar("Error", "Something went wrong");
+                                }
+                              } else {
+                                showSnackbar("Error", "Failed to fetch font");
+                              }
                             },
                             title:
                             kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
@@ -696,7 +714,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 await store.delete("iosFont");
                                 await txn.completed;
                               } else {
-                                await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf");
+                                final file = File("${fs.appDocDir.path}/font/apple.ttf");
+                                await file.delete();
                               }
                               fs.fontExistsOnDisk.value = false;
                               showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
