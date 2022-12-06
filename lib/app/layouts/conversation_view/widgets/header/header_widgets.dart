@@ -124,6 +124,8 @@ class ManualMarkState extends OptimizedState<ManualMark> {
 class ConnectionIndicator extends StatelessWidget {
   const ConnectionIndicator();
 
+  bool get noniOS => ss.settings.skin.value != Skins.iOS;
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -135,8 +137,12 @@ class ConnectionIndicator extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: getIndicatorColor(socket.state.value).withOpacity(0.4),
-              spreadRadius: socket.state.value != SocketState.connected ? max(MediaQuery.of(context).viewPadding.top, 40) : 0,
-              blurRadius: socket.state.value != SocketState.connected ? max(MediaQuery.of(context).viewPadding.top, 40) : 0,
+              spreadRadius: socket.state.value != SocketState.connected
+                  ? max(MediaQuery.of(context).viewPadding.top, 40).clamp(0, noniOS ? 30 : double.infinity).toDouble()
+                  : 0,
+              blurRadius: socket.state.value != SocketState.connected
+                  ? max(MediaQuery.of(context).viewPadding.top, 40).clamp(0, noniOS ? 30 : double.infinity).toDouble()
+                  : 0,
             ),
           ],
         ),

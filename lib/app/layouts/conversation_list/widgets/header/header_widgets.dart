@@ -52,25 +52,6 @@ class SyncIndicator extends StatelessWidget {
   }
 }
 
-class ConnectionIndicator extends StatelessWidget {
-  const ConnectionIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      if (!ss.settings.showConnectionIndicator.value) {
-        return const SizedBox.shrink();
-      }
-      return Padding(
-        padding: EdgeInsets.only(
-          right: ss.settings.skin.value != Skins.Material ? 10 : 0
-        ),
-        child: getIndicatorIcon(socket.state.value, size: 12),
-      );
-    });
-  }
-}
-
 class OverflowMenu extends StatelessWidget {
   const OverflowMenu();
 

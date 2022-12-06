@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
@@ -240,6 +241,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
               ],
             )),
           ),
+          const ConnectionIndicator(),
           if (!showArchived && !showUnknown)
             CupertinoMiniHeader(controller: controller),
         ],

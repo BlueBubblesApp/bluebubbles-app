@@ -51,14 +51,14 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
               FadeTransition(
                 opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
                   parent: animation,
-                  curve: Interval(0.3, 1.0, curve: Curves.easeIn),
+                  curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
                 )),
                 child: Center(child: ExpandedHeaderText(parentController: controller)),
               ),
               FadeTransition(
                 opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
                   parent: animation,
-                  curve: Interval(0.0, 0.7, curve: Curves.easeOut),
+                  curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
                 )),
                 child: Align(
                   alignment: Alignment.bottomLeft,
@@ -73,8 +73,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           HeaderText(controller: controller, fontSize: 20),
-                          ConnectionIndicator(),
-                          SyncIndicator(),
+                          const SyncIndicator(),
                         ],
                       ),
                     ),

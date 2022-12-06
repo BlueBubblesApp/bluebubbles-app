@@ -29,7 +29,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
           color: context.theme.colorScheme.background,
         ),
         AnimatedSwitcher(
-          duration: Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 500),
           child: controller.selectedChats.isEmpty ? SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5),
@@ -85,7 +85,6 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                   alignment: Alignment.centerLeft,
                                   children: [
                                     const SyncIndicator(),
-                                    const ConnectionIndicator(),
                                   ],
                                 ),
                               ],

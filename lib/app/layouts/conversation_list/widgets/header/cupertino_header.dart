@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -28,107 +29,103 @@ class CupertinoHeader extends StatelessWidget {
       child: FadeOnScroll(
         scrollController: controller.iosScrollController,
         zeroOpacityOffset: topMargin + 15,
-        child: Column(
-          children: <Widget>[
-            Container(
-              margin: EdgeInsets.only(
-                top: topMargin,
-                left: 20,
-                right: 20,
-                bottom: 5,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      HeaderText(controller: controller),
-                      const ConnectionIndicator(),
-                      const SyncIndicator(),
-                    ],
-                  ),
-                  Obx(() => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ClipOval(
-                        child: Material(
-                          color: context.theme.colorScheme.properSurface, // button color
-                          child: InkWell(
-                            child: SizedBox(
-                              width: 30,
-                              height: 30,
-                              child: Icon(
-                                CupertinoIcons.search,
-                                color: context.theme.colorScheme.properOnSurface,
-                                size: 20
-                              )
-                            ),
-                            onTap: () {
-                              ns.pushLeft(context, SearchView());
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10.0),
-                      if (ss.settings.moveChatCreatorToHeader.value)
-                        ClipOval(
-                          child: Material(
-                            color: context.theme.colorScheme.properSurface, // button color
-                            child: InkWell(
-                              child: SizedBox(
-                                width: 30,
-                                height: 30,
-                                child: Icon(
-                                  CupertinoIcons.pencil,
-                                  color: context.theme.colorScheme.properOnSurface,
-                                  size: 20,
-                                ),
-                              ),
-                              onTap: () => controller.openNewChatCreator(context),
-                            ),
-                          ),
-                        ),
-                      if (ss.settings.moveChatCreatorToHeader.value
-                          && ss.settings.cameraFAB.value)
-                        const SizedBox(width: 10.0),
-                      if (ss.settings.moveChatCreatorToHeader.value
-                          && ss.settings.cameraFAB.value)
-                        ClipOval(
-                          child: Material(
-                            color: context.theme.colorScheme.properSurface, // button color
-                            child: InkWell(
-                              child: SizedBox(
-                                width: 30,
-                                height: 30,
-                                child: Icon(
-                                  CupertinoIcons.camera,
-                                  color: context.theme.colorScheme.properOnSurface,
-                                  size: 20
-                                ),
-                              ),
-                              onTap: () => controller.openCamera(context)
-                            ),
-                          ),
-                        ),
-                      if (ss.settings.moveChatCreatorToHeader.value)
-                        const SizedBox(width: 10.0),
-                      const Material(
-                        color: Colors.transparent,
-                        shape: CircleBorder(),
-                        clipBehavior: Clip.antiAlias,
-                        child: OverflowMenu(),
-                      ),
-                    ],
-                  ))
+        child: Container(
+          margin: EdgeInsets.only(
+            top: topMargin,
+            left: 20,
+            right: 20,
+            bottom: 5,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  HeaderText(controller: controller),
+                  // const ConnectionIndicator(),
+                  const SyncIndicator(),
                 ],
               ),
-            ),
-          ],
+              Obx(() => Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ClipOval(
+                    child: Material(
+                      color: context.theme.colorScheme.properSurface, // button color
+                      child: InkWell(
+                        child: SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: Icon(
+                            CupertinoIcons.search,
+                            color: context.theme.colorScheme.properOnSurface,
+                            size: 20
+                          )
+                        ),
+                        onTap: () {
+                          ns.pushLeft(context, SearchView());
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10.0),
+                  if (ss.settings.moveChatCreatorToHeader.value)
+                    ClipOval(
+                      child: Material(
+                        color: context.theme.colorScheme.properSurface, // button color
+                        child: InkWell(
+                          child: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: Icon(
+                              CupertinoIcons.pencil,
+                              color: context.theme.colorScheme.properOnSurface,
+                              size: 20,
+                            ),
+                          ),
+                          onTap: () => controller.openNewChatCreator(context),
+                        ),
+                      ),
+                    ),
+                  if (ss.settings.moveChatCreatorToHeader.value
+                      && ss.settings.cameraFAB.value)
+                    const SizedBox(width: 10.0),
+                  if (ss.settings.moveChatCreatorToHeader.value
+                      && ss.settings.cameraFAB.value)
+                    ClipOval(
+                      child: Material(
+                        color: context.theme.colorScheme.properSurface, // button color
+                        child: InkWell(
+                          child: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: Icon(
+                              CupertinoIcons.camera,
+                              color: context.theme.colorScheme.properOnSurface,
+                              size: 20
+                            ),
+                          ),
+                          onTap: () => controller.openCamera(context)
+                        ),
+                      ),
+                    ),
+                  if (ss.settings.moveChatCreatorToHeader.value)
+                    const SizedBox(width: 10.0),
+                  const Material(
+                    color: Colors.transparent,
+                    shape: CircleBorder(),
+                    clipBehavior: Clip.antiAlias,
+                    child: OverflowMenu(),
+                  ),
+                ],
+              ))
+            ],
+          ),
         ),
       ),
     );
