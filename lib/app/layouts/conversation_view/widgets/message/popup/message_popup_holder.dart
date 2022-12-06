@@ -47,7 +47,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     final minBigSur = await ss.isMinBigSur;
     eventDispatcher.emit('popup-pushed', true);
     await Navigator.push(
-      context,
+      Get.context!,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 150),
         pageBuilder: (context, animation, secondaryAnimation) {
