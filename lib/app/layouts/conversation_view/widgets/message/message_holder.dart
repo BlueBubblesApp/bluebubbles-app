@@ -293,7 +293,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                             ),
                           // add a box to account for height of reactions
                           if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty)
-                            const SizedBox(height: 15.0),
+                            const SizedBox(height: 12.5),
                           if (!iOS && index == 0 && !widget.isReplyThread
                               && olderMessage != null
                               && message.threadOriginatorGuid != null
