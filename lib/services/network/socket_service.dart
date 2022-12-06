@@ -166,6 +166,16 @@ class SocketService extends GetxService {
       case "new-message":
         if (!isNullOrEmpty(data)!) {
           Logger.info("Received new message from socket");
+          final message = Message.fromMap(data);
+          if (message.isFromMe!) {
+            if (data['tempGuid'] == null) {
+              ah.outOfOrderTempGuids.add(message.guid!);
+              await Future.delayed(const Duration(milliseconds: 500));
+              if (!ah.outOfOrderTempGuids.contains(message.guid!)) return;
+            } else {
+              ah.outOfOrderTempGuids.remove(message.guid!);
+            }
+          }
           inq.queue(IncomingItem.fromMap(QueueType.newMessage, data));
         }
         return;

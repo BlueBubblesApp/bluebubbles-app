@@ -19,6 +19,7 @@ Future<void> saveFileIsolate(Tuple2<String, Uint8List> data) async {
 
 class ActionHandler extends GetxService {
   final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
+  final List<String> outOfOrderTempGuids = [];
   
   Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
