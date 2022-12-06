@@ -52,6 +52,10 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
     } else {
       if (widget.currentChat != null) {
         currentIndex = attachments.indexWhere((e) => e.guid == attachment.guid);
+        if (currentIndex == -1) {
+          attachments.add(attachment);
+          currentIndex = attachments.indexWhere((e) => e.guid == attachment.guid);
+        }
       }
       controller = PageController(initialPage: currentIndex);
     }
