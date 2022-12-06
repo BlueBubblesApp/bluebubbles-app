@@ -7,7 +7,7 @@ class StructuredName {
     required this.nameSuffix,
   });
 
-  static StructuredName? fromMap(Map<String, String>? map) {
+  static StructuredName? fromMap(Map<String, dynamic>? map) {
     if (map == null) return null;
     return StructuredName(
       namePrefix: map['namePrefix'] as String,
