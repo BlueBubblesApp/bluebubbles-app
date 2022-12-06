@@ -502,7 +502,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                   child: ChatCreatorTile(
                                     key: ValueKey(chat.guid),
                                     title: chat.properTitle,
-                                    subtitle: !chat.isGroup ? chat.participants.first.address : chat.getChatCreatorSubtitle(),
+                                    subtitle: !chat.isGroup
+                                        ? (chat.participants.first.formattedAddress ?? chat.participants.first.address)
+                                        : chat.getChatCreatorSubtitle(),
                                     chat: chat,
                                   ),
                                 ),
@@ -535,6 +537,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         title: contact.displayName,
                                         subtitle: e,
                                         contact: contact,
+                                        format: true,
                                       ),
                                     ),
                                   )),

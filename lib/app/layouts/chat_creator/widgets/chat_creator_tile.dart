@@ -15,12 +15,14 @@ class ChatCreatorTile extends StatefulWidget {
     required this.subtitle,
     this.chat,
     this.contact,
+    this.format = false,
   }) : super(key: key);
 
   final String title;
   final String subtitle;
   final Chat? chat;
   final Contact? contact;
+  final bool format;
 
   @override
   _ChatCreatorTileState createState() => _ChatCreatorTileState();
@@ -49,7 +51,16 @@ class _ChatCreatorTileState extends OptimizedState<ChatCreatorTile> with Automat
         ),
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
+      subtitle: widget.format ? FutureBuilder<String>(
+        future: formatPhoneNumber(widget.subtitle.numericOnly()),
+        initialData: widget.subtitle,
+        builder: (context, snapshot) {
+          return Text(
+            snapshot.data ?? "",
+            style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
+          );
+        },
+      ) : Text(
         widget.subtitle,
         style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
       ),
