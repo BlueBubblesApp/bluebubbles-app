@@ -26,7 +26,7 @@ class MessageProperties extends CustomStateful<MessageWidgetController> {
 
 class _MessagePropertiesState extends CustomState<MessageProperties, void, MessageWidgetController> {
   Message get message => controller.message;
-  MessagesService get service => ms(message.chat.target!.guid);
+  MessagesService get service => ms(controller.cvController!.chat.guid);
 
   @override
   void initState() {

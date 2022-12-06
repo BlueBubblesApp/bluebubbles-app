@@ -30,7 +30,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   bool get shouldShow {
     if (widget.forceShow) return true;
     if (!message.isFromMe!) return false;
-    final messages = ms(message.chat.target!.guid).struct.messages
+    final messages = ms(controller.cvController!.chat.guid).struct.messages
         .where((e) => e.isFromMe! && (e.dateDelivered != null || e.dateRead != null))
         .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final index = messages.indexWhere((e) => e.guid == message.guid);

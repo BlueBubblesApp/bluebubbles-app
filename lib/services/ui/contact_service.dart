@@ -190,9 +190,9 @@ class ContactsService extends GetxService {
           contact = c;
           break;
         }
-        // try to match last 10 - 7 digits
+        // try to match last 11 - 7 digits
         for (String p in numericPhones) {
-          final matchLengths = [10, 9, 8, 7];
+          final matchLengths = [11, 10, 9, 8, 7];
           if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
             contact = c;
             break;

@@ -82,10 +82,10 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
     updateObx(() async {
       final searchMessage = messageService.struct.messages.firstOrNull;
-      if (messageService.tag.contains("search")) {
+      if (messageService.method != null) {
         await messageService.loadSearchChunk(
           messageService.struct.messages.first,
-          messageService.tag.contains("local") ? SearchMethod.local : SearchMethod.network
+          messageService.method == "local" ? SearchMethod.local : SearchMethod.network
         );
       } else if (messageService.struct.isEmpty) {
         await messageService.loadChunk(0);

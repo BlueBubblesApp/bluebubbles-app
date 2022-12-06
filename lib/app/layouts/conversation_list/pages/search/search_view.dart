@@ -132,7 +132,6 @@ class SearchViewState extends OptimizedState<SearchView> {
       final chat = Chat.fromMap(item['chats'][0]);
       final message = Message.fromMap(item);
       chat.latestMessage = message;
-      chat.guid = "${chat.guid}/${randomString(6)}";
       search.results.add(Tuple2(chat, message));
     }
 
@@ -355,7 +354,8 @@ class SearchViewState extends OptimizedState<SearchView> {
                     controller: fakeController,
                     inSelectMode: true,
                     onSelect: (_) {
-                      final service = ms("${local ? "local" : "network"}-search/${chat.guid}");
+                      final service = ms(chat.guid);
+                      service.method = local ? "local" : "network";
                       service.struct.addMessages([message]);
                       ns.push(
                         context,

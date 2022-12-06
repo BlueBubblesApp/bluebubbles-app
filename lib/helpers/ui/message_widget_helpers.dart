@@ -79,7 +79,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   // extract rich content
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
   final linkIndexMatches = <Tuple2<String, List<int>>>[];
-  final controller = cvc(message.chat.target!);
+  final controller = cvc(message.chat.target ?? cm.activeChat!.chat);
   if (!kIsWeb && !kIsDesktop) {
     if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
       try {

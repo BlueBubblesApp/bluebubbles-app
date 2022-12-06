@@ -19,6 +19,7 @@ MessageWidgetController? getActiveMwc(String guid) => Get.isRegistered<MessageWi
 
 class MessageWidgetController extends StatefulController with SingleGetTickerProviderMixin {
   final RxBool showEdits = false.obs;
+  bool _init = false;
 
   late List<MessagePart> parts;
   Message message;
@@ -40,7 +41,8 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   @override
   void onInit() {
     super.onInit();
-    if (!kIsWeb) {
+    if (!kIsWeb && message.id != null) {
+      _init = true;
       final messageQuery = messageBox.query(Message_.id.equals(message.id!)).watch();
       sub = messageQuery.listen((Query<Message> query) {
         final _message = messageBox.get(message.id!);
@@ -53,7 +55,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
 
   @override
   void onClose() {
-    sub.cancel();
+    if (_init) sub.cancel();
     super.onClose();
   }
 

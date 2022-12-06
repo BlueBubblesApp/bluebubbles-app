@@ -57,7 +57,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
         ),
         child: GestureDetector(
           onTap: () {
-            showReplyThread(context, message, part, ms(message.chat.target!.guid));
+            showReplyThread(context, message, part, ms(controller.cvController!.chat.guid));
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -88,7 +88,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
         alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
         child: GestureDetector(
           onTap: () {
-            showReplyThread(context, message, part, ms(message.chat.target!.guid));
+            showReplyThread(context, message, part, ms(controller.cvController!.chat.guid));
           },
           behavior: HitTestBehavior.opaque,
           child: IgnorePointer(

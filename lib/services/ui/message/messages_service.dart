@@ -28,6 +28,7 @@ class MessagesService extends GetxController {
   int currentCount = 0;
   bool isFetching = false;
   bool _init = false;
+  String? method;
 
   Message? get mostRecentSent => (struct.messages.where((e) => e.isFromMe!).toList()
       ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
@@ -36,40 +37,42 @@ class MessagesService extends GetxController {
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
   void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage) {
-    _init = true;
     chat = c;
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
     // watch for new messages
-    final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
-      ..link(Message_.chat, Chat_.id.equals(chat.id!))
-      ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
-    countSub = countQuery.listen((event) {
-      if (!ss.settings.finishedSetup.value) return;
-      final newCount = event.count();
-      if (!isFetching && newCount > currentCount && currentCount != 0) {
-        event.limit = newCount - currentCount;
-        final messages = event.find();
-        event.limit = 0;
-        for (Message message in messages) {
-          message.handle = Handle.findOne(id: message.handleId);
-          message.attachments = List<Attachment>.from(message.dbAttachments);
-          // add this as a reaction if needed, update thread originators and associated messages
-          if (message.associatedMessageGuid != null) {
-            struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
-            getActiveMwc(message.associatedMessageGuid!)?.updateAssociatedMessage(message);
-          }
-          if (message.threadOriginatorGuid != null) {
-            getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
-          }
-          struct.addMessages([message]);
-          if (message.associatedMessageGuid == null) {
-            onNewMessage.call(message);
+    if (chat.id != null) {
+      _init = true;
+      final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        ..link(Message_.chat, Chat_.id.equals(chat.id!))
+        ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      countSub = countQuery.listen((event) {
+        if (!ss.settings.finishedSetup.value) return;
+        final newCount = event.count();
+        if (!isFetching && newCount > currentCount && currentCount != 0) {
+          event.limit = newCount - currentCount;
+          final messages = event.find();
+          event.limit = 0;
+          for (Message message in messages) {
+            message.handle = Handle.findOne(id: message.handleId);
+            message.attachments = List<Attachment>.from(message.dbAttachments);
+            // add this as a reaction if needed, update thread originators and associated messages
+            if (message.associatedMessageGuid != null) {
+              struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
+              getActiveMwc(message.associatedMessageGuid!)?.updateAssociatedMessage(message);
+            }
+            if (message.threadOriginatorGuid != null) {
+              getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
+            }
+            struct.addMessages([message]);
+            if (message.associatedMessageGuid == null) {
+              onNewMessage.call(message);
+            }
           }
         }
-      }
-      currentCount = newCount;
-    });
+        currentCount = newCount;
+      });
+    }
   }
 
   @override
@@ -156,6 +159,11 @@ class MessagesService extends GetxController {
       beforeResponse.addAll(afterResponse);
       _messages = beforeResponse.map((e) => Message.fromMap(e)).toList();
       _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      for (Message message in _messages) {
+        if (message.handle != null) {
+          message.handle!.contactRelation.target = cs.matchHandleToContact(message.handle!);
+        }
+      }
       struct.addMessages(_messages);
     }
     isFetching = false;
