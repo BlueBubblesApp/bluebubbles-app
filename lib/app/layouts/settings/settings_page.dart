@@ -366,7 +366,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                       SettingsSection(
                         backgroundColor: tileColor,
                         children: [
-                          SettingsTile(
+                          Obx(() => SettingsTile(
                             backgroundColor: tileColor,
                             title: "Private API Features",
                             subtitle:
@@ -386,7 +386,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   ? SocketState.connected
                                   : SocketState.connecting),
                             ),
-                          ),
+                          )),
                           Container(
                             color: tileColor,
                             child: Padding(
@@ -394,7 +394,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                             ),
                           ),
-                          SettingsTile(
+                          Obx(() => SettingsTile(
                             backgroundColor: tileColor,
                             title: "Redacted Mode",
                             subtitle:
@@ -414,7 +414,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   ? SocketState.connected
                                   : SocketState.connecting),
                             ),
-                          ),
+                          )),
                         ],
                       ),
                       // SettingsTile(
