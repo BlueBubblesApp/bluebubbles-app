@@ -47,10 +47,10 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       title: "Support Us",
                       subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo\nRight click for Github Sponsors" : "Tap for PayPal / Venmo\nTap and hold for GitHub Sponsors",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"));
+                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"), mode: LaunchMode.externalApplication);
                       },
                       onLongPress: () async {
-                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "sponsors/BlueBubblesApp"));
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "sponsors/BlueBubblesApp"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.money_dollar_circle,
@@ -68,7 +68,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                     SettingsTile(
                       title: "Website",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"));
+                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.globe,
@@ -86,10 +86,10 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       title: "Source Code",
                       subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp"));
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp"), mode: LaunchMode.externalApplication);
                       },
                       onLongPress: () async {
-                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp/bluebubbles-app/issues"));
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp/bluebubbles-app/issues"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
@@ -106,7 +106,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                     SettingsTile(
                       title: "Join Our Discord",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"));
+                        await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"), mode: LaunchMode.externalApplication);
                       },
                       leading: SvgPicture.asset(
                         "assets/icon/discord.svg",
@@ -225,7 +225,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                                     style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () async {
-                                        await launchUrl(Uri(scheme: "https", host: "github.com", path: e.value));
+                                        await launchUrl(Uri(scheme: "https", host: "github.com", path: e.value), mode: LaunchMode.externalApplication);
                                       }),
                                 ),
                               )).toList(),

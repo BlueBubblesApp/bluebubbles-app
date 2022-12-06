@@ -37,7 +37,7 @@ class MacSetupCheck extends StatelessWidget {
                 minimumSize: MaterialStateProperty.all(Size(30, 30)),
               ),
               onPressed: () async {
-                await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "install"));
+                await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "install", mode: LaunchMode.externalApplication));
               },
               child: Shimmer.fromColors(
                 baseColor: Colors.white70,

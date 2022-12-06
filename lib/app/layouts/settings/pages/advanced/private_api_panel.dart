@@ -82,7 +82,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                       title: "Set up Private API Features",
                       subtitle: "View instructions on how to set up these features",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "docs.bluebubbles.app", path: "helper-bundle/installation"));
+                        await launchUrl(Uri(scheme: "https", host: "docs.bluebubbles.app", path: "helper-bundle/installation"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.checkmark_shield,
