@@ -26,7 +26,7 @@ class MessagePart {
     if (ss.settings.redactedMode.value && ss.settings.hideMessageContent.value) {
       return fakeSubject;
     }
-    return text;
+    return subject;
   }
   String? text;
   late final String fakeText = faker.lorem.words(text?.split(" ").length ?? 0).join(" ");
