@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
@@ -48,6 +49,10 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       sub = messageQuery.listen((Query<Message> query) {
         final _message = messageBox.get(message.id!);
         if (_message != null) {
+          if (_message.hasAttachments) {
+            _message.attachments = List<Attachment>.from(_message.dbAttachments);
+          }
+          _message.handle = _message.getHandle();
           updateMessage(_message);
         }
       });
@@ -149,6 +154,9 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       message = Message.merge(newItem, message);
       ms(message.chat.target!.guid).updateMessage(message, oldGuid: oldGuid);
       updateWidgetFunctions[MessageHolder]?.call(null);
+      if (message.isFromMe! && message.attachments.isNotEmpty) {
+        updateWidgetFunctions[AttachmentHolder]?.call(null);
+      }
     } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead) {
       message = Message.merge(newItem, message);
       ms(message.chat.target!.guid).updateMessage(message);

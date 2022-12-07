@@ -36,7 +36,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
   MessagePart get part => widget.message;
   Message get message => controller.message;
   Message? get newerMessage => controller.newMessage;
-  Attachment get attachment => part.attachments.first;
+  Attachment get attachment => message.attachments.firstWhere((e) => e?.id == part.attachments.first.id)!;
   late dynamic content;
 
   @override
@@ -57,6 +57,12 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
         });
       }
     }
+  }
+
+  @override
+  void updateWidget(void _) {
+    updateContent();
+    super.updateWidget(_);
   }
 
   void onComplete(PlatformFile file) {

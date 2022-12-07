@@ -237,10 +237,6 @@ class ActionHandler extends GetxService {
       await MessageHelper.handleNotification(m, c);
     }
     await c.addMessage(m);
-    for (Attachment? a in m.attachments) {
-      if (a == null) continue;
-      a.save(m);
-    }
   }
 
   Future<void> handleUpdatedMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
@@ -252,6 +248,11 @@ class ActionHandler extends GetxService {
       }
     }
     Logger.info("Updated message: [${m.text}] - for chat [${c.guid}]", tag: "ActionHandler");
+    // update any attachments
+    for (Attachment? a in m.attachments) {
+      if (a == null) continue;
+      Attachment.replaceAttachment(tempGuid ?? m.guid, a);
+    }
     // update the message in the DB
     await Message.replaceMessage(tempGuid ?? m.guid, m);
   }
