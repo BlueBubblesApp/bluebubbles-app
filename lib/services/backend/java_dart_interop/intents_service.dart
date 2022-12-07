@@ -101,34 +101,6 @@ class IntentsService extends GetxService {
       final chat = Chat.findOne(guid: guid);
       if (chat == null) return;
       bool chatIsOpen = cm.activeChat?.chat.guid == guid;
-
-      // Add the attachments/text to the chat's draft state variables
-      if (!chatIsOpen) {
-        bool updateAttachments = false;
-        bool updateText = false;
-        if (attachments.isNotEmpty) {
-          chat.textFieldAttachments = attachments.map((e) => e.path!).toList();
-          updateAttachments = true;
-        }
-        if (text != null && text.isNotEmpty) {
-          chat.textFieldText = text;
-          updateText = true;
-        }
-
-        // Save the draft state variables
-        if (updateAttachments || updateText) {
-          chat.save(updateTextFieldAttachments: updateAttachments, updateTextFieldText: updateText);
-        }
-      } else {
-        // Update the current chat controllers
-        if (attachments.isNotEmpty) {
-          cvc(chat).pickedAttachments.value = attachments;
-        }
-        if (text != null && text.isNotEmpty) {
-          cvc(chat).textController.text = text;
-        }
-      }
-
       if (!chatIsOpen) {
         await uiStartup.future;
         ns.pushAndRemoveUntil(
@@ -138,6 +110,14 @@ class IntentsService extends GetxService {
           ),
           (route) => route.isFirst,
         );
+        // wait for controller to be initialized
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      if (attachments.isNotEmpty) {
+        cvc(chat).pickedAttachments.value = attachments;
+      }
+      if (text != null && text.isNotEmpty) {
+        cvc(chat).textController.text = text;
       }
     }
   }
