@@ -1,6 +1,3 @@
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
@@ -243,7 +240,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                   final double snapOffset = controller1.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
                   Future.microtask(() =>
-                      controller1.animateTo(snapOffset, duration: Duration(milliseconds: 200), curve: Curves.linear));
+                      controller1.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
                 }
                 return false;
               },
@@ -252,7 +249,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                 child: Obx(() => CustomScrollView(
                     controller: controller1,
                     physics:
-                    (kIsDesktop || kIsWeb) ? NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
+                    (kIsDesktop || kIsWeb) ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[
                       if (samsung)
                         SliverAppBar(
@@ -276,14 +273,14 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                                   FadeTransition(
                                     opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
                                       parent: animation,
-                                      curve: Interval(0.3, 1.0, curve: Curves.easeIn),
+                                      curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
                                     )),
                                     child: Center(child: Text("Notifications", style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
                                   ),
                                   FadeTransition(
                                     opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
                                       parent: animation,
-                                      curve: Interval(0.0, 0.7, curve: Curves.easeOut),
+                                      curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
                                     )),
                                     child: Align(
                                       alignment: Alignment.bottomLeft,
@@ -325,7 +322,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                           child: ConstrainedBox(
                             constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
                             child: CustomScrollView(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               slivers: bodySlivers,
                             ),
@@ -445,7 +442,7 @@ class ChatListState extends OptimizedState<ChatList> {
 
           return SliverToBoxAdapter(
             child: SingleChildScrollView(
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(25),
                 child: Container(
@@ -455,7 +452,7 @@ class ChatListState extends OptimizedState<ChatList> {
                     controller: _controller,
                     child: ListView.builder(
                       physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                          ? NeverScrollableScrollPhysics()
+                          ? const NeverScrollableScrollPhysics()
                           : ThemeSwitcher.getScrollPhysics(),
                       shrinkWrap: true,
                       controller: _controller,

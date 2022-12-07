@@ -17,7 +17,7 @@ class GamePigeon extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _GamePigeonState createState() => _GamePigeonState();
+  OptimizedState createState() => _GamePigeonState();
 }
 
 class _GamePigeonState extends OptimizedState<GamePigeon> with AutomaticKeepAliveClientMixin {

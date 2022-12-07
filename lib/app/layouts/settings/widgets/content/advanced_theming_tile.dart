@@ -1,5 +1,4 @@
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -19,7 +18,7 @@ class AdvancedThemingTile extends StatefulWidget {
   State<AdvancedThemingTile> createState() => _AdvancedThemingTileState();
 }
 
-class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
+class _AdvancedThemingTileState extends OptimizedState<AdvancedThemingTile> {
   @override
   Widget build(BuildContext context) {
     final textColor = widget.tuple.item2?.value ?? Colors.black;
@@ -150,7 +149,7 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                 newColor = color;
               },
               title: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text('Choose a Color',
                       style: Theme.of(context).textTheme.headline6)
               ),
@@ -178,13 +177,13 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                 onPressed: () {
                   Navigator.of(context).pop(null);
                 },
-                child: Text('CANCEL'),
+                child: const Text('CANCEL'),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(newColor);
                 },
-                child: Text('SAVE'),
+                child: const Text('SAVE'),
               ),
             ],
           );

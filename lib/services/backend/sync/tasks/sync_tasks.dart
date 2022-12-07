@@ -5,14 +5,11 @@ import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/backend/sync/sync_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
-import 'package:faker/faker.dart';
-
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
-
-import '../../../../utils/logger.dart';
 
 class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
   final List<dynamic> params;

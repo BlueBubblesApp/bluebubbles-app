@@ -31,14 +31,14 @@ class FireworkController implements Listenable {
   final List<VoidCallback> listeners = [];
 
   Duration lastAutoLaunch = Duration.zero;
-  Duration autoLaunchDuration = Duration(milliseconds: 100);
+  Duration autoLaunchDuration = const Duration(milliseconds: 100);
   double particleSize = 3;
   double get _rocketSize => max(0, particleSize - 1);
   int explosionParticleCount = 96;
 
   void start() {
     isPlaying = true;
-    autoLaunchDuration = Duration(milliseconds: 100);
+    autoLaunchDuration = const Duration(milliseconds: 100);
     lastAutoLaunch = Duration.zero;
     ticker = vsync.createTicker(update)..start();
   }

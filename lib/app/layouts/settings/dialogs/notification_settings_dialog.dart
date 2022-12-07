@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -55,8 +54,8 @@ class NotificationSettingsDialog extends StatelessWidget {
                               return Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
+                                  const Padding(
+                                    padding: EdgeInsets.all(8.0),
                                     child:
                                     Text("Select the individuals you would like to mute"),
                                   ),
@@ -139,7 +138,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                       context: context,
                       initialDate: DateTime.now().toLocal(),
                       firstDate: DateTime.now().toLocal(),
-                      lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+                      lastDate: DateTime.now().toLocal().add(const Duration(days: 365)));
                   if (messageDate != null) {
                     final messageTime =
                     await showTimePicker(context: context, initialTime: TimeOfDay.now());

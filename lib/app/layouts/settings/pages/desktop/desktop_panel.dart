@@ -122,7 +122,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                   ),
                   if (ss.settings.betterScrolling.value)
                     SettingsSlider(
-                      leading: Text("Multiplier"),
+                      leading: const Text("Multiplier"),
                       max: 14.0,
                       min: 4.0,
                       divisions: 20,
@@ -148,7 +148,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    SettingsTile(
+                    const SettingsTile(
                       title: "Actions",
                       subtitle:
                           "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
@@ -170,7 +170,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                       spacing: 10,
                                       alignment: WrapAlignment.center,
                                       buildDraggableFeedback: (context, constraints, child) => AnimatedScale(
-                                          duration: Duration(milliseconds: 250), scale: 1.1, child: child),
+                                          duration: const Duration(milliseconds: 250), scale: 1.1, child: child),
                                       onReorder: (int oldIndex, int newIndex) {
                                         List<String> selected = ss
                                             .settings
@@ -233,10 +233,10 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                                     }
                                                   },
                                                   child: AnimatedContainer(
-                                                    margin: EdgeInsets.symmetric(vertical: 5),
+                                                    margin: const EdgeInsets.symmetric(vertical: 5),
                                                     height: 56,
                                                     width: 90,
-                                                    padding: EdgeInsets.symmetric(horizontal: 9),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 9),
                                                     decoration: BoxDecoration(
                                                       borderRadius: BorderRadius.circular(8),
                                                       border: Border.all(
@@ -253,7 +253,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                                       borderRadius: BorderRadius.circular(8),
                                                     ),
                                                     curve: Curves.linear,
-                                                    duration: Duration(milliseconds: 150),
+                                                    duration: const Duration(milliseconds: 150),
                                                     child: Center(
                                                       child: Material(
                                                         color: Colors.transparent,
@@ -453,7 +453,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                     bool showMarkRead =
                                         ss.settings.selectedActionIndices.contains(markReadIndex);
                                     if (numActions <= (showMarkRead ? 1 : 0)) {
-                                      return SizedBox.shrink();
+                                      return const SizedBox.shrink();
                                     }
                                     ns.listener.value;
                                     context.width;
@@ -680,7 +680,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                               },
                             );
                           },
-                          child: Text(
+                          child: const Text(
                             "Click here to select a folder",
                           ),
                         ),

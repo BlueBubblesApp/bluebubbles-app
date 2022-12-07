@@ -1,5 +1,3 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -137,7 +135,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
                       borderRadius: BorderRadius.circular(10),
                         side: BorderSide(color: context.theme.colorScheme.onPrimaryContainer)
                     ),
-                    primary: context.theme.colorScheme.primaryContainer,
+                    backgroundColor: context.theme.colorScheme.primaryContainer,
                   ),
                   onPressed: () async {
                     final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);

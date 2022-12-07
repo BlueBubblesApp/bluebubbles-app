@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/app/components/custom/custom_cupertino_page_transition.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
@@ -55,7 +56,7 @@ class ThemeSwitcher extends StatefulWidget {
   State<ThemeSwitcher> createState() => _ThemeSwitcherState();
 }
 
-class _ThemeSwitcherState extends State<ThemeSwitcher> {
+class _ThemeSwitcherState extends OptimizedState<ThemeSwitcher> {
 
   @override
   Widget build(BuildContext context) {

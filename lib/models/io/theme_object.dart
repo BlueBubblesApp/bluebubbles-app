@@ -1,12 +1,10 @@
 import 'dart:core';
 
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';

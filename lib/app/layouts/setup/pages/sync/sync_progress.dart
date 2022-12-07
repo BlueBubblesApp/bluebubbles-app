@@ -21,7 +21,7 @@ class SyncProgress extends StatefulWidget {
 }
 
 class _SyncProgressState extends OptimizedState<SyncProgress> {
-  final confettiController = ConfettiController(duration: Duration(milliseconds: 500));
+  final confettiController = ConfettiController(duration: const Duration(milliseconds: 500));
   final Control animationController = Control.mirror;
   final controller = Get.find<SetupViewController>();
   final Tween<double> tween = Tween<double>(begin: 0, end: 5);
@@ -42,7 +42,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
 
         controller.pageController.animateToPage(
           controller.pageOfNoReturn - 1,
-          duration: Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
       } else if (event == SyncStatus.COMPLETED_SUCCESS && !hasPlayed) {
@@ -94,7 +94,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                   ),
                   padding: const EdgeInsets.all(10),
                   child: Obx(() => ListView.builder(
-                    physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     itemBuilder: (context, index) {
                       Tuple2<LogLevel, String> log = syncManager.output.reversed.toList()[index];
                       return Text(
@@ -152,7 +152,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                     CustomAnimationBuilder<double>(
                       control: animationController,
                       tween: tween,
-                      duration: Duration(milliseconds: 600),
+                      duration: const Duration(milliseconds: 600),
                       curve: Curves.easeOut,
                       builder: (context, _, anim) {
                         return const Padding(

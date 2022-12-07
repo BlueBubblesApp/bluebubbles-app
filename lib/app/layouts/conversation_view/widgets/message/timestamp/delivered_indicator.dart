@@ -15,7 +15,7 @@ class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
   final bool forceShow;
 
   @override
-  _DeliveredIndicatorState createState() => _DeliveredIndicatorState();
+  CustomState createState() => _DeliveredIndicatorState();
 }
 
 class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, MessageWidgetController> {

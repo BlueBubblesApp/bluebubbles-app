@@ -31,7 +31,7 @@ class TextFieldSuffix extends StatefulWidget {
   final Future<void> Function({String? effect}) sendMessage;
 
   @override
-  _TextFieldSuffixState createState() => _TextFieldSuffixState();
+  OptimizedState createState() => _TextFieldSuffixState();
 }
 
 class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {

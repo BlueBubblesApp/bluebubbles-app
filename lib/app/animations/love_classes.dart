@@ -22,11 +22,11 @@ class LoveController implements Listenable {
   final List<VoidCallback> listeners = [];
 
   Duration lastAutoLaunch = Duration.zero;
-  Duration autoLaunchDuration = Duration(milliseconds: 100);
+  Duration autoLaunchDuration = const Duration(milliseconds: 100);
 
   void start(Point<double> startPos) {
     isPlaying = true;
-    autoLaunchDuration = Duration(milliseconds: 100);
+    autoLaunchDuration = const Duration(milliseconds: 100);
     lastAutoLaunch = Duration.zero;
     position = startPos;
     ticker = vsync.createTicker(update)..start();

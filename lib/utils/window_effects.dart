@@ -54,12 +54,12 @@ class WindowEffects {
 
   // Map from window effect to opacity in <dark theme, light theme>
   static final Map<WindowEffect, Tuple2<double, double>> _opacities = {
-    WindowEffect.tabbed: Tuple2(0, 0),
-    WindowEffect.mica: Tuple2(0, 0),
-    WindowEffect.aero: Tuple2(0.6, 0.75),
-    WindowEffect.acrylic: Tuple2(0, 0.6),
-    WindowEffect.transparent: Tuple2(0.7, 0.7),
-    WindowEffect.disabled: Tuple2(1, 1),
+    WindowEffect.tabbed: const Tuple2(0, 0),
+    WindowEffect.mica: const Tuple2(0, 0),
+    WindowEffect.aero: const Tuple2(0.6, 0.75),
+    WindowEffect.acrylic: const Tuple2(0, 0.6),
+    WindowEffect.transparent: const Tuple2(0.7, 0.7),
+    WindowEffect.disabled: const Tuple2(1, 1),
   };
 
   static Map<WindowEffect, String> get descriptions {

@@ -29,7 +29,7 @@ class BubbleEffects extends StatefulWidget {
   final bool showTail;
 
   @override
-  _BubbleEffectsState createState() => _BubbleEffectsState();
+  OptimizedState createState() => _BubbleEffectsState();
 }
 
 class _BubbleEffectsState extends OptimizedState<BubbleEffects> {

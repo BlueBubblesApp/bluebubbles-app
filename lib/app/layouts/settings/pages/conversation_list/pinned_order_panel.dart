@@ -97,7 +97,7 @@ class PinnedOrderPanel extends StatelessWidget {
 
                 return ReorderableListView.builder(
                   shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
                   onReorder: chats.updateChatPinIndex,
                   header: Padding(
                     padding: const EdgeInsets.all(13.0),

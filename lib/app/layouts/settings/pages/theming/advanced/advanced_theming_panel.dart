@@ -23,12 +23,14 @@ class _AdvancedThemingPanelState extends OptimizedState<AdvancedThemingPanel> wi
   int index = ts.inDarkMode(Get.context!) ? 1 : 0;
   final StreamController streamController = StreamController.broadcast();
   late final TabController controller;
+  // ignore: deprecated_member_use_from_same_package
   late final List<ThemeObject> oldThemes;
 
   @override
   void initState() {
     super.initState();
     controller = TabController(length: 2, vsync: this, initialIndex: index);
+    // ignore: deprecated_member_use_from_same_package
     oldThemes = ThemeObject.getThemes().where((e) => !e.isPreset).toList();
   }
 
@@ -89,7 +91,7 @@ class _AdvancedThemingPanelState extends OptimizedState<AdvancedThemingPanel> wi
         ),
         body: TabBarView(
           controller: controller,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           children: <Widget>[
             AdvancedThemingContent(
               isDarkMode: false,

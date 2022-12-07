@@ -18,7 +18,7 @@ class SupportedInteractive extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SupportedInteractiveState createState() => _SupportedInteractiveState();
+  OptimizedState createState() => _SupportedInteractiveState();
 }
 
 class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> with AutomaticKeepAliveClientMixin {

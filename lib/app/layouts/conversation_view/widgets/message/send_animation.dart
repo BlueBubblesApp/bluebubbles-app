@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
@@ -16,7 +15,7 @@ class SendAnimation extends CustomStateful<ConversationViewController> {
   const SendAnimation({Key? key, required super.parentController}) : super(key: key);
 
   @override
-  _SendAnimationState createState() => _SendAnimationState();
+  CustomState createState() => _SendAnimationState();
 }
 
 class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, ConversationViewController> {

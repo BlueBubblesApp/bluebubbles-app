@@ -26,6 +26,8 @@ import 'models/io/theme_object.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 
+// ignore_for_file: deprecated_member_use_from_same_package
+
 final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(1, 2065429213543838585),

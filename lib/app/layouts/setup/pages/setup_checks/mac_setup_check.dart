@@ -33,8 +33,8 @@ class MacSetupCheck extends StatelessWidget {
                 ),
                 backgroundColor: MaterialStateProperty.all(Colors.transparent),
                 shadowColor: MaterialStateProperty.all(Colors.transparent),
-                maximumSize: MaterialStateProperty.all(Size(300, 36)),
-                minimumSize: MaterialStateProperty.all(Size(30, 30)),
+                maximumSize: MaterialStateProperty.all(const Size(300, 36)),
+                minimumSize: MaterialStateProperty.all(const Size(30, 30)),
               ),
               onPressed: () async {
                 await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "install"), mode: LaunchMode.externalApplication);

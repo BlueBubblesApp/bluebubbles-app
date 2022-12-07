@@ -1,6 +1,3 @@
-
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -11,6 +8,7 @@ import 'package:get/get.dart';
 
 class OldThemesDialog extends StatelessWidget {
   OldThemesDialog(this.oldThemes, this.clearOld, {Key? key}) : super(key: key);
+  // ignore: deprecated_member_use_from_same_package
   final List<ThemeObject> oldThemes;
   final Function() clearOld;
 
@@ -26,8 +24,8 @@ class OldThemesDialog extends StatelessWidget {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
                   child:
                   Text("Tap an old theme to view its colors"),
                 ),

@@ -110,7 +110,7 @@ class SyncSettings extends StatelessWidget {
             setup.startSetup(numberOfMessagesPerPage, skipEmptyChats, saveToDownloads);
 
             controller.pageController.nextPage(
-              duration: Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
             );
           },

@@ -184,7 +184,7 @@ class PageButtons extends StatelessWidget {
     return customButton ?? Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        title == "Welcome to BlueBubbles" ? SizedBox.shrink() : Container(
+        title == "Welcome to BlueBubbles" ? const SizedBox.shrink() : Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(25),
             gradient: LinearGradient(
@@ -193,7 +193,7 @@ class PageButtons extends StatelessWidget {
             ),
           ),
           height: 40,
-          padding: EdgeInsets.all(2),
+          padding: const EdgeInsets.all(2),
           child: ElevatedButton(
             style: ButtonStyle(
               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -203,8 +203,8 @@ class PageButtons extends StatelessWidget {
               ),
               backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
               shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-              maximumSize: MaterialStateProperty.all(Size(200, 36)),
-              minimumSize: MaterialStateProperty.all(Size(30, 30)),
+              maximumSize: MaterialStateProperty.all(const Size(200, 36)),
+              minimumSize: MaterialStateProperty.all(const Size(30, 30)),
             ),
             onPressed: () async {
               previousPage();
@@ -237,8 +237,8 @@ class PageButtons extends StatelessWidget {
               ),
               backgroundColor: MaterialStateProperty.all(Colors.transparent),
               shadowColor: MaterialStateProperty.all(Colors.transparent),
-              maximumSize: MaterialStateProperty.all(Size(200, 36)),
-              minimumSize: MaterialStateProperty.all(Size(30, 30)),
+              maximumSize: MaterialStateProperty.all(const Size(200, 36)),
+              minimumSize: MaterialStateProperty.all(const Size(30, 30)),
             ),
             onPressed: () async {
               final proceed = (await onNextPressed?.call()) ?? true;
@@ -260,7 +260,7 @@ class PageButtons extends StatelessWidget {
                     child: CustomAnimationBuilder<double>(
                       control: animation,
                       tween: tween,
-                      duration: Duration(milliseconds: 600),
+                      duration: const Duration(milliseconds: 600),
                       curve: Curves.easeOut,
                       builder: (context, anim, _) {
                         return Padding(
@@ -281,14 +281,14 @@ class PageButtons extends StatelessWidget {
 
   void nextPage() {
     controller.pageController.nextPage(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
   }
 
   void previousPage() {
     controller.pageController.previousPage(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
   }

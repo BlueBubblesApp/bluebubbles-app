@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:bluebubbles/models/global/attributed_body.dart';
 
 class MessageSummaryInfo {

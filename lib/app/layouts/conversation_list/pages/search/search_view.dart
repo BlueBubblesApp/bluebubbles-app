@@ -1,9 +1,6 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
-import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -35,7 +32,7 @@ class SearchView extends StatefulWidget {
 }
 
 class SearchViewState extends OptimizedState<SearchView> {
-  final Duration animationDuration = Duration(milliseconds: 400);
+  final Duration animationDuration = const Duration(milliseconds: 400);
   final TextEditingController textEditingController = TextEditingController();
   final ScrollController scrollController = ScrollController();
   final FocusNode focusNode = FocusNode();
@@ -223,7 +220,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                                   context.theme.colorScheme.background)
                               ),
                             ),
-                            child: CupertinoActivityIndicator(),
+                            child: const CupertinoActivityIndicator(),
                           ) : Container(
                             height: 20,
                             width: 20,
@@ -249,20 +246,20 @@ class SearchViewState extends OptimizedState<SearchView> {
                   children: [
                     Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
                           child: Text("Search Device"),
                         ),
-                        Icon(Icons.storage_outlined, size: 16),
+                        const Icon(Icons.storage_outlined, size: 16),
                       ],
                     ),
                     Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
                           child: Text("Search Mac"),
                         ),
-                        Icon(Icons.cloud_outlined, size: 16),
+                        const Icon(Icons.cloud_outlined, size: 16),
                       ],
                     ),
                   ],

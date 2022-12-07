@@ -21,7 +21,7 @@ class ImageViewer extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ImageViewerState createState() => _ImageViewerState();
+  OptimizedState createState() => _ImageViewerState();
 }
 
 class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAliveClientMixin {

@@ -48,7 +48,7 @@ class MessageHolder extends CustomStateful<MessageWidgetController> {
   final int? replyPart;
 
   @override
-  _MessageHolderState createState() => _MessageHolderState();
+  CustomState createState() => _MessageHolderState();
 }
 
 class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidgetController> {

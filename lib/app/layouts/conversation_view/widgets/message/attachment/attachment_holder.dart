@@ -29,7 +29,7 @@ class AttachmentHolder extends CustomStateful<MessageWidgetController> {
   final MessagePart message;
 
   @override
-  _AttachmentHolderState createState() => _AttachmentHolderState();
+  CustomState createState() => _AttachmentHolderState();
 }
 
 class _AttachmentHolderState extends CustomState<AttachmentHolder, void, MessageWidgetController> {

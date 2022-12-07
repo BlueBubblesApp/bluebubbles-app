@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/async_connecting_dialog.dart';
@@ -40,7 +39,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           ? "Enter your server URL and password to access your messages."
           : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
       contentWrapper: (child) => AnimatedSize(
-          duration: Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 200),
           child: showManualEntry && context.isPhone
               ? const SizedBox.shrink() : child,
       ),
@@ -129,9 +128,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             ),
           ),
           AnimatedSize(
-            duration: Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 200),
             child: !showManualEntry
-                ? SizedBox.shrink()
+                ? const SizedBox.shrink()
                 : Theme(
               data: context.theme.copyWith(
                   inputDecorationTheme: InputDecorationTheme(
@@ -188,8 +187,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                             MaterialStateProperty.all(context.theme.colorScheme.background),
                             shadowColor:
                             MaterialStateProperty.all(context.theme.colorScheme.background),
-                            maximumSize: MaterialStateProperty.all(Size(200, 36)),
-                            minimumSize: MaterialStateProperty.all(Size(30, 30)),
+                            maximumSize: MaterialStateProperty.all(const Size(200, 36)),
+                            minimumSize: MaterialStateProperty.all(const Size(30, 30)),
                           ),
                           onPressed: () async {
                             setState(() {
@@ -225,8 +224,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                             ),
                             backgroundColor: MaterialStateProperty.all(Colors.transparent),
                             shadowColor: MaterialStateProperty.all(Colors.transparent),
-                            maximumSize: MaterialStateProperty.all(Size(200, 36)),
-                            minimumSize: MaterialStateProperty.all(Size(30, 30)),
+                            maximumSize: MaterialStateProperty.all(const Size(200, 36)),
+                            minimumSize: MaterialStateProperty.all(const Size(30, 30)),
                           ),
                           onPressed: () async {
                             connect(urlController.text, passwordController.text);
@@ -260,7 +259,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
 
     if (controller.currentPage == controller.pageOfNoReturn) {
       controller.pageController.nextPage(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }

@@ -11,7 +11,6 @@ import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:universal_io/io.dart';
 
 String getFullChatTitle(Chat _chat) {
   String? title = "";

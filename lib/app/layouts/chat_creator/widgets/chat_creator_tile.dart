@@ -25,7 +25,7 @@ class ChatCreatorTile extends StatefulWidget {
   final bool format;
 
   @override
-  _ChatCreatorTileState createState() => _ChatCreatorTileState();
+  OptimizedState createState() => _ChatCreatorTileState();
 }
 
 class _ChatCreatorTileState extends OptimizedState<ChatCreatorTile> with AutomaticKeepAliveClientMixin {

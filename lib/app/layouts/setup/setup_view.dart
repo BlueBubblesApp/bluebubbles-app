@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/setup_checks/battery_optimization.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_connect_dialog.dart';
@@ -69,7 +68,7 @@ class _SetupViewState extends OptimizedState<SetupView> {
             onDismiss: () {
               controller.pageController.animateToPage(
                 controller.pageOfNoReturn - 1,
-                duration: Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 500),
                 curve: Curves.easeInOut,
               );
               Navigator.of(context).pop();
@@ -190,7 +189,7 @@ class SetupPages extends StatelessWidget {
             Permission.contacts.status.then((status) {
               if (status.isGranted) {
                 controller.pageController.nextPage(
-                  duration: Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                 );
               }
@@ -200,7 +199,7 @@ class SetupPages extends StatelessWidget {
             DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((isDisabled) {
               if (isDisabled ?? false) {
                 controller.pageController.nextPage(
-                  duration: Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                 );
               }

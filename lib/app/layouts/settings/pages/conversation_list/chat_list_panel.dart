@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -22,9 +20,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
   
   @override
   Widget build(BuildContext context) {
-    final inactiveCheckColor = context.theme.colorScheme.properSurface.computeDifference(tileColor) < 15
-        ? context.theme.colorScheme.properOnSurface.withOpacity(0.6) : context.theme.colorScheme.properSurface;
-
     return SettingsScaffold(
         title: "Chat List",
         initialHeader: "Indicators",
@@ -339,7 +334,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                                             crossAxisCount:
                                                                 ss.settings.pinColumnsLandscape.value,
                                                           ),
-                                                          physics: NeverScrollableScrollPhysics(),
+                                                          physics: const NeverScrollableScrollPhysics(),
                                                           childrenDelegate: SliverChildBuilderDelegate(
                                                             (context, index) => Container(
                                                               margin: EdgeInsets.all(2 /
@@ -386,8 +381,8 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                                                         width) ~/
                                                                 ss.settings.pinColumnsLandscape.value,
                                                         child: ListView.builder(
-                                                            padding: EdgeInsets.only(top: 2),
-                                                            physics: NeverScrollableScrollPhysics(),
+                                                            padding: const EdgeInsets.only(top: 2),
+                                                            physics: const NeverScrollableScrollPhysics(),
                                                             shrinkWrap: true,
                                                             itemBuilder: (context, index) => Container(
                                                                 height: 12,

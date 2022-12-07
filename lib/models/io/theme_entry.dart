@@ -19,6 +19,7 @@ class ThemeEntry {
   String? get dbColor => color?.value.toRadixString(16);
   set dbColor(String? s) => s == null ? color = null : color = HexColor(s);
 
+  // ignore: deprecated_member_use_from_same_package
   final themeObject = ToOne<ThemeObject>();
 
   ThemeEntry({

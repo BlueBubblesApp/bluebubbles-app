@@ -26,7 +26,7 @@ class MessagePopupHolder extends StatefulWidget {
   final ConversationViewController cvController;
 
   @override
-  _MessagePopupHolderState createState() => _MessagePopupHolderState();
+  OptimizedState createState() => _MessagePopupHolderState();
 }
 
 class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {

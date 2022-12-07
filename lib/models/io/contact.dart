@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:collection/collection.dart';

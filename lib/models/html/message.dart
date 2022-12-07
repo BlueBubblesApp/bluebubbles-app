@@ -244,7 +244,7 @@ class Message {
 
     if (existing == null) {
       if (awaitNewMessageEvent) {
-        await Future.delayed(Duration(milliseconds: 500));
+        await Future.delayed(const Duration(milliseconds: 500));
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
       }
 

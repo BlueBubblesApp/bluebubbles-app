@@ -41,7 +41,7 @@ class SettingsTextField extends StatelessWidget {
               ),
               trailing: trailing,
               subtitle: Padding(
-                padding: EdgeInsets.only(top: 10.0),
+                padding: const EdgeInsets.only(top: 10.0),
                 child: CustomCupertinoTextField(
                   cursorColor: Theme.of(context).primaryColor,
                   onLongPressStart: () {
@@ -54,7 +54,7 @@ class SettingsTextField extends StatelessWidget {
                   inputFormatters: inputFormatters,
                   autocorrect: true,
                   controller: controller,
-                  scrollPhysics: CustomBouncingScrollPhysics(),
+                  scrollPhysics: const CustomBouncingScrollPhysics(),
                   style: Theme.of(context).textTheme.bodyMedium!.apply(
                       color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                           ? Colors.black
@@ -64,7 +64,7 @@ class SettingsTextField extends StatelessWidget {
                   maxLines: maxLines,
                   minLines: 1,
                   placeholder: placeholder ?? "Enter your text here",
-                  padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                  padding: const EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.labelLarge,
                   autofocus: ss.settings.autoOpenKeyboard.value,
                   decoration: BoxDecoration(

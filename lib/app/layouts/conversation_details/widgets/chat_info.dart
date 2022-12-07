@@ -17,7 +17,7 @@ class ChatInfo extends StatefulWidget {
   final Chat chat;
   
   @override
-  _ChatInfoState createState() => _ChatInfoState();
+  OptimizedState createState() => _ChatInfoState();
 }
 
 class _ChatInfoState extends OptimizedState<ChatInfo> {

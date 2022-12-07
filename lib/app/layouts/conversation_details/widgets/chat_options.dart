@@ -22,7 +22,7 @@ class ChatOptions extends StatefulWidget {
   final Chat chat;
 
   @override
-  _ChatOptionsState createState() => _ChatOptionsState();
+  OptimizedState createState() => _ChatOptionsState();
 }
 
 class _ChatOptionsState extends OptimizedState<ChatOptions> {

@@ -23,11 +23,11 @@ class SpotlightController implements Listenable {
   final List<VoidCallback> listeners = [];
 
   Duration lastAutoLaunch = Duration.zero;
-  Duration autoLaunchDuration = Duration(milliseconds: 100);
+  Duration autoLaunchDuration = const Duration(milliseconds: 100);
 
   void start(Rect bubbleDimensions) {
     isPlaying = true;
-    autoLaunchDuration = Duration(milliseconds: 100);
+    autoLaunchDuration = const Duration(milliseconds: 100);
     lastAutoLaunch = Duration.zero;
     position = Point((bubbleDimensions.left + bubbleDimensions.right) / 2, (bubbleDimensions.top + bubbleDimensions.bottom) / 2);
     size = max(bubbleDimensions.width, bubbleDimensions.height) + 50;

@@ -1,13 +1,10 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_picker_file.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
@@ -54,7 +51,7 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
   Future<void> getAttachments() async {
     if (kIsDesktop || kIsWeb) return;
     // wait for opening animation to complete
-    await Future.delayed(Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 250));
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
     if (list.isNotEmpty) {
       _images = await list.first.getAssetListRange(start: 0, end: 24);
@@ -156,7 +153,7 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
             return true;
           },
           child: SingleChildScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(),
             child: SizedBox(
               height: 300,
               child: Padding(

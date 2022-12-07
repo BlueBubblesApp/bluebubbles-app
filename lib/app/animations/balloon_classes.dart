@@ -21,11 +21,11 @@ class BalloonController implements Listenable {
   final List<VoidCallback> listeners = [];
 
   Duration lastAutoLaunch = Duration.zero;
-  Duration autoLaunchDuration = Duration(milliseconds: 100);
+  Duration autoLaunchDuration = const Duration(milliseconds: 100);
 
   void start() {
     isPlaying = true;
-    autoLaunchDuration = Duration(milliseconds: 100);
+    autoLaunchDuration = const Duration(milliseconds: 100);
     lastAutoLaunch = Duration.zero;
     ticker = vsync.createTicker(update)..start();
   }

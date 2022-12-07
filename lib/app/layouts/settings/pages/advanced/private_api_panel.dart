@@ -58,18 +58,18 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                       child: RichText(
                         text: TextSpan(
                           children: [
-                            TextSpan(text: "Private API features give you the ability to:\n"),
-                            TextSpan(text: " - Send tapbacks\n"),
-                            TextSpan(text: " - Send read receipts\n"),
-                            TextSpan(text: " - Send & receive typing indicators\n"),
-                            TextSpan(text: " - Mark chats read on the Mac server\n"),
-                            TextSpan(text: " - Send messages with subject lines\n"),
-                            TextSpan(text: " - Send message effects\n"),
-                            TextSpan(text: " - Change group chat names\n"),
-                            TextSpan(text: " - Add & remove people from group chats\n"),
-                            TextSpan(text: " - Send replies (requires Big Sur and up)"),
-                            TextSpan(text: "\n\n"),
-                            TextSpan(
+                            const TextSpan(text: "Private API features give you the ability to:\n"),
+                            const TextSpan(text: " - Send tapbacks\n"),
+                            const TextSpan(text: " - Send read receipts\n"),
+                            const TextSpan(text: " - Send & receive typing indicators\n"),
+                            const TextSpan(text: " - Mark chats read on the Mac server\n"),
+                            const TextSpan(text: " - Send messages with subject lines\n"),
+                            const TextSpan(text: " - Send message effects\n"),
+                            const TextSpan(text: " - Change group chat names\n"),
+                            const TextSpan(text: " - Add & remove people from group chats\n"),
+                            const TextSpan(text: " - Send replies (requires Big Sur and up)"),
+                            const TextSpan(text: "\n\n"),
+                            const TextSpan(
                                 text:
                                     "You must have the Private API bundle installed on the server for these features to function, regardless of whether you enable the setting here."),
                           ],

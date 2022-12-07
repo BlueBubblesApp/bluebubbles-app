@@ -1,14 +1,10 @@
-import 'dart:math';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -180,7 +176,7 @@ class ThemeSelector extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
                       "Select your app theme and skin",
                       style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
@@ -200,7 +196,7 @@ class ThemeSelector extends StatelessWidget {
                                 controller.selectedTheme.value = 1;
                               },
                               child: Container(
-                                padding: EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(3),
                                 height: 200,
                                 width: 100,
                                 decoration: controller.selectedTheme.value == 1 ? BoxDecoration(
@@ -265,8 +261,8 @@ class ThemeSelector extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: Text("Light"),
                             ),
                           ],
@@ -278,7 +274,7 @@ class ThemeSelector extends StatelessWidget {
                                 controller.selectedTheme.value = 2;
                               },
                               child: Container(
-                                padding: EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(3),
                                 height: 200,
                                 width: 100,
                                 decoration: controller.selectedTheme.value == 2 ? BoxDecoration(
@@ -344,8 +340,8 @@ class ThemeSelector extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: Text("Dark"),
                             ),
                           ],
@@ -357,7 +353,7 @@ class ThemeSelector extends StatelessWidget {
                                 controller.selectedTheme.value = 3;
                               },
                               child: Container(
-                                padding: EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(3),
                                 height: 200,
                                 width: 100,
                                 decoration: controller.selectedTheme.value == 3 ? BoxDecoration(
@@ -494,8 +490,8 @@ class ThemeSelector extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: Text("System"),
                             ),
                           ],
@@ -503,7 +499,7 @@ class ThemeSelector extends StatelessWidget {
                       ],
                     ),
                   )),
-                  Container(height: 50.0, child: Divider(height: 2, color: Colors.grey,), padding: EdgeInsets.symmetric(horizontal: 15)),
+                  Container(height: 50.0, child: const Divider(height: 2, color: Colors.grey,), padding: const EdgeInsets.symmetric(horizontal: 15)),
                   Obx(() =>  Container(
                     width: 250,
                     child: Row(
@@ -516,7 +512,7 @@ class ThemeSelector extends StatelessWidget {
                                 controller.selectedSkin.value = 1;
                               },
                               child: Container(
-                                padding: EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(3),
                                 height: 200,
                                 width: 100,
                                 decoration: controller.selectedSkin.value == 1 ? BoxDecoration(
@@ -582,8 +578,8 @@ class ThemeSelector extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: Text("iOS"),
                             ),
                           ],
@@ -595,7 +591,7 @@ class ThemeSelector extends StatelessWidget {
                                 controller.selectedSkin.value = 2;
                               },
                               child: Container(
-                                padding: EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(3),
                                 height: 200,
                                 width: 100,
                                 decoration: controller.selectedSkin.value == 2 ? BoxDecoration(
@@ -661,8 +657,8 @@ class ThemeSelector extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: Text("Material"),
                             ),
                           ],
@@ -675,7 +671,7 @@ class ThemeSelector extends StatelessWidget {
                     child: Material(
                       color: Theme.of(context).primaryColor, // button color
                       child: InkWell(
-                        child: SizedBox(width: 60, height: 60, child: Icon(Icons.check, color: Colors.white)),
+                        child: const SizedBox(width: 60, height: 60, child: Icon(Icons.check, color: Colors.white)),
                         onTap: () async {
                           goToNextPage();
                         },
@@ -722,7 +718,7 @@ class TriangleBorder extends ShapeBorder {
 
   @override
   EdgeInsetsGeometry get dimensions {
-    return EdgeInsets.all(0);
+    return const EdgeInsets.all(0);
   }
 
   @override
@@ -773,7 +769,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
           color: theme.dividerColor,
           height: 0.5,
         ),
-        preferredSize: Size.fromHeight(0.5),
+        preferredSize: const Size.fromHeight(0.5),
       ),
       leading: buildBackButton(context, skin: skin),
       backgroundColor: backgroundColor,
@@ -816,7 +812,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
   if (distance <= -30.0 && distance > -60) distance = -30.0;
   if (distance <= -60.0) distance = -35.0;
 
-  return SizedBox.shrink();/*CupertinoNavigationBar(
+  return const SizedBox.shrink();/*CupertinoNavigationBar(
       backgroundColor: theme.colorScheme.secondary.withAlpha(125),
       border: Border(
         bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),

@@ -50,6 +50,7 @@ late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
 late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
+// ignore: deprecated_member_use_from_same_package
 late final Box<ThemeObject> themeObjectBox;
 final Completer<void> storeStartup = Completer();
 final Completer<void> uiStartup = Completer();
@@ -198,6 +199,7 @@ Future<Null> initApp(bool bubble) async {
       scheduledBox = store.box<ScheduledMessage>();
       themeBox = store.box<ThemeStruct>();
       themeEntryBox = store.box<ThemeEntry>();
+      // ignore: deprecated_member_use_from_same_package
       themeObjectBox = store.box<ThemeObject>();
       if (themeBox.isEmpty()) {
         ss.prefs.setString("selected-dark", "OLED Dark");
@@ -263,7 +265,7 @@ Future<Null> initApp(bool bubble) async {
       }
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
-        await WindowManager.instance.setMinimumSize(Size(300, 300));
+        await WindowManager.instance.setMinimumSize(const Size(300, 300));
         Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
         Size size = primary.size;
         Rect bounds = Rect.fromLTWH(0, 0, size.width, size.height);
@@ -676,7 +678,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
               if (ss.settings.finishedSetup.value) {
                 Logger.startup.value = false;
                 if (!serverCompatible && kIsWeb) {
-                  return FailureToStart(
+                  return const FailureToStart(
                     otherTitle: "Server version too low, please upgrade!",
                     e: "Required Server Version: v0.2.0",
                   );

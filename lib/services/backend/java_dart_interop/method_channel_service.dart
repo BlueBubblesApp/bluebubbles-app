@@ -26,7 +26,7 @@ class MethodChannelService extends GetxService {
     if (kIsWeb || kIsDesktop) return;
 
     background = headless;
-    channel = MethodChannel('com.bluebubbles.messaging');
+    channel = const MethodChannel('com.bluebubbles.messaging');
     channel.setMethodCallHandler(_callHandler);
     if (!kIsWeb && !kIsDesktop && headless) {
       try {

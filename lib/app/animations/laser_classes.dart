@@ -26,11 +26,11 @@ class LaserController implements Listenable {
   final List<VoidCallback> listeners = [];
 
   Duration lastAutoLaunch = Duration.zero;
-  Duration autoLaunchDuration = Duration(milliseconds: 500);
+  Duration autoLaunchDuration = const Duration(milliseconds: 500);
 
   void start(Rect bubbleDimensions) {
     isPlaying = true;
-    autoLaunchDuration = Duration(milliseconds: 500);
+    autoLaunchDuration = const Duration(milliseconds: 500);
     lastAutoLaunch = Duration.zero;
     position = Point((bubbleDimensions.left + bubbleDimensions.right) / 2, (bubbleDimensions.top + bubbleDimensions.bottom) / 2);
     ticker = vsync.createTicker(update)..start();
@@ -144,13 +144,13 @@ class LaserBeam {
     required this.globalAngleVelocity,
   }) {
     if (originalGlobalAngle >= 0 && originalGlobalAngle < pi / 2) {
-      globalAngleStops = Tuple2(0, pi / 2);
+      globalAngleStops = const Tuple2(0, pi / 2);
     } else if (originalGlobalAngle >= pi / 2 && originalGlobalAngle < pi) {
-      globalAngleStops = Tuple2(pi / 2, pi);
+      globalAngleStops = const Tuple2(pi / 2, pi);
     } else if (originalGlobalAngle >= pi && originalGlobalAngle < 3 * pi / 2) {
-      globalAngleStops = Tuple2(pi, 3 * pi / 2);
+      globalAngleStops = const Tuple2(pi, 3 * pi / 2);
     } else {
-      globalAngleStops = Tuple2(3 * pi / 2, 2 * pi);
+      globalAngleStops = const Tuple2(3 * pi / 2, 2 * pi);
     }
     if (internalWidth > originalInternalWidth) {
       internalWidthDirection = Direction.down;

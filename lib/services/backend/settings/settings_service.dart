@@ -98,7 +98,7 @@ class SettingsService extends GetxService {
         prefs.setInt("server-version-code", versionCode);
         return Tuple4(version ?? 11, minorVersion ?? 0, serverVersion, versionCode);
       } else {
-        return Tuple4(11, 0, "0.0.0", 0);
+        return const Tuple4(11, 0, "0.0.0", 0);
       }
     } else {
       return Tuple4(prefs.getInt("macos-version") ?? 11, prefs.getInt("macos-minor-version") ?? 0, prefs.getString("server-version") ?? "0.0.0", prefs.getInt("server-version-code") ?? 0);

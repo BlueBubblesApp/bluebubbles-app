@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
-import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -25,7 +24,7 @@ class PickedAttachmentsHolder extends StatefulWidget {
   final List<PlatformFile> initialAttachments;
 
   @override
-  _PickedAttachmentsHolderState createState() => _PickedAttachmentsHolderState();
+  OptimizedState createState() => _PickedAttachmentsHolderState();
 }
 
 class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHolder> {

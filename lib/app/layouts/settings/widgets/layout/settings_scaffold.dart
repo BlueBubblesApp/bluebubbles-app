@@ -1,10 +1,6 @@
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -80,7 +76,7 @@ class SettingsScaffold extends StatelessWidget {
               final double snapOffset = controller.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
               Future.microtask(
-                      () => controller.animateTo(snapOffset, duration: Duration(milliseconds: 200), curve: Curves.linear));
+                      () => controller.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
             }
             return false;
           },
@@ -95,7 +91,7 @@ class SettingsScaffold extends StatelessWidget {
                       controller: controller,
                       shrinkWrap: true,
                       physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                          ? NeverScrollableScrollPhysics()
+                          ? const NeverScrollableScrollPhysics()
                           : ThemeSwitcher.getScrollPhysics(),
                       slivers: <Widget>[
                         if (ss.settings.skin.value == Skins.Samsung)
@@ -119,19 +115,19 @@ class SettingsScaffold extends StatelessWidget {
                                     FadeTransition(
                                       opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
                                         parent: animation,
-                                        curve: Interval(0.3, 1.0, curve: Curves.easeIn),
+                                        curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
                                       )),
                                       child: Center(child: Text(title, style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
                                     ),
                                     FadeTransition(
                                       opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
                                         parent: animation,
-                                        curve: Interval(0.0, 0.7, curve: Curves.easeOut),
+                                        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
                                       )),
                                       child: Align(
                                         alignment: Alignment.bottomLeft,
                                         child: Container(
-                                          padding: EdgeInsets.only(left: 50),
+                                          padding: const EdgeInsets.only(left: 50),
                                           height: 50,
                                           child: Align(
                                             alignment: Alignment.centerLeft,
@@ -194,7 +190,7 @@ class SettingsScaffold extends StatelessWidget {
                             child: ConstrainedBox(
                               constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
                               child: CustomScrollView(
-                                physics: NeverScrollableScrollPhysics(),
+                                physics: const NeverScrollableScrollPhysics(),
                                 shrinkWrap: true,
                                 slivers: bodySlivers,
                               ),

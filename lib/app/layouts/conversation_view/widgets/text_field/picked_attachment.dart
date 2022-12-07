@@ -175,8 +175,8 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
                     side: BorderSide(color: context.theme.colorScheme.properSurface)
                   ),
                   padding: const EdgeInsets.all(0),
-                  maximumSize: Size(25, 25),
-                  minimumSize: Size(25, 25),
+                  maximumSize: const Size(25, 25),
+                  minimumSize: const Size(25, 25),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Icon(

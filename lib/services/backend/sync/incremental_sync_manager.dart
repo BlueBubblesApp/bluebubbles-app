@@ -177,8 +177,7 @@ class IncrementalSyncManager extends SyncManager {
 
     // If we've synced chats, we should also update the latest message
     if (syncedChats.isNotEmpty) {
-      List<Chat> updatedChats =
-          await Chat.syncLatestMessages(syncedChats.values.toList(), true);
+      await Chat.syncLatestMessages(syncedChats.values.toList(), true);
     }
 
     // End the sync

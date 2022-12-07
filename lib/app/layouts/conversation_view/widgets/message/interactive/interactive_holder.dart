@@ -24,7 +24,7 @@ class InteractiveHolder extends CustomStateful<MessageWidgetController> {
   final MessagePart message;
 
   @override
-  _InteractiveHolderState createState() => _InteractiveHolderState();
+  CustomState createState() => _InteractiveHolderState();
 }
 
 class _InteractiveHolderState extends CustomState<InteractiveHolder, void, MessageWidgetController> {

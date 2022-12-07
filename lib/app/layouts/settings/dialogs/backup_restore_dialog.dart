@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -25,12 +24,12 @@ class BackupRestoreDialog extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            SizedBox(
+            const SizedBox(
               height: 15.0,
             ),
             Text("Load From / Save To Server", style: context.theme.textTheme.labelLarge),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               child: Container(color: context.theme.textTheme.labelLarge!.color, height: 0.5),
             ),
             Row(
@@ -38,12 +37,13 @@ class BackupRestoreDialog extends StatelessWidget {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: context.theme.colorScheme.onPrimary,
+                    backgroundColor: context.theme.colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    primary: context.theme.colorScheme.primary,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
+                    disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                    disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                   ),
                   onPressed: () async {
@@ -73,15 +73,17 @@ class BackupRestoreDialog extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: context.theme.colorScheme.onPrimary,
+                    backgroundColor: context.theme.colorScheme.properSurface,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: context.theme.colorScheme.primary)),
-                    primary: context.theme.colorScheme.properSurface,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(color: context.theme.colorScheme.primary)
+                    ),
+                    disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                    disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                   onPressed: () async {
@@ -96,7 +98,7 @@ class BackupRestoreDialog extends StatelessWidget {
                               title: Text("Settings Backups", style: context.theme.textTheme.titleLarge),
                               backgroundColor: context.theme.colorScheme.properSurface,
                               content: Container(
-                                constraints: BoxConstraints(
+                                constraints: const BoxConstraints(
                                   maxHeight: 300,
                                 ),
                                 child: Container(
@@ -118,7 +120,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                               ListView.builder(
                                                 shrinkWrap: true,
                                                 itemCount: json.length,
-                                                physics: NeverScrollableScrollPhysics(),
+                                                physics: const NeverScrollableScrollPhysics(),
                                                 itemBuilder: (context, index) {
                                                   String finalName = "";
                                                   if(json[index]['name'].toString().contains("-")){
@@ -195,12 +197,13 @@ class BackupRestoreDialog extends StatelessWidget {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
+                        foregroundColor: context.theme.colorScheme.onPrimary,
+                        backgroundColor: context.theme.colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        primary: context.theme.colorScheme.primary,
-                        onPrimary: context.theme.colorScheme.onPrimary,
-                        onSurface: context.theme.colorScheme.properOnSurface,
+                        disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                        disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                         textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                       ),
                       onPressed: () async {
@@ -239,15 +242,17 @@ class BackupRestoreDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
+                        foregroundColor: context.theme.colorScheme.onPrimary,
+                        backgroundColor: context.theme.colorScheme.properSurface,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: context.theme.colorScheme.primary)),
-                        primary: context.theme.colorScheme.properSurface,
-                        onPrimary: context.theme.colorScheme.onPrimary,
-                        onSurface: context.theme.colorScheme.properOnSurface,
+                            side: BorderSide(color: context.theme.colorScheme.primary)
+                        ),
+                        disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                        disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                         textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                       ),
                       onPressed: () async {
@@ -262,7 +267,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                   title: Text("Theme Backups", style: context.theme.textTheme.titleLarge),
                                   backgroundColor: context.theme.colorScheme.properSurface,
                                   content: Container(
-                                    constraints: BoxConstraints(
+                                    constraints: const BoxConstraints(
                                       maxHeight: 300,
                                     ),
                                     child: Container(
@@ -284,7 +289,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                                   ListView.builder(
                                                     shrinkWrap: true,
                                                     itemCount: json.length,
-                                                    physics: NeverScrollableScrollPhysics(),
+                                                    physics: const NeverScrollableScrollPhysics(),
                                                     itemBuilder: (context, index) {
                                                       return ListTile(
                                                         title: Text(json[index]['name'], style: context.theme.textTheme.bodyLarge),
@@ -326,12 +331,12 @@ class BackupRestoreDialog extends StatelessWidget {
                     ),
                   ]
               ),
-            SizedBox(
+            const SizedBox(
               height: 15.0,
             ),
             Text("Load / Save Locally", style: context.theme.textTheme.labelLarge),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               child: Container(color: context.theme.textTheme.labelLarge!.color, height: 0.5),
             ),
             Row(
@@ -339,12 +344,13 @@ class BackupRestoreDialog extends StatelessWidget {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: context.theme.colorScheme.onPrimary,
+                    backgroundColor: context.theme.colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    primary: context.theme.colorScheme.primary,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
+                    disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                    disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                   ),
                   onPressed: () async {
@@ -389,7 +395,7 @@ class BackupRestoreDialog extends StatelessWidget {
                         onPressed: () {
                           Share.file("BlueBubbles Settings", filePath);
                         },
-                        child: kIsDesktop ? SizedBox.shrink() : Text("SHARE", style: TextStyle(color: context.theme.primaryColor)),
+                        child: kIsDesktop ? const SizedBox.shrink() : Text("SHARE", style: TextStyle(color: context.theme.primaryColor)),
                       ),
                     );
                   },
@@ -401,15 +407,17 @@ class BackupRestoreDialog extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: context.theme.colorScheme.onPrimary,
+                    backgroundColor: context.theme.colorScheme.properSurface,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: context.theme.colorScheme.primary)),
-                    primary: context.theme.colorScheme.properSurface,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
+                        side: BorderSide(color: context.theme.colorScheme.primary)
+                    ),
+                    disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                    disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                   onPressed: () async {
@@ -418,7 +426,7 @@ class BackupRestoreDialog extends StatelessWidget {
                     if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                     try {
-                      String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
+                      String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
                       Map<String, dynamic> json = jsonDecode(jsonString);
                       Settings.updateFromMap(json);
                       Get.back();
@@ -444,12 +452,13 @@ class BackupRestoreDialog extends StatelessWidget {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      foregroundColor: context.theme.colorScheme.onPrimary,
+                      backgroundColor: context.theme.colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      primary: context.theme.colorScheme.primary,
-                      onPrimary: context.theme.colorScheme.onPrimary,
-                      onSurface: context.theme.colorScheme.properOnSurface,
+                      disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                      disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                       textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                     ),
                     onPressed: () async {
@@ -498,7 +507,7 @@ class BackupRestoreDialog extends StatelessWidget {
                           onPressed: () {
                             Share.file("BlueBubbles Theming", filePath);
                           },
-                          child: kIsDesktop ? SizedBox.shrink() : Text("SHARE", style: TextStyle(color: context.theme.primaryColor)),
+                          child: kIsDesktop ? const SizedBox.shrink() : Text("SHARE", style: TextStyle(color: context.theme.primaryColor)),
                         ),
                       );
                     },
@@ -510,15 +519,17 @@ class BackupRestoreDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      foregroundColor: context.theme.colorScheme.onPrimary,
+                      backgroundColor: context.theme.colorScheme.properSurface,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: context.theme.colorScheme.primary)),
-                      primary: context.theme.colorScheme.properSurface,
-                      onPrimary: context.theme.colorScheme.onPrimary,
-                      onSurface: context.theme.colorScheme.properOnSurface,
+                          side: BorderSide(color: context.theme.colorScheme.primary)
+                      ),
+                      disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                      disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                       textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                     ),
                     onPressed: () async {
@@ -527,7 +538,7 @@ class BackupRestoreDialog extends StatelessWidget {
                       if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                       try {
-                        String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
+                        String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
                         List<dynamic> json = jsonDecode(jsonString);
                         for (var e in json) {
                           ThemeStruct object = ThemeStruct.fromMap(e);

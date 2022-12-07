@@ -18,7 +18,7 @@ class TextBubble extends CustomStateful<MessageWidgetController> {
   final MessagePart message;
 
   @override
-  _TextBubbleState createState() => _TextBubbleState();
+  CustomState createState() => _TextBubbleState();
 }
 
 class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetController> {

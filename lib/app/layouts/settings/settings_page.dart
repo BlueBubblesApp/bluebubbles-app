@@ -1,6 +1,4 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/backup_restore_dialog.dart';
@@ -21,7 +19,6 @@ import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
-import 'package:bluebubbles/services/backend_ui_interop/intents.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/main.dart';
@@ -509,7 +506,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       Get.close(1);
                                     }
                                     Navigator.of(context).pop();
-                                    Future.delayed(Duration(milliseconds: 400), ()
+                                    Future.delayed(const Duration(milliseconds: 400), ()
                                     {
                                       progress.value = null;
                                       totalSize.value = null;
@@ -530,7 +527,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                   style: context.theme.textTheme.bodyLarge,
                                                 ),
                                                 ),
-                                                SizedBox(height: 10.0),
+                                                const SizedBox(height: 10.0),
                                                 Obx(() => LinearProgressIndicator(
                                                   backgroundColor: context.theme.colorScheme.outline,
                                                   value: progress.value,
@@ -539,7 +536,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                   AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                                                 ),
                                                 ),
-                                                SizedBox(
+                                                const SizedBox(
                                                   height: 15.0,
                                                 ),
                                                 Obx(() => Text(

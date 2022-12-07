@@ -13,7 +13,7 @@ class CelebrationController extends FireworkController {
   @override
   void start() {
     isPlaying = true;
-    autoLaunchDuration = Duration(milliseconds: 100);
+    autoLaunchDuration = const Duration(milliseconds: 100);
     lastAutoLaunch = Duration.zero;
     ticker = vsync.createTicker(update)..start();
   }

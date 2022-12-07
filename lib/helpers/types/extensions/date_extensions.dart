@@ -1,6 +1,6 @@
 extension DateHelpers on DateTime {
   bool isTomorrow({DateTime? otherDate}) {
-    final now = otherDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1));
+    final now = otherDate?.add(const Duration(days: 1)) ?? DateTime.now().add(const Duration(days: 1));
     return now.day == day && now.month == month && now.year == year;
   }
 
@@ -10,7 +10,7 @@ extension DateHelpers on DateTime {
   }
 
   bool isYesterday() {
-    final yesterday = DateTime.now().subtract(Duration(days: 1));
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
     return yesterday.day == day && yesterday.month == month && yesterday.year == year;
   }
 

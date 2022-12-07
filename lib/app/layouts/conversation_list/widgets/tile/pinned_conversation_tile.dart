@@ -82,7 +82,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
           },
           onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
           child: Obx(() => AnimatedContainer(
-            duration: Duration(milliseconds: 100),
+            duration: const Duration(milliseconds: 100),
             clipBehavior: Clip.none,
             padding: const EdgeInsets.only(
               top: 4,

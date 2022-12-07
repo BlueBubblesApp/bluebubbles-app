@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,20 +13,15 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends OptimizedState<SplashScreen> {
   bool didNavigate = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   void navigate() async {
     if (widget.shouldNavigate && !didNavigate) {
       didNavigate = true;
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 100));
       Navigator.of(context).pushAndRemoveUntil(PageRouteBuilder(
-          transitionDuration: Duration(seconds: 1),
+          transitionDuration: const Duration(seconds: 1),
           pageBuilder: (_, __, ___) => TitleBarWrapper(child: SetupView())), (route) => route.isFirst);
     }
   }

@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/create_new_theme_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/advanced_theming_tile.dart';
@@ -9,7 +7,6 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -108,7 +105,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                               width: 12,
                               decoration: BoxDecoration(
                                 color: struct.data.colorScheme.primary,
-                                borderRadius: BorderRadius.all(Radius.circular(4)),
+                                borderRadius: const BorderRadius.all(Radius.circular(4)),
                               ),
                             ),
                           ),
@@ -119,7 +116,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                               width: 12,
                               decoration: BoxDecoration(
                                 color: struct.data.colorScheme.secondary,
-                                borderRadius: BorderRadius.all(Radius.circular(4)),
+                                borderRadius: const BorderRadius.all(Radius.circular(4)),
                               ),
                             ),
                           ),
@@ -134,7 +131,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                               width: 12,
                               decoration: BoxDecoration(
                                 color: struct.data.colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.all(Radius.circular(4)),
+                                borderRadius: const BorderRadius.all(Radius.circular(4)),
                               ),
                             ),
                           ),
@@ -145,7 +142,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                               width: 12,
                               decoration: BoxDecoration(
                                 color: struct.data.colorScheme.tertiary,
-                                borderRadius: BorderRadius.all(Radius.circular(4)),
+                                borderRadius: const BorderRadius.all(Radius.circular(4)),
                               ),
                             ),
                           ),

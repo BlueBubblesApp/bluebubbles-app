@@ -51,8 +51,8 @@ class BatteryOptimizationCheck extends StatelessWidget {
                       ),
                       backgroundColor: MaterialStateProperty.all(Colors.transparent),
                       shadowColor: MaterialStateProperty.all(Colors.transparent),
-                      maximumSize: MaterialStateProperty.all(Size(200, 36)),
-                      minimumSize: MaterialStateProperty.all(Size(30, 30)),
+                      maximumSize: MaterialStateProperty.all(const Size(200, 36)),
+                      minimumSize: MaterialStateProperty.all(const Size(30, 30)),
                     ),
                     onPressed: () async {
                       bool? isDisabled =

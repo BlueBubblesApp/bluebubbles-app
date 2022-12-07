@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -27,7 +26,7 @@ class UrlPreview extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _UrlPreviewState createState() => _UrlPreviewState();
+  OptimizedState createState() => _UrlPreviewState();
 }
 
 class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliveClientMixin {

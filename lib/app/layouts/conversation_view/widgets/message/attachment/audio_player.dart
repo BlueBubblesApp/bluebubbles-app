@@ -17,7 +17,7 @@ class AudioPlayer extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _AudioPlayerState createState() => _AudioPlayerState();
+  OptimizedState createState() => _AudioPlayerState();
 }
 
 class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {

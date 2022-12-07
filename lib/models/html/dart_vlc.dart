@@ -60,7 +60,7 @@ class Player {
   CurrentState current = CurrentState();
 
   /// Dimensions of the currently playing video.
-  VideoDimensions videoDimensions = VideoDimensions(0, 0);
+  VideoDimensions videoDimensions = const VideoDimensions(0, 0);
 
   Player({
     required int id,
@@ -183,7 +183,7 @@ class Media {
   factory Media.file(
       dynamic file
   ) {
-    return Media._(resource: "", metas: {});
+    return const Media._(resource: "", metas: {});
   }
 }
 

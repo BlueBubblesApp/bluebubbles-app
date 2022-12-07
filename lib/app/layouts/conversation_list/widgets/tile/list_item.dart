@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -60,7 +59,7 @@ class ListItem extends StatelessWidget {
                   : action == MaterialSwipeAction.mark_read
                   ? (chat.hasUnreadMessage! ? ' Mark Read' : ' Mark Unread')
                   : (chat.isArchived! ? ' UnArchive' : ' Archive'),
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),

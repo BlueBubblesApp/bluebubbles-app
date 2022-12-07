@@ -1,4 +1,3 @@
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -42,7 +41,7 @@ class _GradientBackgroundState extends CustomState<GradientBackground, void, Con
     return MirrorAnimationBuilder<Movie>(
       tween: ts.gradientTween.value,
       curve: Curves.fastOutSlowIn,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
       builder: (context, anim, child) {
         return Container(
           decoration: BoxDecoration(

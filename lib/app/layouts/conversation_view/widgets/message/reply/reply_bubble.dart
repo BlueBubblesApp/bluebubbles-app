@@ -22,7 +22,7 @@ class ReplyBubble extends CustomStateful<MessageWidgetController> {
   final bool showAvatar;
 
   @override
-  _ReplyBubbleState createState() => _ReplyBubbleState();
+  CustomState createState() => _ReplyBubbleState();
 }
 
 class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetController> {

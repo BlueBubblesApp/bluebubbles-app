@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -136,13 +134,13 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                             builder: (context) => Scaffold(
                               body: Markdown(
                                 data: changelog,
-                                physics: AlwaysScrollableScrollPhysics(
+                                physics: const AlwaysScrollableScrollPhysics(
                                   parent: BouncingScrollPhysics(),
                                 ),
                                 styleSheet: MarkdownStyleSheet.fromTheme(
                                   context.theme
                                     ..textTheme.copyWith(
-                                      headlineMedium: TextStyle(
+                                      headlineMedium: const TextStyle(
                                         color: Colors.white,
                                       ),
                                     ),
@@ -218,7 +216,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                               mainAxisSize: MainAxisSize.min,
                               children: devs.entries.map((e) => Container(
                                 alignment: Alignment.center,
-                                padding: EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(8),
                                 child: RichText(
                                   text: TextSpan(
                                     text: e.key,
@@ -424,7 +422,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                                 future: PackageInfo.fromPlatform(),
                                 builder: (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
                                   return AlertDialog(
-                                    contentPadding: EdgeInsets.only(
+                                    contentPadding: const EdgeInsets.only(
                                       top: 24,
                                       left: 24,
                                       right: 24,

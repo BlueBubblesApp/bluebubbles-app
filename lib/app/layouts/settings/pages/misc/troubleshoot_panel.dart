@@ -1,5 +1,4 @@
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -86,7 +85,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                                     ),
                                     padding: const EdgeInsets.all(10),
                                     child: Obx(() => ListView.builder(
-                                      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                                       itemBuilder: (context, index) {
                                         return Text(
                                           log[index],

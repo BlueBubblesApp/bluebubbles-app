@@ -12,7 +12,7 @@ class ReplyHolder extends StatefulWidget {
   final ConversationViewController controller;
 
   @override
-  _ReplyHolderState createState() => _ReplyHolderState();
+  OptimizedState createState() => _ReplyHolderState();
 }
 
 class _ReplyHolderState extends OptimizedState<ReplyHolder> {

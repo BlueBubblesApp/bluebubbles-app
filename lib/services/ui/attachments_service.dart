@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -274,7 +273,7 @@ class AttachmentsService extends GetxService {
         return Size(size.width.toDouble(), size.height.toDouble());
       }
     } catch (ex) {
-      return Size(0, 0);
+      return const Size(0, 0);
     }
   }
 

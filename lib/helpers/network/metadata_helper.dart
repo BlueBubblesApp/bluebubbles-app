@@ -122,7 +122,7 @@ class MetadataHelper {
     data?.url = url;
 
     // Delete from the cache after 15 seconds (arbitrary)
-    Future.delayed(Duration(seconds: 15), () {
+    Future.delayed(const Duration(seconds: 15), () {
       if (_metaCache.containsKey(message.guid)) {
         _metaCache.remove(message.guid);
       }

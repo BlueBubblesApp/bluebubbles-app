@@ -16,7 +16,7 @@ class LegacyUrlPreview extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _LegacyUrlPreviewState createState() => _LegacyUrlPreviewState();
+  OptimizedState createState() => _LegacyUrlPreviewState();
 }
 
 class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with AutomaticKeepAliveClientMixin {

@@ -11,7 +11,6 @@ import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class MentionEntity extends Entity {
   /// Constructor to create an instance of [AddressEntity].

@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -46,7 +45,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
       children: [
         if (ss.settings.cameraFAB.value && iOS)
           ConstrainedBox(
-            constraints: BoxConstraints(
+            constraints: const BoxConstraints(
               maxWidth: 45,
               maxHeight: 45,
             ),
@@ -98,7 +97,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
             child: FloatingActionButton.extended(
               backgroundColor: context.theme.colorScheme.primaryContainer,
               label: AnimatedSwitcher(
-                duration: Duration(milliseconds: 150),
+                duration: const Duration(milliseconds: 150),
                 transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
                   child: child,
                   sizeFactor: animation,

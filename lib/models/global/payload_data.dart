@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:developer';
-
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -128,6 +125,7 @@ class MediaMetadata {
   };
 }
 
+// ignore: camel_case_types
 class iMessageAppData {
   iMessageAppData({
     this.appName,

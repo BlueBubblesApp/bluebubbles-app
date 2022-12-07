@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:flutter/widgets.dart';
 
 /// Draws a circular animated progress bar.
@@ -23,7 +24,7 @@ class CircleProgressBar extends StatefulWidget {
   }
 }
 
-class CircleProgressBarState extends State<CircleProgressBar> with SingleTickerProviderStateMixin {
+class CircleProgressBarState extends OptimizedState<CircleProgressBar> with SingleTickerProviderStateMixin {
   // Used in tweens where a backgroundColor isn't given.
   static const TRANSPARENT = Color(0x00000000);
   late AnimationController _controller;
@@ -161,7 +162,7 @@ class CircleProgressBarPainter extends CustomPainter {
     final radius = (shortestSide / 2);
 
     // Start at the top. 0 radians represents the right edge
-    final double startAngle = -(2 * math.pi * 0.25);
+    const double startAngle = -(2 * math.pi * 0.25);
     final double sweepAngle = (2 * math.pi * percentage);
 
     // Don't draw the background if we don't have a background color

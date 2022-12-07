@@ -27,7 +27,7 @@ class VideoPlayer extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _VideoPlayerState createState() => _VideoPlayerState();
+  OptimizedState createState() => _VideoPlayerState();
 }
 
 class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAliveClientMixin {

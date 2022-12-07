@@ -21,7 +21,7 @@ class MessageProperties extends CustomStateful<MessageWidgetController> {
   final GlobalKey? globalKey;
 
   @override
-  _MessagePropertiesState createState() => _MessagePropertiesState();
+  CustomState createState() => _MessagePropertiesState();
 }
 
 class _MessagePropertiesState extends CustomState<MessageProperties, void, MessageWidgetController> {

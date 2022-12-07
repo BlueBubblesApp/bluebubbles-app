@@ -56,7 +56,7 @@ class MessageHelper {
       );
 
       // Artificial await to prevent lag
-      await Future.delayed(Duration(milliseconds: 10));
+      await Future.delayed(const Duration(milliseconds: 10));
 
       if (existing != null) {
         message = existing;

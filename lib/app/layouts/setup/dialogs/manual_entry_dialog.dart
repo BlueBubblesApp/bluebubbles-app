@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/connecting_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -124,7 +123,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
                 labelText: "URL",
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             TextField(
               cursorColor: context.theme.colorScheme.primary,
               autocorrect: false,
