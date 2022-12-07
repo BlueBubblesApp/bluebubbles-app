@@ -16,13 +16,11 @@ class ContactsService extends GetxService {
   final tag = "ContactsService";
   /// The master list of contact objects
   List<Contact> contacts = [];
-  List<Handle> handles = [];
 
   Future<void> init({bool headless = false}) async {
     if (headless) return;
-    if (!kIsWeb && !kIsDesktop) {
+    if (!kIsWeb) {
       contacts = Contact.getContacts();
-      handles = Handle.find();
     } else {
       await fetchNetworkContacts();
     }
@@ -37,14 +35,14 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> refreshContacts({bool reloadUI = true}) async {
-    if (!(await cs.canAccessContacts())) return [];
-    final contacts = <Contact>[];
+  Future<bool> refreshContacts({bool reloadUI = true}) async {
+    if (!(await cs.canAccessContacts())) return false;
+    final _contacts = <Contact>[];
     bool hasChanges = false;
     if (kIsWeb || kIsDesktop) {
-      contacts.addAll(await cs.fetchNetworkContacts());
+      _contacts.addAll(await cs.fetchNetworkContacts());
     } else {
-      contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
+      _contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
         displayName: e.displayName,
         emails: e.emails,
         phones: e.phones,
@@ -58,7 +56,7 @@ class ContactsService extends GetxService {
         id: e.id,
       )));
       // get avatars
-      for (Contact c in contacts) {
+      for (Contact c in _contacts) {
         try {
           c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
         } catch (_) {
@@ -71,14 +69,14 @@ class ContactsService extends GetxService {
       final dbContacts = contactBox.getAll();
       // save any updated contacts
       for (Contact c in dbContacts) {
-        final refreshedContact = contacts.firstWhereOrNull((element) => element.id == c.id);
+        final refreshedContact = _contacts.firstWhereOrNull((element) => element.id == c.id);
         if (refreshedContact != null && c != refreshedContact) {
           hasChanges = true;
           refreshedContact.save();
         }
       }
       // save any new contacts
-      final newContacts = contacts.where((e) => !dbContacts.map((e) => e.id).contains(e.id)).toList();
+      final newContacts = _contacts.where((e) => !dbContacts.map((e) => e.id).contains(e.id)).toList();
       if (newContacts.isNotEmpty) {
         hasChanges = true;
         final ids = contactBox.putMany(newContacts);
@@ -102,7 +100,7 @@ class ContactsService extends GetxService {
     }
     // match handles to contacts and save match
     final handlesToSearch = List<Handle>.from(handles);
-    for (Contact c in contacts) {
+    for (Contact c in _contacts) {
       final handles = cs.matchContactToHandles(c, handlesToSearch);
       final addresses = handles.map((e) => e.address).toList();
       if (handles.isNotEmpty) {
@@ -128,12 +126,14 @@ class ContactsService extends GetxService {
     if (!kIsWeb) {
       Handle.bulkSave(handles);
     }
+    if (kIsWeb || kIsDesktop) {
+      contacts = _contacts;
+    }
     // only return contacts if things changed (or on web)
-    return kIsWeb || hasChanges ? contacts.map((e) => e.toMap()).toList() : [];
+    return kIsWeb || hasChanges;
   }
 
   void completeContactsRefresh(List<Contact> refreshedContacts, {bool reloadUI = true}) {
-    handles = Handle.find();
     if (refreshedContacts.isNotEmpty) {
       contacts = refreshedContacts;
       if (reloadUI) {

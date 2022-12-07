@@ -42,25 +42,30 @@ class SyncService extends GetxService {
 
     final contacts = <Contact>[];
     if (kIsWeb || kIsDesktop) {
-      contacts.addAll((await incrementalSyncIsolate.call(null)).map((e) => Contact.fromMap(e)));
+      final result = await incrementalSyncIsolate.call(null);
+      if (result) {
+        contacts.addAll(cs.contacts);
+      }
     } else {
-      contacts.addAll((await incrementalSyncIsolate.call(null)).map((e) => Contact.fromMap(e)));
-      /*final completer = Completer<List<Map<String, dynamic>>>();
+      final completer = Completer<bool>();
       final port = RawReceivePort();
-      port.handler = (List<Map<String, dynamic>> response) {
+      port.handler = (bool response) {
         port.close();
         completer.complete(response);
       };
 
+      FlutterIsolate? isolate;
       try {
-        await FlutterIsolate.spawn(incrementalSyncIsolate, port.sendPort);
+        isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, port.sendPort);
       } catch (e) {
         Logger.error('Got error when opening isolate: $e');
         port.close();
       }
-
-      contacts.addAll((await completer.future).map((e) => Contact.fromMap(e)));
-      FlutterIsolate.killAll();*/
+      final result = await completer.future;
+      if (result) {
+        contacts.addAll(Contact.getContacts());
+      }
+      isolate?.kill();
     }
     cs.completeContactsRefresh(contacts);
 
@@ -69,9 +74,9 @@ class SyncService extends GetxService {
 }
 
 @pragma('vm:entry-point')
-Future<List<Map<String, dynamic>>> incrementalSyncIsolate(SendPort? port) async {
+Future<bool> incrementalSyncIsolate(SendPort? port) async {
   try {
-    /*if (!kIsWeb && !kIsDesktop) {
+    if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
       ls.isUiThread = false;
       await ss.init(headless: true);
@@ -85,7 +90,7 @@ Future<List<Map<String, dynamic>>> incrementalSyncIsolate(SendPort? port) async 
       messageBox = store.box<Message>();
       scheduledBox = store.box<ScheduledMessage>();
       themeBox = store.box<ThemeStruct>();
-    }*/
+    }
 
     int syncStart = ss.settings.lastIncrementalSync.value;
     final incrementalSyncManager = IncrementalSyncManager(syncStart);
@@ -94,13 +99,15 @@ Future<List<Map<String, dynamic>>> incrementalSyncIsolate(SendPort? port) async 
     Logger.error('Incremental sync failed! Error: $ex');
     Logger.error(s.toString());
   }
+  Logger.info('Starting contact refresh');
   try {
-    final map = await cs.refreshContacts();
-    port?.send(map);
-    return map;
+    final shouldRefresh = await cs.refreshContacts();
+    Logger.info('Finished contact refresh');
+    port?.send(shouldRefresh);
+    return shouldRefresh;
   } catch (ex) {
     Logger.error('Contacts refresh failed! Error: $ex');
-    port?.send([]);
-    return <Map<String, dynamic>>[];
+    port?.send(false);
+    return false;
   }
 }
