@@ -13,6 +13,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -36,7 +37,8 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
   MessagePart get part => widget.message;
   Message get message => controller.message;
   Message? get newerMessage => controller.newMessage;
-  Attachment get attachment => message.attachments.firstWhere((e) => e?.id == part.attachments.first.id)!;
+  Attachment get attachment => message.attachments.firstWhereOrNull((e) => e?.id == part.attachments.first.id)
+      ?? ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.attachments.firstWhere((e) => e.id == part.attachments.first.id);
   late dynamic content;
 
   @override
