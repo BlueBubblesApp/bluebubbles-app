@@ -259,8 +259,6 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                                 final chat = cm.activeChat!.chat;
                                 List<Message> latest = Chat.getMessages(chat, limit: 1);
                                 chat.latestMessage = latest.first;
-                                chat.latestMessageDate = latest.first.dateCreated;
-                                chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
                                 chat.save();
                               },
                             ),

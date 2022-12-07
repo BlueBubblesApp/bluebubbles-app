@@ -19,7 +19,7 @@ class ChatLifecycleManager {
       sub = chatQuery.listen((Query<Chat> query) {
         final _chat = chatBox.get(chat.id!);
         if (_chat != null) {
-          bool shouldSort = chat.latestMessageDate != _chat.latestMessageDate;
+          bool shouldSort = chat.latestMessage.dateCreated != _chat.latestMessage.dateCreated;
           chats.updateChat(_chat, shouldSort: shouldSort);
           chat = _chat.merge(chat);
         }

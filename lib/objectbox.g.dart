@@ -158,13 +158,8 @@ final _entities = <ModelEntity>[
             flags: 0),
         ModelProperty(
             id: const IdUid(12, 526293286661780207),
-            name: 'latestMessageDate',
+            name: 'dbOnlyLatestMessageDate',
             type: 10,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(13, 4983193271800913860),
-            name: 'latestMessageText',
-            type: 9,
             flags: 0),
         ModelProperty(
             id: const IdUid(15, 4266631519717388837),
@@ -842,7 +837,8 @@ ModelDefinition getObjectBoxModel() {
         8252364803444354563,
         4143511131199296878,
         172817608355620424,
-        130925169208448361
+        130925169208448361,
+        4983193271800913860
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -950,9 +946,6 @@ ModelDefinition getObjectBoxModel() {
           final muteArgsOffset = object.muteArgs == null
               ? null
               : fbb.writeString(object.muteArgs!);
-          final latestMessageTextOffset = object.latestMessageText == null
-              ? null
-              : fbb.writeString(object.latestMessageText!);
           final titleOffset =
               object.title == null ? null : fbb.writeString(object.title!);
           final displayNameOffset = object.displayName == null
@@ -977,8 +970,8 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(8, muteArgsOffset);
           fbb.addBool(9, object.isPinned);
           fbb.addBool(10, object.hasUnreadMessage);
-          fbb.addInt64(11, object.latestMessageDate?.millisecondsSinceEpoch);
-          fbb.addOffset(12, latestMessageTextOffset);
+          fbb.addInt64(
+              11, object.dbOnlyLatestMessageDate?.millisecondsSinceEpoch);
           fbb.addOffset(14, titleOffset);
           fbb.addOffset(15, displayNameOffset);
           fbb.addOffset(17, customAvatarPathOffset);
@@ -993,7 +986,7 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-          final latestMessageDateValue =
+          final dbOnlyLatestMessageDateValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 26);
           final object = Chat(
               id: const fb.Int64Reader()
@@ -1014,12 +1007,14 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 24),
               displayName:
                   const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
-              latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
-              latestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 28),
               autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
               autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
               textFieldText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 46),
               textFieldAttachments: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false).vTableGet(buffer, rootOffset, 48, []))
+            ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    dbOnlyLatestMessageDateValue)
             ..title = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 32)
             ..customAvatarPath = const fb.StringReader(asciiOptimization: true)
@@ -1658,44 +1653,40 @@ class Chat_ {
   static final hasUnreadMessage =
       QueryBooleanProperty<Chat>(_entities[1].properties[7]);
 
-  /// see [Chat.latestMessageDate]
-  static final latestMessageDate =
+  /// see [Chat.dbOnlyLatestMessageDate]
+  static final dbOnlyLatestMessageDate =
       QueryIntegerProperty<Chat>(_entities[1].properties[8]);
 
-  /// see [Chat.latestMessageText]
-  static final latestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[9]);
-
   /// see [Chat.title]
-  static final title = QueryStringProperty<Chat>(_entities[1].properties[10]);
+  static final title = QueryStringProperty<Chat>(_entities[1].properties[9]);
 
   /// see [Chat.displayName]
   static final displayName =
-      QueryStringProperty<Chat>(_entities[1].properties[11]);
+      QueryStringProperty<Chat>(_entities[1].properties[10]);
 
   /// see [Chat.customAvatarPath]
   static final customAvatarPath =
-      QueryStringProperty<Chat>(_entities[1].properties[12]);
+      QueryStringProperty<Chat>(_entities[1].properties[11]);
 
   /// see [Chat.pinIndex]
   static final pinIndex =
-      QueryIntegerProperty<Chat>(_entities[1].properties[13]);
+      QueryIntegerProperty<Chat>(_entities[1].properties[12]);
 
   /// see [Chat.autoSendReadReceipts]
   static final autoSendReadReceipts =
-      QueryBooleanProperty<Chat>(_entities[1].properties[14]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[13]);
 
   /// see [Chat.autoSendTypingIndicators]
   static final autoSendTypingIndicators =
-      QueryBooleanProperty<Chat>(_entities[1].properties[15]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[14]);
 
   /// see [Chat.textFieldText]
   static final textFieldText =
-      QueryStringProperty<Chat>(_entities[1].properties[16]);
+      QueryStringProperty<Chat>(_entities[1].properties[15]);
 
   /// see [Chat.textFieldAttachments]
   static final textFieldAttachments =
-      QueryStringVectorProperty<Chat>(_entities[1].properties[17]);
+      QueryStringVectorProperty<Chat>(_entities[1].properties[16]);
 
   /// see [Chat.handles]
   static final handles =

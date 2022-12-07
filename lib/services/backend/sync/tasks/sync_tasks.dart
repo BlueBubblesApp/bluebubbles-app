@@ -239,13 +239,10 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
     // If the chat has no last message, but we now have a last message
     bool didUpdate = false;
     bool checkMessageText = false;
-    if (chat.latestMessageDate == null) {
-      didUpdate = true;
-    }
 
     // If the dates are equal, check the text to see if we should update it.
     // AKA, check if the text matches
-    int currentMs = chat.latestMessageDate?.millisecondsSinceEpoch ?? 0;
+    int currentMs = chat.latestMessage.dateCreated!.millisecondsSinceEpoch;
     int lastMs = lastMessage.dateCreated!.millisecondsSinceEpoch;
     if (currentMs <= lastMs) {
       didUpdate = true;
@@ -259,7 +256,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
     String? newMsgText;
     if (didUpdate && checkMessageText) {
       newMsgText = MessageHelper.getNotificationText(lastMessage);
-      if (chat.latestMessageText! == newMsgText) {
+      if (MessageHelper.getNotificationText(chat.latestMessage) == newMsgText) {
         didUpdate = false;
       }
     }
@@ -267,8 +264,6 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
     // If we still want to update the info, do so
     if (didUpdate) {
       chat.latestMessage = lastMessage;
-      chat.latestMessageDate = lastMessage.dateCreated;
-      chat.latestMessageText = newMsgText ?? MessageHelper.getNotificationText(lastMessage);
       
       // Mark the chat as unread if we updated the last message & it's not from us
       if (toggleUnread && !(lastMessage.isFromMe ?? false)) {

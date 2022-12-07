@@ -412,7 +412,7 @@ class PinnedIndicators extends StatelessWidget {
         );
       }
 
-      final showMarker = controller.chat.latestMessageGetter?.indicatorToShow ?? Indicator.NONE;
+      final showMarker = controller.chat.latestMessage.indicatorToShow;
       if (ss.settings.statusIndicatorsOnChats.value
           && !controller.chat.isGroup
           && showMarker != Indicator.NONE) {
@@ -472,13 +472,11 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
     unread = controller.chat.hasUnreadMessage ?? false;
-    latestMessage = controller.chat.latestMessageGetter;
     updateObx(() {
       final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
       sub = unreadQuery.listen((Query<Chat> query) {
         final chat = query.findFirst()!;
-        latestMessage = chat.latestMessageGetter;
         if (chat.hasUnreadMessage != unread) {
           setState(() {
             unread = chat.hasUnreadMessage!;

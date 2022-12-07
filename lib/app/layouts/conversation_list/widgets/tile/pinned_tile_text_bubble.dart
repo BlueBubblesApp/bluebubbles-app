@@ -43,17 +43,15 @@ class PinnedTileTextBubble extends StatelessWidget {
     final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
     if (!(chat.hasUnreadMessage ?? false)) return const SizedBox.shrink();
 
-    final lastMessage = chat.latestMessageGetter;
-    String messageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
+    final lastMessage = chat.latestMessage;
+    String messageText = MessageHelper.getNotificationText(lastMessage);
     if (hideInfo) messageText = faker.lorem.words(messageText.split(" ").length).join(" ");
 
-    if (lastMessage?.associatedMessageGuid != null
-        || (lastMessage?.isFromMe ?? false)
-        || isNullOrEmpty(messageText)!) {
+    if (lastMessage.associatedMessageGuid != null || lastMessage.isFromMe! || isNullOrEmpty(messageText)!) {
       return const SizedBox.shrink();
     }
 
-    final background = ss.settings.colorfulBubbles.value && lastMessage != null
+    final background = ss.settings.colorfulBubbles.value
         ? getBubbleColors(lastMessage, context).first.withOpacity(0.7)
         : context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
 

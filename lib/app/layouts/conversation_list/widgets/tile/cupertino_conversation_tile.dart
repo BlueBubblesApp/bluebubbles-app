@@ -135,9 +135,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    cachedLatestMessage = controller.chat.latestMessageGetter != null
-        ? controller.chat.latestMessageGetter!
-        : controller.chat.latestMessage;
+    cachedLatestMessage = controller.chat.latestMessage;
     cachedLatestMessageGuid = cachedLatestMessage?.guid;
     dateCreated = cachedLatestMessage?.dateCreated;
     // run query after render has completed
@@ -151,14 +149,10 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
         final message = query.findFirst();
         cachedLatestMessage = message;
         // check if we really need to update this widget
-        if (message?.guid != cachedLatestMessageGuid) {
-          DateTime newDateCreated = controller.chat.latestMessageDate ?? DateTime.now();
-          if (message != null) {
-            newDateCreated = message.dateCreated ?? newDateCreated;
-          }
-          if (dateCreated != newDateCreated) {
+        if (message != null && message.guid != cachedLatestMessageGuid) {
+          if (dateCreated != message.dateCreated) {
             setState(() {
-              dateCreated = newDateCreated;
+              dateCreated = message.dateCreated;
             });
           }
         }

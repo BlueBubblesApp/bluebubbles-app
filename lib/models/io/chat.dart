@@ -251,7 +251,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       // As well as some limit and offset parameters
       Query<Chat> query = (queryBuilder
             ..order(Chat_.isPinned, flags: Order.descending)
-            ..order(Chat_.latestMessageDate, flags: Order.descending))
+            ..order(Chat_.dbOnlyLatestMessageDate, flags: Order.descending))
           .build()
         ..limit = stuff[0]
         ..offset = stuff[1];
@@ -292,8 +292,6 @@ class Chat {
   String? muteArgs;
   bool? isPinned;
   bool? hasUnreadMessage;
-  DateTime? latestMessageDate;
-  String? latestMessageText;
   String? title;
   String get properTitle {
     if (ss.settings.redactedMode.value && ss.settings.hideContactInfo.value) {
@@ -310,11 +308,19 @@ class Chat {
     }
     return _participants;
   }
-  Message? latestMessage;
   bool? autoSendReadReceipts = true;
   bool? autoSendTypingIndicators = true;
   String? textFieldText;
   List<String> textFieldAttachments = [];
+  Message? _latestMessage;
+  Message get latestMessage {
+    if (_latestMessage != null) return _latestMessage!;
+    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).first;
+    return _latestMessage!;
+  }
+  set latestMessage(Message m) => _latestMessage = m;
+  @Property(uid: 526293286661780207)
+  DateTime? dbOnlyLatestMessageDate;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -342,9 +348,7 @@ class Chat {
     String? customAvatar,
     int? pinnedIndex,
     List<Handle>? participants,
-    this.latestMessage,
-    this.latestMessageDate,
-    this.latestMessageText,
+    Message? latestMessage,
     this.autoSendReadReceipts = true,
     this.autoSendTypingIndicators = true,
     this.textFieldText,
@@ -354,13 +358,11 @@ class Chat {
     pinIndex = pinnedIndex;
     if (textFieldAttachments.isEmpty) textFieldAttachments = [];
     _participants = participants ?? [];
+    _latestMessage = latestMessage;
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     final message = json['lastMessage'] != null ? Message.fromMap(json['lastMessage']) : null;
-    final String? latestText = json["latestMessageText"]
-        ?? (message != null ? MessageHelper.getNotificationText(message) : null);
-
     return Chat(
       id: json["ROWID"] ?? json["id"],
       guid: json["guid"],
@@ -371,8 +373,6 @@ class Chat {
       isPinned: json["isPinned"] ?? false,
       hasUnreadMessage: json["hasUnreadMessage"] ?? false,
       latestMessage: message,
-      latestMessageText: latestText,
-      latestMessageDate: parseDate(json['latestMessageDate']) ?? message?.dateCreated,
       displayName: json["displayName"],
       customAvatar: json['_customAvatarPath'],
       pinnedIndex: json['_pinIndex'],
@@ -440,6 +440,7 @@ class Chat {
         participants[i] = participants[i].save();
         _deduplicateParticipants();
       }
+      dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
         id = chatBox.put(this);
         final _chat = chatBox.get(id!);
@@ -625,17 +626,10 @@ class Chat {
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
     if ((newMessage?.id != null || kIsWeb) && checkForMessageText) {
-      if (latestMessageDate == null) {
-        isNewer = true;
-      } else if (latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
-        isNewer = true;
+      isNewer = message.dateCreated!.isAfter(latestMessage.dateCreated!);
+      if (isNewer) {
+        _latestMessage = message;
       }
-    }
-
-    if (isNewer && checkForMessageText) {
-      latestMessage = message;
-      latestMessageText = MessageHelper.getNotificationText(message);
-      latestMessageDate = message.dateCreated;
     }
 
     // Save any attachments
@@ -690,8 +684,7 @@ class Chat {
 
   /// Gets messages synchronously - DO NOT use in performance-sensitive areas,
   /// otherwise prefer [getMessagesAsync]
-  static List<Message> getMessages(Chat chat,
-      {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
+  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
       final query = (messageBox.query(includeDeleted
@@ -705,8 +698,7 @@ class Chat {
         ..offset = offset;
       final messages = query.find();
       query.close();
-      final handles =
-          handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+      final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
         if (handles.isNotEmpty && message.handleId != 0) {
@@ -882,17 +874,6 @@ class Chat {
 
   bool get isGroup => participants.length > 1;
 
-  Message? get latestMessageGetter {
-    if (latestMessage != null) return latestMessage!;
-    List<Message> latest = Chat.getMessages(this, limit: 1);
-    Message? message = latest.firstOrNull;
-    latestMessage = message;
-    if (message?.hasAttachments ?? false) {
-      message?.fetchAttachments();
-    }
-    return message;
-  }
-
   Chat merge(Chat other) {
     id ??= other.id;
     _customAvatarPath.value ??= other._customAvatarPath.value;
@@ -911,9 +892,7 @@ class Chat {
     hasUnreadMessage ??= other.hasUnreadMessage;
     isArchived ??= other.isArchived;
     isPinned ??= other.isPinned;
-    latestMessage ??= other.latestMessage;
-    latestMessageDate ??= other.latestMessageDate;
-    latestMessageText ??= other.latestMessageText;
+    _latestMessage ??= other.latestMessage;
     muteArgs ??= other.muteArgs;
     title ??= other.title;
 
@@ -936,12 +915,7 @@ class Chat {
     if (a.isPinned! && !b.isPinned!) return -1;
 
     // Compare the last message dates
-    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null &&
-        (b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return 0;
-    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null) return 1;
-    if ((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return -1;
-    return -(a.latestMessageDate ?? a.latestMessageGetter?.dateCreated)!
-        .compareTo((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated)!);
+    return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
   Map<String, dynamic> toMap() => {
@@ -955,8 +929,6 @@ class Chat {
     "displayName": displayName,
     "participants": participants.map((item) => item.toMap()).toList(),
     "hasUnreadMessage": hasUnreadMessage!,
-    "latestMessageDate": latestMessageDate?.millisecondsSinceEpoch ?? 0,
-    "latestMessageText": latestMessageText,
     "_customAvatarPath": _customAvatarPath.value,
     "_pinIndex": _pinIndex.value,
     "autoSendReadReceipts": autoSendReadReceipts!,

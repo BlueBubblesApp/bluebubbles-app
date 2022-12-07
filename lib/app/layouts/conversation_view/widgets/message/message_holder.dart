@@ -481,8 +481,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   // Get the "new" latest info
                                   List<Message> latest = Chat.getMessages(chat, limit: 1);
                                   chat.latestMessage = latest.first;
-                                  chat.latestMessageDate = latest.first.dateCreated;
-                                  chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
                                   chat.save();
                                 },
                               ),

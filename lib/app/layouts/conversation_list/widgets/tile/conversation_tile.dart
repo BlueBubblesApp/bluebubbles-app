@@ -255,13 +255,8 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    final latest = controller.chat.latestMessageGetter;
-    if (latest != null) {
-      subtitle = MessageHelper.getNotificationText(controller.chat.latestMessageGetter!);
-      cachedLatestMessageGuid = latest.guid!;
-    } else {
-      subtitle = controller.chat.latestMessageText ?? "";
-    }
+    subtitle = MessageHelper.getNotificationText(controller.chat.latestMessage);
+    cachedLatestMessageGuid = controller.chat.latestMessage.guid!;
     fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
     // run query after render has completed
     updateObx(() {

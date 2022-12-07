@@ -219,22 +219,12 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       // If the message was saved correctly, update this chat's latestMessage info,
       // but only if the incoming message's date is newer
       if (messages.isNotEmpty) {
-        if ((messages[0].id != null || kIsWeb)) {
-          if (inputChat.latestMessageDate == null) {
-            isNewer = true;
-          } else if (inputChat.latestMessageDate!.millisecondsSinceEpoch <
-              messages[0].dateCreated!.millisecondsSinceEpoch) {
-            isNewer = true;
+        final first = messages.first;
+        if (first.id != null || kIsWeb) {
+          isNewer = first.dateCreated!.isAfter(inputChat.latestMessage.dateCreated!);
+          if (isNewer) {
+            inputChat.latestMessage = first;
           }
-        }
-
-        if (isNewer) {
-          inputChat.latestMessage = messages[0];
-          inputChat.latestMessageText = MessageHelper.getNotificationText(messages[0]);
-          inputChat.latestMessageDate = messages[0].dateCreated;
-
-          // Save the chat with the new info
-          chatBox.put(inputChat);
         }
       }
 
