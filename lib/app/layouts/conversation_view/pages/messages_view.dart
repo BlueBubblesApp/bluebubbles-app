@@ -308,7 +308,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                       ),
                     ),
                   SliverToBoxAdapter(
-                    child: Row(
+                    child: Obx(() => Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         if (controller.showTypingIndicator.value &&
@@ -325,12 +325,12 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                           ),
                         Padding(
                           padding: const EdgeInsets.only(top: 5),
-                          child: Obx(() => TypingIndicator(
+                          child: TypingIndicator(
                             visible: controller.showTypingIndicator.value,
-                          )),
+                          ),
                         ),
                       ],
-                    ),
+                    )),
                   ),
                   if (_messages.isEmpty && widget.customService != null)
                     const SliverToBoxAdapter(
