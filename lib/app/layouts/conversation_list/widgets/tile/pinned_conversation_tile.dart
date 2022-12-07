@@ -149,6 +149,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                         child: PinnedTileTextBubble(
                           chat: controller.chat,
                           size: maxWidth,
+                          parentController: controller,
                         ),
                       ),
                     ],
@@ -461,7 +462,6 @@ class ReactionIcon extends CustomStateful<ConversationTileController> {
 
 class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTileController> {
   bool unread = false;
-  late Message? latestMessage;
   late final StreamSubscription<Query<Chat>> sub;
 
   @override
@@ -495,12 +495,12 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
   @override
   Widget build(BuildContext context) {
     return unread
-        && !isNullOrEmpty(latestMessage?.associatedMessageGuid)!
-        && !(latestMessage?.isFromMe ?? true) ? Positioned(
+        && !isNullOrEmpty(controller.chat.latestMessage.associatedMessageGuid)!
+        && !controller.chat.latestMessage.isFromMe! ? Positioned(
       top: -sqrt(widget.width / 2),
       right: -sqrt(widget.width / 2) - widget.width * 0.15,
       child: ReactionWidget(
-        reaction: latestMessage!,
+        reaction: controller.chat.latestMessage,
         messageIsFromMe: true,
       ),
     ) : const SizedBox.shrink();

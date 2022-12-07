@@ -1,37 +1,118 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
-
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class PinnedTileTextBubble extends StatelessWidget {
+class PinnedTileTextBubble extends CustomStateful<ConversationTileController> {
   PinnedTileTextBubble({
     Key? key,
     required this.chat,
     required this.size,
+    required super.parentController,
   }) : super(key: key);
 
   final Chat chat;
   final double size;
-  final bool leftSide = Random().nextBool();
 
+  @override
+  State<StatefulWidget> createState() => PinnedTileTextBubbleState();
+}
+
+class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, ConversationTileController> {
+  final bool leftSide = Random().nextBool();
+  Message? lastMessage;
+  String subtitle = "Unknown";
+  String fakeText = faker.lorem.words(1).join(" ");
+  late final StreamSubscription<Query<Message>> sub;
+  String? cachedLatestMessageGuid = "";
+  late bool unread = chat.hasUnreadMessage ?? false;
+  late final StreamSubscription<Query<Chat>> sub2;
+
+  Chat get chat => widget.chat;
+  double get size => widget.size;
   bool get showTail => !chat.isGroup;
 
-  List<Color> getBubbleColors(Message message, BuildContext context) {
-    List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
-    if (ss.settings.colorfulBubbles.value && !message.isFromMe!) {
-      if (message.handle?.color == null) {
-        bubbleColors = toColorGradient(message.handle?.address);
+  @override
+  void initState() {
+    super.initState();
+
+    tag = "${controller.chat.guid}-pinned";
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+    subtitle = MessageHelper.getNotificationText(controller.chat.latestMessage);
+    lastMessage = controller.chat.latestMessage;
+    cachedLatestMessageGuid = controller.chat.latestMessage.guid!;
+    fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
+    // run query after render has completed
+    updateObx(() {
+      final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
+        ..order(Message_.dateCreated, flags: Order.descending))
+          .watch();
+
+      sub = latestMessageQuery.listen((Query<Message> query) {
+        final message = query.findFirst();
+        // check if we really need to update this widget
+        if (message != null && message.guid != cachedLatestMessageGuid) {
+          message.handle = message.getHandle();
+          lastMessage = message;
+          String newSubtitle = MessageHelper.getNotificationText(message);
+          if (newSubtitle != subtitle) {
+            setState(() {
+              subtitle = newSubtitle;
+              fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
+            });
+          }
+        }
+        cachedLatestMessageGuid = message?.guid;
+      });
+
+      final unreadQuery = chatBox.query((Chat_.hasUnreadMessage.equals(true)
+          .or(Chat_.muteType.equals("mute")))
+          .and(Chat_.guid.equals(controller.chat.guid)))
+          .watch();
+      sub2 = unreadQuery.listen((Query<Chat> query) {
+        final chat = query.findFirst();
+        final newUnread = chat?.hasUnreadMessage ?? false;
+        if (chat != null && unread != newUnread) {
+          setState(() {
+            unread = newUnread;
+          });
+        } else if (chat == null && unread) {
+          setState(() {
+            unread = false;
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    sub2.cancel();
+    super.dispose();
+  }
+
+  List<Color> getBubbleColors() {
+    List<Color> bubbleColors = [context.theme.colorScheme.bubble(context, chat.isIMessage), context.theme.colorScheme.bubble(context, chat.isIMessage)];
+    if (lastMessage == null) return bubbleColors;
+    if (ss.settings.colorfulBubbles.value && !lastMessage!.isFromMe!) {
+      if (lastMessage!.handle?.color == null) {
+        bubbleColors = toColorGradient(lastMessage!.handle?.address);
       } else {
         bubbleColors = [
-          HexColor(message.handle!.color!),
-          HexColor(message.handle!.color!).lightenAmount(0.075),
+          HexColor(lastMessage!.handle!.color!),
+          HexColor(lastMessage!.handle!.color!).lightenAmount(0.075),
         ];
       }
     }
@@ -41,26 +122,17 @@ class PinnedTileTextBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
-    if (!(chat.hasUnreadMessage ?? false)) return const SizedBox.shrink();
+    String _subtitle = hideInfo ? fakeText : subtitle;
 
-    final lastMessage = chat.latestMessage;
-    String messageText = MessageHelper.getNotificationText(lastMessage);
-    if (hideInfo) messageText = faker.lorem.words(messageText.split(" ").length).join(" ");
-
-    if (lastMessage.associatedMessageGuid != null || lastMessage.isFromMe! || isNullOrEmpty(messageText)!) {
+    if (!unread
+        || lastMessage?.associatedMessageGuid != null
+        || lastMessage!.isFromMe!
+        || isNullOrEmpty(_subtitle)!) {
       return const SizedBox.shrink();
     }
-
-    final background = ss.settings.colorfulBubbles.value
-        ? getBubbleColors(lastMessage, context).first.withOpacity(0.7)
-        : context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
-
+    final background = getBubbleColors().first.withOpacity(0.7);
     return Align(
-      alignment: showTail
-          ? leftSide
-          ? Alignment.centerLeft
-          : Alignment.centerRight
-          : Alignment.center,
+      alignment: showTail ? leftSide ? Alignment.centerLeft : Alignment.centerRight : Alignment.center,
       child: Padding(
         padding: EdgeInsets.only(
           left: showTail
@@ -104,7 +176,7 @@ class PinnedTileTextBubble extends StatelessWidget {
                       color: background,
                     ),
                     child: Text(
-                      messageText,
+                      _subtitle,
                       overflow: TextOverflow.ellipsis,
                       maxLines: size ~/ 30,
                       textAlign: TextAlign.center,
