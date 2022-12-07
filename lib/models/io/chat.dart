@@ -315,7 +315,10 @@ class Chat {
   Message? _latestMessage;
   Message get latestMessage {
     if (_latestMessage != null) return _latestMessage!;
-    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).first;
+    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull ?? Message(
+      dateCreated: DateTime.fromMillisecondsSinceEpoch(0),
+      guid: guid,
+    );
     return _latestMessage!;
   }
   set latestMessage(Message m) => _latestMessage = m;
