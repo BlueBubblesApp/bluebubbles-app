@@ -93,7 +93,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       _messages = messageService.struct.messages;
       _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       setState(() {});
-      _messages.forEachIndexed((i, _) {
+      _messages.forEachIndexed((i, m) {
+        mwc(m);
         listKey.currentState!.insertItem(i, duration: const Duration(milliseconds: 0));
       });
       // scroll to message if needed
@@ -165,8 +166,9 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     _messages = messageService.struct.messages;
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     fetching = false;
-    _messages.sublist(max(oldLength - 1, 0)).forEachIndexed((i, _) {
+    _messages.sublist(max(oldLength - 1, 0)).forEachIndexed((i, m) {
       if (!mounted) return;
+      mwc(m);
       listKey.currentState!.insertItem(i, duration: const Duration(milliseconds: 0));
     });
     // should only happen when a reaction is the most recent message

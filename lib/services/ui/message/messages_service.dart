@@ -130,7 +130,11 @@ class MessagesService extends GetxController {
       if (struct.getMessage(guid) != null) continue;
       // if not, fetch local and add to data
       final threadOriginator = Message.findOne(guid: guid);
-      if (threadOriginator != null) struct.addThreadOriginator(threadOriginator);
+      if (threadOriginator != null) {
+        // create the controller so it can be rendered in a reply bubble
+        mwc(threadOriginator);
+        struct.addThreadOriginator(threadOriginator);
+      }
     }
     isFetching = false;
     return _messages.isNotEmpty;

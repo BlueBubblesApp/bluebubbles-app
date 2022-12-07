@@ -21,7 +21,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   final RxBool showEdits = false.obs;
   bool _init = false;
 
-  late List<MessagePart> parts;
+  List<MessagePart> parts = [];
   Message message;
   String? oldMessageGuid;
   String? newMessageGuid;
@@ -41,6 +41,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   @override
   void onInit() {
     super.onInit();
+    buildMessageParts();
     if (!kIsWeb && message.id != null) {
       _init = true;
       final messageQuery = messageBox.query(Message_.id.equals(message.id!)).watch();
@@ -61,6 +62,85 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
 
   void close() {
     Get.delete<MessageWidgetController>(tag: tag);
+  }
+
+  void buildMessageParts() {
+    // go through the attributed body
+    if (message.attributedBody.firstOrNull?.runs.isNotEmpty ?? false) {
+      parts = attributedBodyToMessagePart(message.attributedBody.first);
+    }
+    // add edits
+    if (message.messageSummaryInfo.firstOrNull?.editedParts.isNotEmpty ?? false) {
+      for (int part in message.messageSummaryInfo.first.editedParts) {
+        final edits = message.messageSummaryInfo.first.editedContent[part.toString()] ?? [];
+        final existingPart = parts.firstWhereOrNull((element) => element.part == part);
+        if (existingPart != null) {
+          existingPart.edits.addAll(edits
+              .where((e) => e.text?.values.isNotEmpty ?? false)
+              .map((e) => attributedBodyToMessagePart(e.text!.values.first).firstOrNull)
+              .where((e) => e != null).map((e) => e!).toList());
+          existingPart.edits.removeLast();
+        }
+      }
+    }
+    // add unsends
+    if (message.messageSummaryInfo.firstOrNull?.retractedParts.isNotEmpty ?? false) {
+      for (int part in message.messageSummaryInfo.first.retractedParts) {
+        parts.add(MessagePart(
+          part: part,
+          isUnsent: true,
+        ));
+      }
+    }
+    if (parts.isEmpty) {
+      parts.addAll(message.attachments.map((e) => MessagePart(
+        attachments: [e!],
+        part: 0,
+      )));
+      if (message.fullText.isNotEmpty || message.isGroupEvent) {
+        parts.add(MessagePart(
+          subject: message.subject,
+          text: message.text,
+          part: 0,
+        ));
+      }
+    }
+    parts.sort((a, b) => a.part.compareTo(b.part));
+  }
+
+  List<MessagePart> attributedBodyToMessagePart(AttributedBody body) {
+    final mainString = body.string;
+    final list = <MessagePart>[];
+    body.runs.forEachIndexed((i, e) {
+      if (e.attributes?.messagePart == null) return;
+      final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
+      // this should only happen if there is a mention in the middle breaking up the text
+      if (existingPart != null) {
+        final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
+        existingPart.text = (existingPart.text ?? "") + newText;
+        if (e.hasMention) {
+          existingPart.mentions.add(Mention(
+            mentionedAddress: e.attributes?.mention,
+            range: [existingPart.text!.indexOf(newText), existingPart.text!.indexOf(newText) + e.range.last],
+          ));
+          existingPart.mentions.sort((a, b) => a.range.first.compareTo(b.range.first));
+        }
+      } else {
+        list.add(MessagePart(
+          subject: i == 0 ? message.subject : null,
+          text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
+          attachments: e.isAttachment ? [
+            ms(cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.getAttachment(e.attributes!.attachmentGuid!) ?? Attachment.findOne(e.attributes!.attachmentGuid!)
+          ].where((e) => e != null).map((e) => e!).toList() : [],
+          mentions: !e.hasMention ? [] : [Mention(
+            mentionedAddress: e.attributes?.mention,
+            range: [0, e.range.last],
+          )],
+          part: e.attributes!.messagePart!,
+        ));
+      }
+    });
+    return list;
   }
 
   void updateMessage(Message newItem) {

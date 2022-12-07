@@ -87,91 +87,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       controller.cvController = widget.cvController;
       controller.oldMessageGuid = widget.oldMessageGuid;
       controller.newMessageGuid = widget.newMessageGuid;
-      buildMessageParts();
-      // fallback - build from the actual message
-      if (messageParts.isEmpty) {
-        messageParts.addAll(message.attachments.map((e) => MessagePart(
-          attachments: [e!],
-          part: 0,
-        )));
-        if (message.fullText.isNotEmpty || message.isGroupEvent) {
-          messageParts.add(MessagePart(
-            subject: message.subject,
-            text: message.text,
-            part: 0,
-          ));
-        }
-      }
-      controller.parts = messageParts;
+      messageParts = controller.parts;
       replyOffsets = List.generate(messageParts.length, (_) => 0.0.obs);
       keys = List.generate(messageParts.length, (_) => GlobalKey());
     }
-  }
-
-  void buildMessageParts() {
-    // go through the attributed body
-    if (message.attributedBody.firstOrNull?.runs.isNotEmpty ?? false) {
-      messageParts = attributedBodyToMessagePart(message.attributedBody.first);
-    }
-    // add edits
-    if (message.messageSummaryInfo.firstOrNull?.editedParts.isNotEmpty ?? false) {
-      for (int part in message.messageSummaryInfo.first.editedParts) {
-        final edits = message.messageSummaryInfo.first.editedContent[part.toString()] ?? [];
-        final existingPart = messageParts.firstWhereOrNull((element) => element.part == part);
-        if (existingPart != null) {
-          existingPart.edits.addAll(edits
-              .where((e) => e.text?.values.isNotEmpty ?? false)
-              .map((e) => attributedBodyToMessagePart(e.text!.values.first).firstOrNull)
-              .where((e) => e != null).map((e) => e!).toList());
-          existingPart.edits.removeLast();
-        }
-      }
-    }
-    // add unsends
-    if (message.messageSummaryInfo.firstOrNull?.retractedParts.isNotEmpty ?? false) {
-      for (int part in message.messageSummaryInfo.first.retractedParts) {
-        messageParts.add(MessagePart(
-          part: part,
-          isUnsent: true,
-        ));
-      }
-    }
-    messageParts.sort((a, b) => a.part.compareTo(b.part));
-  }
-
-  List<MessagePart> attributedBodyToMessagePart(AttributedBody body) {
-    final mainString = body.string;
-    final list = <MessagePart>[];
-    body.runs.forEachIndexed((i, e) {
-      if (e.attributes?.messagePart == null) return;
-      final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
-      // this should only happen if there is a mention in the middle breaking up the text
-      if (existingPart != null) {
-        final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
-        existingPart.text = (existingPart.text ?? "") + newText;
-        if (e.hasMention) {
-          existingPart.mentions.add(Mention(
-            mentionedAddress: e.attributes?.mention,
-            range: [existingPart.text!.indexOf(newText), existingPart.text!.indexOf(newText) + e.range.last],
-          ));
-          existingPart.mentions.sort((a, b) => a.range.first.compareTo(b.range.first));
-        }
-      } else {
-        list.add(MessagePart(
-          subject: i == 0 ? message.subject : null,
-          text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: e.isAttachment ? [
-            service.struct.getAttachment(e.attributes!.attachmentGuid!) ?? Attachment.findOne(e.attributes!.attachmentGuid!)
-          ].where((e) => e != null).map((e) => e!).toList() : [],
-          mentions: !e.hasMention ? [] : [Mention(
-            mentionedAddress: e.attributes?.mention,
-            range: [0, e.range.last],
-          )],
-          part: e.attributes!.messagePart!,
-        ));
-      }
-    });
-    return list;
   }
 
   @override
