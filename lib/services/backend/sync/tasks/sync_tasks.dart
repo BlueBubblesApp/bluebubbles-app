@@ -12,6 +12,8 @@ import 'package:faker/faker.dart';
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 
+import '../../../../utils/logger.dart';
+
 class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
   final List<dynamic> params;
 
@@ -207,7 +209,13 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       // 5. Invoke a final put call to sync the relational data
-      messageBox.putMany(syncedMessages);
+      for (Message m in syncedMessages) {
+        try {
+          messageBox.put(m);
+        } catch (e) {
+          Logger.error(e);
+        }
+      }
       return syncedMessages;
     });
   }
