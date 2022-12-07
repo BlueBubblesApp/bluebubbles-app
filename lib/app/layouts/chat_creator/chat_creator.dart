@@ -143,12 +143,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     findExistingChat();
   }
 
-  void findExistingChat() async {
+  Future<Chat?> findExistingChat({bool update = true}) async {
     // no selected items, remove message view
     if (selectedContacts.isEmpty) {
       cm.setAllInactive();
       fakeController.value = null;
-      return;
+      return null;
     }
     Chat? existingChat;
     // try and find the chat simply by identifier
@@ -191,14 +191,17 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       }
     }
     // if match, show message view, otherwise hide it
-    if (existingChat != null) {
-      cm.setActiveChat(existingChat, clearNotifications: false);
-      cm.activeChat!.controller = cvc(existingChat);
-      fakeController.value = cm.activeChat!.controller;
-    } else {
-      cm.setAllInactive();
-      fakeController.value = null;
+    if (update) {
+      if (existingChat != null) {
+        cm.setActiveChat(existingChat, clearNotifications: false);
+        cm.activeChat!.controller = cvc(existingChat);
+        fakeController.value = cm.activeChat!.controller;
+      } else {
+        cm.setAllInactive();
+        fakeController.value = null;
+      }
     }
+    return existingChat;
   }
 
   @override
@@ -613,15 +616,16 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   recorderController: RecorderController(),
                   initialAttachments: widget.initialAttachments,
                   sendMessage: ({String? effect}) async {
-                    if (fakeController.value?.chat != null) {
+                    if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
+                      final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
                       ns.pushAndRemoveUntil(
                         Get.context!,
-                        ConversationView(chat: fakeController.value!.chat),
+                        ConversationView(chat: chat),
                         (route) => route.isFirst,
                         customRoute: PageRouteBuilder(
                           pageBuilder: (_, __, ___) => TitleBarWrapper(
                             child: ConversationView(
-                              chat: fakeController.value!.chat,
+                              chat: chat,
                               fromChatCreator: true,
                             )
                           ),
@@ -629,6 +633,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         ),
                       );
                       await Future.delayed(const Duration(milliseconds: 500));
+                      if (fakeController.value == null) {
+                        cm.setActiveChat(chat, clearNotifications: false);
+                        cm.activeChat!.controller = cvc(chat);
+                        fakeController.value = cm.activeChat!.controller;
+                      }
                       await fakeController.value!.send(
                         widget.initialAttachments,
                         textController.text,
