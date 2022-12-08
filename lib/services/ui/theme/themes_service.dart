@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/color_engine/engine.dart' as engine;
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -117,8 +118,8 @@ class ThemesService extends GetxService {
     ThemeStruct(name: "OLED Dark", themeData: oledDarkTheme),
     ThemeStruct(name: "Bright White", themeData: whiteLightTheme),
     ThemeStruct(name: "Nord Theme", themeData: nordDarkTheme),
-    ThemeStruct(name: "Music Theme ☀", themeData: whiteLightTheme, gradientBg: true),
-    ThemeStruct(name: "Music Theme 🌙", themeData: oledDarkTheme, gradientBg: true),
+    ThemeStruct(name: "Music Theme ☀", themeData: whiteLightTheme),
+    ThemeStruct(name: "Music Theme 🌙", themeData: oledDarkTheme),
     ...FlexScheme.values
         .where((e) => e != FlexScheme.custom)
         .map((e) => [
@@ -197,20 +198,67 @@ class ThemesService extends GetxService {
     _loadTheme(context);
   }
 
-  void updateMusicTheme(BuildContext context, Color primary, Color lightBg, Color darkBg, double primaryPercent, double lightBgPercent, double darkBgPercent) {
+  void updateMusicTheme(BuildContext context, Color primary, Color lightBg, Color darkBg, double primaryPercent, double lightBgPercent, double darkBgPercent) async {
     final darkTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme 🌙");
     final lightTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme ☀");
-    darkTheme.data = darkTheme.data.copyWith(
-        colorScheme: darkTheme.data.colorScheme.copyWith(
-          primary: primary,
-          background: darkBg,
-        )
+    final engine.ColorScheme scheme = engine.DynamicColorScheme(
+      targetColors: const engine.TargetColors(),
+      primaryColor: engine.Srgb.fromColor(primary),
     );
-    lightTheme.data = darkTheme.data.copyWith(
-        colorScheme: darkTheme.data.colorScheme.copyWith(
-          primary: primary,
-          background: lightBg,
-        )
+    final engine.MonetColors colors = scheme.asColors;
+    lightTheme.data = lightTheme.data.copyWith(
+      colorScheme: lightTheme.data.colorScheme.copyWith(
+        primary: colors.accent1.shade700,
+        onPrimary: colors.accent1.shade100,
+        primaryContainer: colors.accent1.shade100,
+        onPrimaryContainer: colors.accent1.shade900,
+        secondary: colors.accent2.shade600,
+        onSecondary: colors.accent2.shade50,
+        secondaryContainer: colors.accent2.shade100,
+        onSecondaryContainer: colors.accent2.shade900,
+        tertiary: colors.accent3.shade600,
+        onTertiary: colors.accent3.shade50,
+        tertiaryContainer: colors.accent3.shade100,
+        onTertiaryContainer: colors.accent3.shade900,
+        background: colors.neutral1.shade10,
+        onBackground: colors.neutral1.shade900,
+        surface: colors.neutral1.shade10,
+        onSurface: colors.neutral1.shade900,
+        surfaceVariant: colors.neutral2.shade100,
+        onSurfaceVariant: colors.neutral2.shade700,
+        outline: colors.neutral1.shade500,
+        shadow: colors.neutral1.shade1000,
+        inverseSurface: colors.neutral1.shade800,
+        onInverseSurface: colors.neutral1.shade50,
+        inversePrimary: colors.accent1.shade200,
+      ),
+    );
+    darkTheme.data = darkTheme.data.copyWith(
+      colorScheme: darkTheme.data.colorScheme.copyWith(
+        primary: colors.accent1.shade800,
+        onPrimary: colors.accent1.shade200,
+        primaryContainer: colors.accent1.shade700,
+        onPrimaryContainer: colors.accent1.shade100,
+        secondary: colors.accent2.shade200,
+        onSecondary: colors.accent2.shade800,
+        secondaryContainer: colors.accent2.shade700,
+        onSecondaryContainer: colors.accent2.shade100,
+        tertiary: colors.accent3.shade200,
+        onTertiary: colors.accent3.shade800,
+        tertiaryContainer: colors.accent3.shade700,
+        onTertiaryContainer: colors.accent3.shade100,
+        background: colors.neutral1.shade900,
+        onBackground: colors.neutral1.shade100,
+        surface: colors.neutral1.shade900,
+        onSurface: colors.neutral1.shade100,
+        surfaceVariant: colors.neutral2.shade700,
+        onSurfaceVariant: colors.neutral2.shade200,
+        outline: colors.neutral1.shade400,
+        shadow: colors.neutral1.shade1000,
+        inverseSurface: colors.neutral1.shade100,
+        onInverseSurface: colors.neutral1.shade800,
+        inversePrimary: colors.accent1.shade600,
+      ),
     );
     if (inDarkMode(context)) {
       if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
