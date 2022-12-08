@@ -88,13 +88,14 @@ class MessagesViewState extends OptimizedState<MessagesView> {
           messageService.method == "local" ? SearchMethod.local : SearchMethod.network
         );
       } else if (messageService.struct.isEmpty) {
-        await messageService.loadChunk(0);
+        await messageService.loadChunk(0, controller);
       }
       _messages = messageService.struct.messages;
       _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       setState(() {});
       _messages.forEachIndexed((i, m) {
-        mwc(m);
+        final c = mwc(m);
+        c.cvController = controller;
         listKey.currentState!.insertItem(i, duration: const Duration(milliseconds: 0));
       });
       // scroll to message if needed
@@ -157,7 +158,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     fetching = true;
 
     // Start loading the next chunk of messages
-    noMoreMessages = !(await messageService.loadChunk(_messages.length).catchError((e) {
+    noMoreMessages = !(await messageService.loadChunk(_messages.length, controller).catchError((e) {
       Logger.error("Failed to fetch message chunk! $e");
     }));
 
@@ -168,7 +169,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     fetching = false;
     _messages.sublist(max(oldLength - 1, 0)).forEachIndexed((i, m) {
       if (!mounted) return;
-      mwc(m);
+      final c = mwc(m);
+      c.cvController = controller;
       listKey.currentState!.insertItem(i, duration: const Duration(milliseconds: 0));
     });
     // should only happen when a reaction is the most recent message

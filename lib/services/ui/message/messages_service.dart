@@ -104,7 +104,7 @@ class MessagesService extends GetxController {
     removeFunc.call(toRemove);
   }
 
-  Future<bool> loadChunk(int offset) async {
+  Future<bool> loadChunk(int offset, ConversationViewController controller) async {
     isFetching = true;
     List<Message> _messages = [];
     offset = offset + struct.reactions.length;
@@ -131,7 +131,8 @@ class MessagesService extends GetxController {
       final threadOriginator = Message.findOne(guid: guid);
       if (threadOriginator != null) {
         // create the controller so it can be rendered in a reply bubble
-        mwc(threadOriginator);
+        final c = mwc(threadOriginator);
+        c.cvController = controller;
         struct.addThreadOriginator(threadOriginator);
       }
     }

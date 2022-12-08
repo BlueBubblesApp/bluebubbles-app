@@ -256,7 +256,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 padding: showAvatar || ss.settings.alwaysShowAvatars.value
                                     ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
                                 child: DecoratedBox(
-                                  decoration: iOS && !widget.isReplyThread && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
+                                  decoration: iOS && !widget.isReplyThread && replyTo != null && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
                                       || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null))
                                       ? ReplyLineDecoration(
                                     isFromMe: message.isFromMe!,
