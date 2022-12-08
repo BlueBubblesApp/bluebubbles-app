@@ -98,10 +98,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
     updateObx(() {
       currentlySelectedReaction = null;
-      reactions = message.associatedMessages
+      reactions = getUniqueReactionMessages(message.associatedMessages
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == part.part)
-          .toList()
-          ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+          .toList());
       selfReaction = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
       currentlySelectedReaction = selfReaction;
       for (Message m in reactions) {
