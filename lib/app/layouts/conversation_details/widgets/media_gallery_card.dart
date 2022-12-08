@@ -271,7 +271,9 @@ class ImageDisplay extends StatelessWidget {
                       style: context.theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
-                if (attachment.message.target?.handle != null && ss.settings.skin.value == Skins.iOS)
+                if (!(attachment.message.target?.isFromMe ?? true)
+                    && attachment.message.target?.handle != null
+                    && ss.settings.skin.value == Skins.iOS)
                   Positioned(
                     top: 10,
                     right: 10,
