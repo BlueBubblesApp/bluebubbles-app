@@ -43,7 +43,6 @@ class CupertinoHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   HeaderText(controller: controller),
-                  // const ConnectionIndicator(),
                   const SyncIndicator(),
                 ],
               ),

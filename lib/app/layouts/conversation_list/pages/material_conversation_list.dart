@@ -141,7 +141,8 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
               }),
             ),
           ),
-          const ConnectionIndicator(),
+          if (ss.settings.showConnectionIndicator.value)
+            const ConnectionIndicator(),
         ],
       ),
     );

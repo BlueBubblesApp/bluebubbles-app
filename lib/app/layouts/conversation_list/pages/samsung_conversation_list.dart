@@ -227,7 +227,8 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
             ),
             bottomNavigationBar: SamsungFooter(parentController: controller),
           ),
-          const ConnectionIndicator(),
+          if (ss.settings.showConnectionIndicator.value)
+            const ConnectionIndicator(),
         ],
       ),
     );

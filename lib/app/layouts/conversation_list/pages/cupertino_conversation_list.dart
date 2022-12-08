@@ -241,7 +241,8 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
               ],
             )),
           ),
-          const ConnectionIndicator(),
+          if (ss.settings.showConnectionIndicator.value)
+            const ConnectionIndicator(),
           if (!showArchived && !showUnknown)
             CupertinoMiniHeader(controller: controller),
         ],
