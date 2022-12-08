@@ -59,7 +59,7 @@ class Settings {
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
   final RxBool statusIndicatorsOnChats = false.obs;
-  final RxInt apiTimeout = 15000.obs;
+  final RxInt apiTimeout = 30000.obs;
   final RxBool allowUpsideDownRotation = false.obs;
   final RxBool cancelQueuedMessages = false.obs;
   final RxBool repliesToPrevious = false.obs;
