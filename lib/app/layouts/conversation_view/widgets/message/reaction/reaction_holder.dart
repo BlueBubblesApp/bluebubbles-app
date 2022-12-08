@@ -35,6 +35,7 @@ class _ReactionHolderState extends OptimizedState<ReactionHolder> {
       child: Stack(
         clipBehavior: Clip.none,
         children: reactions.mapIndexed((i, e) => Positioned(
+          key: ValueKey(e.guid),
           top: 0,
           left: !widget.message.isFromMe! ? null : -i * 2.0,
           right: widget.message.isFromMe! ? null : -i * 2.0,
