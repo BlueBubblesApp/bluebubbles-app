@@ -76,7 +76,14 @@ class ChatMessages {
   // messages list, in case it is much older than the currently loaded messages.
   // Prefer to use this method to find originator.
   Message? getThreadOriginator(String guid) {
-    return _threads[guid]?[guid];
+    final fromOriginatorList = _threads[guid]?[guid];
+    if (fromOriginatorList == null) {
+      final message = getMessage(guid);
+      if (message != null) addThreadOriginator(message);
+      return message;
+    } else {
+      return fromOriginatorList;
+    }
   }
 
   Message? getPreviousReply(String threadGuid, String messageGuid) {
