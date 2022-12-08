@@ -50,7 +50,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
         sub = messageQuery.listen((Query<Message> query) {
           final _message = messageBox.get(reaction.id!);
           if (_message != null) {
-            if ((_message.guid != reaction.guid && reaction.guid!.contains("temp")) || _message.error != reaction.error) {
+            if (_message.guid != reaction.guid || _message.dateDelivered != reaction.dateDelivered) {
               setState(() {
                 reaction = _message;
               });
