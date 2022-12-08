@@ -109,7 +109,7 @@ class MessageHelper {
     if (message.isInteractive) {
       return "$sender${message.interactiveText}";
     }
-    if (isNullOrEmpty(message.fullText)! && !message.hasAttachments) {
+    if (isNullOrEmpty(message.fullText)! && !message.hasAttachments && isNullOrEmpty(message.associatedMessageGuid)!) {
       return "${sender}Empty message";
     }
     if (message.hasAttachments && message.attachments.isEmpty) {
