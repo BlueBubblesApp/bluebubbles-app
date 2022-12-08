@@ -46,10 +46,6 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
         widget.handle?.color = event.item2[1];
         setState(() {});
       }
-
-      if (contact == null && event.item1 == 'update-contacts') {
-        setState(() {});
-      }
     });
   }
 

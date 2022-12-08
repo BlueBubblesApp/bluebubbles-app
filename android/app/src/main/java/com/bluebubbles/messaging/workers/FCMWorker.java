@@ -21,7 +21,6 @@ import com.bluebubbles.messaging.helpers.NotifyRunnable;
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
 import com.bluebubbles.messaging.services.FirebaseMessagingService;
 import java.util.concurrent.CountDownLatch;
-import com.tekartik.sqflite.SqflitePlugin;
 
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.pathprovider.PathProviderPlugin;

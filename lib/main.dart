@@ -522,7 +522,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     /* ----- APP REFRESH LISTENER INITIALIZATION ----- */
     eventDispatcher.stream.listen((event) {
-      if (event.item1 == 'refresh-all') {
+      if (event.item1 == 'refresh-all' || event.item1 == 'update-contacts') {
         setState(() {});
       }
     });
