@@ -45,6 +45,13 @@ class AttachmentDownloadService extends GetxService {
       _downloaders.firstWhereOrNull((e) => !e.isFetching)?.fetchAttachment();
     }
   }
+
+  void cancelAllDownloads() {
+    for (AttachmentDownloadController e in _downloaders) {
+      Get.delete<AttachmentDownloadController>(tag: e.attachment.guid!);
+    }
+    _downloaders.clear();
+  }
 }
 
 class AttachmentDownloadController extends GetxController {
