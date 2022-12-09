@@ -39,7 +39,7 @@ class ScrollbarWrapper extends StatelessWidget {
     child: showScrollbar
       ? RawScrollbar(
             controller: controller,
-            thumbColor: context.theme.colorScheme.properSurface.withOpacity(0.5),
+            thumbColor: context.theme.colorScheme.properOnSurface.withOpacity(0.3),
             thickness: 10,
             radius: const Radius.circular(5),
             child: child,
