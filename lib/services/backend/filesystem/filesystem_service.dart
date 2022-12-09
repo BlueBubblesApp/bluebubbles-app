@@ -8,6 +8,7 @@ import 'package:idb_shim/idb.dart';
 import 'package:idb_shim/idb_browser.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:slugify/slugify.dart';
 import 'package:universal_io/io.dart';
 
 FilesystemService fs = Get.isRegistered<FilesystemService>() ? Get.find<FilesystemService>() : Get.put(FilesystemService());
@@ -89,5 +90,31 @@ class FilesystemService extends GetxService {
     messageBox.removeAll();
     scheduledBox.removeAll();
     themeBox.removeAll();
+  }
+
+  String uriToFilename(String? uri, String? mimeType) {
+    // Handle any unknown cases
+    String? ext = mimeType != null ? mimeType.split('/')[1] : null;
+    ext = (ext != null && ext.contains('+')) ? ext.split('+')[0] : ext;
+    if (uri == null) return (ext != null) ? 'unknown.$ext' : 'unknown';
+
+    // Get the filename
+    String filename = uri;
+    if (filename.contains('/')) {
+      filename = filename.split('/').last;
+    }
+
+    // Get the extension
+    if (filename.contains('.')) {
+      List<String> split = filename.split('.');
+      ext = split[1];
+      filename = split[0];
+    }
+
+    // Slugify the filename
+    filename = slugify(filename, delimiter: '_');
+
+    // Rebuild the filename
+    return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
   }
 }

@@ -569,7 +569,7 @@ class TextFieldComponent extends StatelessWidget {
                       onSubmitted: (String value) {
                         controller!.focusNode.requestFocus();
                       },
-                      // onContentCommitted: onContentCommit,
+                      onContentCommitted: onContentCommit,
                     ),
                   if (!isChatCreator && 
                       ss.settings.enablePrivateAPI.value &&
@@ -619,7 +619,7 @@ class TextFieldComponent extends StatelessWidget {
                       if (isNullOrEmpty(value)! && (controller?.pickedAttachments.isEmpty ?? false)) return;
                       sendMessage.call();
                     },
-                    // onContentCommitted: onContentCommit,
+                    onContentCommitted: onContentCommit,
                     suffix: samsung && !isChatCreator ? null : Padding(
                       padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
                       child: TextFieldSuffix(
@@ -638,6 +638,28 @@ class TextFieldComponent extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void onContentCommit(CommittedContent content) async {
+    // Add some debugging logs
+    Logger.info("[Content Commit] Keyboard received content");
+    Logger.info("  -> Content Type: ${content.mimeType}");
+    Logger.info("  -> URI: ${content.uri}");
+    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+
+    // Parse the filename from the URI and read the data as a List<int>
+    String filename = fs.uriToFilename(content.uri, content.mimeType);
+
+    // Save the data to a location and add it to the file picker
+    if (content.hasData) {
+      controller?.pickedAttachments.add(PlatformFile(
+        name: filename,
+        size: content.data!.length,
+        bytes: content.data,
+      ));
+    } else {
+      showSnackbar('Insertion Failed', 'Attachment has no data!');
+    }
   }
 
   KeyEventResult handleKey(FocusNode _, RawKeyEvent ev, BuildContext context) {
