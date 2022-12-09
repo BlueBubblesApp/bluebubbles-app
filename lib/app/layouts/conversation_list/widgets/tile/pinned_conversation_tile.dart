@@ -144,7 +144,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                         PinnedIndicators(width: maxWidth, controller: controller),
                         ReactionIcon(width: maxWidth, parentController: controller),
                         Positioned(
-                          bottom: context.textTheme.bodyMedium!.fontSize! * 3,
+                          bottom: context.textTheme.bodyMedium!.fontSize! * 1.75,
                           width: maxWidth,
                           child: PinnedTileTextBubble(
                             chat: controller.chat,
