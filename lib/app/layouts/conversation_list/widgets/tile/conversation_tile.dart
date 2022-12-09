@@ -273,8 +273,6 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       sub = latestMessageQuery.listen((Query<Message> query) {
         final message = query.findFirst();
         // check if we really need to update this widget
-        print(controller.chat.guid);
-        print(message?.dateDelivered);
         if (message != null && message.guid != cachedLatestMessageGuid) {
           message.handle = message.getHandle();
           String newSubtitle = MessageHelper.getNotificationText(message);

@@ -40,9 +40,6 @@ String buildDate(DateTime? dateTime) {
 
 String buildChatListDateMaterial(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = ss.settings.use24HrFormat.value
-      ? DateFormat.Hm().format(dateTime)
-      : DateFormat.jm().format(dateTime);
   String date;
   if (DateTime.now().difference(dateTime.toLocal()).inMinutes < 1) {
     date = "Just Now";
