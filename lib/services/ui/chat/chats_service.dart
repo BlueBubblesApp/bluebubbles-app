@@ -146,7 +146,7 @@ class ChatsService extends GetxService {
       e.pinIndex = i;
       e.save(updatePinIndex: true);
     });
-    chats.sort();
+    chats.sort(Chat.sort);
   }
 
   void removePinIndices() {
@@ -154,6 +154,6 @@ class ChatsService extends GetxService {
       element.pinIndex = null;
       element.save(updatePinIndex: true);
     });
-    chats.sort();
+    chats.sort(Chat.sort);
   }
 }
