@@ -606,6 +606,7 @@ class Chat {
     }
 
     // Save the message
+    Message? latest = latestMessage;
     Message? newMessage;
 
     try {
@@ -622,8 +623,8 @@ class Chat {
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
     if ((newMessage?.id != null || kIsWeb) && checkForMessageText) {
-      isNewer = message.dateCreated!.isAfter(latestMessage.dateCreated!)
-          || (message.guid != latestMessage.guid && message.dateCreated == latestMessage.dateCreated);
+      isNewer = message.dateCreated!.isAfter(latest.dateCreated!)
+          || (message.guid != latest.guid && message.dateCreated == latest.dateCreated);
       if (isNewer) {
         _latestMessage = message;
       }
