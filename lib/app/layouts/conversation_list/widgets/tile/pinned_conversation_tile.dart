@@ -13,6 +13,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.d
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -117,41 +118,43 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                   constraints: BoxConstraints(
                     maxWidth: maxWidth + 40,
                   ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Stack(
-                            children: <Widget>[
-                              ContactAvatarGroupWidget(
-                                chat: controller.chat,
-                                size: maxWidth,
-                                editable: false,
-                                onTap: () => controller.onTap(context),
-                              ),
-                              UnreadIcon(width: maxWidth, parentController: controller),
-                              MuteIcon(width: maxWidth, parentController: controller),
-                            ],
-                          ),
-                          ChatTitle(parentController: controller),
-                        ],
-                      ),
-                      PinnedIndicators(width: maxWidth, controller: controller),
-                      ReactionIcon(width: maxWidth, parentController: controller),
-                      Positioned(
-                        bottom: context.textTheme.bodyMedium!.fontSize! * 3,
-                        width: maxWidth,
-                        child: PinnedTileTextBubble(
-                          chat: controller.chat,
-                          size: maxWidth,
-                          parentController: controller,
+                  child: DeferredPointerHandler(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Stack(
+                              children: <Widget>[
+                                ContactAvatarGroupWidget(
+                                  chat: controller.chat,
+                                  size: maxWidth,
+                                  editable: false,
+                                  onTap: () => controller.onTap(context),
+                                ),
+                                UnreadIcon(width: maxWidth, parentController: controller),
+                                MuteIcon(width: maxWidth, parentController: controller),
+                              ],
+                            ),
+                            ChatTitle(parentController: controller),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
+                        PinnedIndicators(width: maxWidth, controller: controller),
+                        ReactionIcon(width: maxWidth, parentController: controller),
+                        Positioned(
+                          bottom: context.textTheme.bodyMedium!.fontSize! * 3,
+                          width: maxWidth,
+                          child: PinnedTileTextBubble(
+                            chat: controller.chat,
+                            size: maxWidth,
+                            parentController: controller,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
                 );
               },
             ),
@@ -507,7 +510,7 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
         && !isNullOrEmpty(controller.chat.latestMessage.associatedMessageGuid)!
         && !controller.chat.latestMessage.isFromMe! ? Positioned(
       top: -sqrt(widget.width / 2),
-      right: -sqrt(widget.width / 2) - widget.width * 0.15,
+      right: (-sqrt(widget.width / 2) + widget.width) * 0.1,
       child: ReactionWidget(
         reaction: controller.chat.latestMessage,
         messageIsFromMe: true,
