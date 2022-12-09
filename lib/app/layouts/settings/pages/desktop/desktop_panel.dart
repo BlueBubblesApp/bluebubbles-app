@@ -208,6 +208,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                             .map((s) => ss.settings.actionList.indexOf(s))
                                             .toList();
                                         ss.settings.selectedActionIndices.value = selectedIndices;
+                                        saveSettings();
                                       },
                                       children: List.generate(
                                         ReactionTypes.toList().length + 1,
@@ -245,6 +246,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                                         .remove(index)) {
                                                       ss.settings.selectedActionIndices.add(index);
                                                     }
+                                                    saveSettings();
                                                   },
                                                   child: AnimatedContainer(
                                                     margin: const EdgeInsets.symmetric(vertical: 5),
