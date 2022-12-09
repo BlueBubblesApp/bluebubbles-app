@@ -336,15 +336,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                                 ),
                                               ),
-                                              Obx(() => SettingsSwitch(
-                                                onChanged: (bool val) {
-                                                  ss.settings.swipeToReply.value = val;
-                                                  saveSettings();
-                                                },
-                                                initialVal: ss.settings.swipeToReply.value,
-                                                title: "Swipe Messages to Reply",
-                                                backgroundColor: tileColor,
-                                              )),
                                             ],
                                           );
                                         } else {
