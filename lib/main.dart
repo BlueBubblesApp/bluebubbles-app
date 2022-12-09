@@ -40,6 +40,9 @@ import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
 
+// todo list desktop
+/// Show notif badges
+
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -560,10 +563,12 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       }
 
       if (kIsDesktop) {
-        /* ----- CONTACT IMAGE CACHE DELETION ----- */
         if (Platform.isWindows) {
+          /* ----- CONTACT IMAGE CACHE DELETION ----- */
           Directory temp = Directory(join(fs.appDocDir.path, "temp"));
           if (await temp.exists()) await temp.delete(recursive: true);
+          /* ----- BADGE ICON DELETION ----- */
+          await WindowsTaskbar.resetOverlayIcon();
         }
 
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
