@@ -34,7 +34,9 @@ public class SocketIssueWarning implements Handler {
         PendingIntent openIntent = PendingIntent.getActivity(
                 context,
                 4000,
-                new Intent(context, MainActivity.class).setType(TYPE),
+                new Intent(context, MainActivity.class).setType(TYPE)
+                        .putExtra("id", -2)
+                        .putExtra("chatGuid", "-2"),
                 PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, (String) call.argument("CHANNEL_ID"))

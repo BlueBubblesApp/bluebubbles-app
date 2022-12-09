@@ -11,7 +11,7 @@ description: Send iMessages on Android using BlueBubbles!
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.10.0+32
+version: 1.10.1+36
 publish_to: none
 
 environment:
@@ -21,80 +21,70 @@ dependencies:
   flutter:
     sdk: flutter
   get: ^4.3.8 # pinned because of snackbar issue
-  cupertino_icons: ^1.0.4
-  exif: ^3.1.1
+  cupertino_icons: ^1.0.5
+  exif: ^3.1.2
   flutter_native_image: ^0.0.6+1 # mobile only
-  socket_io_client: ^2.0.0-beta.4-nullsafety.0
-  url_launcher: ^6.1.2
-  mobile_scanner: ^1.1.0 # no desktop support
-  connectivity_plus: ^2.3.0
+  socket_io_client: ^2.0.0
+  url_launcher: ^6.1.5
+  mobile_scanner: ^2.0.0 # no desktop support
+  connectivity_plus: ^2.3.6+1
   tuple: ^2.0.0
   encrypt: ^5.0.1
-  assorted_layout_widgets: ^5.8.5
-  record: ^4.1.1 # mobile and web
   fast_contacts: ^1.1.1 # mobile only
   permission_handler: ^9.2.0 # mobile only
-  path_provider: ^2.0.10 # no web support
-  sqflite: ^2.0.2+1 # mobile only
-  sqflite_common_ffi: ^2.1.1 # desktop
-  path: ^1.8.1
+  path_provider: ^2.0.11 # no web support
+  path: ^1.8.2
   intl: ^0.17.0
-  flutter_svg: ^1.0.3
-  photo_manager: ^2.1.0+2 # only mobile
-  video_player: ^2.4.2 # no desktop support, todo desktop
-  chewie_audio: # no desktop support, todo desktop
-    git:
-      url: https://github.com/tneotia/chewie_audio-1.git
-      ref: BlueBubbles
+  flutter_svg: ^1.1.3
+  photo_manager: ^2.2.0 # only mobile
+  video_player: ^2.4.6 # no desktop support, todo desktop
   mime_type: ^1.0.0
-  receive_sharing_intent: ^1.4.5 # mobile only
-  flutter_map: ^0.14.0
-  video_thumbnail: ^0.5.0 # mobile only
-  flutter_slidable: ^1.2.0
-  image_size_getter: ^2.1.1
-  photo_view: ^0.13.0
-  adaptive_theme: ^2.3.1
-  sprung: ^3.0.0
+  receive_intent: ^0.2.3 # mobile only
+  receive_sharing_intent: ^1.4.5
+  video_thumbnail: ^0.5.2 # mobile only
+  flutter_slidable: ^2.0.0
+  image_size_getter: ^2.1.2
+  photo_view: ^0.14.0
+  adaptive_theme: ^3.1.1
+  sprung: ^3.0.1
   slugify: ^2.0.0
   metadata_fetch: ^0.4.1
   maps_launcher: ^2.0.1
-  latlong2: ^0.8.1
   smooth_page_indicator: ^1.0.0+2
   flex_color_picker: ^2.5.0
   image_gallery_saver: ^1.7.1 # mobile only
-  visibility_detector: ^0.3.3
   flutter_displaymode: ^0.4.0 # android only
   libphonenumber_plugin: ^0.2.3 # no desktop support, todo desktop
   flutter_libphonenumber: ^1.2.4 # no web or desktop support, used to speed up chat loading on mobile
-  flutter_markdown: ^0.6.10
-  device_info_plus: ^3.2.3
-  google_ml_kit: ^0.11.0 # mobile only
+  flutter_markdown: ^0.6.10+3
+  device_info_plus: ^4.1.2
+  google_ml_kit: ^0.12.0 # mobile only
   faker: ^2.0.0
-  share_plus: ^4.0.4 # sharing files not supported on Windows & Linux, todo desktop
+  share_plus: ^4.0.10+1 # sharing files not supported on Windows & Linux, todo desktop
   collection: ^1.16.0
   disable_battery_optimization: ^1.1.0+1
   secure_application: ^3.8.0 # no linux support
-  local_auth: ^2.0.2 # mobile only
+  local_auth: ^2.1.2 # mobile only, todo windows
   crop_your_image: ^0.7.2
-  chewie: ^1.3.2 # no desktop support, todo desktop
-  simple_animations: ^4.0.2
-  flutter_keyboard_visibility: ^5.2.0 # no desktop support
-  flutter_local_notifications: ^9.5.3+1 # mobile only
+  chewie: ^1.3.5 # no desktop support, todo desktop
+  simple_animations: ^5.0.0+2
+  flutter_keyboard_visibility: ^5.3.0 # no desktop support
+  flutter_local_notifications: ^9.7.1 # mobile only
   flutter_native_timezone: ^2.0.0 # no desktop support
-  package_info_plus: ^1.4.2
+  package_info_plus: ^1.4.3+1
   shared_preferences: ^2.0.15
-  location: ^4.4.0 # no desktop support, todo desktop
   universal_io: ^2.0.4 # cross-platform dart:io implementation
   universal_html: ^2.0.8 # cross-platform dart:html implementation
-  file_picker: ^4.5.1
-  firebase_dart: ^1.0.7
+  file_picker: ^5.0.1
+  firebase_dart: ^1.0.10+1
   dio: ^4.0.6
-  flutter_dropzone: ^3.0.5
-  transparent_pointer: ^1.0.0
   quick_notify: ^0.2.1
-  qr_flutter: ^4.0.0
+  qr_flutter:
+    git:
+      url: https://github.com/theyakka/qr.flutter
+      ref: master
   window_manager: ^0.2.5
-  objectbox: ^1.5.0
+  objectbox: ^1.6.0
   objectbox_flutter_libs: any
   js: ^0.6.4
   bitsdojo_window:
@@ -102,55 +92,59 @@ dependencies:
       url: https://github.com/jjoelj/bitsdojo_window.git
       ref: 5317458a49240217931f749f700107b268bebf24
       path: bitsdojo_window
-  system_tray:
-    git:
-      url: https://github.com/BlueBubblesApp/system_tray.git
-      ref: 576d7cc17fbab10bcdb40468a0db012d2365462e
+  system_tray: ^2.0.1
   flutter_improved_scrolling: ^0.0.3
   desktop_drop: ^0.3.3
   particles_flutter: ^0.1.4
-  # used for percent progress when downloading font
-  dynamic_cached_fonts:
-    git:
-      url: https://github.com/jjoelj/dynamic_cached_fonts
-      ref: main
-  confetti: ^0.6.0
+  confetti: ^0.7.0
   supercharged: ^2.1.1
-  pdf: ^3.8.0
-  printing: ^5.9.0
+  pdf: ^3.8.2
+  printing: ^5.9.2
   shimmer: ^2.0.0
-  giphy_get: ^3.0.5
+  giphy_get: ^3.1.0
   flutter_dotenv: ^5.0.2
-  image: ^3.1.3
-  launch_at_startup: ^0.1.7
+  image: ^3.2.0
+  launch_at_startup: ^0.2.0
   async_task: ^1.0.18
-  filesystem_picker: ^2.0.0
-  version: ^2.0.0
+  version: ^3.0.2
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
-  pasteboard: ^0.0.3
-  win_toast:
+  pasteboard: ^0.2.0
+  local_notifier:
     git:
-      url: https://github.com/jjoelj/flutter-plugins.git
-      ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      path: packages/win_toast
+      url: https://github.com/jjoelj/local_notifier.git
+      ref: 78d87ac4b89ad68854dad27aea0b819758d7228d
   dynamic_color: ^1.4.0
-  material_color_utilities: ^0.1.5
-  dart_vlc: ^0.2.1
-  geolocator: ^8.2.1
-  flex_color_scheme: ^5.0.1
+  material_color_utilities: ^0.2.0
+  dart_vlc: ^0.3.0
+  geolocator: 8.2.1
+  flex_color_scheme: ^5.1.0
   reorderables: ^0.5.0
-  screen_retriever: ^0.1.2
+  screen_retriever: ^0.1.4
   flutter_acrylic: ^1.0.0+2
-  expandable_page_view: ^1.0.17
+  windows_taskbar: ^1.1.0+1
+  animated_size_and_fade: ^3.0.0
+  idb_shim: ^2.0.1+1
+  chunked_stream: ^1.4.1
+  image_picker: ^0.8.5+3
+  scroll_to_index: ^3.0.1
+  animations: ^2.0.7
+  flutter_isolate: ^2.0.3
+  # for VCard parsing
+  flutter_contacts: ^1.1.5+1
+  multi_value_listenable_builder: ^0.0.2
+  audio_waveforms: ^0.1.5+1
+  flutter_staggered_grid_view: ^0.6.2
+  store_checker: ^1.1.0
+  github: ^9.7.0
 
 dependency_overrides:
-  rxdart: ^0.27.3
-  path_parsing: ^1.0.0
-  qr: 2.0.0 # qr_flutter depends on 2.0.0
-  barcode: 2.1.0 # qr 2.0.0 depends on 2.1.0
+  rxdart: ^0.27.5
   get: 4.3.8 # pinned because of snackbar issue
-  material_color_utilities: ^0.1.5 # flutter test SDK depends on 0.1.4
+  material_color_utilities: ^0.2.0 # flutter test SDK depends on 0.1.4
+  path: ^1.8.2 # flutter test SDK depends on 1.8.1
+  ffi: ^2.0.1
+  win32: 2.6.1 # conflicts with bitsdojo_window
   bitsdojo_window_linux:
     git:
       url: https://github.com/jjoelj/bitsdojo_window.git
@@ -168,13 +162,13 @@ dependency_overrides:
       path: bitsdojo_window_windows
 
 dev_dependencies:
-  build_runner: ^2.1.10
+  build_runner: ^2.2.0
   build_verify: ^3.0.0
-  flutter_launcher_icons: ^0.9.2
-  flutter_native_splash: ^2.1.2+1
+  flutter_launcher_icons: ^0.10.0
+  flutter_native_splash: ^2.2.7
   flutter_lints: ^2.0.1
-  msix: ^3.6.2
-  peanut: ^4.1.1
+  msix: ^3.6.3
+  peanut: ^4.3.0
   objectbox_generator: any
   flutter_test:
     sdk: flutter
@@ -191,9 +185,9 @@ flutter_native_splash:
   color_dark: "#000000"
   image: "assets/icon/splash-foreground-dark.png"
   image_dark: "assets/icon/splash-foreground-dark.png"
-  android12:
-    image: "assets/icon/splash-foreground-dark.png"
-    image_dark: "assets/icon/splash-foreground-dark.png"
+  android_12:
+    image: "assets/icon/splash-foreground-dark-2.png"
+    image_dark: "assets/icon/splash-foreground-dark-2.png"
     icon_background_color: "#FFFFFF"
     icon_background_color_dark: "000000"
 
@@ -237,6 +231,16 @@ flutter:
     - assets/icon/icon.png
     - assets/changelog/changelog.md
     - assets/icon/icon.ico
+    - assets/badges/badge-1.ico
+    - assets/badges/badge-2.ico
+    - assets/badges/badge-3.ico
+    - assets/badges/badge-4.ico
+    - assets/badges/badge-5.ico
+    - assets/badges/badge-6.ico
+    - assets/badges/badge-7.ico
+    - assets/badges/badge-8.ico
+    - assets/badges/badge-9.ico
+    - assets/badges/badge-10.ico
     - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
@@ -266,7 +270,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.9.102.0
+  msix_version: 1.10.100.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

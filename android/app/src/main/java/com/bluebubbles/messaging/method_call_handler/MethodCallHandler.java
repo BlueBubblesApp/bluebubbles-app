@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Activity;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.content.Intent;
 import android.provider.Settings;
@@ -25,7 +26,6 @@ import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle;
 import com.bluebubbles.messaging.method_call_handler.handlers.MediaSessionListener;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
-import com.bluebubbles.messaging.method_call_handler.handlers.OpenCamera;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
@@ -40,6 +40,8 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
+
+import com.kasem.receive_sharing_intent.FileDirectory;
 import java.util.HashMap;
 
 
@@ -91,8 +93,6 @@ public class MethodCallHandler {
             new GetServerUrl(context, call, result).Handle();
         } else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
-        } else if(call.method.equals(OpenCamera.TAG)) {
-            new OpenCamera(context, call, result).Handle();
         } else if (call.method.equals(AlarmScheduler.TAG)) {
             new AlarmScheduler(context, call, result).Handle();
         } else if (call.method.equals(SetNextRestart.TAG)) {
@@ -122,6 +122,9 @@ public class MethodCallHandler {
                 Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
                 activity.startActivityForResult(intent, 3000);
             }
+        } else if (call.method.equals("get-content-path")) {
+            final String path = FileDirectory.INSTANCE.getAbsolutePath(context, Uri.parse((String) call.argument("uri")));
+            result.success(path);
         } else {
             result.notImplemented();
         }

@@ -26,7 +26,7 @@ public class Contact {
 
     public IconCompat getIcon() {
         Bitmap bmp = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-        return IconCompat.createWithAdaptiveBitmap(bmp);
+        return IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
     }
 
 }

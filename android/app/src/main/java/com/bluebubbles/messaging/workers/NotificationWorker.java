@@ -19,7 +19,6 @@ import androidx.work.WorkerParameters;
 import com.baseflow.permissionhandler.PermissionHandlerPlugin;
 import com.bluebubbles.messaging.helpers.NotifyRunnable;
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
-import com.tekartik.sqflite.SqflitePlugin;
 
 import java.util.Map;
 

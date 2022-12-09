@@ -75,7 +75,7 @@ public class MainActivity extends FlutterFragmentActivity {
                 .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this, null)));
     }
 
-
+/*
     protected void onNewIntent(Intent intent) {
         // Get intent, action and MIME type
         String action = intent.getAction();
@@ -108,7 +108,7 @@ public class MainActivity extends FlutterFragmentActivity {
             }
         }
 
-    }
+    }*/
 
     // Used during the result after file picking
     @RequiresApi(api = Build.VERSION_CODES.O)

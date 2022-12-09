@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   dart_vlc
   desktop_drop
   flutter_acrylic
+  local_notifier
   maps_launcher
   objectbox_flutter_libs
   pasteboard
