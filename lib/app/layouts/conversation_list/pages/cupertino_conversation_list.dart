@@ -106,7 +106,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   double spaceBetween = (colCount - 1) * 30;
                   double maxWidth = ((ns.width(context) - 50 - spaceBetween) / colCount).floorToDouble();
                   TextStyle style = context.theme.textTheme.bodyMedium!;
-                  double height = usedRowCount * (maxWidth * 1.15 + style.fontSize! * 2.25);
+                  double height = usedRowCount * (maxWidth * 1.15 + style.fontSize! * 1.25);
 
                   return SliverPadding(
                     padding: const EdgeInsets.only(top: 10),
