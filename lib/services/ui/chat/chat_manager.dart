@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -71,6 +72,10 @@ class ChatManager extends GetxService {
 
   Future<void> clearChatNotifications(Chat chat) async {
     chat.toggleHasUnread(false);
+
+    if (kIsDesktop) {
+      await notif.clearDesktopNotificationsForChat(chat.guid);
+    }
 
     // Handle Private API features
     if (ss.settings.enablePrivateAPI.value) {

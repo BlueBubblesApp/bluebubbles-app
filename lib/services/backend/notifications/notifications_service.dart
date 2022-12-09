@@ -467,4 +467,14 @@ class NotificationsService extends GetxService {
   Future<void> clearFailedToSend() async {
     await mcs.invokeMethod("clear-failed-to-send");
   }
+
+  Future<void> clearDesktopNotificationsForChat(String chatGuid) async {
+    if (!notifications.containsKey(chatGuid)) return;
+    List<LocalNotification> toasts = notifications[chatGuid]!;
+    for (LocalNotification toast in toasts) {
+      await toast.close();
+    }
+    notifications[chatGuid] = [];
+    notificationCounts[chatGuid] = 0;
+  }
 }
