@@ -752,6 +752,22 @@ class TextFieldComponent extends StatelessWidget {
       }
     }
 
+    if (linuxData != null) {
+      if ((linuxData.physicalKey == PhysicalKeyboardKey.keyV ||
+          linuxData.logicalKey == LogicalKeyboardKey.keyV) &&
+          (ev.isControlPressed)) {
+        Pasteboard.image.then((image) {
+          if (image != null) {
+            controller!.pickedAttachments.add(PlatformFile(
+              name: "${randomString(8)}.png",
+              bytes: image,
+              size: image.length,
+            ));
+          }
+        });
+      }
+    }
+
     if (webData != null) {
       if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
         getPastedImageWeb().then((value) {
