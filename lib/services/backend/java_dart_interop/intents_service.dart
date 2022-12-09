@@ -8,6 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' hide Intent;
 import 'package:get/get.dart';
 import 'package:receive_intent/receive_intent.dart';
 import 'package:universal_io/io.dart';
@@ -94,7 +95,9 @@ class IntentsService extends GetxService {
         (route) => route.isFirst,
       );
     } else if (guid == "-1") {
-      ns.key.currentState!.popUntil((route) => route.isFirst);
+      if (cm.activeChat != null) {
+        Navigator.of(Get.context!).popUntil((route) => route.isFirst);
+      }
     } else if (guid == "-2") {
       Get.toNamed("/settings/server-management-panel");
     } else {
