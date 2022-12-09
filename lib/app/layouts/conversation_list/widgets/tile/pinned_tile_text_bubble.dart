@@ -59,8 +59,10 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
         ..order(Message_.dateCreated, flags: Order.descending))
           .watch();
 
-      sub = latestMessageQuery.listen((Query<Message> query) {
-        final message = query.findFirst();
+      sub = latestMessageQuery.listen((Query<Message> query) async {
+        final message = await runAsync(() {
+          return query.findFirst();
+        });
         // check if we really need to update this widget
         if (message != null && message.guid != cachedLatestMessageGuid) {
           message.handle = message.getHandle();
@@ -76,12 +78,12 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
         cachedLatestMessageGuid = message?.guid;
       });
 
-      final unreadQuery = chatBox.query((Chat_.hasUnreadMessage.equals(true)
-          .or(Chat_.muteType.equals("mute")))
-          .and(Chat_.guid.equals(controller.chat.guid)))
+      final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
-      sub2 = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst();
+      sub2 = unreadQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
         final newUnread = chat?.hasUnreadMessage ?? false;
         if (chat != null && unread != newUnread) {
           setState(() {

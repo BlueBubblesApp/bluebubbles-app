@@ -186,8 +186,11 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     updateObx(() {
       final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
-      sub = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst()!;
+      sub = unreadQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
+        if (chat == null) return;
         if (chat.hasUnreadMessage != unread) {
           setState(() {
             unread = chat.hasUnreadMessage!;
@@ -248,8 +251,10 @@ class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileControl
           .or(Chat_.muteType.equals("mute")))
           .and(Chat_.guid.equals(controller.chat.guid)))
           .watch();
-      sub = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst();
+      sub = unreadQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
         final newUnread = chat?.hasUnreadMessage ?? false;
         final newMute = chat?.muteType ?? "";
         if (chat != null && unread != newUnread) {
@@ -328,8 +333,11 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     updateObx(() {
       final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
-      sub = titleQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst()!;
+      sub = titleQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
+        if (chat == null) return;
         // check if we really need to update this widget
         if (chat.displayName != cachedDisplayName
             || chat.handles.length != cachedParticipants.length) {
@@ -473,8 +481,11 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
     updateObx(() {
       final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
-      sub = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst()!;
+      sub = unreadQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
+        if (chat == null) return;
         if (chat.hasUnreadMessage != unread) {
           setState(() {
             unread = chat.hasUnreadMessage!;

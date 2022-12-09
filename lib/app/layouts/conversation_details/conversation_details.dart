@@ -53,8 +53,10 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
 
     if (!kIsWeb) {
       final chatQuery = chatBox.query(Chat_.guid.equals(chat.guid)).watch();
-      sub = chatQuery.listen((Query<Chat> query) {
-        final _chat = chatBox.get(chat.id!);
+      sub = chatQuery.listen((Query<Chat> query) async {
+        final _chat = await runAsync(() {
+          return chatBox.get(chat.id!);
+        });
         if (_chat != null) {
           final update = _chat.getTitle() != chat.title || _chat.participants.length != chat.participants.length;
           chat = _chat.merge(chat);

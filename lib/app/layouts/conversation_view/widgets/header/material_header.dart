@@ -183,8 +183,10 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     updateObx(() {
       final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
-      sub = titleQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst()!;
+      sub = titleQuery.listen((Query<Chat> query) async {
+        final chat = await runAsync(() {
+          return chatBox.get(controller.chat.id!)!;
+        });
         // check if we really need to update this widget
         if (chat.displayName != cachedDisplayName
             || chat.handles.length != cachedParticipants.length) {

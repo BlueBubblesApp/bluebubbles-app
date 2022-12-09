@@ -145,8 +145,10 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
         ..order(Message_.dateCreated, flags: Order.descending))
           .watch();
 
-      sub = latestMessageQuery.listen((Query<Message> query) {
-        final message = query.findFirst();
+      sub = latestMessageQuery.listen((Query<Message> query) async {
+        final message = await runAsync(() {
+          return query.findFirst();
+        });
         cachedLatestMessage = message;
         // check if we really need to update this widget
         if (message != null && message.guid != cachedLatestMessageGuid) {
@@ -249,8 +251,10 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     updateObx(() {
       final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
-      sub = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst();
+      sub = unreadQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
         if (chat == null) return;
         if (chat.hasUnreadMessage != unread) {
           setState(() {

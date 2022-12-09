@@ -192,8 +192,10 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     updateObx(() {
       final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
-      sub = titleQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst();
+      sub = titleQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
         if (chat == null) return;
         // check if we really need to update this widget
         if (chat.displayName != cachedDisplayName
@@ -270,8 +272,10 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
         ..order(Message_.dateCreated, flags: Order.descending))
           .watch();
 
-      sub = latestMessageQuery.listen((Query<Message> query) {
-        final message = query.findFirst();
+      sub = latestMessageQuery.listen((Query<Message> query) async {
+        final message = await runAsync(() {
+          return query.findFirst();
+        });
         // check if we really need to update this widget
         if (message != null && message.guid != cachedLatestMessageGuid) {
           message.handle = message.getHandle();

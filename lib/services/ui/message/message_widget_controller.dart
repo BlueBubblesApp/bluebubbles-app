@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/messag
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -46,8 +47,10 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     if (!kIsWeb && message.id != null) {
       _init = true;
       final messageQuery = messageBox.query(Message_.id.equals(message.id!)).watch();
-      sub = messageQuery.listen((Query<Message> query) {
-        final _message = messageBox.get(message.id!);
+      sub = messageQuery.listen((Query<Message> query) async {
+        final _message = await runAsync(() {
+          return messageBox.get(message.id!);
+        });
         if (_message != null) {
           if (_message.hasAttachments) {
             _message.attachments = List<Attachment>.from(_message.dbAttachments);

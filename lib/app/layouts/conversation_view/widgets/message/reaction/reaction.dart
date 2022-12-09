@@ -47,8 +47,10 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
     updateObx(() {
       if (!kIsWeb) {
         final messageQuery = messageBox.query(Message_.id.equals(reaction.id!)).watch();
-        sub = messageQuery.listen((Query<Message> query) {
-          final _message = messageBox.get(reaction.id!);
+        sub = messageQuery.listen((Query<Message> query) async {
+          final _message = await runAsync(() {
+            return messageBox.get(reaction.id!);
+          });
           if (_message != null) {
             if (_message.guid != reaction.guid || _message.dateDelivered != reaction.dateDelivered) {
               setState(() {
