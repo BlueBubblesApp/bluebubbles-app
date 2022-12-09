@@ -88,45 +88,76 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
         alignment: Alignment.center,
         duration: const Duration(milliseconds: 300),
         secondChild: const SizedBox.shrink(),
-        firstChild: InkWell(
-          onLongPress: ss.settings.cameraFAB.value
-              ? () => controller.openCamera(context) : null,
-          child: Container(
-            height: 65,
-            padding: const EdgeInsets.only(right: 4.5, bottom: 9),
-            child: FloatingActionButton.extended(
-              backgroundColor: context.theme.colorScheme.primaryContainer,
-              label: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 150),
-                transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
-                  child: child,
-                  sizeFactor: animation,
-                  axis: Axis.horizontal,
+        firstChild: SizedBox(
+          width: ns.width(context),
+          height: 125,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedOpacity(
+                opacity: !controller.showMaterialFABText ? 1 : 0,
+                duration: const Duration(milliseconds: 300),
+                child: FloatingActionButton.small(
+                  heroTag: null,
+                  onPressed: () async {
+                    await controller.materialScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+                    setState(() {
+                      controller.showMaterialFABText = true;
+                    });
+                  },
+                  child: Icon(
+                    Icons.arrow_upward,
+                    color: context.theme.colorScheme.onSecondary,
+                  ),
+                  backgroundColor: context.theme.colorScheme.secondary,
                 ),
-                child: controller.showMaterialFABText ? Padding(
-                  padding: const EdgeInsets.only(left: 6.0),
-                  child: Text(
-                    "Start Chat",
-                    style: TextStyle(
-                      color: context.theme.colorScheme.onPrimaryContainer,
+              ),
+              Positioned(
+                right: 0,
+                child: InkWell(
+                  onLongPress: ss.settings.cameraFAB.value
+                      ? () => controller.openCamera(context) : null,
+                  child: Container(
+                    height: 65,
+                    padding: const EdgeInsets.only(right: 4.5, bottom: 9),
+                    child: FloatingActionButton.extended(
+                      backgroundColor: context.theme.colorScheme.primaryContainer,
+                      label: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 150),
+                        transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
+                          child: child,
+                          sizeFactor: animation,
+                          axis: Axis.horizontal,
+                        ),
+                        child: controller.showMaterialFABText ? Padding(
+                          padding: const EdgeInsets.only(left: 6.0),
+                          child: Text(
+                            "Start Chat",
+                            style: TextStyle(
+                              color: context.theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ) : const SizedBox.shrink(),
+                      ),
+                      extendedIconLabelSpacing: 0,
+                      icon: Padding(
+                        padding: const EdgeInsets.only(left: 5.0),
+                        child: Icon(
+                          Icons.message_outlined,
+                          color: context.theme.colorScheme.onPrimaryContainer,
+                          size: 25,
+                        ),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                      onPressed: () => controller.openNewChatCreator(context),
                     ),
                   ),
-                ) : const SizedBox.shrink(),
-              ),
-              extendedIconLabelSpacing: 0,
-              icon: Padding(
-                padding: const EdgeInsets.only(left: 5.0),
-                child: Icon(
-                  Icons.message_outlined,
-                  color: context.theme.colorScheme.onPrimaryContainer,
-                  size: 25,
                 ),
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(17),
-              ),
-              onPressed: () => controller.openNewChatCreator(context),
-            ),
+            ],
           ),
         ),
       ),
