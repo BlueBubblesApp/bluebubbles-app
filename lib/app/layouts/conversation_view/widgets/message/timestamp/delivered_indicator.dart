@@ -20,6 +20,7 @@ class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
 
 class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, MessageWidgetController> {
   Message get message => controller.message;
+  bool get showAvatar => (!iOS || (controller.cvController?.chat ?? cm.activeChat!.chat).isGroup) && !samsung;
 
   @override
   void initState() {
@@ -69,7 +70,10 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       alignment: Alignment.bottomCenter,
       duration: const Duration(milliseconds: 250),
       child: shouldShow ? Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15).add(const EdgeInsets.only(top: 3)),
+        padding: const EdgeInsets.symmetric(horizontal: 15).add(EdgeInsets.only(
+          top: 3,
+          left: showAvatar || ss.settings.alwaysShowAvatars.value ? 35 : 0)
+        ),
         child: Text(
           getText(),
           style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),

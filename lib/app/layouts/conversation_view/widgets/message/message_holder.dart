@@ -504,7 +504,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                 return const SizedBox.shrink();
               }),
               // slide to view timestamp
-              if (!samsung)
+              if (iOS)
                 MessageTimestamp(controller: controller, cvController: widget.cvController),
             ],
           ),
