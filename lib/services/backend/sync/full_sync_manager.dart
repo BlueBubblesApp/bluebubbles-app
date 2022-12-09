@@ -8,6 +8,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
+import 'package:windows_taskbar/windows_taskbar.dart';
 
 class FullSyncManager extends SyncManager {
   final tag = 'FullSyncManager';
@@ -34,6 +36,9 @@ class FullSyncManager extends SyncManager {
     }
 
     super.start();
+    if (kIsDesktop && Platform.isWindows) {
+      await WindowsTaskbar.setProgressMode(TaskbarProgressMode.indeterminate);
+    }
     addToOutput('Full sync is starting...');
     addToOutput("Reloading your contacts...");
     await cs.refreshContacts(reloadUI: false);
@@ -56,6 +61,9 @@ class FullSyncManager extends SyncManager {
 
     try {
       int completedChats = 0;
+      if (kIsDesktop && Platform.isWindows) {
+        await WindowsTaskbar.setProgressMode(TaskbarProgressMode.normal);
+      }
       await for (final chatEvent in streamChatPages(totalChats)) {
         double chatProgress = chatEvent.item1;
         List<Chat> newChats = chatEvent.item2;
@@ -104,7 +112,9 @@ class FullSyncManager extends SyncManager {
               completedChats += 1;
               setProgress(completedChats, totalChats ?? newChats.length);
               chatsSynced += 1;
-
+              if (kIsDesktop && Platform.isWindows) {
+                await WindowsTaskbar.setProgress(completedChats, totalChats ?? newChats.length);
+              }
               // If we're supposed to be stopping, break out
               if (status.value == SyncStatus.STOPPING) break;
             }
@@ -121,15 +131,27 @@ class FullSyncManager extends SyncManager {
         if (chatProgress >= 1.0) {
           // When we've hit the last chunk, we're finished
           await complete();
+          if (kIsDesktop && Platform.isWindows) {
+            await WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
+            await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
+          }
         } else if (status.value == SyncStatus.STOPPING) {
           // If we are supposed to be stopping, complete the future
           if (completer != null && !completer!.isCompleted) completer!.complete();
+          if (kIsDesktop && Platform.isWindows) {
+            await WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
+            await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
+          }
         }
       }
     } catch (e, s) {
       addToOutput('Failed to sync chats! Error: ${e.toString()}', level: LogLevel.ERROR);
       addToOutput(s.toString(), level: LogLevel.ERROR);
       completeWithError(e.toString());
+      if (kIsDesktop && Platform.isWindows) {
+        await WindowsTaskbar.setProgressMode(TaskbarProgressMode.error);
+        await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
+      }
     }
 
     return completer!.future;
