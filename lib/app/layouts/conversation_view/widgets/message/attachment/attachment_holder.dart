@@ -38,7 +38,8 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
   Message get message => controller.message;
   Message? get newerMessage => controller.newMessage;
   Attachment get attachment => message.attachments.firstWhereOrNull((e) => e?.id == part.attachments.first.id)
-      ?? ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.attachments.firstWhere((e) => e.id == part.attachments.first.id);
+      ?? ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.attachments.firstWhereOrNull((e) => e.id == part.attachments.first.id)
+      ?? part.attachments.first;
   late dynamic content;
 
   @override
