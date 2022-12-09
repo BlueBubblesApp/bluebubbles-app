@@ -379,7 +379,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
       }
 
       return SizedBox(
-        height: style.height! * style.fontSize! * 2,
+        height: style.height! * style.fontSize! * 1.5,
         child: Align(
           alignment: Alignment.center,
           child: RichText(
