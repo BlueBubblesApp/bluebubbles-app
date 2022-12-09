@@ -49,7 +49,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   }
 
   String getText() {
-    String text = "Sent";
+    String text = "";
     if (!(message.isFromMe ?? false)) {
       text = "Received ${buildDate(message.dateCreated)}";
     } else if (message.dateRead != null) {
