@@ -133,11 +133,18 @@ class NotificationsService extends GetxService {
     final title = chat.getTitle();
     final text = hideContent ? "iMessage" : MessageHelper.getNotificationText(message);
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
+    final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
 
-    final chatIcon = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
-    final contactIcon = message.isFromMe!
-        ? (await loadAsset("assets/images/person64.png")).buffer.asUint8List()
+    Uint8List chatIcon = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
+    Uint8List contactIcon = message.isFromMe!
+        ? personIcon
         : await avatarAsBytes(isGroup: false, participants: chat.participants.where((e) => e.address == message.handle!.address).toList(), chatGuid: guid, quality: 256);
+    if (chatIcon.isEmpty) {
+      chatIcon = personIcon;
+    }
+    if (contactIcon.isEmpty) {
+      contactIcon = personIcon;
+    }
 
     if (kIsWeb && Notification.permission == "granted") {
       final notif = Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: message.guid);
