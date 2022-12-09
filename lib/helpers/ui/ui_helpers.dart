@@ -530,7 +530,7 @@ Future<void> paintAvatar(
     canvas.drawRect(Rect.fromCenter(center: _offset, width: size, height: size), paint);
   }
 
-  String? initials = handle == null ? "Y" : cs.getContact(handle.address)?.initials;
+  String? initials = handle == null ? "Y" : handle.initials;
 
   if (initials == null) {
     IconData icon = Icons.person;
