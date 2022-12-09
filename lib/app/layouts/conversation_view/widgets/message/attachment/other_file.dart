@@ -53,6 +53,8 @@ class OtherFile extends StatelessWidget {
             initialDirectory: (await getDownloadsDirectory())?.path,
             dialogTitle: 'Choose a location to save this file',
             fileName: file.name,
+            type: file.extension != null ? FileType.custom : FileType.any,
+            allowedExtensions: file.extension != null ? [file.extension!] : null,
           );
           Logger.info(savePath);
           if (savePath != null) {

@@ -129,6 +129,8 @@ class AttachmentsService extends GetxService {
         dialogTitle: 'Choose a location to save this file',
         fileName: file.name,
         lockParentWindow: true,
+        type: file.extension != null ? FileType.custom : FileType.any,
+        allowedExtensions: file.extension != null ? [file.extension!] : null,
       );
 
       if (savePath == null) {
