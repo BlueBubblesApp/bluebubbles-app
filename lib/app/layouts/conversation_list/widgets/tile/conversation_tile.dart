@@ -247,6 +247,8 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   String fakeText = faker.lorem.words(1).join(" ");
   late final StreamSubscription<Query<Message>> sub;
   String? cachedLatestMessageGuid = "";
+  bool isDelivered = false;
+  bool isFromMe = false;
 
   @override
   void initState() {
@@ -257,6 +259,9 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
     forceDelete = false;
     subtitle = MessageHelper.getNotificationText(controller.chat.latestMessage);
     cachedLatestMessageGuid = controller.chat.latestMessage.guid!;
+    isFromMe = controller.chat.latestMessage.isFromMe!;
+    isDelivered = controller.chat.isGroup || !isFromMe || controller.chat.latestMessage.dateDelivered != null
+        || controller.chat.latestMessage.dateRead != null;
     fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
     // run query after render has completed
     updateObx(() {
@@ -268,15 +273,27 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       sub = latestMessageQuery.listen((Query<Message> query) {
         final message = query.findFirst();
         // check if we really need to update this widget
+        print(controller.chat.guid);
+        print(message?.dateDelivered);
         if (message != null && message.guid != cachedLatestMessageGuid) {
           message.handle = message.getHandle();
           String newSubtitle = MessageHelper.getNotificationText(message);
           if (newSubtitle != subtitle) {
             setState(() {
               subtitle = newSubtitle;
+              isFromMe = controller.chat.latestMessage.isFromMe!;
+              isDelivered = controller.chat.isGroup || !isFromMe || message.dateDelivered != null || message.dateRead != null;
               fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
             });
           }
+        } else if (!controller.chat.isGroup
+            && message != null
+            && message.isFromMe!
+            && (message.dateDelivered != null || message.dateRead != null)
+            && !isDelivered) {
+          setState(() {
+            isDelivered = true;
+          });
         }
         cachedLatestMessageGuid = message?.guid;
       });
@@ -298,8 +315,8 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       return RichText(
         text: TextSpan(
           children: MessageHelper.buildEmojiText(
-            _subtitle,
-            widget.style,
+            "${!iOS && isFromMe ? "You: " : ""}$_subtitle",
+            widget.style.copyWith(fontStyle: !iOS && !isDelivered ? FontStyle.italic : null),
           ),
         ),
         overflow: TextOverflow.ellipsis,
