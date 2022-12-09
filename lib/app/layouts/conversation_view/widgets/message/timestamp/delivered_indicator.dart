@@ -69,7 +69,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       curve: Curves.easeInOut,
       alignment: Alignment.bottomCenter,
       duration: const Duration(milliseconds: 250),
-      child: shouldShow ? Padding(
+      child: shouldShow && getText().isNotEmpty ? Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15).add(EdgeInsets.only(
           top: 3,
           left: showAvatar || ss.settings.alwaysShowAvatars.value ? 35 : 0)
