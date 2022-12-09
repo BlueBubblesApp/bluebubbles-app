@@ -574,10 +574,6 @@ class Chat {
   }
 
   Chat toggleHasUnread(bool hasUnread, {bool clearLocalNotifications = true, bool privateMark = true}) {
-    if (hasUnreadMessage == hasUnread) {
-      return this;
-    }
-
     hasUnreadMessage = hasUnread;
     save(updateHasUnreadMessage: true);
 
@@ -610,7 +606,6 @@ class Chat {
     }
 
     // Save the message
-    Message? existing = Message.findOne(guid: message.guid);
     Message? newMessage;
 
     try {
@@ -627,7 +622,8 @@ class Chat {
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
     if ((newMessage?.id != null || kIsWeb) && checkForMessageText) {
-      isNewer = message.dateCreated!.isAfter(latestMessage.dateCreated!);
+      isNewer = message.dateCreated!.isAfter(latestMessage.dateCreated!)
+          || (message.guid != latestMessage.guid && message.dateCreated == latestMessage.dateCreated);
       if (isNewer) {
         _latestMessage = message;
       }
@@ -644,7 +640,7 @@ class Chat {
     save();
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (checkForMessageText && changeUnreadStatus && isNewer && existing == null) {
+    if (checkForMessageText && changeUnreadStatus && isNewer) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
