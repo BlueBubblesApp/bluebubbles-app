@@ -16,14 +16,18 @@ String buildDate(DateTime? dateTime) {
       ? DateFormat.Hm().format(dateTime)
       : DateFormat.jm().format(dateTime);
   String date;
-  if (dateTime.isToday()) {
+  if (ss.settings.skin.value != Skins.iOS && DateTime.now().difference(dateTime.toLocal()).inMinutes < 1) {
+    date = "Just Now";
+  } else if (ss.settings.skin.value != Skins.iOS && DateTime.now().difference(dateTime.toLocal()).inHours < 1) {
+    date = "${DateTime.now().difference(dateTime.toLocal()).inMinutes} min";
+  } else if (dateTime.isToday()) {
     date = time;
-  } else if (dateTime.isYesterday()) {
+  } else if (ss.settings.skin.value == Skins.iOS && dateTime.isYesterday()) {
     date = "Yesterday";
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
-    date = DateFormat(ss.settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime);
+    date = "${DateFormat(ss.settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime)}${ss.settings.skin.value != Skins.iOS ? " $time" : ""}";
   } else if (ss.settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
-    date = DateFormat.MMMd().format(dateTime);
+    date = "${DateFormat.MMMd().format(dateTime)}, $time";
   } else if (ss.settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
     date = DateFormat.MMMd().format(dateTime);
   } else if (ss.settings.skin.value == Skins.Samsung && DateTime.now().year != dateTime.toLocal().year) {
@@ -44,7 +48,7 @@ String buildChatListDateMaterial(DateTime? dateTime) {
     date = "Just Now";
   } else if (DateTime.now().difference(dateTime.toLocal()).inHours < 1) {
     date = "${DateTime.now().difference(dateTime.toLocal()).inMinutes} min";
-  }else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
+  } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
     date = DateFormat("EEE").format(dateTime);
   } else if (ss.settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
     date = DateFormat.MMMd().format(dateTime);
