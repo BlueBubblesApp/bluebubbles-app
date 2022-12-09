@@ -16,6 +16,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OtherFile extends StatelessWidget {
   OtherFile({
@@ -49,51 +50,12 @@ class OtherFile extends StatelessWidget {
             ..setAttribute("download", file.name)
             ..click();
         } else if (kIsDesktop) {
-          String? savePath = await FilePicker.platform.saveFile(
-            initialDirectory: (await getDownloadsDirectory())?.path,
-            dialogTitle: 'Choose a location to save this file',
-            fileName: file.name,
-            type: file.extension != null ? FileType.custom : FileType.any,
-            allowedExtensions: file.extension != null ? [file.extension!] : null,
-          );
-          Logger.info(savePath);
-          if (savePath != null) {
-            if (await File(savePath).exists()) {
-              await showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text(
-                      "Confirm save",
-                      style: context.theme.textTheme.titleLarge,
-                    ),
-                    content: Text("This file already exists.\nAre you sure you want to overwrite it?", style: context.theme.textTheme.bodyLarge),
-                    backgroundColor: context.theme.colorScheme.properSurface,
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          await File(file.path!).copy(savePath);
-                          showSnackbar('Success', 'Saved attachment to $savePath!');
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            } else {
-              await File(file.path!).copy(savePath);
-              showSnackbar('Success', 'Saved attachment to $savePath!');
-            }
+          File _file = File(join((await getTemporaryDirectory()).path, "BlueBubbles", "attachments", attachment.guid, basename(file.path!)));
+          if (!_file.existsSync()) {
+            _file.createSync(recursive: true);
+            File(file.path!).copySync(_file.path);
           }
+          launchUrl(Uri.file(_file.path));
         } else {
           try {
             await mcs.invokeMethod(
