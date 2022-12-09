@@ -313,8 +313,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                     child: Obx(() => Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        if (controller.showTypingIndicator.value &&
-                            (samsung || ss.settings.alwaysShowAvatars.value))
+                        if (controller.showTypingIndicator.value && ss.settings.alwaysShowAvatars.value && iOS)
                           Padding(
                             padding: const EdgeInsets.only(left: 10.0),
                             child: ContactAvatarWidget(
