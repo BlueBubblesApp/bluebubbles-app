@@ -344,6 +344,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           await ts.refreshWindowsAccent(context);
                         },
                       )),
+                    if (kIsDesktop && Platform.isWindows)
+                      const SettingsDivider(),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
                       Obx(() {
                         if (iOS) {

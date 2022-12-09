@@ -57,6 +57,8 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     backgroundColor: tileColor,
                   )),
                   if (Platform.isLinux)
+                    const SettingsDivider(),
+                  if (Platform.isLinux)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) async {
                         ss.settings.useCustomTitleBar.value = val;
@@ -70,6 +72,12 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     )),
                   Obx(() {
                     if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
+                      return const SettingsDivider();
+                    }
+                    return const SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
                       return SettingsSwitch(
                         onChanged: (bool val) async {
                           ss.settings.minimizeToTray.value = val;
@@ -81,6 +89,12 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                             "When enabled, clicking the minimize button will minimize the app to the system tray",
                         backgroundColor: tileColor,
                       );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
+                      return const SettingsDivider();
                     }
                     return const SizedBox.shrink();
                   }),
