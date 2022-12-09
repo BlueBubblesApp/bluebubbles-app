@@ -18,17 +18,21 @@ class WindowEffects {
     WindowEffect.disabled
   ];
 
-  static final Map<WindowEffect, int> _versions = {
-    WindowEffect.tabbed: 22523,
-    WindowEffect.mica: 22000,
-    WindowEffect.aero: 0,
-    WindowEffect.acrylic: 17134,
-    WindowEffect.transparent: 0,
-    WindowEffect.disabled: 0,
+  static final Map<WindowEffect, Tuple2<int?, int?>> _versions = {
+    WindowEffect.tabbed: const Tuple2(22523, null),
+    WindowEffect.mica: const Tuple2(22000, null),
+    WindowEffect.aero: const Tuple2(0, 22523),
+    WindowEffect.acrylic: const Tuple2(17134, null),
+    WindowEffect.transparent: const Tuple2(0, null),
+    WindowEffect.disabled: const Tuple2(0, null),
   };
 
   static List<WindowEffect> get effects =>
-      _effects.where((effect) => parsedWindowsVersion() >= _versions[effect]!).toList();
+      _effects.where((effect) {
+        int version = parsedWindowsVersion();
+        return version >= _versions[effect]!.item1! &&
+            (_versions[effect]!.item2 == null || (version <= _versions[effect]!.item2!));
+      }).toList();
 
   static final _descriptions = {
     WindowEffect.tabbed: "Tabbed is a Mica-like material that incorporates theme and desktop wallpaper, but is more "
