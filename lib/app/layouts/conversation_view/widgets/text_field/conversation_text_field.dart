@@ -23,6 +23,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
 import 'package:pasteboard/pasteboard.dart';
@@ -352,7 +353,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                     onPressed: () async {
                       GiphyGif? gif = await GiphyGet.getGif(
                         context: context,
-                        apiKey: GIPHY_API_KEY,
+                        apiKey: kIsWeb ? GIPHY_API_KEY : dotenv.get('GIPHY_API_KEY'),
                         tabColor: context.theme.primaryColor,
                       );
                       if (gif?.images?.original != null) {
