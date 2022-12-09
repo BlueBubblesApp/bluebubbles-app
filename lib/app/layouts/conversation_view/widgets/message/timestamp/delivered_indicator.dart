@@ -36,7 +36,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
         .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final index = messages.indexWhere((e) => e.guid == message.guid);
     if (index == 0) return true;
-    if (index == 1) {
+    if (index == 1 && message.isFromMe!) {
       final newer = messages.first;
       if (message.dateRead != null) {
         return newer.dateRead == null;
