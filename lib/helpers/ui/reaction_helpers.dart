@@ -48,7 +48,7 @@ class ReactionTypes {
     LIKE: Emojis.thumbsUp,
     DISLIKE: Emojis.thumbsDown,
     LAUGH: Emojis.faceWithTearsOfJoy,
-    EMPHASIZE: Platform.isAndroid ? Emojis.doubleExclamationMark : Emojis.redExclamationMark,
+    EMPHASIZE: Emojis.redExclamationMark,
     QUESTION: Emojis.redQuestionMark,
   };
 
