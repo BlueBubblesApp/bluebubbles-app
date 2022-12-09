@@ -15,11 +15,11 @@ MessagesService ms(String chatGuid) => Get.isRegistered<MessagesService>(tag: ch
 
 class MessagesService extends GetxController {
   static final Map<String, Size> cachedBubbleSizes = {};
-  late final Chat chat;
-  late final StreamSubscription countSub;
+  late Chat chat;
+  late StreamSubscription countSub;
   final ChatMessages struct = ChatMessages();
-  late final Function(Message, {String? oldGuid}) updateFunc;
-  late final Function(Message) removeFunc;
+  late Function(Message, {String? oldGuid}) updateFunc;
+  late Function(Message) removeFunc;
 
   final String tag;
   MessagesService(this.tag);
