@@ -71,7 +71,6 @@ class Settings {
   final RxBool privateMarkChatAsRead = false.obs;
   final RxBool privateManualMarkAsRead = false.obs;
   final RxBool privateSubjectLine = false.obs;
-  final RxBool swipeToReply = false.obs;
   final RxBool privateAPISend = false.obs;
 
   // Redacted Mode Settings
@@ -220,7 +219,6 @@ class Settings {
       'allowUpsideDownRotation': allowUpsideDownRotation.value,
       'cancelQueuedMessages': cancelQueuedMessages.value,
       'repliesToPrevious': repliesToPrevious.value,
-      'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -322,7 +320,6 @@ class Settings {
     ss.settings.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     ss.settings.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
-    ss.settings.swipeToReply.value = map['swipeToReply'] ?? false;
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -428,7 +425,6 @@ class Settings {
     s.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
-    s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

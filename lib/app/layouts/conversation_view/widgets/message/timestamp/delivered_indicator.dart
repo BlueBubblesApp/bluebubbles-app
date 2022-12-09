@@ -20,6 +20,7 @@ class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
 
 class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, MessageWidgetController> {
   Message get message => controller.message;
+  bool get showAvatar => (!iOS || (controller.cvController?.chat ?? cm.activeChat!.chat).isGroup) && !samsung;
 
   @override
   void initState() {
@@ -28,10 +29,10 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   }
 
   bool get shouldShow {
-    if (widget.forceShow) return true;
-    if (!message.isFromMe!) return false;
+    if (widget.forceShow || message.guid!.contains("temp")) return true;
+    if (!message.isFromMe! && iOS) return false;
     final messages = ms(controller.cvController!.chat.guid).struct.messages
-        .where((e) => e.isFromMe! && (e.dateDelivered != null || e.dateRead != null))
+        .where((e) => (!iOS ? !e.isFromMe! : false) || (e.isFromMe! && (e.dateDelivered != null || e.dateRead != null)))
         .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final index = messages.indexWhere((e) => e.guid == message.guid);
     if (index == 0) return true;
@@ -54,9 +55,9 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     } else if (message.dateRead != null) {
       text = "Read ${buildDate(message.dateRead)}";
     } else if (message.dateDelivered != null) {
-      text = "Delivered${ss.settings.showDeliveryTimestamps.value ? " ${buildDate(message.dateDelivered)}" : ""}";
-    } else if (ss.settings.showDeliveryTimestamps.value && message.dateCreated != null) {
-      text = "Sent ${buildDate(message.dateCreated)}";
+      text = "Delivered${ss.settings.showDeliveryTimestamps.value || !iOS ? " ${buildDate(message.dateDelivered)}" : ""}";
+    } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
+      text = "Sending...";
     }
 
     return text;
@@ -69,7 +70,10 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       alignment: Alignment.bottomCenter,
       duration: const Duration(milliseconds: 250),
       child: shouldShow ? Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15).add(const EdgeInsets.only(top: 3)),
+        padding: const EdgeInsets.symmetric(horizontal: 15).add(EdgeInsets.only(
+          top: 3,
+          left: showAvatar || ss.settings.alwaysShowAvatars.value ? 35 : 0)
+        ),
         child: Text(
           getText(),
           style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
