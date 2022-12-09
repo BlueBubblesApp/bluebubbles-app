@@ -66,7 +66,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(left: 7, right: 7, top: 1, bottom: 3),
+      margin: const EdgeInsets.only(top: 1, bottom: 3),
       child: MouseRegion(
         onEnter: (event) => controller.hoverHighlight.value = true,
         onExit: (event) => controller.hoverHighlight.value = false,
@@ -86,8 +86,6 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
             clipBehavior: Clip.none,
             padding: const EdgeInsets.only(
               top: 4,
-              left: 8,
-              right: 8,
               bottom: 2,
             ),
             decoration: BoxDecoration(
@@ -112,12 +110,12 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                 final colCount = kIsDesktop
                     ? ss.settings.pinColumnsLandscape.value
                     : ss.settings.pinColumnsPortrait.value;
-                final spaceBetween = (colCount - 1) * 30;
+                final spaceBetween = (colCount - 1) * 60;
                 final maxWidth = max(((availableWidth - spaceBetween) / colCount).floorToDouble(), 0).toDouble();
 
                 return ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: maxWidth,
+                    maxWidth: maxWidth + 40,
                   ),
                   child: Stack(
                     clipBehavior: Clip.none,
