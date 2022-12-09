@@ -36,7 +36,7 @@ class BaseLogger extends GetxService {
   Future<void> init() async {
     // For now, only do logs on desktop
     if (kIsDesktop) {
-      String startupPath = (await getApplicationSupportDirectory()).path;
+      String startupPath = fs.appDocDir.path;
       startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
       startupFile = File(startupPath)..createSync();
       if (startupFile.existsSync()) {
