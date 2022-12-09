@@ -29,17 +29,15 @@ class SettingsService extends GetxService {
     settings = Settings.getSettings();
     if (!headless && !kIsWeb && !kIsDesktop) {
       // refresh rate
-      if (!kIsWeb && !kIsDesktop) {
-        try {
-          canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
-          final mode = await settings.getDisplayMode();
-          if (mode != DisplayMode.auto) {
-            FlutterDisplayMode.setPreferredMode(mode);
-          }
-        } catch (_) {}
-      }
+      try {
+        canAuthenticate = await LocalAuthentication().isDeviceSupported();
+        final mode = await settings.getDisplayMode();
+        if (mode != DisplayMode.auto) {
+          FlutterDisplayMode.setPreferredMode(mode);
+        }
+      } catch (_) {}
       // system appearance
-      if (!kIsWeb && settings.immersiveMode.value) {
+      if (settings.immersiveMode.value) {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       }
       SystemChrome.setPreferredOrientations([
@@ -49,14 +47,14 @@ class SettingsService extends GetxService {
         if (settings.allowUpsideDownRotation.value)
           DeviceOrientation.portraitDown,
       ]);
-      // launch at startup
-      if (kIsDesktop) {
-        LaunchAtStartup.setup(fs.packageInfo.appName);
-        if (settings.launchAtStartup.value) {
-          await LaunchAtStartup.enable();
-        } else {
-          await LaunchAtStartup.disable();
-        }
+    }
+    // launch at startup
+    if (kIsDesktop) {
+      LaunchAtStartup.setup(fs.packageInfo.appName);
+      if (settings.launchAtStartup.value) {
+        await LaunchAtStartup.enable();
+      } else {
+        await LaunchAtStartup.disable();
       }
     }
   }

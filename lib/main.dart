@@ -54,6 +54,7 @@ late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 final Completer<void> storeStartup = Completer();
 final Completer<void> uiStartup = Completer();
+bool isAuthing = false;
 
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
@@ -422,7 +423,7 @@ class Main extends StatelessWidget {
           child: SecureApplication(
             child: Builder(
               builder: (context) {
-                if (ss.canAuthenticate && !ls.isAlive) {
+                if (ss.canAuthenticate && (!ls.isAlive || !uiStartup.isCompleted)) {
                   if (ss.settings.shouldSecure.value) {
                     SecureApplicationProvider.of(context, listen: false)!.lock();
                     if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
@@ -435,14 +436,18 @@ class Main extends StatelessWidget {
                   opacity: 1.0,
                   lockedBuilder: (context, controller) {
                     final localAuth = LocalAuthentication();
-                    localAuth.authenticate(
-                        localizedReason: 'Please authenticate to unlock BlueBubbles',
-                        options: const AuthenticationOptions(stickyAuth: true)
-                    ).then((result) {
-                      if (result) {
-                        SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
-                      }
-                    });
+                    if (!isAuthing) {
+                      isAuthing = true;
+                      localAuth.authenticate(
+                          localizedReason: 'Please authenticate to unlock BlueBubbles',
+                          options: const AuthenticationOptions(stickyAuth: true)
+                      ).then((result) {
+                        isAuthing = false;
+                        if (result) {
+                          SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
+                        }
+                      });
+                    }
                     return Container(
                       color: context.theme.colorScheme.background,
                       child: Center(
