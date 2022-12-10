@@ -72,8 +72,8 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
 
     if (text.isNotEmpty || subject.isNotEmpty) {
       final _message = Message(
-        text: text,
-        subject: subject,
+        text: text.isEmpty && subject.isNotEmpty ? subject : text,
+        subject: text.isEmpty && subject.isNotEmpty ? null : subject,
         threadOriginatorGuid: replyGuid,
         threadOriginatorPart: "${part ?? 0}:0:0",
         expressiveSendStyleId: effectId,
