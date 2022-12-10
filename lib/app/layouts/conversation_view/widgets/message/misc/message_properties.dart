@@ -42,6 +42,10 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
       properties.add(TextSpan(
         text: "↺ sent with $effect",
         recognizer: TapGestureRecognizer()..onTap = () {
+          if (stringToMessageEffect[effect] == MessageEffect.echo) {
+            showSnackbar("Notice", "Echo animation is not supported at this time.");
+            return;
+          }
           HapticFeedback.mediumImpact();
           if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
             eventDispatcher.emit('play-bubble-effect', '${widget.part.part}/${message.guid}');
