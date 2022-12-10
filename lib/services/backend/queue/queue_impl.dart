@@ -10,7 +10,7 @@ abstract class Queue extends GetxService {
   bool isProcessing = false;
   List<QueueItem> items = [];
 
-  void queue(QueueItem item) async {
+  Future<void> queue(QueueItem item) async {
     final returned = await prepItem(item);
     // we may get a link split into 2 messages
     if (item is OutgoingItem && returned is List) {

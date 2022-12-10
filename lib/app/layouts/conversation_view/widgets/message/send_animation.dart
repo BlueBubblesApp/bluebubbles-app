@@ -63,7 +63,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
       );
       message.generateTempGuid();
       message.attachments.first!.guid = message.guid;
-      outq.queue(OutgoingItem(
+      await outq.queue(OutgoingItem(
         type: QueueType.sendAttachment,
         chat: controller.chat,
         message: message,
