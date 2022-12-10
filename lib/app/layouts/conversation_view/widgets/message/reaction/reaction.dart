@@ -17,12 +17,12 @@ import 'package:get/get.dart';
 class ReactionWidget extends StatefulWidget {
   const ReactionWidget({
     Key? key,
-    required this.messageIsFromMe,
+    required this.message,
     required this.reaction,
     this.reactions,
   }) : super(key: key);
 
-  final bool messageIsFromMe;
+  final Message? message;
   final Message reaction;
   final List<Message>? reactions;
 
@@ -36,7 +36,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
 
   List<Message>? get reactions => widget.reactions;
   bool get reactionIsFromMe => reaction.isFromMe!;
-  bool get messageIsFromMe => widget.messageIsFromMe;
+  bool get messageIsFromMe => widget.message?.isFromMe ?? true;
   String get reactionType => reaction.associatedMessageType!;
 
   static const double iosSize = 35;
@@ -56,6 +56,11 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
               setState(() {
                 reaction = _message;
               });
+            } else {
+              reaction = _message;
+            }
+            if (widget.message != null) {
+              getActiveMwc(widget.message!.guid!)?.updateAssociatedMessage(reaction, updateHolder: false);
             }
           }
         });

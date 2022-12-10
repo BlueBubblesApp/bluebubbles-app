@@ -183,11 +183,16 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     updateWidgetFunctions[MessageProperties]?.call(null);
   }
 
-  void updateAssociatedMessage(Message newItem) {
-    if (message.associatedMessages.firstWhereOrNull((e) => e.guid == newItem.guid) == null) {
+  void updateAssociatedMessage(Message newItem, {bool updateHolder = true}) {
+    final index = message.associatedMessages.indexWhere((e) => e.id == newItem.id);
+    if (index >= 0) {
+      message.associatedMessages[index] = newItem;
+    } else {
       message.associatedMessages.add(newItem);
     }
-    updateWidgetFunctions[MessageHolder]?.call(null);
+    if (updateHolder) {
+      updateWidgetFunctions[MessageHolder]?.call(null);
+    }
   }
 
   void removeAssociatedMessage(Message toRemove) {

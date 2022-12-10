@@ -223,7 +223,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                           associatedMessageType: ReactionTypes.LOVE,
                                           isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LOVE
                                         ),
-                                        messageIsFromMe: true,
+                                        message: null,
                                       ),
                                     ),
                                     Padding(
@@ -234,7 +234,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             associatedMessageType: ReactionTypes.LIKE,
                                             isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LIKE
                                         ),
-                                        messageIsFromMe: true,
+                                        message: null,
                                       ),
                                     ),
                                     Padding(
@@ -245,7 +245,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             associatedMessageType: ReactionTypes.DISLIKE,
                                             isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.DISLIKE
                                         ),
-                                        messageIsFromMe: true,
+                                        message: null,
                                       ),
                                     ),
                                     Padding(
@@ -256,7 +256,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             associatedMessageType: ReactionTypes.LAUGH,
                                             isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LAUGH
                                         ),
-                                        messageIsFromMe: true,
+                                        message: null,
                                       ),
                                     ),
                                     Padding(
@@ -267,7 +267,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             associatedMessageType: ReactionTypes.EMPHASIZE,
                                             isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.EMPHASIZE
                                         ),
-                                        messageIsFromMe: true,
+                                        message: null,
                                       ),
                                     ),
                                     Padding(
@@ -278,7 +278,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             associatedMessageType: ReactionTypes.QUESTION,
                                             isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.QUESTION
                                         ),
-                                        messageIsFromMe: true,
+                                        message: null,
                                       ),
                                     ),
                                   ],

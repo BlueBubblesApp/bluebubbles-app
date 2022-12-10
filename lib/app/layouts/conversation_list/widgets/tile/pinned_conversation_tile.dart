@@ -513,7 +513,7 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
       right: (-sqrt(widget.width / 2) + widget.width) * 0.1,
       child: ReactionWidget(
         reaction: controller.chat.latestMessage,
-        messageIsFromMe: true,
+        message: null,
       ),
     ) : const SizedBox.shrink();
   }
