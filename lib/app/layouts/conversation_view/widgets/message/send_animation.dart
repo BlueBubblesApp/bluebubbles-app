@@ -81,6 +81,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         hasAttachments: false,
         isFromMe: true,
         handleId: 0,
+        hasDdResults: true,
       );
       _message.generateTempGuid();
       outq.queue(OutgoingItem(
