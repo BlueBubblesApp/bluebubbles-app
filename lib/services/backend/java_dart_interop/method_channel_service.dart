@@ -108,10 +108,10 @@ class MethodChannelService extends GetxService {
         Logger.info("Received chat status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);
         Chat? chat = Chat.findOne(guid: data["chatGuid"]);
-        if (chat == null) {
+        if (chat == null || (data["read"] != true && data["read"] != false)) {
           return false;
         } else {
-          chat.toggleHasUnread(!(data["read"] ?? true));
+          chat.toggleHasUnread(!data["read"]!, privateMark: false);
           return true;
         }
       case "media-colors":

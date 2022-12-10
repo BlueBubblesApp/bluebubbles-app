@@ -27,7 +27,7 @@ class ChatManager extends GetxService {
     ss.prefs.setString('lastOpenedChat', chat.guid);
     createChatController(chat, active: true);
     if (clearNotifications) {
-      clearChatNotifications(chat);
+      chat.toggleHasUnread(false, force: true);
     }
   }
 
@@ -68,27 +68,6 @@ class ChatManager extends GetxService {
   ChatLifecycleManager? getChatController(String guid) {
     if (!_chatControllers.containsKey(guid)) return null;
     return _chatControllers[guid];
-  }
-
-  Future<void> clearChatNotifications(Chat chat) async {
-    chat.toggleHasUnread(false);
-
-    if (kIsDesktop) {
-      await notif.clearDesktopNotificationsForChat(chat.guid);
-    }
-
-    // Handle Private API features
-    if (ss.settings.enablePrivateAPI.value) {
-      if (ss.settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
-        http.markChatRead(chat.guid);
-      }
-    }
-
-    // We want to clear the notifications for the chat so long as it is not a bubble-chat
-    // This is because we do not want to kill the bubble-process (crashing it)
-    if (!ls.isBubble) {
-      await mcs.invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
-    }
   }
 
   /// Fetch chat information from the server

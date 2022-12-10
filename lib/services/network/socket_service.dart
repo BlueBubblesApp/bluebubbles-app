@@ -196,8 +196,8 @@ class SocketService extends GetxService {
         return;
       case "chat-read-status-changed":
         Chat? chat = Chat.findOne(guid: data["chatGuid"]);
-        if (chat != null) {
-          chat.toggleHasUnread(!(data["read"] ?? true));
+        if (chat != null && (data["read"] == true || data["read"] == false)) {
+          chat.toggleHasUnread(!data["read"]!, privateMark: false);
         }
         return;
       case "typing-indicator":

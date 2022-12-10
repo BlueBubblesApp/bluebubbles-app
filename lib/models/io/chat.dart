@@ -573,9 +573,14 @@ class Chat {
     });
   }
 
-  Chat toggleHasUnread(bool hasUnread, {bool clearLocalNotifications = true, bool privateMark = true}) {
+  Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
+    if (hasUnreadMessage == hasUnread && !force) return this;
     hasUnreadMessage = hasUnread;
     save(updateHasUnreadMessage: true);
+
+    if (kIsDesktop) {
+      notif.clearDesktopNotificationsForChat(guid);
+    }
 
     try {
       if (clearLocalNotifications && !hasUnread && !ls.isBubble) {

@@ -52,7 +52,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   void open() {
     cm.setActiveToAlive();
     if (cm.activeChat != null) {
-      cm.clearChatNotifications(cm.activeChat!.chat);
+      cm.activeChat!.chat.toggleHasUnread(false);
     }
 
     if (!kIsDesktop && !kIsWeb) {
