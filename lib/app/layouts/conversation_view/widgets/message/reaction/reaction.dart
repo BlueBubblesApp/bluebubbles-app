@@ -240,6 +240,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                                   message: Message(
                                     associatedMessageGuid: selected.guid,
                                     associatedMessageType: reaction.associatedMessageType,
+                                    associatedMessagePart: reaction.associatedMessagePart,
                                     dateCreated: DateTime.now(),
                                     hasAttachments: false,
                                     isFromMe: true,
