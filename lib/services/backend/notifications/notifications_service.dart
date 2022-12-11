@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -63,28 +62,6 @@ class NotificationsService extends GetxService {
         "Message Reminders",
         "Displays message reminders set through the app",
       );
-    }
-
-    // watch for new messages and handle the notification
-    if (!kIsWeb) {
-      final countQuery = (messageBox.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
-      countSub = countQuery.listen((event) {
-        if (!ss.settings.finishedSetup.value) return;
-        final newCount = event.count();
-        final activeChatFetching = cm.activeChat != null ? ms(cm.activeChat!.chat.guid).isFetching : false;
-        if (!activeChatFetching && newCount > currentCount && currentCount != 0) {
-          event.limit = newCount - currentCount;
-          final messages = event.find();
-          event.limit = 0;
-          for (Message message in messages) {
-            if (message.chat.target == null) continue;
-            message.handle = Handle.findOne(id: message.handleId);
-            message.attachments = List<Attachment>.from(message.dbAttachments);
-            MessageHelper.handleNotification(message, message.chat.target!, findExisting: false);
-          }
-        }
-        currentCount = newCount;
-      });
     }
   }
 
@@ -429,6 +406,22 @@ class NotificationsService extends GetxService {
         QuickNotify.notify(title: title, content: text);
       }
     } else {
+      print({
+        "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
+        "CHANNEL_NAME": "New Messages",
+        "notificationId": Random().nextInt(9998) + 1,
+        "summaryId": chat.id,
+        "chatGuid": guid,
+        "chatIsGroup": isGroup,
+        "chatTitle": title,
+        "chatIcon": (isGroup ? chatIcon : contactIcon).length,
+        "contactName": contactName,
+        "contactAvatar": contactIcon.length,
+        "messageGuid": message.guid!,
+        "messageText": text,
+        "messageDate": message.dateCreated!.millisecondsSinceEpoch,
+        "messageIsFromMe": false,
+      });
       await mcs.invokeMethod("new-message-notification", {
         "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
         "CHANNEL_NAME": "New Messages",

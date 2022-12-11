@@ -233,9 +233,7 @@ class ActionHandler extends GetxService {
       m.handle = handle;
     }
     // Display notification if needed and save everything to DB
-    if (!ls.isAlive) {
-      await MessageHelper.handleNotification(m, c);
-    }
+    await MessageHelper.handleNotification(m, c);
     await c.addMessage(m);
   }
 

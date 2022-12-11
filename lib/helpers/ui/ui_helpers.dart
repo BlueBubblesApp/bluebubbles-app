@@ -483,7 +483,7 @@ Future<void> paintAvatar(
     }
   }
 
-  Contact? contact = handle != null ? cs.getContact(handle.address) : null;
+  Contact? contact = handle?.contact ?? (handle != null ? cs.getContact(handle.address) : null);
   if (contact?.avatar != null) {
     Uint8List? contactAvatar =
     await clip(contact!.avatar ?? contact.avatar!, size: size.toInt(), circle: kIsDesktop || inGroup);
