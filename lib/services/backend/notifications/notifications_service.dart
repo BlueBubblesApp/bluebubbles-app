@@ -406,22 +406,6 @@ class NotificationsService extends GetxService {
         QuickNotify.notify(title: title, content: text);
       }
     } else {
-      print({
-        "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
-        "CHANNEL_NAME": "New Messages",
-        "notificationId": Random().nextInt(9998) + 1,
-        "summaryId": chat.id,
-        "chatGuid": guid,
-        "chatIsGroup": isGroup,
-        "chatTitle": title,
-        "chatIcon": (isGroup ? chatIcon : contactIcon).length,
-        "contactName": contactName,
-        "contactAvatar": contactIcon.length,
-        "messageGuid": message.guid!,
-        "messageText": text,
-        "messageDate": message.dateCreated!.millisecondsSinceEpoch,
-        "messageIsFromMe": false,
-      });
       await mcs.invokeMethod("new-message-notification", {
         "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
         "CHANNEL_NAME": "New Messages",
