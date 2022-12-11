@@ -276,6 +276,8 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
         final message = await runAsync(() {
           return query.findFirst();
         });
+        isFromMe = message?.isFromMe ?? false;
+        isDelivered = controller.chat.isGroup || !isFromMe || message?.dateDelivered != null || message?.dateRead != null;
         // check if we really need to update this widget
         if (message != null && message.guid != cachedLatestMessageGuid) {
           message.handle = message.getHandle();
@@ -283,19 +285,15 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           if (newSubtitle != subtitle) {
             setState(() {
               subtitle = newSubtitle;
-              isFromMe = controller.chat.latestMessage.isFromMe!;
-              isDelivered = controller.chat.isGroup || !isFromMe || message.dateDelivered != null || message.dateRead != null;
               fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
             });
           }
         } else if (!controller.chat.isGroup
             && message != null
             && message.isFromMe!
-            && (message.dateDelivered != null || message.dateRead != null)
-            && !isDelivered) {
-          setState(() {
-            isDelivered = true;
-          });
+            && (message.dateDelivered != null || message.dateRead != null)) {
+          // update delivered status
+          setState(() {});
         }
         cachedLatestMessageGuid = message?.guid;
       });
