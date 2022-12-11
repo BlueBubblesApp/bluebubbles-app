@@ -101,15 +101,17 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       }
     }
     if (parts.isEmpty) {
-      parts.addAll(message.attachments.map((e) => MessagePart(
-        attachments: [e!],
-        part: 0,
-      )));
+      if (!message.hasApplePayloadData && !message.isLegacyUrlPreview && !message.isInteractive && !message.isGroupEvent) {
+        parts.addAll(message.attachments.mapIndexed((index, e) => MessagePart(
+          attachments: [e!],
+          part: index,
+        )));
+      }
       if (message.fullText.isNotEmpty || message.isGroupEvent) {
         parts.add(MessagePart(
           subject: message.subject,
           text: message.text,
-          part: 0,
+          part: parts.length,
         ));
       }
     }
