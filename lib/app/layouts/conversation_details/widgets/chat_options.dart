@@ -45,6 +45,21 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
           SettingsSection(
             backgroundColor: tileColor,
             children: [
+              if (!kIsWeb && !kIsDesktop && (fs.androidInfo?.version.sdkInt ?? 0) >= 30)
+                SettingsTile(
+                  title: "Notification Settings",
+                  subtitle: "Customize notification sounds, importance, and more for this specific chat",
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(right: 15.0),
+                    child: Icon(
+                      iOS ? CupertinoIcons.bell : Icons.notifications_on,
+                    ),
+                  ),
+                  isThreeLine: true,
+                  onTap: () async {
+                    await mcs.invokeMethod("open-convo-notif-settings", {"parentId": NotificationsService.NEW_MESSAGE_CHANNEL, "id": chat.guid, "displayName": chat.getTitle()});
+                  },
+                ),
               if (!kIsWeb)
                 SettingsTile(
                   title: "Change Chat Avatar",

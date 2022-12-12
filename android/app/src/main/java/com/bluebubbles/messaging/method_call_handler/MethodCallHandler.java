@@ -3,6 +3,8 @@ package com.bluebubbles.messaging.method_call_handler;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
@@ -125,6 +127,17 @@ public class MethodCallHandler {
         } else if (call.method.equals("get-content-path")) {
             final String path = FileDirectory.INSTANCE.getAbsolutePath(context, Uri.parse((String) call.argument("uri")));
             result.success(path);
+        } else if (call.method.equals("open-convo-notif-settings")) {
+            NotificationChannel channel = new NotificationChannel(call.argument("id"), call.argument("displayName"), NotificationManager.IMPORTANCE_HIGH);
+            channel.setConversationId(call.argument("parentId"), call.argument("id"));
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+            Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+            intent.putExtra(Settings.EXTRA_CHANNEL_ID, channel.getId());
+            intent.putExtra(Settings.EXTRA_CONVERSATION_ID, channel.getConversationId());
+            context.startActivity(intent);
+            result.success("");
         } else {
             result.notImplemented();
         }

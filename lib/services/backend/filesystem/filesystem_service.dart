@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -16,6 +17,7 @@ FilesystemService fs = Get.isRegistered<FilesystemService>() ? Get.find<Filesyst
 class FilesystemService extends GetxService {
   late final Directory appDocDir;
   late final PackageInfo packageInfo;
+  AndroidDeviceInfo? androidInfo;
   late final Database webDb;
   late final Uint8List noVideoPreviewIcon;
   late final Uint8List unplayableVideoIcon;
@@ -38,6 +40,9 @@ class FilesystemService extends GetxService {
       }
     }
     packageInfo = await PackageInfo.fromPlatform();
+    if (Platform.isAndroid) {
+      androidInfo = await DeviceInfoPlugin().androidInfo;
+    }
   }
 
   void checkFont() async {
