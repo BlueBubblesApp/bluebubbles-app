@@ -414,7 +414,7 @@ class Message {
       groupTitle: json["groupTitle"],
       groupActionType: json["groupActionType"] ?? 0,
       balloonBundleId: json["balloonBundleId"],
-      associatedMessageGuid: json["associatedMessageGuid"]?.toString().split("/").last,
+      associatedMessageGuid: json["associatedMessageGuid"]?.toString().replaceAll("bp:", "").split("/").last,
       associatedMessagePart: json["associatedMessagePart"] ?? int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
       associatedMessageType: json["associatedMessageType"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
