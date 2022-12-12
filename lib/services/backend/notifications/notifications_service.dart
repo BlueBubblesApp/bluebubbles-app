@@ -59,7 +59,7 @@ class NotificationsService extends GetxService {
         "Displays connection failures",
       );
       createNotificationChannel(
-        SOCKET_ERROR_CHANNEL,
+        REMINDER_CHANNEL,
         "Message Reminders",
         "Displays message reminders set through the app",
       );
