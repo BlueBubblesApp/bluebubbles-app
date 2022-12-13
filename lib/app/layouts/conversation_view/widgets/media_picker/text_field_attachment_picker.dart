@@ -58,7 +58,8 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
       // see if there is a recent attachment
       if (DateTime.now().toLocal().isWithin(_images.first.modifiedDateTime, minutes: 2)) {
         final file = await _images.first.file;
-        if (file == null) return;
+        if (controller.addedRecentPhotoReply || file == null) return;
+        controller.addedRecentPhotoReply = true;
         eventDispatcher.emit('add-custom-smartreply', PlatformFile(
           path: file.path,
           name: file.path.split('/').last,

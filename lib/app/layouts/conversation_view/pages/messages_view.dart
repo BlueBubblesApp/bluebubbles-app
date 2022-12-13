@@ -69,7 +69,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
         setState(() {});
       } else if (e.item1 == "add-custom-smartreply") {
-        if (e.item2 != null) {
+        if (e.item2 != null && internalSmartReplies.isEmpty) {
           internalSmartReplies.add(
             _buildReply("Attach recent photo", onTap: () async {
               controller.pickedAttachments.add(e.item2);

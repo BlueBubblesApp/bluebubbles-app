@@ -25,6 +25,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final Chat chat;
   late final String tag;
   bool fromChatCreator = false;
+  bool addedRecentPhotoReply = false;
   final AutoScrollController scrollController = AutoScrollController();
 
   ConversationViewController(this.chat, {String? tag_}) {
