@@ -117,6 +117,10 @@ class SettingsService extends GetxService {
     return (prefs.getInt("macos-version") ?? 11) >= 11;
   }
 
+  bool get isMinVenturaSync {
+    return (prefs.getInt("macos-version") ?? 11) >= 13;
+  }
+
   Future<void> checkServerUpdate() async {
     final response = await http.checkUpdate();
     if (response.statusCode == 200) {

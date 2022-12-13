@@ -576,6 +576,20 @@ class HttpService extends GetxService {
     });
   }
 
+  Future<Response> unsend(String selectedMessageGuid, {int? partIndex, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/message/$selectedMessageGuid/unsend",
+          queryParameters: buildQueryParams(),
+          data: {
+            "partIndex": partIndex ?? 0,
+          },
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get the number of handles in the server iMessage DB
   Future<Response> handleCount({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {

@@ -94,6 +94,10 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     // add unsends
     if (message.messageSummaryInfo.firstOrNull?.retractedParts.isNotEmpty ?? false) {
       for (int part in message.messageSummaryInfo.first.retractedParts) {
+        final existing = parts.indexWhere((e) => e.part == part);
+        if (existing >= 0) {
+          parts.removeAt(existing);
+        }
         parts.add(MessagePart(
           part: part,
           isUnsent: true,

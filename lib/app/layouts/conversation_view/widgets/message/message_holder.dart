@@ -94,6 +94,12 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   }
 
   @override
+  void updateWidget(void _) {
+    messageParts = controller.parts;
+    super.updateWidget(_);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
     final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType));

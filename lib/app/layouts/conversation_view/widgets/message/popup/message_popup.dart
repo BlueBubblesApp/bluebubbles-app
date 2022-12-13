@@ -250,6 +250,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       downloadOriginal();
                     } else if (value == 5) {
                       createContact();
+                    } else if (value == 6) {
+                      unsend();
                     }
                   },
                   itemBuilder: (context) {
@@ -267,6 +269,14 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                           value: 1,
                           child: Text(
                             'Forward',
+                            style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                          ),
+                        ),
+                      if (ss.isMinVenturaSync && message.isFromMe!)
+                        PopupMenuItem(
+                          value: 6,
+                          child: Text(
+                            'Undo Send',
                             style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                           ),
                         ),
@@ -751,6 +761,11 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
     }
   }
+
+  void unsend() {
+    http.unsend(message.guid!, partIndex: part.part);
+    popDetails();
+  }
   
   void delete() {
     service.removeMessage(message);
@@ -1095,6 +1110,25 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.person_crop_circle_badge_plus
                     : Icons.contact_page_outlined,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (ss.isMinVenturaSync && message.isFromMe!)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: unsend,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Undo Send",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_uturn_left : Icons.undo,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
