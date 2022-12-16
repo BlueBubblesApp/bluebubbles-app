@@ -750,7 +750,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
   
   Future<void> remindLater() async {
-    final finalDate = await showTimeframePicker("Select Reminder Time", context);
+    final finalDate = await showTimeframePicker("Select Reminder Time", context, presetsAhead: true);
     if (finalDate != null) {
       if (!finalDate.isAfter(DateTime.now().toLocal())) {
         showSnackbar("Error", "Select a date in the future");

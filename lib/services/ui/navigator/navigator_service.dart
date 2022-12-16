@@ -61,12 +61,12 @@ class NavigatorService extends GetxService {
   }
 
   /// Push a new route onto the settings navigator
-  void pushSettings(BuildContext context, Widget widget, {Bindings? binding}) {
+  Future<dynamic> pushSettings(BuildContext context, Widget widget, {Bindings? binding}) async {
     if (Get.keys.containsKey(3) && isTabletMode(context)) {
-      Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
+      return await Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
     } else {
       binding?.dependencies();
-      Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
+      return await Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }

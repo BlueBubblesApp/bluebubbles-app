@@ -18,8 +18,6 @@ export 'package:bluebubbles/models/io/message.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/message.dart';
 export 'package:bluebubbles/objectbox.g.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/objectbox.dart' hide Version;
-export 'package:bluebubbles/models/io/scheduled.dart'
-    if (dart.library.html) 'package:bluebubbles/models/html/scheduled.dart';
 export 'package:bluebubbles/models/io/theme.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/theme.dart';
 export 'package:bluebubbles/models/io/theme_entry.dart'
@@ -41,3 +39,4 @@ export 'package:bluebubbles/models/global/theme_colors.dart';
 export 'package:bluebubbles/models/global/payload_data.dart';
 export 'package:bluebubbles/models/global/message_summary_info.dart';
 export 'package:bluebubbles/models/global/message_part.dart';
+export 'package:bluebubbles/models/global/scheduled_message.dart';

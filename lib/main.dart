@@ -200,7 +200,6 @@ Future<Null> initApp(bool bubble) async {
       fcmDataBox = store.box<FCMData>();
       handleBox = store.box<Handle>();
       messageBox = store.box<Message>();
-      scheduledBox = store.box<ScheduledMessage>();
       themeBox = store.box<ThemeStruct>();
       themeEntryBox = store.box<ThemeEntry>();
       // ignore: deprecated_member_use_from_same_package

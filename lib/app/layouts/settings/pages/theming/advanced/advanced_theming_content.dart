@@ -81,6 +81,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                 SettingsOptions<ThemeStruct>(
                   title: "Selected Theme",
                   initial: currentTheme,
+                  clampWidth: false,
                   options: allThemes
                       .where((a) => !a.name.contains("🌙") && !a.name.contains("☀")).toList()
                     ..add(ThemeStruct(name: "Divider1"))

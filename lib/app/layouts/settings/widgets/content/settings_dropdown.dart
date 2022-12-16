@@ -21,6 +21,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.backgroundColor,
     this.secondaryColor,
     this.useCupertino = true,
+    this.clampWidth = true,
   }) : super(key: key);
   final String title;
   final void Function(T?) onChanged;
@@ -35,6 +36,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final Color? backgroundColor;
   final Color? secondaryColor;
   final bool useCupertino;
+  final bool clampWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +70,8 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: ns.width(context) * 3 / 5, minWidth: ns.width(context) / 5),
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,35 +92,51 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   ]),
             ),
             const SizedBox(width: 15),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: secondaryColor ?? surfaceColor,
-              ),
-              child: Center(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<T>(
-                    dropdownColor: secondaryColor ?? surfaceColor,
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: context.theme.textTheme.bodyLarge!.color,
-                    ),
-                    value: initial,
-                    items: options.map<DropdownMenuItem<T>>((e) {
-                      return DropdownMenuItem(
-                        value: e,
-                        child: materialCustomWidgets?.call(e) ?? Text(
-                          capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
-                          style: context.theme.textTheme.bodyLarge,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: onChanged,
-                    onTap: onMaterialTap,
+            if (clampWidth) const Spacer(),
+            Builder(
+              builder: (context) {
+                final widget = Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: secondaryColor ?? surfaceColor,
                   ),
-                ),
-              ),
+                  child: Center(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<T>(
+                        dropdownColor: secondaryColor ?? surfaceColor,
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color: context.theme.textTheme.bodyLarge!.color,
+                        ),
+                        isExpanded: true,
+                        value: initial,
+                        items: options.map<DropdownMenuItem<T>>((e) {
+                          return DropdownMenuItem(
+                            value: e,
+                            child: materialCustomWidgets?.call(e) ?? Text(
+                              capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
+                              style: context.theme.textTheme.bodyLarge,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: onChanged,
+                        onTap: onMaterialTap,
+                      ),
+                    ),
+                  ),
+                );
+                if (clampWidth) {
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: ns.width(context) * 2 / 5 - 50),
+                    child: widget,
+                  );
+                } else {
+                  return Expanded(
+                    child: widget,
+                  );
+                }
+              },
             ),
           ],
         ),

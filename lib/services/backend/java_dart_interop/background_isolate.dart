@@ -45,7 +45,6 @@ backgroundIsolateEntrypoint() async {
   fcmDataBox = store.box<FCMData>();
   handleBox = store.box<Handle>();
   messageBox = store.box<Message>();
-  scheduledBox = store.box<ScheduledMessage>();
   themeBox = store.box<ThemeStruct>();
   storeStartup.complete();
 }

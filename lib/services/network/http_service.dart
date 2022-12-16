@@ -734,6 +734,52 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get scheduled messages from server
+  Future<Response> getScheduled({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$origin/message/schedule",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Create a scheduled message
+  Future<Response> createScheduled(String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$origin/message/schedule",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+        data: {
+          "type": "send-message",
+          "payload": {
+            "chatGuid": chatGuid,
+            "message": message,
+            "method": "apple-script"
+          },
+          "scheduledFor": date.millisecondsSinceEpoch,
+          "schedule": schedule,
+        }
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Delete a scheduled message
+  Future<Response> deleteScheduled(int id, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+        "$origin/message/schedule/$id",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   Future<Response> downloadFromUrl(String url, {Function(int, int)? progress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(

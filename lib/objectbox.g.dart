@@ -19,14 +19,11 @@ import 'models/io/contact.dart';
 import 'models/io/fcm_data.dart';
 import 'models/io/handle.dart';
 import 'models/io/message.dart';
-import 'models/io/scheduled.dart';
 import 'models/io/theme.dart';
 import 'models/io/theme_entry.dart';
 import 'models/io/theme_object.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
-
-// ignore_for_file: deprecated_member_use_from_same_package
 
 final _entities = <ModelEntity>[
   ModelEntity(
@@ -561,40 +558,6 @@ final _entities = <ModelEntity>[
             name: 'dbAttachments', srcEntity: 'Attachment', srcField: 'message')
       ]),
   ModelEntity(
-      id: const IdUid(14, 4579555475244243263),
-      name: 'ScheduledMessage',
-      lastPropertyId: const IdUid(5, 696004914151488398),
-      flags: 0,
-      properties: <ModelProperty>[
-        ModelProperty(
-            id: const IdUid(1, 4810718806330671770),
-            name: 'id',
-            type: 6,
-            flags: 1),
-        ModelProperty(
-            id: const IdUid(2, 8558367758823185430),
-            name: 'chatGuid',
-            type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(3, 7997144491374144435),
-            name: 'message',
-            type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(4, 1278586999912993922),
-            name: 'epochTime',
-            type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(5, 696004914151488398),
-            name: 'completed',
-            type: 1,
-            flags: 0)
-      ],
-      relations: <ModelRelation>[],
-      backlinks: <ModelBacklink>[]),
-  ModelEntity(
       id: const IdUid(15, 7753273527865539946),
       name: 'ThemeObject',
       lastPropertyId: const IdUid(7, 7718171125722310355),
@@ -752,7 +715,8 @@ ModelDefinition getObjectBoxModel() {
         1619417403499629985,
         4450451951397945314,
         1700370751061310153,
-        3483028772414651169
+        3483028772414651169,
+        4579555475244243263
       ],
       retiredIndexUids: const [8277667704777683261],
       retiredPropertyUids: const [
@@ -840,7 +804,12 @@ ModelDefinition getObjectBoxModel() {
         4143511131199296878,
         172817608355620424,
         130925169208448361,
-        4983193271800913860
+        4983193271800913860,
+        4810718806330671770,
+        8558367758823185430,
+        7997144491374144435,
+        1278586999912993922,
+        696004914151488398
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -1377,49 +1346,8 @@ ModelDefinition getObjectBoxModel() {
               store.box<Message>());
           return object;
         }),
-    ScheduledMessage: EntityDefinition<ScheduledMessage>(
-        model: _entities[6],
-        toOneRelations: (ScheduledMessage object) => [],
-        toManyRelations: (ScheduledMessage object) => {},
-        getId: (ScheduledMessage object) => object.id,
-        setId: (ScheduledMessage object, int id) {
-          object.id = id;
-        },
-        objectToFB: (ScheduledMessage object, fb.Builder fbb) {
-          final chatGuidOffset = object.chatGuid == null
-              ? null
-              : fbb.writeString(object.chatGuid!);
-          final messageOffset =
-              object.message == null ? null : fbb.writeString(object.message!);
-          fbb.startTable(6);
-          fbb.addInt64(0, object.id ?? 0);
-          fbb.addOffset(1, chatGuidOffset);
-          fbb.addOffset(2, messageOffset);
-          fbb.addInt64(3, object.epochTime);
-          fbb.addBool(4, object.completed);
-          fbb.finish(fbb.endTable());
-          return object.id ?? 0;
-        },
-        objectFromFB: (Store store, ByteData fbData) {
-          final buffer = fb.BufferContext(fbData);
-          final rootOffset = buffer.derefObject(0);
-
-          final object = ScheduledMessage(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              chatGuid: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              message: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 8),
-              epochTime: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 10),
-              completed: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 12));
-
-          return object;
-        }),
     ThemeObject: EntityDefinition<ThemeObject>(
-        model: _entities[7],
+        model: _entities[6],
         toOneRelations: (ThemeObject object) => [],
         toManyRelations: (ThemeObject object) => {
               RelInfo<ThemeEntry>.toOneBacklink(8, object.id!,
@@ -1472,7 +1400,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     ThemeStruct: EntityDefinition<ThemeStruct>(
-        model: _entities[8],
+        model: _entities[7],
         toOneRelations: (ThemeStruct object) => [],
         toManyRelations: (ThemeStruct object) => {},
         getId: (ThemeStruct object) => object.id,
@@ -1507,7 +1435,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     Contact: EntityDefinition<Contact>(
-        model: _entities[9],
+        model: _entities[8],
         toOneRelations: (Contact object) => [],
         toManyRelations: (Contact object) => {},
         getId: (Contact object) => object.dbId,
@@ -1941,104 +1869,81 @@ class Message_ {
       QueryStringProperty<Message>(_entities[5].properties[35]);
 }
 
-/// [ScheduledMessage] entity fields to define ObjectBox queries.
-class ScheduledMessage_ {
-  /// see [ScheduledMessage.id]
-  static final id =
-      QueryIntegerProperty<ScheduledMessage>(_entities[6].properties[0]);
-
-  /// see [ScheduledMessage.chatGuid]
-  static final chatGuid =
-      QueryStringProperty<ScheduledMessage>(_entities[6].properties[1]);
-
-  /// see [ScheduledMessage.message]
-  static final message =
-      QueryStringProperty<ScheduledMessage>(_entities[6].properties[2]);
-
-  /// see [ScheduledMessage.epochTime]
-  static final epochTime =
-      QueryIntegerProperty<ScheduledMessage>(_entities[6].properties[3]);
-
-  /// see [ScheduledMessage.completed]
-  static final completed =
-      QueryBooleanProperty<ScheduledMessage>(_entities[6].properties[4]);
-}
-
 /// [ThemeObject] entity fields to define ObjectBox queries.
 class ThemeObject_ {
   /// see [ThemeObject.id]
   static final id =
-      QueryIntegerProperty<ThemeObject>(_entities[7].properties[0]);
+      QueryIntegerProperty<ThemeObject>(_entities[6].properties[0]);
 
   /// see [ThemeObject.name]
   static final name =
-      QueryStringProperty<ThemeObject>(_entities[7].properties[1]);
+      QueryStringProperty<ThemeObject>(_entities[6].properties[1]);
 
   /// see [ThemeObject.selectedLightTheme]
   static final selectedLightTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[2]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[2]);
 
   /// see [ThemeObject.selectedDarkTheme]
   static final selectedDarkTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[3]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[3]);
 
   /// see [ThemeObject.gradientBg]
   static final gradientBg =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[4]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[4]);
 
   /// see [ThemeObject.previousLightTheme]
   static final previousLightTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[5]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[5]);
 
   /// see [ThemeObject.previousDarkTheme]
   static final previousDarkTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[6]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[6]);
 }
 
 /// [ThemeStruct] entity fields to define ObjectBox queries.
 class ThemeStruct_ {
   /// see [ThemeStruct.id]
   static final id =
-      QueryIntegerProperty<ThemeStruct>(_entities[8].properties[0]);
+      QueryIntegerProperty<ThemeStruct>(_entities[7].properties[0]);
 
   /// see [ThemeStruct.name]
   static final name =
-      QueryStringProperty<ThemeStruct>(_entities[8].properties[1]);
+      QueryStringProperty<ThemeStruct>(_entities[7].properties[1]);
 
   /// see [ThemeStruct.gradientBg]
   static final gradientBg =
-      QueryBooleanProperty<ThemeStruct>(_entities[8].properties[2]);
+      QueryBooleanProperty<ThemeStruct>(_entities[7].properties[2]);
 
   /// see [ThemeStruct.dbThemeData]
   static final dbThemeData =
-      QueryStringProperty<ThemeStruct>(_entities[8].properties[3]);
+      QueryStringProperty<ThemeStruct>(_entities[7].properties[3]);
 }
 
 /// [Contact] entity fields to define ObjectBox queries.
 class Contact_ {
   /// see [Contact.dbId]
-  static final dbId = QueryIntegerProperty<Contact>(_entities[9].properties[0]);
+  static final dbId = QueryIntegerProperty<Contact>(_entities[8].properties[0]);
 
   /// see [Contact.id]
-  static final id = QueryStringProperty<Contact>(_entities[9].properties[1]);
+  static final id = QueryStringProperty<Contact>(_entities[8].properties[1]);
 
   /// see [Contact.displayName]
   static final displayName =
-      QueryStringProperty<Contact>(_entities[9].properties[2]);
+      QueryStringProperty<Contact>(_entities[8].properties[2]);
 
   /// see [Contact.phones]
   static final phones =
-      QueryStringVectorProperty<Contact>(_entities[9].properties[3]);
+      QueryStringVectorProperty<Contact>(_entities[8].properties[3]);
 
   /// see [Contact.emails]
   static final emails =
-      QueryStringVectorProperty<Contact>(_entities[9].properties[4]);
+      QueryStringVectorProperty<Contact>(_entities[8].properties[4]);
 
   /// see [Contact.avatar]
   static final avatar =
-      QueryByteVectorProperty<Contact>(_entities[9].properties[5]);
+      QueryByteVectorProperty<Contact>(_entities[8].properties[5]);
 
   /// see [Contact.dbStructuredName]
   static final dbStructuredName =
-      QueryStringProperty<Contact>(_entities[9].properties[6]);
+      QueryStringProperty<Contact>(_entities[8].properties[6]);
 }

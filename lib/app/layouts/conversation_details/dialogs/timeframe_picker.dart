@@ -2,7 +2,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool showHourPicker = true}) async {
+Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool showHourPicker = true, bool presetsAhead = false}) async {
   DateTime? finalDate;
   await showDialog(
     context: context,
@@ -25,7 +25,7 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool 
               TextButton(
                 child: Text("1 Hour", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                 onPressed: () {
-                  if (title.contains("Reminder")) {
+                  if (presetsAhead) {
                     finalDate = DateTime.now().toLocal().add(const Duration(hours: 1));
                   } else {
                     finalDate = DateTime.now().toLocal().subtract(const Duration(hours: 1));
@@ -36,7 +36,7 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool 
               TextButton(
                 child: Text("1 Day", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                 onPressed: () {
-                  if (title.contains("Reminder")) {
+                  if (presetsAhead) {
                     finalDate = DateTime.now().toLocal().add(const Duration(days: 1));
                   } else {
                     finalDate = DateTime.now().toLocal().subtract(const Duration(days: 1));
@@ -47,7 +47,7 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool 
               TextButton(
                 child: Text("1 Week", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                 onPressed: () {
-                  if (title.contains("Reminder")) {
+                  if (presetsAhead) {
                     finalDate = DateTime.now().toLocal().add(const Duration(days: 7));
                   } else {
                     finalDate = DateTime.now().toLocal().subtract(const Duration(days: 7));
@@ -58,7 +58,7 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool 
               TextButton(
                 child: Text("1 Month", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                 onPressed: () {
-                  if (title.contains("Reminder")) {
+                  if (presetsAhead) {
                     finalDate = DateTime.now().toLocal().add(const Duration(days: 30));
                   } else {
                     finalDate = DateTime.now().toLocal().subtract(const Duration(days: 30));
