@@ -22,7 +22,8 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
       final message = widget.controller.replyToMessage?.item1;
       final part = widget.controller.replyToMessage?.item2 ?? 0;
       final reply = message?.guid == null ? message : (getActiveMwc(message!.guid!)?.parts[part] ?? message);
-      if (reply != null) {
+      final date = widget.controller.scheduledDate.value;
+      if (reply != null || date != null) {
         return Container(
           color: context.theme.colorScheme.properSurface,
           padding: EdgeInsets.only(left: !iOS ? 20.0 : 0, right: iOS ? 8.0 : 0),
@@ -39,28 +40,36 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
                   ),
                   onPressed: () {
                     widget.controller.replyToMessage = null;
+                    widget.controller.scheduledDate.value = null;
                   },
                   iconSize: 17,
                 ),
               Expanded(
                 child: Text.rich(
                   TextSpan(children: [
-                    if (iOS)
+                    if (iOS && reply != null)
                       const TextSpan(text: "Replying to "),
-                    TextSpan(
-                      text: message!.handle?.displayName ?? "You",
-                      style: context.textTheme.bodyMedium!.copyWith(fontWeight: iOS ? FontWeight.bold : FontWeight.w400),
-                    ),
+                    if (reply != null)
+                      TextSpan(
+                        text: message!.handle?.displayName ?? "You",
+                        style: context.textTheme.bodyMedium!.copyWith(fontWeight: iOS ? FontWeight.bold : FontWeight.w400),
+                      ),
+                    if (date != null)
+                      TextSpan(
+                        text: "Scheduling for ${buildFullDate(date)}",
+                        style: context.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
+                      ),
                     if (!iOS)
                       const TextSpan(text: "\n"),
-                    TextSpan(
-                      text: "${iOS ? " - " : ""}${MessageHelper.getNotificationText(reply is MessagePart ? Message(
-                        text: reply.text,
-                        subject: reply.subject,
-                        attachments: reply.attachments,
-                      ).mergeWith(message) : message)}",
-                      style: context.textTheme.bodyMedium!.copyWith(fontStyle: iOS ? FontStyle.italic : null).apply(fontSizeFactor: iOS ? 1 : 1.15),
-                    ),
+                    if (reply != null)
+                      TextSpan(
+                        text: "${iOS ? " - " : ""}${MessageHelper.getNotificationText(reply is MessagePart ? Message(
+                          text: reply.text,
+                          subject: reply.subject,
+                          attachments: reply.attachments,
+                        ).mergeWith(message!) : message!)}",
+                        style: context.textTheme.bodyMedium!.copyWith(fontStyle: iOS ? FontStyle.italic : null).apply(fontSizeFactor: iOS ? 1 : 1.15),
+                      ),
                   ]),
                   style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                   maxLines: iOS ? 1 : 2,
@@ -78,6 +87,7 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
                   ),
                   onPressed: () {
                     widget.controller.replyToMessage = null;
+                    widget.controller.scheduledDate.value = null;
                   },
                   iconSize: 25,
                 ),

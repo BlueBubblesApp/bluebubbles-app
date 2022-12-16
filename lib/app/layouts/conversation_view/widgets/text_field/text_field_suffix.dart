@@ -151,6 +151,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
               secondChild: SendButton(
                 sendMessage: widget.sendMessage,
                 onLongPress: isChatCreator ? () {} : () {
+                  if (widget.controller!.scheduledDate.value != null) return;
                   sendEffectAction(
                     context,
                     widget.controller!,

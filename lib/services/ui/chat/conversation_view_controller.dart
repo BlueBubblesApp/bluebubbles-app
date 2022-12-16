@@ -53,10 +53,12 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
   final textController = TextEditingController();
+  final subjectTextController = TextEditingController();
   final RxBool showRecording = false.obs;
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
   final ScrollController emojiScrollController = ScrollController();
+  final Rxn<DateTime> scheduledDate = Rxn<DateTime>(null);
   final Rxn<Tuple2<Message, int>> _replyToMessage = Rxn<Tuple2<Message, int>>(null);
   Tuple2<Message, int>? get replyToMessage => _replyToMessage.value;
   set replyToMessage(Tuple2<Message, int>? m) {

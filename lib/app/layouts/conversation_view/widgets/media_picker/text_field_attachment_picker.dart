@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -109,6 +110,8 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
           return CupertinoIcons.camera;
         case 3:
           return CupertinoIcons.videocam;
+        case 4:
+          return CupertinoIcons.calendar_today;
       }
     } else {
       switch (index) {
@@ -120,6 +123,8 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
           return Icons.photo_camera_outlined;
         case 3:
           return Icons.videocam_outlined;
+        case 4:
+          return Icons.schedule;
       }
     }
     return Icons.abc;
@@ -132,9 +137,11 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
       case 1:
         return "Location";
       case 2:
-        return "Camera";
+        return "Photo";
       case 3:
         return "Video";
+      case 4:
+        return "Schedule";
     }
     return "";
   }
@@ -206,6 +213,17 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                                 case 3:
                                   openFullCamera(type: "video");
                                   return;
+                                case 4:
+                                  if (controller.pickedAttachments.isNotEmpty) {
+                                    return showSnackbar("Error", "Remove all attachments before scheduling!");
+                                  } else if (controller.replyToMessage != null || controller.subjectTextController.text.isNotEmpty) {
+                                    return showSnackbar("Error", "Private API features are not supported when scheduling!");
+                                  }
+                                  final date = await showTimeframePicker("Pick date and time", context, presetsAhead: true);
+                                  if (date != null && date.isAfter(DateTime.now())) {
+                                    controller.scheduledDate.value = date;
+                                  }
+                                  return;
                               }
                             },
                             child: Column(
@@ -224,7 +242,7 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                             ),
                           );
                         },
-                        childCount: 4,
+                        childCount: 5,
                       ),
                     ),
                     const SliverPadding(padding: EdgeInsets.only(left: 5, right: 5)),

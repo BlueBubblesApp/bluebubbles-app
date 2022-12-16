@@ -45,7 +45,6 @@ class ConversationTextField extends CustomStateful<ConversationViewController> {
 }
 
 class ConversationTextFieldState extends CustomState<ConversationTextField, void, ConversationViewController> with TickerProviderStateMixin {
-  final subjectTextController = TextEditingController();
   final recorderController = RecorderController();
   // emoji
   final Map<String, Emoji> emojiNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.shortName, e)));
@@ -53,7 +52,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   bool showAttachmentPicker = false;
   // typing indicators
-  String oldText = "";
+  String oldText = "\n";
   Timer? _debounceTyping;
   // emoji
   String oldEmojiText = "";
@@ -80,7 +79,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.subjectFocusNode.addListener(() => focusListener(true));
 
     controller.textController.addListener(() => textListener(false));
-    subjectTextController.addListener(() => textListener(true));
+    controller.subjectTextController.addListener(() => textListener(true));
   }
 
   void getDrafts() async {
@@ -137,7 +136,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       chat.textFieldText = controller.textController.text;
     }
     // typing indicators
-    final newText = "${subjectTextController.text}\n${controller.textController.text}";
+    final newText = "${controller.subjectTextController.text}\n${controller.textController.text}";
     if (newText != oldText) {
       _debounceTyping?.cancel();
       oldText = newText;
@@ -151,7 +150,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       }
     }
     // emoji picker
-    final _controller = subject ? subjectTextController : controller.textController;
+    final _controller = subject ? controller.subjectTextController : controller.textController;
     final newEmojiText = _controller.text;
     if (newEmojiText.contains(":") && newEmojiText != oldEmojiText) {
       oldEmojiText = newEmojiText;
@@ -217,7 +216,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.focusNode.dispose();
     controller.subjectFocusNode.dispose();
     controller.textController.dispose();
-    subjectTextController.dispose();
+    controller.subjectTextController.dispose();
     recorderController.dispose();
     if (ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
       socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
@@ -227,26 +226,62 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   }
 
   Future<void> sendMessage({String? effect}) async {
-    if (controller.textController.text.isEmpty
-        && subjectTextController.text.isEmpty) {
-      if (controller.replyToMessage != null) {
-        return showSnackbar("Error", "Replies must be sent with a text message!");
-      } else if (effect != null) {
-        return showSnackbar("Error", "Effects must be sent with a text message!");
+    if (controller.scheduledDate.value != null) {
+      final date = controller.scheduledDate.value!;
+      if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: context.theme.colorScheme.properSurface,
+            title: Text(
+              "Scheduling message...",
+              style: context.theme.textTheme.titleLarge,
+            ),
+            content: Container(
+              height: 70,
+              child: Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      final response = await http.createScheduled(chat.guid, controller.textController.text, date.toUtc(), {"type": "once"});
+      Navigator.of(context).pop();
+      if (response.statusCode == 200 && response.data != null) {
+        showSnackbar("Notice", "Message scheduled successfully for ${buildFullDate(date)}");
+      } else {
+        Logger.error("Scheduled message error: ${response.statusCode}");
+        Logger.error(response.data);
+        showSnackbar("Error", "Something went wrong!");
       }
+    } else {
+      if (controller.textController.text.isEmpty
+          && controller.subjectTextController.text.isEmpty) {
+        if (controller.replyToMessage != null) {
+          return showSnackbar("Error", "Replies must be sent with a text message!");
+        } else if (effect != null) {
+          return showSnackbar("Error", "Effects must be sent with a text message!");
+        }
+      }
+      await controller.send(
+        controller.pickedAttachments,
+        controller.textController.text,
+        controller.subjectTextController.text,
+        controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
+        controller.replyToMessage?.item2,
+        effect,
+      );
     }
-    await controller.send(
-      controller.pickedAttachments,
-      controller.textController.text,
-      subjectTextController.text,
-      controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
-      controller.replyToMessage?.item2,
-      effect,
-    );
     controller.pickedAttachments.clear();
     controller.textController.clear();
-    subjectTextController.clear();
+    controller.subjectTextController.clear();
     controller.replyToMessage = null;
+    controller.scheduledDate.value = null;
 
     // Remove the saved text field draft
     if ((chat.textFieldText ?? "").isNotEmpty) {
@@ -389,7 +424,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                     children: [
                       TextFieldComponent(
                         key: controller.textFieldKey,
-                        subjectTextController: subjectTextController,
+                        subjectTextController: controller.subjectTextController,
                         textController: controller.textController,
                         controller: controller,
                         recorderController: recorderController,
@@ -438,7 +473,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                   Padding(
                     padding: const EdgeInsets.only(right: 5.0),
                     child: TextFieldSuffix(
-                      subjectTextController: subjectTextController,
+                      subjectTextController: controller.subjectTextController,
                       textController: controller.textController,
                       controller: controller,
                       recorderController: recorderController,
@@ -519,7 +554,7 @@ class TextFieldComponent extends StatelessWidget {
                     PickedAttachmentsHolder(
                       controller: controller,
                       textController: textController,
-                      subjectTextController: subjectTextController,
+                      subjectTextController: controller!.subjectTextController,
                       initialAttachments: initialAttachments,
                     ),
                   if (!isChatCreator)
@@ -541,7 +576,7 @@ class TextFieldComponent extends StatelessWidget {
                       textCapitalization: TextCapitalization.sentences,
                       focusNode: controller!.subjectFocusNode,
                       autocorrect: true,
-                      controller: subjectTextController,
+                      controller: controller!.subjectTextController,
                       scrollPhysics: const CustomBouncingScrollPhysics(),
                       style: context.theme.extension<BubbleText>()!.bubbleText.copyWith(fontWeight: FontWeight.bold),
                       keyboardType: TextInputType.multiline,
@@ -623,7 +658,7 @@ class TextFieldComponent extends StatelessWidget {
                     suffix: samsung && !isChatCreator ? null : Padding(
                       padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
                       child: TextFieldSuffix(
-                        subjectTextController: subjectTextController,
+                        subjectTextController: controller!.subjectTextController,
                         textController: textController,
                         controller: controller,
                         recorderController: recorderController,
@@ -814,12 +849,12 @@ class TextFieldComponent extends StatelessWidget {
     }
     if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
     if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
-      if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(subjectTextController.text)!) {
+      if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(controller!.subjectTextController.text)!) {
         sendMessage();
         controller!.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
       } else {
-        subjectTextController.text = "";
+        controller!.subjectTextController.text = "";
         textController.text = ""; // Stop pressing physical enter with enterIsSend from creating newlines
         controller!.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
