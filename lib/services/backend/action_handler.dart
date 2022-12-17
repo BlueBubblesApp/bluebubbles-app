@@ -100,7 +100,7 @@ class ActionHandler extends GetxService {
         m = handleSendError(error, m);
 
         if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
-          await notif.createFailedToSend();
+          await notif.createFailedToSend(c);
         }
         await Message.replaceMessage(tempGuid, m);
         completer.completeError(error);
@@ -122,7 +122,7 @@ class ActionHandler extends GetxService {
         m = handleSendError(error, m);
 
         if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
-          await notif.createFailedToSend();
+          await notif.createFailedToSend(c);
         }
         await Message.replaceMessage(tempGuid, m);
         completer.completeError(error);
@@ -174,7 +174,7 @@ class ActionHandler extends GetxService {
       m = handleSendError(error, m);
 
       if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
-        await notif.createFailedToSend();
+        await notif.createFailedToSend(c);
       }
       await Message.replaceMessage(tempGuid, m);
       attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);

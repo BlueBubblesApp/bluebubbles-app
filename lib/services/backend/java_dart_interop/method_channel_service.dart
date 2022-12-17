@@ -77,6 +77,14 @@ class MethodChannelService extends GetxService {
           inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data!));
         }
         return true;
+      case "scheduled-message-error":
+        Logger.info("Received scheduled message error from FCM");
+        Map<String, dynamic> data = jsonDecode(call.arguments) ?? {};
+        Chat? chat = Chat.findOne(guid: data["payload"]["chatGuid"]);
+        if (chat != null) {
+          notif.createFailedToSend(chat);
+        }
+        return true;
       case "reply":
         await storeStartup.future;
         Logger.info("Received reply to message from FCM");

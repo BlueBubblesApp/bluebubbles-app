@@ -460,7 +460,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   Navigator.of(context).pop();
                                   service.removeMessage(message);
                                   Message.delete(message.guid!);
-                                  await notif.clearFailedToSend();
+                                  await notif.clearFailedToSend(chat.id!);
                                   // Re-send
                                   message.id = null;
                                   message.error = 0;
@@ -483,7 +483,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   Message.delete(message.guid!);
                                   // Remove the message from the Bloc
                                   service.removeMessage(message);
-                                  await notif.clearFailedToSend();
+                                  await notif.clearFailedToSend(chat.id!);
                                   // Get the "new" latest info
                                   List<Message> latest = Chat.getMessages(chat, limit: 1);
                                   chat.latestMessage = latest.first;
@@ -497,7 +497,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 ),
                                 onPressed: () async {
                                   Navigator.of(context).pop();
-                                  await notif.clearFailedToSend();
+                                  await notif.clearFailedToSend(chat.id!);
                                 },
                               )
                             ],

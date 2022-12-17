@@ -23,7 +23,7 @@ NotificationsService notif = Get.isRegistered<NotificationsService>() ? Get.find
 
 class NotificationsService extends GetxService {
   static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
-  static const String SOCKET_ERROR_CHANNEL = "com.bluebubbles.socket_error";
+  static const String ERROR_CHANNEL = "com.bluebubbles.errors";
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
 
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
@@ -46,7 +46,15 @@ class NotificationsService extends GetxService {
     if (!kIsWeb && !kIsDesktop) {
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-      await flnp.initialize(initializationSettings);
+      await flnp.initialize(initializationSettings, onSelectNotification: (String? payload) {
+        if (payload != null) {
+          intents.openChat(payload);
+        }
+      });
+      final details = await flnp.getNotificationAppLaunchDetails();
+      if (details != null && details.didNotificationLaunchApp && details.payload != null) {
+        intents.openChat(details.payload!);
+      }
       // create notif channels
       createNotificationChannel(
         NEW_MESSAGE_CHANNEL,
@@ -54,9 +62,9 @@ class NotificationsService extends GetxService {
         "Displays all received new messages",
       );
       createNotificationChannel(
-        SOCKET_ERROR_CHANNEL,
-        "Socket Connection Error",
-        "Displays connection failures",
+        ERROR_CHANNEL,
+        "Errors",
+        "Displays message send failures, connection failures, and more",
       );
       createNotificationChannel(
         REMINDER_CHANNEL,
@@ -449,23 +457,50 @@ class NotificationsService extends GetxService {
   }
 
   Future<void> createSocketError() async {
-    await mcs.invokeMethod("create-socket-issue-warning", {
-      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-    });
+    await flnp.show(
+      -2,
+      'Could not connect',
+      'Your server may be offline!',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          ERROR_CHANNEL,
+          'Errors',
+          channelDescription: 'Displays message send failures, connection failures, and more',
+          priority: Priority.max,
+          importance: Importance.max,
+          color: HexColor("4990de"),
+          ongoing: true,
+          onlyAlertOnce: true,
+        ),
+      ),
+    );
   }
 
-  Future<void> createFailedToSend() async {
-    await mcs.invokeMethod("message-failed-to-send", {
-      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-    });
+  Future<void> createFailedToSend(Chat chat) async {
+    await flnp.show(
+      chat.id!,
+      'Failed to send message',
+      'Tap to see more details or retry',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          ERROR_CHANNEL,
+          'Errors',
+          channelDescription: 'Displays message send failures, connection failures, and more',
+          priority: Priority.max,
+          importance: Importance.max,
+          color: HexColor("4990de"),
+        ),
+      ),
+      payload: chat.guid,
+    );
   }
 
   Future<void> clearSocketError() async {
-    await mcs.invokeMethod("clear-socket-issue");
+    await flnp.cancel(-2);
   }
 
-  Future<void> clearFailedToSend() async {
-    await mcs.invokeMethod("clear-failed-to-send");
+  Future<void> clearFailedToSend(int id) async {
+    await flnp.cancel(id);
   }
 
   Future<void> clearDesktopNotificationsForChat(String chatGuid) async {
