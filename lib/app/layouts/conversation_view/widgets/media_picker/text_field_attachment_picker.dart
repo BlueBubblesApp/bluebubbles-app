@@ -12,10 +12,12 @@ import 'package:chunked_stream/chunked_stream.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hand_signature/signature.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -103,28 +105,32 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
     if (iOS) {
       switch (index) {
         case 0:
-          return CupertinoIcons.folder_open;
-        case 1:
-          return CupertinoIcons.location;
-        case 2:
           return CupertinoIcons.camera;
-        case 3:
+        case 1:
           return CupertinoIcons.videocam;
+        case 2:
+          return CupertinoIcons.folder_open;
+        case 3:
+          return CupertinoIcons.location;
         case 4:
           return CupertinoIcons.calendar_today;
+        case 5:
+          return CupertinoIcons.pencil_outline;
       }
     } else {
       switch (index) {
         case 0:
-          return Icons.folder_open_outlined;
-        case 1:
-          return Icons.location_on_outlined;
-        case 2:
           return Icons.photo_camera_outlined;
-        case 3:
+        case 1:
           return Icons.videocam_outlined;
+        case 2:
+          return Icons.folder_open_outlined;
+        case 3:
+          return Icons.location_on_outlined;
         case 4:
           return Icons.schedule;
+        case 5:
+          return Icons.draw;
       }
     }
     return Icons.abc;
@@ -133,15 +139,17 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
   String getText(int index) {
     switch (index) {
       case 0:
-        return "Files";
-      case 1:
-        return "Location";
-      case 2:
         return "Photo";
-      case 3:
+      case 1:
         return "Video";
+      case 2:
+        return "Files";
+      case 3:
+        return "Location";
       case 4:
         return "Schedule";
+      case 5:
+        return "Handwritten";
     }
     return "";
   }
@@ -188,41 +196,10 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                             onPressed: () async {
                               switch (index) {
                                 case 0:
-                                  final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
-                                  if (res == null || res.files.isEmpty) return;
-
-                                  for (pf.PlatformFile file in res.files) {
-                                    if (file.size / 1024000 > 1000) {
-                                      showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
-                                      continue;
-                                    }
-                                    controller.pickedAttachments.add(PlatformFile(
-                                      path: file.path,
-                                      name: file.name,
-                                      bytes: await readByteStream(file.readStream!),
-                                      size: file.size
-                                    ));
-                                  }
-                                  return;
-                                case 1:
-                                  await Share.location(cm.activeChat!.chat);
-                                  return;
-                                case 2:
                                   openFullCamera();
                                   return;
-                                case 3:
+                                case 1:
                                   openFullCamera(type: "video");
-                                  return;
-                                case 4:
-                                  if (controller.pickedAttachments.isNotEmpty) {
-                                    return showSnackbar("Error", "Remove all attachments before scheduling!");
-                                  } else if (controller.replyToMessage != null || controller.subjectTextController.text.isNotEmpty) {
-                                    return showSnackbar("Error", "Private API features are not supported when scheduling!");
-                                  }
-                                  final date = await showTimeframePicker("Pick date and time", context, presetsAhead: true);
-                                  if (date != null && date.isAfter(DateTime.now())) {
-                                    controller.scheduledDate.value = date;
-                                  }
                                   return;
                               }
                             },
@@ -242,7 +219,159 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                             ),
                           );
                         },
-                        childCount: 5,
+                        childCount: 2,
+                      ),
+                    ),
+                    const SliverPadding(padding: EdgeInsets.only(left: 5, right: 5)),
+                    SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        childAspectRatio: 2/3,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        index = index + 2;
+                        return ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                          ),
+                          onPressed: () async {
+                            switch (index) {
+                              case 2:
+                                final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
+                                if (res == null || res.files.isEmpty) return;
+
+                                for (pf.PlatformFile file in res.files) {
+                                  if (file.size / 1024000 > 1000) {
+                                    showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+                                    continue;
+                                  }
+                                  controller.pickedAttachments.add(PlatformFile(
+                                      path: file.path,
+                                      name: file.name,
+                                      bytes: await readByteStream(file.readStream!),
+                                      size: file.size
+                                  ));
+                                }
+                                return;
+                              case 3:
+                                await Share.location(cm.activeChat!.chat);
+                                return;
+                              case 4:
+                                if (controller.pickedAttachments.isNotEmpty) {
+                                  return showSnackbar("Error", "Remove all attachments before scheduling!");
+                                } else if (controller.replyToMessage != null || controller.subjectTextController.text.isNotEmpty) {
+                                  return showSnackbar("Error", "Private API features are not supported when scheduling!");
+                                }
+                                final date = await showTimeframePicker("Pick date and time", context, presetsAhead: true);
+                                if (date != null && date.isAfter(DateTime.now())) {
+                                  controller.scheduledDate.value = date;
+                                }
+                                return;
+                              case 5:
+                                final Color color = await showColorPickerDialog(
+                                  context,
+                                  context.theme.colorScheme.bubble(context, controller.chat.isIMessage),
+                                  title: Text(
+                                    "Select Color",
+                                    style: context.theme.textTheme.titleLarge,
+                                  ),
+                                  width: 40,
+                                  height: 40,
+                                  spacing: 0,
+                                  runSpacing: 0,
+                                  borderRadius: 0,
+                                  wheelDiameter: 165,
+                                  enableOpacity: false,
+                                  showColorCode: true,
+                                  colorCodeHasColor: true,
+                                  pickersEnabled: <ColorPickerType, bool>{
+                                    ColorPickerType.wheel: true,
+                                  },
+                                  copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+                                    parseShortHexCode: true,
+                                  ),
+                                  actionButtons: const ColorPickerActionButtons(
+                                    dialogActionButtons: true,
+                                  ),
+                                  constraints: BoxConstraints(
+                                      minHeight: 480, minWidth: ns.width(context) - 70, maxWidth: ns.width(context) - 70),
+                                );
+                                final control = HandSignatureControl();
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text(
+                                        "Draw Handwritten Message",
+                                        style: context.theme.textTheme.titleLarge,
+                                      ),
+                                      content: AspectRatio(
+                                        aspectRatio: 1,
+                                        child: Container(
+                                          constraints: const BoxConstraints.expand(),
+                                          child: HandSignature(
+                                            control: control,
+                                            color: color,
+                                            width: 1.0,
+                                            maxWidth: 10.0,
+                                            type: SignatureDrawType.shape,
+                                          ),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                                          onPressed: () async {
+                                            Navigator.of(context).pop();
+                                            final bytes = await control.toImage(height: 512, fit: false);
+                                            if (bytes != null) {
+                                              final uint8 = bytes.buffer.asUint8List();
+                                              controller.pickedAttachments.add(PlatformFile(
+                                                path: null,
+                                                name: "handwritten-${randomString(3)}.png",
+                                                bytes: uint8,
+                                                size: uint8.lengthInBytes,
+                                              ));
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                      backgroundColor: context.theme.colorScheme.properSurface,
+                                    );
+                                  },
+                                );
+                                return;
+                            }
+                          },
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Icon(
+                                getIcon(index),
+                                color: context.theme.colorScheme.properOnSurface,
+                              ),
+                              const SizedBox(height: 8.0),
+                              Text(
+                                  getText(index),
+                                  style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      childCount: 4,
                       ),
                     ),
                     const SliverPadding(padding: EdgeInsets.only(left: 5, right: 5)),

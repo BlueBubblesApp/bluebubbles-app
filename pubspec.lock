@@ -1058,6 +1058,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  hand_signature:
+    dependency: "direct main"
+    description:
+      name: hand_signature
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.3.0+1"
   hashcodes:
     dependency: transitive
     description:

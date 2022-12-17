@@ -138,6 +138,7 @@ dependencies:
   store_checker: ^1.1.0
   github: ^9.7.0
   numberpicker: ^2.1.1
+  hand_signature: ^2.3.0+1
 
 dependency_overrides:
   rxdart: ^0.27.5
