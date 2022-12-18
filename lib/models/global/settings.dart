@@ -325,7 +325,7 @@ class Settings {
     ss.settings.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     ss.settings.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
-    ss.settings.localhostPort.value = map['useLocalhost'] ?? false;
+    ss.settings.localhostPort.value = map['useLocalhost'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -431,7 +431,7 @@ class Settings {
     s.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
-    s.localhostPort.value = map['useLocalhost'] ?? false;
+    s.localhostPort.value = map['useLocalhost'];
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
