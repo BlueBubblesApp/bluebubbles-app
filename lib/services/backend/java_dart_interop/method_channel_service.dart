@@ -82,7 +82,7 @@ class MethodChannelService extends GetxService {
         Map<String, dynamic> data = jsonDecode(call.arguments) ?? {};
         Chat? chat = Chat.findOne(guid: data["payload"]["chatGuid"]);
         if (chat != null) {
-          notif.createFailedToSend(chat);
+          notif.createFailedToSend(chat, scheduled: true);
         }
         return true;
       case "reply":

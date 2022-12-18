@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -99,7 +103,21 @@ class IntentsService extends GetxService {
         Navigator.of(Get.context!).popUntil((route) => route.isFirst);
       }
     } else if (guid == "-2") {
-      Get.toNamed("/settings/server-management-panel");
+      Navigator.of(Get.context!).push(
+        ThemeSwitcher.buildPageRoute(
+          builder: (BuildContext context) {
+            return ServerManagementPanel();
+          },
+        ),
+      );
+    } else if (guid.contains("scheduled")) {
+      Navigator.of(Get.context!).push(
+        ThemeSwitcher.buildPageRoute(
+          builder: (BuildContext context) {
+            return ScheduledMessagesPanel();
+          },
+        ),
+      );
     } else {
       final chat = Chat.findOne(guid: guid);
       if (chat == null) return;

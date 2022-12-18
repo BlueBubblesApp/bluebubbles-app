@@ -476,11 +476,11 @@ class NotificationsService extends GetxService {
     );
   }
 
-  Future<void> createFailedToSend(Chat chat) async {
+  Future<void> createFailedToSend(Chat chat, {bool scheduled = false}) async {
     await flnp.show(
-      chat.id!,
-      'Failed to send message',
-      'Tap to see more details or retry',
+      chat.id! * (scheduled ? -1 : 1),
+      'Failed to send${scheduled ? " scheduled" : ""} message',
+      scheduled ? 'Tap to open scheduled messages list' : 'Tap to see more details or retry',
       NotificationDetails(
         android: AndroidNotificationDetails(
           ERROR_CHANNEL,
@@ -491,7 +491,7 @@ class NotificationsService extends GetxService {
           color: HexColor("4990de"),
         ),
       ),
-      payload: chat.guid,
+      payload: chat.guid + (scheduled ? "-scheduled" : ""),
     );
   }
 
