@@ -27,8 +27,10 @@ abstract class Queue extends GetxService {
       Logger.info("Adding to queue list...");
       items.add(item);
     }
-    Logger.info("Processing...");
-    if (!isProcessing) processNextItem();
+    Logger.info("Processing... (Is processing: $isProcessing)");
+    Logger.info("List of items: $items");
+    Logger.info("Condition: ${items.isEmpty && item is IncomingItem}");
+    if (!isProcessing || (items.isEmpty && item is IncomingItem)) processNextItem();
   }
 
   Future<dynamic> prepItem(QueueItem _);
