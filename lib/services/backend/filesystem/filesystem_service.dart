@@ -40,7 +40,7 @@ class FilesystemService extends GetxService {
       }
     }
     packageInfo = await PackageInfo.fromPlatform();
-    if (Platform.isAndroid) {
+    if (!headless && Platform.isAndroid) {
       androidInfo = await DeviceInfoPlugin().androidInfo;
     }
   }

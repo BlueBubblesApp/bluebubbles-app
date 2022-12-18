@@ -63,9 +63,11 @@ class MethodChannelService extends GetxService {
         return true;
       case "new-message":
         await storeStartup.future;
-        Logger.info("Received new message from FCM");
+        Logger.info("Received new message from FCM with type ${call.arguments.runtimeType}");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
+        Logger.info("Parsed data $data");
         if (!isNullOrEmpty(data)!) {
+          Logger.info("Adding to queue...");
           inq.queue(IncomingItem.fromMap(QueueType.newMessage, data!));
         }
         return true;
