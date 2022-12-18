@@ -13,9 +13,10 @@ HttpService http = Get.isRegistered<HttpService>() ? Get.find<HttpService>() : G
 /// GET or POST requests.
 class HttpService extends GetxService {
   late Dio dio;
+  String? originOverride;
 
   /// Get the URL origin from the current server address
-  String get origin => "${Uri.parse(ss.settings.serverAddress.value).origin}/api/v1";
+  String get origin => originOverride ?? "${Uri.parse(ss.settings.serverAddress.value).origin}/api/v1";
 
   /// Helper function to build query params, this way we only need to add the
   /// required guid auth param in one place

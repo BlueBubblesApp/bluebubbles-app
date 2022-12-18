@@ -139,6 +139,8 @@ dependencies:
   github: ^9.7.0
   numberpicker: ^2.1.1
   hand_signature: ^2.3.0+1
+  network_tools: ^3.0.0+3
+  network_info_plus: 2.1.4+1
 
 dependency_overrides:
   rxdart: ^0.27.5
