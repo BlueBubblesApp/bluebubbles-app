@@ -202,13 +202,17 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
   void handleUpdatedMessage(Message message, {String? oldGuid}) {
     final index = _messages.indexWhere((e) => e.guid == (oldGuid ?? message.guid));
-    _messages[index] = message;
+    if (index != -1) {
+      _messages[index] = message;
+    }
   }
 
   void handleDeletedMessage(Message message) {
     final index = _messages.indexWhere((e) => e.guid == message.guid);
-    _messages.removeAt(index);
-    listKey.currentState!.removeItem(index, (context, animation) => const SizedBox.shrink());
+    if (index != -1) {
+      _messages.removeAt(index);
+      listKey.currentState!.removeItem(index, (context, animation) => const SizedBox.shrink());
+    }
   }
 
   Widget _buildReply(String text, {Function()? onTap}) => Container(
