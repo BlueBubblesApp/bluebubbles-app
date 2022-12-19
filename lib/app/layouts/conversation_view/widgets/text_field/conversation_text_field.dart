@@ -658,7 +658,7 @@ class TextFieldComponent extends StatelessWidget {
                     suffix: samsung && !isChatCreator ? null : Padding(
                       padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
                       child: TextFieldSuffix(
-                        subjectTextController: controller!.subjectTextController,
+                        subjectTextController: subjectTextController,
                         textController: textController,
                         controller: controller,
                         recorderController: recorderController,
