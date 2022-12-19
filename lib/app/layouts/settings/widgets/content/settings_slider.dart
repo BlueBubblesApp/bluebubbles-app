@@ -12,6 +12,7 @@ class SettingsSlider extends StatelessWidget {
         this.formatValue,
         required this.min,
         required this.max,
+        this.leadingMinWidth,
         required this.divisions,
         this.leading,
         this.backgroundColor,
@@ -24,6 +25,7 @@ class SettingsSlider extends StatelessWidget {
   final Function(double value)? formatValue;
   final double min;
   final double max;
+  final double? leadingMinWidth;
   final int divisions;
   final Widget? leading;
   final Color? backgroundColor;
@@ -38,6 +40,7 @@ class SettingsSlider extends StatelessWidget {
     return ListTile(
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
+      minLeadingWidth: leadingMinWidth,
       title: ss.settings.skin.value == Skins.iOS
           ? CupertinoSlider(
         activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
