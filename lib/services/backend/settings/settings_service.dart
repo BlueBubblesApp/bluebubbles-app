@@ -150,7 +150,10 @@ class SettingsService extends GetxService {
           actions: [
             TextButton(
               child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                prefs.setString("update-check", metadata['version']);
+                Navigator.of(context).pop();
+              },
             ),
           ],
         ),
