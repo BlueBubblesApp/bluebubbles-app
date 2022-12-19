@@ -420,8 +420,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                               : Colors.transparent,
                                           borderRadius: BorderRadius.circular(20),
                                           child: SizedBox(
-                                            width: 35,
-                                            height: 35,
+                                            width: iOS ? 35 : null,
+                                            height: iOS ? 35 : null,
                                             child: InkWell(
                                               borderRadius: BorderRadius.circular(20),
                                               onTap: () {
