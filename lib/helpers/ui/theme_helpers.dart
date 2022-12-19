@@ -210,6 +210,15 @@ extension ColorHelpers on Color {
     }
   }
 
+  Color themeLightenOrDarken(BuildContext context, [double percent = 10]) {
+    if (percent == 0) return this;
+    if (!ts.inDarkMode(context)) {
+      return darkenPercent(percent);
+    } else {
+      return lightenPercent(percent);
+    }
+  }
+
   Color darkenAmount([double amount = .1]) {
     assert(amount >= 0 && amount <= 1);
     if (amount == 0) return this;
