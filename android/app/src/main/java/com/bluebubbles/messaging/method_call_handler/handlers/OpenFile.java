@@ -29,7 +29,7 @@ public class OpenFile implements Handler{
     public void Handle() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         Log.d("filesDir", "filesDir is " + context.getFilesDir().getAbsolutePath() + (String) call.argument("path"));
-        Uri data = FileProvider.getUriForFile(context, "com.bluebubbles.messaging.fileprovider", new File(context.getFilesDir().getAbsolutePath() + (String) call.argument("path")));
+        Uri data = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".fileprovider", new File(context.getFilesDir().getAbsolutePath() + (String) call.argument("path")));
         context.grantUriPermission(context.getPackageName(), data, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.setDataAndType(data, (String) call.argument("mimeType"));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

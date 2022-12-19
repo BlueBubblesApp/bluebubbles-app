@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -58,14 +59,9 @@ class OtherFile extends StatelessWidget {
           launchUrl(Uri.file(_file.path));
         } else {
           try {
-            await mcs.invokeMethod(
-              "open_file",
-              {
-                "path": "/attachments/${attachment.guid!}/${basename(file.path!)}",
-                "mimeType": attachment.mimeType,
-              },
-            );
+            await OpenFilex.open("${fs.appDocDir.path}/attachments/${attachment.guid!}/${basename(file.path!)}");
           } catch (ex) {
+            Logger.error(ex);
             showSnackbar('Error', "No handler for this file type!");
           }
         }
