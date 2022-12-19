@@ -103,6 +103,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         final index = _messages.indexWhere((element) => element.guid == searchMessage.guid);
         await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
         scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
+      } else {
+        updateReplies();
       }
       initialized = true;
     });
@@ -122,7 +124,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     if (isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop) return;
 
     if (updateConversation) {
-      _messages.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).take(min(_messages.length, 5)).forEach((message) {
+      _messages.reversed.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).skip(max(_messages.length - 5, 0)).forEach((message) {
         _addMessageToSmartReply(message);
       });
     }
@@ -190,7 +192,11 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
     if (insertIndex == 0 && showSmartReplies) {
       _addMessageToSmartReply(message);
-      updateReplies(updateConversation: false);
+      if (message.isFromMe!) {
+        smartReplies.clear();
+      } else {
+        updateReplies(updateConversation: false);
+      }
     }
   }
 
@@ -221,7 +227,13 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         outq.queue(OutgoingItem(
             type: QueueType.sendMessage,
             chat: controller.chat,
-            message: Message(text: text)
+            message: Message(
+              text: text,
+              dateCreated: DateTime.now(),
+              hasAttachments: false,
+              isFromMe: true,
+              handleId: 0,
+            ),
         ));
       },
       child: Center(

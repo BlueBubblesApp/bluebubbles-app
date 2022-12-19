@@ -137,39 +137,42 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                                     alignment: iOS ? Alignment.bottomRight : Alignment.bottomCenter,
                                     child: Padding(
                                       padding: const EdgeInsets.only(bottom: 10, right: 10, left: 10),
-                                      child: Obx(() => AnimatedOpacity(
-                                        opacity: controller.showScrollDown.value ? 1 : 0,
-                                        duration: const Duration(milliseconds: 300),
-                                        child: iOS ? TextButton(
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: context.theme.colorScheme.secondary,
-                                            shape: const CircleBorder(),
-                                            padding: const EdgeInsets.all(0),
-                                            maximumSize: const Size(32, 32),
-                                            minimumSize: const Size(32, 32),
-                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                          ),
-                                          onPressed: controller.scrollToBottom,
-                                          child: Container(
-                                            constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
-                                            decoration: const BoxDecoration(
-                                              shape: BoxShape.circle,
+                                      child: Obx(() => IgnorePointer(
+                                        ignoring: controller.showScrollDown.value ? false : true,
+                                        child: AnimatedOpacity(
+                                          opacity: controller.showScrollDown.value ? 1 : 0,
+                                          duration: const Duration(milliseconds: 300),
+                                          child: iOS ? TextButton(
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: context.theme.colorScheme.secondary,
+                                              shape: const CircleBorder(),
+                                              padding: const EdgeInsets.all(0),
+                                              maximumSize: const Size(32, 32),
+                                              minimumSize: const Size(32, 32),
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                             ),
-                                            alignment: Alignment.center,
+                                            onPressed: controller.scrollToBottom,
+                                            child: Container(
+                                              constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                                              decoration: const BoxDecoration(
+                                                shape: BoxShape.circle,
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                CupertinoIcons.chevron_down,
+                                                color: context.theme.colorScheme.onSecondary,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ) : FloatingActionButton.small(
+                                            heroTag: null,
+                                            onPressed: controller.scrollToBottom,
                                             child: Icon(
-                                              CupertinoIcons.chevron_down,
+                                              Icons.arrow_downward,
                                               color: context.theme.colorScheme.onSecondary,
-                                              size: 20,
                                             ),
+                                            backgroundColor: context.theme.colorScheme.secondary,
                                           ),
-                                        ) : FloatingActionButton.small(
-                                          heroTag: null,
-                                          onPressed: controller.scrollToBottom,
-                                          child: Icon(
-                                            Icons.arrow_downward,
-                                            color: context.theme.colorScheme.onSecondary,
-                                          ),
-                                          backgroundColor: context.theme.colorScheme.secondary,
                                         ),
                                       )),
                                     )
