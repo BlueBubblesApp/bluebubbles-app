@@ -589,7 +589,7 @@ class Chat {
       if (privateMark && ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
         if (!hasUnread && autoSendReadReceipts!) {
           http.markChatRead(guid);
-        } else {
+        } else if (hasUnread) {
           http.markChatUnread(guid);
         }
       }
