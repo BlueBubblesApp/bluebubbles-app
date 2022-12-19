@@ -341,7 +341,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                   decoration: BoxDecoration(
                     border: !ss.settings.hideDividers.value ? Border(
                       bottom: BorderSide(
-                        color: context.theme.colorScheme.background.lightenOrDarken(15),
+                        color: context.theme.colorScheme.background.oppositeLightenOrDarken(15),
                         width: 0.5,
                       ),
                     ) : null,

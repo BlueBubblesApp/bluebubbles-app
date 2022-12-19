@@ -122,7 +122,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                             },
                             child: Obx(() => ListTile(
                                 dense: true,
-                                selectedTileColor: context.theme.colorScheme.properSurface.lightenOrDarken(20),
+                                selectedTileColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
                                 selected: widget.controller!.emojiSelectedIndex.value == index,
                                 title: Row(
                                   children: <Widget>[

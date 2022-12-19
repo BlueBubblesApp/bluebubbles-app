@@ -151,9 +151,9 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
 }
 
 extension ColorSchemeHelpers on ColorScheme {
-  Color get properSurface => surface.computeDifference(background) < 20 ? surfaceVariant : surface;
+  Color get properSurface => surface.computeDifference(background) < 10 ? surfaceVariant : surface;
 
-  Color get properOnSurface => surface.computeDifference(background) < 20 ? onSurfaceVariant : onSurface;
+  Color get properOnSurface => surface.computeDifference(background) < 10 ? onSurfaceVariant : onSurface;
 
   Color get iMessageBubble => HSLColor.fromColor(primary).colorfulness < HSLColor.fromColor(primaryContainer).colorfulness ? primary : primaryContainer;
 
@@ -193,7 +193,7 @@ extension ColorHelpers on Color {
 
   Color lightenOrDarken([double percent = 10]) {
     if (percent == 0) return this;
-    if (computeDifference(Colors.black) >= 50) {
+    if (computeDifference(Colors.black) <= 50) {
       return darkenPercent(percent);
     } else {
       return lightenPercent(percent);
@@ -202,7 +202,7 @@ extension ColorHelpers on Color {
   
   Color oppositeLightenOrDarken([double percent = 10]) {
     if (percent == 0) return this;
-    if (computeDifference(Colors.black) >= 50) {
+    if (computeDifference(Colors.black) <= 50) {
       return lightenPercent(percent);
     } else {
       return darkenPercent(percent);
@@ -246,8 +246,8 @@ extension ColorHelpers on Color {
     final r2 = other.red;
     final g2 = other.green;
     final b2 = other.blue;
-    final d = sqrt((r2-r1)^2+(g2-g1)^2+(b2-b1)^2);
-    return d / sqrt((255)^2+(255)^2+(255)^2) * 100;
+    final d = sqrt(pow(r2-r1, 2)+pow(g2-g1, 2)+pow(b2-b1, 2));
+    return d / sqrt(pow(255, 2)+pow(255, 2)+pow(255, 2)) * 100;
   }
 }
 
