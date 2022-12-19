@@ -226,29 +226,35 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
               ),
             ),
           ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Obx(() {
-              String _title = title;
-              if (controller.inSelectMode.value) {
-                _title = "${controller.selected.length} selected";
-              } else if (hideInfo) {
-                _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
-              }
-              return Text(
-                _title,
-                style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
-              );
-            }),
-            if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)) && !hideInfo)
-              Text(
-                controller.chat.isGroup
-                  ? "${controller.chat.participants.length} recipients"
-                  : controller.chat.participants[0].address,
-                style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
-              ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Obx(() {
+                String _title = title;
+                if (controller.inSelectMode.value) {
+                  _title = "${controller.selected.length} selected";
+                } else if (hideInfo) {
+                  _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
+                }
+                return Text(
+                  _title,
+                  style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                );
+              }),
+              if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)) && !hideInfo)
+                Text(
+                  controller.chat.isGroup
+                    ? "${controller.chat.participants.length} recipients"
+                    : controller.chat.participants[0].address,
+                  style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                ),
+            ],
+          ),
         ),
       ],
     );
