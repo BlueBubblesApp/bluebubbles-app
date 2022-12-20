@@ -52,7 +52,7 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
     });
 
     eventDispatcher.stream.listen((event) async {
-      if (event.item1 == 'play-effect' && mounted) {
+      if (event.item1 == 'play-effect' && mounted && screenSelected.isEmpty) {
         setState(() {
           screenSelected = event.item2['type'];
         });
@@ -126,7 +126,7 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
           || screenSelected == "spotlight"
           || screenSelected == "lasers"
         ? Colors.black : Colors.transparent,
-      child: Stack(
+      child: screenSelected.isEmpty ? null : Stack(
         children: [
           Fireworks(controller: fireworkController),
           Celebration(controller: celebrationController),
