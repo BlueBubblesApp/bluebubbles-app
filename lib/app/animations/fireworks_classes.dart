@@ -35,6 +35,7 @@ class FireworkController implements Listenable {
   double particleSize = 3;
   double get _rocketSize => max(0, particleSize - 1);
   int explosionParticleCount = 96;
+  Function? stopFunc;
 
   void start() {
     isPlaying = true;
@@ -43,9 +44,10 @@ class FireworkController implements Listenable {
     ticker = vsync.createTicker(update)..start();
   }
 
-  void stop() {
+  void stop({Function? onStop}) {
     autoLaunchDuration = Duration.zero;
     requestedToStop = true;
+    stopFunc = onStop;
   }
 
   @override
@@ -116,6 +118,7 @@ class FireworkController implements Listenable {
       isPlaying = false;
       requestedToStop = false;
       hasCreatedParticles = false;
+      stopFunc?.call();
     }
     // Notify listeners.
     // The copy of the list and the condition prevent

@@ -19,9 +19,10 @@ class CelebrationController extends FireworkController {
   }
 
   @override
-  void stop() {
+  void stop({Function? onStop}) {
     autoLaunchDuration = Duration.zero;
     requestedToStop = true;
+    stopFunc = onStop;
   }
 
   @override
