@@ -126,7 +126,7 @@ class SettingsService extends GetxService {
     if (response.statusCode == 200) {
       bool available = response.data['data']['available'] ?? false;
       Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
-      if (!available || prefs.getString("update-check") == metadata['version']) return;
+      if (!available || prefs.getString("server-update-check") == metadata['version']) return;
       showDialog(
         context: Get.context!,
         builder: (context) => AlertDialog(
@@ -150,7 +150,10 @@ class SettingsService extends GetxService {
           actions: [
             TextButton(
               child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                prefs.setString("server-update-check", metadata['version']);
+                Navigator.of(context).pop();
+              },
             ),
           ],
         ),
@@ -166,7 +169,7 @@ class SettingsService extends GetxService {
     final version = release.tagName!.split("+").first.replaceAll("v", "");
     final code = release.tagName!.split("+").last;
     final buildNumber = fs.packageInfo.buildNumber.lastChars(min(4, fs.packageInfo.buildNumber.length));
-    if (int.parse(code) <= int.parse(buildNumber)) return;
+    if (int.parse(code) <= int.parse(buildNumber) || prefs.getString("client-update-check") == code) return;
     showDialog(
       context: Get.context!,
       builder: (context) => AlertDialog(
@@ -196,7 +199,10 @@ class SettingsService extends GetxService {
             ),
           TextButton(
             child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              prefs.setString("client-update-check", code);
+              Navigator.of(context).pop();
+            },
           ),
         ],
       ),

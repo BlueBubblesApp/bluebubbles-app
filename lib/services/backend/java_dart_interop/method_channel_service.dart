@@ -67,8 +67,13 @@ class MethodChannelService extends GetxService {
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         Logger.info("Parsed data $data");
         if (!isNullOrEmpty(data)!) {
-          Logger.info("Adding to queue...");
-          inq.queue(IncomingItem.fromMap(QueueType.newMessage, data!));
+          final item = IncomingItem.fromMap(QueueType.newMessage, data!);
+          if (ls.isAlive) {
+            Logger.info("Adding to queue...");
+            inq.queue(item);
+          } else {
+            ah.handleNewMessage(item.chat, item.message, item.tempGuid);
+          }
         }
         return true;
       case "updated-message":
@@ -76,7 +81,13 @@ class MethodChannelService extends GetxService {
         Logger.info("Received updated message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
-          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data!));
+          final item = IncomingItem.fromMap(QueueType.updatedMessage, data!);
+          if (ls.isAlive) {
+            Logger.info("Adding to queue...");
+            inq.queue(item);
+          } else {
+            ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);
+          }
         }
         return true;
       case "scheduled-message-error":

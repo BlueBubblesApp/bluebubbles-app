@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
@@ -21,7 +22,7 @@ class HeaderText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 10.0),
-      child: Text(
+      child: AutoSizeText(
         controller.showArchivedChats
             ? "Archive"
             : controller.showUnknownSenders
@@ -32,6 +33,7 @@ class HeaderText extends StatelessWidget {
           fontWeight: FontWeight.w500,
           fontSize: fontSize,
         ),
+        maxLines: 1,
       ),
     );
   }

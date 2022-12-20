@@ -37,14 +37,18 @@ class CupertinoHeader extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  HeaderText(controller: controller),
-                  const SyncIndicator(),
-                ],
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: HeaderText(controller: controller),
+                    ),
+                    const SyncIndicator(),
+                  ],
+                ),
               ),
               Obx(() => Row(
                 mainAxisSize: MainAxisSize.min,

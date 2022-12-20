@@ -100,14 +100,14 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           part,
           message,
           colorOverride: ss.settings.colorfulBubbles.value && !message.isFromMe!
-              ? getBubbleColors().first.oppositeLightenOrDarken(50) : null,
+              ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
         ),
         initialData: buildMessageSpans(
           context,
           part,
           message,
           colorOverride: ss.settings.colorfulBubbles.value && !message.isFromMe!
-              ? getBubbleColors().first.oppositeLightenOrDarken(50) : null,
+              ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
         ),
         builder: (context, snapshot) {
           if (snapshot.data != null) {

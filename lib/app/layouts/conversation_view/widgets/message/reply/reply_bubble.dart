@@ -155,13 +155,13 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                             context,
                             part,
                             message,
-                            colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).lightenOrDarken(30),
+                            colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).themeLightenOrDarken(context, 30),
                           ),
                           initialData: buildMessageSpans(
                             context,
                             part,
                             message,
-                            colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).lightenOrDarken(30),
+                            colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).themeLightenOrDarken(context, 30),
                           ),
                           builder: (context, snapshot) {
                             if (snapshot.data != null) {

@@ -94,7 +94,7 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
               padding: EdgeInsets.zero,
               enableSeekGesture: false,
               playerWaveStyle: PlayerWaveStyle(
-                fixedWaveColor: context.theme.colorScheme.properSurface.lightenOrDarken(20),
+                fixedWaveColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
                 liveWaveColor: context.theme.colorScheme.properOnSurface,
                 waveCap: StrokeCap.square,
                 scaleFactor: 0.25,

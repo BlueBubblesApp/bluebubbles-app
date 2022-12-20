@@ -131,7 +131,7 @@ void sendEffectAction(
                                           "screen": const Text("Screen"),
                                         },
                                         groupValue: typeSelected,
-                                        thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
+                                        thumbColor: CupertinoColors.tertiarySystemFill.oppositeLightenOrDarken(20),
                                         backgroundColor: CupertinoColors.tertiarySystemFill,
                                         onValueChanged: (str) {
                                           setState(() {

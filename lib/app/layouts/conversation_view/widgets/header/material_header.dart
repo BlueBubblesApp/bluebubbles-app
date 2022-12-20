@@ -27,6 +27,9 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
         AppBar(
           backgroundColor: context.theme.colorScheme.background
               .withOpacity(ss.settings.skin.value == Skins.Samsung ? 1 : 0.95),
+          systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
           automaticallyImplyLeading: false,
           leadingWidth: 40,
           leading: Padding(

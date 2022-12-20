@@ -127,7 +127,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                     child: Container(
-                      color: context.theme.colorScheme.properSurface.withOpacity(0.3),
+                      color: context.theme.colorScheme.properSurface.darkenPercent(30).withOpacity(0.2),
                     ),
                   ),
                 ),
@@ -169,7 +169,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                             child: DeferredPointerHandler(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
+                                  color: ts.inDarkMode(context) ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 width: min(context.width - 50, 500),
@@ -346,7 +346,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: context.theme.colorScheme.properSurface.withAlpha(150),
+          color: (ts.inDarkMode(context) ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background).withAlpha(150),
           width: maxMenuWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,

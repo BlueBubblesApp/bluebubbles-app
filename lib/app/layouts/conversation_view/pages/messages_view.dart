@@ -310,19 +310,19 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                 slivers: <Widget>[
                   if (showSmartReplies)
                     SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: iOS ? 8.0 : 0.0, right: 5),
-                        child: Obx(() => AnimatedSize(
-                          duration: const Duration(milliseconds: 400),
-                          child: smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty ? SizedBox(
+                      child: Obx(() => AnimatedSize(
+                        duration: const Duration(milliseconds: 400),
+                        child: smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty ? Padding(
+                          padding: EdgeInsets.only(top: iOS ? 8.0 : 0.0, right: 5),
+                          child: SizedBox(
                             height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
                             child: ListView(
                               scrollDirection: Axis.horizontal,
                               reverse: true,
                               children: smartReplies..addAll(internalSmartReplies),
                             ),
-                          ) : const SizedBox.shrink())
-                        ),
+                          ),
+                        ) : const SizedBox.shrink())
                       ),
                     ),
                   SliverToBoxAdapter(
