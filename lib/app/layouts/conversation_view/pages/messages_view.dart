@@ -103,7 +103,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         final index = _messages.indexWhere((element) => element.guid == searchMessage.guid);
         await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
         scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
-      } else {
+      } else if (!(_messages.firstOrNull?.isFromMe ?? true)) {
         updateReplies();
       }
       initialized = true;
