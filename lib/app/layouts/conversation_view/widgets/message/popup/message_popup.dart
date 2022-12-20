@@ -275,7 +275,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                             style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                           ),
                         ),
-                      if (ss.isMinVenturaSync && message.isFromMe!)
+                      if (ss.isMinVenturaSync && message.isFromMe! && ss.serverDetailsSync().item4 >= 148)
                         PopupMenuItem(
                           value: 6,
                           child: Text(
@@ -1118,7 +1118,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (ss.isMinVenturaSync && message.isFromMe!)
+      if (ss.isMinVenturaSync && message.isFromMe! && ss.serverDetailsSync().item4 >= 148)
         Material(
           color: Colors.transparent,
           child: InkWell(
