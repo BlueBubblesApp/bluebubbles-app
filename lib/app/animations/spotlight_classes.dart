@@ -21,6 +21,7 @@ class SpotlightController implements Listenable {
   bool isPlaying = false;
   bool requestedToStop = false;
   final List<VoidCallback> listeners = [];
+  Function? stopFunc;
 
   Duration lastAutoLaunch = Duration.zero;
   Duration autoLaunchDuration = const Duration(milliseconds: 100);
@@ -34,9 +35,10 @@ class SpotlightController implements Listenable {
     ticker = vsync.createTicker(update)..start();
   }
 
-  void stop() {
+  void stop({Function? onStop}) {
     autoLaunchDuration = Duration.zero;
     requestedToStop = true;
+    stopFunc = onStop;
   }
 
   @override
@@ -79,6 +81,7 @@ class SpotlightController implements Listenable {
       isPlaying = false;
       requestedToStop = false;
       spotlight = null;
+      stopFunc?.call();
     }
     // Notify listeners.
     // The copy of the list and the condition prevent

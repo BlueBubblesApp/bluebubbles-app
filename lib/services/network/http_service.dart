@@ -769,6 +769,28 @@ class HttpService extends GetxService {
     });
   }
 
+  // Create a scheduled message
+  Future<Response> updateScheduled(int id, String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.put(
+          "$origin/message/schedule/$id",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken,
+          data: {
+            "type": "send-message",
+            "payload": {
+              "chatGuid": chatGuid,
+              "message": message,
+              "method": "apple-script"
+            },
+            "scheduledFor": date.millisecondsSinceEpoch,
+            "schedule": schedule,
+          }
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Delete a scheduled message
   Future<Response> deleteScheduled(int id, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {

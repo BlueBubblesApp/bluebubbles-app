@@ -103,6 +103,9 @@ class SettingsService extends GetxService {
     }
   }
 
+  Tuple4<int, int, String, int> serverDetailsSync() =>
+      Tuple4(prefs.getInt("macos-version") ?? 11, prefs.getInt("macos-minor-version") ?? 0, prefs.getString("server-version") ?? "0.0.0", prefs.getInt("server-version-code") ?? 0);
+
   Future<bool> get isMinSierra async {
     final val = await getServerDetails();
     return val.item1 > 10 || (val.item1 == 10 && val.item2 > 11);

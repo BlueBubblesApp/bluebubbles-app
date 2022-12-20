@@ -725,6 +725,8 @@ class Message {
       text = "$name named the conversation \"$groupTitle\"";
     } else if (itemType == 6) {
       text = "$name started a FaceTime call";
+    } else if (itemType == 4 && groupActionType == 0) {
+      text = "$name shared ${name == "You" ? "your" : "their"} location";
     }
 
     return text;

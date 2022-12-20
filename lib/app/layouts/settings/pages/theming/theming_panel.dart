@@ -77,7 +77,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       onChanged: (val) {
                         if (val == null) return;
                         AdaptiveTheme.of(context).setThemeMode(val);
-                        controller.update();
+                        setState(() {});
                         eventDispatcher.emit('theme-update', null);
                       },
                       options: AdaptiveThemeMode.values,

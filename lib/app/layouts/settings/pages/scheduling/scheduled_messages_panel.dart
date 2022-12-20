@@ -125,7 +125,7 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                   const Padding(
                     padding: EdgeInsets.only(top: 10.0),
                     child: SettingsSubtitle(
-                      subtitle: "One-Time: Messages that will only be sent once at the displayed date.\nRecurring: Messages that will be sent on a recurring schedule.\nCompleted: One-time messages that have already been sent.",
+                      subtitle: "Tap to edit an existing scheduled message.\nOne-Time: Messages that will only be sent once at the displayed date.\nRecurring: Messages that will be sent on a recurring schedule.\nCompleted: One-time messages that have already been sent.",
                       unlimitedSpace: true,
                     ),
                   ),
@@ -143,22 +143,36 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      final item = oneTime[index];
-                      final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
-                      return ListTile(
-                        title: Text(item.payload.message),
-                        subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} on ${buildFullDate(item.scheduledFor)}"),
-                        trailing: IconButton(
-                          icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
-                          onPressed: () => deleteMessage(item),
-                        ),
-                      );
-                    },
-                    itemCount: oneTime.length,
+                  Material(
+                    color: Colors.transparent,
+                    child: ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        final item = oneTime[index];
+                        final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
+                        return ListTile(
+                          title: Text(item.payload.message),
+                          subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} on ${buildFullDate(item.scheduledFor)}"),
+                          trailing: IconButton(
+                            icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
+                            onPressed: () => deleteMessage(item),
+                          ),
+                          onTap: () async {
+                            final result = await ns.pushSettings(
+                              context,
+                              CreateScheduledMessage(existing: item),
+                            );
+                            if (result is ScheduledMessage) {
+                              final index = scheduled.indexWhere((e) => e.id == item.id);
+                              scheduled[index] = result;
+                              setState(() {});
+                            }
+                          },
+                        );
+                      },
+                      itemCount: oneTime.length,
+                    ),
                   ),
                 ],
               ),
@@ -174,23 +188,37 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      final item = recurring[index];
-                      final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
-                      return ListTile(
-                        title: Text(item.payload.message),
-                        subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} every ${item.schedule.interval} ${frequencyToText[item.schedule.intervalType]}(s) starting starting on ${buildFullDate(item.scheduledFor)}"),
-                        isThreeLine: true,
-                        trailing: IconButton(
-                          icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
-                          onPressed: () => deleteMessage(item),
-                        ),
-                      );
-                    },
-                    itemCount: recurring.length,
+                  Material(
+                    color: Colors.transparent,
+                    child: ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        final item = recurring[index];
+                        final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
+                        return ListTile(
+                          title: Text(item.payload.message),
+                          subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} every ${item.schedule.interval} ${frequencyToText[item.schedule.intervalType]}(s) starting starting on ${buildFullDate(item.scheduledFor)}"),
+                          isThreeLine: true,
+                          trailing: IconButton(
+                            icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
+                            onPressed: () => deleteMessage(item),
+                          ),
+                          onTap: () async {
+                            final result = await ns.pushSettings(
+                              context,
+                              CreateScheduledMessage(existing: item),
+                            );
+                            if (result is ScheduledMessage) {
+                              final index = scheduled.indexWhere((e) => e.id == item.id);
+                              scheduled[index] = result;
+                              setState(() {});
+                            }
+                          },
+                        );
+                      },
+                      itemCount: recurring.length,
+                    ),
                   ),
                 ],
               ),

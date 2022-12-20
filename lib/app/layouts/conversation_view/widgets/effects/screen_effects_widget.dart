@@ -52,7 +52,7 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
     });
 
     eventDispatcher.stream.listen((event) async {
-      if (event.item1 == 'play-effect' && mounted) {
+      if (event.item1 == 'play-effect' && mounted && screenSelected.isEmpty) {
         setState(() {
           screenSelected = event.item2['type'];
         });
@@ -61,17 +61,19 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
           fireworkController.windowSize = Size(ns.width(context), context.height);
           fireworkController.start();
           await Future.delayed(const Duration(seconds: 1));
-          fireworkController.stop();
-          setState(() {
-            screenSelected = "";
+          fireworkController.stop(onStop: () {
+            setState(() {
+              screenSelected = "";
+            });
           });
         } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
           celebrationController.windowSize = Size(ns.width(context), context.height);
           celebrationController.start();
           await Future.delayed(const Duration(seconds: 1));
-          celebrationController.stop();
-          setState(() {
-            screenSelected = "";
+          celebrationController.stop(onStop: () {
+            setState(() {
+              screenSelected = "";
+            });
           });
         } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
           balloonController.windowSize = Size(ns.width(context), context.height);
@@ -90,9 +92,10 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
             spotlightController.windowSize = Size(ns.width(context), context.height);
             spotlightController.start(rect!);
             await Future.delayed(const Duration(seconds: 1));
-            spotlightController.stop();
-            setState(() {
-              screenSelected = "";
+            spotlightController.stop(onStop: () {
+              setState(() {
+                screenSelected = "";
+              });
             });
           }
         } else if (screenSelected == "lasers" && !laserController.isPlaying) {
@@ -100,9 +103,10 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
             laserController.windowSize = Size(ns.width(context), context.height);
             laserController.start(rect!);
             await Future.delayed(const Duration(seconds: 1));
-            laserController.stop();
-            setState(() {
-              screenSelected = "";
+            laserController.stop(onStop: () {
+              setState(() {
+                screenSelected = "";
+              });
             });
           }
         } else if (screenSelected == "confetti") {
@@ -122,30 +126,23 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
           || screenSelected == "spotlight"
           || screenSelected == "lasers"
         ? Colors.black : Colors.transparent,
-      child: Stack(
+      child: screenSelected.isEmpty ? null : Stack(
         children: [
-          if (screenSelected == "fireworks")
-            Fireworks(controller: fireworkController),
-          if (screenSelected == "celebration")
-            Celebration(controller: celebrationController),
-          if (screenSelected == "balloons")
-            Balloons(controller: balloonController),
-          if (screenSelected == "love")
-            Love(controller: loveController),
-          if (screenSelected == "spotlight")
-            Spotlight(controller: spotlightController),
-          if (screenSelected == "lasers")
-            Laser(controller: laserController),
-          if (screenSelected == "confetti")
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: confettiController,
-                blastDirection: pi / 2,
-                blastDirectionality: BlastDirectionality.explosive,
-                emissionFrequency: 0.35,
-              ),
+          Fireworks(controller: fireworkController),
+          Celebration(controller: celebrationController),
+          Balloons(controller: balloonController),
+          Love(controller: loveController),
+          Spotlight(controller: spotlightController),
+          Laser(controller: laserController),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: confettiController,
+              blastDirection: pi / 2,
+              blastDirectionality: BlastDirectionality.explosive,
+              emissionFrequency: 0.35,
             ),
+          ),
         ]
       ),
     );

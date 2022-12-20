@@ -181,31 +181,33 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               trailing: nextIcon,
                             );
                           }),
-                          Container(
-                            color: tileColor,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 65.0),
-                              child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                          if (ss.serverDetailsSync().item4 >= 205)
+                            Container(
+                              color: tileColor,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 65.0),
+                                child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                              ),
                             ),
-                          ),
-                          SettingsTile(
-                            backgroundColor: tileColor,
-                            title: "Scheduled Messages",
-                            subtitle: "Schedule your server to send a message in the future or at set intervals",
-                            isThreeLine: true,
-                            onTap: () {
-                              ns.pushAndRemoveSettingsUntil(
-                                context,
-                                ScheduledMessagesPanel(),
-                                    (route) => route.isFirst,
-                              );
-                            },
-                            trailing: nextIcon,
-                            leading: const SettingsLeadingIcon(
-                              iosIcon: CupertinoIcons.calendar_today,
-                              materialIcon: Icons.schedule_send_outlined,
+                          if (ss.serverDetailsSync().item4 >= 205)
+                            SettingsTile(
+                              backgroundColor: tileColor,
+                              title: "Scheduled Messages",
+                              subtitle: "Schedule your server to send a message in the future or at set intervals",
+                              isThreeLine: true,
+                              onTap: () {
+                                ns.pushAndRemoveSettingsUntil(
+                                  context,
+                                  ScheduledMessagesPanel(),
+                                      (route) => route.isFirst,
+                                );
+                              },
+                              trailing: nextIcon,
+                              leading: const SettingsLeadingIcon(
+                                iosIcon: CupertinoIcons.calendar_today,
+                                materialIcon: Icons.schedule_send_outlined,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                       SettingsHeader(
