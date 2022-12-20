@@ -178,7 +178,7 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
               shape: BoxShape.circle
             ),
             alignment: Alignment.center,
-            padding: const EdgeInsets.only(left: 1.0),
+            padding: const EdgeInsets.only(left: 0.5),
             child: Text(
               _count.toString(),
               style: context.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onPrimary, fontSize: _count > 9 ?
