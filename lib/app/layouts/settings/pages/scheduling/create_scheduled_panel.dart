@@ -28,7 +28,7 @@ class CreateScheduledMessage extends StatefulWidget {
 }
 
 class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage> {
-  final TextEditingController messageController = TextEditingController();
+  late final TextEditingController messageController = TextEditingController(text: widget.existing?.payload.message);
   final FocusNode messageNode = FocusNode();
 
   late String selectedChat = widget.existing?.payload.chatGuid ?? chats.chats.first.guid;
@@ -92,8 +92,8 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
             }
           );
           Response? response;
-          if (widget.existing == null) {
-            response = await http.createScheduled(selectedChat, messageController.text, date.toUtc(), schedule == "once" ? {
+          if (widget.existing != null) {
+            response = await http.updateScheduled(widget.existing!.id, selectedChat, messageController.text, date.toUtc(), schedule == "once" ? {
               "type": "once",
             } : {
               "type": "recurring",
@@ -111,7 +111,14 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
           }
           Navigator.of(context).pop();
           if (response.statusCode == 200 && response.data != null) {
-            final message = ScheduledMessage.fromJson(response.data['data']);
+            final data = widget.existing != null ? widget.existing!.toJson() : response.data['data'];
+            // merge new with old
+            if (widget.existing != null) {
+              for (String k in response.data['data'].keys) {
+                data[k] = response.data['data'][k];
+              }
+            }
+            final message = ScheduledMessage.fromJson(data);
             Navigator.of(context).pop(message);
           } else {
             Logger.error("Scheduled message error: ${response.statusCode}");
