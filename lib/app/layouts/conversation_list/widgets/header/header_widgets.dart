@@ -1,4 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_page.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
@@ -133,6 +134,14 @@ class OverflowMenu extends StatelessWidget {
               );
             },
           );
+        } else if (value == 5) {
+          Navigator.of(Get.context!).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (BuildContext context) {
+                return const FindMyPage();
+              },
+            ),
+          );
         }
       },
       itemBuilder: (context) {
@@ -159,6 +168,13 @@ class OverflowMenu extends StatelessWidget {
                 style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
               ),
             ),
+          PopupMenuItem(
+            value: 5,
+            child: Text(
+              'FindMy',
+              style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+            ),
+          ),
           PopupMenuItem(
             value: 2,
             child: Text(
