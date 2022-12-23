@@ -205,6 +205,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                     style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
                                   )
                                 ],
                               );
