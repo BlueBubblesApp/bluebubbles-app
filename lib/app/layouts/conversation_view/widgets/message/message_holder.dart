@@ -203,6 +203,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 child: controller.showEdits.value ? Opacity(
                                   opacity: 0.75,
                                   child: Column(
+                                    crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: e.edits.map((edit) => ClipPath(
                                       clipper: TailClipper(
