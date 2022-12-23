@@ -591,6 +591,22 @@ class HttpService extends GetxService {
     });
   }
 
+  Future<Response> edit(String selectedMessageGuid, String edit, String backwardsCompatText, {int? partIndex, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/message/$selectedMessageGuid/edit",
+          queryParameters: buildQueryParams(),
+          data: {
+            "editedMessage": edit,
+            "backwardsCompatibilityMessage": backwardsCompatText,
+            "partIndex": partIndex ?? 0,
+          },
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get the number of handles in the server iMessage DB
   Future<Response> handleCount({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
@@ -798,6 +814,30 @@ class HttpService extends GetxService {
         "$origin/message/schedule/$id",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get FindMy devices from server
+  Future<Response> findMyDevices({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$origin/icloud/findmy/devices",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get FindMy friends from server
+  Future<Response> findMyFriends({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$origin/icloud/findmy/friends",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
       );
       return returnSuccessOrError(response);
     });

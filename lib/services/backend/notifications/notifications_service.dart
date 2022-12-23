@@ -25,6 +25,7 @@ class NotificationsService extends GetxService {
   static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
   static const String ERROR_CHANNEL = "com.bluebubbles.errors";
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
+  static const String FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
 
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
   StreamSubscription? countSub;
@@ -70,6 +71,11 @@ class NotificationsService extends GetxService {
         REMINDER_CHANNEL,
         "Message Reminders",
         "Displays message reminders set through the app",
+      );
+      createNotificationChannel(
+        FACETIME_CHANNEL,
+        "Incoming FaceTimes",
+        "Displays incoming FaceTimes detected by the server",
       );
     }
 
@@ -143,10 +149,14 @@ class NotificationsService extends GetxService {
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
     final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
 
-    Uint8List chatIcon = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
+    Uint8List chatIcon = await avatarAsBytes(chat: chat, quality: 256);
     Uint8List contactIcon = message.isFromMe!
         ? personIcon
-        : await avatarAsBytes(isGroup: false, participants: chat.participants.where((e) => e.address == message.handle!.address).toList(), chatGuid: guid, quality: 256);
+        : await avatarAsBytes(
+            participantsOverride: chat.participants.where((e) => e.address == message.handle!.address).toList(),
+            chat: chat,
+            quality: 256
+        );
     if (chatIcon.isEmpty) {
       chatIcon = personIcon;
     }
@@ -236,7 +246,7 @@ class NotificationsService extends GetxService {
           return;
         }
 
-        Uint8List avatar = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
+        Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
 
         // Create a temp file with the avatar
         String path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");
@@ -492,6 +502,26 @@ class NotificationsService extends GetxService {
         ),
       ),
       payload: chat.guid + (scheduled ? "-scheduled" : ""),
+    );
+  }
+
+  Future<void> createFacetimeNotif(Handle handle) async {
+    await cs.init();
+    final contact = cs.matchHandleToContact(handle);
+    await flnp.show(
+      Random().nextInt(9998) + 1,
+      'Incoming FaceTime from ${contact?.displayName ?? handle.address}',
+      '',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          FACETIME_CHANNEL,
+          'Incoming FaceTimes',
+          channelDescription: 'Displays incoming FaceTimes detected by the server',
+          priority: Priority.max,
+          importance: Importance.max,
+          color: HexColor("4990de"),
+        ),
+      ),
     );
   }
 

@@ -49,6 +49,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final RxDouble timestampOffset = 0.0.obs;
   final RxBool inSelectMode = false.obs;
   final RxList<Message> selected = <Message>[].obs;
+  final RxList<Tuple4<Message, MessagePart, TextEditingController, FocusNode>> editing = <Tuple4<Message, MessagePart, TextEditingController, FocusNode>>[].obs;
   // text field items
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
@@ -198,7 +199,12 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     return selected.firstWhereOrNull((e) => e.guid == guid) != null;
   }
 
+  bool isEditing(String guid, int part) {
+    return editing.firstWhereOrNull((e) => e.item1.guid == guid && e.item2.part == part) != null;
+  }
+
   void close() {
+    cm.setAllInactive();
     Get.delete<ConversationViewController>(tag: tag);
   }
 }

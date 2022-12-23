@@ -8,6 +8,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
 
@@ -81,16 +82,18 @@ class ChatsService extends GetxService {
     loadedAllChats.complete();
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
     // update share targets
-    for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)!).take(4)) {
-      await mcs.invokeMethod("push-share-targets", {
-        "title": c.title,
-        "guid": c.guid,
-        "icon": await avatarAsBytes(
-          isGroup: c.isGroup,
-          participants: c.participants,
-          chatGuid: c.guid,
-          quality: 256
-        ),
+    if (Platform.isAndroid) {
+      uiStartup.future.then((_) async {
+        for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)!).take(4)) {
+          await mcs.invokeMethod("push-share-targets", {
+            "title": c.title,
+            "guid": c.guid,
+            "icon": await avatarAsBytes(
+                chat: c,
+                quality: 256
+            ),
+          });
+        }
       });
     }
   }

@@ -79,7 +79,6 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   @override
   void dispose() {
     if (!disposed) {
-      cm.setAllInactive();
       cvController.close();
       ms(widget.chat.guid).close();
       for (Message m in widget.messages) {
@@ -149,7 +148,6 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                         children: [
                           GestureDetector(
                             onTap: () async {
-                              cm.setAllInactive();
                               cvController.close();
                               ms(widget.chat.guid).close();
                               for (Message m in widget.messages) {

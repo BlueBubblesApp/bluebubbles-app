@@ -28,17 +28,17 @@ class SetupViewController extends StatefulController {
 
   void updatePage(int newPage) {
     currentPage = newPage;
-    updateWidgetFunctions[PageNumber]?.call(newPage);
+    updateWidgets<PageNumber>(newPage);
   }
 
   void updateNumberToDownload(int num) {
     numberToDownload = num;
-    updateWidgetFunctions[NumberOfMessagesText]?.call(num);
+    updateWidgets<NumberOfMessagesText>(num);
   }
 
   void updateConnectError(String newError) {
     error = newError;
-    updateWidgetFunctions[ErrorText]?.call(newError);
+    updateWidgets<ErrorText>(newError);
   }
 }
 

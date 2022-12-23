@@ -24,7 +24,10 @@ class VideoPlayer extends StatefulWidget {
     Key? key,
     required this.file,
     required this.attachment,
+    required this.controller,
   }) : super(key: key);
+
+  final ConversationViewController? controller;
 
   @override
   OptimizedState createState() => _VideoPlayerState();
@@ -33,7 +36,7 @@ class VideoPlayer extends StatefulWidget {
 class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAliveClientMixin {
   Attachment get attachment => widget.attachment;
   PlatformFile get file => widget.file;
-  ConversationViewController get cvController => cvc(cm.activeChat!.chat);
+  ConversationViewController? get cvController => widget.controller;
 
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
@@ -45,8 +48,8 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
   @override
   void initState() {
     super.initState();
-    controller = cvController.videoPlayers[attachment.guid];
-    thumbnail = cvController.imageData[attachment.guid];
+    controller = cvController?.videoPlayers[attachment.guid];
+    thumbnail = cvController?.imageData[attachment.guid];
 
     updateObx(() {
       if (controller != null) {
@@ -70,7 +73,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
     }
     await controller!.initialize();
     createListener(controller!);
-    cvController.videoPlayers[attachment.guid!] = controller!;
+    cvController?.videoPlayers[attachment.guid!] = controller!;
     setState(() {});
   }
 
@@ -112,7 +115,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
       }
 
       if (thumbnail == null) return;
-      cvController.imageData[attachment.guid!] = thumbnail!;
+      cvController?.imageData[attachment.guid!] = thumbnail!;
       await precacheImage(MemoryImage(thumbnail!), context);
       setState(() {});
     }

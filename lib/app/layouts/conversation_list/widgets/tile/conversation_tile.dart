@@ -79,10 +79,10 @@ class ConversationTileController extends StatefulController {
   
   void onSelected() {
     if (ss.settings.skin.value == Skins.Material) {
-      updateWidgetFunctions[MaterialConversationTile]?.call(null);
+      updateWidgets<MaterialConversationTile>(null);
     }
     if (ss.settings.skin.value == Skins.Samsung) {
-      updateWidgetFunctions[SamsungConversationTile]?.call(null);
+      updateWidgets<SamsungConversationTile>(null);
     }
     onSelect!.call(!isSelected);
   }
@@ -96,7 +96,7 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
     Function(bool)? onSelect,
     bool inSelectMode = false,
     Widget? subtitle,
-  }) : super(key: key, parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
+  }) : super(key: key, parentController: !inSelectMode && Get.isRegistered<ConversationTileController>(tag: chat.guid)
       ? Get.find<ConversationTileController>(tag: chat.guid)
       : Get.put(ConversationTileController(
         chat: chat,

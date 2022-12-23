@@ -84,8 +84,7 @@ class AttachmentDownloadController extends GetxController {
     isFetching = true;
     stopwatch.start();
     var response = await http.downloadAttachment(attachment.guid!,
-        onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)));
-    if (response.statusCode != 200) {
+        onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!))).catchError((err) async {
       if (!kIsWeb) {
         File file = File(attachment.path);
         if (await file.exists()) {
@@ -98,8 +97,9 @@ class AttachmentDownloadController extends GetxController {
 
       error.value = true;
       attachmentDownloader._removeFromQueue(this);
-      return;
-    } else if (!kIsWeb && !kIsDesktop) {
+    });
+    if (response.statusCode != 200) return;
+    if (!kIsWeb && !kIsDesktop) {
       await mcs.invokeMethod("download-file", {
         "data": response.data,
         "path": attachment.path,

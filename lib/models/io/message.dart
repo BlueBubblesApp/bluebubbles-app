@@ -370,7 +370,11 @@ class Message {
       if (json['attributedBody'] is Map) {
         json['attributedBody'] = [json['attributedBody']];
       }
-      attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+      try {
+        attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+      } catch (e) {
+        Logger.error('Failed to parse attributed body! $e');
+      }
     }
 
     Map<String, dynamic> metadata = {};
@@ -387,12 +391,16 @@ class Message {
     List<MessageSummaryInfo> msi = [];
     try {
       msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e)).toList();
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('Failed to parse summary info! $e');
+    }
 
     PayloadData? payloadData;
     try {
       payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('Failed to parse payload data! $e');
+    }
 
     return Message(
       id: json["ROWID"] ?? json['id'],
@@ -1054,6 +1062,7 @@ class Message {
       "threadOriginatorGuid": threadOriginatorGuid,
       "threadOriginatorPart": threadOriginatorPart,
       "hasApplePayloadData": hasApplePayloadData,
+      "dateEdited": dateEdited,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();

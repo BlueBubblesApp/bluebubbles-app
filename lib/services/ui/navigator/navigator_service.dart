@@ -75,6 +75,9 @@ class NavigatorService extends GetxService {
   /// Push a new route, popping all previous routes, on the chat list right side navigator
   Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate, {PageRoute? customRoute}) async {
     if (Get.keys.containsKey(2) && isTabletMode(context)) {
+      if (cm.activeChat != null) {
+        cvc(cm.activeChat!.chat).close();
+      }
       await Get.offUntil(
           GetPageRoute(
             page: () => widget,
@@ -138,6 +141,9 @@ class NavigatorService extends GetxService {
             id2result = true;
           }
           if (!(Get.global(2).currentState?.canPop() ?? true)) {
+            if (cm.activeChat != null) {
+              cvc(cm.activeChat!.chat).close();
+            }
             eventDispatcher.emit('update-highlight', null);
           }
           return true;

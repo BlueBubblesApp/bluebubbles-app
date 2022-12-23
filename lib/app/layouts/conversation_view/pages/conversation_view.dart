@@ -43,13 +43,6 @@ class ConversationViewState extends OptimizedState<ConversationView> {
   }
 
   @override
-  void dispose() {
-    if (cm.activeChat?.chat.guid == chat.guid) cm.setAllInactive();
-    controller.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -85,6 +78,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
             if (ls.isBubble) {
               SystemNavigator.pop();
             }
+            controller.close();
             return !ls.isBubble;
           },
           child: SafeArea(

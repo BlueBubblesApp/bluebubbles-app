@@ -63,6 +63,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                               return;
                             }
                             eventDispatcher.emit("update-highlight", null);
+                            controller.close();
                             while (Get.isOverlaysOpen) {
                               Get.back();
                             }

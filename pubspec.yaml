@@ -143,6 +143,8 @@ dependencies:
   network_info_plus: 2.1.4+1
   open_filex: 4.1.1
   auto_size_text: ^3.0.0
+  flutter_map: ^3.0.0
+  flutter_map_marker_popup: ^4.0.0
 
 dependency_overrides:
   rxdart: ^0.27.5

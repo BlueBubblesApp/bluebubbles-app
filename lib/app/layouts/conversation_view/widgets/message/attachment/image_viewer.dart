@@ -18,7 +18,10 @@ class ImageViewer extends StatefulWidget {
     Key? key,
     required this.file,
     required this.attachment,
+    this.controller,
   }) : super(key: key);
+
+  final ConversationViewController? controller;
 
   @override
   OptimizedState createState() => _ImageViewerState();
@@ -27,15 +30,15 @@ class ImageViewer extends StatefulWidget {
 class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAliveClientMixin {
   Attachment get attachment => widget.attachment;
   PlatformFile get file => widget.file;
-  ConversationViewController get controller => cvc(cm.activeChat!.chat);
+  ConversationViewController? get controller => widget.controller;
 
   Uint8List? data;
 
   @override
   void initState() {
     super.initState();
-    if (attachment.guid!.contains("demo")) return;
-    data = controller.imageData[attachment.guid];
+    if (attachment.guid!.contains("demo") || controller == null) return;
+    data = controller!.imageData[attachment.guid];
     updateObx(() {
       initBytes();
     });
@@ -44,10 +47,10 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
   void initBytes() async {
     if (data != null) return;
     // Try to get the image data from the "cache"
-    Uint8List? tmpData = controller.imageData[attachment.guid];
+    Uint8List? tmpData = controller!.imageData[attachment.guid];
     if (tmpData == null) {
       final completer = Completer<Uint8List>();
-      controller.queueImage(Tuple4(attachment, file, context, completer));
+      controller!.queueImage(Tuple4(attachment, file, context, completer));
       final newData = await completer.future;
       if (newData.isEmpty) return;
       setState(() {

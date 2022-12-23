@@ -98,6 +98,15 @@ class MethodChannelService extends GetxService {
           notif.createFailedToSend(chat, scheduled: true);
         }
         return true;
+      case "incoming-facetime":
+        Logger.info("Received incoming facetime from FCM");
+        final replaced = call.arguments.toString().replaceAll("\\", "");
+        Map<String, dynamic> data = jsonDecode(replaced.substring(1, replaced.length - 1)) ?? {};
+        String? caller = data["caller"];
+        if (caller != null) {
+          notif.createFacetimeNotif(Handle(address: caller));
+        }
+        return true;
       case "reply":
         await storeStartup.future;
         Logger.info("Received reply to message from FCM");
