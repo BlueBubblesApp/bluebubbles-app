@@ -100,8 +100,8 @@ class MethodChannelService extends GetxService {
         return true;
       case "incoming-facetime":
         Logger.info("Received incoming facetime from FCM");
-        Map<String, dynamic> data = jsonDecode(call.arguments) ?? {};
-        print(data);
+        final replaced = call.arguments.toString().replaceAll("\\", "");
+        Map<String, dynamic> data = jsonDecode(replaced.substring(1, replaced.length - 1)) ?? {};
         String? caller = data["caller"];
         if (caller != null) {
           notif.createFacetimeNotif(Handle(address: caller));

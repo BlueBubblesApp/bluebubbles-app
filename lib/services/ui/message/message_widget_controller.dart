@@ -164,9 +164,9 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     if (newItem.guid != oldGuid && oldGuid!.contains("temp")) {
       message = Message.merge(newItem, message);
       ms(message.chat.target!.guid).updateMessage(message, oldGuid: oldGuid);
-      updateWidgetFunctions[MessageHolder]?.call(null);
+      updateWidgets<MessageHolder>(null);
       if (message.isFromMe! && message.attachments.isNotEmpty) {
-        updateWidgetFunctions[AttachmentHolder]?.call(null);
+        updateWidgets<AttachmentHolder>(null);
       }
     } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead) {
       message = Message.merge(newItem, message);
@@ -176,20 +176,20 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
           .where((e) => e.isFromMe! && (e.dateDelivered != null || e.dateRead != null))
           .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       for (Message m in messages.take(2)) {
-        getActiveMwc(m.guid!)?.updateWidgetFunctions[DeliveredIndicator]?.call(null);
+        getActiveMwc(m.guid!)?.updateWidgets<DeliveredIndicator>(null);
       }
-      updateWidgetFunctions[DeliveredIndicator]?.call(null);
+      updateWidgets<DeliveredIndicator>(null);
     } else if (newItem.dateEdited != message.dateEdited || newItem.error != message.error) {
       message = Message.merge(newItem, message);
       parts.clear();
       buildMessageParts();
       ms(message.chat.target!.guid).updateMessage(message);
-      updateWidgetFunctions[MessageHolder]?.call(null);
+      updateWidgets<MessageHolder>(null);
     }
   }
 
   void updateThreadOriginator(Message newItem) {
-    updateWidgetFunctions[MessageProperties]?.call(null);
+    updateWidgets<MessageProperties>(null);
   }
 
   void updateAssociatedMessage(Message newItem, {bool updateHolder = true}) {
@@ -200,12 +200,12 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       message.associatedMessages.add(newItem);
     }
     if (updateHolder) {
-      updateWidgetFunctions[MessageHolder]?.call(null);
+      updateWidgets<MessageHolder>(null);
     }
   }
 
   void removeAssociatedMessage(Message toRemove) {
     message.associatedMessages.removeWhere((e) => e.id == toRemove.id);
-    updateWidgetFunctions[MessageHolder]?.call(null);
+    updateWidgets<MessageHolder>(null);
   }
 }

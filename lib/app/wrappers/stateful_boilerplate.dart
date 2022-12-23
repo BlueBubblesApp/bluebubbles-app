@@ -7,8 +7,12 @@ import 'package:get/get.dart';
 
 /// [GetxController] with support for optimized state management
 class StatefulController extends GetxController {
-  final Map<Object, Function> updateWidgetFunctions = {};
+  final Map<Object, List<Function>> updateWidgetFunctions = {};
   late final void Function(VoidCallback) updateObx;
+
+  void updateWidgets<T>(Object? arg) {
+    updateWidgetFunctions[T]?.forEach((e) => e.call(arg));
+  }
 }
 
 /// [StatefulWidget] with support for optimized state management and a built-in
@@ -50,7 +54,8 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
     if (widget.parentController.updateWidgetFunctions.isEmpty) {
       widget.parentController.updateObx = updateObx;
     }
-    widget.parentController.updateWidgetFunctions[T] = updateWidget;
+    widget.parentController.updateWidgetFunctions[T] ??= [];
+    widget.parentController.updateWidgetFunctions[T]!.add(updateWidget);
 
     // complete the completer when we know the page animation has finished
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
