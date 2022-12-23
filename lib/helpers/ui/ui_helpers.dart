@@ -442,7 +442,7 @@ Future<void> paintGroupAvatar({
             style: TextStyle(
                 fontSize: adjustedWidth * 0.3,
                 fontFamily: icon.fontFamily,
-                color: Get.context?.textTheme.labelLarge!.color!.withOpacity(0.8)))
+                color: theme.colorScheme.properOnSurface.withOpacity(0.8)))
         ..layout()
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {
