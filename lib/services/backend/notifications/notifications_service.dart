@@ -149,10 +149,14 @@ class NotificationsService extends GetxService {
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
     final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
 
-    Uint8List chatIcon = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
+    Uint8List chatIcon = await avatarAsBytes(chat: chat, quality: 256);
     Uint8List contactIcon = message.isFromMe!
         ? personIcon
-        : await avatarAsBytes(isGroup: false, participants: chat.participants.where((e) => e.address == message.handle!.address).toList(), chatGuid: guid, quality: 256);
+        : await avatarAsBytes(
+            participantsOverride: chat.participants.where((e) => e.address == message.handle!.address).toList(),
+            chat: chat,
+            quality: 256
+        );
     if (chatIcon.isEmpty) {
       chatIcon = personIcon;
     }
@@ -242,7 +246,7 @@ class NotificationsService extends GetxService {
           return;
         }
 
-        Uint8List avatar = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
+        Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
 
         // Create a temp file with the avatar
         String path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");

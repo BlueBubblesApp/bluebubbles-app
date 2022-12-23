@@ -536,6 +536,11 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       uiStartup.complete();
+
+      if (!ls.isBubble) {
+        ls.createFakePort();
+      }
+
       ErrorWidget.builder = (FlutterErrorDetails error) {
         Logger.error(error.exception);
         Logger.error("Stacktrace: ${error.stack.toString()}");

@@ -5,13 +5,14 @@ import 'dart:ui' as ui;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
-import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
 class BackButton extends StatelessWidget {
@@ -342,15 +343,15 @@ Color getIndicatorColor(SocketState socketState) {
 }
 
 Future<Uint8List> avatarAsBytes({
-  required String chatGuid,
-  required bool isGroup,
-  List<Handle>? participants,
+  required Chat chat,
+  List<Handle>? participantsOverride,
   double quality = 256,
 }) async {
+  final participants = participantsOverride ?? chat.participants;
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
 
-  await paintGroupAvatar(chatGuid: chatGuid, participants: participants, canvas: canvas, size: quality);
+  await paintGroupAvatar(chat: chat, participants: participants, canvas: canvas, size: quality);
 
   ui.Picture picture = pictureRecorder.endRecording();
   ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
@@ -361,21 +362,33 @@ Future<Uint8List> avatarAsBytes({
 }
 
 Future<void> paintGroupAvatar({
-  required String chatGuid,
+  required Chat chat,
   required List<Handle>? participants,
   required Canvas canvas,
   required double size,
 }) async {
-  if (kIsDesktop) {
-    String customPath = join(fs.appDocDir.path, "avatars",
-        chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+  late final ThemeData theme;
+  if (!ls.isAlive) {
+    final brightness = SchedulerBinding.instance.window.platformBrightness;
+    if (brightness == Brightness.light) {
+      theme = ThemeStruct.getLightTheme().data;
+    } else {
+      theme = ThemeStruct.getDarkTheme().data;
+    }
+  } else {
+    theme = Get.context!.theme;
+  }
 
-    if (await File(customPath).exists()) {
-      Uint8List? customAvatar = await clip(await File(customPath).readAsBytes(), size: size.toInt(), circle: true);
-      if (customAvatar != null) {
-        canvas.drawImage(await loadImage(customAvatar), const Offset(0, 0), Paint());
-        return;
-      }
+  if (chat.customAvatarPath != null) {
+    Uint8List? customAvatar;
+    try {
+      customAvatar = await clip(await File(chat.customAvatarPath!).readAsBytes(), size: size.toInt(), circle: true);
+    } catch (e) {
+      Logger.error(e);
+    }
+    if (customAvatar != null) {
+      canvas.drawImage(await loadImage(customAvatar), const Offset(0, 0), Paint());
+      return;
     }
   }
 
@@ -384,7 +397,6 @@ Future<void> paintGroupAvatar({
 
   if (participants.length == 1) {
     await paintAvatar(
-      chatGuid: chatGuid,
       handle: participants.first,
       canvas: canvas,
       offset: const Offset(0, 0),
@@ -393,7 +405,7 @@ Future<void> paintGroupAvatar({
     return;
   }
 
-  Paint paint = Paint()..color = Get.theme.colorScheme.properSurface;
+  Paint paint = Paint()..color = theme.colorScheme.properSurface;
   Offset _offset = Offset(size * 0.5, size * 0.5);
   if (kIsDesktop) {
     canvas.drawCircle(_offset, size * 0.5, paint);
@@ -415,14 +427,10 @@ Future<void> paintGroupAvatar({
     if (index == maxAvatars - 1 && participants.length > maxAvatars) {
       Paint paint = Paint();
       paint.isAntiAlias = true;
-      paint.color = Get.context?.theme.colorScheme.secondary.withOpacity(0.8) ?? HexColor("686868").withOpacity(0.8);
+      paint.color = theme.colorScheme.properSurface.withOpacity(0.8);
       Offset _offset = Offset(left + realSize * 0.5, top + realSize * 0.5);
       double radius = realSize * 0.5;
-      if (kIsDesktop) {
-        canvas.drawCircle(_offset, radius, paint);
-      } else {
-        canvas.drawRect(Rect.fromCenter(center: _offset, width: realSize, height: realSize), paint);
-      }
+      canvas.drawCircle(_offset, radius, paint);
 
       IconData icon = Icons.people;
 
@@ -438,14 +446,11 @@ Future<void> paintGroupAvatar({
         ..layout()
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {
-      Paint paint = Paint()
-        ..color = (ss.settings.skin.value == Skins.Samsung
-            ? Get.context?.theme.colorScheme.secondary
-            : Get.context?.theme.backgroundColor) ??
-            HexColor("928E8E");
+      Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung
+            ? theme.colorScheme.secondary
+            : theme.backgroundColor;
       canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
       await paintAvatar(
-        chatGuid: chatGuid,
         handle: participants[index],
         canvas: canvas,
         offset: Offset(left + realSize * 0.01, top + realSize * 0.01),
@@ -459,8 +464,7 @@ Future<void> paintGroupAvatar({
 }
 
 Future<void> paintAvatar(
-    {required String chatGuid,
-      required Handle? handle,
+    {required Handle? handle,
       required Canvas canvas,
       required Offset offset,
       required double size,
@@ -469,20 +473,6 @@ Future<void> paintAvatar(
       bool inGroup=false}) async {
   fontSize ??= size * 0.5;
   borderWidth ??= size * 0.05;
-
-  if (kIsDesktop) {
-    String customPath = join(fs.appDocDir.path, "avatars",
-        chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
-
-    if (await File(customPath).exists()) {
-      Uint8List? customAvatar = await clip(await File(customPath).readAsBytes(), size: size.toInt(), circle: true);
-      if (customAvatar != null) {
-        canvas.drawImage(await loadImage(customAvatar), offset, Paint());
-        return;
-      }
-    }
-  }
-
   Contact? contact = handle?.contact ?? (handle != null ? cs.getContact(handle.address) : null);
   if (contact?.avatar != null) {
     Uint8List? contactAvatar =
