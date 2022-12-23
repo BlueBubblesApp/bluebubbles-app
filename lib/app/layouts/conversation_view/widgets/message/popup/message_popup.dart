@@ -738,7 +738,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   
   void redownload() {
     for (Attachment? element in part.attachments) {
-      cvc(cm.activeChat!.chat).imageData.remove(element!.guid!);
+      widget.cvController.imageData.remove(element!.guid!);
       as.redownloadAttachment(element);
     }
     setState(() {});

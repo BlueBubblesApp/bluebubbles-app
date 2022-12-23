@@ -18,7 +18,10 @@ class ImageViewer extends StatefulWidget {
     Key? key,
     required this.file,
     required this.attachment,
+    this.controller,
   }) : super(key: key);
+
+  final ConversationViewController? controller;
 
   @override
   OptimizedState createState() => _ImageViewerState();
@@ -27,7 +30,7 @@ class ImageViewer extends StatefulWidget {
 class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAliveClientMixin {
   Attachment get attachment => widget.attachment;
   PlatformFile get file => widget.file;
-  ConversationViewController get controller => cvc(cm.activeChat!.chat);
+  ConversationViewController get controller => widget.controller ?? cvc(cm.activeChat!.chat);
 
   Uint8List? data;
 

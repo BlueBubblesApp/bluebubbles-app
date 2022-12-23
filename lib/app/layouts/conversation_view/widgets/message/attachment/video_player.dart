@@ -24,7 +24,10 @@ class VideoPlayer extends StatefulWidget {
     Key? key,
     required this.file,
     required this.attachment,
+    required this.controller,
   }) : super(key: key);
+
+  final ConversationViewController? controller;
 
   @override
   OptimizedState createState() => _VideoPlayerState();
@@ -33,7 +36,7 @@ class VideoPlayer extends StatefulWidget {
 class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAliveClientMixin {
   Attachment get attachment => widget.attachment;
   PlatformFile get file => widget.file;
-  ConversationViewController get cvController => cvc(cm.activeChat!.chat);
+  ConversationViewController get cvController => widget.controller ?? cvc(cm.activeChat!.chat);
 
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;

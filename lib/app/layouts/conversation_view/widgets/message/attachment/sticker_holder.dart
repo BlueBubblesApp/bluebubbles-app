@@ -8,8 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 
 class StickerHolder extends StatefulWidget {
-  StickerHolder({Key? key, required this.stickerMessages}) : super(key: key);
+  StickerHolder({Key? key, required this.stickerMessages, required this.controller}) : super(key: key);
   final Iterable<Message> stickerMessages;
+  final ConversationViewController controller;
 
   @override
   State<StickerHolder> createState() => _StickerHolderState();
@@ -17,7 +18,7 @@ class StickerHolder extends StatefulWidget {
 
 class _StickerHolderState extends OptimizedState<StickerHolder> with AutomaticKeepAliveClientMixin {
   Iterable<Message> get messages => widget.stickerMessages;
-  ConversationViewController get controller => cvc(cm.activeChat!.chat);
+  ConversationViewController get controller => widget.controller;
   
   bool _visible = true;
 

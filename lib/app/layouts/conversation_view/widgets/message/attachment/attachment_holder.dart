@@ -238,7 +238,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               closedBuilder: (context, openContainer) {
                                 return GestureDetector(
                                   onTap: () {
-                                    final _controller = cvc(cm.activeChat!.chat);
+                                    final _controller = controller.cvController ?? cvc(cm.activeChat!.chat);
                                     _controller.focusNode.unfocus();
                                     _controller.subjectFocusNode.unfocus();
                                     openContainer();
@@ -246,6 +246,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                   child: ImageViewer(
                                     file: _content,
                                     attachment: attachment,
+                                    controller: controller.cvController,
                                   ),
                                 );
                               }
@@ -254,6 +255,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                             return VideoPlayer(
                               attachment: attachment,
                               file: _content,
+                              controller: controller.cvController,
                             );
                           } else if (attachment.mimeStart == "audio") {
                             return Padding(
@@ -261,6 +263,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               child: AudioPlayer(
                                 attachment: attachment,
                                 file: _content,
+                                controller: controller.cvController,
                               ),
                             );
                           } else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {

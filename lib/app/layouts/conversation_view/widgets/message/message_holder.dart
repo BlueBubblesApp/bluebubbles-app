@@ -538,7 +538,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                     ),
                                                   ),
                                                   // show stickers on top
-                                                  StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
+                                                  if (stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty)
+                                                    StickerHolder(
+                                                      stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                      controller: widget.cvController,
+                                                    ),
                                                   // show reactions on top
                                                   if (message.isFromMe!)
                                                     Positioned(

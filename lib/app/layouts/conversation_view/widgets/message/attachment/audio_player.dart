@@ -14,7 +14,10 @@ class AudioPlayer extends StatefulWidget {
     Key? key,
     required this.file,
     required this.attachment,
+    this.controller,
   }) : super(key: key);
+
+  final ConversationViewController? controller;
 
   @override
   OptimizedState createState() => _AudioPlayerState();
@@ -23,7 +26,7 @@ class AudioPlayer extends StatefulWidget {
 class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   Attachment? get attachment => widget.attachment;
   PlatformFile get file => widget.file;
-  ConversationViewController get cvController => cvc(cm.activeChat!.chat);
+  ConversationViewController get cvController => widget.controller ?? cvc(cm.activeChat!.chat);
 
   PlayerController? controller;
   late final animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
