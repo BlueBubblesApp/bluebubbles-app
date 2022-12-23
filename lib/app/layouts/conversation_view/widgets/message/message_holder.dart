@@ -306,7 +306,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   ),
                                 ),
                               Padding(
-                                padding: showAvatar || ss.settings.alwaysShowAvatars.value
+                                padding: (showAvatar || ss.settings.alwaysShowAvatars.value) && !(message.isGroupEvent || e.isUnsent)
                                     ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
                                 child: DecoratedBox(
                                   decoration: iOS && !widget.isReplyThread && replyTo != null && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
