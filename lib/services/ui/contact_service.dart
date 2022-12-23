@@ -17,8 +17,7 @@ class ContactsService extends GetxService {
   /// The master list of contact objects
   List<Contact> contacts = [];
 
-  Future<void> init({bool headless = false}) async {
-    if (headless) return;
+  Future<void> init() async {
     if (!kIsWeb) {
       contacts = Contact.getContacts();
     } else {
