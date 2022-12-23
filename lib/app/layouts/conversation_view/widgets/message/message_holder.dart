@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/sticker_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/chat_event/chat_event.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/t
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/timestamp_separator.dart';
+import 'package:bluebubbles/app/components/custom/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -97,6 +99,50 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   void updateWidget(void _) {
     messageParts = controller.parts;
     super.updateWidget(_);
+  }
+
+  List<Color> getBubbleColors() {
+    List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
+    if (ss.settings.colorfulBubbles.value && !message.isFromMe!) {
+      if (message.handle?.color == null) {
+        bubbleColors = toColorGradient(message.handle?.address);
+      } else {
+        bubbleColors = [
+          HexColor(message.handle!.color!),
+          HexColor(message.handle!.color!).lightenAmount(0.075),
+        ];
+      }
+    }
+    return bubbleColors;
+  }
+
+  void completeEdit(String newEdit, int part) async {
+    widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == part);
+    if (newEdit.isNotEmpty && newEdit != messageParts.firstWhere((element) => element.part == part).text) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: context.theme.colorScheme.properSurface,
+            title: Text(
+              "Editing message...",
+              style: context.theme.textTheme.titleLarge,
+            ),
+            content: Container(
+              height: 70,
+              child: Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                ),
+              ),
+            ),
+          );
+        }
+      );
+      await http.edit(message.guid!, newEdit, "Edited to: “$newEdit”", partIndex: part);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -354,19 +400,139 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                 || (e.part == 0 && controller.parts.length > 1),
                                                             connectUpper: iOS ? false : e.part != 0,
                                                           ),
-                                                          child: message.hasApplePayloadData
-                                                              || message.isLegacyUrlPreview
-                                                              || message.isInteractive ? InteractiveHolder(
-                                                            parentController: controller,
-                                                            message: e,
-                                                          ) : e.attachments.isEmpty
-                                                              && (e.text != null || e.subject != null) ? TextBubble(
-                                                            parentController: controller,
-                                                            message: e,
-                                                          ) : e.attachments.isNotEmpty ? AttachmentHolder(
-                                                            parentController: controller,
-                                                            message: e,
-                                                          ) : const SizedBox.shrink(),
+                                                          child: Stack(
+                                                            alignment: Alignment.centerRight,
+                                                            children: [
+                                                              message.hasApplePayloadData
+                                                                  || message.isLegacyUrlPreview
+                                                                  || message.isInteractive ? InteractiveHolder(
+                                                                parentController: controller,
+                                                                message: e,
+                                                              ) : e.attachments.isEmpty
+                                                                  && (e.text != null || e.subject != null) ? TextBubble(
+                                                                parentController: controller,
+                                                                message: e,
+                                                              ) : e.attachments.isNotEmpty ? AttachmentHolder(
+                                                                parentController: controller,
+                                                                message: e,
+                                                              ) : const SizedBox.shrink(),
+                                                              if (message.isFromMe!)
+                                                                Obx(() {
+                                                                  final editStuff = widget.cvController.editing.firstWhereOrNull((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
+                                                                  return AnimatedSize(
+                                                                    duration: const Duration(milliseconds: 250),
+                                                                    alignment: Alignment.centerRight,
+                                                                    curve: Curves.easeOutBack,
+                                                                    child: editStuff == null ? const SizedBox.shrink() : Material(
+                                                                      color: Colors.transparent,
+                                                                      child: Container(
+                                                                        decoration: BoxDecoration(
+                                                                          color: !message.isBigEmoji
+                                                                              ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0)
+                                                                              : context.theme.colorScheme.background,
+                                                                        ),
+                                                                        constraints: BoxConstraints(
+                                                                          maxWidth: message.isBigEmoji ? context.width : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
+                                                                          minHeight: 40,
+                                                                        ),
+                                                                        padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
+                                                                        child: CustomCupertinoTextField(
+                                                                          textCapitalization: TextCapitalization.sentences,
+                                                                          autocorrect: true,
+                                                                          focusNode: editStuff.item4,
+                                                                          controller: editStuff.item3,
+                                                                          scrollPhysics: const CustomBouncingScrollPhysics(),
+                                                                          style: context.theme.extension<BubbleText>()!.bubbleText,
+                                                                          keyboardType: TextInputType.multiline,
+                                                                          maxLines: 14,
+                                                                          minLines: 1,
+                                                                          placeholder: "Edited Message",
+                                                                          padding: EdgeInsets.all(iOS ? 10 : 12.5),
+                                                                          placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
+                                                                          selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
+                                                                          autofocus: true,
+                                                                          enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
+                                                                          textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                                                                              ? TextInputAction.send
+                                                                              : TextInputAction.newline,
+                                                                          cursorColor: context.theme.extension<BubbleText>()!.bubbleText.color,
+                                                                          cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
+                                                                          decoration: BoxDecoration(
+                                                                            border: Border.fromBorderSide(BorderSide(
+                                                                              color: context.theme.colorScheme.outline,
+                                                                              width: 1.5,
+                                                                            )),
+                                                                            borderRadius: BorderRadius.circular(20),
+                                                                          ),
+                                                                          onLongPressStart: () {
+                                                                            Feedback.forLongPress(context);
+                                                                          },
+                                                                          onTap: () {
+                                                                            HapticFeedback.selectionClick();
+                                                                          },
+                                                                          onSubmitted: (String value) {
+                                                                            completeEdit(value, e.part);
+                                                                          },
+                                                                          prefix: IconButton(
+                                                                            constraints: const BoxConstraints(maxWidth: 27),
+                                                                            padding: const EdgeInsets.only(left: 5),
+                                                                            visualDensity: VisualDensity.compact,
+                                                                            icon: Icon(
+                                                                              CupertinoIcons.xmark_circle_fill,
+                                                                              color: context.theme.colorScheme.outline,
+                                                                              size: 22,
+                                                                            ),
+                                                                            onPressed: () {
+                                                                              widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
+                                                                            },
+                                                                            iconSize: 22,
+                                                                            style: const ButtonStyle(
+                                                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                                              visualDensity: VisualDensity.compact,
+                                                                            ),
+                                                                          ),
+                                                                          suffix: ValueListenableBuilder(
+                                                                            valueListenable: editStuff.item3,
+                                                                            builder: (context, value, _) {
+                                                                              return Padding(
+                                                                                padding: const EdgeInsets.all(3.0),
+                                                                                child: TextButton(
+                                                                                  style: TextButton.styleFrom(
+                                                                                    backgroundColor: Colors.transparent,
+                                                                                    shape: const CircleBorder(),
+                                                                                    padding: const EdgeInsets.all(0),
+                                                                                    maximumSize: const Size(27, 27),
+                                                                                    minimumSize: const Size(27, 27),
+                                                                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                                                  ),
+                                                                                  child: AnimatedContainer(
+                                                                                    duration: const Duration(milliseconds: 150),
+                                                                                    constraints: const BoxConstraints(minHeight: 27, minWidth: 27),
+                                                                                    decoration: BoxDecoration(
+                                                                                      shape: iOS ? BoxShape.circle : BoxShape.rectangle,
+                                                                                      color: !iOS ? null : editStuff.item3.text.isNotEmpty ? Colors.white : context.theme.colorScheme.outline,
+                                                                                    ),
+                                                                                    alignment: Alignment.center,
+                                                                                    child: Icon(
+                                                                                      iOS ? CupertinoIcons.arrow_up : Icons.send_outlined,
+                                                                                      color: !iOS ? context.theme.extension<BubbleText>()!.bubbleText.color : context.theme.colorScheme.bubble(context, chat.isIMessage),
+                                                                                      size: iOS ? 18 : 26,
+                                                                                    ),
+                                                                                  ),
+                                                                                  onPressed: () {
+                                                                                    completeEdit(editStuff.item3.text, e.part);
+                                                                                  },
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    )
+                                                                  );
+                                                                }),
+                                                            ],
+                                                          ),
                                                         ),
                                                       ),
                                                     ),

@@ -255,6 +255,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       createContact();
                     } else if (value == 6) {
                       unsend();
+                    } else if (value == 7) {
+                      edit();
                     }
                   },
                   itemBuilder: (context) {
@@ -275,11 +277,19 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                             style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                           ),
                         ),
-                      if (ss.isMinVenturaSync && message.isFromMe! && ss.serverDetailsSync().item4 >= 148)
+                      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148)
                         PopupMenuItem(
                           value: 6,
                           child: Text(
                             'Undo Send',
+                            style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                          ),
+                        ),
+                      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148 && (part.text?.isNotEmpty ?? false))
+                        PopupMenuItem(
+                          value: 7,
+                          child: Text(
+                            'Edit',
                             style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                           ),
                         ),
@@ -769,6 +779,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     http.unsend(message.guid!, partIndex: part.part);
     popDetails();
   }
+
+  void edit() async {
+    final node = FocusNode();
+    cvController.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
+    popDetails();
+  }
   
   void delete() {
     service.removeMessage(message);
@@ -1118,7 +1134,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (ss.isMinVenturaSync && message.isFromMe! && ss.serverDetailsSync().item4 >= 148)
+      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1132,6 +1148,25 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               ),
               trailing: Icon(
                 ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_uturn_left : Icons.undo,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148 && (part.text?.isNotEmpty ?? false))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: edit,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Edit",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.pencil : Icons.edit_outlined,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
