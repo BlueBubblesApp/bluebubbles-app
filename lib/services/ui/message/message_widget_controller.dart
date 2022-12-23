@@ -87,7 +87,9 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
               .where((e) => e.text?.values.isNotEmpty ?? false)
               .map((e) => attributedBodyToMessagePart(e.text!.values.first).firstOrNull)
               .where((e) => e != null).map((e) => e!).toList());
-          existingPart.edits.removeLast();
+          if (existingPart.edits.isNotEmpty) {
+            existingPart.edits.removeLast();
+          }
         }
       }
     }
