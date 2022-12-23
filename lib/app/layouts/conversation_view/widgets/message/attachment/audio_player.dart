@@ -26,7 +26,7 @@ class AudioPlayer extends StatefulWidget {
 class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   Attachment? get attachment => widget.attachment;
   PlatformFile get file => widget.file;
-  ConversationViewController get cvController => widget.controller ?? cvc(cm.activeChat!.chat);
+  ConversationViewController? get cvController => widget.controller;
 
   PlayerController? controller;
   late final animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
@@ -34,7 +34,7 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   @override
   void initState() {
     super.initState();
-    if (attachment != null) controller = cvController.audioPlayers[attachment!.guid];
+    if (attachment != null) controller = cvController?.audioPlayers[attachment!.guid];
     updateObx(() {
       initBytes();
     });
@@ -49,13 +49,13 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   }
 
   void initBytes() async {
-    if (attachment != null) controller = cvController.audioPlayers[attachment!.guid];
+    if (attachment != null) controller = cvController?.audioPlayers[attachment!.guid];
     if (controller == null) {
       controller = PlayerController()..addListener(() {
         setState(() {});
       });
       await controller!.preparePlayer(file.path!);
-      if (attachment != null) cvController.audioPlayers[attachment!.guid!] = controller!;
+      if (attachment != null) cvController?.audioPlayers[attachment!.guid!] = controller!;
     }
     setState(() {});
   }

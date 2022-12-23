@@ -204,6 +204,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   }
 
   void close() {
+    cm.setAllInactive();
     Get.delete<ConversationViewController>(tag: tag);
   }
 }

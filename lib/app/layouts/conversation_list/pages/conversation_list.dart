@@ -170,6 +170,12 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                       Get.back(id: 2);
                       id2result = true;
                     }
+                    if (!(Get.global(2).currentState?.canPop() ?? true)) {
+                      if (cm.activeChat != null) {
+                        cvc(cm.activeChat!.chat).close();
+                      }
+                      eventDispatcher.emit('update-highlight', null);
+                    }
                     return true;
                   }, id: 2);
                   if (!id2result) {
