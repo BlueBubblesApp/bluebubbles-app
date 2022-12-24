@@ -100,10 +100,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     updateObx(() {
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == part.part)
+          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) && (e.associatedMessagePart ?? 0) == part.part)
           .toList());
-      selfReaction = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
-      currentlySelectedReaction = selfReaction;
+      final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
+      if (!(self?.contains("-") ?? true)) {
+        selfReaction = self;
+        currentlySelectedReaction = selfReaction;
+      }
       for (Message m in reactions) {
         if (m.isFromMe!) {
           m.handle = null;
