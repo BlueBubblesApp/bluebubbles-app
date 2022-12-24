@@ -252,7 +252,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 );
                               }
                             );
-                          } else if (attachment.mimeStart == "video" && !kIsDesktop && !ss.settings.highPerfMode.value) {
+                          } else if ((attachment.mimeStart == "video" || attachment.mimeType == "audio/mp4") && !kIsDesktop && !ss.settings.highPerfMode.value) {
                             return VideoPlayer(
                               attachment: attachment,
                               file: _content,
