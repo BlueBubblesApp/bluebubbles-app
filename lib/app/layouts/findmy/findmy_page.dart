@@ -440,7 +440,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               ),
             ],
             onDestinationSelected: (page) {
-              if (!completer.isCompleted) return;
+              if (fetching != false) return;
               index.value = page;
               tabController.animateTo(page);
             },
