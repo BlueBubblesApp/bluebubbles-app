@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -30,7 +31,7 @@ class NetworkTasks {
     }
   }
 
-  static Future<void> detectLocalhost() async {
+  static Future<void> detectLocalhost({bool createSnackbar = false}) async {
     final wifiIP = await NetworkInfo().getWifiIP();
     final schemes = ['https', 'http'];
     if (wifiIP != null) {
@@ -58,6 +59,10 @@ class NetworkTasks {
           }
         }
         if (address != null) {
+          if (createSnackbar) {
+            showSnackbar('Localhost Detected', 'Connected to $address');
+          }
+
           http.originOverride = address;
         } else {
           http.originOverride = null;
