@@ -41,7 +41,9 @@ class HeaderText extends StatelessWidget {
 }
 
 class SyncIndicator extends StatelessWidget {
-  const SyncIndicator();
+  final double size;
+
+  SyncIndicator({this.size = 12});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +52,7 @@ class SyncIndicator extends StatelessWidget {
           || !sync.isIncrementalSyncing.value) {
         return const SizedBox.shrink();
       }
-      return buildProgressIndicator(context, size: 12);
+      return buildProgressIndicator(context, size: size);
     });
   }
 }

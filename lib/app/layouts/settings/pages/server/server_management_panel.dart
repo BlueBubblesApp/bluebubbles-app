@@ -562,7 +562,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           if (ss.settings.localhostPort.value == null) {
                             http.originOverride = null;
                           } else {
-                            NetworkTasks.detectLocalhost();
+                            NetworkTasks.detectLocalhost(createSnackbar: true);
                           }
                         },
                       ))
