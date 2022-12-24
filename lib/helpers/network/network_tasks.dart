@@ -33,7 +33,7 @@ class NetworkTasks {
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) async {
     final wifiIP = await NetworkInfo().getWifiIP();
-    final schemes = ['https', 'http'];
+    final schemes = ['http', 'https'];
     if (wifiIP != null) {
       final stream = HostScanner.scanDevicesForSinglePort(
         wifiIP.substring(0, wifiIP.lastIndexOf('.')),
