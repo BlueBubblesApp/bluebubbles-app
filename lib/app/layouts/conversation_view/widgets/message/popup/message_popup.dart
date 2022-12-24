@@ -1327,7 +1327,7 @@ class ReactionDetails extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: Text(
-                        message.handle?.displayName ?? "You",
+                        message.isFromMe! ? "You" : (message.handle?.displayName ?? "Unknown"),
                         style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                       ),
                     ),
