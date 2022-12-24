@@ -38,23 +38,15 @@ class CupertinoHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Expanded(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: HeaderText(controller: controller),
-                    ),
-                    const SyncIndicator(),
-                  ],
-                ),
+                child: HeaderText(controller: controller),
               ),
               Obx(() => Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  SyncIndicator(size: 16),
+                  const SizedBox(width: 10.0),
                   ClipOval(
                     child: Material(
                       color: context.theme.colorScheme.properSurface, // button color
