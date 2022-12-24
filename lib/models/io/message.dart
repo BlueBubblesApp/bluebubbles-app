@@ -543,6 +543,9 @@ class Message {
         if (existingHandle != null) {
           m.handleId = existingHandle.id;
         }
+        if (existingMessages.firstWhereOrNull((e) => e.guid == m.guid) == null && m.otherHandle != null) {
+          m.otherHandle = Handle.findOne(originalROWID: m.otherHandle)?.id;
+        }
       }
       associatedMessages.removeWhere((message) {
         Message? _message = messages.firstWhereOrNull((e) => e.guid == message.guid);

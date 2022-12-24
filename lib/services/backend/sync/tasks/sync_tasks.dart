@@ -162,12 +162,16 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
         if (message.handle == null && message.handleId == 0) continue;
 
         // If the handle is null, find the handle data by the original handle ID.
+        bool hadNullHandle = message.handle == null;
         message.handle ??= handlesCache.values.firstWhereOrNull(
             (element) => element.originalROWID == message.handleId);
         if (!handlesCache.containsKey(message.handle?.address)) continue;
 
         message.handleId = handlesCache[message.handle!.address]?.id ?? 0;
         message.handle = handlesCache[message.handle!.address];
+        if (hadNullHandle && message.otherHandle != null) {
+          message.otherHandle = Handle.findOne(originalROWID: message.otherHandle)?.id;
+        }
       }
 
       // 2. Extract & cache the attachments
