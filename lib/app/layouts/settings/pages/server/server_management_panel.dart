@@ -512,7 +512,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     ),
                   if (!kIsWeb)
                     Container(
-                      padding: const EdgeInsets.only(bottom: 5),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: Obx(() => SettingsSwitch(
                         initialVal: ss.settings.localhostPort.value != null,
                         title: "Detect Localhost Address",
