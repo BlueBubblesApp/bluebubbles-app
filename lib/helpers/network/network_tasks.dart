@@ -49,7 +49,7 @@ class NetworkTasks {
           }
         }
         if (address != null) {
-          http.originOverride = "http://$address:${ss.settings.localhostPort.value}/api/v1";
+          http.originOverride = "http://$address:${ss.settings.localhostPort.value}";
         } else {
           http.originOverride = null;
         }

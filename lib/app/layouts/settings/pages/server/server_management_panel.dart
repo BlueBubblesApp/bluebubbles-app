@@ -152,7 +152,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       const TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
+                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : http.originOverride ?? ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
                                       ..onTap = () {
                                         Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
                                         showSnackbar('Copied', "Address copied to clipboard");
