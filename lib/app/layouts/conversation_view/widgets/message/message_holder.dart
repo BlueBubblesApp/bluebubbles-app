@@ -547,7 +547,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                   // show reactions on top
                                                   if (message.isFromMe!)
                                                     Positioned(
-                                                      top: -15,
+                                                      top: -14,
                                                       left: -20,
                                                       child: ReactionHolder(
                                                         reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
@@ -556,7 +556,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                     ),
                                                   if (!message.isFromMe!)
                                                     Positioned(
-                                                      top: -15,
+                                                      top: -14,
                                                       right: -20,
                                                       child: ReactionHolder(
                                                         reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),

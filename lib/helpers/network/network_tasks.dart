@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:network_info_plus/network_info_plus.dart';
@@ -29,8 +31,9 @@ class NetworkTasks {
     }
   }
 
-  static Future<void> detectLocalhost() async {
+  static Future<void> detectLocalhost({bool createSnackbar = false}) async {
     final wifiIP = await NetworkInfo().getWifiIP();
+    final schemes = ['https', 'http'];
     if (wifiIP != null) {
       final stream = HostScanner.scanDevicesForSinglePort(
         wifiIP.substring(0, wifiIP.lastIndexOf('.')),
@@ -42,18 +45,29 @@ class NetworkTasks {
       }, onDone: () async {
         String? address;
         for (ActiveHost h in hosts) {
-          final response = await http.dio.get("http://${hosts.first.address}:${ss.settings.localhostPort.value!}");
-          if (response.data.toString().contains("BlueBubbles")) {
-            address = h.address;
-            break;
+          for (String scheme in schemes) {
+            String addr = "$scheme://${h.address}:${ss.settings.localhostPort.value!}";
+            try {
+              final response = await http.dio.get(addr);
+              if (response.data.toString().contains("BlueBubbles")) {
+                address = addr;
+                break;
+              }
+            } catch (ex) {
+              Logger.debug('Failed to connect to localhost addres: $addr');
+            }
           }
         }
         if (address != null) {
-          http.originOverride = "http://$address:${ss.settings.localhostPort.value}/api/v1";
+          if (createSnackbar) {
+            showSnackbar('Localhost Detected', 'Connected to $address');
+          }
+
+          http.originOverride = address;
         } else {
           http.originOverride = null;
         }
-      }, onError: (_,__) {
+      }, onError: (_, __) {
         http.originOverride = null;
       });
     } else {

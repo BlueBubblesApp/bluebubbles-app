@@ -84,7 +84,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                 Stack(
                                   alignment: Alignment.centerLeft,
                                   children: [
-                                    const SyncIndicator(),
+                                    SyncIndicator(),
                                   ],
                                 ),
                               ],
