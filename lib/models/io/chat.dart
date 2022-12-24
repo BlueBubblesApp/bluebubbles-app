@@ -577,8 +577,10 @@ class Chat {
 
   Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
     if (hasUnreadMessage == hasUnread && !force) return this;
-    hasUnreadMessage = hasUnread;
-    save(updateHasUnreadMessage: true);
+    if (!cm.isChatActive(guid) || !hasUnread) {
+      hasUnreadMessage = hasUnread;
+      save(updateHasUnreadMessage: true);
+    }
 
     if (kIsDesktop) {
       notif.clearDesktopNotificationsForChat(guid);

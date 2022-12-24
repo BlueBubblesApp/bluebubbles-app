@@ -134,6 +134,7 @@ class MethodChannelService extends GetxService {
         }
       case "markAsRead":
       case "chat-read-status-changed":
+        if (ls.isAlive) return;
         await storeStartup.future;
         Logger.info("Received chat status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);
