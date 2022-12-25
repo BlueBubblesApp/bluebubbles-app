@@ -240,7 +240,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       if (stuff.length >= 3 && stuff[2] != null && stuff[2] is List) {
         queryBuilder = chatBox.query(Chat_.id.oneOf(stuff[2] as List<int>));
       } else {
-        queryBuilder = chatBox.query();
+        queryBuilder = chatBox.query(Chat_.dateDeleted.isNull());
       }
 
       // Build the query, applying some sorting so we get data in the correct order.
@@ -320,6 +320,7 @@ class Chat {
   set latestMessage(Message m) => _latestMessage = m;
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
+  DateTime? dateDeleted;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -352,6 +353,7 @@ class Chat {
     this.autoSendTypingIndicators = true,
     this.textFieldText,
     this.textFieldAttachments = const [],
+    this.dateDeleted,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -378,6 +380,7 @@ class Chat {
       participants: (json['participants'] as List? ?? []).map((e) => Handle.fromMap(e)).toList(),
       autoSendReadReceipts: json["autoSendReadReceipts"],
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
+      dateDeleted: parseDate(json["dateDeleted"]),
     );
   }
 
@@ -561,15 +564,27 @@ class Chat {
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
-  /// Delete a chat locally
+  /// Delete a chat locally. Prefer using softDelete so the chat doesn't come back
   static void deleteChat(Chat chat) {
     if (kIsWeb) return;
     List<Message> messages = Chat.getMessages(chat);
     store.runInTransaction(TxMode.write, () {
-      /// Remove all references of chat - from chatBox, messageBox,
-      /// chJoinBox, and cmJoinBox
+      /// Remove all references of chat and its messages
       chatBox.remove(chat.id!);
       messageBox.removeMany(messages.map((e) => e.id!).toList());
+    });
+  }
+
+  static void softDelete(Chat chat) {
+    if (kIsWeb) return;
+    List<Message> messages = Chat.getMessages(chat);
+    store.runInTransaction(TxMode.write, () {
+      chat.dateDeleted = DateTime.now().toUtc();
+      chat.hasUnreadMessage = false;
+      chat.save();
+      for (Message m in messages) {
+        Message.softDelete(m.guid!);
+      }
     });
   }
 
@@ -900,7 +915,7 @@ class Chat {
     _latestMessage ??= other.latestMessage;
     muteArgs ??= other.muteArgs;
     title ??= other.title;
-
+    dateDeleted ??= other.dateDeleted;
     return this;
   }
 
@@ -938,5 +953,6 @@ class Chat {
     "_pinIndex": _pinIndex.value,
     "autoSendReadReceipts": autoSendReadReceipts!,
     "autoSendTypingIndicators": autoSendTypingIndicators!,
+    "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
   };
 }

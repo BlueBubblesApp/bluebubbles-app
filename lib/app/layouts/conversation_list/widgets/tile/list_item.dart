@@ -120,7 +120,7 @@ class ListItem extends StatelessWidget {
               chat.toggleMute(chat.muteType != "mute");
             } else if (action == MaterialSwipeAction.delete) {
               chats.removeChat(chat);
-              Chat.deleteChat(chat);
+              Chat.softDelete(chat);
             } else if (action == MaterialSwipeAction.mark_read) {
               chat.toggleHasUnread(!chat.hasUnreadMessage!);
             } else if (action == MaterialSwipeAction.archive) {

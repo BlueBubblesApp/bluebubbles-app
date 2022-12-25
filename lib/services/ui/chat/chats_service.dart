@@ -28,7 +28,7 @@ class ChatsService extends GetxService {
   void onInit() {
     super.onInit();
     // watch for new chats
-    final countQuery = (chatBox.query()
+    final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())
       ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
     countSub = countQuery.listen((event) {
       if (!ss.settings.finishedSetup.value) return;
@@ -110,11 +110,13 @@ class ChatsService extends GetxService {
 
   void updateChat(Chat updated, {bool shouldSort = false}) {
     final index = chats.indexWhere((e) => updated.guid == e.guid);
-    final toUpdate = chats[index];
-    // this is so the list doesn't re-render
-    // ignore: invalid_use_of_protected_member
-    chats.value[index] = updated.merge(toUpdate);
-    if (shouldSort) sort();
+    if (index != -1) {
+      final toUpdate = chats[index];
+      // this is so the list doesn't re-render
+      // ignore: invalid_use_of_protected_member
+      chats.value[index] = updated.merge(toUpdate);
+      if (shouldSort) sort();
+    }
   }
 
   void addChat(Chat toAdd) {

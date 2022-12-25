@@ -89,7 +89,7 @@
     },
     {
       "id": "3:9017250848141753702",
-      "lastPropertyId": "23:7756745453707268462",
+      "lastPropertyId": "24:1609660383308913679",
       "name": "Chat",
       "properties": [
         {
@@ -179,6 +179,11 @@
           "id": "23:7756745453707268462",
           "name": "textFieldAttachments",
           "type": 30
+        },
+        {
+          "id": "24:1609660383308913679",
+          "name": "dateDeleted",
+          "type": 10
         }
       ],
       "relations": [

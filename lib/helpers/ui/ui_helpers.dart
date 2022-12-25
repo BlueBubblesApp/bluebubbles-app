@@ -253,7 +253,7 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
             behavior: HitTestBehavior.opaque,
             onTap: () async {
               chats.removeChat(chat);
-              Chat.deleteChat(chat);
+              Chat.softDelete(chat);
               Navigator.pop(context);
             },
             child: Padding(
