@@ -42,13 +42,6 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
   void initState() {
     super.initState();
     getAttachments();
-
-    eventDispatcher.stream.listen((event) {
-      if (event.item1 == "add-attachment") {
-        PlatformFile file = PlatformFile.fromMap(event.item2);
-        controller.pickedAttachments.add(file);
-      }
-    });
   }
 
   Future<void> getAttachments() async {
@@ -61,18 +54,17 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
       // see if there is a recent attachment
       if (DateTime.now().toLocal().isWithin(_images.first.modifiedDateTime, minutes: 2)) {
         final file = await _images.first.file;
-        if (controller.addedRecentPhotoReply || file == null) return;
-        controller.addedRecentPhotoReply = true;
-        eventDispatcher.emit('add-custom-smartreply', PlatformFile(
-          path: file.path,
-          name: file.path.split('/').last,
-          size: await file.length(),
-          bytes: await file.readAsBytes(),
-        ));
+        if (file != null) {
+          eventDispatcher.emit('add-custom-smartreply', PlatformFile(
+            path: file.path,
+            name: file.path.split('/').last,
+            size: await file.length(),
+            bytes: await file.readAsBytes(),
+          ));
+        }
       }
     }
-
-    if (mounted) setState(() {});
+    setState(() {});
   }
 
   Future<void> openFullCamera({String type = 'camera'}) async {
