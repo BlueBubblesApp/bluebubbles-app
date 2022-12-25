@@ -42,7 +42,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   List<Message> _messages = <Message>[];
 
   RxList<Widget> smartReplies = <Widget>[].obs;
-  RxList<Widget> internalSmartReplies = <Widget>[].obs;
+  RxMap<String, Widget> internalSmartReplies = <String, Widget>{}.obs;
 
   late final messageService = widget.customService ?? ms(chat.guid)
     ..init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
@@ -70,12 +70,10 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         setState(() {});
       } else if (e.item1 == "add-custom-smartreply") {
         if (e.item2 != null && internalSmartReplies.isEmpty) {
-          internalSmartReplies.add(
-            _buildReply("Attach recent photo", onTap: () async {
-              controller.pickedAttachments.add(e.item2);
-              internalSmartReplies.clear();
-            })
-          );
+          internalSmartReplies['attach-recent'] = _buildReply("Attach recent photo", onTap: () async {
+            controller.pickedAttachments.add(e.item2);
+            internalSmartReplies.clear();
+          });
         }
       }
     });
@@ -319,7 +317,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                             child: ListView(
                               scrollDirection: Axis.horizontal,
                               reverse: true,
-                              children: smartReplies..addAll(internalSmartReplies),
+                              children: List<Widget>.from(smartReplies)..addAll(internalSmartReplies.values),
                             ),
                           ),
                         ) : const SizedBox.shrink())

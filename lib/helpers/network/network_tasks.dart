@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:network_info_plus/network_info_plus.dart';
@@ -32,6 +33,11 @@ class NetworkTasks {
   }
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) async {
+    ConnectivityResult status = await (Connectivity().checkConnectivity());
+    if (status != ConnectivityResult.wifi) {
+      http.originOverride = null;
+      return;
+    }
     final wifiIP = await NetworkInfo().getWifiIP();
     final schemes = ['http', 'https'];
     if (wifiIP != null) {

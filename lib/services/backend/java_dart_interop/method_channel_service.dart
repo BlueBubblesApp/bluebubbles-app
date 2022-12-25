@@ -63,13 +63,11 @@ class MethodChannelService extends GetxService {
         return true;
       case "new-message":
         await storeStartup.future;
-        Logger.info("Received new message from FCM with type ${call.arguments.runtimeType}");
+        Logger.info("Received new message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
-        Logger.info("Parsed data $data");
         if (!isNullOrEmpty(data)!) {
           final item = IncomingItem.fromMap(QueueType.newMessage, data!);
           if (ls.isAlive) {
-            Logger.info("Adding to queue...");
             inq.queue(item);
           } else {
             ah.handleNewMessage(item.chat, item.message, item.tempGuid);
@@ -83,7 +81,6 @@ class MethodChannelService extends GetxService {
         if (!isNullOrEmpty(data)!) {
           final item = IncomingItem.fromMap(QueueType.updatedMessage, data!);
           if (ls.isAlive) {
-            Logger.info("Adding to queue...");
             inq.queue(item);
           } else {
             ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);

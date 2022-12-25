@@ -41,7 +41,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
       ?? ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.attachments.firstWhereOrNull((e) => e.id == part.attachments.first.id)
       ?? part.attachments.first;
   late dynamic content;
-  bool selected = false;
+  late bool selected = controller.cvController?.isSelected(message.guid!) ?? false;
 
   @override
   void initState() {

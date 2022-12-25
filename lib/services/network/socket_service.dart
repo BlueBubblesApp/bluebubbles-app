@@ -7,6 +7,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -33,6 +34,12 @@ class SocketService extends GetxService {
   void onInit() {
     super.onInit();
     startSocket();
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.wifi && http.originOverride != null) {
+        Logger.info("Detected switch off wifi, removing localhost address...");
+        http.originOverride = null;
+      }
+    });
   }
 
   @override
