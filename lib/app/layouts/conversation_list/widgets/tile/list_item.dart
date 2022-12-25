@@ -38,6 +38,9 @@ class ListItem extends StatelessWidget {
         child: Row(
           mainAxisAlignment: left ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: <Widget>[
+            const SizedBox(
+              width: 20,
+            ),
             Icon(
               action == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
@@ -59,7 +62,7 @@ class ListItem extends StatelessWidget {
                   ? " Delete"
                   : action == MaterialSwipeAction.mark_read
                   ? (chat.hasUnreadMessage! ? ' Mark Read' : ' Mark Unread')
-                  : (chat.isArchived! ? ' UnArchive' : ' Archive'),
+                  : (chat.isArchived! ? ' Unarchive' : ' Archive'),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
