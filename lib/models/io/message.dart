@@ -755,7 +755,7 @@ class Message {
       ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
 
   Indicator get indicatorToShow {
-    if (isFromMe!) return Indicator.NONE;
+    if (!isFromMe!) return Indicator.NONE;
     if (dateRead != null) return Indicator.READ;
     if (dateDelivered != null) return Indicator.DELIVERED;
     if (dateCreated != null) return Indicator.SENT;
