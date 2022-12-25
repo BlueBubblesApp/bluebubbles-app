@@ -577,7 +577,7 @@ class Chat {
 
   Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
     if (hasUnreadMessage == hasUnread && !force) return this;
-    if (!cm.isChatActive(guid) || !hasUnread) {
+    if (!cm.isChatActive(guid) || !hasUnread || force) {
       hasUnreadMessage = hasUnread;
       save(updateHasUnreadMessage: true);
     }
