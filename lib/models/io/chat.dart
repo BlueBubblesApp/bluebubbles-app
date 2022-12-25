@@ -92,8 +92,8 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       final messages = <Message>[];
       if (searchAround == null) {
         final query = (messageBox.query(includeDeleted
-            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-            : Message_.dateDeleted.isNull())
+            ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+            : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
           ..link(Message_.chat, Chat_.id.equals(chatId))
           ..order(Message_.dateCreated, flags: Order.descending))
             .build();
@@ -103,20 +103,18 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
         messages.addAll(query.find());
         query.close();
       } else {
-        final beforeQuery = (messageBox.query(Message_.dateCreated.lessThan(searchAround)
-            .and(includeDeleted
-            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-            : Message_.dateDeleted.isNull()))
+        final beforeQuery = (messageBox.query(Message_.dateCreated.lessThan(searchAround).and(includeDeleted
+            ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+            : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull())))
           ..link(Message_.chat, Chat_.id.equals(chatId))
           ..order(Message_.dateCreated, flags: Order.descending))
             .build();
         beforeQuery.limit = limit;
         final before = beforeQuery.find();
         beforeQuery.close();
-        final afterQuery = (messageBox.query(Message_.dateCreated.greaterThan(searchAround)
-            .and(includeDeleted
-            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-            : Message_.dateDeleted.isNull()))
+        final afterQuery = (messageBox.query(Message_.dateCreated.greaterThan(searchAround).and(includeDeleted
+            ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+            : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull())))
           ..link(Message_.chat, Chat_.id.equals(chatId))
           ..order(Message_.dateCreated))
             .build();
@@ -695,8 +693,8 @@ class Chat {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
       final query = (messageBox.query(includeDeleted
-              ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-              : Message_.dateDeleted.isNull())
+              ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+              : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
             ..link(Message_.chat, Chat_.id.equals(chat.id!))
             ..order(Message_.dateCreated, flags: Order.descending))
           .build();

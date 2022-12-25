@@ -86,7 +86,8 @@ class SearchViewState extends OptimizedState<SearchView> {
     if (local) {
       final query = (messageBox.query(Message_.text.contains(currentSearchTerm!)
           .and(Message_.associatedMessageGuid.isNull())
-          .and(Message_.dateDeleted.isNull()))
+          .and(Message_.dateDeleted.isNull())
+          .and(Message_.dateCreated.notNull()))
         ..order(Message_.dateCreated, flags: Order.descending)).build();
       query.limit = 50;
       final messages = query.find();
