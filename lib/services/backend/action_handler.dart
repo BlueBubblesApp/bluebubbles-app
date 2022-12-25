@@ -238,6 +238,9 @@ class ActionHandler extends GetxService {
       m.handleId = handle.id;
       m.handle = handle;
     }
+    if (m.otherHandle != null) {
+      m.otherHandle = Handle.findOne(originalROWID: m.otherHandle)?.id;
+    }
     // Display notification if needed and save everything to DB
     Logger.info("Alive: ${ls.isAlive}");
     if (!ls.isAlive) {

@@ -153,7 +153,7 @@ class NotificationsService extends GetxService {
     Uint8List contactIcon = message.isFromMe!
         ? personIcon
         : await avatarAsBytes(
-            participantsOverride: chat.participants.where((e) => e.address == message.handle!.address).toList(),
+            participantsOverride: !chat.isGroup ? null : chat.participants.where((e) => e.address == message.handle!.address).toList(),
             chat: chat,
             quality: 256
         );

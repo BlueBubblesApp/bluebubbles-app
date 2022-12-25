@@ -21,6 +21,9 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
   bool get shouldHighlight => controller.shouldHighlight.value;
   bool get hoverHighlight => controller.hoverHighlight.value;
 
+  late bool unread = controller.chat.hasUnreadMessage ?? false;
+  late final StreamSubscription<Query<Chat>> sub;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +31,28 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
+
+    updateObx(() {
+      final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+          .watch();
+      sub = unreadQuery.listen((Query<Chat> query) async {
+        final chat = controller.chat.id == null ? null : await runAsync(() {
+          return chatBox.get(controller.chat.id!);
+        });
+        if (chat == null) return;
+        if (chat.hasUnreadMessage != unread) {
+          setState(() {
+            unread = chat.hasUnreadMessage!;
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
   }
 
   @override
@@ -56,7 +81,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
             title: ChatTitle(
               parentController: controller,
               style: context.theme.textTheme.bodyMedium!.copyWith(
-                fontWeight: controller.chat.hasUnreadMessage ?? false
+                fontWeight: unread
                     ? FontWeight.bold
                     : controller.shouldHighlight.value
                     ? FontWeight.w600
@@ -66,10 +91,10 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
             subtitle: controller.subtitle ?? ChatSubtitle(
               parentController: controller,
               style: context.theme.textTheme.bodySmall!.copyWith(
-                fontWeight: controller.chat.hasUnreadMessage ?? false
+                fontWeight: unread
                     ? FontWeight.bold
                     : null,
-                color: controller.chat.hasUnreadMessage ?? false
+                color: unread
                     ? context.textTheme.bodyMedium!.color
                     : context.theme.colorScheme.outline,
                 height: 1.5,
@@ -205,9 +230,11 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
             children: [
               Obx(() {
                 String indicatorText = "";
-                if (ss.settings.statusIndicatorsOnChats.value) {
+                if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
                   Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
-                  indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+                  if (show != Indicator.NONE) {
+                    indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+                  }
                 }
 
                 return Text(

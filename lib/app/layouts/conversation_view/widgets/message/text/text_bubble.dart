@@ -29,6 +29,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
 
   late MovieTween tween;
   Control anim = Control.stop;
+  bool selected = false;
 
   @override
   void initState() {
@@ -53,10 +54,24 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
         });
       }
     });
+    if (controller.cvController != null && !iOS) {
+      ever<List<Message>>(controller.cvController!.selected, (event) {
+        if (controller.cvController!.isSelected(message.guid!) && !selected) {
+          setState(() {
+            selected = true;
+          });
+        } else if (!controller.cvController!.isSelected(message.guid!) && selected) {
+          setState(() {
+            selected = false;
+          });
+        }
+      });
+    }
     super.initState();
   }
 
   List<Color> getBubbleColors() {
+    if (selected && !iOS) return [context.theme.colorScheme.tertiary, context.theme.colorScheme.tertiary];
     List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
     if (ss.settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
@@ -84,7 +99,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           right: message.isFromMe! && !message.isBigEmoji ? 10 : 0
         )),
       color: message.isFromMe! && !message.isBigEmoji
-          ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0)
+          ? (selected ? context.theme.colorScheme.tertiary : context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0))
           : null,
       decoration: message.isFromMe! || message.isBigEmoji ? null : BoxDecoration(
         gradient: LinearGradient(
@@ -99,14 +114,14 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           context,
           part,
           message,
-          colorOverride: ss.settings.colorfulBubbles.value && !message.isFromMe!
+          colorOverride: (ss.settings.colorfulBubbles.value && !message.isFromMe!) || selected
               ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
         ),
         initialData: buildMessageSpans(
           context,
           part,
           message,
-          colorOverride: ss.settings.colorfulBubbles.value && !message.isFromMe!
+          colorOverride: (ss.settings.colorfulBubbles.value && !message.isFromMe!) || selected
               ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
         ),
         builder: (context, snapshot) {

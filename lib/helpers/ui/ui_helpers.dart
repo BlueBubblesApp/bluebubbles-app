@@ -351,7 +351,7 @@ Future<Uint8List> avatarAsBytes({
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
 
-  await paintGroupAvatar(chat: chat, participants: participants, canvas: canvas, size: quality);
+  await paintGroupAvatar(chat: chat, participants: participants, canvas: canvas, size: quality, usingParticipantsOverride: participantsOverride != null);
 
   ui.Picture picture = pictureRecorder.endRecording();
   ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
@@ -366,6 +366,7 @@ Future<void> paintGroupAvatar({
   required List<Handle>? participants,
   required Canvas canvas,
   required double size,
+  required bool usingParticipantsOverride,
 }) async {
   late final ThemeData theme;
   if (!ls.isAlive) {
@@ -379,7 +380,7 @@ Future<void> paintGroupAvatar({
     theme = Get.context!.theme;
   }
 
-  if (chat.customAvatarPath != null) {
+  if (chat.customAvatarPath != null && !usingParticipantsOverride) {
     Uint8List? customAvatar;
     try {
       customAvatar = await clip(await File(chat.customAvatarPath!).readAsBytes(), size: size.toInt(), circle: true);

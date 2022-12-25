@@ -100,10 +100,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     updateObx(() {
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == part.part)
+          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) && (e.associatedMessagePart ?? 0) == part.part)
           .toList());
-      selfReaction = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
-      currentlySelectedReaction = selfReaction;
+      final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
+      if (!(self?.contains("-") ?? true)) {
+        selfReaction = self;
+        currentlySelectedReaction = selfReaction;
+      }
       for (Message m in reactions) {
         if (m.isFromMe!) {
           m.handle = null;
@@ -117,7 +120,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     });
   }
 
-  void popDetails() {
+  void popDetails({bool returnVal = false}) {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
       if (kIsWeb) {
@@ -126,7 +129,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         Navigator.of(context).pop();
       }
     }
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(returnVal);
   }
 
   @override
@@ -795,8 +798,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   
   void selectMultiple() {
     cvController.inSelectMode.toggle();
-    cvController.selected.add(message);
-    popDetails();
+    if (iOS) {
+      cvController.selected.add(message);
+    }
+    popDetails(returnVal: true);
   }
   
   void messageInfo() {
@@ -1324,7 +1329,7 @@ class ReactionDetails extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: Text(
-                        message.handle?.displayName ?? "You",
+                        message.isFromMe! ? "You" : (message.handle?.displayName ?? "Unknown"),
                         style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                       ),
                     ),

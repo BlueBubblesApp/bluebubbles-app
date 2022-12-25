@@ -407,7 +407,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            socket.restartSocket();
                           },
                           onClose: () {
                             Get.back();
@@ -421,7 +420,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            socket.restartSocket();
                           },
                           onClose: () {
                             Get.back();
@@ -567,6 +565,22 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         },
                       ))
                     ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
+                  SettingsTile(
+                    title: "Fetch Latest URL",
+                    subtitle: "Forcefully fetch latest URL from Firebase",
+                    backgroundColor: tileColor,
+                    onTap: () async {
+                      String? newUrl = await fdb.fetchNewUrl();
+                      showSnackbar("Notice", "Fetched URL: $newUrl");
+                      socket.restartSocket();
+                    }),
                 ]
               ),
               SettingsHeader(

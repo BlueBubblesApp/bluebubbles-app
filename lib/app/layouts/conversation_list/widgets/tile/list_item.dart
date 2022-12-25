@@ -10,7 +10,8 @@ import 'package:get/get.dart';
 class ListItem extends StatelessWidget {
   final Chat chat;
   final ConversationListController controller;
-  ListItem({required this.chat, required this.controller});
+  final VoidCallback update;
+  ListItem({required this.chat, required this.controller, required this.update});
 
   MaterialSwipeAction get leftAction => ss.settings.materialLeftAction.value;
   MaterialSwipeAction get rightAction => ss.settings.materialRightAction.value;
@@ -37,6 +38,9 @@ class ListItem extends StatelessWidget {
         child: Row(
           mainAxisAlignment: left ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: <Widget>[
+            const SizedBox(
+              width: 20,
+            ),
             Icon(
               action == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
@@ -58,7 +62,7 @@ class ListItem extends StatelessWidget {
                   ? " Delete"
                   : action == MaterialSwipeAction.mark_read
                   ? (chat.hasUnreadMessage! ? ' Mark Read' : ' Mark Unread')
-                  : (chat.isArchived! ? ' UnArchive' : ' Archive'),
+                  : (chat.isArchived! ? ' Unarchive' : ' Archive'),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -122,6 +126,7 @@ class ListItem extends StatelessWidget {
             } else if (action == MaterialSwipeAction.archive) {
               chat.toggleArchived(!chat.isArchived!);
             }
+            update.call();
           },
           child: tile,
         );

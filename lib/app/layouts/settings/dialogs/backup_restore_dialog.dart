@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/share.dart';
@@ -294,6 +295,9 @@ class BackupRestoreDialog extends StatelessWidget {
                                                       return ListTile(
                                                         title: Text(json[index]['name'], style: context.theme.textTheme.bodyLarge),
                                                         onTap: () async {
+                                                          if (!json[index].containsKey('data')) {
+                                                            return showSnackbar("Error", "This theme was created on the old theming engine and cannot be restored");
+                                                          }
                                                           ThemeStruct object = ThemeStruct.fromMap(json[index]);
                                                           object.id = null;
                                                           object.save();

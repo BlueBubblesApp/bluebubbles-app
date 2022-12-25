@@ -136,12 +136,12 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                                 ),
                                 UnreadIcon(width: maxWidth, parentController: controller),
                                 MuteIcon(width: maxWidth, parentController: controller),
+                                PinnedIndicators(width: maxWidth, controller: controller),
                               ],
                             ),
                             ChatTitle(parentController: controller),
                           ],
                         ),
-                        PinnedIndicators(width: maxWidth, controller: controller),
                         ReactionIcon(width: maxWidth, parentController: controller),
                         Positioned(
                           bottom: context.textTheme.bodyMedium!.fontSize! * 1.75,
@@ -410,7 +410,7 @@ class PinnedIndicators extends StatelessWidget {
       if (showTypingIndicator) {
         return Positioned(
           top: -sqrt(width / 2),
-          right: -sqrt(width / 2) - width * 0.25,
+          right: sqrt(width) - width * 0.05 * sqrt(2),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 32),
             child: const FittedBox(

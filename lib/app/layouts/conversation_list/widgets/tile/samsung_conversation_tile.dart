@@ -178,9 +178,11 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
         children: [
           Obx(() {
             String indicatorText = "";
-            if (ss.settings.statusIndicatorsOnChats.value) {
+            if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
               Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
-              indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+              if (show != Indicator.NONE) {
+                indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+              }
             }
 
             return Text(

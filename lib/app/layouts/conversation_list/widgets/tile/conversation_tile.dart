@@ -78,13 +78,13 @@ class ConversationTileController extends StatefulController {
   }
   
   void onSelected() {
+    onSelect!.call(!isSelected);
     if (ss.settings.skin.value == Skins.Material) {
       updateWidgets<MaterialConversationTile>(null);
     }
     if (ss.settings.skin.value == Skins.Samsung) {
       updateWidgets<SamsungConversationTile>(null);
     }
-    onSelect!.call(!isSelected);
   }
 }
 

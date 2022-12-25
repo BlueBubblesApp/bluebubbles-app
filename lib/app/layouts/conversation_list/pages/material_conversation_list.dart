@@ -116,7 +116,9 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                           : ThemeSwitcher.getScrollPhysics(),
                       itemBuilder: (context, index) {
                         final chat = _chats[index];
-                        final child = ListItem(chat: chat, controller: controller);
+                        final child = ListItem(chat: chat, controller: controller, update: () {
+                          setState(() {});
+                        });
                         final separator = Obx(() => !ss.settings.hideDividers.value ? Padding(
                           padding: const EdgeInsets.only(left: 20),
                           child: Divider(

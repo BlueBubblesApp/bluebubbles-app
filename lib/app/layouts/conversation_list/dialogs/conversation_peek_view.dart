@@ -276,7 +276,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            widget.chat.toggleHasUnread(!widget.chat.hasUnreadMessage!);
+            widget.chat.toggleHasUnread(!widget.chat.hasUnreadMessage!, force: true);
             popPeekView();
           },
           child: ListTile(
