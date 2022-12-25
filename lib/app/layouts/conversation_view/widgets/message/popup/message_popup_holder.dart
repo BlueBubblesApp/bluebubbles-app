@@ -46,7 +46,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     final minSierra = await ss.isMinSierra;
     final minBigSur = await ss.isMinBigSur;
     eventDispatcher.emit('popup-pushed', true);
-    await Navigator.push(
+    if (!iOS) {
+      widget.cvController.selected.add(message);
+    }
+    final result = await Navigator.push(
       Get.context!,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 150),
@@ -82,6 +85,9 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
         barrierDismissible: true,
       ),
     );
+    if (!result) {
+      widget.cvController.selected.remove(message);
+    }
     eventDispatcher.emit('popup-pushed', false);
   }
 

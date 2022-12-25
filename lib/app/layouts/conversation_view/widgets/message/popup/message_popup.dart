@@ -120,7 +120,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     });
   }
 
-  void popDetails() {
+  void popDetails({bool returnVal = false}) {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
       if (kIsWeb) {
@@ -129,7 +129,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         Navigator.of(context).pop();
       }
     }
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(returnVal);
   }
 
   @override
@@ -798,8 +798,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   
   void selectMultiple() {
     cvController.inSelectMode.toggle();
-    cvController.selected.add(message);
-    popDetails();
+    if (iOS) {
+      cvController.selected.add(message);
+    }
+    popDetails(returnVal: true);
   }
   
   void messageInfo() {
