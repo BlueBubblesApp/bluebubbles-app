@@ -25,6 +25,9 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
   String? error;
 
   void connect(String url, String password) async {
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length - 1);
+    }
     if (kIsWeb && url.startsWith("http://")) {
       error = "HTTP URLs are not supported on Web! You must use an HTTPS URL.";
       setState(() {});

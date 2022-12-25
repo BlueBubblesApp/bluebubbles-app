@@ -319,6 +319,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   }
 
   Future<void> connect(String url, String password) async {
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length - 1);
+    }
     if (kIsWeb && url.startsWith("http://")) {
       controller.updateConnectError("HTTP URLs are not supported on Web! You must use an HTTPS URL.");
       return;
