@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -50,6 +51,10 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
   @override
   Widget build(BuildContext context) {
     if (!iOS) {
+      String text = MessageHelper.getNotificationText(message);
+      if (ss.settings.redactedMode.value && ss.settings.hideMessageContent.value) {
+        text = faker.lorem.words(text.split(" ").length).join(" ");
+      }
       return ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
@@ -69,7 +74,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                 ),
                 const TextSpan(text: "\n"),
                 TextSpan(
-                  text: "${iOS ? " - " : ""}${MessageHelper.getNotificationText(message)}",
+                  text: text,
                   style: context.textTheme.bodyMedium!.apply(fontSizeFactor: 1.15),
                 ),
               ]),
