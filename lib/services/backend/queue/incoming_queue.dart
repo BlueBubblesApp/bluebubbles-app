@@ -16,10 +16,9 @@ class IncomingQueue extends Queue {
   Future<void> handleQueueItem(QueueItem _) async {
     assert(_ is IncomingItem);
     final item = _ as IncomingItem;
-    Logger.info("Item type ${item.type}");
+
     switch (item.type) {
       case QueueType.newMessage:
-        Logger.info("Sending to ActionHandler...");
         await ah.handleNewMessage(item.chat, item.message, item.tempGuid);
         break;
       case QueueType.updatedMessage:

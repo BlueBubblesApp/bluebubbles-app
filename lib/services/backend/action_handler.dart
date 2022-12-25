@@ -215,24 +215,18 @@ class ActionHandler extends GetxService {
 
   Future<void> handleNewMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
     // sanity check
-    Logger.info("Checking existing...");
     if (checkExisting) {
       final existing = Message.findOne(guid: tempGuid ?? m.guid);
-      Logger.info("Result: $existing");
       if (existing != null) {
-        Logger.info("Handling updated...");
         return await handleUpdatedMessage(c, m, tempGuid, checkExisting: false);
       }
     }
     // should have been handled by the sanity check
-    Logger.info("Checking tempGuid is null");
     if (tempGuid != null) return;
     Logger.info("New message: [${m.text}] - for chat [${c.guid}]", tag: "ActionHandler");
     // Gets the chat from the db or server (if new)
-    Logger.info("Getting chat...");
     c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
     // Get the message handle
-    Logger.info("Getting handle...");
     final handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId);
     if (handle != null) {
       m.handleId = handle.id;
@@ -242,12 +236,9 @@ class ActionHandler extends GetxService {
       m.otherHandle = Handle.findOne(originalROWID: m.otherHandle)?.id;
     }
     // Display notification if needed and save everything to DB
-    Logger.info("Alive: ${ls.isAlive}");
     if (!ls.isAlive) {
-      Logger.info("Creating notif...");
       await MessageHelper.handleNotification(m, c);
     }
-    Logger.info("Adding to chat...");
     await c.addMessage(m);
   }
 
