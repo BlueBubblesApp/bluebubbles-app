@@ -310,7 +310,8 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   Widget build(BuildContext context) {
     return Obx(() {
       final hideContent = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
-      String _subtitle = hideContent ? fakeText : subtitle;
+      final hideContacts = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+      String _subtitle = hideContent ? fakeText : hideContacts ? MessageHelper.getNotificationText(Message.findOne(guid: cachedLatestMessageGuid!)!) : subtitle;
 
       return RichText(
         text: TextSpan(
