@@ -10,7 +10,8 @@ import 'package:get/get.dart';
 class ListItem extends StatelessWidget {
   final Chat chat;
   final ConversationListController controller;
-  ListItem({required this.chat, required this.controller});
+  final VoidCallback update;
+  ListItem({required this.chat, required this.controller, required this.update});
 
   MaterialSwipeAction get leftAction => ss.settings.materialLeftAction.value;
   MaterialSwipeAction get rightAction => ss.settings.materialRightAction.value;
@@ -122,6 +123,7 @@ class ListItem extends StatelessWidget {
             } else if (action == MaterialSwipeAction.archive) {
               chat.toggleArchived(!chat.isArchived!);
             }
+            update.call();
           },
           child: tile,
         );
