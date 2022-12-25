@@ -826,9 +826,12 @@ class Message {
     // make sure the older message is none of the following:
     // 1) thread originator
     // 2) part of the thread
-    // OR the thread originator is not the last part of the older message
+    // OR
+    // 1) It is the thread originator but the part is not the last part of the older message
+    // 2) It is part of the thread but has multiple parts
     return (olderMessage.guid != threadOriginatorGuid && olderMessage.threadOriginatorGuid != threadOriginatorGuid)
-        || normalizedThreadPart != olderPartCount - 1;
+        || (olderMessage.guid == threadOriginatorGuid && normalizedThreadPart != olderPartCount - 1)
+        || (olderMessage.threadOriginatorGuid == threadOriginatorGuid && olderPartCount > 1);
   }
 
   bool connectToLower(Message newerMessage) {
