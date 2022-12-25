@@ -649,6 +649,8 @@ class Chat {
           || (message.guid != latest.guid && message.dateCreated == latest.dateCreated);
       if (isNewer) {
         _latestMessage = message;
+        dateDeleted = null;
+        chats.addChat(this);
       }
     }
 
