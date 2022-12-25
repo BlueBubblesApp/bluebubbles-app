@@ -31,7 +31,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
   MessagePart get part => widget.message;
   Message get message => controller.message;
   PayloadData? get payloadData => message.payloadData;
-  bool selected = false;
+  late bool selected = controller.cvController?.isSelected(message.guid!) ?? false;
 
   @override
   void initState() {

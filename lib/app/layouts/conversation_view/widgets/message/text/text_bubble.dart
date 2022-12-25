@@ -29,7 +29,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
 
   late MovieTween tween;
   Control anim = Control.stop;
-  bool selected = false;
+  late bool selected = controller.cvController?.isSelected(message.guid!) ?? false;
 
   @override
   void initState() {
