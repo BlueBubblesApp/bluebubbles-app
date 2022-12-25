@@ -1,4 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_page.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -69,7 +70,7 @@ class OverflowMenu extends StatelessWidget {
           Radius.circular(20.0),
         ),
       ) : null,
-      onSelected: (int value) {
+      onSelected: (int value) async {
         if (value == 0) {
           chats.markAllAsRead();
         } else if (value == 1) {
@@ -81,13 +82,24 @@ class OverflowMenu extends StatelessWidget {
             )
           );
         } else if (value == 2) {
-          Navigator.of(Get.context!).push(
+          final currentChat = cm.activeChat?.chat;
+          ns.closeAllConversationView(context);
+          await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
                 return SettingsPage();
               },
             ),
           );
+          if (currentChat != null) {
+            ns.pushAndRemoveUntil(
+              context,
+              ConversationView(
+                chat: currentChat,
+              ),
+              (route) => route.isFirst,
+            );
+          }
         } else if (value == 3) {
           ns.pushLeft(
             context,
