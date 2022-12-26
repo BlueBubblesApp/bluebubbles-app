@@ -124,6 +124,9 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         cm.activeChat?.chat.guid != ss.prefs.getString('lastOpenedChat') &&
         !ls.isBubble) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (kIsWeb) {
+          await chats.loadedAllChats.future;
+        }
         ns.pushAndRemoveUntil(
           context,
           ConversationView(

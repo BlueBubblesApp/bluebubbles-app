@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -184,32 +185,34 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
     // run query after render has completed
-    updateObx(() {
-      final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-          .watch();
-      sub = titleQuery.listen((Query<Chat> query) async {
-        final chat = await runAsync(() {
-          return chatBox.get(controller.chat.id!)!;
-        });
-        // check if we really need to update this widget
-        if (chat.displayName != cachedDisplayName
-            || chat.handles.length != cachedParticipants.length) {
-          final newTitle = chat.getTitle();
-          if (newTitle != title) {
-            setState(() {
-              title = newTitle;
-            });
+    if (!kIsWeb) {
+      updateObx(() {
+        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+            .watch();
+        sub = titleQuery.listen((Query<Chat> query) async {
+          final chat = await runAsync(() {
+            return chatBox.get(controller.chat.id!)!;
+          });
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.handles.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
           }
-        }
-        cachedDisplayName = chat.displayName;
-        cachedParticipants = chat.handles;
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.handles;
+        });
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 

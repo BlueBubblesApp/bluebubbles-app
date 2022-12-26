@@ -530,7 +530,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       uiStartup.complete();
 
-      if (!ls.isBubble) {
+      if (!ls.isBubble && !kIsWeb && !kIsDesktop) {
         ls.createFakePort();
       }
 

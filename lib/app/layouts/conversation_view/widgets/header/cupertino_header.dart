@@ -11,6 +11,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -129,22 +130,24 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
   @override
   void initState() {
     super.initState();
-    updateObx(() {
-      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
-      sub = unreadQuery.listen((Query<Chat> query) {
-        final c = query.count();
-        if (count != c) {
-          setState(() {
-            count = c;
-          });
-        }
+    if (!kIsWeb) {
+      updateObx(() {
+        final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
+        sub = unreadQuery.listen((Query<Chat> query) {
+          final c = query.count();
+          if (count != c) {
+            setState(() {
+              count = c;
+            });
+          }
+        });
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 
@@ -216,27 +219,9 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
     // run query after render has completed
-    updateObx(() {
-      final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-          .watch();
-      sub = titleQuery.listen((Query<Chat> query) async {
-        final chat = await runAsync(() {
-          return chatBox.get(controller.chat.id!)!;
-        });
-        // check if we really need to update this widget
-        if (chat.displayName != cachedDisplayName
-            || chat.handles.length != cachedParticipants.length) {
-          final newTitle = chat.getTitle();
-          if (newTitle != title) {
-            setState(() {
-              title = newTitle;
-            });
-          }
-        }
-        cachedDisplayName = chat.displayName;
-        cachedParticipants = chat.handles;
-      });
-    });
+    if (!kIsWeb) {
+
+    }
   }
 
   @override
