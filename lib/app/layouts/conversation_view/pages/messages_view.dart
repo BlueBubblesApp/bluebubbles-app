@@ -79,7 +79,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     });
 
     updateObx(() async {
-      final searchMessage = messageService.struct.messages.firstOrNull;
+      final searchMessage = (messageService.method == null) ? null : messageService.struct.messages.firstOrNull;
       if (messageService.method != null) {
         await messageService.loadSearchChunk(
           messageService.struct.messages.first,
