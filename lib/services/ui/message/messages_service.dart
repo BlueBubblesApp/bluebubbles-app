@@ -14,6 +14,8 @@ import 'package:get/get.dart' hide Response;
 MessagesService ms(String chatGuid) => Get.isRegistered<MessagesService>(tag: chatGuid)
     ? Get.find<MessagesService>(tag: chatGuid) : Get.put(MessagesService(chatGuid), tag: chatGuid);
 
+String? lastReloadedChat() => Get.isRegistered<String>(tag: 'lastReloadedChat') ? Get.find<String>(tag: 'lastReloadedChat') : null;
+
 class MessagesService extends GetxController {
   static final Map<String, Size> cachedBubbleSizes = {};
   late Chat chat;
@@ -38,6 +40,8 @@ class MessagesService extends GetxController {
 
   void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage) {
     chat = c;
+    Get.put<String>(tag, tag: 'lastReloadedChat');
+
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
     // watch for new messages
@@ -82,10 +86,14 @@ class MessagesService extends GetxController {
   }
 
   void close() {
-    Get.delete<MessagesService>(tag: tag);
+    String? lastChat = lastReloadedChat();
+    if (lastChat != tag) {
+      Get.delete<MessagesService>(tag: tag);
+    }
   }
 
   void reload() {
+    Get.put<String>(tag, tag: 'lastReloadedChat');
     Get.reload<MessagesService>(tag: tag);
   }
 
