@@ -22,6 +22,7 @@ class GamePigeon extends StatefulWidget {
 
 class _GamePigeonState extends OptimizedState<GamePigeon> with AutomaticKeepAliveClientMixin {
   iMessageAppData get data => widget.data;
+  dynamic get file => File(content.path!);
   dynamic content;
 
   @override
@@ -63,7 +64,7 @@ class _GamePigeonState extends OptimizedState<GamePigeon> with AutomaticKeepAliv
           ),
         if (content is PlatformFile && content.bytes == null && content.path != null)
           Image.file(
-            File(content.path!),
+            file,
             gaplessPlayback: true,
             filterQuality: FilterQuality.none,
             errorBuilder: (_, __, ___) {

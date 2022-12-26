@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/html/attachment.dart';
 import 'package:bluebubbles/models/html/chat.dart';
 import 'package:bluebubbles/models/html/handle.dart';
 import 'package:bluebubbles/models/html/objectbox.dart';
+import 'package:bluebubbles/models/models.dart' show AttributedBody, MessageSummaryInfo, PayloadData;
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
-import 'package:crypto/crypto.dart' as crypto;
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 
@@ -25,42 +24,19 @@ class Message {
   String? text;
   String? subject;
   String? country;
-  final RxInt _error = RxInt(0);
-
-  int get error => _error.value;
-
-  set error(int i) => _error.value = i;
   DateTime? dateCreated;
-  final Rxn<DateTime> _dateRead = Rxn<DateTime>();
-
-  DateTime? get dateRead => _dateRead.value;
-
-  set dateRead(DateTime? d) => _dateRead.value = d;
-  final Rxn<DateTime> _dateDelivered = Rxn<DateTime>();
-
-  DateTime? get dateDelivered => _dateDelivered.value;
-
-  set dateDelivered(DateTime? d) => _dateDelivered.value = d;
   bool? isFromMe;
-  bool? isDelayed;
-  bool? isAutoReply;
-  bool? isSystemMessage;
-  bool? isServiceMessage;
-  bool? isForward;
-  bool? isArchived;
+  // Data detector results
   bool? hasDdResults;
-  String? cacheRoomnames;
-  bool? isAudioMessage;
   DateTime? datePlayed;
   int? itemType;
   String? groupTitle;
   int? groupActionType;
-  bool? isExpired;
   String? balloonBundleId;
   String? associatedMessageGuid;
+  int? associatedMessagePart;
   String? associatedMessageType;
   String? expressiveSendStyleId;
-  DateTime? timeExpressiveSendStyleId;
   Handle? handle;
   bool hasAttachments;
   bool hasReactions;
@@ -68,169 +44,163 @@ class Message {
   Map<String, dynamic>? metadata;
   String? threadOriginatorGuid;
   String? threadOriginatorPart;
-
   List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
+  List<AttributedBody> attributedBody;
+  List<MessageSummaryInfo> messageSummaryInfo;
+  PayloadData? payloadData;
+  bool hasApplePayloadData;
+
+  final RxInt _error = RxInt(0);
+  int get error => _error.value;
+  set error(int i) => _error.value = i;
+
+  final Rxn<DateTime> _dateRead = Rxn<DateTime>();
+  DateTime? get dateRead => _dateRead.value;
+  set dateRead(DateTime? d) => _dateRead.value = d;
+
+  final Rxn<DateTime> _dateDelivered = Rxn<DateTime>();
+  DateTime? get dateDelivered => _dateDelivered.value;
+  set dateDelivered(DateTime? d) => _dateDelivered.value = d;
+
+  final Rxn<DateTime> _dateEdited = Rxn<DateTime>();
+  DateTime? get dateEdited => _dateEdited.value;
+  set dateEdited(DateTime? d) => _dateEdited.value = d;
 
   final chat = ToOne<Chat>();
   final dbAttachments = <Attachment>[];
 
-  Message(
-      {this.id,
-      this.originalROWID,
-      this.guid,
-      this.handleId,
-      this.otherHandle,
-      this.text,
-      this.subject,
-      this.country,
-      int? error2,
-      this.dateCreated,
-      DateTime? dateRead2,
-      DateTime? dateDelivered2,
-      this.isFromMe = true,
-      this.isDelayed = false,
-      this.isAutoReply = false,
-      this.isSystemMessage = false,
-      this.isServiceMessage = false,
-      this.isForward = false,
-      this.isArchived = false,
-      this.hasDdResults = false,
-      this.cacheRoomnames,
-      this.isAudioMessage = false,
-      this.datePlayed,
-      this.itemType = 0,
-      this.groupTitle,
-      this.groupActionType = 0,
-      this.isExpired = false,
-      this.balloonBundleId,
-      this.associatedMessageGuid,
-      this.associatedMessageType,
-      this.expressiveSendStyleId,
-      this.timeExpressiveSendStyleId,
-      this.handle,
-      this.hasAttachments = false,
-      this.hasReactions = false,
-      this.attachments = const [],
-      this.associatedMessages = const [],
-      this.dateDeleted,
-      this.metadata,
-      this.threadOriginatorGuid,
-      this.threadOriginatorPart}) {
-    if (error2 != null) _error.value = error2;
-    if (dateRead2 != null) _dateRead.value = dateRead2;
-    if (dateDelivered2 != null) _dateDelivered.value = dateDelivered2;
+  Message({
+    this.id,
+    this.originalROWID,
+    this.guid,
+    this.handleId,
+    this.otherHandle,
+    this.text,
+    this.subject,
+    this.country,
+    int? error,
+    this.dateCreated,
+    DateTime? dateRead,
+    DateTime? dateDelivered,
+    this.isFromMe = true,
+    this.hasDdResults = false,
+    this.datePlayed,
+    this.itemType = 0,
+    this.groupTitle,
+    this.groupActionType = 0,
+    this.balloonBundleId,
+    this.associatedMessageGuid,
+    this.associatedMessagePart,
+    this.associatedMessageType,
+    this.expressiveSendStyleId,
+    this.handle,
+    this.hasAttachments = false,
+    this.hasReactions = false,
+    this.attachments = const [],
+    this.associatedMessages = const [],
+    this.dateDeleted,
+    this.metadata,
+    this.threadOriginatorGuid,
+    this.threadOriginatorPart,
+    this.attributedBody = const [],
+    this.messageSummaryInfo = const [],
+    this.payloadData,
+    this.hasApplePayloadData = false,
+    DateTime? dateEdited,
+  }) {
+    if (error != null) _error.value = error;
+    if (dateRead != null) _dateRead.value = dateRead;
+    if (dateDelivered != null) _dateDelivered.value = dateDelivered;
+    if (dateEdited != null) _dateEdited.value = dateEdited;
+    if (attachments.isEmpty) attachments = [];
+    if (associatedMessages.isEmpty) associatedMessages = [];
+    if (attributedBody.isEmpty) attributedBody = [];
+    if (messageSummaryInfo.isEmpty) messageSummaryInfo = [];
   }
-
-  String get fullText {
-    String fullText = subject ?? "";
-    if (fullText.isNotEmpty) {
-      fullText += "\n";
-    }
-
-    fullText += text ?? "";
-
-    return sanitizeString(fullText);
-  }
-
-  bool get isUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
-      || (hasDdResults! && (text ?? "").trim().hasUrl);
-
-  bool get isInteractive => balloonBundleId != null && !isUrlPreview;
-
-  bool get isGroupEvent => fullText.isEmpty && !isInteractive && (itemType != null || groupActionType != null);
-
-  bool get isParticipantEvent => isGroupEvent && ((itemType == 1 && [0, 1].contains(groupActionType)) || [2, 3].contains(itemType));
 
   factory Message.fromMap(Map<String, dynamic> json) {
-    bool hasAttachments = false;
-    if (json.containsKey("hasAttachments")) {
-      hasAttachments = json["hasAttachments"] == 1 ? true : false;
-    } else if (json.containsKey("attachments")) {
-      hasAttachments = (json['attachments'] as List).isNotEmpty ? true : false;
+    final attachments = (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList();
+
+    List<AttributedBody> attributedBody = [];
+    if (json["attributedBody"] != null) {
+      if (json['attributedBody'] is Map) {
+        json['attributedBody'] = [json['attributedBody']];
+      }
+      try {
+        attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+      } catch (e) {
+        Logger.error('Failed to parse attributed body! $e');
+      }
     }
 
-    List<Attachment> attachments =
-        json.containsKey("attachments") ? (json['attachments'] as List).map((a) => Attachment.fromMap(a)).toList() : [];
-
-    // Load the metadata
-    dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
-    if (!isNullOrEmpty(metadata)!) {
-      // If the metadata is a string, convert it to JSON
-      if (metadata is String) {
+    Map<String, dynamic> metadata = {};
+    if (!isNullOrEmpty(json["metadata"])!) {
+      if (json["metadata"] is String) {
         try {
-          metadata = jsonDecode(metadata);
+          metadata = jsonDecode(json["metadata"]);
         } catch (_) {}
-      }
-    }
-
-    String? associatedMessageGuid;
-    if (json.containsKey("associatedMessageGuid") && json["associatedMessageGuid"] != null) {
-      if ((json["associatedMessageGuid"] as String).contains("/")) {
-        associatedMessageGuid = (json["associatedMessageGuid"] as String).split("/").last;
       } else {
-        associatedMessageGuid = (json["associatedMessageGuid"] as String).split(":").last;
+        metadata = json["metadata"];
       }
     }
 
-    var data = Message(
-      id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
+    List<MessageSummaryInfo> msi = [];
+    try {
+      msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e)).toList();
+    } catch (e) {
+      Logger.error('Failed to parse summary info! $e');
+    }
+
+    PayloadData? payloadData;
+    try {
+      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
+    } catch (e) {
+      Logger.error('Failed to parse payload data! $e');
+    }
+
+    return Message(
+      id: json["ROWID"] ?? json['id'],
+      originalROWID: json["originalROWID"],
       guid: json["guid"],
-      handleId: (json["handleId"] != null) ? json["handleId"] : 0,
-      otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
-      text: sanitizeString(json["text"]),
-      subject: json.containsKey("subject") ? json["subject"] : null,
-      country: json.containsKey("country") ? json["country"] : null,
-      error2: json.containsKey("_error") ? json["_error"] : 0,
-      dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
-      dateRead2: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered2: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
-      isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
-      isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
-      isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
-      isSystemMessage:
-          (json["isSystemMessage"] is bool) ? json['isSystemMessage'] : ((json['isSystemMessage'] == 1) ? true : false),
-      isServiceMessage: (json["isServiceMessage"] is bool)
-          ? json['isServiceMessage']
-          : ((json['isServiceMessage'] == 1) ? true : false),
-      isForward: (json["isForward"] is bool) ? json['isForward'] : ((json['isForward'] == 1) ? true : false),
-      isArchived: (json["isArchived"] is bool) ? json['isArchived'] : ((json['isArchived'] == 1) ? true : false),
-      hasDdResults:
-          (json["hasDdResults"] is bool) ? json['hasDdResults'] : ((json['hasDdResults'] == 1) ? true : false),
-      cacheRoomnames: json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
-      isAudioMessage:
-          (json["isAudioMessage"] is bool) ? json['isAudioMessage'] : ((json['isAudioMessage'] == 1) ? true : false),
-      datePlayed: json.containsKey("datePlayed") ? parseDate(json["datePlayed"]) : null,
-      itemType: json.containsKey("itemType") ? json["itemType"] : null,
-      groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
-      groupActionType: (json["groupActionType"] != null) ? json["groupActionType"] : 0,
-      isExpired: (json["isExpired"] is bool) ? json['isExpired'] : ((json['isExpired'] == 1) ? true : false),
-      balloonBundleId: json.containsKey("balloonBundleId") ? json["balloonBundleId"] : null,
-      associatedMessageGuid: associatedMessageGuid,
-      associatedMessageType: json.containsKey("associatedMessageType") ? json["associatedMessageType"] : null,
-      expressiveSendStyleId: json.containsKey("expressiveSendStyleId") ? json["expressiveSendStyleId"] : null,
-      timeExpressiveSendStyleId: json.containsKey("timeExpressiveSendStyleId")
-          ? DateTime.tryParse(json["timeExpressiveSendStyleId"].toString())?.toLocal()
-          : null,
-      handle: json.containsKey("handle") ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null) : null,
-      hasAttachments: hasAttachments,
-      attachments: attachments,
-      hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
-      dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
+      handleId: json["handleId"] ?? 0,
+      otherHandle: json["otherHandle"],
+      text: sanitizeString(json["text"] ?? attributedBody.firstOrNull?.string),
+      subject: json["subject"],
+      country: json["country"],
+      error: json["_error"] ?? 0,
+      dateCreated: parseDate(json["dateCreated"]),
+      dateRead: parseDate(json["dateRead"]),
+      dateDelivered: parseDate(json["dateDelivered"]),
+      isFromMe: json['isFromMe'] == true,
+      hasDdResults: json['hasDdResults'] == true,
+      datePlayed: parseDate(json["datePlayed"]),
+      itemType: json["itemType"],
+      groupTitle: json["groupTitle"],
+      groupActionType: json["groupActionType"] ?? 0,
+      balloonBundleId: json["balloonBundleId"],
+      associatedMessageGuid: json["associatedMessageGuid"]?.toString().replaceAll("bp:", "").split("/").last,
+      associatedMessagePart: json["associatedMessagePart"] ?? int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
+      associatedMessageType: json["associatedMessageType"],
+      expressiveSendStyleId: json["expressiveSendStyleId"],
+      handle: json['handle'] != null ? Handle.fromMap(json['handle']) : null,
+      hasAttachments: attachments.isNotEmpty || json['hasAttachments'] == true,
+      attachments: (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList(),
+      hasReactions: json['hasReactions'] == true,
+      dateDeleted: parseDate(json["dateDeleted"]),
       metadata: metadata is String ? null : metadata,
-      threadOriginatorGuid: json.containsKey('threadOriginatorGuid') ? json['threadOriginatorGuid'] : null,
-      threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
+      threadOriginatorGuid: json['threadOriginatorGuid'],
+      threadOriginatorPart: json['threadOriginatorPart'],
+      attributedBody: attributedBody,
+      messageSummaryInfo: msi,
+      payloadData: payloadData,
+      hasApplePayloadData: json['hasApplePayloadData'] == true || payloadData != null,
+      dateEdited: parseDate(json["dateEdited"]),
     );
-
-    // Adds fallback getter for the ID
-    data.id ??= json.containsKey("id") ? json["id"] : null;
-
-    return data;
   }
 
-  Message save() {
+  Message save({Chat? chat}) {
     return this;
   }
 
@@ -238,29 +208,12 @@ class Message {
     return [];
   }
 
-  static Future<Message> replaceMessage(String? oldGuid, Message newMessage,
-      {bool awaitNewMessageEvent = true, Chat? chat}) async {
-    Message? existing = Message.findOne(guid: oldGuid);
+  static List<Message> bulkSave(List<Message> messages) {
+    return [];
+  }
 
-    if (existing == null) {
-      if (awaitNewMessageEvent) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
-      }
-
-      if (chat != null) {
-        await chat.addMessage(newMessage);
-      }
-
-      return newMessage;
-    }
-
-    existing.guid = newMessage.guid;
-    existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
-    existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
-    existing._error.value = newMessage._error.value;
-
-    return existing;
+  static Future<Message> replaceMessage(String? oldGuid, Message newMessage, {bool awaitNewMessageEvent = true, Chat? chat}) async {
+    return newMessage;
   }
 
   Message updateMetadata(Metadata? metadata) {
@@ -274,20 +227,6 @@ class Message {
 
   List<Attachment?>? fetchAttachments({ChatLifecycleManager? currentChat}) {
     return attachments;
-  }
-
-  static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages,
-      {ChatLifecycleManager? currentChat}) {
-    final Map<String, List<Attachment?>> map = {};
-    map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
-    return map;
-  }
-
-  static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages,
-      {ChatLifecycleManager? currentChat}) async {
-    final Map<String, List<Attachment?>> map = {};
-    map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
-    return map;
   }
 
   Chat? getChat() {
@@ -317,10 +256,6 @@ class Message {
     return null;
   }
 
-  static DateTime? lastMessageDate() {
-    return null;
-  }
-
   static List<Message> find() {
     return [];
   }
@@ -333,89 +268,97 @@ class Message {
     return;
   }
 
-  static void flush() {
-    return;
+  String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
+
+  // first condition is for macOS < 11 and second condition is for macOS >= 11
+  bool get isLegacyUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
+      || (hasDdResults! && (text ?? "").trim().isURL);
+
+  String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
+
+  bool get isInteractive => balloonBundleId != null && !isLegacyUrlPreview;
+
+  String get interactiveText {
+    String text = "";
+    final temp = balloonBundleIdMap[balloonBundleId?.split(":").first] ?? (balloonBundleId?.split(":").first ?? "Unknown");
+    if (temp is Map) {
+      text = temp[balloonBundleId?.split(":").last] ?? ((balloonBundleId?.split(":").last ?? "Unknown"));
+    } else {
+      text = temp.toString();
+    }
+    return text;
   }
 
-  String? getUrl() {
-    if (text == null) return null;
-    List<String> splits = text!.replaceAll("\n", " ").split(" ");
-    return splits.firstWhereOrNull((String element) => element.hasUrl);
+  bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
+
+  String get groupEventText {
+    String text = "Unknown group event";
+    String name = handle?.displayName ?? "You";
+
+    String? other = "someone";
+    if (otherHandle != null && isParticipantEvent) {
+      other = Handle.findOne(id: otherHandle)?.displayName;
+    }
+
+    if (itemType == 1 && groupActionType == 1) {
+      text = "$name removed $other from the conversation";
+    } else if (itemType == 1 && groupActionType == 0) {
+      text = "$name added $other to the conversation";
+    } else if (itemType == 3 && (groupActionType ?? 0) > 0) {
+      text = "$name changed the group photo";
+    } else if (itemType == 3) {
+      text = "$name left the conversation";
+    } else if (itemType == 2 && groupTitle != null) {
+      text = "$name named the conversation \"$groupTitle\"";
+    } else if (itemType == 6) {
+      text = "$name started a FaceTime call";
+    } else if (itemType == 4 && groupActionType == 0) {
+      text = "$name shared ${name == "You" ? "your" : "their"} location";
+    }
+
+    return text;
   }
 
-  bool hasText() {
-    return !isNullOrEmptyString(fullText);
+  bool get isParticipantEvent => isGroupEvent && ((itemType == 1 && [0, 1].contains(groupActionType)) || [2, 3].contains(itemType));
+
+  bool get isBigEmoji => bigEmoji ?? MessageHelper.shouldShowBigEmoji(fullText);
+
+  List<Attachment> get realAttachments => attachments.where((e) => e != null && e.mimeType != null).cast<Attachment>().toList();
+
+  List<Attachment> get previewAttachments => attachments.where((e) => e != null && e.mimeType == null).cast<Attachment>().toList();
+
+  List<Message> get reactions => associatedMessages.where((item) =>
+      ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
+
+  Indicator get indicatorToShow {
+    if (!isFromMe!) return Indicator.NONE;
+    if (dateRead != null) return Indicator.READ;
+    if (dateDelivered != null) return Indicator.DELIVERED;
+    if (dateCreated != null) return Indicator.SENT;
+    return Indicator.NONE;
   }
 
-  bool isBigEmoji() {
-    // We are checking the variable first because we want to
-    // avoid processing twice for this as it won't change
-    bigEmoji ??= MessageHelper.shouldShowBigEmoji(fullText);
-
-    return bigEmoji!;
+  bool showTail(Message? newer) {
+    // if there is no newer, or if the newer is a different sender
+    if (newer == null || !sameSender(newer) || newer.isGroupEvent) return true;
+    // if newer is over a minute newer
+    return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1;
   }
 
-  List<Attachment?> getRealAttachments() {
-    return attachments.where((item) => item!.mimeType != null).toList();
-  }
-
-  List<Attachment?> getPreviewAttachments() {
-    return attachments.where((item) => item!.mimeType == null).toList();
-  }
-
-  List<Message> getReactions() {
-    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
+  bool sameSender(Message? other) {
+    return (isFromMe! && isFromMe == other?.isFromMe) || (!isFromMe! && !(other?.isFromMe ?? true) && handleId == other?.handleId);
   }
 
   void generateTempGuid() {
-    List<String> unique = [text ?? "", dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
-
-    String preHashed;
-    if (unique.every((element) => element.trim().isEmpty)) {
-      preHashed = randomString(8);
-    } else {
-      preHashed = unique.join(":");
-    }
-
-    String hashed = crypto.sha1.convert(utf8.encode(preHashed)).toString();
-    guid = "temp-$hashed";
+    guid = "temp-${randomString(8)}";
   }
 
   static int? countForChat(Chat? chat) {
     return 0;
   }
 
-  void merge(Message otherMessage) {
-    if (dateCreated == null && otherMessage.dateCreated != null) {
-      dateCreated = otherMessage.dateCreated;
-    }
-    if (dateDelivered == null && otherMessage.dateDelivered != null) {
-      dateDelivered = otherMessage.dateDelivered;
-    }
-    if (dateRead == null && otherMessage.dateRead != null) {
-      dateRead = otherMessage.dateRead;
-    }
-    if (dateDeleted == null && otherMessage.dateDeleted != null) {
-      dateDeleted = otherMessage.dateDeleted;
-    }
-    if (datePlayed == null && otherMessage.datePlayed != null) {
-      datePlayed = otherMessage.datePlayed;
-    }
-    if (metadata == null && otherMessage.metadata != null) {
-      metadata = otherMessage.metadata;
-    }
-    if (originalROWID == null && otherMessage.originalROWID != null) {
-      originalROWID = otherMessage.originalROWID;
-    }
-    if (!hasAttachments && otherMessage.hasAttachments) {
-      hasAttachments = otherMessage.hasAttachments;
-    }
-    if (!hasReactions && otherMessage.hasReactions) {
-      hasReactions = otherMessage.hasReactions;
-    }
-    if (_error.value == 0 && otherMessage._error.value != 0) {
-      _error.value = otherMessage._error.value;
-    }
+  Message mergeWith(Message otherMessage) {
+    return Message.merge(this, otherMessage);
   }
 
   /// Get what shape the reply line should be
@@ -447,6 +390,35 @@ class Message {
     return isFromMe != newerMessage.isFromMe;
   }
 
+  int get normalizedThreadPart => threadOriginatorPart == null ? 0 : int.parse(threadOriginatorPart![0]);
+
+  bool connectToUpper() => threadOriginatorGuid != null;
+
+  bool showUpperMessage(Message olderMessage) {
+    // find the part count of the older message
+    final olderPartCount = getActiveMwc(olderMessage.guid!)?.parts.length ?? 1;
+    // make sure the older message is none of the following:
+    // 1) thread originator
+    // 2) part of the thread
+    // OR
+    // 1) It is the thread originator but the part is not the last part of the older message
+    // 2) It is part of the thread but has multiple parts
+    return (olderMessage.guid != threadOriginatorGuid && olderMessage.threadOriginatorGuid != threadOriginatorGuid)
+        || (olderMessage.guid == threadOriginatorGuid && normalizedThreadPart != olderPartCount - 1)
+        || (olderMessage.threadOriginatorGuid == threadOriginatorGuid && olderPartCount > 1);
+  }
+
+  bool connectToLower(Message newerMessage) {
+    final thisPartCount = getActiveMwc(guid!)?.parts.length ?? 1;
+    if (newerMessage.isFromMe != isFromMe) return false;
+    if (newerMessage.normalizedThreadPart != thisPartCount - 1) return false;
+    if (threadOriginatorGuid != null) {
+      return newerMessage.threadOriginatorGuid == threadOriginatorGuid;
+    } else {
+      return newerMessage.threadOriginatorGuid == guid;
+    }
+  }
+
   /// Get whether the reply line from the message should connect to the message above
   bool shouldConnectUpper(Message? olderMessage, Message threadOriginator) {
     // if theres no older message, or it isn't a part of the thread (make sure
@@ -476,96 +448,153 @@ class Message {
     return olderMessage?.threadOriginatorGuid != threadOriginatorGuid;
   }
 
-  /// Calculate the size of the message bubble by calculating text size or
-  /// attachment size
-  Size getBubbleSize(BuildContext context,
-      {double? maxWidthOverride, double? minHeightOverride, String? textOverride}) {
-    // cache this value because the calculation can be expensive
-    if (MessagesService.cachedBubbleSizes[guid!] != null) return MessagesService.cachedBubbleSizes[guid!]!;
-    // if attachment, then grab width / height
-    if (fullText.isEmpty && (attachments).isNotEmpty) {
-      return Size(
-          attachments
-              .map((e) => e!.width)
-              .fold(0, (p, e) => max(p, (e ?? ns.width(context) / 2).toDouble()) + 28),
-          attachments
-              .map((e) => e!.height)
-              .fold(0, (p, e) => max(p, (e ?? ns.width(context) / 2).toDouble())));
+  static Message merge(Message existing, Message newMessage) {
+    existing.id ??= newMessage.id;
+    existing.guid ??= newMessage.guid;
+
+    // Update date created
+    if ((existing.dateCreated == null && newMessage.dateCreated != null) ||
+        (existing.dateCreated != null &&
+            newMessage.dateCreated != null &&
+            existing.dateCreated!.millisecondsSinceEpoch < newMessage.dateCreated!.millisecondsSinceEpoch)) {
+      existing.dateCreated = newMessage.dateCreated;
     }
-    // initialize constraints for text rendering
-    final constraints = BoxConstraints(
-      maxWidth: maxWidthOverride ?? ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
-      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize!,
-    );
-    final renderParagraph = RichText(
-      text: TextSpan(
-        text: textOverride ?? fullText,
-        style: context.theme.textTheme.bodySmall!.apply(color: Colors.white),
-      ),
-    ).createRenderObject(context);
-    // get the text size
-    Size size = renderParagraph.getDryLayout(constraints);
-    // if the text is shorter than the full width, add 28 to account for the
-    // container margins
-    if (size.height < context.theme.textTheme.bodySmall!.fontSize! * 2 ||
-        (subject != null && size.height < context.theme.textTheme.bodySmall!.fontSize! * 3)) {
-      size = Size(size.width + 28, size.height);
+
+    // Update date delivered
+    if ((existing._dateDelivered.value == null && newMessage._dateDelivered.value != null) ||
+        (existing._dateDelivered.value != null &&
+            newMessage.dateDelivered != null &&
+            existing._dateDelivered.value!.millisecondsSinceEpoch <
+                newMessage._dateDelivered.value!.millisecondsSinceEpoch)) {
+      existing._dateDelivered.value = newMessage.dateDelivered;
     }
-    // if we have a URL preview, extend to the full width
-    if (isUrlPreview) {
-      size = Size(ns.width(context) * 2 / 3 - 30, size.height);
+
+    // Update date delivered
+    if ((existing._dateRead.value == null && newMessage._dateRead.value != null) ||
+        (existing._dateRead.value != null &&
+            newMessage._dateRead.value != null &&
+            existing._dateRead.value!.millisecondsSinceEpoch < newMessage._dateRead.value!.millisecondsSinceEpoch)) {
+      existing._dateRead.value = newMessage.dateRead;
     }
-    // if we have reactions, account for the extra height they add
-    if (hasReactions) {
-      size = Size(size.width, size.height + 25);
+
+    // Update date played
+    if ((existing.datePlayed == null && newMessage.datePlayed != null) ||
+        (existing.datePlayed != null &&
+            newMessage.datePlayed != null &&
+            existing.datePlayed!.millisecondsSinceEpoch < newMessage.datePlayed!.millisecondsSinceEpoch)) {
+      existing.datePlayed = newMessage.datePlayed;
     }
-    // add 16 to the height to account for container margins
-    size = Size(size.width, size.height + 16);
-    // cache the value
-    MessagesService.cachedBubbleSizes[guid!] = size;
-    return size;
+
+    // Update date deleted
+    if ((existing.dateDeleted == null && newMessage.dateDeleted != null) ||
+        (existing.dateDeleted != null &&
+            newMessage.dateDeleted != null &&
+            existing.dateDeleted!.millisecondsSinceEpoch < newMessage.dateDeleted!.millisecondsSinceEpoch)) {
+      existing.dateDeleted = newMessage.dateDeleted;
+    }
+
+    // Update date edited (and attr body & message summary info)
+    if ((existing.dateEdited == null && newMessage.dateEdited != null) ||
+        (existing.dateEdited != null &&
+            newMessage.dateEdited != null &&
+            existing.dateEdited!.millisecondsSinceEpoch < newMessage.dateEdited!.millisecondsSinceEpoch)) {
+      existing.dateEdited = newMessage.dateEdited;
+      if (!isNullOrEmpty(newMessage.attributedBody)!) {
+        existing.attributedBody = newMessage.attributedBody;
+      }
+      if (!isNullOrEmpty(newMessage.messageSummaryInfo)!) {
+        existing.messageSummaryInfo = newMessage.messageSummaryInfo;
+      }
+    }
+
+    // Update error
+    if (existing._error.value != newMessage._error.value) {
+      existing._error.value = newMessage._error.value;
+    }
+
+    // Update has Dd results
+    if ((existing.hasDdResults == null && newMessage.hasDdResults != null) ||
+        (!existing.hasDdResults! && newMessage.hasDdResults!)) {
+      existing.hasDdResults = newMessage.hasDdResults;
+    }
+
+    // Update metadata
+    existing.metadata = mergeTopLevelDicts(existing.metadata, newMessage.metadata);
+
+    // Update original ROWID
+    if (existing.originalROWID == null && newMessage.originalROWID != null) {
+      existing.originalROWID = newMessage.originalROWID;
+    }
+
+    // Update attachments flag
+    if (!existing.hasAttachments && newMessage.hasAttachments) {
+      existing.hasAttachments = newMessage.hasAttachments;
+    }
+
+    // Update has reactions flag
+    if (!existing.hasReactions && newMessage.hasReactions) {
+      existing.hasReactions = newMessage.hasReactions;
+    }
+
+    // Update handle
+    if (existing.handle?.id == null && newMessage.handle?.id != null) {
+      existing.handle = newMessage.handle;
+    }
+
+    // Update attachments
+    if (existing.dbAttachments.isEmpty && newMessage.dbAttachments.isNotEmpty) {
+      existing.dbAttachments.addAll(newMessage.dbAttachments);
+    }
+
+    if (existing.payloadData == null && newMessage.payloadData != null) {
+      existing.payloadData = newMessage.payloadData;
+    }
+
+    return existing;
   }
 
-  Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "guid": guid,
-        "handleId": handleId,
-        "otherHandle": otherHandle,
-        "text": sanitizeString(text),
-        "subject": subject,
-        "country": country,
-        "_error": _error.value,
-        "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
-        "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
-        "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
-        "isFromMe": isFromMe! ? 1 : 0,
-        "isDelayed": isDelayed! ? 1 : 0,
-        "isAutoReply": isAutoReply! ? 1 : 0,
-        "isSystemMessage": isSystemMessage! ? 1 : 0,
-        "isServiceMessage": isServiceMessage! ? 1 : 0,
-        "isForward": isForward! ? 1 : 0,
-        "isArchived": isArchived! ? 1 : 0,
-        "hasDdResults": hasDdResults! ? 1 : 0,
-        "cacheRoomnames": cacheRoomnames,
-        "isAudioMessage": isAudioMessage! ? 1 : 0,
-        "datePlayed": (datePlayed == null) ? null : datePlayed!.millisecondsSinceEpoch,
-        "itemType": itemType,
-        "groupTitle": groupTitle,
-        "groupActionType": groupActionType,
-        "isExpired": isExpired! ? 1 : 0,
-        "balloonBundleId": balloonBundleId,
-        "associatedMessageGuid": associatedMessageGuid,
-        "associatedMessageType": associatedMessageType,
-        "expressiveSendStyleId": expressiveSendStyleId,
-        "timeExpressiveSendStyleId":
-            (timeExpressiveSendStyleId == null) ? null : timeExpressiveSendStyleId!.millisecondsSinceEpoch,
-        "handle": (handle != null) ? handle!.toMap() : null,
-        "hasAttachments": hasAttachments ? 1 : 0,
-        "hasReactions": hasReactions ? 1 : 0,
-        "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
-        "metadata": jsonEncode(metadata),
-        "threadOriginatorGuid": threadOriginatorGuid,
-        "threadOriginatorPart": threadOriginatorPart,
-      };
+  Map<String, dynamic> toMap({bool includeObjects = false}) {
+    final map = {
+      "ROWID": id,
+      "originalROWID": originalROWID,
+      "guid": guid,
+      "handleId": handleId,
+      "otherHandle": otherHandle,
+      "text": sanitizeString(text),
+      "subject": subject,
+      "country": country,
+      "_error": _error.value,
+      "dateCreated": dateCreated?.millisecondsSinceEpoch,
+      "dateRead": _dateRead.value?.millisecondsSinceEpoch,
+      "dateDelivered":  _dateDelivered.value?.millisecondsSinceEpoch,
+      "isFromMe": isFromMe!,
+      "hasDdResults": hasDdResults!,
+      "datePlayed": datePlayed?.millisecondsSinceEpoch,
+      "itemType": itemType,
+      "groupTitle": groupTitle,
+      "groupActionType": groupActionType,
+      "balloonBundleId": balloonBundleId,
+      "associatedMessageGuid": associatedMessageGuid,
+      "associatedMessagePart": associatedMessagePart,
+      "associatedMessageType": associatedMessageType,
+      "expressiveSendStyleId": expressiveSendStyleId,
+      "handle": handle?.toMap(),
+      "hasAttachments": hasAttachments,
+      "hasReactions": hasReactions,
+      "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
+      "metadata": jsonEncode(metadata),
+      "threadOriginatorGuid": threadOriginatorGuid,
+      "threadOriginatorPart": threadOriginatorPart,
+      "hasApplePayloadData": hasApplePayloadData,
+      "dateEdited": dateEdited,
+    };
+    if (includeObjects) {
+      map['attachments'] = (attachments).map((e) => e!.toMap()).toList();
+      map['handle'] = handle?.toMap();
+      map['attributedBody'] = attributedBody.map((e) => e.toMap()).toList();
+      map['messageSummaryInfo'] = messageSummaryInfo.map((e) => e.toJson()).toList();
+      map['payloadData'] = payloadData?.toJson();
+    }
+    return map;
+  }
 }

@@ -68,7 +68,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
       final url = html.Url.createObjectUrlFromBlob(blob);
       controller = VideoPlayerController.network(url);
     } else {
-      final file = File(_file.path!);
+      dynamic file = File(_file.path!);
       controller = VideoPlayerController.file(file);
     }
     await controller!.initialize();
