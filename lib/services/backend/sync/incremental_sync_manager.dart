@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:dio/dio.dart' as dio;
+import 'package:diox/diox.dart' as dio;
 
 class IncrementalSyncManager extends SyncManager {
   final tag = 'IncrementalSyncManager';

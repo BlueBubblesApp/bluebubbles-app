@@ -189,28 +189,36 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
     // run query after render has completed
-    updateObx(() {
-      final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-          .watch();
-      sub = titleQuery.listen((Query<Chat> query) async {
-        final chat = controller.chat.id == null ? null : await runAsync(() {
-          return chatBox.get(controller.chat.id!);
-        });
-        if (chat == null) return;
-        // check if we really need to update this widget
-        if (chat.displayName != cachedDisplayName
-            || chat.handles.length != cachedParticipants.length) {
-          final newTitle = chat.getTitle();
-          if (newTitle != title) {
-            setState(() {
-              title = newTitle;
-            });
+    if (!kIsWeb) {
+      updateObx(() {
+        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+            .watch();
+        sub = titleQuery.listen((Query<Chat> query) async {
+          final chat = controller.chat.id == null ? null : await runAsync(() {
+            return chatBox.get(controller.chat.id!);
+          });
+          if (chat == null) return;
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.handles.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
           }
-        }
-        cachedDisplayName = chat.displayName;
-        cachedParticipants = chat.handles;
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.handles;
+        });
       });
-    });
+    }
+  }
+
+  @override
+  void dispose() {
+    if (!kIsWeb) sub.cancel();
+    super.dispose();
   }
 
   @override
@@ -266,43 +274,45 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
         || controller.chat.latestMessage.dateRead != null;
     fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
     // run query after render has completed
-    updateObx(() {
-      final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
-        ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-        ..order(Message_.dateCreated, flags: Order.descending))
-          .watch();
+    if (!kIsWeb) {
+      updateObx(() {
+        final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+          ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
+          ..order(Message_.dateCreated, flags: Order.descending))
+            .watch();
 
-      sub = latestMessageQuery.listen((Query<Message> query) async {
-        final message = await runAsync(() {
-          return query.findFirst();
-        });
-        isFromMe = message?.isFromMe ?? false;
-        isDelivered = controller.chat.isGroup || !isFromMe || message?.dateDelivered != null || message?.dateRead != null;
-        // check if we really need to update this widget
-        if (message != null && message.guid != cachedLatestMessageGuid) {
-          message.handle = message.getHandle();
-          String newSubtitle = MessageHelper.getNotificationText(message);
-          if (newSubtitle != subtitle) {
-            setState(() {
-              subtitle = newSubtitle;
-              fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
-            });
+        sub = latestMessageQuery.listen((Query<Message> query) async {
+          final message = await runAsync(() {
+            return query.findFirst();
+          });
+          isFromMe = message?.isFromMe ?? false;
+          isDelivered = controller.chat.isGroup || !isFromMe || message?.dateDelivered != null || message?.dateRead != null;
+          // check if we really need to update this widget
+          if (message != null && message.guid != cachedLatestMessageGuid) {
+            message.handle = message.getHandle();
+            String newSubtitle = MessageHelper.getNotificationText(message);
+            if (newSubtitle != subtitle) {
+              setState(() {
+                subtitle = newSubtitle;
+                fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
+              });
+            }
+          } else if (!controller.chat.isGroup
+              && message != null
+              && message.isFromMe!
+              && (message.dateDelivered != null || message.dateRead != null)) {
+            // update delivered status
+            setState(() {});
           }
-        } else if (!controller.chat.isGroup
-            && message != null
-            && message.isFromMe!
-            && (message.dateDelivered != null || message.dateRead != null)) {
-          // update delivered status
-          setState(() {});
-        }
-        cachedLatestMessageGuid = message?.guid;
+          cachedLatestMessageGuid = message?.guid;
+        });
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 

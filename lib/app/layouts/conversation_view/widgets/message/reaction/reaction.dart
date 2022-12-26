@@ -70,7 +70,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 

@@ -1,6 +1,4 @@
-//ignore: implementation_imports
-import 'package:objectbox/src/transaction.dart';
-
+// ignore_for_file: camel_case_types
 /// READ: Dummy file to allow objectbox related code to compile on Web. We use
 /// conditional imports at compile time, so any references to objectbox stuff
 /// in [database.dart], [main.dart] and [background_isolate.dart] will error if

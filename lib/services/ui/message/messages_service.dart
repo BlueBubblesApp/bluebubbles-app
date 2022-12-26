@@ -6,7 +6,8 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
+import 'package:diox/diox.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 
@@ -113,9 +114,13 @@ class MessagesService extends GetxController {
       if (_messages.isEmpty) {
         // get from server and save
         final fromServer = await cm.getMessages(chat.guid, offset: offset);
-        await MessageHelper.bulkAddMessages(chat, fromServer, checkForLatestMessageText: false);
-        // re-fetch from the DB because it will find handles / associated messages for us
-        _messages = await Chat.getMessagesAsync(chat, offset: offset);
+        final temp = await MessageHelper.bulkAddMessages(chat, fromServer, checkForLatestMessageText: false);
+        if (!kIsWeb) {
+          // re-fetch from the DB because it will find handles / associated messages for us
+          _messages = await Chat.getMessagesAsync(chat, offset: offset);
+        } else {
+          _messages = temp;
+        }
       }
     } catch (e, s) {
       return Future.error(e, s);

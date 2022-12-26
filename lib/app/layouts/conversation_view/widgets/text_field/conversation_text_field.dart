@@ -675,7 +675,7 @@ class TextFieldComponent extends StatelessWidget {
     );
   }
 
-  void onContentCommit(CommittedContent content) async {
+  void onContentCommit(dynamic content) async {
     // Add some debugging logs
     Logger.info("[Content Commit] Keyboard received content");
     Logger.info("  -> Content Type: ${content.mimeType}");

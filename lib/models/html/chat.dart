@@ -437,7 +437,7 @@ class Chat {
 
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
     if (guid != null) {
-      return chats.chats.firstWhere((e) => e.guid == guid) as Chat;
+      return chats.chats.firstWhereOrNull((e) => e.guid == guid) as Chat;
     } else if (chatIdentifier != null) {
       return chats.chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier) as Chat;
     }
