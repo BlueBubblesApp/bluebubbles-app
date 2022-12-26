@@ -554,7 +554,7 @@ class TextFieldComponent extends StatelessWidget {
                     PickedAttachmentsHolder(
                       controller: controller,
                       textController: textController,
-                      subjectTextController: controller!.subjectTextController,
+                      subjectTextController: controller?.subjectTextController ?? TextEditingController(),
                       initialAttachments: initialAttachments,
                     ),
                   if (!isChatCreator)
@@ -675,7 +675,7 @@ class TextFieldComponent extends StatelessWidget {
     );
   }
 
-  void onContentCommit(dynamic content) async {
+  void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
     Logger.info("[Content Commit] Keyboard received content");
     Logger.info("  -> Content Type: ${content.mimeType}");
