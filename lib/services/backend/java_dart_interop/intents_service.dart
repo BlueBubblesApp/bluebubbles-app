@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
-import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/logger.dart';

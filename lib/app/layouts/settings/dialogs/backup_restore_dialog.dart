@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/share.dart';

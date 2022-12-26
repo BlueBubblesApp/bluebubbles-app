@@ -1,7 +1,6 @@
 import 'package:bluebubbles/models/models.dart' hide Entity;
 import 'package:emojis/emojis.dart';
 import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 
 class ReactionTypes {
   // ignore: non_constant_identifier_names

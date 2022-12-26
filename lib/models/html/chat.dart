@@ -7,10 +7,8 @@ import 'package:bluebubbles/models/html/handle.dart';
 import 'package:bluebubbles/models/html/message.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 
 String getFullChatTitle(Chat _chat) {
   String? title = "";

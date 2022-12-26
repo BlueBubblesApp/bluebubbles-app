@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/html/chat.dart';
 import 'package:bluebubbles/models/html/contact.dart';
 import 'package:bluebubbles/models/html/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
