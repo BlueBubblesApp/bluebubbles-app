@@ -35,7 +35,7 @@ class ChatManager extends GetxService {
   }
 
   void setActiveToDead() {
-    Logger.info('Setting active chat to dead: ${activeChat?.chat.guid}');
+    Logger.debug('Setting active chat to dead: ${activeChat?.chat.guid}');
     activeChat?.isAlive = false;
   }
 

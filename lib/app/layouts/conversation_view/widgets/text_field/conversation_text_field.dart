@@ -226,10 +226,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   }
 
   Future<void> sendMessage({String? effect}) async {
-    Logger.debug('Sending message to chat $chatGuid');
-    Logger.debug('  -> Controller Chat: ${controller.chat}');
-    Logger.debug('  -> Active Chat: ${cm.activeChat}');
-
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
       if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
