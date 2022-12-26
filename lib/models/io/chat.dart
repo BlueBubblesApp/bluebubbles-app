@@ -444,6 +444,9 @@ class Chat {
       }
       dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
+        if (handles.isEmpty && participants.isNotEmpty) {
+          handles.addAll(participants);
+        }
         id = chatBox.put(this);
         final _chat = chatBox.get(id!);
         if (handles.isNotEmpty) {
