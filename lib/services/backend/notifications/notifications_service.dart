@@ -144,7 +144,7 @@ class NotificationsService extends GetxService {
     final isGroup = chat.isGroup;
     final guid = chat.guid;
     final contactName = message.handle?.displayName ?? "Unknown";
-    final title = chat.getChatCreatorSubtitle();
+    final title = isGroup ? chat.getChatCreatorSubtitle() : contactName;
     final text = hideContent ? "iMessage" : MessageHelper.getNotificationText(message);
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
     final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
