@@ -119,7 +119,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   }
 
   void updateReplies({bool updateConversation = true}) async {
-    if (isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop) return;
+    if (!showSmartReplies || isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop) return;
 
     if (updateConversation) {
       _messages.reversed.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).skip(max(_messages.length - 5, 0)).forEach((message) {
