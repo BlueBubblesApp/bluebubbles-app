@@ -23,7 +23,7 @@ class FindMyPage extends StatefulWidget {
   const FindMyPage({Key? key}) : super(key: key);
 
   @override
-  _FindMyPageState createState() => _FindMyPageState();
+  State<StatefulWidget> createState() => _FindMyPageState();
 }
 
 class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProviderStateMixin {

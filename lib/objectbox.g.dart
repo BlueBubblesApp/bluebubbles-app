@@ -111,7 +111,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(3, 9017250848141753702),
       name: 'Chat',
-      lastPropertyId: const IdUid(23, 7756745453707268462),
+      lastPropertyId: const IdUid(24, 1609660383308913679),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -199,6 +199,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(23, 7756745453707268462),
             name: 'textFieldAttachments',
             type: 30,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(24, 1609660383308913679),
+            name: 'dateDeleted',
+            type: 10,
             flags: 0)
       ],
       relations: <ModelRelation>[
@@ -932,7 +937,7 @@ ModelDefinition getObjectBoxModel() {
               .textFieldAttachments
               .map(fbb.writeString)
               .toList(growable: false));
-          fbb.startTable(24);
+          fbb.startTable(25);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(2, guidOffset);
           fbb.addOffset(4, chatIdentifierOffset);
@@ -951,6 +956,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addBool(20, object.autoSendTypingIndicators);
           fbb.addOffset(21, textFieldTextOffset);
           fbb.addOffset(22, textFieldAttachmentsOffset);
+          fbb.addInt64(23, object.dateDeleted?.millisecondsSinceEpoch);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -959,6 +965,8 @@ ModelDefinition getObjectBoxModel() {
           final rootOffset = buffer.derefObject(0);
           final dbOnlyLatestMessageDateValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 26);
+          final dateDeletedValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 50);
           final object = Chat(
               id: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 4),
@@ -981,7 +989,8 @@ ModelDefinition getObjectBoxModel() {
               autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
               autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
               textFieldText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 46),
-              textFieldAttachments: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false).vTableGet(buffer, rootOffset, 48, []))
+              textFieldAttachments: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false).vTableGet(buffer, rootOffset, 48, []),
+              dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue))
             ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
                 ? null
                 : DateTime.fromMillisecondsSinceEpoch(
@@ -1617,6 +1626,10 @@ class Chat_ {
   /// see [Chat.textFieldAttachments]
   static final textFieldAttachments =
       QueryStringVectorProperty<Chat>(_entities[1].properties[16]);
+
+  /// see [Chat.dateDeleted]
+  static final dateDeleted =
+      QueryIntegerProperty<Chat>(_entities[1].properties[17]);
 
   /// see [Chat.handles]
   static final handles =

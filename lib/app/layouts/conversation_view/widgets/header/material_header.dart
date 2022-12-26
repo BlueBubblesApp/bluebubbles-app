@@ -109,7 +109,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   Navigator.of(context).pop();
                 } else if (value == 2) {
                   chats.removeChat(controller.chat);
-                  Chat.deleteChat(controller.chat);
+                  Chat.softDelete(controller.chat);
                   while (Get.isOverlaysOpen) {
                     Get.back();
                   }

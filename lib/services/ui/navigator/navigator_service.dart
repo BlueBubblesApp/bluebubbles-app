@@ -158,6 +158,14 @@ class NavigatorService extends GetxService {
     }
   }
 
+  void closeAllConversationView(BuildContext context) {
+    if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && ns.isTabletMode(context)) {
+      Get.until((route) {
+        return route.settings.name == "initial";
+      }, id: 2);
+    }
+  }
+
   void backSettings(BuildContext context, {bool closeOverlays = false}) {
     if (Get.keys.containsKey(3) && isTabletMode(context)) {
       Get.back(closeOverlays: closeOverlays, id: 3);

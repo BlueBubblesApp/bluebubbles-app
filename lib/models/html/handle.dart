@@ -1,9 +1,10 @@
-import 'package:bluebubbles/models/html/chat.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/html/contact.dart';
 import 'package:bluebubbles/models/html/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
+import 'package:get/get.dart';
 
 class Handle {
   int? id;
@@ -11,25 +12,33 @@ class Handle {
   String address;
   String? formattedAddress;
   String? country;
-  String? color;
   String? defaultEmail;
   String? defaultPhone;
-  String? uncanonicalizedId;
   final String fakeName = faker.person.name();
 
   final contactRelation = ToOne<Contact>();
   Contact? webContact;
 
+  final RxnString _color = RxnString();
+  String? get color => _color.value;
+  set color(String? val) => _color.value = val;
+
   Contact? get contact => webContact;
   String get displayName {
-    if (ss.settings.redactedMode.value && ss.settings.hideContactInfo.value) {
-      return fakeName;
+    if (ss.settings.redactedMode.value) {
+      if (ss.settings.generateFakeContactNames.value) {
+        return fakeName;
+      } else if (ss.settings.hideContactInfo.value) {
+        return "";
+      }
     }
+    if (address.startsWith("urn:biz")) return "Business";
     if (contact != null) return contact!.displayName;
     return address.contains("@") ? address : (formattedAddress ?? address);
   }
   String? get initials {
     // Remove any numbers, certain symbols, and non-alphabet characters
+    if (address.startsWith("urn:biz")) return null;
     String importantChars = displayName.toUpperCase().replaceAll(RegExp(r'[^a-zA-Z _-]'), "").trim();
     if (importantChars.isEmpty) return null;
 
@@ -47,33 +56,31 @@ class Handle {
     this.id,
     this.originalROWID,
     this.address = "",
+    this.formattedAddress,
     this.country,
-    this.color,
+    String? handleColor,
     this.defaultEmail,
     this.defaultPhone,
-    this.uncanonicalizedId,
-  });
-
-  factory Handle.fromMap(Map<String, dynamic> json) {
-    var data = Handle(
-      id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
-      address: json["address"],
-      country: json.containsKey("country") ? json["country"] : null,
-      color: json.containsKey("color") ? json["color"] : null,
-      defaultEmail: json['defaultEmail'],
-      defaultPhone: json['defaultPhone'],
-      uncanonicalizedId: json.containsKey("uncanonicalizedId") ? json["uncanonicalizedId"] : null,
-    );
-
-    // Adds fallback getter for the ID
-    data.id ??= json.containsKey("id") ? json["id"] : null;
-
-    return data;
+  }) {
+    color = handleColor;
   }
+
+  factory Handle.fromMap(Map<String, dynamic> json) => Handle(
+    id: json["ROWID"] ?? json["id"],
+    originalROWID: json["originalROWID"],
+    address: json["address"],
+    formattedAddress: json["formattedAddress"],
+    country: json["country"],
+    handleColor: json["color"],
+    defaultPhone: json['defaultPhone'],
+  );
 
   Handle save({updateColor = false}) {
     return this;
+  }
+
+  static List<Handle> bulkSave(List<Handle> handles) {
+    return [];
   }
 
   Handle updateColor(String? newColor) {
@@ -103,22 +110,29 @@ class Handle {
     return [];
   }
 
-  static List<Chat> getChats(Handle handle) {
-    return [];
-  }
+  static Handle merge(Handle handle1, Handle handle2) {
+    handle1.id ??= handle2.id;
+    handle1.originalROWID ??= handle2.originalROWID;
+    handle1._color.value ??= handle2._color.value;
+    handle1.country ??= handle2.country;
+    handle1.formattedAddress ??= handle2.formattedAddress;
+    if (isNullOrEmpty(handle1.defaultPhone)!) {
+      handle1.defaultPhone = handle2.defaultPhone;
+    }
+    if (isNullOrEmpty(handle1.defaultEmail)!) {
+      handle1.defaultEmail = handle2.defaultEmail;
+    }
 
-  static void flush() {
-    return;
+    return handle1;
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "address": address,
-        "country": country,
-        "color": color,
-        "defaultEmail": defaultEmail,
-        "defaultPhone": defaultPhone,
-        "uncanonicalizedId": uncanonicalizedId,
-      };
+    "ROWID": id,
+    "originalROWID": originalROWID,
+    "address": address,
+    "formattedAddress": formattedAddress,
+    "country": country,
+    "color": color,
+    "defaultPhone": defaultPhone,
+  };
 }

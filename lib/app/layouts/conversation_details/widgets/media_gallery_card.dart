@@ -116,8 +116,8 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
 
     try {
       videoPreview = await as.getVideoThumbnail(file.path!);
-
-      final tempController = VideoPlayerController.file(File(file.path!));
+      dynamic _file = File(file.path!);
+      final tempController = VideoPlayerController.file(_file);
       await tempController.initialize();
       duration = tempController.value.duration;
     } catch (_) {

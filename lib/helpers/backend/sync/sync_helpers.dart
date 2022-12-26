@@ -98,8 +98,8 @@ List<Attachment> syncAttachments(List<Attachment> attachments) {
   List<String> inputAttachmentGuids = attachments.map((element) => element.guid!).toList();
 
   // Query the database for existing attachments
-  QueryBuilder<Attachment> query = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
-  List<Attachment> existingAttachments = query.build().find();
+  final query = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids)).build();
+  List<Attachment> existingAttachments = query.find();
   List<String> existingAttachmentGuids = existingAttachments.map((e) => e.guid!).toList();
 
   // Insert any non-existing attachments
@@ -125,8 +125,8 @@ List<Attachment> syncAttachments(List<Attachment> attachments) {
   }
 
   // Return a list of the inserted/existing attachments
-  QueryBuilder<Attachment> query2 = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
-  List<Attachment> syncedAttachments = query2.build().find().toList();
+  final query2 = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids)).build();
+  List<Attachment> syncedAttachments = query2.find().toList();
 
   // Insert the real ID
   for (var i = 0; i < attachments.length; i++) {
@@ -144,8 +144,8 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
   List<String> inputMessageGuids = messages.map((element) => element.guid!).toList();
 
   // Query the database for existing messages
-  QueryBuilder<Message> query = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
-  List<Message> existingMessages = query.build().find();
+  final query = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
+  List<Message> existingMessages = query.find();
   List<String> existingMessageGuids = existingMessages.map((e) => e.guid!).toList();
 
   // Insert any non-existing messages
@@ -170,8 +170,8 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
   }
 
   // Return a list of the inserted/existing messages
-  QueryBuilder<Message> query2 = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
-  List<Message> syncedMessages = query2.build().find().toList();
+  final query2 = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
+  List<Message> syncedMessages = query2.find().toList();
 
   // Insert the real ID
   for (var i = 0; i < messages.length; i++) {

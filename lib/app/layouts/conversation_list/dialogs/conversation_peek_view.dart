@@ -321,7 +321,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         child: InkWell(
           onTap: () async {
             chats.removeChat(widget.chat);
-            Chat.deleteChat(widget.chat);
+            Chat.softDelete(widget.chat);
             popPeekView();
           },
           child: ListTile(

@@ -210,7 +210,8 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
         final url = html.Url.createObjectUrlFromBlob(blob);
         controller = VideoPlayerController.network(url);
       } else {
-        controller = VideoPlayerController.file(File(file.path!));
+        dynamic _file = File(file.path!);
+        controller = VideoPlayerController.file(_file);
       }
       await controller.initialize();
       isReloading.value = false;

@@ -25,6 +25,7 @@ class UnsupportedInteractive extends StatefulWidget {
 class _UnsupportedInteractiveState extends OptimizedState<UnsupportedInteractive> with AutomaticKeepAliveClientMixin {
   iMessageAppData? get data => widget.payloadData;
   Message get message => widget.message;
+  dynamic get file => File(content.path!);
 
   dynamic content;
 
@@ -90,7 +91,7 @@ class _UnsupportedInteractiveState extends OptimizedState<UnsupportedInteractive
           ),
         if (content is PlatformFile && content.bytes == null && content.path != null)
           Image.file(
-            File(content.path!),
+            file,
             gaplessPlayback: true,
             filterQuality: FilterQuality.none,
             errorBuilder: (_, __, ___) {
