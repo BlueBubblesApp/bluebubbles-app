@@ -517,13 +517,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
-    // we want to refresh the page rather than loading a new instance of [Home]
-    // to avoid errors
-    //todo see if necessary
-    if (ls.isAlive && kIsWeb) {
-      html.window.location.reload();
-    }
-
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
 

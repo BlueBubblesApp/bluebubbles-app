@@ -27,20 +27,23 @@ class ChatsService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    // watch for new chats
-    final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())
-      ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
-    countSub = countQuery.listen((event) {
-      if (!ss.settings.finishedSetup.value) return;
-      final newCount = event.count();
-      if (newCount > currentCount && currentCount != 0) {
-        addChat(event.findFirst()!);
-      }
-      currentCount = newCount;
-    });
+    if (!kIsWeb) {
+      // watch for new chats
+      final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())
+        ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      countSub = countQuery.listen((event) {
+        if (!ss.settings.finishedSetup.value) return;
+        final newCount = event.count();
+        if (newCount > currentCount && currentCount != 0) {
+          addChat(event.findFirst()!);
+        }
+        currentCount = newCount;
+      });
+    }
   }
 
   Future<void> init() async {
+    if (!ss.settings.finishedSetup.value) return;
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
@@ -100,7 +103,9 @@ class ChatsService extends GetxService {
 
   @override
   void onClose() {
-    countSub.cancel();
+    if (!kIsWeb) {
+      countSub.cancel();
+    }
     super.onClose();
   }
 
