@@ -33,6 +33,7 @@ class ReactionWidget extends StatefulWidget {
 class ReactionWidgetState extends OptimizedState<ReactionWidget> {
   late Message reaction = widget.reaction;
   late final StreamSubscription<Query<Message>> sub;
+  bool hasStream = false;
 
   List<Message>? get reactions => widget.reactions;
   bool get reactionIsFromMe => reaction.isFromMe!;
@@ -64,13 +65,15 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
             }
           }
         });
+
+        hasStream = true;
       }
     });
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    if (!kIsWeb && hasStream) sub.cancel();
     super.dispose();
   }
 
