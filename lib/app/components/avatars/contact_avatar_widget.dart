@@ -44,10 +44,16 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
   void initState() {
     super.initState();
     eventDispatcher.stream.listen((event) {
-      if (event.item1 == 'refresh-avatar' && event.item1[0] == widget.handle?.address && mounted) {
-        widget.handle?.color = event.item2[1];
-        setState(() {});
-      }
+      // Exit if not mounted or the event isn't want we need
+      if (!mounted) return;
+      if (event.item1 != 'refresh-avatar') return;
+
+      // Exit if the event isn't for this contact or the color is the same
+      if (event.item1[0] != widget.handle?.address || widget.handle?.color == event.item2[1]) return;
+
+      // Apply color and refresh
+      widget.handle?.color = event.item2[1];
+      setState(() {});
     });
   }
 
@@ -128,8 +134,8 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
         ? context.theme.colorScheme.properSurface
         : context.theme.colorScheme.background;
 
-    final size = (widget.size ?? 40) *
-        (widget.scaleSize ? ss.settings.avatarScale.value : 1);
+    final size = ((widget.size ?? 40) *
+        (widget.scaleSize ? ss.settings.avatarScale.value : 1)).roundToDouble();
     List<Color> colors = [];
     if (widget.handle?.color == null) {
       colors = toColorGradient(widget.handle?.address);
@@ -184,17 +190,14 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             if (isNullOrEmpty(avatar)! || hide) {
               String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
               if (!isNullOrEmpty(initials)! && !hide) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Text(
-                    initials!,
-                    key: Key("$keyPrefix-avatar-text"),
-                    style: TextStyle(
-                      fontSize: widget.fontSize ?? 18,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  )
+                return Text(
+                  initials!,
+                  key: Key("$keyPrefix-avatar-text"),
+                  style: TextStyle(
+                    fontSize: (widget.fontSize ?? 18).roundToDouble(),
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
                 );
               } else {
                 return Padding(
