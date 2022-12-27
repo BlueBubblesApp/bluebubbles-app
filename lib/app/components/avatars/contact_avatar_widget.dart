@@ -19,6 +19,7 @@ class ContactAvatarWidget extends StatefulWidget {
     this.contact,
     this.scaleSize = true,
     this.preferHighResAvatar = false,
+    this.padding = EdgeInsets.zero
   }) : super(key: key);
   final Handle? handle;
   final Contact? contact;
@@ -29,6 +30,7 @@ class ContactAvatarWidget extends StatefulWidget {
   final Function? onTap;
   final bool scaleSize;
   final bool preferHighResAvatar;
+  final EdgeInsets padding;
 
   @override
   State<ContactAvatarWidget> createState() => _ContactAvatarWidgetState();
@@ -148,6 +150,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           key: Key("$keyPrefix-avatar-container"),
           width: size,
           height: size,
+          padding: widget.padding,
           decoration: BoxDecoration(
             color: iOS ? null : (!ss.settings.colorfulAvatars.value
                 ? HexColor("686868")
@@ -181,21 +184,27 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             if (isNullOrEmpty(avatar)! || hide) {
               String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
               if (!isNullOrEmpty(initials)! && !hide) {
-                return Text(
-                  initials!,
-                  key: Key("$keyPrefix-avatar-text"),
-                  style: TextStyle(
-                    fontSize: widget.fontSize ?? 18,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
+                return Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Text(
+                    initials!,
+                    key: Key("$keyPrefix-avatar-text"),
+                    style: TextStyle(
+                      fontSize: widget.fontSize ?? 18,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  )
                 );
               } else {
-                return Icon(
-                  iOS ? CupertinoIcons.person_fill : Icons.person,
-                  color: Colors.white,
-                  key: Key("$keyPrefix-avatar-icon"),
-                  size: size / 2,
+                return Padding(
+                  padding: const EdgeInsets.only(left: 1),
+                  child: Icon(
+                    iOS ? CupertinoIcons.person_fill : Icons.person,
+                    color: Colors.white,
+                    key: Key("$keyPrefix-avatar-icon"),
+                    size: size / 2,
+                  )
                 );
               }
             } else {
