@@ -206,7 +206,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
             showOverlay = newVal;
           });
 
-          eventDispatcher.emit('overlay-toggle', newVal);
+          // eventDispatcher.emit('overlay-toggle', newVal);
         },
         child: Stack(
           children: [

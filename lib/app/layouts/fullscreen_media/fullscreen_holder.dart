@@ -44,8 +44,8 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
   int currentIndex = 0;
   ScrollPhysics? physics;
   Attachment get attachment => widget.attachment;
-  bool showOverlay = true;
-  StreamSubscription<Tuple2<String, dynamic>>? overlaySub;
+  // bool showOverlay = true;
+  // StreamSubscription<Tuple2<String, dynamic>>? overlaySub;
 
   @override
   void initState() {
@@ -63,21 +63,21 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
       controller = PageController(initialPage: currentIndex);
     }
 
-    overlaySub = eventDispatcher.stream.listen((event) {
-      if (!mounted || event.item1 != 'overlay-toggle') return;
-      if (event.item2 == showOverlay) return;
-      setState(() {
-        showOverlay = event.item2;
-      });
-    });
+    // overlaySub = eventDispatcher.stream.listen((event) {
+    //   if (!mounted || event.item1 != 'overlay-toggle') return;
+    //   if (event.item2 == showOverlay) return;
+    //   setState(() {
+    //     showOverlay = event.item2;
+    //   });
+    // });
   }
 
   @override
   void dispose() {
     controller.dispose();
-    if (overlaySub != null) {
-      overlaySub!.cancel();
-    }
+    // if (overlaySub != null) {
+    //   overlaySub!.cancel();
+    // }
   
     super.dispose();
   }
@@ -90,14 +90,14 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
           systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
           systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
           statusBarColor: Colors.transparent, // status bar color
-          statusBarIconBrightness: !showOverlay || ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+          statusBarIconBrightness: ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
         ),
         child: Actions(
           actions: {
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
-            appBar: !showOverlay || !iOS ? null : AppBar(
+            appBar: !iOS ? null : AppBar(
               leading: TextButton(
                 child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                 onPressed: () {

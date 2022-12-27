@@ -61,7 +61,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
       });
     }
 
-    eventDispatcher.emit('overlay-toggle', toggle);
+    // eventDispatcher.emit('overlay-toggle', toggle);
   }
 
   void initControllers() async {
