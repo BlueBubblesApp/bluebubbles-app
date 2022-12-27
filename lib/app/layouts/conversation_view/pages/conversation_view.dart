@@ -151,6 +151,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                                               decoration: const BoxDecoration(
                                                 shape: BoxShape.circle,
                                               ),
+                                              padding: const EdgeInsets.only(top: 3, left: 1),
                                               alignment: Alignment.center,
                                               child: Icon(
                                                 CupertinoIcons.chevron_down,
