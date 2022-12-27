@@ -19,12 +19,14 @@ import 'package:video_player/video_player.dart' as vp;
 class VideoPlayer extends StatefulWidget {
   final PlatformFile file;
   final Attachment attachment;
+  final bool isFromMe;
 
   VideoPlayer({
     Key? key,
     required this.file,
     required this.attachment,
     required this.controller,
+    required this.isFromMe
   }) : super(key: key);
 
   final ConversationViewController? controller;
@@ -36,6 +38,7 @@ class VideoPlayer extends StatefulWidget {
 class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAliveClientMixin {
   Attachment get attachment => widget.attachment;
   PlatformFile get file => widget.file;
+  bool get isFromMe => widget.isFromMe;
   ConversationViewController? get cvController => widget.controller;
 
   PlayerStatus status = PlayerStatus.NONE;
@@ -150,7 +153,12 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
               child: vp.VideoPlayer(controller!),
             ),
             PlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: controller),
-            MuteButton(showPlayPauseOverlay: showPlayPauseOverlay, muted: muted, controller: controller),
+            MuteButton(
+              showPlayPauseOverlay: showPlayPauseOverlay,
+              muted: muted,
+              controller: controller,
+              isFromMe: widget.isFromMe
+            ),
           ],
         ),
       );
@@ -193,7 +201,12 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
                   controller!.play();
                   showPlayPauseOverlay.value = false;
                 }),
-                MuteButton(showPlayPauseOverlay: showPlayPauseOverlay, muted: muted, controller: controller),
+                MuteButton(
+                  showPlayPauseOverlay: showPlayPauseOverlay,
+                  muted: muted,
+                  controller: controller,
+                  isFromMe: isFromMe
+                ),
               ],
             ),
             firstChild: SizedBox(
@@ -280,17 +293,19 @@ class MuteButton extends StatelessWidget {
     required this.showPlayPauseOverlay,
     required this.muted,
     required this.controller,
+    required this.isFromMe
   }) : super(key: key);
 
   final RxBool showPlayPauseOverlay;
   final RxBool muted;
   final VideoPlayerController? controller;
+  final bool isFromMe;
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
       bottom: 8,
-      right: 8,
+      right: (isFromMe) ? 15 : 8,
       child: Obx(() => AnimatedOpacity(
         opacity: showPlayPauseOverlay.value ? 1 : 0,
         duration: const Duration(milliseconds: 250),

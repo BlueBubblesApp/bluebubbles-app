@@ -273,6 +273,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 attachment: attachment,
                                 file: _content,
                                 controller: controller.cvController,
+                                isFromMe: message.isFromMe!,
                               );
                             } else if (attachment.mimeStart == "audio") {
                               return Padding(
