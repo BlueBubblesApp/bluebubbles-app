@@ -183,10 +183,13 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     _messages.add(message);
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final insertIndex = _messages.indexOf(message);
-    listKey.currentState!.insertItem(
-      insertIndex,
-      duration: const Duration(milliseconds: 500),
-    );
+
+    if (listKey.currentState != null) {
+      listKey.currentState!.insertItem(
+        insertIndex,
+        duration: const Duration(milliseconds: 500),
+      );
+    }
 
     if (insertIndex == 0 && showSmartReplies) {
       _addMessageToSmartReply(message);
