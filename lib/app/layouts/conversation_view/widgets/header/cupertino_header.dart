@@ -207,6 +207,7 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
   String title = "Unknown";
+  late final StreamSubscription<Query<Chat>> sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -220,10 +221,35 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedDisplayName = controller.chat.displayName;
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
+    // run query after render has completed
+    if (!kIsWeb) {
+      updateObx(() {
+        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+            .watch();
+        sub = titleQuery.listen((Query<Chat> query) async {
+          final chat = await runAsync(() {
+            return chatBox.get(controller.chat.id!)!;
+          });
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.handles.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
+          }
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.handles;
+        });
+      });
+    }
   }
 
   @override
   void dispose() {
+    sub.cancel();
     super.dispose();
   }
 
