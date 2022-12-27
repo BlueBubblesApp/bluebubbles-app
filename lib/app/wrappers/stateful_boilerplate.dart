@@ -126,7 +126,7 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
         await SchedulerBinding.instance.endOfFrame;
         if (mounted) super.setState(fn);
       } else {
-        super.setState(fn);
+        if (mounted) super.setState(fn);
       }
     }
 
@@ -150,7 +150,7 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
           if (mounted) fn.call();
         });
       } else {
-        fn.call();
+        if (mounted) fn.call();
       }
     }
 
@@ -217,7 +217,7 @@ abstract class OptimizedState<T extends StatefulWidget> extends State<T> with Th
         await SchedulerBinding.instance.endOfFrame;
         if (mounted) super.setState(fn);
       } else {
-        super.setState(fn);
+        if (mounted) super.setState(fn);
       }
     }
 
@@ -240,7 +240,7 @@ abstract class OptimizedState<T extends StatefulWidget> extends State<T> with Th
           if (mounted) fn.call();
         });
       } else {
-        fn.call();
+        if (mounted) fn.call();
       }
     }
 
