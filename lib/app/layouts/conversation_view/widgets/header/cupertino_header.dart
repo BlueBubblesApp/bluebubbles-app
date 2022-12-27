@@ -208,6 +208,7 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
   String title = "Unknown";
   late final StreamSubscription<Query<Chat>> sub;
+  bool hasStream = false;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -243,13 +244,17 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           cachedDisplayName = chat.displayName;
           cachedParticipants = chat.handles;
         });
+
+        hasStream = true;
       });
     }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (hasStream) {
+      sub.cancel();
+    }
     super.dispose();
   }
 
