@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class FullscreenMediaHolder extends StatefulWidget {
   FullscreenMediaHolder({
@@ -43,6 +44,8 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
   int currentIndex = 0;
   ScrollPhysics? physics;
   Attachment get attachment => widget.attachment;
+  bool showOverlay = true;
+  StreamSubscription<Tuple2<String, dynamic>>? overlaySub;
 
   @override
   void initState() {
@@ -59,11 +62,23 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
       }
       controller = PageController(initialPage: currentIndex);
     }
+
+    overlaySub = eventDispatcher.stream.listen((event) {
+      if (!mounted || event.item1 != 'overlay-toggle') return;
+      if (event.item2 == showOverlay) return;
+      setState(() {
+        showOverlay = event.item2;
+      });
+    });
   }
 
   @override
   void dispose() {
     controller.dispose();
+    if (overlaySub != null) {
+      overlaySub!.cancel();
+    }
+  
     super.dispose();
   }
 
@@ -75,14 +90,14 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
           systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
           systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
           statusBarColor: Colors.transparent, // status bar color
-          statusBarIconBrightness: ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+          statusBarIconBrightness: !showOverlay || ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
         ),
         child: Actions(
           actions: {
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
-            appBar: !iOS ? null : AppBar(
+            appBar: !showOverlay || !iOS ? null : AppBar(
               leading: TextButton(
                 child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                 onPressed: () {
