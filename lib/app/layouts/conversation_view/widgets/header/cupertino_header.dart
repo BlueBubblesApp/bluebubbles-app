@@ -126,6 +126,7 @@ class _UnreadIcon extends StatefulWidget {
 class _UnreadIconState extends OptimizedState<_UnreadIcon> {
   int count = 0;
   late final StreamSubscription<Query<Chat>> sub;
+  bool hasStream = false;
 
   @override
   void initState() {
@@ -141,13 +142,15 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
             });
           }
         });
+
+        hasStream = true;
       });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    if (!kIsWeb && hasStream) sub.cancel();
     super.dispose();
   }
 
@@ -204,7 +207,6 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
   String title = "Unknown";
-  late final StreamSubscription<Query<Chat>> sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -218,15 +220,10 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedDisplayName = controller.chat.displayName;
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
-    // run query after render has completed
-    if (!kIsWeb) {
-
-    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
     super.dispose();
   }
 
