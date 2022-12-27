@@ -222,7 +222,7 @@ class FullSyncManager extends SyncManager {
     await cs.refreshContacts(reloadUI: false);
     addToOutput("Reloading your chats...");
     Get.reload<ChatsService>(force: true);
-    await chats.init();
+    await chats.init(force: true);
     await super.complete();
   }
 }

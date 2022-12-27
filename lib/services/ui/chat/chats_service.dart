@@ -42,8 +42,8 @@ class ChatsService extends GetxService {
     }
   }
 
-  Future<void> init() async {
-    if (!ss.settings.finishedSetup.value) return;
+  Future<void> init({bool force = true}) async {
+    if (!force && !ss.settings.finishedSetup.value) return;
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
