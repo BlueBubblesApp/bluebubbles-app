@@ -25,6 +25,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final Chat chat;
   late final String tag;
   bool fromChatCreator = false;
+  bool addedRecentPhotoReply = false;
   final AutoScrollController scrollController = AutoScrollController();
 
   ConversationViewController(this.chat, {String? tag_}) {
@@ -48,14 +49,17 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final RxDouble timestampOffset = 0.0.obs;
   final RxBool inSelectMode = false.obs;
   final RxList<Message> selected = <Message>[].obs;
+  final RxList<Tuple4<Message, MessagePart, TextEditingController, FocusNode>> editing = <Tuple4<Message, MessagePart, TextEditingController, FocusNode>>[].obs;
   // text field items
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
   final textController = TextEditingController();
+  final subjectTextController = TextEditingController();
   final RxBool showRecording = false.obs;
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
   final ScrollController emojiScrollController = ScrollController();
+  final Rxn<DateTime> scheduledDate = Rxn<DateTime>(null);
   final Rxn<Tuple2<Message, int>> _replyToMessage = Rxn<Tuple2<Message, int>>(null);
   Tuple2<Message, int>? get replyToMessage => _replyToMessage.value;
   set replyToMessage(Tuple2<Message, int>? m) {
@@ -195,7 +199,12 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     return selected.firstWhereOrNull((e) => e.guid == guid) != null;
   }
 
+  bool isEditing(String guid, int part) {
+    return editing.firstWhereOrNull((e) => e.item1.guid == guid && e.item2.part == part) != null;
+  }
+
   void close() {
+    cm.setAllInactive();
     Get.delete<ConversationViewController>(tag: tag);
   }
 }

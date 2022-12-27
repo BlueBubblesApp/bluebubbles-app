@@ -23,8 +23,9 @@ NotificationsService notif = Get.isRegistered<NotificationsService>() ? Get.find
 
 class NotificationsService extends GetxService {
   static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
-  static const String SOCKET_ERROR_CHANNEL = "com.bluebubbles.socket_error";
+  static const String ERROR_CHANNEL = "com.bluebubbles.errors";
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
+  static const String FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
 
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
   StreamSubscription? countSub;
@@ -46,7 +47,15 @@ class NotificationsService extends GetxService {
     if (!kIsWeb && !kIsDesktop) {
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-      await flnp.initialize(initializationSettings);
+      await flnp.initialize(initializationSettings, onSelectNotification: (String? payload) {
+        if (payload != null) {
+          intents.openChat(payload);
+        }
+      });
+      final details = await flnp.getNotificationAppLaunchDetails();
+      if (details != null && details.didNotificationLaunchApp && details.payload != null) {
+        intents.openChat(details.payload!);
+      }
       // create notif channels
       createNotificationChannel(
         NEW_MESSAGE_CHANNEL,
@@ -54,14 +63,19 @@ class NotificationsService extends GetxService {
         "Displays all received new messages",
       );
       createNotificationChannel(
-        SOCKET_ERROR_CHANNEL,
-        "Socket Connection Error",
-        "Displays connection failures",
+        ERROR_CHANNEL,
+        "Errors",
+        "Displays message send failures, connection failures, and more",
       );
       createNotificationChannel(
         REMINDER_CHANNEL,
         "Message Reminders",
         "Displays message reminders set through the app",
+      );
+      createNotificationChannel(
+        FACETIME_CHANNEL,
+        "Incoming FaceTimes",
+        "Displays incoming FaceTimes detected by the server",
       );
     }
 
@@ -105,7 +119,7 @@ class NotificationsService extends GetxService {
   Future<void> createReminder(Chat chat, Message message, DateTime time) async {
     await flnp.zonedSchedule(
       Random().nextInt(9998) + 1,
-      'Reminder: ${chat.getTitle()}',
+      'Reminder: ${chat.getChatCreatorSubtitle()}',
       hideContent ? "iMessage" : MessageHelper.getNotificationText(message),
       TZDateTime.from(time, local),
       NotificationDetails(
@@ -130,15 +144,19 @@ class NotificationsService extends GetxService {
     final isGroup = chat.isGroup;
     final guid = chat.guid;
     final contactName = message.handle?.displayName ?? "Unknown";
-    final title = chat.getTitle();
+    final title = isGroup ? chat.getChatCreatorSubtitle() : contactName;
     final text = hideContent ? "iMessage" : MessageHelper.getNotificationText(message);
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
     final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
 
-    Uint8List chatIcon = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
+    Uint8List chatIcon = await avatarAsBytes(chat: chat, quality: 256);
     Uint8List contactIcon = message.isFromMe!
         ? personIcon
-        : await avatarAsBytes(isGroup: false, participants: chat.participants.where((e) => e.address == message.handle!.address).toList(), chatGuid: guid, quality: 256);
+        : await avatarAsBytes(
+            participantsOverride: !chat.isGroup ? null : chat.participants.where((e) => e.address == message.handle!.address).toList(),
+            chat: chat,
+            quality: 256
+        );
     if (chatIcon.isEmpty) {
       chatIcon = personIcon;
     }
@@ -228,7 +246,7 @@ class NotificationsService extends GetxService {
           return;
         }
 
-        Uint8List avatar = await avatarAsBytes(isGroup: isGroup, participants: chat.participants, chatGuid: guid, quality: 256);
+        Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
 
         // Create a temp file with the avatar
         String path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");
@@ -449,23 +467,70 @@ class NotificationsService extends GetxService {
   }
 
   Future<void> createSocketError() async {
-    await mcs.invokeMethod("create-socket-issue-warning", {
-      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-    });
+    await flnp.show(
+      -2,
+      'Could not connect',
+      'Your server may be offline!',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          ERROR_CHANNEL,
+          'Errors',
+          channelDescription: 'Displays message send failures, connection failures, and more',
+          priority: Priority.max,
+          importance: Importance.max,
+          color: HexColor("4990de"),
+          ongoing: true,
+          onlyAlertOnce: true,
+        ),
+      ),
+    );
   }
 
-  Future<void> createFailedToSend() async {
-    await mcs.invokeMethod("message-failed-to-send", {
-      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-    });
+  Future<void> createFailedToSend(Chat chat, {bool scheduled = false}) async {
+    await flnp.show(
+      chat.id! * (scheduled ? -1 : 1),
+      'Failed to send${scheduled ? " scheduled" : ""} message',
+      scheduled ? 'Tap to open scheduled messages list' : 'Tap to see more details or retry',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          ERROR_CHANNEL,
+          'Errors',
+          channelDescription: 'Displays message send failures, connection failures, and more',
+          priority: Priority.max,
+          importance: Importance.max,
+          color: HexColor("4990de"),
+        ),
+      ),
+      payload: chat.guid + (scheduled ? "-scheduled" : ""),
+    );
+  }
+
+  Future<void> createFacetimeNotif(Handle handle) async {
+    await cs.init();
+    final contact = cs.matchHandleToContact(handle);
+    await flnp.show(
+      Random().nextInt(9998) + 1,
+      'Incoming FaceTime from ${contact?.displayName ?? handle.address}',
+      '',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          FACETIME_CHANNEL,
+          'Incoming FaceTimes',
+          channelDescription: 'Displays incoming FaceTimes detected by the server',
+          priority: Priority.max,
+          importance: Importance.max,
+          color: HexColor("4990de"),
+        ),
+      ),
+    );
   }
 
   Future<void> clearSocketError() async {
-    await mcs.invokeMethod("clear-socket-issue");
+    await flnp.cancel(-2);
   }
 
-  Future<void> clearFailedToSend() async {
-    await mcs.invokeMethod("clear-failed-to-send");
+  Future<void> clearFailedToSend(int id) async {
+    await flnp.cancel(id);
   }
 
   Future<void> clearDesktopNotificationsForChat(String chatGuid) async {

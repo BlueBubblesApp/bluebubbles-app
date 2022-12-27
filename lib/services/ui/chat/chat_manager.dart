@@ -1,10 +1,9 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:dio/dio.dart';
+import 'package:diox/diox.dart';
 import 'package:get/get.dart' hide Response;
 
 ChatManager cm = Get.isRegistered<ChatManager>() ? Get.find<ChatManager>() : Get.put(ChatManager());
@@ -14,6 +13,8 @@ class ChatManager extends GetxService {
   final Map<String, ChatLifecycleManager> _chatControllers = {};
 
   void setAllInactive() {
+    Logger.debug('Setting all chats to inactive');
+
     activeChat?.controller = null;
     activeChat = null;
     attachmentDownloader.cancelAllDownloads();
@@ -24,6 +25,8 @@ class ChatManager extends GetxService {
   }
 
   void setActiveChat(Chat chat, {clearNotifications = true}) {
+    Logger.debug('Setting active chat to ${chat.guid} (${chat.displayName})');
+
     ss.prefs.setString('lastOpenedChat', chat.guid);
     createChatController(chat, active: true);
     if (clearNotifications) {
@@ -32,10 +35,12 @@ class ChatManager extends GetxService {
   }
 
   void setActiveToDead() {
+    Logger.debug('Setting active chat to dead: ${activeChat?.chat.guid}');
     activeChat?.isAlive = false;
   }
 
   void setActiveToAlive() {
+    Logger.info('Setting active chat to alive: ${activeChat?.chat.guid}');
     activeChat?.isAlive = true;
   }
 
@@ -48,6 +53,8 @@ class ChatManager extends GetxService {
   }
 
   ChatLifecycleManager createChatController(Chat chat, {active = false}) {
+    Logger.debug('Creating chat controller for ${chat.guid} (${chat.displayName})');
+  
     // If a chat is passed, get the chat and set it be active and make sure it's stored
     ChatLifecycleManager controller = getChatController(chat.guid) ?? ChatLifecycleManager(chat);
     _chatControllers[chat.guid] = controller;

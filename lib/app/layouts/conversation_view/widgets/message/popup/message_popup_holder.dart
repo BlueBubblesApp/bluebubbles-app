@@ -46,7 +46,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     final minSierra = await ss.isMinSierra;
     final minBigSur = await ss.isMinBigSur;
     eventDispatcher.emit('popup-pushed', true);
-    await Navigator.push(
+    if (!iOS) {
+      widget.cvController.selected.add(message);
+    }
+    final result = await Navigator.push(
       Get.context!,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 150),
@@ -82,6 +85,9 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
         barrierDismissible: true,
       ),
     );
+    if (!result) {
+      widget.cvController.selected.remove(message);
+    }
     eventDispatcher.emit('popup-pushed', false);
   }
 
@@ -112,12 +118,12 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       key: globalKey,
       onDoubleTap: ss.settings.doubleTapForDetails.value || message.guid!.startsWith('temp')
         ? () => openPopup(context)
-        : ss.settings.enableQuickTapback.value && cm.activeChat!.chat.isIMessage
+        : ss.settings.enableQuickTapback.value && widget.cvController.chat.isIMessage
         ? () => sendTapback(null, widget.part.part)
         : null,
       onLongPress: ss.settings.doubleTapForDetails.value &&
         ss.settings.enableQuickTapback.value &&
-        cm.activeChat!.chat.isIMessage &&
+        widget.cvController.chat.isIMessage &&
         !message.guid!.startsWith('temp')
         ? () => sendTapback(null, widget.part.part)
         : () => openPopup(context),

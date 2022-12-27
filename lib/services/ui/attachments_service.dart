@@ -394,7 +394,8 @@ class AttachmentsService extends GetxService {
     if (attachment.metadata != null) {
       // Map the EXIF to the metadata
       try {
-        Map<String, IfdTag> exif = await readExifFromFile(File(filePath));
+        dynamic file = File(filePath);
+        Map<String, IfdTag> exif = await readExifFromFile(file);
         attachment.metadata ??= {};
         for (MapEntry<String, IfdTag> item in exif.entries) {
           attachment.metadata![item.key] = item.value.printable;

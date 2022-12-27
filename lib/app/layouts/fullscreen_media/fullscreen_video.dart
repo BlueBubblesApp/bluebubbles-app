@@ -53,6 +53,17 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
     initControllers();
   }
 
+  void togglePlayPauseOverlay(bool toggle) {
+    if (!mounted) return;
+    if (toggle != showPlayPauseOverlay) {
+      setState(() {
+        showPlayPauseOverlay = toggle;
+      });
+    }
+
+    // eventDispatcher.emit('overlay-toggle', toggle);
+  }
+
   void initControllers() async {
     if (kIsWeb || widget.file.path == null) {
       final blob = html.Blob([widget.file.bytes]);
@@ -66,9 +77,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
     await controller.initialize();
     chewieController = makeController();
     createListener(controller);
-    setState(() {
-      showPlayPauseOverlay = !controller.value.isPlaying;
-    });
+    togglePlayPauseOverlay(!controller.value.isPlaying);
     isReloading.value = false;
   }
 
@@ -180,9 +189,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
       status = currentStatus;
       // If the status is ended, restart
       if (status == PlayerStatus.ENDED) {
-        setState(() {
-          showPlayPauseOverlay = true;
-        });
+        togglePlayPauseOverlay(true);
         await controller.pause();
         await controller.seekTo(const Duration());
       }
@@ -210,16 +217,15 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
         final url = html.Url.createObjectUrlFromBlob(blob);
         controller = VideoPlayerController.network(url);
       } else {
-        controller = VideoPlayerController.file(File(file.path!));
+        dynamic _file = File(file.path!);
+        controller = VideoPlayerController.file(_file);
       }
       await controller.initialize();
       isReloading.value = false;
       controller.setVolume(ss.settings.startVideosMutedFullscreen.value ? 0 : 1);
       chewieController = makeController();
       createListener(controller);
-      setState(() {
-        showPlayPauseOverlay = !controller.value.isPlaying;
-      });
+      togglePlayPauseOverlay(!controller.value.isPlaying);
     }, onError: () {
       setState(() {
         hasError = true;
@@ -236,7 +242,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
     return Scaffold(
       backgroundColor: Colors.black,
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      bottomNavigationBar: !iOS || !widget.showInteractions ? null : Theme(
+      bottomNavigationBar: !showPlayPauseOverlay || !iOS || !widget.showInteractions ? null : Theme(
         data: context.theme.copyWith(
           navigationBarTheme: context.theme.navigationBarTheme.copyWith(
             indicatorColor: samsung ? Colors.black : context.theme.colorScheme.properSurface,
@@ -315,14 +321,11 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
       body: Listener(
         onPointerUp: (_) async {
           if (iOS) {
-            setState(() {
-              showPlayPauseOverlay = true;
-            });
+            togglePlayPauseOverlay(true);
             if (hideOverlayTimer?.isActive ?? false) hideOverlayTimer?.cancel();
             hideOverlayTimer = Timer(const Duration(seconds: 3), () {
-              setState(() {
-                showPlayPauseOverlay = false;
-              });
+              if (!controller.value.isPlaying) return;
+              togglePlayPauseOverlay(false);
             });
           }
         },

@@ -2,7 +2,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_pic
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:dio/dio.dart';
+import 'package:diox/diox.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;

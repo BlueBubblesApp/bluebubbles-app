@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:dio/dio.dart';
+import 'package:diox/diox.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
@@ -98,7 +98,7 @@ class FullSyncManager extends SyncManager {
 
               if (newMessages.isEmpty && skipEmptyChats) {
                 addToOutput('Deleting chat: $displayName (skip empty chats was selected)');
-                Chat.deleteChat(chat);
+                Chat.softDelete(chat);
                 continue;
               }
 
@@ -222,7 +222,7 @@ class FullSyncManager extends SyncManager {
     await cs.refreshContacts(reloadUI: false);
     addToOutput("Reloading your chats...");
     Get.reload<ChatsService>(force: true);
-    await chats.init();
+    await chats.init(force: true);
     await super.complete();
   }
 }

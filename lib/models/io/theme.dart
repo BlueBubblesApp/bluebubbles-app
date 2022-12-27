@@ -200,32 +200,32 @@ class ThemeStruct {
             titleLarge: typography.titleLarge!.copyWith(
               color: Color(map["textTheme"]["titleLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["titleLarge"]["fontWeight"]],
-              fontSize: map["textTheme"]["titleLarge"]["fontSize"],
+              fontSize: map["textTheme"]["titleLarge"]["fontSize"]?.toDouble(),
             ).apply(letterSpacingFactor: 0),
             bodyLarge: typography.bodyLarge!.copyWith(
               color: Color(map["textTheme"]["bodyLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyLarge"]["fontWeight"]],
-              fontSize: map["textTheme"]["bodyLarge"]["fontSize"],
+              fontSize: map["textTheme"]["bodyLarge"]["fontSize"]?.toDouble(),
             ).apply(letterSpacingFactor: 0),
             bodyMedium: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
-              fontSize: map["textTheme"]["bodyMedium"]["fontSize"],
+              fontSize: map["textTheme"]["bodyMedium"]["fontSize"]?.toDouble(),
             ).apply(letterSpacingFactor: 0),
             bodySmall: typography.bodySmall!.copyWith(
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
-              fontSize: map["textTheme"]["bodySmall"]["fontSize"],
+              fontSize: map["textTheme"]["bodySmall"]["fontSize"]?.toDouble(),
             ).apply(letterSpacingFactor: 0),
             labelLarge: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelLarge"]["fontWeight"]],
-              fontSize: map["textTheme"]["labelLarge"]["fontSize"],
+              fontSize: map["textTheme"]["labelLarge"]["fontSize"]?.toDouble(),
             ).apply(letterSpacingFactor: 0),
             labelSmall: typography.labelSmall!.copyWith(
               color: Color(map["textTheme"]["labelSmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelSmall"]["fontWeight"]],
-              fontSize: map["textTheme"]["labelSmall"]["fontSize"],
+              fontSize: map["textTheme"]["labelSmall"]["fontSize"]?.toDouble(),
             ).apply(letterSpacingFactor: 0),
           ),
           colorScheme: ColorScheme(
@@ -278,7 +278,7 @@ class ThemeStruct {
             bubbleText: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
-              fontSize: map["textTheme"]["bubbleText"]?["fontSize"] ?? 15,
+              fontSize: map["textTheme"]["bubbleText"]?["fontSize"]?.toDouble() ?? 15,
               height: typography.bodyMedium!.height! * 0.85,
             ).apply(letterSpacingFactor: 0),
           ),

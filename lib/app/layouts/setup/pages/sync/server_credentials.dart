@@ -10,7 +10,7 @@ import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:dio/dio.dart' as dio;
+import 'package:diox/diox.dart' as dio;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -319,6 +319,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   }
 
   Future<void> connect(String url, String password) async {
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length - 1);
+    }
     if (kIsWeb && url.startsWith("http://")) {
       controller.updateConnectError("HTTP URLs are not supported on Web! You must use an HTTPS URL.");
       return;

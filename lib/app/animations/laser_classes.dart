@@ -24,6 +24,7 @@ class LaserController implements Listenable {
   bool isPlaying = false;
   bool requestedToStop = false;
   final List<VoidCallback> listeners = [];
+  Function? stopFunc;
 
   Duration lastAutoLaunch = Duration.zero;
   Duration autoLaunchDuration = const Duration(milliseconds: 500);
@@ -36,8 +37,9 @@ class LaserController implements Listenable {
     ticker = vsync.createTicker(update)..start();
   }
 
-  void stop() {
+  void stop({Function? onStop}) {
     requestedToStop = true;
+    stopFunc = onStop;
   }
 
   @override
@@ -107,6 +109,7 @@ class LaserController implements Listenable {
       requestedToStop = false;
       laser = null;
       beams = [];
+      stopFunc?.call();
     }
     // Notify listeners.
     // The copy of the list and the condition prevent

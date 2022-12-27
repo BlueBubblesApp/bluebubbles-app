@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
@@ -137,14 +138,32 @@ class MessageHelper {
           // now we check if theres a subject or text and construct out message based off that
         } else if (associatedMessage.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
           return "$sender $verb a message with Invisible Ink";
-        } else if (!isNullOrEmpty(associatedMessage.subject?.trim())! || !isNullOrEmpty(associatedMessage.text?.trim())!) {
-          final messageText = (associatedMessage.subject ?? "")
-              + (!isNullOrEmpty(associatedMessage.subject?.trim())! ? "\n" : "")
-              + (associatedMessage.text ?? "");
-          return '$sender $verb “$messageText”';
-          // if it has an attachment, we should fetch the attachments and get the attachment text
-        } else if (associatedMessage.hasAttachments) {
-          return '$sender $verb ${_getAttachmentText(associatedMessage.fetchAttachments()!)}';
+        } else {
+          String? messageText;
+          bool attachment = false;
+          if (message.associatedMessagePart != null && associatedMessage.attributedBody.firstOrNull != null) {
+            final attrBod = associatedMessage.attributedBody.first;
+            final range = attrBod.runs.firstWhereOrNull((e) => e.attributes?.messagePart == message.associatedMessagePart)?.range;
+            final attachmentGuid = attrBod.runs.firstWhereOrNull((e) => e.attributes?.messagePart == message.associatedMessagePart)?.attributes?.attachmentGuid;
+            if (attachmentGuid != null) {
+              attachment = true;
+              messageText = _getAttachmentText([associatedMessage.fetchAttachments()!.firstWhere((e) => e?.guid == attachmentGuid)]);
+            } else if (range != null) {
+              messageText = attrBod.string.substring(range.first, range.first + range.last);
+            }
+          }
+          // fallback
+          if (messageText == null) {
+            if (associatedMessage.hasAttachments) {
+              attachment = true;
+              messageText = _getAttachmentText(associatedMessage.fetchAttachments()!);
+            } else {
+              messageText = (associatedMessage.subject ?? "")
+                + (!isNullOrEmpty(associatedMessage.subject?.trim())! ? "\n" : "")
+                + (associatedMessage.text ?? "");
+            }
+          }
+          return '$sender $verb ${attachment ? "" : "“"}$messageText${attachment ? "" : "”"}';
         }
       }
       // if we can't fetch the associated message for some reason

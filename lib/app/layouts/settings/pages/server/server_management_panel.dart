@@ -152,7 +152,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       const TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
+                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : http.originOverride ?? ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
                                       ..onTap = () {
                                         Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
                                         showSnackbar('Copied', "Address copied to clipboard");
@@ -407,7 +407,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            socket.restartSocket();
                           },
                           onClose: () {
                             Get.back();
@@ -421,7 +420,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            socket.restartSocket();
                           },
                           onClose: () {
                             Get.back();
@@ -470,7 +468,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       ),
                     ),
                   if (!kIsWeb)
-                    Obx(() =>SettingsTile(
+                    Obx(() => SettingsTile(
                       title: "Manually Sync Messages",
                       subtitle: socket.state.value == SocketState.connected
                           ? "Tap to sync messages" : "Disconnected, cannot sync",
@@ -502,6 +500,87 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         }
                       }),
                     ),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    Container(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Obx(() => SettingsSwitch(
+                        initialVal: ss.settings.localhostPort.value != null,
+                        title: "Detect Localhost Address",
+                        subtitle: "Look up localhost address for a faster direct connection",
+                        backgroundColor: tileColor,
+                        onChanged: (bool val) async {
+                          if (val) {
+                            final TextEditingController portController = TextEditingController();
+                            await showDialog(
+                              context: context,
+                              builder: (_) {
+                                return AlertDialog(
+                                  actions: [
+                                    TextButton(
+                                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                      onPressed: () => Get.back(),
+                                    ),
+                                    TextButton(
+                                      child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                      onPressed: () async {
+                                        if (portController.text.isEmpty || !portController.text.isNumericOnly) {
+                                          showSnackbar("Error", "Enter a valid port!");
+                                          return;
+                                        }
+                                        Get.back();
+                                        ss.settings.localhostPort.value = portController.text;
+                                      },
+                                    ),
+                                  ],
+                                  content: TextField(
+                                    controller: portController,
+                                    decoration: const InputDecoration(
+                                      labelText: "Port Number",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                  title: Text("Enter Server Port", style: context.theme.textTheme.titleLarge),
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                );
+                              }
+                            );
+                          } else {
+                            ss.settings.localhostPort.value = null;
+                          }
+                          ss.settings.save();
+                          if (ss.settings.localhostPort.value == null) {
+                            http.originOverride = null;
+                          } else {
+                            NetworkTasks.detectLocalhost(createSnackbar: true);
+                          }
+                        },
+                      ))
+                    ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
+                  SettingsTile(
+                    title: "Fetch Latest URL",
+                    subtitle: "Forcefully fetch latest URL from Firebase",
+                    backgroundColor: tileColor,
+                    onTap: () async {
+                      String? newUrl = await fdb.fetchNewUrl();
+                      showSnackbar("Notice", "Fetched URL: $newUrl");
+                      socket.restartSocket();
+                    }),
                 ]
               ),
               SettingsHeader(

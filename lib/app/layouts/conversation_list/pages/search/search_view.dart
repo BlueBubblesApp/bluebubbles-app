@@ -86,7 +86,8 @@ class SearchViewState extends OptimizedState<SearchView> {
     if (local) {
       final query = (messageBox.query(Message_.text.contains(currentSearchTerm!)
           .and(Message_.associatedMessageGuid.isNull())
-          .and(Message_.dateDeleted.isNull()))
+          .and(Message_.dateDeleted.isNull())
+          .and(Message_.dateCreated.notNull()))
         ..order(Message_.dateCreated, flags: Order.descending)).build();
       query.limit = 50;
       final messages = query.find();
@@ -341,7 +342,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                   decoration: BoxDecoration(
                     border: !ss.settings.hideDividers.value ? Border(
                       bottom: BorderSide(
-                        color: context.theme.colorScheme.background.lightenOrDarken(15),
+                        color: context.theme.colorScheme.background.oppositeLightenOrDarken(15),
                         width: 0.5,
                       ),
                     ) : null,

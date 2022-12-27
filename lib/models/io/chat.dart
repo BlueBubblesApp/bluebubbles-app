@@ -92,8 +92,8 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       final messages = <Message>[];
       if (searchAround == null) {
         final query = (messageBox.query(includeDeleted
-            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-            : Message_.dateDeleted.isNull())
+            ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+            : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
           ..link(Message_.chat, Chat_.id.equals(chatId))
           ..order(Message_.dateCreated, flags: Order.descending))
             .build();
@@ -103,20 +103,18 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
         messages.addAll(query.find());
         query.close();
       } else {
-        final beforeQuery = (messageBox.query(Message_.dateCreated.lessThan(searchAround)
-            .and(includeDeleted
-            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-            : Message_.dateDeleted.isNull()))
+        final beforeQuery = (messageBox.query(Message_.dateCreated.lessThan(searchAround).and(includeDeleted
+            ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+            : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull())))
           ..link(Message_.chat, Chat_.id.equals(chatId))
           ..order(Message_.dateCreated, flags: Order.descending))
             .build();
         beforeQuery.limit = limit;
         final before = beforeQuery.find();
         beforeQuery.close();
-        final afterQuery = (messageBox.query(Message_.dateCreated.greaterThan(searchAround)
-            .and(includeDeleted
-            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-            : Message_.dateDeleted.isNull()))
+        final afterQuery = (messageBox.query(Message_.dateCreated.greaterThan(searchAround).and(includeDeleted
+            ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+            : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull())))
           ..link(Message_.chat, Chat_.id.equals(chatId))
           ..order(Message_.dateCreated))
             .build();
@@ -242,7 +240,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       if (stuff.length >= 3 && stuff[2] != null && stuff[2] is List) {
         queryBuilder = chatBox.query(Chat_.id.oneOf(stuff[2] as List<int>));
       } else {
-        queryBuilder = chatBox.query();
+        queryBuilder = chatBox.query(Chat_.dateDeleted.isNull());
       }
 
       // Build the query, applying some sorting so we get data in the correct order.
@@ -322,6 +320,7 @@ class Chat {
   set latestMessage(Message m) => _latestMessage = m;
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
+  DateTime? dateDeleted;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -354,6 +353,7 @@ class Chat {
     this.autoSendTypingIndicators = true,
     this.textFieldText,
     this.textFieldAttachments = const [],
+    this.dateDeleted,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -380,6 +380,7 @@ class Chat {
       participants: (json['participants'] as List? ?? []).map((e) => Handle.fromMap(e)).toList(),
       autoSendReadReceipts: json["autoSendReadReceipts"],
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
+      dateDeleted: parseDate(json["dateDeleted"]),
     );
   }
 
@@ -443,20 +444,25 @@ class Chat {
       }
       dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
+        if (handles.isEmpty && participants.isNotEmpty) {
+          handles.addAll(participants);
+        }
         id = chatBox.put(this);
         final _chat = chatBox.get(id!);
-        if (_chat!.handles.length > handles.length) {
-          final remove = List<Handle>.from(_chat.handles.where((e) => handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-          for (Handle e in remove) {
-            _chat.handles.remove(e);
+        if (handles.isNotEmpty) {
+          if (_chat!.handles.length > handles.length) {
+            final remove = List<Handle>.from(_chat.handles.where((e) => handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
+            for (Handle e in remove) {
+              _chat.handles.remove(e);
+            }
+            _chat.handles.applyToDb();
+          } else if (_chat.handles.length < handles.length) {
+            final add = List<Handle>.from(handles.where((e) => _chat.handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
+            for (Handle e in add) {
+              _chat.handles.add(e);
+            }
+            _chat.handles.applyToDb();
           }
-          _chat.handles.applyToDb();
-        } else if (_chat.handles.length < handles.length) {
-          final add = List<Handle>.from(handles.where((e) => _chat.handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-          for (Handle e in add) {
-            _chat.handles.add(e);
-          }
-          _chat.handles.applyToDb();
         }
       } on UniqueViolationException catch (_) {}
     });
@@ -561,22 +567,36 @@ class Chat {
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
-  /// Delete a chat locally
+  /// Delete a chat locally. Prefer using softDelete so the chat doesn't come back
   static void deleteChat(Chat chat) {
     if (kIsWeb) return;
     List<Message> messages = Chat.getMessages(chat);
     store.runInTransaction(TxMode.write, () {
-      /// Remove all references of chat - from chatBox, messageBox,
-      /// chJoinBox, and cmJoinBox
+      /// Remove all references of chat and its messages
       chatBox.remove(chat.id!);
       messageBox.removeMany(messages.map((e) => e.id!).toList());
     });
   }
 
+  static void softDelete(Chat chat) {
+    if (kIsWeb) return;
+    List<Message> messages = Chat.getMessages(chat);
+    store.runInTransaction(TxMode.write, () {
+      chat.dateDeleted = DateTime.now().toUtc();
+      chat.hasUnreadMessage = false;
+      chat.save();
+      for (Message m in messages) {
+        Message.softDelete(m.guid!);
+      }
+    });
+  }
+
   Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
     if (hasUnreadMessage == hasUnread && !force) return this;
-    hasUnreadMessage = hasUnread;
-    save(updateHasUnreadMessage: true);
+    if (!cm.isChatActive(guid) || !hasUnread || force) {
+      hasUnreadMessage = hasUnread;
+      save(updateHasUnreadMessage: true);
+    }
 
     if (kIsDesktop) {
       notif.clearDesktopNotificationsForChat(guid);
@@ -589,7 +609,7 @@ class Chat {
       if (privateMark && ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
         if (!hasUnread && autoSendReadReceipts!) {
           http.markChatRead(guid);
-        } else {
+        } else if (hasUnread) {
           http.markChatUnread(guid);
         }
       }
@@ -632,6 +652,10 @@ class Chat {
           || (message.guid != latest.guid && message.dateCreated == latest.dateCreated);
       if (isNewer) {
         _latestMessage = message;
+        if (dateDeleted != null) {
+          dateDeleted = null;
+          chats.addChat(this);
+        }
       }
     }
 
@@ -691,8 +715,8 @@ class Chat {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
       final query = (messageBox.query(includeDeleted
-              ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-              : Message_.dateDeleted.isNull())
+              ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+              : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
             ..link(Message_.chat, Chat_.id.equals(chat.id!))
             ..order(Message_.dateCreated, flags: Order.descending))
           .build();
@@ -898,7 +922,7 @@ class Chat {
     _latestMessage ??= other.latestMessage;
     muteArgs ??= other.muteArgs;
     title ??= other.title;
-
+    dateDeleted ??= other.dateDeleted;
     return this;
   }
 
@@ -936,5 +960,6 @@ class Chat {
     "_pinIndex": _pinIndex.value,
     "autoSendReadReceipts": autoSendReadReceipts!,
     "autoSendTypingIndicators": autoSendTypingIndicators!,
+    "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
   };
 }

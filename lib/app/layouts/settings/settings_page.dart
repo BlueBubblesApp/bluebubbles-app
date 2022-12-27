@@ -12,6 +12,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/system/notification_panel
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/private_api_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/redacted_mode_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theming_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/troubleshoot_panel.dart';
@@ -22,7 +23,7 @@ import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:dio/dio.dart';
+import 'package:diox/diox.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -89,7 +90,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
           allowResize: true,
           left: SettingsScaffold(
               title: "Settings",
-              initialHeader: "Server Management",
+              initialHeader: "Server & Message Management",
               iosSubtitle: iosSubtitle,
               materialSubtitle: materialSubtitle,
               tileColor: tileColor,
@@ -180,6 +181,33 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               trailing: nextIcon,
                             );
                           }),
+                          if (ss.serverDetailsSync().item4 >= 205)
+                            Container(
+                              color: tileColor,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 65.0),
+                                child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                              ),
+                            ),
+                          if (ss.serverDetailsSync().item4 >= 205)
+                            SettingsTile(
+                              backgroundColor: tileColor,
+                              title: "Scheduled Messages",
+                              subtitle: "Schedule your server to send a message in the future or at set intervals",
+                              isThreeLine: true,
+                              onTap: () {
+                                ns.pushAndRemoveSettingsUntil(
+                                  context,
+                                  ScheduledMessagesPanel(),
+                                      (route) => route.isFirst,
+                                );
+                              },
+                              trailing: nextIcon,
+                              leading: const SettingsLeadingIcon(
+                                iosIcon: CupertinoIcons.calendar_today,
+                                materialIcon: Icons.schedule_send_outlined,
+                              ),
+                            ),
                         ],
                       ),
                       SettingsHeader(
@@ -414,30 +442,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                           )),
                         ],
                       ),
-                      // SettingsTile(
-                      //   title: "Message Scheduling",
-                      //   trailing: Icon(Icons.arrow_forward_ios,
-                      //       color: context.theme.primaryColor),
-                      //   onTap: () async {
-                      //     Navigator.of(context).push(
-                      //       CupertinoPageRoute(
-                      //         builder: (context) => SchedulingPanel(),
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
-                      // SettingsTile(
-                      //   title: "Search",
-                      //   trailing: Icon(Icons.arrow_forward_ios,
-                      //       color: context.theme.primaryColor),
-                      //   onTap: () async {
-                      //     Navigator.of(context).push(
-                      //       CupertinoPageRoute(
-                      //         builder: (context) => SearchView(),
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
                       SettingsHeader(
                           headerColor: headerColor,
                           tileColor: tileColor,

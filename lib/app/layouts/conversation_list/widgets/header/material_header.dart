@@ -84,7 +84,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                 Stack(
                                   alignment: Alignment.centerLeft,
                                   children: [
-                                    const SyncIndicator(),
+                                    SyncIndicator(),
                                   ],
                                 ),
                               ],
@@ -215,7 +215,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                         onPressed: () {
                           for (Chat element in controller.selectedChats) {
                             chats.removeChat(element);
-                            Chat.deleteChat(element);
+                            Chat.softDelete(element);
                           }
                           controller.clearSelectedChats();
                         },

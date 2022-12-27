@@ -77,7 +77,7 @@ dependencies:
   universal_html: ^2.0.8 # cross-platform dart:html implementation
   file_picker: ^5.0.1
   firebase_dart: ^1.0.10+1
-  dio: ^4.0.6
+  diox: ^5.0.0-dev.2
   quick_notify: ^0.2.1
   qr_flutter:
     git:
@@ -137,6 +137,14 @@ dependencies:
   flutter_staggered_grid_view: ^0.6.2
   store_checker: ^1.1.0
   github: ^9.7.0
+  numberpicker: ^2.1.1
+  hand_signature: ^2.3.0+1
+  network_tools: ^3.0.0+3
+  network_info_plus: 2.1.4+1
+  open_filex: 4.1.1
+  auto_size_text: ^3.0.0
+  flutter_map: ^3.0.0
+  flutter_map_marker_popup: ^4.0.0
 
 dependency_overrides:
   rxdart: ^0.27.5

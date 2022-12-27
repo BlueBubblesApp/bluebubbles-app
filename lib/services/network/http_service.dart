@@ -1,6 +1,6 @@
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:dio/dio.dart';
+import 'package:diox/diox.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
@@ -13,9 +13,10 @@ HttpService http = Get.isRegistered<HttpService>() ? Get.find<HttpService>() : G
 /// GET or POST requests.
 class HttpService extends GetxService {
   late Dio dio;
+  String? originOverride;
 
   /// Get the URL origin from the current server address
-  String get origin => "${Uri.parse(ss.settings.serverAddress.value).origin}/api/v1";
+  String get origin => "${originOverride ?? Uri.parse(ss.settings.serverAddress.value).origin}/api/v1";
 
   /// Helper function to build query params, this way we only need to add the
   /// required guid auth param in one place
@@ -53,9 +54,9 @@ class HttpService extends GetxService {
   @override
   void onInit() {
     dio = Dio(BaseOptions(
-        connectTimeout: 15000,
-        receiveTimeout: ss.settings.apiTimeout.value,
-        sendTimeout: ss.settings.apiTimeout.value,
+      connectTimeout: const Duration(milliseconds: 15000),
+      receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+      sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
     ));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
@@ -228,7 +229,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$origin/attachment/$guid/download",
           queryParameters: buildQueryParams({"original": original}),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -242,7 +243,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
         "$origin/attachment/$guid/blurhash",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
@@ -409,7 +410,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$origin/chat/$guid/icon",
           queryParameters: buildQueryParams(),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -523,7 +524,7 @@ class HttpService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: 0, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout! * 12),
       );
       return returnSuccessOrError(response);
     });
@@ -549,7 +550,7 @@ class HttpService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: 0, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout! * 12),
       );
       return returnSuccessOrError(response);
     });
@@ -569,6 +570,36 @@ class HttpService extends GetxService {
             "selectedMessageGuid": selectedMessageGuid,
             "reaction": reaction,
             "partIndex": partIndex,
+          },
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  Future<Response> unsend(String selectedMessageGuid, {int? partIndex, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/message/$selectedMessageGuid/unsend",
+          queryParameters: buildQueryParams(),
+          data: {
+            "partIndex": partIndex ?? 0,
+          },
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  Future<Response> edit(String selectedMessageGuid, String edit, String backwardsCompatText, {int? partIndex, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/message/$selectedMessageGuid/edit",
+          queryParameters: buildQueryParams(),
+          data: {
+            "editedMessage": edit,
+            "backwardsCompatibilityMessage": backwardsCompatText,
+            "partIndex": partIndex ?? 0,
           },
           cancelToken: cancelToken
       );
@@ -651,7 +682,7 @@ class HttpService extends GetxService {
           queryParameters: buildQueryParams(),
           data: contacts,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: 0, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout! * 12),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -720,11 +751,103 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get scheduled messages from server
+  Future<Response> getScheduled({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$origin/message/schedule",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Create a scheduled message
+  Future<Response> createScheduled(String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$origin/message/schedule",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+        data: {
+          "type": "send-message",
+          "payload": {
+            "chatGuid": chatGuid,
+            "message": message,
+            "method": "apple-script"
+          },
+          "scheduledFor": date.millisecondsSinceEpoch,
+          "schedule": schedule,
+        }
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  // Create a scheduled message
+  Future<Response> updateScheduled(int id, String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.put(
+          "$origin/message/schedule/$id",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken,
+          data: {
+            "type": "send-message",
+            "payload": {
+              "chatGuid": chatGuid,
+              "message": message,
+              "method": "apple-script"
+            },
+            "scheduledFor": date.millisecondsSinceEpoch,
+            "schedule": schedule,
+          }
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Delete a scheduled message
+  Future<Response> deleteScheduled(int id, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+        "$origin/message/schedule/$id",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get FindMy devices from server
+  Future<Response> findMyDevices({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$origin/icloud/findmy/devices",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get FindMy friends from server
+  Future<Response> findMyFriends({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$origin/icloud/findmy/friends",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   Future<Response> downloadFromUrl(String url, {Function(int, int)? progress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           url,
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
           cancelToken: cancelToken,
           onReceiveProgress: progress,
       );

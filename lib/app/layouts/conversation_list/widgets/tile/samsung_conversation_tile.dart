@@ -111,59 +111,63 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
     cachedLatestMessageGuid = cachedLatestMessage?.guid;
     dateCreated = cachedLatestMessage?.dateCreated;
     // run query after render has completed
-    updateObx(() {
-      final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
-        ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-        ..order(Message_.dateCreated, flags: Order.descending))
-          .watch();
+    if (!kIsWeb) {
+      updateObx(() {
+        final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+          ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
+          ..order(Message_.dateCreated, flags: Order.descending))
+            .watch();
 
-      sub = latestMessageQuery.listen((Query<Message> query) async {
-        final message = await runAsync(() {
-          return query.findFirst();
+        sub = latestMessageQuery.listen((Query<Message> query) async {
+          final message = await runAsync(() {
+            return query.findFirst();
+          });
+          cachedLatestMessage = message;
+          // check if we really need to update this widget
+          if (message != null && message.guid != cachedLatestMessageGuid) {
+            if (dateCreated != message.dateCreated) {
+              setState(() {
+                dateCreated = message.dateCreated;
+              });
+            }
+          }
+          cachedLatestMessageGuid = message?.guid;
         });
-        cachedLatestMessage = message;
-        // check if we really need to update this widget
-        if (message != null && message.guid != cachedLatestMessageGuid) {
-          if (dateCreated != message.dateCreated) {
+
+        final unreadQuery = chatBox.query((Chat_.hasUnreadMessage.equals(true)
+            .or(Chat_.muteType.equals("mute")))
+            .and(Chat_.guid.equals(controller.chat.guid)))
+            .watch();
+        sub2 = unreadQuery.listen((Query<Chat> query) async {
+          final chat = controller.chat.id == null ? null : await runAsync(() {
+            return chatBox.get(controller.chat.id!);
+          });
+          final newUnread = chat?.hasUnreadMessage ?? false;
+          final newMute = chat?.muteType ?? "";
+          if (chat != null && unread != newUnread) {
             setState(() {
-              dateCreated = message.dateCreated;
+              unread = newUnread;
+            });
+          } else if (chat == null && unread) {
+            setState(() {
+              unread = false;
+            });
+          } else if (muteType != newMute) {
+            setState(() {
+              muteType = newMute;
             });
           }
-        }
-        cachedLatestMessageGuid = message?.guid;
-      });
-
-      final unreadQuery = chatBox.query((Chat_.hasUnreadMessage.equals(true)
-          .or(Chat_.muteType.equals("mute")))
-          .and(Chat_.guid.equals(controller.chat.guid)))
-          .watch();
-      sub2 = unreadQuery.listen((Query<Chat> query) async {
-        final chat = controller.chat.id == null ? null : await runAsync(() {
-          return chatBox.get(controller.chat.id!);
         });
-        final newUnread = chat?.hasUnreadMessage ?? false;
-        final newMute = chat?.muteType ?? "";
-        if (chat != null && unread != newUnread) {
-          setState(() {
-            unread = newUnread;
-          });
-        } else if (chat == null && unread) {
-          setState(() {
-            unread = false;
-          });
-        } else if (muteType != newMute) {
-          setState(() {
-            muteType = newMute;
-          });
-        }
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
-    sub2.cancel();
+    if (!kIsWeb) {
+      sub.cancel();
+      sub2.cancel();
+    }
     super.dispose();
   }
 
@@ -178,9 +182,11 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
         children: [
           Obx(() {
             String indicatorText = "";
-            if (ss.settings.statusIndicatorsOnChats.value) {
+            if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
               Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
-              indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+              if (show != Indicator.NONE) {
+                indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+              }
             }
 
             return Text(
@@ -238,26 +244,28 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
     unread = controller.chat.hasUnreadMessage ?? false;
-    updateObx(() {
-      final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-          .watch();
-      sub = unreadQuery.listen((Query<Chat> query) async {
-        final chat = controller.chat.id == null ? null : await runAsync(() {
-          return chatBox.get(controller.chat.id!);
-        });
-        if (chat == null) return;
-        if (chat.hasUnreadMessage != unread) {
-          setState(() {
-            unread = chat.hasUnreadMessage!;
+    if (!kIsWeb) {
+      updateObx(() {
+        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+            .watch();
+        sub = unreadQuery.listen((Query<Chat> query) async {
+          final chat = controller.chat.id == null ? null : await runAsync(() {
+            return chatBox.get(controller.chat.id!);
           });
-        }
+          if (chat == null) return;
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        });
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 

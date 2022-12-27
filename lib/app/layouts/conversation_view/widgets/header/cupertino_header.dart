@@ -11,6 +11,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -63,6 +64,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                               return;
                             }
                             eventDispatcher.emit("update-highlight", null);
+                            controller.close();
                             while (Get.isOverlaysOpen) {
                               Get.back();
                             }
@@ -124,26 +126,31 @@ class _UnreadIcon extends StatefulWidget {
 class _UnreadIconState extends OptimizedState<_UnreadIcon> {
   int count = 0;
   late final StreamSubscription<Query<Chat>> sub;
+  bool hasStream = false;
 
   @override
   void initState() {
     super.initState();
-    updateObx(() {
-      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
-      sub = unreadQuery.listen((Query<Chat> query) {
-        final c = query.count();
-        if (count != c) {
-          setState(() {
-            count = c;
-          });
-        }
+    if (!kIsWeb) {
+      updateObx(() {
+        final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
+        sub = unreadQuery.listen((Query<Chat> query) {
+          final c = query.count();
+          if (count != c) {
+            setState(() {
+              count = c;
+            });
+          }
+        });
+
+        hasStream = true;
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb && hasStream) sub.cancel();
     super.dispose();
   }
 
@@ -178,7 +185,7 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
               shape: BoxShape.circle
             ),
             alignment: Alignment.center,
-            padding: const EdgeInsets.only(left: 1.0),
+            padding: const EdgeInsets.only(left: 0.5),
             child: Text(
               _count.toString(),
               style: context.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onPrimary, fontSize: _count > 9 ?
@@ -201,6 +208,7 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
   String title = "Unknown";
   late final StreamSubscription<Query<Chat>> sub;
+  bool hasStream = false;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -215,32 +223,38 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
     // run query after render has completed
-    updateObx(() {
-      final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-          .watch();
-      sub = titleQuery.listen((Query<Chat> query) async {
-        final chat = await runAsync(() {
-          return chatBox.get(controller.chat.id!)!;
-        });
-        // check if we really need to update this widget
-        if (chat.displayName != cachedDisplayName
-            || chat.handles.length != cachedParticipants.length) {
-          final newTitle = chat.getTitle();
-          if (newTitle != title) {
-            setState(() {
-              title = newTitle;
-            });
+    if (!kIsWeb) {
+      updateObx(() {
+        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+            .watch();
+        sub = titleQuery.listen((Query<Chat> query) async {
+          final chat = await runAsync(() {
+            return chatBox.get(controller.chat.id!)!;
+          });
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.handles.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
           }
-        }
-        cachedDisplayName = chat.displayName;
-        cachedParticipants = chat.handles;
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.handles;
+        });
+
+        hasStream = true;
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (hasStream) {
+      sub.cancel();
+    }
     super.dispose();
   }
 

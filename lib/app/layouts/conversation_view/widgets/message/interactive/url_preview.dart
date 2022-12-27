@@ -32,6 +32,7 @@ class UrlPreview extends StatefulWidget {
 class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliveClientMixin {
   UrlPreviewData get data => widget.data;
   UrlPreviewData? dataOverride;
+  dynamic get file => File(content.path!);
   dynamic content;
 
   @override
@@ -130,7 +131,7 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
             ),
           if (content is PlatformFile && hasAppleImage && content.bytes == null && content.path != null)
             Image.file(
-              File(content.path!),
+              file,
               gaplessPlayback: true,
               filterQuality: FilterQuality.none,
               errorBuilder: (_, __, ___) {

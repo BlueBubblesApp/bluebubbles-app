@@ -39,11 +39,11 @@ class ConversationListController extends StatefulController {
 
   void updateSelectedChats() {
     if (ss.settings.skin.value == Skins.Material) {
-      updateWidgetFunctions[MaterialHeader]?.call(null);
+      updateWidgets<MaterialHeader>(null);
       updateMaterialFAB();
     } else if (ss.settings.skin.value == Skins.Samsung) {
-      updateWidgetFunctions[SamsungFooter]?.call(null);
-      updateWidgetFunctions[ExpandedHeaderText]?.call(null);
+      updateWidgets<SamsungFooter>(null);
+      updateWidgets<ExpandedHeaderText>(null);
     }
   }
 
@@ -51,14 +51,14 @@ class ConversationListController extends StatefulController {
     final copy = List.from(selectedChats);
     for (Chat c in copy) {
       selectedChats.removeWhere((element) => element.guid == c.guid);
-      Get.find<ConversationTileController>(tag: c.guid).updateWidgetFunctions[MaterialConversationTile]?.call(null);
-      Get.find<ConversationTileController>(tag: c.guid).updateWidgetFunctions[SamsungConversationTile]?.call(null);
+      Get.find<ConversationTileController>(tag: c.guid).updateWidgets<MaterialConversationTile>(null);
+      Get.find<ConversationTileController>(tag: c.guid).updateWidgets<SamsungConversationTile>(null);
     }
     updateSelectedChats();
   }
 
   void updateMaterialFAB() {
-    updateWidgetFunctions[ConversationListFAB]?.call(null);
+    updateWidgets<ConversationListFAB>(null);
   }
 
   void openCamera(BuildContext context) async {
@@ -124,6 +124,9 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         cm.activeChat?.chat.guid != ss.prefs.getString('lastOpenedChat') &&
         !ls.isBubble) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (kIsWeb) {
+          await chats.loadedAllChats.future;
+        }
         ns.pushAndRemoveUntil(
           context,
           ConversationView(
@@ -169,6 +172,12 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                     if (route.settings.name != "initial") {
                       Get.back(id: 2);
                       id2result = true;
+                    }
+                    if (!(Get.global(2).currentState?.canPop() ?? true)) {
+                      if (cm.activeChat != null) {
+                        cvc(cm.activeChat!.chat).close();
+                      }
+                      eventDispatcher.emit('update-highlight', null);
                     }
                     return true;
                   }, id: 2);

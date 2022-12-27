@@ -25,7 +25,7 @@ abstract class Queue extends GetxService {
     } else {
       items.add(item);
     }
-    if (!isProcessing) processNextItem();
+    if (!isProcessing || (items.isEmpty && item is IncomingItem)) processNextItem();
   }
 
   Future<dynamic> prepItem(QueueItem _);

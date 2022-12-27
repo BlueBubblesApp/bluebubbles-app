@@ -6,18 +6,22 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
+import 'package:diox/diox.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 
 MessagesService ms(String chatGuid) => Get.isRegistered<MessagesService>(tag: chatGuid)
     ? Get.find<MessagesService>(tag: chatGuid) : Get.put(MessagesService(chatGuid), tag: chatGuid);
 
+String? lastReloadedChat() => Get.isRegistered<String>(tag: 'lastReloadedChat') ? Get.find<String>(tag: 'lastReloadedChat') : null;
+
 class MessagesService extends GetxController {
   static final Map<String, Size> cachedBubbleSizes = {};
   late Chat chat;
   late StreamSubscription countSub;
   final ChatMessages struct = ChatMessages();
+  late Function(Message) newFunc;
   late Function(Message, {String? oldGuid}) updateFunc;
   late Function(Message) removeFunc;
 
@@ -37,8 +41,12 @@ class MessagesService extends GetxController {
 
   void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage) {
     chat = c;
+    Get.put<String>(tag, tag: 'lastReloadedChat');
+
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
+    newFunc = onNewMessage;
+
     // watch for new messages
     if (chat.id != null) {
       _init = true;
@@ -65,7 +73,7 @@ class MessagesService extends GetxController {
             }
             struct.addMessages([message]);
             if (message.associatedMessageGuid == null) {
-              onNewMessage.call(message);
+              newFunc.call(message);
             }
           }
         }
@@ -81,10 +89,14 @@ class MessagesService extends GetxController {
   }
 
   void close() {
-    Get.delete<MessagesService>(tag: tag);
+    String? lastChat = lastReloadedChat();
+    if (lastChat != tag) {
+      Get.delete<MessagesService>(tag: tag);
+    }
   }
 
   void reload() {
+    Get.put<String>(tag, tag: 'lastReloadedChat');
     Get.reload<MessagesService>(tag: tag);
   }
 
@@ -113,9 +125,13 @@ class MessagesService extends GetxController {
       if (_messages.isEmpty) {
         // get from server and save
         final fromServer = await cm.getMessages(chat.guid, offset: offset);
-        await MessageHelper.bulkAddMessages(chat, fromServer, checkForLatestMessageText: false);
-        // re-fetch from the DB because it will find handles / associated messages for us
-        _messages = await Chat.getMessagesAsync(chat, offset: offset);
+        final temp = await MessageHelper.bulkAddMessages(chat, fromServer, checkForLatestMessageText: false);
+        if (!kIsWeb) {
+          // re-fetch from the DB because it will find handles / associated messages for us
+          _messages = await Chat.getMessagesAsync(chat, offset: offset);
+        } else {
+          _messages = temp;
+        }
       }
     } catch (e, s) {
       return Future.error(e, s);

@@ -8,4 +8,3 @@ export 'package:bluebubbles/app/layouts/settings/widgets/layout/settings_divider
 export 'package:bluebubbles/app/layouts/settings/widgets/layout/settings_header.dart';
 export 'package:bluebubbles/app/layouts/settings/widgets/layout/settings_scaffold.dart';
 export 'package:bluebubbles/app/layouts/settings/widgets/layout/settings_section.dart';
-export 'package:bluebubbles/app/layouts/settings/widgets/unfinished/settings_text_field.dart';

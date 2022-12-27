@@ -45,7 +45,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
                   }
                 }
               }
-              Tuple2? selected;
+              Tuple2<String, String>? selected;
               await showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
@@ -72,6 +72,10 @@ void showAddParticipant(BuildContext context, Chat chat) {
                                   return ListTile(
                                     title: Text(contacts[index].item2),
                                     subtitle: Text(contacts[index].item1),
+                                    onTap: () {
+                                      selected = contacts[index];
+                                      Navigator.of(context).pop();
+                                    },
                                   );
                                 },
                               ),
@@ -83,10 +87,10 @@ void showAddParticipant(BuildContext context, Chat chat) {
                   )
               );
               if (selected?.item1 != null) {
-                if (!selected!.item1!.isEmail) {
-                  participantController.text = selected.item1!.numericOnly();
+                if (!selected!.item1.isEmail) {
+                  participantController.text = selected!.item1.numericOnly();
                 } else {
-                  participantController.text = selected.item1!;
+                  participantController.text = selected!.item1;
                 }
               }
             },

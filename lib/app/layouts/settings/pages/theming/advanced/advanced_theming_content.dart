@@ -32,6 +32,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
   late ThemeStruct currentTheme;
   List<ThemeStruct> allThemes = [];
   bool editable = false;
+  double master = 1;
   final _controller = ScrollController();
 
   @override
@@ -81,6 +82,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                 SettingsOptions<ThemeStruct>(
                   title: "Selected Theme",
                   initial: currentTheme,
+                  clampWidth: false,
                   options: allThemes
                       .where((a) => !a.name.contains("🌙") && !a.name.contains("☀")).toList()
                     ..add(ThemeStruct(name: "Divider1"))
@@ -298,10 +300,49 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
           ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+              (context, index) {
+                if (index == 0) {
+                  return SettingsSlider(
+                    leading: const Text("master"),
+                    startingVal: master,
+                    leadingMinWidth: context.theme.textTheme.bodyMedium!.fontSize! * 6,
+                    update: (double val) {
+                      master = val;
+                      final map = currentTheme.toMap();
+                      final keys = currentTheme.textSizes.keys.toList();
+                      for (String k in keys) {
+                        map["data"]["textTheme"][k]['fontSize'] = ThemeStruct.defaultTextSizes[k]! * val;
+                      }
+                      currentTheme.data = ThemeStruct.fromMap(map).data;
+                      setState(() {});
+                    },
+                    onChangeEnd: (double val) {
+                      master = val;
+                      final map = currentTheme.toMap();
+                      final keys = currentTheme.textSizes.keys.toList();
+                      for (String k in keys) {
+                        map["data"]["textTheme"][k]['fontSize'] = ThemeStruct.defaultTextSizes[k]! * val;
+                      }
+                      currentTheme.data = ThemeStruct.fromMap(map).data;
+                      currentTheme.save();
+                      if (currentTheme.name == ss.prefs.getString("selected-dark")) {
+                        ts.changeTheme(context, dark: currentTheme);
+                      } else if (currentTheme.name == ss.prefs.getString("selected-light")) {
+                        ts.changeTheme(context, light: currentTheme);
+                      }
+                    },
+                    backgroundColor: tileColor,
+                    min: 0.5,
+                    max: 3,
+                    divisions: 30,
+                    formatValue: ((double val) => val.toStringAsFixed(2)),
+                  );
+                }
+                index = index - 1;
                 return SettingsSlider(
                   leading: Text(currentTheme.textSizes.keys.toList()[index]),
                   startingVal: currentTheme.textSizes.values.toList()[index] / ThemeStruct.defaultTextSizes.values.toList()[index],
+                  leadingMinWidth: context.theme.textTheme.bodyMedium!.fontSize! * 6,
                   update: (double val) {
                     final map = currentTheme.toMap();
                     map["data"]["textTheme"][currentTheme.textSizes.keys.toList()[index]]['fontSize'] = ThemeStruct.defaultTextSizes.values.toList()[index] * val;
@@ -326,7 +367,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                   formatValue: ((double val) => val.toStringAsFixed(2)),
                 );
               },
-              childCount: currentTheme.textSizes.length,
+              childCount: currentTheme.textSizes.length + 1,
             ),
           ),
           if (!currentTheme.isPreset)

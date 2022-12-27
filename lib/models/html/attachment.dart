@@ -13,18 +13,14 @@ class Attachment {
   String? guid;
   String? uti;
   String? mimeType;
-  String? transferState;
   bool? isOutgoing;
   String? transferName;
   int? totalBytes;
-  bool? isSticker;
-  bool? hideAttachment;
-  String? blurhash;
   int? height;
   int? width;
-  Map<String, dynamic>? metadata;
   Uint8List? bytes;
   String? webUrl;
+  Map<String, dynamic>? metadata;
 
   final message = ToOne<Message>();
 
@@ -34,13 +30,9 @@ class Attachment {
     this.guid,
     this.uti,
     this.mimeType,
-    this.transferState,
     this.isOutgoing,
     this.transferName,
     this.totalBytes,
-    this.isSticker,
-    this.hideAttachment,
-    this.blurhash,
     this.height,
     this.width,
     this.metadata,
@@ -48,69 +40,33 @@ class Attachment {
     this.webUrl,
   });
 
-  bool get existsOnDisk {
-    return false;
-  }
-
-  String get orientation {
-    String orientation = 'portrait'; // Default
-    if (metadata == null) return orientation;
-    // This key is from FlutterNativeImage
-    if (metadata!.containsKey('orientation') &&
-        (metadata!['orientation'].toString().toLowerCase().contains('landscape') ||
-            metadata!['orientation'].toString() == '0')) {
-      orientation = 'landscape';
-      // This key is from the Exif loader
-    } else if (metadata!.containsKey('Image Orientation') &&
-        (metadata!['Image Orientation'].toString().toLowerCase().contains('horizontal') ||
-            metadata!['orientation'].toString() == '0')) {
-      orientation = 'landscape';
-    }
-
-    return orientation;
-  }
-
   factory Attachment.fromMap(Map<String, dynamic> json) {
     String? mimeType = json["mimeType"];
-    if ((json.containsKey("uti") && json["uti"] == "com.apple.coreaudio_format") ||
-        (json.containsKey("transferName") && (json['transferName'] ?? "").endsWith(".caf"))) {
+    if (json["uti"] == "com.apple.coreaudio_format" || json['transferName'].toString().endsWith(".caf")) {
       mimeType = "audio/caf";
     }
 
     // Load the metadata
-    dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
-    if (!isNullOrEmpty(metadata)!) {
-      // If the metadata is a string, convert it to JSON
-      if (metadata is String) {
-        try {
-          metadata = jsonDecode(metadata);
-        } catch (_) {}
-      }
+    var metadata = json["metadata"];
+    if (metadata is String && metadata.isNotEmpty) {
+      try {
+        metadata = jsonDecode(metadata);
+      } catch (_) {}
     }
 
-    var data = Attachment(
-      id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
+    return Attachment(
+      id: json["ROWID"] ?? json["id"],
+      originalROWID: json["originalROWID"],
       guid: json["guid"],
       uti: json["uti"],
       mimeType: mimeType ?? mime(json['transferName']),
-      transferState: json['transferState'].toString(),
-      isOutgoing: (json["isOutgoing"] is bool) ? json['isOutgoing'] : ((json['isOutgoing'] == 1) ? true : false),
+      isOutgoing: json["isOutgoing"] == true,
       transferName: json['transferName'],
       totalBytes: json['totalBytes'] is int ? json['totalBytes'] : 0,
-      isSticker: (json["isSticker"] is bool) ? json['isSticker'] : ((json['isSticker'] == 1) ? true : false),
-      hideAttachment:
-          (json["hideAttachment"] is bool) ? json['hideAttachment'] : ((json['hideAttachment'] == 1) ? true : false),
-      blurhash: json.containsKey("blurhash") ? json["blurhash"] : null,
-      height: json.containsKey("height") ? json["height"] : 0,
-      width: json.containsKey("width") ? json["width"] : 0,
+      height: json["height"] ?? 0,
+      width: json["width"] ?? 0,
       metadata: metadata is String ? null : metadata,
     );
-
-    // Adds fallback getter for the ID
-    data.id ??= json.containsKey("id") ? json["id"] : null;
-
-    return data;
   }
 
   /// save a new attachment or update an existing attachment on disk
@@ -118,6 +74,12 @@ class Attachment {
   /// when provided
   Attachment save(Message? message) {
     return this;
+  }
+
+  /// Save many attachments at once. [map] is used to establish a link between
+  /// the message and its attachments.
+  static void bulkSave(Map<Message, List<Attachment>> map) {
+    return;
   }
 
   /// replaces a temporary attachment with the new one from the server
@@ -130,57 +92,71 @@ class Attachment {
     return null;
   }
 
-  /// clear the attachment DB
-  static void flush() {}
+  /// Find all attachments matching a specified condition, or all attachments
+  /// if no condition is provided
+  static List<Attachment> find({dynamic cond}) {
+    return [];
+  }
 
   String getFriendlySize({decimals = 2}) {
-    double size = ((totalBytes ?? 0) / 1024000.0);
-    String postfix = "MB";
-    if (size < 1) {
-      size = size * 1024;
-      postfix = "KB";
-    } else if (size > 1024) {
-      size = size / 1024;
-      postfix = "GB";
-    }
-
-    return "${size.toStringAsFixed(decimals)} $postfix";
+    return (totalBytes ?? 0.0).toDouble().getFriendlySize();
   }
 
   bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
 
-  String? get mimeStart {
-    if (mimeType == null) return null;
-    String _mimeType = mimeType!;
-    _mimeType = _mimeType.substring(0, _mimeType.indexOf("/"));
-    return _mimeType;
-  }
+  double get aspectRatio => hasValidSize ? (_isPortrait && height! < width! ?  (height! / width!).abs() : (width! / height!).abs()) : 0.78;
 
-  String getPath() {
-    String? fileName = transferName;
-    String pathName = "${fs.appDocDir.path}/attachments/$guid/$fileName";
-    return pathName;
-  }
+  String? get mimeStart => mimeType?.split("/").first;
 
-  String getHeicToJpgPath() {
-    return "${getPath()}.jpg";
+  static String get baseDirectory => "${fs.appDocDir.path}/attachments";
+
+  String get directory => "$baseDirectory/$guid";
+
+  String get path => "$directory/$transferName";
+
+  String get convertedPath => "$path.jpg";
+
+  bool get existsOnDisk => false;
+
+  Future<bool> get existsOnDiskAsync async => false;
+
+  bool get canCompress => mimeStart == "image" && !mimeType!.contains("gif");
+
+  static Attachment merge(Attachment attachment1, Attachment attachment2) {
+    attachment1.id ??= attachment2.id;
+    attachment1.bytes ??= attachment2.bytes;
+    attachment1.guid ??= attachment2.guid;
+    attachment1.height ??= attachment2.height;
+    attachment1.width ??= attachment2.width;
+    attachment1.isOutgoing ??= attachment2.isOutgoing;
+    attachment1.mimeType ??= attachment2.mimeType;
+    attachment1.totalBytes ??= attachment2.totalBytes;
+    attachment1.transferName ??= attachment2.transferName;
+    attachment1.uti ??= attachment2.uti;
+    attachment1.webUrl ??= attachment2.webUrl;
+    attachment1.metadata = mergeTopLevelDicts(attachment1.metadata, attachment2.metadata);
+    return attachment1;
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "guid": guid,
-        "uti": uti,
-        "mimeType": mimeType,
-        "transferState": transferState,
-        "isOutgoing": isOutgoing! ? 1 : 0,
-        "transferName": transferName,
-        "totalBytes": totalBytes,
-        "isSticker": isSticker! ? 1 : 0,
-        "hideAttachment": hideAttachment! ? 1 : 0,
-        "blurhash": blurhash,
-        "height": height,
-        "width": width,
-        "metadata": jsonEncode(metadata),
-      };
+    "ROWID": id,
+    "originalROWID": originalROWID,
+    "guid": guid,
+    "uti": uti,
+    "mimeType": mimeType,
+    "isOutgoing": isOutgoing!,
+    "transferName": transferName,
+    "totalBytes": totalBytes,
+    "height": height,
+    "width": width,
+    "metadata": jsonEncode(metadata),
+  };
+
+  bool  get _isPortrait {
+    if (metadata?['orientation'] == '1') return true;
+    if (metadata?['orientation'] == 1) return true;
+    if (metadata?['orientation'] == 'portrait') return true;
+    if (metadata?['Image Orientation']?.contains("90") ?? false) return true;
+    return false;
+  }
 }

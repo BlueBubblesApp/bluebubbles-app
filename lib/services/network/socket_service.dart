@@ -7,6 +7,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -33,6 +34,12 @@ class SocketService extends GetxService {
   void onInit() {
     super.onInit();
     startSocket();
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.wifi && http.originOverride != null) {
+        Logger.info("Detected switch off wifi, removing localhost address...");
+        http.originOverride = null;
+      }
+    });
   }
 
   @override
@@ -72,11 +79,11 @@ class SocketService extends GetxService {
       socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
       socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
       socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
-      socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-change", data));
     }
     socket.on("new-message", (data) => handleCustomEvent("new-message", data));
     socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
     socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
+    socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-change", data));
 
     socket.connect();
   }
@@ -162,10 +169,10 @@ class SocketService extends GetxService {
   }
 
   void handleCustomEvent(String event, Map<String, dynamic> data) async {
+    Logger.info("Received $event from socket");
     switch (event) {
       case "new-message":
         if (!isNullOrEmpty(data)!) {
-          Logger.info("Received new message from socket");
           final message = Message.fromMap(data);
           if (message.isFromMe!) {
             if (data['tempGuid'] == null) {
@@ -181,7 +188,6 @@ class SocketService extends GetxService {
         return;
       case "updated-message":
         if (!isNullOrEmpty(data)!) {
-          Logger.info("Received updated message from socket");
           inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data));
         }
         return;

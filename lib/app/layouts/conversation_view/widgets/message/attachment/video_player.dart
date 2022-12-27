@@ -19,12 +19,17 @@ import 'package:video_player/video_player.dart' as vp;
 class VideoPlayer extends StatefulWidget {
   final PlatformFile file;
   final Attachment attachment;
+  final bool isFromMe;
 
   VideoPlayer({
     Key? key,
     required this.file,
     required this.attachment,
+    required this.controller,
+    required this.isFromMe
   }) : super(key: key);
+
+  final ConversationViewController? controller;
 
   @override
   OptimizedState createState() => _VideoPlayerState();
@@ -33,7 +38,8 @@ class VideoPlayer extends StatefulWidget {
 class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAliveClientMixin {
   Attachment get attachment => widget.attachment;
   PlatformFile get file => widget.file;
-  ConversationViewController get cvController => cvc(cm.activeChat!.chat);
+  bool get isFromMe => widget.isFromMe;
+  ConversationViewController? get cvController => widget.controller;
 
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
@@ -45,8 +51,8 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
   @override
   void initState() {
     super.initState();
-    controller = cvController.videoPlayers[attachment.guid];
-    thumbnail = cvController.imageData[attachment.guid];
+    controller = cvController?.videoPlayers[attachment.guid];
+    thumbnail = cvController?.imageData[attachment.guid];
 
     updateObx(() {
       if (controller != null) {
@@ -65,12 +71,12 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
       final url = html.Url.createObjectUrlFromBlob(blob);
       controller = VideoPlayerController.network(url);
     } else {
-      final file = File(_file.path!);
+      dynamic file = File(_file.path!);
       controller = VideoPlayerController.file(file);
     }
     await controller!.initialize();
     createListener(controller!);
-    cvController.videoPlayers[attachment.guid!] = controller!;
+    cvController?.videoPlayers[attachment.guid!] = controller!;
     setState(() {});
   }
 
@@ -112,7 +118,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
       }
 
       if (thumbnail == null) return;
-      cvController.imageData[attachment.guid!] = thumbnail!;
+      cvController?.imageData[attachment.guid!] = thumbnail!;
       await precacheImage(MemoryImage(thumbnail!), context);
       setState(() {});
     }
@@ -147,7 +153,12 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
               child: vp.VideoPlayer(controller!),
             ),
             PlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: controller),
-            MuteButton(showPlayPauseOverlay: showPlayPauseOverlay, muted: muted, controller: controller),
+            MuteButton(
+              showPlayPauseOverlay: showPlayPauseOverlay,
+              muted: muted,
+              controller: controller,
+              isFromMe: widget.isFromMe
+            ),
           ],
         ),
       );
@@ -190,7 +201,12 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
                   controller!.play();
                   showPlayPauseOverlay.value = false;
                 }),
-                MuteButton(showPlayPauseOverlay: showPlayPauseOverlay, muted: muted, controller: controller),
+                MuteButton(
+                  showPlayPauseOverlay: showPlayPauseOverlay,
+                  muted: muted,
+                  controller: controller,
+                  isFromMe: isFromMe
+                ),
               ],
             ),
             firstChild: SizedBox(
@@ -277,17 +293,19 @@ class MuteButton extends StatelessWidget {
     required this.showPlayPauseOverlay,
     required this.muted,
     required this.controller,
+    required this.isFromMe
   }) : super(key: key);
 
   final RxBool showPlayPauseOverlay;
   final RxBool muted;
   final VideoPlayerController? controller;
+  final bool isFromMe;
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
       bottom: 8,
-      right: 8,
+      right: (isFromMe) ? 15 : 8,
       child: Obx(() => AnimatedOpacity(
         opacity: showPlayPauseOverlay.value ? 1 : 0,
         duration: const Duration(milliseconds: 250),

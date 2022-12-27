@@ -19,6 +19,7 @@ class SettingsScaffold extends StatelessWidget {
   final List<Widget> actions;
   final Widget? stickyPrefix;
   final Widget? stickySuffix;
+  final Widget? fab;
 
   SettingsScaffold({
     required this.title,
@@ -31,6 +32,7 @@ class SettingsScaffold extends StatelessWidget {
     this.actions = const [],
     this.stickyPrefix,
     this.stickySuffix,
+    this.fab,
   });
 
   @override
@@ -66,6 +68,7 @@ class SettingsScaffold extends StatelessWidget {
             actions: actions,
           ),
         ),
+        floatingActionButton: fab,
         body: NotificationListener<ScrollEndNotification>(
           onNotification: (_) {
             if (ss.settings.skin.value != Skins.Samsung) return false;

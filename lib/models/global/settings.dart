@@ -64,6 +64,7 @@ class Settings {
   final RxBool allowUpsideDownRotation = false.obs;
   final RxBool cancelQueuedMessages = false.obs;
   final RxBool repliesToPrevious = false.obs;
+  final RxnString localhostPort = RxnString(null);
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -222,6 +223,7 @@ class Settings {
       'allowUpsideDownRotation': allowUpsideDownRotation.value,
       'cancelQueuedMessages': cancelQueuedMessages.value,
       'repliesToPrevious': repliesToPrevious.value,
+      'useLocalhost': localhostPort.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -323,6 +325,7 @@ class Settings {
     ss.settings.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     ss.settings.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
+    ss.settings.localhostPort.value = map['useLocalhost'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -358,8 +361,8 @@ class Settings {
     ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    ss.settings.selectedActionIndices.value = (map['selectedActionIndices'] != null ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>();
-    ss.settings.actionList.value = (map['actionList'] != null ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
+    ss.settings.selectedActionIndices.value = map['selectedActionIndices'].cast<int>() ?? [0, 1, 2, 3, 4];
+    ss.settings.actionList.value = map['actionList'].cast<String>() ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
     ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
@@ -428,6 +431,7 @@ class Settings {
     s.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
+    s.localhostPort.value = map['useLocalhost'];
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

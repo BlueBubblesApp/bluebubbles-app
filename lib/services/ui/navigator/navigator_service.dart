@@ -61,12 +61,12 @@ class NavigatorService extends GetxService {
   }
 
   /// Push a new route onto the settings navigator
-  void pushSettings(BuildContext context, Widget widget, {Bindings? binding}) {
+  Future<dynamic> pushSettings(BuildContext context, Widget widget, {Bindings? binding}) async {
     if (Get.keys.containsKey(3) && isTabletMode(context)) {
-      Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
+      return await Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
     } else {
       binding?.dependencies();
-      Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
+      return await Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }
@@ -75,6 +75,9 @@ class NavigatorService extends GetxService {
   /// Push a new route, popping all previous routes, on the chat list right side navigator
   Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate, {PageRoute? customRoute}) async {
     if (Get.keys.containsKey(2) && isTabletMode(context)) {
+      if (cm.activeChat != null) {
+        cvc(cm.activeChat!.chat).close();
+      }
       await Get.offUntil(
           GetPageRoute(
             page: () => widget,
@@ -138,6 +141,9 @@ class NavigatorService extends GetxService {
             id2result = true;
           }
           if (!(Get.global(2).currentState?.canPop() ?? true)) {
+            if (cm.activeChat != null) {
+              cvc(cm.activeChat!.chat).close();
+            }
             eventDispatcher.emit('update-highlight', null);
           }
           return true;
@@ -149,6 +155,14 @@ class NavigatorService extends GetxService {
         }
         return true;
       }, id: 1);
+    }
+  }
+
+  void closeAllConversationView(BuildContext context) {
+    if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && ns.isTabletMode(context)) {
+      Get.until((route) {
+        return route.settings.name == "initial";
+      }, id: 2);
     }
   }
 

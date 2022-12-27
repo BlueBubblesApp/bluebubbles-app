@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/custom/custom_cupertino_alert_dialog.dart';
@@ -99,10 +100,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     updateObx(() {
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == part.part)
+          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) && (e.associatedMessagePart ?? 0) == part.part)
           .toList());
-      selfReaction = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
-      currentlySelectedReaction = selfReaction;
+      final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
+      if (!(self?.contains("-") ?? true)) {
+        selfReaction = self;
+        currentlySelectedReaction = selfReaction;
+      }
       for (Message m in reactions) {
         if (m.isFromMe!) {
           m.handle = null;
@@ -116,7 +120,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     });
   }
 
-  void popDetails() {
+  void popDetails({bool returnVal = false}) {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
       if (kIsWeb) {
@@ -125,7 +129,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         Navigator.of(context).pop();
       }
     }
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(returnVal);
   }
 
   @override
@@ -161,7 +165,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             extendBodyBehindAppBar: true,
             backgroundColor: Colors.transparent,
             appBar: iOS ? null : AppBar(
-              backgroundColor: context.theme.colorScheme.background.lightenOrDarken(5),
+              backgroundColor: context.theme.colorScheme.background.oppositeLightenOrDarken(5),
+              systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
               automaticallyImplyLeading: false,
               leadingWidth: 40,
               leading: Padding(
@@ -250,6 +257,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       downloadOriginal();
                     } else if (value == 5) {
                       createContact();
+                    } else if (value == 6) {
+                      unsend();
+                    } else if (value == 7) {
+                      edit();
                     }
                   },
                   itemBuilder: (context) {
@@ -267,6 +278,22 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                           value: 1,
                           child: Text(
                             'Forward',
+                            style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                          ),
+                        ),
+                      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148)
+                        PopupMenuItem(
+                          value: 6,
+                          child: Text(
+                            'Undo Send',
+                            style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                          ),
+                        ),
+                      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148 && (part.text?.isNotEmpty ?? false))
+                        PopupMenuItem(
+                          value: 7,
+                          child: Text(
+                            'Edit',
                             style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                           ),
                         ),
@@ -391,7 +418,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                             child: Container(
                               padding: const EdgeInsets.all(5).add(const EdgeInsets.only(bottom: 15)),
-                              color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).oppositeLightenOrDarken(iOS ? 0 : 10),
+                              color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).lightenOrDarken(iOS ? 0 : 10),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: List.generate(narrowScreen ? 2 : 1, (index) {
@@ -410,8 +437,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                               : Colors.transparent,
                                           borderRadius: BorderRadius.circular(20),
                                           child: SizedBox(
-                                            width: 35,
-                                            height: 35,
+                                            width: iOS ? 35 : null,
+                                            height: iOS ? 35 : null,
                                             child: InkWell(
                                               borderRadius: BorderRadius.circular(20),
                                               onTap: () {
@@ -715,11 +742,11 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   
   void redownload() {
     for (Attachment? element in part.attachments) {
-      cvc(cm.activeChat!.chat).imageData.remove(element!.guid!);
+      widget.cvController.imageData.remove(element!.guid!);
       as.redownloadAttachment(element);
     }
-    setState(() {});
     popDetails();
+    getActiveMwc(message.guid!)?.updateWidgets<AttachmentHolder>(null);
   }
   
   void share() {
@@ -740,7 +767,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
   
   Future<void> remindLater() async {
-    final finalDate = await showTimeframePicker("Select Reminder Time", context);
+    final finalDate = await showTimeframePicker("Select Reminder Time", context, presetsAhead: true);
     if (finalDate != null) {
       if (!finalDate.isAfter(DateTime.now().toLocal())) {
         showSnackbar("Error", "Select a date in the future");
@@ -751,6 +778,17 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
     }
   }
+
+  void unsend() {
+    http.unsend(message.guid!, partIndex: part.part);
+    popDetails();
+  }
+
+  void edit() async {
+    final node = FocusNode();
+    cvController.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
+    popDetails();
+  }
   
   void delete() {
     service.removeMessage(message);
@@ -760,8 +798,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   
   void selectMultiple() {
     cvController.inSelectMode.toggle();
-    cvController.selected.add(message);
-    popDetails();
+    if (iOS) {
+      cvController.selected.add(message);
+    }
+    popDetails(returnVal: true);
   }
   
   void messageInfo() {
@@ -1100,6 +1140,44 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
+      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: unsend,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Undo Send",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_uturn_left : Icons.undo,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148 && (part.text?.isNotEmpty ?? false))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: edit,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Edit",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.pencil : Icons.edit_outlined,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
       Material(
         color: Colors.transparent,
         child: InkWell(
@@ -1251,7 +1329,7 @@ class ReactionDetails extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: Text(
-                        message.handle?.displayName ?? "You",
+                        message.isFromMe! ? "You" : (message.handle?.displayName ?? "Unknown"),
                         style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                       ),
                     ),

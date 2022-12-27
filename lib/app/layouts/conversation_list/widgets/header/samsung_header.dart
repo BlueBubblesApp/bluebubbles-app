@@ -8,6 +8,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
@@ -71,7 +72,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           HeaderText(controller: controller, fontSize: 20),
-                          const SyncIndicator(),
+                          SyncIndicator(),
                         ],
                       ),
                     ),
@@ -168,23 +169,25 @@ class _ExpandedHeaderTextState extends CustomState<ExpandedHeaderText, void, Con
   @override
   void initState() {
     super.initState();
-    final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true))
-        .watch(triggerImmediately: true);
-    sub = unreadQuery.listen((Query<Chat> query) {
-      final count = query.count();
-      if (unreadChats == -1) {
-        unreadChats = count;
-      } else if (unreadChats != count) {
-        setState(() {
+    if (!kIsWeb) {
+      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true))
+          .watch(triggerImmediately: true);
+      sub = unreadQuery.listen((Query<Chat> query) {
+        final count = query.count();
+        if (unreadChats == -1) {
           unreadChats = count;
-        });
-      }
-    });
+        } else if (unreadChats != count) {
+          setState(() {
+            unreadChats = count;
+          });
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 
@@ -200,7 +203,8 @@ class _ExpandedHeaderTextState extends CustomState<ExpandedHeaderText, void, Con
             : unreadChats > 0
             ? "$unreadChats unread message${unreadChats > 1 ? "s" : ""}"
             : "Messages",
-        style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground)
+        style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground),
+      textAlign: TextAlign.center,
     );
   }
 }

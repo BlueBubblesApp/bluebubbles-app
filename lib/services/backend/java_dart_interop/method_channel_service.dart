@@ -66,7 +66,12 @@ class MethodChannelService extends GetxService {
         Logger.info("Received new message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
-          inq.queue(IncomingItem.fromMap(QueueType.newMessage, data!));
+          final item = IncomingItem.fromMap(QueueType.newMessage, data!);
+          if (ls.isAlive) {
+            inq.queue(item);
+          } else {
+            ah.handleNewMessage(item.chat, item.message, item.tempGuid);
+          }
         }
         return true;
       case "updated-message":
@@ -74,7 +79,29 @@ class MethodChannelService extends GetxService {
         Logger.info("Received updated message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
-          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data!));
+          final item = IncomingItem.fromMap(QueueType.updatedMessage, data!);
+          if (ls.isAlive) {
+            inq.queue(item);
+          } else {
+            ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);
+          }
+        }
+        return true;
+      case "scheduled-message-error":
+        Logger.info("Received scheduled message error from FCM");
+        Map<String, dynamic> data = jsonDecode(call.arguments) ?? {};
+        Chat? chat = Chat.findOne(guid: data["payload"]["chatGuid"]);
+        if (chat != null) {
+          notif.createFailedToSend(chat, scheduled: true);
+        }
+        return true;
+      case "incoming-facetime":
+        Logger.info("Received incoming facetime from FCM");
+        final replaced = call.arguments.toString().replaceAll("\\", "");
+        Map<String, dynamic> data = jsonDecode(replaced.substring(1, replaced.length - 1)) ?? {};
+        String? caller = data["caller"];
+        if (caller != null) {
+          notif.createFacetimeNotif(Handle(address: caller));
         }
         return true;
       case "reply":
@@ -104,6 +131,7 @@ class MethodChannelService extends GetxService {
         }
       case "markAsRead":
       case "chat-read-status-changed":
+        if (ls.isAlive) return;
         await storeStartup.future;
         Logger.info("Received chat status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);

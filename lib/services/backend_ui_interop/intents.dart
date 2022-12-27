@@ -20,15 +20,26 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
   final BuildContext context;
 
   @override
-  Object? invoke(covariant OpenSettingsIntent intent) {
+  Object? invoke(covariant OpenSettingsIntent intent) async {
     if (ss.settings.finishedSetup.value) {
-      Navigator.of(Get.context!).push(
+      final currentChat = cm.activeChat?.chat;
+      ns.closeAllConversationView(context);
+      await Navigator.of(Get.context!).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
             return SettingsPage();
           },
         ),
       );
+      if (currentChat != null) {
+        ns.pushAndRemoveUntil(
+          context,
+          ConversationView(
+            chat: currentChat,
+          ),
+          (route) => route.isFirst,
+        );
+      }
     }
     return null;
   }

@@ -1,3 +1,6 @@
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_page.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
@@ -21,7 +24,7 @@ class HeaderText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 10.0),
-      child: Text(
+      child: AutoSizeText(
         controller.showArchivedChats
             ? "Archive"
             : controller.showUnknownSenders
@@ -32,13 +35,16 @@ class HeaderText extends StatelessWidget {
           fontWeight: FontWeight.w500,
           fontSize: fontSize,
         ),
+        maxLines: 1,
       ),
     );
   }
 }
 
 class SyncIndicator extends StatelessWidget {
-  const SyncIndicator();
+  final double size;
+
+  SyncIndicator({this.size = 12});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +53,7 @@ class SyncIndicator extends StatelessWidget {
           || !sync.isIncrementalSyncing.value) {
         return const SizedBox.shrink();
       }
-      return buildProgressIndicator(context, size: 12);
+      return buildProgressIndicator(context, size: size);
     });
   }
 }
@@ -64,7 +70,7 @@ class OverflowMenu extends StatelessWidget {
           Radius.circular(20.0),
         ),
       ) : null,
-      onSelected: (int value) {
+      onSelected: (int value) async {
         if (value == 0) {
           chats.markAllAsRead();
         } else if (value == 1) {
@@ -76,13 +82,24 @@ class OverflowMenu extends StatelessWidget {
             )
           );
         } else if (value == 2) {
-          Navigator.of(Get.context!).push(
+          final currentChat = cm.activeChat?.chat;
+          ns.closeAllConversationView(context);
+          await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
                 return SettingsPage();
               },
             ),
           );
+          if (currentChat != null) {
+            ns.pushAndRemoveUntil(
+              context,
+              ConversationView(
+                chat: currentChat,
+              ),
+              (route) => route.isFirst,
+            );
+          }
         } else if (value == 3) {
           ns.pushLeft(
             context,
@@ -131,6 +148,14 @@ class OverflowMenu extends StatelessWidget {
               );
             },
           );
+        } else if (value == 5) {
+          Navigator.of(Get.context!).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (BuildContext context) {
+                return const FindMyPage();
+              },
+            ),
+          );
         }
       },
       itemBuilder: (context) {
@@ -157,6 +182,13 @@ class OverflowMenu extends StatelessWidget {
                 style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
               ),
             ),
+          PopupMenuItem(
+            value: 5,
+            child: Text(
+              'FindMy',
+              style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+            ),
+          ),
           PopupMenuItem(
             value: 2,
             child: Text(

@@ -14,6 +14,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   local_auth_windows
   local_notifier
   maps_launcher
+  network_info_plus_windows
   objectbox_flutter_libs
   pasteboard
   permission_handler_windows

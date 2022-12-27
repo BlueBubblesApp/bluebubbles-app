@@ -8,6 +8,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
 
@@ -26,20 +27,23 @@ class ChatsService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    // watch for new chats
-    final countQuery = (chatBox.query()
-      ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
-    countSub = countQuery.listen((event) {
-      if (!ss.settings.finishedSetup.value) return;
-      final newCount = event.count();
-      if (newCount > currentCount && currentCount != 0) {
-        addChat(event.findFirst()!);
-      }
-      currentCount = newCount;
-    });
+    if (!kIsWeb) {
+      // watch for new chats
+      final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())
+        ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      countSub = countQuery.listen((event) {
+        if (!ss.settings.finishedSetup.value) return;
+        final newCount = event.count();
+        if (newCount > currentCount && currentCount != 0) {
+          addChat(event.findFirst()!);
+        }
+        currentCount = newCount;
+      });
+    }
   }
 
-  Future<void> init() async {
+  Future<void> init({bool force = true}) async {
+    if (!force && !ss.settings.finishedSetup.value) return;
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
@@ -81,23 +85,27 @@ class ChatsService extends GetxService {
     loadedAllChats.complete();
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
     // update share targets
-    for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)!).take(4)) {
-      await mcs.invokeMethod("push-share-targets", {
-        "title": c.title,
-        "guid": c.guid,
-        "icon": await avatarAsBytes(
-          isGroup: c.isGroup,
-          participants: c.participants,
-          chatGuid: c.guid,
-          quality: 256
-        ),
+    if (Platform.isAndroid) {
+      uiStartup.future.then((_) async {
+        for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)!).take(4)) {
+          await mcs.invokeMethod("push-share-targets", {
+            "title": c.title,
+            "guid": c.guid,
+            "icon": await avatarAsBytes(
+                chat: c,
+                quality: 256
+            ),
+          });
+        }
       });
     }
   }
 
   @override
   void onClose() {
-    countSub.cancel();
+    if (!kIsWeb) {
+      countSub.cancel();
+    }
     super.onClose();
   }
 
@@ -107,11 +115,13 @@ class ChatsService extends GetxService {
 
   void updateChat(Chat updated, {bool shouldSort = false}) {
     final index = chats.indexWhere((e) => updated.guid == e.guid);
-    final toUpdate = chats[index];
-    // this is so the list doesn't re-render
-    // ignore: invalid_use_of_protected_member
-    chats.value[index] = updated.merge(toUpdate);
-    if (shouldSort) sort();
+    if (index != -1) {
+      final toUpdate = chats[index];
+      // this is so the list doesn't re-render
+      // ignore: invalid_use_of_protected_member
+      chats.value[index] = updated.merge(toUpdate);
+      if (shouldSort) sort();
+    }
   }
 
   void addChat(Chat toAdd) {

@@ -116,5 +116,10 @@ public class ReplyReceiver extends BroadcastReceiver {
             existingId = intent.getExtras().getInt("id");
             HelperUtils.tryCancelNotifications(context, existingId, null);
         }
+        intent.replaceExtras(new Bundle());
+        intent.setType("");
+        intent.setAction("");
+        intent.setData(null);
+        intent.setFlags(0);
     }
 }

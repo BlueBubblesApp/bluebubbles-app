@@ -37,7 +37,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
   Future<void> send(Tuple6<List<PlatformFile>, String, String, String?, int?, String?> tuple) async {
     await controller.scrollToBottom();
 
-    final attachments = tuple.item1;
+    final attachments = List<PlatformFile>.from(tuple.item1);
     final text = tuple.item2;
     final subject = tuple.item3;
     final replyGuid = tuple.item4;

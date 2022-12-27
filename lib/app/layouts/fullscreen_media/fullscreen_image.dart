@@ -201,9 +201,12 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
       body: GestureDetector(
         onTap: () {
           if (!widget.showInteractions) return;
+          bool newVal = !showOverlay;
           setState(() {
-            showOverlay = !showOverlay;
+            showOverlay = newVal;
           });
+
+          // eventDispatcher.emit('overlay-toggle', newVal);
         },
         child: Stack(
           children: [

@@ -128,7 +128,9 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
                                     final chat = _chats.bigPinHelper(true)[index];
-                                    final item = ListItem(chat: chat, controller: controller);
+                                    final item = ListItem(chat: chat, controller: controller, update: () {
+                                      setState(() {});
+                                    });
                                     // give the list rounded corners at top and bottom
                                     if (_chats.bigPinHelper(true).length == 1) {
                                       return Container(
@@ -177,7 +179,9 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                 delegate: SliverChildBuilderDelegate(
                                       (context, index) {
                                     final chat = _chats.bigPinHelper(false)[index];
-                                    final item = ListItem(chat: chat, controller: controller);
+                                    final item = ListItem(chat: chat, controller: controller, update: () {
+                                      setState(() {});
+                                    });
                                     // give the list rounded corners at top and bottom
                                     if (_chats.bigPinHelper(false).length == 1) {
                                       return Container(

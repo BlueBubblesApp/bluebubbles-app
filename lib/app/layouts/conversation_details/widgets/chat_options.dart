@@ -131,6 +131,19 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                   },
                 ),
               SettingsTile(
+                title: "Fetch Chat Details",
+                subtitle: "Get the latest chat title and participants from the server",
+                backgroundColor: tileColor,
+                trailing: Padding(
+                  padding: const EdgeInsets.only(right: 15.0),
+                  child: Icon(iOS ? CupertinoIcons.chat_bubble : Icons.sms),
+                ),
+                onTap: () async {
+                  await cm.fetchChat(chat.guid);
+                  showSnackbar("Notice", "Fetched details!");
+                }
+              ),
+              SettingsTile(
                 title: "Fetch More Messages",
                 subtitle: "Fetches up to 100 messages after the last message stored locally",
                 isThreeLine: true,

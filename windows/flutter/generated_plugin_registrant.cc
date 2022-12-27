@@ -17,6 +17,7 @@
 #include <local_auth_windows/local_auth_plugin.h>
 #include <local_notifier/local_notifier_plugin.h>
 #include <maps_launcher/maps_launcher_plugin.h>
+#include <network_info_plus_windows/network_info_plus_windows_plugin.h>
 #include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
 #include <pasteboard/pasteboard_plugin.h>
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
@@ -52,6 +53,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("LocalNotifierPlugin"));
   MapsLauncherPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("MapsLauncherPlugin"));
+  NetworkInfoPlusWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("NetworkInfoPlusWindowsPlugin"));
   ObjectboxFlutterLibsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ObjectboxFlutterLibsPlugin"));
   PasteboardPluginRegisterWithRegistrar(

@@ -370,7 +370,11 @@ class Message {
       if (json['attributedBody'] is Map) {
         json['attributedBody'] = [json['attributedBody']];
       }
-      attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+      try {
+        attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+      } catch (e) {
+        Logger.error('Failed to parse attributed body! $e');
+      }
     }
 
     Map<String, dynamic> metadata = {};
@@ -387,12 +391,16 @@ class Message {
     List<MessageSummaryInfo> msi = [];
     try {
       msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e)).toList();
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('Failed to parse summary info! $e');
+    }
 
     PayloadData? payloadData;
     try {
       payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('Failed to parse payload data! $e');
+    }
 
     return Message(
       id: json["ROWID"] ?? json['id'],
@@ -534,6 +542,9 @@ class Message {
         final existingHandle = handles.firstWhereOrNull((e) => e.address == m.handle?.address);
         if (existingHandle != null) {
           m.handleId = existingHandle.id;
+        }
+        if (existingMessages.firstWhereOrNull((e) => e.guid == m.guid) == null && m.otherHandle != null) {
+          m.otherHandle = Handle.findOne(originalROWID: m.otherHandle)?.id;
         }
       }
       associatedMessages.removeWhere((message) {
@@ -725,6 +736,8 @@ class Message {
       text = "$name named the conversation \"$groupTitle\"";
     } else if (itemType == 6) {
       text = "$name started a FaceTime call";
+    } else if (itemType == 4 && groupActionType == 0) {
+      text = "$name shared ${name == "You" ? "your" : "their"} location";
     }
 
     return text;
@@ -742,7 +755,7 @@ class Message {
       ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
 
   Indicator get indicatorToShow {
-    if (isFromMe!) return Indicator.NONE;
+    if (!isFromMe!) return Indicator.NONE;
     if (dateRead != null) return Indicator.READ;
     if (dateDelivered != null) return Indicator.DELIVERED;
     if (dateCreated != null) return Indicator.SENT;
@@ -813,9 +826,12 @@ class Message {
     // make sure the older message is none of the following:
     // 1) thread originator
     // 2) part of the thread
-    // OR the thread originator is not the last part of the older message
+    // OR
+    // 1) It is the thread originator but the part is not the last part of the older message
+    // 2) It is part of the thread but has multiple parts
     return (olderMessage.guid != threadOriginatorGuid && olderMessage.threadOriginatorGuid != threadOriginatorGuid)
-        || normalizedThreadPart != olderPartCount - 1;
+        || (olderMessage.guid == threadOriginatorGuid && normalizedThreadPart != olderPartCount - 1)
+        || (olderMessage.threadOriginatorGuid == threadOriginatorGuid && olderPartCount > 1);
   }
 
   bool connectToLower(Message newerMessage) {
@@ -1052,6 +1068,7 @@ class Message {
       "threadOriginatorGuid": threadOriginatorGuid,
       "threadOriginatorPart": threadOriginatorPart,
       "hasApplePayloadData": hasApplePayloadData,
+      "dateEdited": dateEdited,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();

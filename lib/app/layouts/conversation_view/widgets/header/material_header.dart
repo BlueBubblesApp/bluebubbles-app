@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -27,6 +28,9 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
         AppBar(
           backgroundColor: context.theme.colorScheme.background
               .withOpacity(ss.settings.skin.value == Skins.Samsung ? 1 : 0.95),
+          systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
           automaticallyImplyLeading: false,
           leadingWidth: 40,
           leading: Padding(
@@ -44,6 +48,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   return true;
                 }
                 eventDispatcher.emit("update-highlight", null);
+                controller.close();
                 return false;
               },
             ),
@@ -105,7 +110,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   Navigator.of(context).pop();
                 } else if (value == 2) {
                   chats.removeChat(controller.chat);
-                  Chat.deleteChat(controller.chat);
+                  Chat.softDelete(controller.chat);
                   while (Get.isOverlaysOpen) {
                     Get.back();
                   }
@@ -180,32 +185,34 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
     // run query after render has completed
-    updateObx(() {
-      final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-          .watch();
-      sub = titleQuery.listen((Query<Chat> query) async {
-        final chat = await runAsync(() {
-          return chatBox.get(controller.chat.id!)!;
-        });
-        // check if we really need to update this widget
-        if (chat.displayName != cachedDisplayName
-            || chat.handles.length != cachedParticipants.length) {
-          final newTitle = chat.getTitle();
-          if (newTitle != title) {
-            setState(() {
-              title = newTitle;
-            });
+    if (!kIsWeb) {
+      updateObx(() {
+        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+            .watch();
+        sub = titleQuery.listen((Query<Chat> query) async {
+          final chat = await runAsync(() {
+            return chatBox.get(controller.chat.id!)!;
+          });
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.handles.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
           }
-        }
-        cachedDisplayName = chat.displayName;
-        cachedParticipants = chat.handles;
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.handles;
+        });
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 
@@ -226,29 +233,35 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
               ),
             ),
           ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Obx(() {
-              String _title = title;
-              if (controller.inSelectMode.value) {
-                _title = "${controller.selected.length} selected";
-              } else if (hideInfo) {
-                _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
-              }
-              return Text(
-                _title,
-                style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
-              );
-            }),
-            if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)) && !hideInfo)
-              Text(
-                controller.chat.isGroup
-                  ? "${controller.chat.participants.length} recipients"
-                  : controller.chat.participants[0].address,
-                style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
-              ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Obx(() {
+                String _title = title;
+                if (controller.inSelectMode.value) {
+                  _title = "${controller.selected.length} selected";
+                } else if (hideInfo) {
+                  _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
+                }
+                return Text(
+                  _title,
+                  style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                );
+              }),
+              if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)) && !hideInfo)
+                Text(
+                  controller.chat.isGroup
+                    ? "${controller.chat.participants.length} recipients"
+                    : controller.chat.participants[0].address,
+                  style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                ),
+            ],
+          ),
         ),
       ],
     );

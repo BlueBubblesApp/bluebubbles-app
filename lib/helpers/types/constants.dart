@@ -65,6 +65,13 @@ final balloonBundleIdIconMap = {
   }
 };
 
+const frequencyToText = {
+  "daily": "day",
+  "weekly": "week",
+  "monthly": "month",
+  "yearly": "year",
+};
+
 enum MessageEffect {
   none,
   slam,

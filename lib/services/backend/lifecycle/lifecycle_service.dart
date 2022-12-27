@@ -56,14 +56,18 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     }
 
     if (!kIsDesktop && !kIsWeb) {
-      // clever trick so we can see if the app is active in an isolate or not
       if (!isBubble) {
-        final port = ReceivePort();
-        IsolateNameServer.removePortNameMapping('bg_isolate');
-        IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+        createFakePort();
       }
       socket.reconnect();
     }
+  }
+
+  // clever trick so we can see if the app is active in an isolate or not
+  void createFakePort() {
+    final port = ReceivePort();
+    IsolateNameServer.removePortNameMapping('bg_isolate');
+    IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
   }
 
   void close() {

@@ -42,7 +42,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   List<Message> _messages = <Message>[];
 
   RxList<Widget> smartReplies = <Widget>[].obs;
-  RxList<Widget> internalSmartReplies = <Widget>[].obs;
+  RxMap<String, Widget> internalSmartReplies = <String, Widget>{}.obs;
 
   late final messageService = widget.customService ?? ms(chat.guid)
     ..init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
@@ -69,19 +69,17 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
         setState(() {});
       } else if (e.item1 == "add-custom-smartreply") {
-        if (e.item2 != null) {
-          internalSmartReplies.add(
-            _buildReply("Attach recent photo", onTap: () async {
-              controller.pickedAttachments.add(e.item2);
-              internalSmartReplies.clear();
-            })
-          );
+        if (e.item2 != null && internalSmartReplies.isEmpty) {
+          internalSmartReplies['attach-recent'] = _buildReply("Attach recent photo", onTap: () async {
+            controller.pickedAttachments.add(e.item2);
+            internalSmartReplies.clear();
+          });
         }
       }
     });
 
     updateObx(() async {
-      final searchMessage = messageService.struct.messages.firstOrNull;
+      final searchMessage = (messageService.method == null) ? null : messageService.struct.messages.firstOrNull;
       if (messageService.method != null) {
         await messageService.loadSearchChunk(
           messageService.struct.messages.first,
@@ -103,6 +101,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         final index = _messages.indexWhere((element) => element.guid == searchMessage.guid);
         await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
         scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
+      } else if (!(_messages.firstOrNull?.isFromMe ?? true)) {
+        updateReplies();
       }
       initialized = true;
     });
@@ -119,10 +119,10 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   }
 
   void updateReplies({bool updateConversation = true}) async {
-    if (isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop) return;
+    if (!showSmartReplies || isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop) return;
 
     if (updateConversation) {
-      _messages.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).take(min(_messages.length, 5)).forEach((message) {
+      _messages.reversed.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).skip(max(_messages.length - 5, 0)).forEach((message) {
         _addMessageToSmartReply(message);
       });
     }
@@ -183,26 +183,37 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     _messages.add(message);
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final insertIndex = _messages.indexOf(message);
-    listKey.currentState!.insertItem(
-      insertIndex,
-      duration: const Duration(milliseconds: 500),
-    );
+
+    if (listKey.currentState != null) {
+      listKey.currentState!.insertItem(
+        insertIndex,
+        duration: const Duration(milliseconds: 500),
+      );
+    }
 
     if (insertIndex == 0 && showSmartReplies) {
       _addMessageToSmartReply(message);
-      updateReplies(updateConversation: false);
+      if (message.isFromMe!) {
+        smartReplies.clear();
+      } else {
+        updateReplies(updateConversation: false);
+      }
     }
   }
 
   void handleUpdatedMessage(Message message, {String? oldGuid}) {
     final index = _messages.indexWhere((e) => e.guid == (oldGuid ?? message.guid));
-    _messages[index] = message;
+    if (index != -1) {
+      _messages[index] = message;
+    }
   }
 
   void handleDeletedMessage(Message message) {
     final index = _messages.indexWhere((e) => e.guid == message.guid);
-    _messages.removeAt(index);
-    listKey.currentState!.removeItem(index, (context, animation) => const SizedBox.shrink());
+    if (index != -1) {
+      _messages.removeAt(index);
+      listKey.currentState!.removeItem(index, (context, animation) => const SizedBox.shrink());
+    }
   }
 
   Widget _buildReply(String text, {Function()? onTap}) => Container(
@@ -221,7 +232,13 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         outq.queue(OutgoingItem(
             type: QueueType.sendMessage,
             chat: controller.chat,
-            message: Message(text: text)
+            message: Message(
+              text: text,
+              dateCreated: DateTime.now(),
+              hasAttachments: false,
+              isFromMe: true,
+              handleId: 0,
+            ),
         ));
       },
       child: Center(
@@ -294,19 +311,19 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                 slivers: <Widget>[
                   if (showSmartReplies)
                     SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: iOS ? 8.0 : 0.0, right: 5),
-                        child: Obx(() => AnimatedSize(
-                          duration: const Duration(milliseconds: 400),
-                          child: smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty ? SizedBox(
+                      child: Obx(() => AnimatedSize(
+                        duration: const Duration(milliseconds: 400),
+                        child: smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty ? Padding(
+                          padding: EdgeInsets.only(top: iOS ? 8.0 : 0.0, right: 5),
+                          child: SizedBox(
                             height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
                             child: ListView(
                               scrollDirection: Axis.horizontal,
                               reverse: true,
-                              children: smartReplies..addAll(internalSmartReplies),
+                              children: List<Widget>.from(smartReplies)..addAll(internalSmartReplies.values),
                             ),
-                          ) : const SizedBox.shrink())
-                        ),
+                          ),
+                        ) : const SizedBox.shrink())
                       ),
                     ),
                   SliverToBoxAdapter(

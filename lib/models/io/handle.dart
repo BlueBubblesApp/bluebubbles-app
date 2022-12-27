@@ -158,13 +158,14 @@ class Handle {
       final result = query.findFirst();
       query.close();
       return result;
-    } else {
-      final query = handleBox.query(Handle_.address.equals(address!)).build();
+    } else if (address != null) {
+      final query = handleBox.query(Handle_.address.equals(address)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
     }
+    return null;
   }
 
   static Handle merge(Handle handle1, Handle handle2) {

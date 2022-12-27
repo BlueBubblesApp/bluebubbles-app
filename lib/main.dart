@@ -200,7 +200,6 @@ Future<Null> initApp(bool bubble) async {
       fcmDataBox = store.box<FCMData>();
       handleBox = store.box<Handle>();
       messageBox = store.box<Message>();
-      scheduledBox = store.box<ScheduledMessage>();
       themeBox = store.box<ThemeStruct>();
       themeEntryBox = store.box<ThemeEntry>();
       // ignore: deprecated_member_use_from_same_package
@@ -518,13 +517,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
-    // we want to refresh the page rather than loading a new instance of [Home]
-    // to avoid errors
-    //todo see if necessary
-    if (ls.isAlive && kIsWeb) {
-      html.window.location.reload();
-    }
-
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
 
@@ -537,6 +529,11 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       uiStartup.complete();
+
+      if (!ls.isBubble && !kIsWeb && !kIsDesktop) {
+        ls.createFakePort();
+      }
+
       ErrorWidget.builder = (FlutterErrorDetails error) {
         Logger.error(error.exception);
         Logger.error("Stacktrace: ${error.stack.toString()}");

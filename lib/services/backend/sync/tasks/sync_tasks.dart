@@ -7,9 +7,6 @@ import 'package:bluebubbles/helpers/backend/sync/sync_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
-// (needed when generating objectbox model code)
-// ignore: unnecessary_import
-import 'package:objectbox/objectbox.dart';
 
 class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
   final List<dynamic> params;
@@ -68,14 +65,14 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
       // 1. Check for existing handles and save new ones
       List<Handle> inputHandles = handlesToSave.values.toList();
       List<String> inputHandleAddresses = inputHandles.map((element) => element.address).toList();
-      QueryBuilder<Handle> handleQuery = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
-      List<String> existingHandleAddresses = handleQuery.build().find().map((e) => e.address).toList();
+      final handleQuery = handleBox.query(Handle_.address.oneOf(inputHandleAddresses)).build();
+      List<String> existingHandleAddresses = handleQuery.find().map((e) => e.address).toList();
       inputHandles = inputHandles.where((element) => !existingHandleAddresses.contains(element.address)).toList();
       handleBox.putMany(inputHandles);
 
       // 2. Fetch all inserted/existing handles based on input
-      QueryBuilder<Handle> handleQuery2 = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
-      List<Handle> handles = handleQuery2.build().find().toList();
+      final handleQuery2 = handleBox.query(Handle_.address.oneOf(inputHandleAddresses)).build();
+      List<Handle> handles = handleQuery2.find().toList();
 
       // 3. Create map of inserted/existing handles
       Map<String, Handle> handleMap = {};
@@ -84,14 +81,14 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
       }
 
       // 4. Check for existing chats and save new ones
-      QueryBuilder<Chat> chatQuery = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
-      List<String> existingChatGuids = chatQuery.build().find().map((e) => e.guid).toList();
+      final chatQuery = chatBox.query(Chat_.guid.oneOf(inputChatGuids)).build();
+      List<String> existingChatGuids = chatQuery.find().map((e) => e.guid).toList();
       inputChats = inputChats.where((element) => !existingChatGuids.contains(element.guid)).toList();
       chatBox.putMany(inputChats);
 
       // 5. Fetch all inserted/existing chats based on input
-      QueryBuilder<Chat> chatQuery2 = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
-      List<Chat> chats = chatQuery2.build().find().toList();
+      final chatQuery2 = chatBox.query(Chat_.guid.oneOf(inputChatGuids)).build();
+      List<Chat> chats = chatQuery2.find().toList();
 
       // 6. Create map of inserted/existing chats
       Map<String, Chat> chatMap = {};
@@ -162,12 +159,16 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
         if (message.handle == null && message.handleId == 0) continue;
 
         // If the handle is null, find the handle data by the original handle ID.
+        bool hadNullHandle = message.handle == null;
         message.handle ??= handlesCache.values.firstWhereOrNull(
             (element) => element.originalROWID == message.handleId);
         if (!handlesCache.containsKey(message.handle?.address)) continue;
 
         message.handleId = handlesCache[message.handle!.address]?.id ?? 0;
         message.handle = handlesCache[message.handle!.address];
+        if (hadNullHandle && message.otherHandle != null) {
+          message.otherHandle = Handle.findOne(originalROWID: message.otherHandle)?.id;
+        }
       }
 
       // 2. Extract & cache the attachments
@@ -288,17 +289,16 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
       List<String> inputGuids = inputChats.map((e) => e.guid).toList();
 
       // Get the latest versions of the chats
-      QueryBuilder<Chat> chatQuery = chatBox.query(Chat_.guid.oneOf(inputGuids));
-      List<Chat> existingChats = chatQuery.build().find();
+      final chatQuery = chatBox.query(Chat_.guid.oneOf(inputGuids)).build();
+      List<Chat> existingChats = chatQuery.find();
 
       // Pull the latest message for all of the chats.
       List<int> chatIds = existingChats.map((e) => e.id!).toList();
       List<Chat> updatedChats = [];
       for (int i in chatIds) {
         // Fetch latest message for the chat
-        QueryBuilder<Message> latestMsgQuery = messageBox.query(Message_.chat.equals(i));
-        latestMsgQuery.order(Message_.dateCreated, flags: Order.descending);
-        Message? latestMessage = latestMsgQuery.build().findFirst();
+        final latestMsgQuery = (messageBox.query(Message_.chat.equals(i))..order(Message_.dateCreated, flags: Order.descending)).build();
+        Message? latestMessage = latestMsgQuery.findFirst();
         if (latestMessage?.handle == null && latestMessage?.handleId != null && latestMessage?.handleId != 0) {
           latestMessage!.handle = handleBox.get(latestMessage.handleId!);
         }
