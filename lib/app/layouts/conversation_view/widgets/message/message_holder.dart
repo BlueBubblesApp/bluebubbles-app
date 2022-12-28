@@ -437,7 +437,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           minHeight: 40,
                                                                         ),
                                                                         padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
-                                                                        child: CustomCupertinoTextField(
+                                                                        child: TextField(
                                                                           textCapitalization: TextCapitalization.sentences,
                                                                           autocorrect: true,
                                                                           focusNode: editStuff.item4,
@@ -447,9 +447,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           keyboardType: TextInputType.multiline,
                                                                           maxLines: 14,
                                                                           minLines: 1,
-                                                                          placeholder: "Edited Message",
-                                                                          padding: EdgeInsets.all(iOS ? 10 : 12.5),
-                                                                          placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                                                                           selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                                                                           autofocus: true,
                                                                           enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
@@ -458,75 +455,96 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                               : TextInputAction.newline,
                                                                           cursorColor: context.theme.extension<BubbleText>()!.bubbleText.color,
                                                                           cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
-                                                                          decoration: BoxDecoration(
-                                                                            border: Border.fromBorderSide(BorderSide(
-                                                                              color: context.theme.colorScheme.outline,
-                                                                              width: 1.5,
-                                                                            )),
-                                                                            borderRadius: BorderRadius.circular(20),
+                                                                          decoration: InputDecoration(
+                                                                            contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
+                                                                            isDense: true,
+                                                                            isCollapsed: true,
+                                                                            hintText: "Edited Message",
+                                                                            enabledBorder: OutlineInputBorder(
+                                                                              borderSide: BorderSide(
+                                                                                  color: context.theme.colorScheme.outline,
+                                                                                  width: 1.5
+                                                                              ),
+                                                                              borderRadius: BorderRadius.circular(20),
+                                                                            ),
+                                                                            border: OutlineInputBorder(
+                                                                              borderSide: BorderSide(
+                                                                                color: context.theme.colorScheme.outline,
+                                                                                width: 1.5
+                                                                              ),
+                                                                              borderRadius: BorderRadius.circular(20),
+                                                                            ),
+                                                                            focusedBorder: OutlineInputBorder(
+                                                                              borderSide: BorderSide(
+                                                                                  color: context.theme.colorScheme.outline,
+                                                                                  width: 1.5
+                                                                              ),
+                                                                              borderRadius: BorderRadius.circular(20),
+                                                                            ),
+                                                                            fillColor: Colors.transparent,
+                                                                            hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
+                                                                            prefixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 40),
+                                                                            prefixIcon: IconButton(
+                                                                              constraints: const BoxConstraints(maxWidth: 27),
+                                                                              padding: const EdgeInsets.only(left: 5),
+                                                                              visualDensity: VisualDensity.compact,
+                                                                              icon: Icon(
+                                                                                CupertinoIcons.xmark_circle_fill,
+                                                                                color: context.theme.colorScheme.outline,
+                                                                                size: 22,
+                                                                              ),
+                                                                              onPressed: () {
+                                                                                widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
+                                                                              },
+                                                                              iconSize: 22,
+                                                                              style: const ButtonStyle(
+                                                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                                                visualDensity: VisualDensity.compact,
+                                                                              ),
+                                                                            ),
+                                                                            suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 40),
+                                                                            suffixIcon: ValueListenableBuilder(
+                                                                              valueListenable: editStuff.item3,
+                                                                              builder: (context, value, _) {
+                                                                                return Padding(
+                                                                                  padding: const EdgeInsets.all(3.0),
+                                                                                  child: TextButton(
+                                                                                    style: TextButton.styleFrom(
+                                                                                      backgroundColor: Colors.transparent,
+                                                                                      shape: const CircleBorder(),
+                                                                                      padding: const EdgeInsets.all(0),
+                                                                                      maximumSize: const Size(27, 27),
+                                                                                      minimumSize: const Size(27, 27),
+                                                                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                                                    ),
+                                                                                    child: AnimatedContainer(
+                                                                                      duration: const Duration(milliseconds: 150),
+                                                                                      constraints: const BoxConstraints(minHeight: 27, minWidth: 27),
+                                                                                      decoration: BoxDecoration(
+                                                                                        shape: iOS ? BoxShape.circle : BoxShape.rectangle,
+                                                                                        color: !iOS ? null : editStuff.item3.text.isNotEmpty ? Colors.white : context.theme.colorScheme.outline,
+                                                                                      ),
+                                                                                      alignment: Alignment.center,
+                                                                                      child: Icon(
+                                                                                        iOS ? CupertinoIcons.arrow_up : Icons.send_outlined,
+                                                                                        color: !iOS ? context.theme.extension<BubbleText>()!.bubbleText.color : context.theme.colorScheme.bubble(context, chat.isIMessage),
+                                                                                        size: iOS ? 18 : 26,
+                                                                                      ),
+                                                                                    ),
+                                                                                    onPressed: () {
+                                                                                      completeEdit(editStuff.item3.text, e.part);
+                                                                                    },
+                                                                                  ),
+                                                                                );
+                                                                              },
+                                                                            ),
                                                                           ),
-                                                                          onLongPressStart: () {
-                                                                            Feedback.forLongPress(context);
-                                                                          },
                                                                           onTap: () {
                                                                             HapticFeedback.selectionClick();
                                                                           },
                                                                           onSubmitted: (String value) {
                                                                             completeEdit(value, e.part);
                                                                           },
-                                                                          prefix: IconButton(
-                                                                            constraints: const BoxConstraints(maxWidth: 27),
-                                                                            padding: const EdgeInsets.only(left: 5),
-                                                                            visualDensity: VisualDensity.compact,
-                                                                            icon: Icon(
-                                                                              CupertinoIcons.xmark_circle_fill,
-                                                                              color: context.theme.colorScheme.outline,
-                                                                              size: 22,
-                                                                            ),
-                                                                            onPressed: () {
-                                                                              widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
-                                                                            },
-                                                                            iconSize: 22,
-                                                                            style: const ButtonStyle(
-                                                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                                              visualDensity: VisualDensity.compact,
-                                                                            ),
-                                                                          ),
-                                                                          suffix: ValueListenableBuilder(
-                                                                            valueListenable: editStuff.item3,
-                                                                            builder: (context, value, _) {
-                                                                              return Padding(
-                                                                                padding: const EdgeInsets.all(3.0),
-                                                                                child: TextButton(
-                                                                                  style: TextButton.styleFrom(
-                                                                                    backgroundColor: Colors.transparent,
-                                                                                    shape: const CircleBorder(),
-                                                                                    padding: const EdgeInsets.all(0),
-                                                                                    maximumSize: const Size(27, 27),
-                                                                                    minimumSize: const Size(27, 27),
-                                                                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                                                  ),
-                                                                                  child: AnimatedContainer(
-                                                                                    duration: const Duration(milliseconds: 150),
-                                                                                    constraints: const BoxConstraints(minHeight: 27, minWidth: 27),
-                                                                                    decoration: BoxDecoration(
-                                                                                      shape: iOS ? BoxShape.circle : BoxShape.rectangle,
-                                                                                      color: !iOS ? null : editStuff.item3.text.isNotEmpty ? Colors.white : context.theme.colorScheme.outline,
-                                                                                    ),
-                                                                                    alignment: Alignment.center,
-                                                                                    child: Icon(
-                                                                                      iOS ? CupertinoIcons.arrow_up : Icons.send_outlined,
-                                                                                      color: !iOS ? context.theme.extension<BubbleText>()!.bubbleText.color : context.theme.colorScheme.bubble(context, chat.isIMessage),
-                                                                                      size: iOS ? 18 : 26,
-                                                                                    ),
-                                                                                  ),
-                                                                                  onPressed: () {
-                                                                                    completeEdit(editStuff.item3.text, e.part);
-                                                                                  },
-                                                                                ),
-                                                                              );
-                                                                            },
-                                                                          ),
                                                                         ),
                                                                       ),
                                                                     )

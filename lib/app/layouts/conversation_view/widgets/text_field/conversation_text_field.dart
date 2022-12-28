@@ -572,7 +572,7 @@ class TextFieldComponent extends StatelessWidget {
                       ss.settings.enablePrivateAPI.value &&
                       ss.settings.privateSubjectLine.value &&
                       chat!.isIMessage)
-                    CustomCupertinoTextField(
+                    TextField(
                       textCapitalization: TextCapitalization.sentences,
                       focusNode: controller!.subjectFocusNode,
                       autocorrect: true,
@@ -582,22 +582,27 @@ class TextFieldComponent extends StatelessWidget {
                       keyboardType: TextInputType.multiline,
                       maxLines: 14,
                       minLines: 1,
-                      placeholder: "Subject",
-                      padding: EdgeInsets.all(iOS ? 10 : 12.5),
-                      placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(
-                          color: context.theme.colorScheme.outline,
-                          fontWeight: FontWeight.bold
-                      ),
                       selectionControls: iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                       autofocus: kIsWeb || kIsDesktop,
                       enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                       textInputAction: TextInputAction.next,
                       cursorColor: context.theme.colorScheme.primary,
                       cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
-                      decoration: const BoxDecoration(),
-                      onLongPressStart: () {
-                        Feedback.forLongPress(context);
-                      },
+                      decoration: InputDecoration(
+                        contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
+                        isDense: true,
+                        isCollapsed: true,
+                        hintText: "Subject",
+                        enabledBorder: InputBorder.none,
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        fillColor: Colors.transparent,
+                        hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(
+                            color: context.theme.colorScheme.outline,
+                            fontWeight: FontWeight.bold
+                        ),
+                        suffixIconConstraints: const BoxConstraints(minHeight: 0),
+                      ),
                       onTap: () {
                         HapticFeedback.selectionClick();
                       },
@@ -616,7 +621,7 @@ class TextFieldComponent extends StatelessWidget {
                       indent: 10,
                       color: context.theme.colorScheme.properSurface,
                     ),
-                  CustomCupertinoTextField(
+                  TextField(
                     textCapitalization: TextCapitalization.sentences,
                     focusNode: controller?.focusNode,
                     autocorrect: true,
@@ -626,14 +631,6 @@ class TextFieldComponent extends StatelessWidget {
                     keyboardType: TextInputType.multiline,
                     maxLines: 14,
                     minLines: 1,
-                    placeholder: isChatCreator ? "New Message"
-                        : ss.settings.recipientAsPlaceholder.value == true
-                        ? chat!.getTitle()
-                        : chat!.isTextForwarding
-                        ? "Text Forwarding"
-                        : "iMessage",
-                    padding: EdgeInsets.all(iOS ? 10 : 12.5),
-                    placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                     autofocus: kIsWeb || kIsDesktop,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
@@ -642,10 +639,33 @@ class TextFieldComponent extends StatelessWidget {
                         : TextInputAction.newline,
                     cursorColor: context.theme.colorScheme.primary,
                     cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
-                    decoration: const BoxDecoration(),
-                    onLongPressStart: () {
-                      Feedback.forLongPress(context);
-                    },
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
+                      isDense: true,
+                      isCollapsed: true,
+                      hintText: isChatCreator ? "New Message"
+                          : ss.settings.recipientAsPlaceholder.value == true
+                          ? chat!.getTitle()
+                          : chat!.isTextForwarding
+                          ? "Text Forwarding"
+                          : "iMessage",
+                      enabledBorder: InputBorder.none,
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      fillColor: Colors.transparent,
+                      hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
+                      suffixIconConstraints: const BoxConstraints(minHeight: 0),
+                      suffixIcon: samsung && !isChatCreator ? null : Padding(
+                        padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
+                        child: TextFieldSuffix(
+                          subjectTextController: subjectTextController,
+                          textController: textController,
+                          controller: controller,
+                          recorderController: recorderController,
+                          sendMessage: sendMessage,
+                        ),
+                      ),
+                    ),
                     onTap: () {
                       HapticFeedback.selectionClick();
                     },
@@ -655,16 +675,6 @@ class TextFieldComponent extends StatelessWidget {
                       sendMessage.call();
                     },
                     onContentCommitted: onContentCommit,
-                    suffix: samsung && !isChatCreator ? null : Padding(
-                      padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
-                      child: TextFieldSuffix(
-                        subjectTextController: subjectTextController,
-                        textController: textController,
-                        controller: controller,
-                        recorderController: recorderController,
-                        sendMessage: sendMessage,
-                      ),
-                    ),
                   ),
                 ],
               ),

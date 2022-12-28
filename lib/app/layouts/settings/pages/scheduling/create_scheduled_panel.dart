@@ -172,7 +172,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                 ),
                 Padding(
                   padding: const EdgeInsets.all(15.0),
-                  child: CustomCupertinoTextField(
+                  child: TextField(
                     textCapitalization: TextCapitalization.sentences,
                     focusNode: messageNode,
                     autocorrect: true,
@@ -181,21 +181,37 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                     keyboardType: TextInputType.multiline,
                     maxLines: 14,
                     minLines: 1,
-                    placeholder: "Message",
-                    padding: EdgeInsets.all(iOS ? 10 : 12.5),
-                    placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                     textInputAction: TextInputAction.done,
                     cursorColor: context.theme.colorScheme.primary,
                     cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: context.theme.colorScheme.outline),
-                      borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
+                      isDense: true,
+                      isCollapsed: true,
+                      hintText: "Message",
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: context.theme.colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                      ),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: context.theme.colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: context.theme.colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                      ),
+                      fillColor: Colors.transparent,
+                      hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     ),
-                    onLongPressStart: () {
-                      Feedback.forLongPress(context);
-                    },
                     onTap: () {
                       HapticFeedback.selectionClick();
                     },
