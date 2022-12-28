@@ -53,8 +53,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     });
     if (response.statusCode == 200 && response.data['data'] != null) {
       devices = (response.data['data'] as List).map((e) => FindMy.fromJson(e)).toList().cast<FindMy>();
-      markers = devices.where((e) => e.location != null).map((e) => Marker(
-        point: LatLng(e.location!.latitude, e.location!.longitude),
+      markers = devices.where((e) => e.location?.latitude != null && e.location?.longitude != null).map((e) => Marker(
+        point: LatLng(e.location!.latitude!, e.location!.longitude!),
         width: 30,
         height: 35,
         builder: (_) => ClipShadowPath(
@@ -152,13 +152,13 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       return ListTile(
                         title: Text(item.name ?? "Unknown Device"),
                         subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
-                        onTap: item.location != null ? () async {
+                        onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
                           index.value = 1;
                           tabController.animateTo(1);
                           await completer.future;
                           final marker = markers.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
                           popupController.showPopupsOnlyFor([marker]);
-                          mapController.move(LatLng(item.location!.latitude, item.location!.longitude), 10);
+                          mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
                         } : null,
                         onLongPress: () async {
                           const encoder = JsonEncoder.withIndent("     ");
