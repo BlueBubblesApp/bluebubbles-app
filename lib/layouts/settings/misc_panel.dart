@@ -354,7 +354,7 @@ class MiscPanel extends StatelessWidget {
                             ]);
                           },
                           initialVal: SettingsManager().settings.allowUpsideDownRotation.value,
-                          title: "Alllow Upside-Down Rotation",
+                          title: "Allow Upside-Down Rotation",
                           backgroundColor: tileColor,
                         )),
                   if (Platform.isAndroid)
