@@ -10,6 +10,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:github/github.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:store_checker/store_checker.dart';
 import 'package:tuple/tuple.dart';
@@ -50,7 +51,7 @@ class SettingsService extends GetxService {
     }
     // launch at startup
     if (kIsDesktop) {
-      LaunchAtStartup.setup(fs.packageInfo.appName);
+      LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName); // Can't use fs here because it hasn't been initialized yet
       if (settings.launchAtStartup.value) {
         await LaunchAtStartup.enable();
       } else {
@@ -156,6 +157,7 @@ class SettingsService extends GetxService {
 
   Future<void> checkClientUpdate() async {
     if (!kIsDesktop && (kIsWeb || (await StoreChecker.getSource) != Source.IS_INSTALLED_FROM_LOCAL_SOURCE)) return;
+    if (kIsDesktop) return; // todo
     final github = GitHub();
     final stream = github.repositories.listReleases(RepositorySlug('bluebubblesapp', 'bluebubbles-app'));
     final release = await stream.firstWhere((element) => !(element.isDraft ?? false) && !(element.isPrerelease ?? false) && element.tagName != null);

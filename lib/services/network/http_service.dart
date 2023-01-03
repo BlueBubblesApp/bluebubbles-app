@@ -622,7 +622,7 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$origin/contact",
-          queryParameters: buildQueryParams(withAvatars ? {"extraProperties": "contactImage"} : {}),
+          queryParameters: buildQueryParams(withAvatars ? {"extraProperties": "avatar"} : {}),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
