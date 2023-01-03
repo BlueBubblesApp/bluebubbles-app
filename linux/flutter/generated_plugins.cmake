@@ -12,7 +12,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   objectbox_flutter_libs
   pasteboard
   printing
-  quick_notify
   screen_retriever
   system_tray
   url_launcher_linux
