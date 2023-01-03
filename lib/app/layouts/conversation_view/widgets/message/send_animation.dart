@@ -104,7 +104,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
   @override
   Widget build(BuildContext context) {
     final typicalWidth = message?.isBigEmoji ?? false
-        ? context.width : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
+        ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
     return AnimatedPositioned(
       duration: Duration(milliseconds: message != null ? 400 : 0),
       bottom: message != null ? textFieldSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) : 0,

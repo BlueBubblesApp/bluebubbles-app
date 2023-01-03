@@ -846,7 +846,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   Widget buildDetailsMenu(BuildContext context) {
-    double maxMenuWidth = min(max(context.width * 3 / 5, 200), context.width * 4 / 5);
+    double maxMenuWidth = min(max(ns.width(context) * 3 / 5, 200), ns.width(context) * 4 / 5);
 
     List<Widget> allActions = [
       if (ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
