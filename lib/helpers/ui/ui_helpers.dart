@@ -369,12 +369,12 @@ Future<void> paintGroupAvatar({
   required bool usingParticipantsOverride,
 }) async {
   late final ThemeData theme;
+  final bool systemDark = SchedulerBinding.instance.window.platformBrightness == Brightness.dark;
   if (!ls.isAlive) {
-    final brightness = SchedulerBinding.instance.window.platformBrightness;
-    if (brightness == Brightness.light) {
-      theme = ThemeStruct.getLightTheme().data;
-    } else {
+    if (systemDark) {
       theme = ThemeStruct.getDarkTheme().data;
+    } else {
+      theme = ThemeStruct.getLightTheme().data;
     }
   } else {
     theme = Get.context!.theme;
@@ -406,7 +406,11 @@ Future<void> paintGroupAvatar({
     return;
   }
 
-  Paint paint = Paint()..color = theme.colorScheme.properSurface;
+  Color bgColor = theme.colorScheme.properSurface;
+  if (kIsDesktop && systemDark && ss.settings.useWindowsAccent.value && Platform.isWindows) {
+    bgColor = ts.windowsAccentColor ?? bgColor;
+  }
+  Paint paint = Paint()..color = bgColor;
   Offset _offset = Offset(size * 0.5, size * 0.5);
   if (kIsDesktop) {
     canvas.drawCircle(_offset, size * 0.5, paint);
