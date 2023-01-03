@@ -335,7 +335,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             ),
                           ),
                           ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: context.width - 50),
+                            constraints: BoxConstraints(maxWidth: ns.width(context) - 50),
                             child: FocusScope(
                               child: Focus(
                                 onKey: (_, ev) {
