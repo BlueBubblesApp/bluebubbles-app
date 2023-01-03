@@ -8,6 +8,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
@@ -393,7 +394,12 @@ Future<void> paintGroupAvatar({
     return;
   }
 
-  Paint paint = Paint()..color = Get.theme.colorScheme.properSurface;
+  bool systemDark = SchedulerBinding.instance.window.platformBrightness == Brightness.dark;
+  Color bgColor = (systemDark ? ThemeStruct.getDarkTheme() : ThemeStruct.getLightTheme()).data.colorScheme.properSurface;
+  if (kIsDesktop && systemDark && ss.settings.useWindowsAccent.value && Platform.isWindows) {
+    bgColor = ts.windowsAccentColor ?? bgColor;
+  }
+  Paint paint = Paint()..color = bgColor;
   Offset _offset = Offset(size * 0.5, size * 0.5);
   if (kIsDesktop) {
     canvas.drawCircle(_offset, size * 0.5, paint);
@@ -418,11 +424,7 @@ Future<void> paintGroupAvatar({
       paint.color = Get.context?.theme.colorScheme.secondary.withOpacity(0.8) ?? HexColor("686868").withOpacity(0.8);
       Offset _offset = Offset(left + realSize * 0.5, top + realSize * 0.5);
       double radius = realSize * 0.5;
-      if (kIsDesktop) {
-        canvas.drawCircle(_offset, radius, paint);
-      } else {
-        canvas.drawRect(Rect.fromCenter(center: _offset, width: realSize, height: realSize), paint);
-      }
+      canvas.drawCircle(_offset, radius, paint);
 
       IconData icon = Icons.people;
 
