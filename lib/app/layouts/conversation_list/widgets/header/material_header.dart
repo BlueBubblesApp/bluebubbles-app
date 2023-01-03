@@ -25,7 +25,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
       children: [
         Container(
           height: controller.selectedChats.isEmpty ? 80 : null,
-          width: context.width,
+          width: ns.width(context),
           color: context.theme.colorScheme.background,
         ),
         AnimatedSwitcher(
