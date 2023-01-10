@@ -85,7 +85,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
         barrierDismissible: true,
       ),
     );
-    if (result) {
+    if (result != false) {
       widget.cvController.selected.clear();
     }
     eventDispatcher.emit('popup-pushed', false);
