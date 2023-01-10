@@ -963,7 +963,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
-                "Download Original to Device",
+                "Save Original",
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
