@@ -75,6 +75,11 @@ class ConversationViewState extends OptimizedState<ConversationView> {
               controller.selected.clear();
               return false;
             }
+            if (controller.showAttachmentPicker) {
+              controller.showAttachmentPicker = false;
+              controller.updateWidgets<ConversationTextField>(null);
+              return false;
+            }
             if (ls.isBubble) {
               SystemNavigator.pop();
             }
