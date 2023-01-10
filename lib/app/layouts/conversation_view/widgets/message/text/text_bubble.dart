@@ -71,7 +71,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
   }
 
   List<Color> getBubbleColors() {
-    if (selected && !iOS) return [context.theme.colorScheme.tertiary, context.theme.colorScheme.tertiary];
+    if (selected && !iOS) return [context.theme.colorScheme.tertiaryContainer, context.theme.colorScheme.tertiaryContainer];
     List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
     if (ss.settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
@@ -99,7 +99,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           right: message.isFromMe! && !message.isBigEmoji ? 10 : 0
         )),
       color: message.isFromMe! && !message.isBigEmoji
-          ? (selected ? context.theme.colorScheme.tertiary : context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0))
+          ? (selected ? context.theme.colorScheme.tertiaryContainer : context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0))
           : null,
       decoration: message.isFromMe! || message.isBigEmoji ? null : BoxDecoration(
         gradient: LinearGradient(
@@ -115,14 +115,14 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           part,
           message,
           colorOverride: (ss.settings.colorfulBubbles.value && !message.isFromMe!) || selected
-              ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
+              ? context.theme.colorScheme.onTertiaryContainer : null,
         ),
         initialData: buildMessageSpans(
           context,
           part,
           message,
           colorOverride: (ss.settings.colorfulBubbles.value && !message.isFromMe!) || selected
-              ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
+              ? context.theme.colorScheme.onTertiaryContainer : null,
         ),
         builder: (context, snapshot) {
           if (snapshot.data != null) {

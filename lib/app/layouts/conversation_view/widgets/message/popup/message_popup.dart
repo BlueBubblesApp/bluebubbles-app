@@ -120,7 +120,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     });
   }
 
-  void popDetails({bool returnVal = false}) {
+  void popDetails({bool returnVal = true}) {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
       if (kIsWeb) {
@@ -801,7 +801,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     if (iOS) {
       cvController.selected.add(message);
     }
-    popDetails(returnVal: true);
+    popDetails(returnVal: false);
   }
   
   void messageInfo() {
