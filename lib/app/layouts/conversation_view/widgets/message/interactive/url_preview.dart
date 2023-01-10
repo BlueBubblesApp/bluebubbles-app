@@ -149,7 +149,7 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _data.title ?? "Unknown Site",
+                        _data.title ?? siteText ?? widget.message.text!,
                         style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
