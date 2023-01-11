@@ -147,6 +147,8 @@ class Settings {
         ss.prefs.setDouble(key, value);
       } else if (value is List) {
         ss.prefs.setString(key, jsonEncode(value));
+      } else if (value == null) {
+        ss.prefs.remove(key);
       }
     });
     return this;
