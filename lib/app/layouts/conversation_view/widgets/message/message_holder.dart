@@ -194,7 +194,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           if (e.isEdited)
                             Padding(
                               padding: showAvatar || ss.settings.alwaysShowAvatars.value
-                                  ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                  ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                               child: Obx(() => AnimatedSize(
                                 duration: const Duration(milliseconds: 250),
                                 alignment: Alignment.bottomCenter,
@@ -259,7 +259,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
                             Padding(
                               padding: showAvatar || ss.settings.alwaysShowAvatars.value
-                                  ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                  ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                               child: MessageSender(olderMessage: olderMessage, message: message),
                             ),
                           // add a box to account for height of reactions
@@ -306,7 +306,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 ),
                               Padding(
                                 padding: (showAvatar || ss.settings.alwaysShowAvatars.value) && !(message.isGroupEvent || e.isUnsent)
-                                    ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                    ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                                 child: DecoratedBox(
                                   decoration: iOS && !widget.isReplyThread && replyTo != null && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
                                       || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null))
@@ -597,7 +597,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           // message properties (replies, edits, effect)
                           Padding(
                             padding: showAvatar || ss.settings.alwaysShowAvatars.value
-                                ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                             child: MessageProperties(
                               globalKey: keys.length > index ? keys[index] : null,
                               parentController: controller,
