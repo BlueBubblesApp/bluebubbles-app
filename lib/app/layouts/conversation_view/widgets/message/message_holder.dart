@@ -63,7 +63,12 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
   Chat get chat => widget.cvController.chat;
   MessagesService get service => ms(widget.cvController.chat.guid);
-  bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.isMinBigSurSync && chat.isIMessage && !widget.isReplyThread;
+  bool get canSwipeToReply => ss.settings.enablePrivateAPI.value
+      && ss.isMinBigSurSync
+      && chat.isIMessage
+      && !widget.isReplyThread
+      && !message.guid!.startsWith("temp")
+      && !message.guid!.startsWith("error");
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
       || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
   bool get showAvatar => (!iOS || chat.isGroup) && !samsung;
