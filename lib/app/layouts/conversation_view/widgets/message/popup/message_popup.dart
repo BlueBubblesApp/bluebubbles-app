@@ -577,7 +577,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   void copyText() {
     Clipboard.setData(ClipboardData(text: part.fullText));
     popDetails();
-    showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
+    if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+      showSnackbar("Copied", "Copied to clipboard!");
+    }
   }
 
   Future<void> downloadOriginal() async {

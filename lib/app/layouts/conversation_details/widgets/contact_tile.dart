@@ -11,6 +11,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:universal_io/io.dart';
 
 class ContactTile extends StatelessWidget {
   final Handle handle;
@@ -34,7 +35,9 @@ class ContactTile extends StatelessWidget {
     final child = InkWell(
       onLongPress: () {
         Clipboard.setData(ClipboardData(text: handle.address));
-        showSnackbar('Copied', 'Address copied to clipboard');
+        if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+          showSnackbar("Copied", "Address copied to clipboard!");
+        }
       },
       onTap: () async {
         if (contact == null) {
