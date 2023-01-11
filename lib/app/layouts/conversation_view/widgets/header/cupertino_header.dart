@@ -111,7 +111,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(Get.context!.orientation == Orientation.landscape && Platform.isAndroid ? 55 : 75);
+  Size get preferredSize => Size.fromHeight((Get.context!.orientation == Orientation.landscape && Platform.isAndroid ? 55 : 75) * ss.settings.avatarScale.value);
 }
 
 class _UnreadIcon extends StatefulWidget {
