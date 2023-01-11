@@ -117,7 +117,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
               constraints: BoxConstraints(
                 maxWidth: ns.width(context) * 0.5,
                 maxHeight: context.height * 0.6,
-                minHeight: 40,
+                minHeight: 5,
                 minWidth: 40,
               ),
               child: Padding(
