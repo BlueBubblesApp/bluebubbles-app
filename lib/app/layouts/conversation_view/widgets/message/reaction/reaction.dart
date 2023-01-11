@@ -145,7 +145,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
           child: Center(
             child: Text(
               ReactionTypes.reactionToEmoji[reactionType] ?? "X",
-              style: const TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
               textAlign: TextAlign.center,
             ),
           ),

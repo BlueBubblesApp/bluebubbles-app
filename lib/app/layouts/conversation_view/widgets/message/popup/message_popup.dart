@@ -463,7 +463,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                 ) : Center(
                                                   child: Text(
                                                     ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                    style: const TextStyle(fontSize: 18),
+                                                    style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
                                                     textAlign: TextAlign.center,
                                                   ),
                                                 ),
@@ -1365,7 +1365,7 @@ class ReactionDetails extends StatelessWidget {
                         ) : Center(
                           child: Text(
                             ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
-                            style: const TextStyle(fontSize: 18),
+                            style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
                             textAlign: TextAlign.center,
                           ),
                         ),
