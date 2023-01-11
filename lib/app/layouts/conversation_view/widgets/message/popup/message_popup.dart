@@ -60,6 +60,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   late final AnimationController controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 150),
+    animationBehavior: AnimationBehavior.preserve,
   );
   final double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
 

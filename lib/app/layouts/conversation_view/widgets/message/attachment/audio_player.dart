@@ -30,7 +30,7 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   ConversationViewController? get cvController => widget.controller;
 
   PlayerController? controller;
-  late final animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+  late final animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400), animationBehavior: AnimationBehavior.preserve);
 
   @override
   void initState() {
