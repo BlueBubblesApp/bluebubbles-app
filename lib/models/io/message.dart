@@ -1068,7 +1068,7 @@ class Message {
       "threadOriginatorGuid": threadOriginatorGuid,
       "threadOriginatorPart": threadOriginatorPart,
       "hasApplePayloadData": hasApplePayloadData,
-      "dateEdited": dateEdited,
+      "dateEdited": dateEdited?.millisecondsSinceEpoch,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();
