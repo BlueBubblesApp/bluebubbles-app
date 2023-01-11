@@ -130,7 +130,6 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     body.runs.forEachIndexed((i, e) {
       if (e.attributes?.messagePart == null) return;
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
-      // this should only happen if there is a mention in the middle breaking up the text
       if (existingPart != null) {
         final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
         existingPart.text = (existingPart.text ?? "") + newText;
