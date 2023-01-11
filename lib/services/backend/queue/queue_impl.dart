@@ -11,7 +11,9 @@ abstract class Queue extends GetxService {
   List<QueueItem> items = [];
 
   Future<void> queue(QueueItem item) async {
+    Logger.info("Prepping item");
     final returned = await prepItem(item);
+    Logger.info("Adding to proper queue");
     // we may get a link split into 2 messages
     if (item is OutgoingItem && returned is List) {
       items.addAll(returned.map((e) => OutgoingItem(
@@ -25,21 +27,25 @@ abstract class Queue extends GetxService {
     } else {
       items.add(item);
     }
+    Logger.info("Processing: $isProcessing, ${items.isEmpty}");
     if (!isProcessing || (items.isEmpty && item is IncomingItem)) processNextItem();
   }
 
   Future<dynamic> prepItem(QueueItem _);
 
   Future<void> processNextItem() async {
+    Logger.info("Process next item");
     if (items.isEmpty) {
       isProcessing = false;
       return;
     }
 
     isProcessing = true;
+    Logger.info("Getting queued item");
     QueueItem queued = items.removeAt(0);
 
     try {
+      Logger.info("Handling queued item");
       await handleQueueItem(queued).catchError((err) async {
         if (queued is OutgoingItem && ss.settings.cancelQueuedMessages.value) {
           final toCancel = List<OutgoingItem>.from(items.whereType<OutgoingItem>().where((e) => e.chat.guid == queued.chat.guid));
@@ -53,6 +59,7 @@ abstract class Queue extends GetxService {
           }
         }
       });
+      Logger.info("Finished handling queued item");
       queued.completer?.complete();
     } catch (ex, stacktrace) {
       Logger.error("Failed to handle queued item! $ex");

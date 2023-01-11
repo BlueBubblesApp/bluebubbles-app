@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -44,6 +45,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     final part = tuple.item5;
     final effectId = tuple.item6;
     for (int i = 0; i < attachments.length; i++) {
+      Logger.info("Creating message with attachment...");
       final file = attachments[i];
       final message = Message(
         text: "",
@@ -63,6 +65,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
       );
       message.generateTempGuid();
       message.attachments.first!.guid = message.guid;
+      Logger.info("Queued message with attachment");
       await outq.queue(OutgoingItem(
         type: QueueType.sendAttachment,
         chat: controller.chat,

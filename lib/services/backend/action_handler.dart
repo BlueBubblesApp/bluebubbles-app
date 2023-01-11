@@ -145,10 +145,13 @@ class ActionHandler extends GetxService {
   }
 
   Future<void> sendAttachment(Chat c, Message m) async {
+    Logger.info("Checking attachment cond");
     if (m.attachments.isEmpty || m.attachments.firstOrNull?.bytes == null) return;
+    Logger.info("Getting attachment, progress, and completer");
     final attachment = m.attachments.first!;
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
+    Logger.info("Running http request");
     http.sendAttachmentBytes(c.guid, attachment.guid!, attachment.bytes!, attachment.transferName!,
         onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length
     ).then((response) async {
