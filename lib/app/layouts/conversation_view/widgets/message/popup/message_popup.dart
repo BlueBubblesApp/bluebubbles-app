@@ -461,10 +461,23 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                       ? Colors.pink
                                                       : (currentlySelectedReaction == e ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.outline),
                                                 ) : Center(
-                                                  child: Text(
-                                                    ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                    style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
-                                                    textAlign: TextAlign.center,
+                                                  child: Builder(
+                                                    builder: (context) {
+                                                      final text = Text(
+                                                        ReactionTypes.reactionToEmoji[e] ?? "X",
+                                                        style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
+                                                        textAlign: TextAlign.center,
+                                                      );
+                                                      // rotate thumbs down to match iOS
+                                                      if (e == "dislike") {
+                                                        return Transform(
+                                                          transform: Matrix4.identity()..rotateY(pi),
+                                                          alignment: FractionalOffset.center,
+                                                          child: text,
+                                                        );
+                                                      }
+                                                      return text;
+                                                    }
                                                   ),
                                                 ),
                                               ),
@@ -1363,10 +1376,23 @@ class ReactionDetails extends StatelessWidget {
                               ? context.theme.colorScheme.onPrimary
                               : context.theme.colorScheme.properOnSurface,
                         ) : Center(
-                          child: Text(
-                            ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
-                            style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
-                            textAlign: TextAlign.center,
+                          child: Builder(
+                              builder: (context) {
+                                final text = Text(
+                                  ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
+                                  style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
+                                  textAlign: TextAlign.center,
+                                );
+                                // rotate thumbs down to match iOS
+                                if (message.associatedMessageType == "dislike") {
+                                  return Transform(
+                                    transform: Matrix4.identity()..rotateY(pi),
+                                    alignment: FractionalOffset.center,
+                                    child: text,
+                                  );
+                                }
+                                return text;
+                              }
                           ),
                         ),
                       ),

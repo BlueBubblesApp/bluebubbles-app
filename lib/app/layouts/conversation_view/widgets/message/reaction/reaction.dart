@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
@@ -143,10 +144,23 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
             );
           },
           child: Center(
-            child: Text(
-              ReactionTypes.reactionToEmoji[reactionType] ?? "X",
-              style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
-              textAlign: TextAlign.center,
+            child: Builder(
+                builder: (context) {
+                  final text = Text(
+                    ReactionTypes.reactionToEmoji[reactionType] ?? "X",
+                    style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
+                    textAlign: TextAlign.center,
+                  );
+                  // rotate thumbs down to match iOS
+                  if (reactionType == "dislike") {
+                    return Transform(
+                      transform: Matrix4.identity()..rotateY(pi),
+                      alignment: FractionalOffset.center,
+                      child: text,
+                    );
+                  }
+                  return text;
+                }
             ),
           ),
         )
