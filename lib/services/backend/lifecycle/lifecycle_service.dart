@@ -79,7 +79,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void closeBubble() {
-    cm.setAllInactive();
+    cm.setActiveToDead();
     socket.disconnect();
   }
 }
