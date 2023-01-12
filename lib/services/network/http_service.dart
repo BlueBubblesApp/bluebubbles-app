@@ -1,6 +1,6 @@
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
@@ -54,9 +54,9 @@ class HttpService extends GetxService {
   @override
   void onInit() {
     dio = Dio(BaseOptions(
-      connectTimeout: const Duration(milliseconds: 15000),
-      receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
-      sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+      connectTimeout: 15000,
+      receiveTimeout: ss.settings.apiTimeout.value,
+      sendTimeout: ss.settings.apiTimeout.value,
     ));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
@@ -229,7 +229,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$origin/attachment/$guid/download",
           queryParameters: buildQueryParams({"original": original}),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -243,7 +243,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
         "$origin/attachment/$guid/blurhash",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
@@ -410,7 +410,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$origin/chat/$guid/icon",
           queryParameters: buildQueryParams(),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -524,7 +524,7 @@ class HttpService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout! * 12),
+          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout* 12),
       );
       return returnSuccessOrError(response);
     });
@@ -550,7 +550,7 @@ class HttpService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout! * 12),
+          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout* 12),
       );
       return returnSuccessOrError(response);
     });
@@ -682,7 +682,7 @@ class HttpService extends GetxService {
           queryParameters: buildQueryParams(),
           data: contacts,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout! * 12),
+          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout* 12),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -847,7 +847,7 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           url,
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
           cancelToken: cancelToken,
           onReceiveProgress: progress,
       );
