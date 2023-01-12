@@ -160,7 +160,7 @@ class ContactsService extends GetxService {
         continue;
       }
 
-      // try to match last 11 - 7 digits
+      // try to match last 15 - 7 digits
       for (String p in numericPhones) {
         final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
         if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
