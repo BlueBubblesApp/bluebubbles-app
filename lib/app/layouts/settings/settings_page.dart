@@ -23,7 +23,7 @@ import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -135,7 +135,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               },
                               onLongPress: () {
                                 Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
-                                showSnackbar('Copied', "Address copied to clipboard");
+                                if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+                                  showSnackbar("Copied", "Server address copied to clipboard!");
+                                }
                               },
                               leading: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,

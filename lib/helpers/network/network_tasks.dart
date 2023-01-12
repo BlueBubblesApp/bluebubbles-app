@@ -13,6 +13,9 @@ import 'package:network_tools/network_tools.dart'
 class NetworkTasks {
   static Future<void> onConnect() async {
     if (ss.settings.finishedSetup.value) {
+      if (cm.activeChat != null) {
+        socket.sendMessage("update-typing-status", {"chatGuid": cm.activeChat!.chat.guid});
+      }
       await fcm.registerDevice();
       await sync.startIncrementalSync();
       await ss.getServerDetails(refresh: true);

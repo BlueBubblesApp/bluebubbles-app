@@ -147,6 +147,8 @@ class Settings {
         ss.prefs.setDouble(key, value);
       } else if (value is List) {
         ss.prefs.setString(key, jsonEncode(value));
+      } else if (value == null) {
+        ss.prefs.remove(key);
       }
     });
     return this;
@@ -361,8 +363,8 @@ class Settings {
     ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    ss.settings.selectedActionIndices.value = map['selectedActionIndices'].cast<int>() ?? [0, 1, 2, 3, 4];
-    ss.settings.actionList.value = map['actionList'].cast<String>() ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
+    ss.settings.selectedActionIndices.value = map['selectedActionIndices']?.cast<int>() ?? [0, 1, 2, 3, 4];
+    ss.settings.actionList.value = map['actionList']?.cast<String>() ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
     ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;

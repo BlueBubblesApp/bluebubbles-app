@@ -60,6 +60,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
+      animationBehavior: AnimationBehavior.preserve,
     );
     controller.forward();
   }

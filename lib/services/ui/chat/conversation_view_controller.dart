@@ -51,6 +51,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final RxList<Message> selected = <Message>[].obs;
   final RxList<Tuple4<Message, MessagePart, TextEditingController, FocusNode>> editing = <Tuple4<Message, MessagePart, TextEditingController, FocusNode>>[].obs;
   // text field items
+  bool showAttachmentPicker = false;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
   final textController = TextEditingController();

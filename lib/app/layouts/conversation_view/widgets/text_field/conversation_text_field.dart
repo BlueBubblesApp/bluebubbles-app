@@ -49,7 +49,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   final Map<String, Emoji> emojiNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.shortName, e)));
   final Map<String, Emoji> emojiFullNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.name, e)));
 
-  bool showAttachmentPicker = false;
   // typing indicators
   String oldText = "\n";
   Timer? _debounceTyping;
@@ -58,6 +57,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   Chat get chat => controller.chat;
   String get chatGuid => chat.guid;
+  bool get showAttachmentPicker => controller.showAttachmentPicker;
 
   @override
   void initState() {
@@ -120,7 +120,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final _focusNode = subject ? controller.subjectFocusNode : controller.focusNode;
     if (_focusNode.hasFocus && showAttachmentPicker) {
       setState(() {
-        showAttachmentPicker = !showAttachmentPicker;
+        controller.showAttachmentPicker = !showAttachmentPicker;
       });
     }
     // remove emoji picker if no field is focused
@@ -376,7 +376,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         controller.subjectFocusNode.unfocus();
                       }
                       setState(() {
-                        showAttachmentPicker = !showAttachmentPicker;
+                        controller.showAttachmentPicker = !showAttachmentPicker;
                       });
                     }
                   },

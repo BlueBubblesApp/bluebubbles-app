@@ -513,13 +513,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.0.0"
-  diox:
+  dio:
     dependency: "direct main"
     description:
-      name: diox
+      name: dio
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.0.0-dev.2"
+    version: "4.0.6"
   disable_battery_optimization:
     dependency: "direct main"
     description:

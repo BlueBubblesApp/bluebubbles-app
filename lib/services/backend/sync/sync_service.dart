@@ -94,6 +94,7 @@ Future<bool> incrementalSyncIsolate(SendPort? port) async {
     int syncStart = ss.settings.lastIncrementalSync.value;
     final incrementalSyncManager = IncrementalSyncManager(syncStart);
     await incrementalSyncManager.start();
+    chats.sort();
   } catch (ex, s) {
     Logger.error('Incremental sync failed! Error: $ex');
     Logger.error(s.toString());

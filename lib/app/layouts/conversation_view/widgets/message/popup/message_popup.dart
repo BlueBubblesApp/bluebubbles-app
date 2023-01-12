@@ -60,6 +60,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   late final AnimationController controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 150),
+    animationBehavior: AnimationBehavior.preserve,
   );
   final double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
 
@@ -120,7 +121,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     });
   }
 
-  void popDetails({bool returnVal = false}) {
+  void popDetails({bool returnVal = true}) {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
       if (kIsWeb) {
@@ -460,10 +461,23 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                       ? Colors.pink
                                                       : (currentlySelectedReaction == e ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.outline),
                                                 ) : Center(
-                                                  child: Text(
-                                                    ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                    style: const TextStyle(fontSize: 18),
-                                                    textAlign: TextAlign.center,
+                                                  child: Builder(
+                                                    builder: (context) {
+                                                      final text = Text(
+                                                        ReactionTypes.reactionToEmoji[e] ?? "X",
+                                                        style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
+                                                        textAlign: TextAlign.center,
+                                                      );
+                                                      // rotate thumbs down to match iOS
+                                                      if (e == "dislike") {
+                                                        return Transform(
+                                                          transform: Matrix4.identity()..rotateY(pi),
+                                                          alignment: FractionalOffset.center,
+                                                          child: text,
+                                                        );
+                                                      }
+                                                      return text;
+                                                    }
                                                   ),
                                                 ),
                                               ),
@@ -576,7 +590,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   void copyText() {
     Clipboard.setData(ClipboardData(text: part.fullText));
     popDetails();
-    showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
+    if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+      showSnackbar("Copied", "Copied to clipboard!");
+    }
   }
 
   Future<void> downloadOriginal() async {
@@ -801,7 +817,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     if (iOS) {
       cvController.selected.add(message);
     }
-    popDetails(returnVal: true);
+    popDetails(returnVal: false);
   }
   
   void messageInfo() {
@@ -963,7 +979,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
-                "Download Original to Device",
+                "Save Original",
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
@@ -1360,10 +1376,23 @@ class ReactionDetails extends StatelessWidget {
                               ? context.theme.colorScheme.onPrimary
                               : context.theme.colorScheme.properOnSurface,
                         ) : Center(
-                          child: Text(
-                            ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
-                            style: const TextStyle(fontSize: 18),
-                            textAlign: TextAlign.center,
+                          child: Builder(
+                              builder: (context) {
+                                final text = Text(
+                                  ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
+                                  style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
+                                  textAlign: TextAlign.center,
+                                );
+                                // rotate thumbs down to match iOS
+                                if (message.associatedMessageType == "dislike") {
+                                  return Transform(
+                                    transform: Matrix4.identity()..rotateY(pi),
+                                    alignment: FractionalOffset.center,
+                                    child: text,
+                                  );
+                                }
+                                return text;
+                              }
                           ),
                         ),
                       ),

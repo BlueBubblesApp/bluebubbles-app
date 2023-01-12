@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
 
 ChatManager cm = Get.isRegistered<ChatManager>() ? Get.find<ChatManager>() : Get.put(ChatManager());

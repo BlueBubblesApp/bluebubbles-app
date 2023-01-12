@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -172,7 +173,9 @@ class BackupRestoreDialog extends StatelessWidget {
                               ),
                             )
                         );
-                      } catch (_) {
+                      } catch (e, s) {
+                        Logger.error(e);
+                        Logger.error(s);
                         Get.back();
                         showSnackbar("Error", "Something went wrong");
                       }
@@ -315,7 +318,9 @@ class BackupRestoreDialog extends StatelessWidget {
                                   ),
                                 )
                             );
-                          } catch (_) {
+                          } catch (e, s) {
+                            Logger.error(e);
+                            Logger.error(s);
                             Get.back();
                             showSnackbar("Error", "Something went wrong");
                           }
@@ -436,7 +441,9 @@ class BackupRestoreDialog extends StatelessWidget {
                       Settings.updateFromMap(json);
                       Get.back();
                       showSnackbar("Success", "Settings restored successfully");
-                    } catch (_) {
+                    } catch (e, s) {
+                      Logger.error(e);
+                      Logger.error(s);
                       Get.back();
                       showSnackbar("Error", "Something went wrong");
                     }
@@ -555,7 +562,9 @@ class BackupRestoreDialog extends StatelessWidget {
                         }
                         Get.back();
                         showSnackbar("Success", "Theming restored successfully");
-                      } catch (_) {
+                      } catch (e, s) {
+                        Logger.error(e);
+                        Logger.error(s);
                         Get.back();
                         showSnackbar("Error", "Something went wrong");
                       }

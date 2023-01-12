@@ -155,7 +155,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                     TextSpan(text: "Server URL: ${redact ? "Redacted" : http.originOverride ?? ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
                                       ..onTap = () {
                                         Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
-                                        showSnackbar('Copied', "Address copied to clipboard");
+                                        if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+                                          showSnackbar("Copied", "Server address copied to clipboard!");
+                                        }
                                       }),
                                     const TextSpan(text: "\n\n"),
                                     TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
