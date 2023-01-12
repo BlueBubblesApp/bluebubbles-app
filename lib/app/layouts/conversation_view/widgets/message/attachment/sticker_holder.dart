@@ -89,15 +89,19 @@ class _StickerHolderState extends OptimizedState<StickerHolder> with AutomaticKe
             maxWidth: ns.width(context) * 0.6,
             maxHeight: 100,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            mainAxisSize: MainAxisSize.min,
-            children: data.map((e) => Image.memory(
-              e,
-              gaplessPlayback: true,
-              cacheHeight: 200,
-              filterQuality: FilterQuality.none,
-            )).toList(),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: ts.scrollPhysics,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.min,
+              children: data.map((e) => Image.memory(
+                e,
+                gaplessPlayback: true,
+                cacheHeight: 200,
+                filterQuality: FilterQuality.none,
+              )).toList(),
+            ),
           ),
         ),
       ),
