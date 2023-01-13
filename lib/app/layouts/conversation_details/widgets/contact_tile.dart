@@ -148,9 +148,7 @@ class ContactTile extends StatelessWidget {
               http.chatParticipant("remove", chat.guid, handle.address).then((response) async {
                 Get.back();
                 Logger.info("Removed participant ${handle.address}");
-                Chat updatedChat = Chat.fromMap(response.data["data"]);
-                updatedChat.handles.addAll(updatedChat.participants);
-                updatedChat.save();
+                showSnackbar("Notice", "Removed participant from chat!");
               }).catchError((err) {
                 Logger.error("Failed to remove participant ${handle.address}");
                 late final String error;

@@ -95,11 +95,24 @@ class ChatManager extends GetxService {
       Map<String, dynamic> chatData = response.data["data"];
 
       Logger.info("Got updated chat metadata from server. Saving.", tag: "Fetch-Chat");
-      Chat newChat = Chat.fromMap(chatData);
-      newChat.handles.clear();
-      newChat.handles.addAll(newChat.participants);
-      newChat.save();
-      return newChat;
+      Chat updatedChat = Chat.fromMap(chatData);
+      Chat chat = Chat.findOne(guid: chatGuid)!;
+      if (chat.handles.length > updatedChat.participants.length) {
+        final newAddresses = updatedChat.participants.map((e) => e.address);
+        final handlesToUse = chat.participants.where((e) => newAddresses.contains(e.address));
+        chat.handles.clear();
+        chat.handles.addAll(handlesToUse);
+        chat.handles.applyToDb();
+      } else if (chat.handles.length < updatedChat.participants.length) {
+        final existingAddresses = chat.participants.map((e) => e.address);
+        final newHandle = updatedChat.participants.firstWhere((e) => !existingAddresses.contains(e.address));
+        final handle = Handle.findOne(address: newHandle.address) ?? newHandle.save();
+        chat.handles.add(handle);
+        chat.handles.applyToDb();
+      }
+      chat.displayName = updatedChat.displayName;
+      chat.save();
+      return updatedChat;
     }
 
     return null;

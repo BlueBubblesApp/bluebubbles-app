@@ -443,26 +443,7 @@ class Chat {
       }
       dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
-        if (handles.isEmpty && participants.isNotEmpty) {
-          handles.addAll(participants);
-        }
         id = chatBox.put(this);
-        final _chat = chatBox.get(id!);
-        if (handles.isNotEmpty) {
-          if (_chat!.handles.length > handles.length) {
-            final remove = List<Handle>.from(_chat.handles.where((e) => handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-            for (Handle e in remove) {
-              _chat.handles.remove(e);
-            }
-            _chat.handles.applyToDb();
-          } else if (_chat.handles.length < handles.length) {
-            final add = List<Handle>.from(handles.where((e) => _chat.handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-            for (Handle e in add) {
-              _chat.handles.add(e);
-            }
-            _chat.handles.applyToDb();
-          }
-        }
       } on UniqueViolationException catch (_) {}
     });
     return this;
