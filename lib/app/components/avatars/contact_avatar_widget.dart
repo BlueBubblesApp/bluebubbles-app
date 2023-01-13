@@ -157,6 +157,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                 : colors[0]),
             gradient: !iOS ? null : LinearGradient(
               begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 !ss.settings.colorfulAvatars.value
                     ? HexColor("928E8E")
@@ -165,6 +166,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                     ? HexColor("686868")
                     : colors[0]
               ],
+              stops: [0.4, 0.8],
             ),
             border: Border.all(
               color: ss.settings.skin.value == Skins.Samsung
