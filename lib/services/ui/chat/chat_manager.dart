@@ -17,7 +17,6 @@ class ChatManager extends GetxService {
 
     activeChat?.controller = null;
     activeChat = null;
-    attachmentDownloader.cancelAllDownloads();
     _chatControllers.forEach((key, value) {
       value.isActive = false;
       value.isAlive = false;
