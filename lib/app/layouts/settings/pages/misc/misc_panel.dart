@@ -346,7 +346,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             ]);
                           },
                           initialVal: ss.settings.allowUpsideDownRotation.value,
-                          title: "Alllow Upside-Down Rotation",
+                          title: "Allow Upside-Down Rotation",
                           backgroundColor: tileColor,
                         )),
                   if (Platform.isAndroid)
