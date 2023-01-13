@@ -57,7 +57,7 @@ class FindMy {
   final List<dynamic> audioChannels;
   final bool lostModeCapable;
   final dynamic snd;
-  final int? batteryLevel;
+  final double? batteryLevel;
   final bool? locationEnabled;
   final bool? isConsideredAccessory;
   final Address? address;
@@ -105,7 +105,7 @@ class FindMy {
     audioChannels: json["audioChannels"] ?? [],
     lostModeCapable: json["lostModeCapable"],
     snd: json["snd"],
-    batteryLevel: json["batteryLevel"],
+    batteryLevel: json["batteryLevel"]?.toDouble(),
     locationEnabled: json["locationEnabled"],
     isConsideredAccessory: json["isConsideredAccessory"],
     address: json["address"] == null ? null : Address.fromJson(json["address"]),
