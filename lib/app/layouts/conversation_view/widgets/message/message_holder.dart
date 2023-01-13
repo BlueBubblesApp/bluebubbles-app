@@ -97,6 +97,13 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       replyOffsets = List.generate(messageParts.length, (_) => 0.0.obs);
       keys = List.generate(messageParts.length, (_) => GlobalKey());
     }
+
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 != 'refresh-avatar') return;
+      if (event.item2[0] != message.handle?.address) return;
+      message.handle?.color = event.item2[1];
+      setState(() {});
+    });
   }
 
   @override
