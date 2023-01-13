@@ -208,6 +208,8 @@ class MessageHelper {
 
       int current = counts.containsKey(key) ? counts[key]! : 0;
       counts[key] = current + 1;
+      // a message can only ever have 1 link (but multiple "attachments", so we break out)
+      if (key == "link") break;
     }
 
     List<String> attachmentStr = [];
