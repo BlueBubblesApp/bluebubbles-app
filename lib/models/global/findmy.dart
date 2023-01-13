@@ -93,7 +93,7 @@ class FindMy {
   final bool? deviceWithYou;
   final int? maxMsgChar;
   final String? deviceClass;
-  final bool? crowdSourcedLocation;
+  final dynamic crowdSourcedLocation;
 
   factory FindMy.fromJson(Map<String, dynamic> json) => FindMy(
     deviceModel: json["deviceModel"],
