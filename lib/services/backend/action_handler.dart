@@ -13,7 +13,9 @@ import 'package:universal_io/io.dart';
 ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>() : Get.put(ActionHandler());
 
 Future<void> saveFileIsolate(Tuple2<String, Uint8List> data) async {
+  Logger.info("Creating empty file");
   final file = await File(data.item1).create(recursive: true);
+  Logger.info("Writing file");
   await file.writeAsBytes(data.item2);
 }
 
@@ -133,14 +135,19 @@ class ActionHandler extends GetxService {
   }
   
   Future<void> prepAttachment(Chat c, Message m) async {
+    Logger.info("Grabbing attachment");
     final attachment = m.attachments.first!;
+    Logger.info("Setting progress");
     final progress = Tuple2(attachment.guid!, 0.0.obs);
     attachmentProgress.add(progress);
     // Save the attachment to storage and DB
     if (!kIsWeb) {
+      Logger.info("Getting path name");
       String pathName = "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
+      Logger.info("Saving file");
       await compute(saveFileIsolate, Tuple2(pathName, attachment.bytes!));
     }
+    Logger.info("Adding message");
     await c.addMessage(m);
   }
 
