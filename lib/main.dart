@@ -219,14 +219,16 @@ Future<Null> initApp(bool bubble) async {
             case 2:
               Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
               final messages = messageBox.getAll();
-              final handles = handleBox.getAll();
-              Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
-              for (Message m in messages) {
-                if (m.handleId == 0 || m.handleId == null) continue;
-                m.handleId = handles.firstWhere((e) => e.id == m.handleId).originalROWID;
+              if (messages.isNotEmpty) {
+                final handles = handleBox.getAll();
+                Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
+                for (Message m in messages) {
+                  if (m.handleId == 0 || m.handleId == null) continue;
+                  m.handleId = handles.firstWhere((e) => e.id == m.handleId).originalROWID;
+                }
+                Logger.info("Final save...", tag: "DB-Migration");
+                messageBox.putMany(messages);
               }
-              Logger.info("Final save...", tag: "DB-Migration");
-              messageBox.putMany(messages);
               version = 2;
               migrate.call();
               return;
