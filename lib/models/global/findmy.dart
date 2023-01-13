@@ -72,7 +72,7 @@ class FindMy {
   final bool? remoteWipe;
   final bool? fmlyShare;
   final bool? thisDevice;
-  final bool? lostDevice;
+  final dynamic lostDevice;
   final bool? lostModeEnabled;
   final String? deviceDisplayName;
   final List<dynamic>? safeLocations;
@@ -279,7 +279,7 @@ class Location {
   final int? floorLevel;
   final bool? isInaccurate;
   final bool? isOld;
-  final int? horizontalAccuracy;
+  final double? horizontalAccuracy;
   final double? latitude;
   final int? timeStamp;
   final int? altitude;
@@ -288,12 +288,12 @@ class Location {
   factory Location.fromJson(Map<String, dynamic> json) => Location(
     positionType: json["positionType"],
     verticalAccuracy: json["verticalAccuracy"],
-    longitude: json["longitude"],
+    longitude: json["longitude"]?.toDouble(),
     floorLevel: json["floorLevel"],
     isInaccurate: json["isInaccurate"],
     isOld: json["isOld"],
-    horizontalAccuracy: json["horizontalAccuracy"],
-    latitude: json["latitude"],
+    horizontalAccuracy: json["horizontalAccuracy"]?.toDouble(),
+    latitude: json["latitude"]?.toDouble(),
     timeStamp: json["timeStamp"],
     altitude: json["altitude"],
     locationFinished: json["locationFinished"],
