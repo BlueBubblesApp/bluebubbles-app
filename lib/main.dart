@@ -224,7 +224,7 @@ Future<Null> initApp(bool bubble) async {
                 Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
                 for (Message m in messages) {
                   if (m.handleId == 0 || m.handleId == null) continue;
-                  m.handleId = handles.firstWhere((e) => e.id == m.handleId).originalROWID;
+                  m.handleId = handles.firstWhereOrNull((e) => e.id == m.handleId)?.originalROWID ?? m.handleId;
                 }
                 Logger.info("Final save...", tag: "DB-Migration");
                 messageBox.putMany(messages);
