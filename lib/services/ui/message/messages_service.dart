@@ -61,7 +61,7 @@ class MessagesService extends GetxController {
           final messages = event.find();
           event.limit = 0;
           for (Message message in messages) {
-            message.handle = Handle.findOne(id: message.handleId);
+            message.handle = message.getHandle();
             message.attachments = List<Attachment>.from(message.dbAttachments);
             // add this as a reaction if needed, update thread originators and associated messages
             if (message.associatedMessageGuid != null) {

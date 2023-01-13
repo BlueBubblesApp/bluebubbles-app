@@ -90,13 +90,13 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
           && e.mimeStart != "image" && e.mimeStart != "video" && !(e.mimeType ?? "").contains("location")).take(24);
       final _locations = value.where((e) => (e.mimeType ?? "").contains("location")).take(10);
       for (Attachment a in _media) {
-        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == a.message.target?.handleId);
       }
       for (Attachment a in _docs) {
-        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == a.message.target?.handleId);
       }
       for (Attachment a in _locations) {
-        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == a.message.target?.handleId);
       }
       setState(() {
         media = _media.toList();

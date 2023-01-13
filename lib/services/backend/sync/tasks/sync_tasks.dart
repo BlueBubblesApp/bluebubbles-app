@@ -155,20 +155,7 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
       // 1. For each message, match the handles & replace the old reference
       for (Message message in inputMessages) {
-        if (message.handle == null && message.handleId == null) continue;
-        if (message.handle == null && message.handleId == 0) continue;
-
-        // If the handle is null, find the handle data by the original handle ID.
-        bool hadNullHandle = message.handle == null;
-        message.handle ??= handlesCache.values.firstWhereOrNull(
-            (element) => element.originalROWID == message.handleId);
-        if (!handlesCache.containsKey(message.handle?.address)) continue;
-
-        message.handleId = handlesCache[message.handle!.address]?.id ?? 0;
-        message.handle = handlesCache[message.handle!.address];
-        if (hadNullHandle && message.otherHandle != null) {
-          message.otherHandle = Handle.findOne(originalROWID: message.otherHandle)?.id;
-        }
+        message.handle ??= handlesCache.values.firstWhereOrNull((e) => e.originalROWID == message.handleId);
       }
 
       // 2. Extract & cache the attachments
@@ -300,7 +287,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
         final latestMsgQuery = (messageBox.query(Message_.chat.equals(i))..order(Message_.dateCreated, flags: Order.descending)).build();
         Message? latestMessage = latestMsgQuery.findFirst();
         if (latestMessage?.handle == null && latestMessage?.handleId != null && latestMessage?.handleId != 0) {
-          latestMessage!.handle = handleBox.get(latestMessage.handleId!);
+          latestMessage!.handle = latestMessage.getHandle();
         }
         Chat current = existingChats.firstWhere((element) => element.id == i);
 

@@ -43,6 +43,7 @@ import 'package:windows_taskbar/windows_taskbar.dart';
 // todo list desktop
 /// Show notif badges
 
+const databaseVersion = 2;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -209,9 +210,41 @@ Future<Null> initApp(bool bubble) async {
         ss.prefs.setString("selected-light", "Bright White");
         themeBox.putMany(ts.defaultThemes);
       }
+      int version = ss.prefs.getInt('dbVersion') ?? 1;
+
+      migrate() {
+        if (version < databaseVersion) {
+          switch (databaseVersion) {
+            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
+            case 2:
+              Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
+              final messages = messageBox.getAll();
+              final handles = handleBox.getAll();
+              Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
+              for (Message m in messages) {
+                if (m.handleId == 0 || m.handleId == null) continue;
+                m.handleId = handles.firstWhere((e) => e.id == m.handleId).originalROWID;
+              }
+              Logger.info("Final save...", tag: "DB-Migration");
+              messageBox.putMany(messages);
+              version = 2;
+              migrate.call();
+              return;
+            default:
+              return;
+          }
+        }
+      }
+
+      final Stopwatch s = Stopwatch();
+      s.start();
+      migrate.call();
+      s.stop();
+      Logger.info("Done in ${s.elapsedMilliseconds}ms", tag: "DB-Migration");
     }
 
     /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
+    ss.prefs.setInt('dbVersion', databaseVersion);
     storeStartup.complete();
     ss.getFcmData();
     if (!kIsWeb) {

@@ -92,7 +92,7 @@ class NotificationsService extends GetxService {
           event.limit = 0;
           for (Message message in messages) {
             if (message.chat.target == null) continue;
-            message.handle = Handle.findOne(id: message.handleId);
+            message.handle = message.getHandle();
             message.attachments = List<Attachment>.from(message.dbAttachments);
             MessageHelper.handleNotification(message, message.chat.target!, findExisting: false);
           }
