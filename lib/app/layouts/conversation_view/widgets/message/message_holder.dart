@@ -280,7 +280,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           if (!iOS && index == 0 && !widget.isReplyThread
                               && olderMessage != null
                               && message.threadOriginatorGuid != null
-                              && message.showUpperMessage(olderMessage!)
                               && replyTo != null
                               && getActiveMwc(replyTo!.guid!) != null)
                             Padding(
