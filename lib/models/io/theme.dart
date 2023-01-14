@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:core';
+import 'dart:ui';
 
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/main.dart';
@@ -8,6 +9,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
@@ -19,6 +21,7 @@ class ThemeStruct {
   @Unique()
   String name;
   bool gradientBg = false;
+  String googleFont;
   ThemeData data;
 
   String get dbThemeData {
@@ -38,8 +41,11 @@ class ThemeStruct {
     this.id,
     required this.name,
     this.gradientBg = false,
+    this.googleFont = 'Default',
     ThemeData? themeData,
-  }) : data = themeData ?? ts.whiteLightTheme;
+  }) : data = themeData ?? ts.whiteLightTheme {
+    if (googleFont.isEmpty) googleFont = 'Default';
+  }
 
   bool get isPreset =>
       ts.defaultThemes.map((e) => e.name).contains(name);
@@ -116,6 +122,7 @@ class ThemeStruct {
     "gradientBg": gradientBg ? 1 : 0,
     "data": {
       "textTheme": {
+        "font": googleFont,
         "titleLarge": {
           "color": data.textTheme.titleLarge!.color!.value,
           "fontWeight": data.textTheme.titleLarge!.fontWeight!.index,
@@ -188,6 +195,29 @@ class ThemeStruct {
   factory ThemeStruct.fromMap(Map<String, dynamic> json) {
     final map = json["data"];
     final brightness = Brightness.values[map["colorScheme"]["brightness"]];
+    final font = GoogleFonts.asMap()[map["textTheme"]["font"]] ?? ({
+      TextStyle? textStyle,
+      Color? color,
+      Color? backgroundColor,
+      double? fontSize,
+      FontWeight? fontWeight,
+      FontStyle? fontStyle,
+      double? letterSpacing,
+      double? wordSpacing,
+      TextBaseline? textBaseline,
+      double? height,
+      Locale? locale,
+      Paint? foreground,
+      Paint? background,
+      List<Shadow>? shadows,
+      List<FontFeature>? fontFeatures,
+      TextDecoration? decoration,
+      Color? decorationColor,
+      TextDecorationStyle? decorationStyle,
+      double? decorationThickness,
+    }) {
+      return textStyle!;
+    };
     final typography = brightness == Brightness.light 
         ? Typography.englishLike2021.merge(Typography.blackMountainView) 
         : Typography.englishLike2021.merge(Typography.whiteMountainView);
@@ -197,36 +227,46 @@ class ThemeStruct {
         gradientBg: json["gradientBg"] == 1,
         themeData: FlexColorScheme(
           textTheme: typography.copyWith(
-            titleLarge: typography.titleLarge!.copyWith(
+            titleLarge: font(textStyle: typography.titleLarge!.copyWith(
               color: Color(map["textTheme"]["titleLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["titleLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["titleLarge"]["fontSize"]?.toDouble(),
-            ).apply(letterSpacingFactor: 0),
-            bodyLarge: typography.bodyLarge!.copyWith(
+            ).apply(letterSpacingFactor: 0)),
+            bodyLarge: font(textStyle: typography.bodyLarge!.copyWith(
               color: Color(map["textTheme"]["bodyLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyLarge"]["fontSize"]?.toDouble(),
-            ).apply(letterSpacingFactor: 0),
-            bodyMedium: typography.bodyMedium!.copyWith(
+            ).apply(letterSpacingFactor: 0)),
+            bodyMedium: font(textStyle: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyMedium"]["fontSize"]?.toDouble(),
-            ).apply(letterSpacingFactor: 0),
-            bodySmall: typography.bodySmall!.copyWith(
+            ).apply(letterSpacingFactor: 0)),
+            bodySmall: font(textStyle: typography.bodySmall!.copyWith(
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
               fontSize: map["textTheme"]["bodySmall"]["fontSize"]?.toDouble(),
-            ).apply(letterSpacingFactor: 0),
-            labelLarge: typography.labelLarge!.copyWith(
+            ).apply(letterSpacingFactor: 0)),
+            labelLarge: font(textStyle: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["labelLarge"]["fontSize"]?.toDouble(),
-            ).apply(letterSpacingFactor: 0),
-            labelSmall: typography.labelSmall!.copyWith(
+            ).apply(letterSpacingFactor: 0)),
+            labelSmall: font(textStyle: typography.labelSmall!.copyWith(
               color: Color(map["textTheme"]["labelSmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelSmall"]["fontWeight"]],
               fontSize: map["textTheme"]["labelSmall"]["fontSize"]?.toDouble(),
-            ).apply(letterSpacingFactor: 0),
+            ).apply(letterSpacingFactor: 0)),
+            // these are not themeable and only used to override the font family
+            displayLarge: font(textStyle: typography.displayLarge),
+            displayMedium: font(textStyle: typography.displayMedium),
+            displaySmall: font(textStyle: typography.displaySmall),
+            headlineLarge: font(textStyle: typography.headlineLarge),
+            headlineMedium: font(textStyle: typography.headlineMedium),
+            headlineSmall: font(textStyle: typography.headlineSmall),
+            titleMedium: font(textStyle: typography.titleMedium),
+            titleSmall: font(textStyle: typography.titleSmall),
+            labelMedium: font(textStyle: typography.labelMedium),
           ),
           colorScheme: ColorScheme(
             primary: Color(map["colorScheme"]["primary"]),
@@ -275,12 +315,12 @@ class ThemeStruct {
               onSmsBubbleColor: map["colorScheme"]["onSmsBubble"] == null ? null : Color(map["colorScheme"]["onSmsBubble"]),
             ),
           BubbleText(
-            bubbleText: typography.bodyMedium!.copyWith(
+            bubbleText: font(textStyle: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bubbleText"]?["fontSize"]?.toDouble() ?? 15,
               height: typography.bodyMedium!.height! * 0.85,
-            ).apply(letterSpacingFactor: 0),
+            ).apply(letterSpacingFactor: 0)),
           ),
         ])
     );

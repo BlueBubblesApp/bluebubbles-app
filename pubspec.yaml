@@ -145,6 +145,7 @@ dependencies:
   auto_size_text: ^3.0.0
   flutter_map: ^3.0.0
   flutter_map_marker_popup: ^4.0.0
+  google_fonts: ^3.0.1
 
 dependency_overrides:
   rxdart: ^0.27.5

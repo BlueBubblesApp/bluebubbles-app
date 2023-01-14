@@ -615,7 +615,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(16, 1815690088052698449),
       name: 'ThemeStruct',
-      lastPropertyId: const IdUid(4, 1129102363347301238),
+      lastPropertyId: const IdUid(5, 5263969220071020408),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -637,6 +637,11 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(4, 1129102363347301238),
             name: 'dbThemeData',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(5, 5263969220071020408),
+            name: 'googleFont',
             type: 9,
             flags: 0)
       ],
@@ -1419,11 +1424,13 @@ ModelDefinition getObjectBoxModel() {
         objectToFB: (ThemeStruct object, fb.Builder fbb) {
           final nameOffset = fbb.writeString(object.name);
           final dbThemeDataOffset = fbb.writeString(object.dbThemeData);
-          fbb.startTable(5);
+          final googleFontOffset = fbb.writeString(object.googleFont);
+          fbb.startTable(6);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, nameOffset);
           fbb.addBool(2, object.gradientBg);
           fbb.addOffset(3, dbThemeDataOffset);
+          fbb.addOffset(4, googleFontOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1437,7 +1444,9 @@ ModelDefinition getObjectBoxModel() {
               name: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 6, ''),
               gradientBg:
-                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false))
+                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false),
+              googleFont: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 12, ''))
             ..dbThemeData = const fb.StringReader(asciiOptimization: true)
                 .vTableGet(buffer, rootOffset, 10, '');
 
@@ -1930,6 +1939,10 @@ class ThemeStruct_ {
   /// see [ThemeStruct.dbThemeData]
   static final dbThemeData =
       QueryStringProperty<ThemeStruct>(_entities[7].properties[3]);
+
+  /// see [ThemeStruct.googleFont]
+  static final googleFont =
+      QueryStringProperty<ThemeStruct>(_entities[7].properties[4]);
 }
 
 /// [Contact] entity fields to define ObjectBox queries.
