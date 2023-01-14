@@ -5,6 +5,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/models/io/message.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mime_type/mime_type.dart';
@@ -89,22 +90,27 @@ class Attachment {
   /// when provided
   Attachment save(Message? message) {
     if (kIsWeb) return this;
+    Logger.info("Creating tx");
     store.runInTransaction(TxMode.write, () {
+      Logger.info("Finding existing attachment");
       /// Find an existing attachment and update the attachment ID if applicable
       Attachment? existing = Attachment.findOne(guid!);
+      Logger.info("Done $existing");
       if (existing != null) {
         id = existing.id;
       }
       try {
         /// store the attachment and add the link between the message and
         /// attachment
+        Logger.info("Checking if message exists ${message?.id}");
         if (message?.id != null) {
           this.message.target = message;
         }
-
+        Logger.info("Putting");
         id = attachmentBox.put(this);
       } on UniqueViolationException catch (_) {}
     });
+    Logger.info("Returning back");
     return this;
   }
 

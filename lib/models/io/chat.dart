@@ -644,7 +644,7 @@ class Chat {
     }
 
     // Save any attachments
-    Logger.info("Saving attachments");
+    Logger.info("Saving attachments ${message.attachments}");
     for (Attachment? attachment in message.attachments) {
       attachment!.save(newMessage);
     }
