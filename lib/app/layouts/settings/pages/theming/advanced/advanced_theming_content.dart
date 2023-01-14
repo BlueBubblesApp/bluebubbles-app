@@ -69,7 +69,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
     final length = currentTheme
         .colors(widget.isDarkMode, returnMaterialYou: false).keys
         .where((e) => e != "outline").length ~/ 2 + 1;
-    print(currentTheme.googleFont);
+
     return ScrollbarWrapper(
       controller: _controller,
       child: CustomScrollView(
