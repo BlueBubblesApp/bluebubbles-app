@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  audioplayers_linux
   bitsdojo_window_linux
   dart_vlc
   desktop_drop
