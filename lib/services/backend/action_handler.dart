@@ -154,8 +154,8 @@ class ActionHandler extends GetxService {
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
     Logger.info("Running http request");
-    http.sendAttachmentBytes(c.guid, attachment.guid!, attachment.bytes!, attachment.transferName!,
-        onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length
+    http.sendAttachment(c.guid, attachment.guid!, PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: attachment.path, size: attachment.totalBytes ?? 0),
+      onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
 
