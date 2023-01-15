@@ -105,7 +105,7 @@ class Settings {
   final RxInt pinRowsPortrait = RxInt(3);
   final RxInt pinColumnsPortrait = RxInt(3);
   final RxInt pinRowsLandscape = RxInt(1);
-  final RxInt pinColumnsLandscape = RxInt(6);
+  final RxInt pinColumnsLandscape = RxInt(4);
 
   final RxInt maxAvatarsInGroupWidget = RxInt(4);
 
@@ -366,7 +366,7 @@ class Settings {
     ss.settings.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     ss.settings.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     ss.settings.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
-    ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
+    ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     ss.settings.selectedActionIndices.value = map['selectedActionIndices']?.cast<int>() ?? [0, 1, 2, 3, 4];
@@ -474,7 +474,7 @@ class Settings {
     s.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     s.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
-    s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
+    s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     s.selectedActionIndices.value = (map['selectedActionIndices'] != null ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>();
