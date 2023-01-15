@@ -539,7 +539,7 @@ class Message {
   }
 
   /// Replace a temp message with the message from the server
-  static Future<Message> replaceMessage(String? oldGuid, Message newMessage) async {
+  static Future<Message> replaceMessage(String? oldGuid, Message newMessage, Chat chat) async {
     Message? existing = Message.findOne(guid: oldGuid);
     if (existing == null) {
       throw Exception("Cannot replace on a null existing message!!");

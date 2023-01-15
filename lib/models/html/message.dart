@@ -212,7 +212,8 @@ class Message {
     return [];
   }
 
-  static Future<Message> replaceMessage(String? oldGuid, Message newMessage, {bool awaitNewMessageEvent = true, Chat? chat}) async {
+  static Future<Message> replaceMessage(String? oldGuid, Message newMessage, Chat chat) async {
+    webStreams.emitUpdatedMessage(newMessage, chat, oldGuid ?? "");
     return newMessage;
   }
 
@@ -249,7 +250,8 @@ class Message {
   }
 
   Handle? getHandle() {
-    return null;
+    if (handleId == 0 || handleId == null) return null;
+    return Handle.findOne(originalROWID: handleId!);
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {

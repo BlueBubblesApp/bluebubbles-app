@@ -82,7 +82,7 @@ class ActionHandler extends GetxService {
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await Message.replaceMessage(m.guid, newMessage);
+          await Message.replaceMessage(m.guid, newMessage, c);
           Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
         } catch (_) {
           Logger.info("Message match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
@@ -97,14 +97,14 @@ class ActionHandler extends GetxService {
         if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
           await notif.createFailedToSend(c);
         }
-        await Message.replaceMessage(tempGuid, m);
+        await Message.replaceMessage(tempGuid, m, c);
         completer.completeError(error);
       });
     } else {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, partIndex: m.associatedMessagePart).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await Message.replaceMessage(m.guid, newMessage);
+          await Message.replaceMessage(m.guid, newMessage, c);
           Logger.info("Reaction match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
         } catch (_) {
           Logger.info("Reaction match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
@@ -119,7 +119,7 @@ class ActionHandler extends GetxService {
         if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
           await notif.createFailedToSend(c);
         }
-        await Message.replaceMessage(tempGuid, m);
+        await Message.replaceMessage(tempGuid, m, c);
         completer.completeError(error);
       });
     }
@@ -164,7 +164,7 @@ class ActionHandler extends GetxService {
         Attachment.replaceAttachment(m.guid, a);
       }
       try {
-        await Message.replaceMessage(m.guid, newMessage);
+        await Message.replaceMessage(m.guid, newMessage, c);
         Logger.info("Attachment match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
       } catch (_) {
         Logger.info("Attachment match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
@@ -181,7 +181,7 @@ class ActionHandler extends GetxService {
       if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
         await notif.createFailedToSend(c);
       }
-      await Message.replaceMessage(tempGuid, m);
+      await Message.replaceMessage(tempGuid, m, c);
       attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);
       completer.completeError(error);
     });
@@ -220,7 +220,7 @@ class ActionHandler extends GetxService {
 
   Future<void> handleNewMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
     // sanity check
-    if (checkExisting) {
+    if (checkExisting && !kIsWeb) {
       final existing = Message.findOne(guid: tempGuid ?? m.guid);
       if (existing != null) {
         return await handleUpdatedMessage(c, m, tempGuid, checkExisting: false);
@@ -242,7 +242,7 @@ class ActionHandler extends GetxService {
 
   Future<void> handleUpdatedMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
     // sanity check
-    if (checkExisting) {
+    if (checkExisting && !kIsWeb) {
       final existing = Message.findOne(guid: tempGuid ?? m.guid);
       if (existing == null) {
         return await handleNewMessage(c, m, tempGuid, checkExisting: false);
@@ -255,7 +255,7 @@ class ActionHandler extends GetxService {
       Attachment.replaceAttachment(tempGuid ?? m.guid, a);
     }
     // update the message in the DB
-    await Message.replaceMessage(tempGuid ?? m.guid, m);
+    await Message.replaceMessage(tempGuid ?? m.guid, m, c);
   }
 
   Future<Chat> handleNewOrUpdatedChat(Chat partialData) async {
