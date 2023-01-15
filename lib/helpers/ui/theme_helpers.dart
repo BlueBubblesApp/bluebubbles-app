@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class HexColor extends Color {
@@ -222,7 +224,8 @@ extension ColorHelpers on Color {
   }
 
   Color themeOpacity(BuildContext context) {
-    if (!kIsDesktop) return withOpacity(1.0.obs.value);
+    if (ss.settings.windowEffect.value == WindowEffect.disabled) return withOpacity(1.0.obs.value);
+    if (!WindowEffects.dependsOnColor()) return withOpacity(0.0.obs.value);
     if (!ts.inDarkMode(context)) {
       return withOpacity(ss.settings.windowEffectCustomOpacityLight.value);
     } else {
