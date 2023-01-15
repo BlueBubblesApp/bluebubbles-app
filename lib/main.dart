@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -572,9 +573,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       ErrorWidget.builder = (FlutterErrorDetails error) {
         Logger.error(error.exception);
         Logger.error("Stacktrace: ${error.stack.toString()}");
-        return Text(
+        return CustomErrorWidget(
           "An unexpected error occurred when rendering.",
-          style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.error)
         );
       };
       /* ----- SERVER VERSION CHECK ----- */
