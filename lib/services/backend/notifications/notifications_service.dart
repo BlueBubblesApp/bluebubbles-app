@@ -99,13 +99,6 @@ class NotificationsService extends GetxService {
         }
         currentCount = newCount;
       });
-    } else {
-      countSub = webStreams.newMessage.listen((event) {
-        final message = event.item1;
-        message.handle = message.getHandle();
-        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-        MessageHelper.handleNotification(message, event.item2, findExisting: false);
-      });
     }
   }
 

@@ -29,7 +29,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   String? newMessageGuid;
   ConversationViewController? cvController;
   late final String tag;
-  late final StreamSubscription sub;
+  late final StreamSubscription<Query<Message>> sub;
 
   static const maxBubbleSizeFactor = 0.75;
 
@@ -56,16 +56,6 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
             _message.attachments = List<Attachment>.from(_message.dbAttachments);
           }
           _message.handle = _message.getHandle();
-          updateMessage(_message);
-        }
-      });
-    } else {
-      _init = true;
-      sub = webStreams.updatedMessage.listen((event) {
-        if (event.item3 == message.guid) {
-          final _message = event.item1;
-          _message.handle = _message.getHandle();
-          // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
           updateMessage(_message);
         }
       });
@@ -168,21 +158,20 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     return list;
   }
 
-  void updateMessage(Message newItem, {Chat? chat}) {
+  void updateMessage(Message newItem) {
     final oldGuid = message.guid;
-    final _chat = (kIsWeb ? chat : message.chat.target)!;
     if (newItem.guid != oldGuid && oldGuid!.contains("temp")) {
       message = Message.merge(newItem, message);
-      ms(_chat.guid).updateMessage(message, oldGuid: oldGuid);
+      ms(message.chat.target!.guid).updateMessage(message, oldGuid: oldGuid);
       updateWidgets<MessageHolder>(null);
       if (message.isFromMe! && message.attachments.isNotEmpty) {
         updateWidgets<AttachmentHolder>(null);
       }
     } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead) {
       message = Message.merge(newItem, message);
-      ms(_chat.guid).updateMessage(message);
+      ms(message.chat.target!.guid).updateMessage(message);
       // update the latest 2 messages in case their indicators need to go away
-      final messages = ms(_chat.guid).struct.messages
+      final messages = ms(message.chat.target!.guid).struct.messages
           .where((e) => e.isFromMe! && (e.dateDelivered != null || e.dateRead != null))
           .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       for (Message m in messages.take(2)) {
@@ -193,7 +182,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       message = Message.merge(newItem, message);
       parts.clear();
       buildMessageParts();
-      ms(_chat.guid).updateMessage(message);
+      ms(message.chat.target!.guid).updateMessage(message);
       updateWidgets<MessageHolder>(null);
     }
   }

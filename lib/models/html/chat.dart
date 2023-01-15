@@ -162,7 +162,6 @@ class Chat {
     bool updateTextFieldText = false,
     bool updateTextFieldAttachments = false,
   }) {
-    webStreams.addChatUpdate([this]);
     return this;
   }
 
@@ -278,7 +277,6 @@ class Chat {
 
     try {
       newMessage = message.save(chat: this);
-      webStreams.emitNewMessage(newMessage, this);
     } catch (ex, stacktrace) {
       newMessage = Message.findOne(guid: message.guid);
       if (newMessage == null) {

@@ -55,7 +55,7 @@ abstract class Queue extends GetxService {
             final tempGuid = m.guid;
             m.guid = m.guid!.replaceAll("temp", "error-Canceled due to previous failure");
             m.error = MessageError.BAD_REQUEST.code;
-            Message.replaceMessage(tempGuid, m, i.chat);
+            Message.replaceMessage(tempGuid, m);
           }
         }
       });
