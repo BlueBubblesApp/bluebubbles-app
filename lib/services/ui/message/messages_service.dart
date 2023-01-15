@@ -48,7 +48,7 @@ class MessagesService extends GetxController {
     newFunc = onNewMessage;
 
     // watch for new messages
-    if (chat.id != null) {
+    if (!kIsWeb && chat.id != null) {
       _init = true;
       final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
         ..link(Message_.chat, Chat_.id.equals(chat.id!))
@@ -78,6 +78,29 @@ class MessagesService extends GetxController {
           }
         }
         currentCount = newCount;
+      });
+    } else if (kIsWeb) {
+      countSub = webStreams.newMessage.listen((event) {
+        if (event.item2.guid == chat.guid) {
+          final message = event.item1;
+          message.handle = message.getHandle();
+          if (message.associatedMessageGuid != null) {
+            // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+            struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
+            // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+            getActiveMwc(message.associatedMessageGuid!)?.updateAssociatedMessage(message);
+          }
+          if (message.threadOriginatorGuid != null) {
+            // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+            getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
+          }
+          // ignore: list_element_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+          struct.addMessages([message]);
+          if (message.associatedMessageGuid == null) {
+            // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+            newFunc.call(message);
+          }
+        }
       });
     }
   }

@@ -136,7 +136,7 @@ class OverflowMenu extends StatelessWidget {
                       await ss.prefs.clear();
                       await ss.prefs.setString("selected-dark", "OLED Dark");
                       await ss.prefs.setString("selected-light", "Bright White");
-                      themeBox.putMany(ts.defaultThemes);
+                      if (!kIsWeb) themeBox.putMany(ts.defaultThemes);
                       ts.changeTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
