@@ -92,7 +92,7 @@ class NotificationsService extends GetxService {
           event.limit = 0;
           for (Message message in messages) {
             if (message.chat.target == null) continue;
-            message.handle = Handle.findOne(id: message.handleId);
+            message.handle = message.getHandle();
             message.attachments = List<Attachment>.from(message.dbAttachments);
             MessageHelper.handleNotification(message, message.chat.target!, findExisting: false);
           }
@@ -119,7 +119,7 @@ class NotificationsService extends GetxService {
   Future<void> createReminder(Chat chat, Message message, DateTime time) async {
     await flnp.zonedSchedule(
       Random().nextInt(9998) + 1,
-      'Reminder: ${chat.getChatCreatorSubtitle()}',
+      'Reminder: ${chat.getTitle()}',
       hideContent ? "iMessage" : MessageHelper.getNotificationText(message),
       TZDateTime.from(time, local),
       NotificationDetails(
@@ -144,7 +144,7 @@ class NotificationsService extends GetxService {
     final isGroup = chat.isGroup;
     final guid = chat.guid;
     final contactName = message.handle?.displayName ?? "Unknown";
-    final title = isGroup ? chat.getChatCreatorSubtitle() : contactName;
+    final title = isGroup ? chat.getTitle() : contactName;
     final text = hideContent ? "iMessage" : MessageHelper.getNotificationText(message);
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
     final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();

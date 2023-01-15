@@ -140,18 +140,10 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
       // 5. Fetch all handles and map the old handle ROWIDs from each message to the new ones based on the original ROWID
       List<Handle> handles = handleBox.getAll();
-      Map<int, Handle> originalRowIdMap = {};
-      for (final h in handles) {
-        if (h.originalROWID != null) {
-          originalRowIdMap[h.originalROWID!] = h;
-        }
-      }
 
       for (final msg in inputMessages) {
         msg.chat.target = inputChat;
-        msg.handleId = originalRowIdMap[msg.handleId]?.id ?? msg.handleId;
-        msg.handle = originalRowIdMap[msg.handleId];
-        msg.otherHandle = originalRowIdMap[msg.otherHandle]?.id ?? msg.otherHandle;
+        msg.handle = handles.firstWhereOrNull((e) => e.originalROWID == msg.handleId);
       }
 
       // 6. Relate the attachments to the messages
@@ -173,7 +165,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       Map<String, Message> messagesToUpdate = {};
       for (final message in messages) {
         // Update the handles from our cache
-        message.handle = handles.firstWhereOrNull((element) => element.id == message.handleId);
+        message.handle = handles.firstWhereOrNull((element) => element.originalROWID == message.handleId);
 
         // Continue if there isn't an associated message GUID to process
         if ((message.associatedMessageGuid ?? '').isEmpty) continue;
@@ -454,15 +446,8 @@ class Message {
       }
 
       // Save the participant & set the handle ID to the new participant
-      if (handle == null && id == null && handleId != null) {
+      if (handle == null && handleId != null) {
         handle = Handle.findOne(originalROWID: handleId);
-      }
-      if (handle != null) {
-        handle!.save();
-        handleId = handle!.id;
-      }
-      if (otherHandle != null && id == null) {
-        otherHandle = Handle.findOne(originalROWID: otherHandle)?.id;
       }
       // Save associated messages or the original message (depending on whether
       // this message is a reaction or regular message
@@ -522,9 +507,6 @@ class Message {
       List<Message> originalMessages =
           Message.find(cond: Message_.associatedMessageGuid.oneOf(messages.map((e) => e.guid!).toList()));
 
-      /// Save handles
-      final handles = Handle.bulkSave(messages.where((e) => e.handle != null).map((e) => e.handle!).toList());
-
       /// Iterate thru messages and update the associated message or the original
       /// message, and update original message handle data
       for (Message m in messages) {
@@ -538,13 +520,6 @@ class Message {
           if (originalMessage != null) {
             m.hasReactions = true;
           }
-        }
-        final existingHandle = handles.firstWhereOrNull((e) => e.address == m.handle?.address);
-        if (existingHandle != null) {
-          m.handleId = existingHandle.id;
-        }
-        if (existingMessages.firstWhereOrNull((e) => e.guid == m.guid) == null && m.otherHandle != null) {
-          m.otherHandle = Handle.findOne(originalROWID: m.otherHandle)?.id;
         }
       }
       associatedMessages.removeWhere((message) {
@@ -632,7 +607,7 @@ class Message {
     if (threadOriginatorGuid != null) {
       final existing = service?.struct.getMessage(threadOriginatorGuid!);
       final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
-      threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
+      threadOriginator?.handle ??= threadOriginator.getHandle();
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
       if (existing == null && threadOriginator != null) service?.struct.addThreadOriginator(threadOriginator);
     }
@@ -642,7 +617,7 @@ class Message {
 
   Handle? getHandle() {
     if (kIsWeb || handleId == 0 || handleId == null) return null;
-    return handleBox.get(handleId!);
+    return Handle.findOne(originalROWID: handleId!);
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
@@ -721,7 +696,7 @@ class Message {
 
     String? other = "someone";
     if (otherHandle != null && isParticipantEvent) {
-      other = Handle.findOne(id: otherHandle)?.displayName;
+      other = Handle.findOne(originalROWID: otherHandle)?.displayName;
     }
 
     if (itemType == 1 && groupActionType == 1) {

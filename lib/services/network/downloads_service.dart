@@ -15,10 +15,10 @@ AttachmentDownloadService attachmentDownloader = Get.isRegistered<AttachmentDown
 class AttachmentDownloadService extends GetxService {
   int maxDownloads = 2;
   final RxList<String> downloaders = <String>[].obs;
-  final List<AttachmentDownloadController> _downloaders = [];
+  final Map<String, List<AttachmentDownloadController>> _downloaders = {};
 
   AttachmentDownloadController? getController(String? guid) {
-    return _downloaders.firstWhereOrNull((element) => element.attachment.guid == guid);
+    return _downloaders.values.flattened.firstWhereOrNull((element) => element.attachment.guid == guid);
   }
 
   AttachmentDownloadController startDownload(Attachment a, {Function(PlatformFile)? onComplete, Function? onError}) {
@@ -31,26 +31,37 @@ class AttachmentDownloadService extends GetxService {
 
   void _addToQueue(AttachmentDownloadController downloader) {
     downloaders.add(downloader.attachment.guid!);
-    _downloaders.add(downloader);
-    if (_downloaders.where((e) => e.isFetching).length < maxDownloads) {
-      _downloaders.firstWhereOrNull((e) => !e.isFetching)?.fetchAttachment();
+    final chatGuid = downloader.attachment.message.target?.chat.target?.guid ?? "unknown";
+    if (_downloaders.containsKey(chatGuid)) {
+      _downloaders[chatGuid]!.add(downloader);
+    } else {
+      _downloaders[chatGuid] = [downloader];
     }
+    _fetchNext();
   }
 
   void _removeFromQueue(AttachmentDownloadController downloader) {
     downloaders.remove(downloader.attachment.guid!);
-    _downloaders.removeWhere((e) => e.attachment.guid == downloader.attachment.guid);
+    final chatGuid = downloader.attachment.message.target?.chat.target?.guid ?? "unknown";
+    _downloaders[chatGuid]!.removeWhere((e) => e.attachment.guid == downloader.attachment.guid);
+    if (_downloaders[chatGuid]!.isEmpty) _downloaders.remove(chatGuid);
     Get.delete<AttachmentDownloadController>(tag: downloader.attachment.guid!);
-    if (_downloaders.where((e) => e.isFetching).length < maxDownloads) {
-      _downloaders.firstWhereOrNull((e) => !e.isFetching)?.fetchAttachment();
-    }
+    _fetchNext();
   }
 
-  void cancelAllDownloads() {
-    for (AttachmentDownloadController e in _downloaders) {
-      Get.delete<AttachmentDownloadController>(tag: e.attachment.guid!);
+  void _fetchNext() {
+    if (_downloaders.values.flattened.where((e) => e.isFetching).length < maxDownloads) {
+      AttachmentDownloadController? activeChatDownloader;
+      // first check if we have an active chat that needs downloads, if so prioritize that chat
+      if (cm.activeChat != null && _downloaders.containsKey(cm.activeChat!.chat.guid)) {
+        activeChatDownloader = _downloaders[cm.activeChat!.chat.guid]!.firstWhereOrNull((e) => !e.isFetching);
+        activeChatDownloader?.fetchAttachment();
+      }
+      // otherwise just grab a random attachment that needs fetching
+      if (activeChatDownloader == null) {
+        _downloaders.values.flattened.firstWhereOrNull((e) => !e.isFetching)?.fetchAttachment();
+      }
     }
-    _downloaders.clear();
   }
 }
 

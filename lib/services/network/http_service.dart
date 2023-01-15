@@ -1,10 +1,10 @@
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
-import 'package:universal_io/io.dart';
 
 /// Get an instance of our [HttpService]
 HttpService http = Get.isRegistered<HttpService>() ? Get.find<HttpService>() : Get.put(HttpService());
@@ -509,40 +509,14 @@ class HttpService extends GetxService {
   /// Send an attachment. [chatGuid] specifies the chat, [tempGuid] specifies a
   /// temporary guid to avoid duplicate messages being sent, [file] is the
   /// body of the message.
-  Future<Response> sendAttachment(String chatGuid, String tempGuid, File file, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+  Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
-      final fileName = file.path.split('/').last;
+      final fileName = file.path!.split('/').last;
       final formData = FormData.fromMap({
-        "attachment": await MultipartFile.fromFile(file.path, filename: fileName),
+        "attachment": kIsWeb ? MultipartFile.fromBytes(file.bytes!, filename: fileName) : await MultipartFile.fromFile(file.path!, filename: fileName),
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
-      });
-      final response = await dio.post(
-          "$origin/message/attachment",
-          queryParameters: buildQueryParams(),
-          cancelToken: cancelToken,
-          data: formData,
-          onSendProgress: onSendProgress,
-          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout* 12),
-      );
-      return returnSuccessOrError(response);
-    });
-  }
-
-  /// Send an attachment with bytes. [chatGuid] specifies the chat, [tempGuid] specifies a
-  /// temporary guid to avoid duplicate messages being sent, [file] is the
-  /// body of the message.
-  ///
-  /// Prefer using [sendAttachment] since it provides accurate send progress
-  Future<Response> sendAttachmentBytes(String chatGuid, String tempGuid, Uint8List bytes, String filename,
-      {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
-    return runApiGuarded(() async {
-      final formData = FormData.fromMap({
-        "attachment": MultipartFile.fromBytes(bytes, filename: filename),
-        "chatGuid": chatGuid,
-        "tempGuid": tempGuid,
-        "name": filename,
       });
       final response = await dio.post(
           "$origin/message/attachment",

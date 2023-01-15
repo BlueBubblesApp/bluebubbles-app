@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -198,6 +199,15 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       } else {
         updateReplies(updateConversation: false);
       }
+    }
+
+    if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null) {
+      PlayerController controller = PlayerController();
+      controller.preparePlayer(
+        ss.settings.receiveSoundPath.value!, 1.0
+      ).then((_) {
+        controller.startPlayer();
+      });
     }
   }
 

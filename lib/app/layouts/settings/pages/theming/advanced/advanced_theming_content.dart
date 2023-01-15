@@ -12,6 +12,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
@@ -295,7 +296,39 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
           SliverPadding(
             padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
             sliver: SliverToBoxAdapter(
-              child: Text("FONT SIZE SCALING", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+              child: Text("FONT", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: SettingsSection(
+              backgroundColor: tileColor,
+              children: [
+                SettingsOptions<String>(
+                  title: "Selected Font",
+                  initial: currentTheme.googleFont,
+                  clampWidth: false,
+                  options: ['Default', ...GoogleFonts.asMap().keys],
+                  secondaryColor: headerColor,
+                  useCupertino: false,
+                  textProcessing: (str) => str,
+                  onChanged: (value) async {
+                    currentTheme.googleFont = value!;
+                    final map = currentTheme.toMap();
+                    map["data"]["textTheme"]["font"] = value;
+                    currentTheme.data = ThemeStruct.fromMap(map).data;
+                    currentTheme.save();
+                    if (currentTheme.name == ss.prefs.getString("selected-dark")) {
+                      ts.changeTheme(context, dark: currentTheme);
+                    } else if (currentTheme.name == ss.prefs.getString("selected-light")) {
+                      ts.changeTheme(context, light: currentTheme);
+                    }
+                  },
+                ),
+                const SettingsSubtitle(
+                  subtitle: "Font previews are not shown here since each font must be downloaded and saved from the internet. To see what a font looks like, either select it in the dropdown or visit fonts.google.com to view previews for all available fonts.",
+                  unlimitedSpace: true,
+                ),
+              ],
             ),
           ),
           SliverList(

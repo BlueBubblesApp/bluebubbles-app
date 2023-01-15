@@ -125,12 +125,11 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       /// Fetch and match handles
-      final handles =
-          handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+      final chat = chatBox.get(chatId);
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (handles.isNotEmpty && message.handleId != 0) {
-          Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+        if (chat!.participants.isNotEmpty && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
           if (handle == null && message.originalROWID != null) {
             messages.remove(message);
             i--;
@@ -444,26 +443,7 @@ class Chat {
       }
       dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
-        if (handles.isEmpty && participants.isNotEmpty) {
-          handles.addAll(participants);
-        }
         id = chatBox.put(this);
-        final _chat = chatBox.get(id!);
-        if (handles.isNotEmpty) {
-          if (_chat!.handles.length > handles.length) {
-            final remove = List<Handle>.from(_chat.handles.where((e) => handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-            for (Handle e in remove) {
-              _chat.handles.remove(e);
-            }
-            _chat.handles.applyToDb();
-          } else if (_chat.handles.length < handles.length) {
-            final add = List<Handle>.from(handles.where((e) => _chat.handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-            for (Handle e in add) {
-              _chat.handles.add(e);
-            }
-            _chat.handles.applyToDb();
-          }
-        }
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -620,6 +600,7 @@ class Chat {
 
   Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
     // If this is a message preview and we don't already have metadata for this, get it
+    Logger.info("Checking metadata");
     if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata) && !message.hasApplePayloadData) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
         // If the metadata is empty, don't do anything
@@ -634,6 +615,7 @@ class Chat {
     Message? latest = latestMessage;
     Message? newMessage;
 
+    Logger.info("Saving message");
     try {
       newMessage = message.save(chat: this);
     } catch (ex, stacktrace) {
@@ -647,9 +629,11 @@ class Chat {
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
+    Logger.info("Checking is newer");
     if ((newMessage?.id != null || kIsWeb) && checkForMessageText) {
       isNewer = message.dateCreated!.isAfter(latest.dateCreated!)
           || (message.guid != latest.guid && message.dateCreated == latest.dateCreated);
+      Logger.info("$isNewer");
       if (isNewer) {
         _latestMessage = message;
         if (dateDeleted != null) {
@@ -660,6 +644,7 @@ class Chat {
     }
 
     // Save any attachments
+    Logger.info("Saving attachments ${message.attachments}");
     for (Attachment? attachment in message.attachments) {
       attachment!.save(newMessage);
     }
@@ -667,9 +652,11 @@ class Chat {
     // Save the chat.
     // This will update the latestMessage info as well as update some
     // other fields that we want to "mimic" from the server
+    Logger.info("Saving Chat");
     save();
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
+    Logger.info("Toggling read");
     if (checkForMessageText && changeUnreadStatus && isNewer) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
@@ -682,10 +669,12 @@ class Chat {
 
     // If the message is for adding or removing participants,
     // we need to ensure that all of the chat participants are correct by syncing with the server
+    Logger.info("Checking participant event");
     if (message.isParticipantEvent && checkForMessageText) {
       serverSyncParticipants();
     }
 
+    Logger.info("Done");
     // Return the current chat instance (with updated vals)
     return this;
   }
@@ -725,11 +714,10 @@ class Chat {
         ..offset = offset;
       final messages = query.find();
       query.close();
-      final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (handles.isNotEmpty && message.handleId != 0) {
-          Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+        if (chat.participants.isNotEmpty && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
           if (handle == null) {
             messages.remove(message);
             i--;

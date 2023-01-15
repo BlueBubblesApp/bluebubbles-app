@@ -144,7 +144,8 @@ class MessageHelper {
           if (message.associatedMessagePart != null && associatedMessage.attributedBody.firstOrNull != null) {
             final attrBod = associatedMessage.attributedBody.first;
             final ranges = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart).map((e) => e.range);
-            final attachmentGuids = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart && e.attributes?.attachmentGuid != null).map((e) => e.attributes?.attachmentGuid);
+            final attachmentGuids = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart && e.attributes?.attachmentGuid != null)
+                .map((e) => e.attributes?.attachmentGuid).toSet();
             if (attachmentGuids.isNotEmpty) {
               attachment = true;
               messageText = _getAttachmentText(associatedMessage.fetchAttachments()!.where((e) => attachmentGuids.contains(e?.guid)).toList());
@@ -207,6 +208,8 @@ class MessageHelper {
 
       int current = counts.containsKey(key) ? counts[key]! : 0;
       counts[key] = current + 1;
+      // a message can only ever have 1 link (but multiple "attachments", so we break out)
+      if (key == "link") break;
     }
 
     List<String> attachmentStr = [];

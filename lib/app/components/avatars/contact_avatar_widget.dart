@@ -44,14 +44,8 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
   void initState() {
     super.initState();
     eventDispatcher.stream.listen((event) {
-      // Exit if not mounted or the event isn't want we need
-      if (!mounted) return;
       if (event.item1 != 'refresh-avatar') return;
-
-      // Exit if the event isn't for this contact or the color is the same
-      if (event.item1[0] != widget.handle?.address || widget.handle?.color == event.item2[1]) return;
-
-      // Apply color and refresh
+      if (event.item2[0] != widget.handle?.address) return;
       widget.handle?.color = event.item2[1];
       setState(() {});
     });
@@ -163,6 +157,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                 : colors[0]),
             gradient: !iOS ? null : LinearGradient(
               begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 !ss.settings.colorfulAvatars.value
                     ? HexColor("928E8E")
@@ -171,6 +166,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                     ? HexColor("686868")
                     : colors[0]
               ],
+              stops: [0.4, 0.8],
             ),
             border: Border.all(
               color: ss.settings.skin.value == Skins.Samsung

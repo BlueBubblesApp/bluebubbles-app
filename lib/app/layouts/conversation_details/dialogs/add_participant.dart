@@ -128,10 +128,6 @@ void showAddParticipant(BuildContext context, Chat chat) {
               if (response.statusCode == 200) {
                 Get.back();
                 Get.back();
-                final _chat = Chat.fromMap(response.data['data']);
-                _chat.handles.addAll(_chat.participants);
-                chat = _chat.merge(chat);
-                chat.save();
                 showSnackbar("Notice", "Added ${participantController.text} successfully!");
               } else {
                 Get.back();

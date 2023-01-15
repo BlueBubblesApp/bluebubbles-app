@@ -143,6 +143,9 @@ public class NewMessageNotification implements Handler {
             group = sender;
         }
 
+        // Update the share target so a contact icon is always available
+        ShareShortcutManager.publishShareTarget(context, new Contact(chatTitle, chatGuid, chatIcon));
+
         // If we have an existing style, load it
         // This will load all the other messages as part of the notification as well
         NotificationCompat.MessagingStyle style;
@@ -277,7 +280,7 @@ public class NewMessageNotification implements Handler {
                 // Tell android that it's a message/conversation
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 // Set the priority to high since it's a message they should see
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openIntent)
                 // Sets the intent for when it is swiped away
@@ -355,7 +358,7 @@ public class NewMessageNotification implements Handler {
                 // Let's the notification dismiss itself when it's tapped
                 .setAutoCancel(true)
                 // Set the priority to high since it's a notification they should see
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openSummaryIntent)
                 // Set the color. This is the blue primary color
