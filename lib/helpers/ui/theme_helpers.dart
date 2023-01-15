@@ -122,9 +122,9 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   );
 
   Color get _headerColor => ts.inDarkMode(context)
-      ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+      ? Colors.transparent : context.theme.colorScheme.properSurface;
   Color get _tileColor => ts.inDarkMode(context)
-      ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+      ? context.theme.colorScheme.properSurface : Colors.transparent;
 
   /// Header / background color on settings pages
   Color get headerColor => reverseMapping ? _tileColor : _headerColor;
@@ -218,6 +218,15 @@ extension ColorHelpers on Color {
       return darkenPercent(percent);
     } else {
       return lightenPercent(percent);
+    }
+  }
+
+  Color themeOpacity(BuildContext context) {
+    if (!kIsDesktop) return withOpacity(1.0.obs.value);
+    if (!ts.inDarkMode(context)) {
+      return withOpacity(ss.settings.windowEffectCustomOpacityLight.value);
+    } else {
+      return withOpacity(ss.settings.windowEffectCustomOpacityDark.value);
     }
   }
 

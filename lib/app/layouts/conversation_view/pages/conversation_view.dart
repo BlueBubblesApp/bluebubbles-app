@@ -90,7 +90,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
             top: false,
             bottom: false,
             child: Scaffold(
-              backgroundColor: context.theme.colorScheme.background,
+              backgroundColor: Colors.transparent,
               extendBodyBehindAppBar: true,
               appBar: iOS
                   ? CupertinoHeader(controller: controller)

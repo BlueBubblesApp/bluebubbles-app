@@ -615,6 +615,17 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         if (Platform.isWindows) {
           await localNotifier.setup(appName: "BlueBubbles");
         }
+
+        /* ----- WINDOW EFFECT INITIALIZATION ----- */
+        if (Platform.isWindows) {
+          await WindowEffects.setEffect(color: context.theme.backgroundColor);
+
+          eventDispatcher.stream.listen((event) async {
+            if (event.item1 == 'theme-update') {
+              await WindowEffects.setEffect(color: context.theme.backgroundColor);
+            }
+          });
+        }
       }
 
       if (!ss.settings.finishedSetup.value) {
@@ -665,37 +676,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
 
-    if (kIsDesktop && Platform.isWindows) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-        await WindowEffects.setEffect(color: context.theme.backgroundColor);
-        eventDispatcher.stream.listen((event) async {
-          if (event.item1 == 'theme-update') {
-            await WindowEffects.setEffect(color: context.theme.backgroundColor);
-          }
-
-          if (event.item1 == 'popup-pushed') {
-            bool popup = event.item2;
-            if (popup) {
-              ss.settings.windowEffect.value = WindowEffect.disabled;
-            } else {
-              ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == ss.prefs.getString('window-effect')) ?? WindowEffect.aero;
-            }
-          }
-        });
-      });
-    }
-
-    final Rx<Color> _backgroundColor = (ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
-
-    if (kIsDesktop) {
-      ss.settings.windowEffect.listen((WindowEffect effect) {
-        if (mounted) {
-          _backgroundColor.value =
-          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
-        }
-      });
-    }
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -714,7 +694,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           GoBackIntent: GoBackAction(context),
         },
         child: Obx(() => Scaffold(
-          backgroundColor: _backgroundColor.value,
+          backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
           body: Builder(
             builder: (BuildContext context) {
               if (ss.settings.finishedSetup.value) {

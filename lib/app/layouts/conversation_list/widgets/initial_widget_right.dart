@@ -13,25 +13,11 @@ class InitialWidgetRight extends StatefulWidget {
 }
 
 class _InitialWidgetRightState extends OptimizedState<InitialWidgetRight> {
-  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
-      ? context.theme.colorScheme.background
-      : Colors.transparent;
-
-  @override
-  void initState() {
-    super.initState();
-    // update widget when background color changes
-    if (kIsDesktop) {
-      ss.settings.windowEffect.listen((WindowEffect effect) {
-        setState(() {});
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       body: Center(
         child: Container(

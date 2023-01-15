@@ -58,7 +58,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
       child: Stack(
         children: [
           Scaffold(
-            backgroundColor: backgroundColor,
+            backgroundColor: Colors.transparent,
             floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
                 && !showArchived && !showUnknown
                 ? ConversationListFAB(parentController: controller)

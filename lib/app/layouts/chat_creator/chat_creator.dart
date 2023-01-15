@@ -214,7 +214,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: context.theme.colorScheme.background,
+        backgroundColor: Colors.transparent,
         appBar: PreferredSize(
           preferredSize: Size(ns.width(context), 50),
           child: AppBar(
