@@ -67,15 +67,17 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
       });
     }
 
-    updateObx(() {
-      fetchAttachments();
-      fetchLinks();
-    });
+    if (!kIsWeb) {
+      updateObx(() {
+        fetchAttachments();
+        fetchLinks();
+      });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 

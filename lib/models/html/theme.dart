@@ -10,6 +10,7 @@ class ThemeStruct {
   int? id;
   String name;
   bool gradientBg = false;
+  String googleFont;
   ThemeData data;
 
   String get dbThemeData {
@@ -29,8 +30,11 @@ class ThemeStruct {
     this.id,
     required this.name,
     this.gradientBg = false,
+    this.googleFont = 'Default',
     ThemeData? themeData,
-  }) : data = themeData ?? ts.whiteLightTheme;
+  }) : data = themeData ?? ts.whiteLightTheme {
+    if (googleFont.isEmpty) googleFont = 'Default';
+  }
 
   bool get isPreset =>
       ts.defaultThemes.map((e) => e.name).contains(name);
