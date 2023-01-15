@@ -18,6 +18,7 @@ class NotificationSettingsDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             ListTile(
+              mouseCursor: MouseCursor.defer,
               title: Text(chat.muteType == "mute" ? "Unmute" : "Mute",
                   style: context.theme.textTheme.bodyLarge),
               subtitle: Text(
@@ -33,6 +34,7 @@ class NotificationSettingsDialog extends StatelessWidget {
             ),
             if (chat.isGroup)
               ListTile(
+                mouseCursor: MouseCursor.defer,
                 title: Text("Mute Individuals", style: context.theme.textTheme.bodyLarge),
                 subtitle: Text("Mute certain individuals in this chat",
                   style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
@@ -117,6 +119,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 },
               ),
             ListTile(
+              mouseCursor: MouseCursor.defer,
               title: Text(
                   chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
                       ? "Delete Temporary Mute"
@@ -157,6 +160,7 @@ class NotificationSettingsDialog extends StatelessWidget {
               },
             ),
             ListTile(
+              mouseCursor: MouseCursor.defer,
               title: Text("Text Detection", style: context.theme.textTheme.bodyLarge),
               subtitle: Text(
                 "Completely mute this chat, except when a message contains certain text",
@@ -180,6 +184,7 @@ class NotificationSettingsDialog extends StatelessWidget {
               },
             ),
             ListTile(
+              mouseCursor: MouseCursor.defer,
               title: Text("Reset chat-specific settings",
                   style: context.theme.textTheme.bodyLarge),
               subtitle: Text("Delete your custom settings",

@@ -348,6 +348,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                     ) : null,
                   ),
                   child: ListTile(
+                    mouseCursor: MouseCursor.defer,
                     title: RichText(
                       text: TextSpan(
                         children: MessageHelper.buildEmojiText(

@@ -40,6 +40,7 @@ class OldThemesDialog extends StatelessWidget {
                     itemCount: oldThemes.length,
                     itemBuilder: (context, index) {
                       return ListTile(
+                        mouseCursor: MouseCursor.defer,
                         title: Text(
                             oldThemes[index].name ?? "Unknown Theme",
                             style: context.theme.textTheme.bodyLarge),
@@ -63,6 +64,7 @@ class OldThemesDialog extends StatelessWidget {
                                           itemBuilder: (context, index2) {
                                             final hex = oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex;
                                             return ListTile(
+                                                mouseCursor: SystemMouseCursors.click,
                                                 title: Text(
                                                     ThemeColors.Colors.reversed.toList()[index2],
                                                     style: context.theme.textTheme.bodyLarge),

@@ -43,6 +43,7 @@ class SettingsTile extends StatelessWidget {
             onLongPress?.call();
           },
           child: ListTile(
+            mouseCursor: MouseCursor.defer,
             leading: leading,
             title: title != null ? Text(
               title!,

@@ -152,6 +152,7 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                         final item = oneTime[index];
                         final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                         return ListTile(
+                          mouseCursor: SystemMouseCursors.click,
                           title: Text(item.payload.message),
                           subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} on ${buildFullDate(item.scheduledFor)}"),
                           trailing: IconButton(
@@ -197,6 +198,7 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                         final item = recurring[index];
                         final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                         return ListTile(
+                          mouseCursor: SystemMouseCursors.click,
                           title: Text(item.payload.message),
                           subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} every ${item.schedule.interval} ${frequencyToText[item.schedule.intervalType]}(s) starting starting on ${buildFullDate(item.scheduledFor)}"),
                           isThreeLine: true,

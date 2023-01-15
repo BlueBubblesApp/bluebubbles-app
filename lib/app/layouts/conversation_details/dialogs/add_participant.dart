@@ -70,6 +70,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
                                 itemCount: contacts.length,
                                 itemBuilder: (context, index) {
                                   return ListTile(
+                                    mouseCursor: MouseCursor.defer,
                                     title: Text(contacts[index].item2),
                                     subtitle: Text(contacts[index].item1),
                                     onTap: () {

@@ -914,6 +914,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: openLink,
             child: ListTile(
+              mouseCursor: MouseCursor.defer,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In Browser",
@@ -934,6 +935,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: openAttachmentWeb,
             child: ListTile(
+              mouseCursor: MouseCursor.defer,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In New Tab",
@@ -1126,6 +1128,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: remindLater,
             child: ListTile(
+              mouseCursor: MouseCursor.defer,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Remind Later",

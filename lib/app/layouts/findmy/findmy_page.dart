@@ -164,6 +164,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     itemBuilder: (context, i) {
                       final item = devices[i];
                       return ListTile(
+                        mouseCursor: MouseCursor.defer,
                         title: Text(item.name ?? "Unknown Device"),
                         subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
                         onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
