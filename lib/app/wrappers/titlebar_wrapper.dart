@@ -39,10 +39,6 @@ class TitleBarWrapper extends StatelessWidget {
           color: Colors.transparent,
           width: 0,
           child: Stack(children: <Widget>[
-            Scaffold(
-              backgroundColor: context.theme.backgroundColor
-                  .withOpacity(WindowEffects.getOpacity(color: context.theme.backgroundColor)),
-            ),
             child,
             const TitleBar()
           ]),

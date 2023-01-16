@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class HexColor extends Color {
@@ -122,9 +124,9 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   );
 
   Color get _headerColor => ts.inDarkMode(context)
-      ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+      ? (kIsDesktop ? Colors.transparent : context.theme.colorScheme.background) : context.theme.colorScheme.properSurface;
   Color get _tileColor => ts.inDarkMode(context)
-      ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+      ? context.theme.colorScheme.properSurface : (kIsDesktop ? Colors.transparent : context.theme.colorScheme.background);
 
   /// Header / background color on settings pages
   Color get headerColor => reverseMapping ? _tileColor : _headerColor;
@@ -218,6 +220,16 @@ extension ColorHelpers on Color {
       return darkenPercent(percent);
     } else {
       return lightenPercent(percent);
+    }
+  }
+
+  Color themeOpacity(BuildContext context) {
+    if (ss.settings.windowEffect.value == WindowEffect.disabled) return withOpacity(1.0.obs.value);
+    if (!WindowEffects.dependsOnColor()) return withOpacity(0.0.obs.value);
+    if (!ts.inDarkMode(context)) {
+      return withOpacity(ss.settings.windowEffectCustomOpacityLight.value);
+    } else {
+      return withOpacity(ss.settings.windowEffectCustomOpacityDark.value);
     }
   }
 

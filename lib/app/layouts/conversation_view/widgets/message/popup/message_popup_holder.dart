@@ -53,7 +53,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       Get.context!,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 150),
-        pageBuilder: (context, animation, secondaryAnimation) {
+        pageBuilder: (_, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
             child: Theme(
@@ -76,6 +76,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
                 cvController: widget.cvController,
                 serverDetails: Tuple3(minSierra, minBigSur, version > 100),
                 sendTapback: sendTapback,
+                widthContext: context,
               ),
             ),
           );

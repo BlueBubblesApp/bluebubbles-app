@@ -155,6 +155,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                                     finalName = json[index]['name'].toString();
                                                   }
                                                   return ListTile(
+                                                    mouseCursor: MouseCursor.defer,
                                                     title: Text(finalName, style: context.theme.textTheme.bodyLarge),
                                                     onTap: () {
                                                       Settings.updateFromMap(json[index]);
@@ -295,6 +296,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                                     physics: const NeverScrollableScrollPhysics(),
                                                     itemBuilder: (context, index) {
                                                       return ListTile(
+                                                        mouseCursor: MouseCursor.defer,
                                                         title: Text(json[index]['name'], style: context.theme.textTheme.bodyLarge),
                                                         onTap: () async {
                                                           if (!json[index].containsKey('data')) {

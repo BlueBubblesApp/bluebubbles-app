@@ -50,7 +50,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
       extendBodyBehindAppBar: !showArchived && !showUnknown,
       floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
           && !showArchived
@@ -63,7 +63,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
         systemOverlayStyle: brightness == Brightness.dark
             ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         centerTitle: true,
-        backgroundColor: context.theme.colorScheme.background,
+        backgroundColor: Colors.transparent,
         title: Text(
           showArchived ? "Archive" : "Unknown Senders",
           style: context.theme.textTheme.titleLarge

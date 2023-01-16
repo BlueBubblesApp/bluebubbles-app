@@ -39,6 +39,7 @@ class MessagePopup extends StatefulWidget {
   final ConversationViewController cvController;
   final Tuple3<bool, bool, bool> serverDetails;
   final Function([String? type, int? part]) sendTapback;
+  final BuildContext widthContext;
 
   const MessagePopup({
     Key? key,
@@ -50,6 +51,7 @@ class MessagePopup extends StatefulWidget {
     required this.cvController,
     required this.serverDetails,
     required this.sendTapback,
+    required this.widthContext,
   }) : super(key: key);
 
   @override
@@ -90,6 +92,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   bool get minSierra => widget.serverDetails.item1;
   bool get minBigSur => widget.serverDetails.item2;
   bool get supportsOriginalDownload => widget.serverDetails.item3;
+  BuildContext get widthContext => widget.widthContext;
 
   @override
   void initState() {
@@ -136,7 +139,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   @override
   Widget build(BuildContext context) {
     double narrowWidth = message.isFromMe! || !ss.settings.alwaysShowAvatars.value ? 330 : 360;
-    bool narrowScreen = ns.width(context) < narrowWidth;
+    bool narrowScreen = ns.width(widthContext) < narrowWidth;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -164,7 +167,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         child: TitleBarWrapper(
           child: Scaffold(
             extendBodyBehindAppBar: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: kIsWeb || kIsDesktop ? context.theme.colorScheme.background.withOpacity(0.5) : Colors.transparent,
             appBar: iOS ? null : AppBar(
               backgroundColor: context.theme.colorScheme.background.oppositeLightenOrDarken(5),
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
@@ -832,7 +835,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         ),
         backgroundColor: context.theme.colorScheme.properSurface,
         content: SizedBox(
-          width: ns.width(context) * 3 / 5,
+          width: ns.width(widthContext) * 3 / 5,
           height: context.height * 1 / 4,
           child: Container(
             padding: const EdgeInsets.all(10.0),
@@ -862,7 +865,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   Widget buildDetailsMenu(BuildContext context) {
-    double maxMenuWidth = min(max(ns.width(context) * 3 / 5, 200), ns.width(context) * 4 / 5);
+    double maxMenuWidth = min(max(ns.width(widthContext) * 3 / 5, 200), ns.width(widthContext) * 4 / 5);
 
     List<Widget> allActions = [
       if (ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
@@ -911,6 +914,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: openLink,
             child: ListTile(
+              mouseCursor: MouseCursor.defer,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In Browser",
@@ -931,6 +935,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: openAttachmentWeb,
             child: ListTile(
+              mouseCursor: MouseCursor.defer,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In New Tab",
@@ -1079,7 +1084,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (part.text!.isNotEmpty && !kIsDesktop))
+      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (!kIsWeb && !kIsDesktop && part.text!.isNotEmpty))
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1123,6 +1128,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: remindLater,
             child: ListTile(
+              mouseCursor: MouseCursor.defer,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Remind Later",

@@ -471,13 +471,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.3.3"
-  desktop_notifications:
-    dependency: transitive
-    description:
-      name: desktop_notifications
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.6.3"
   device_info_plus:
     dependency: "direct main"
     description:
@@ -1901,7 +1894,7 @@ packages:
       name: quick_notify
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.0-dev.0"
+    version: "0.2.1"
   quiver:
     dependency: transitive
     description:

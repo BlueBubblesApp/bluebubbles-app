@@ -9,6 +9,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
@@ -29,6 +30,7 @@ class CreateScheduledMessage extends StatefulWidget {
 class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage> {
   late final TextEditingController messageController = TextEditingController(text: widget.existing?.payload.message);
   final FocusNode messageNode = FocusNode();
+  late final TextEditingController numberController = TextEditingController(text: widget.existing?.schedule.interval?.toString() ?? '1');
 
   late String selectedChat = widget.existing?.payload.chatGuid ?? chats.chats.first.guid;
   late String schedule = widget.existing?.schedule.type ?? "once";
@@ -47,6 +49,12 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
        } else if (isEmpty) {
          isEmpty = false;
          setState(() {});
+       }
+     });
+     numberController.addListener(() {
+       final value = int.tryParse(numberController.text) ?? 1;
+       if (interval != value) {
+         setState(() => interval = value);
        }
      });
   }
@@ -256,10 +264,25 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                             padding: const EdgeInsets.only(left: 15.0),
                             child: Text("Repeat every:", style: context.theme.textTheme.bodyLarge!),
                           ),
+                          if (kIsWeb || kIsDesktop)
+                            const Spacer(),
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                              child: NumberPicker(
+                              child: kIsWeb || kIsDesktop ? Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 5.0),
+                                child: TextField(
+                                  controller: numberController,
+                                  decoration: const InputDecoration(
+                                    labelText: "1-100",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.allow(RegExp(r'^[1-9][0-9]?$|^100$')),
+                                  ],
+                                ),
+                              ) : NumberPicker(
                                 value: interval,
                                 minValue: 1,
                                 maxValue: 100,

@@ -207,11 +207,14 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                 );
               }
             } else {
-              return Image.memory(
-                avatar!,
-                cacheHeight: size.toInt() * 2,
-                cacheWidth: size.toInt() * 2,
-                filterQuality: FilterQuality.none,
+              return SizedBox.expand(
+                child: Image.memory(
+                  avatar!,
+                  cacheHeight: size.toInt() * 2,
+                  cacheWidth: size.toInt() * 2,
+                  filterQuality: FilterQuality.none,
+                  fit: BoxFit.cover,
+                ),
               );
             }
           }),

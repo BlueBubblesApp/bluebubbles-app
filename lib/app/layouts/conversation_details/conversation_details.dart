@@ -191,6 +191,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final addMember = ListTile(
+                    mouseCursor: MouseCursor.defer,
                     title: Text("Add ${iOS ? "Member" : "people"}", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     leading: Container(
                       width: 40 * ss.settings.avatarScale.value,
@@ -221,6 +222,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   if (index == clippedParticipants.length) {
                     if (shouldShowMore) {
                       return ListTile(
+                        mouseCursor: SystemMouseCursors.click,
                         onTap: () {
                           setState(() {
                             showMoreParticipants = !showMoreParticipants;

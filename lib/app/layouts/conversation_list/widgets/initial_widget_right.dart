@@ -1,8 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class InitialWidgetRight extends StatefulWidget {
@@ -13,25 +11,11 @@ class InitialWidgetRight extends StatefulWidget {
 }
 
 class _InitialWidgetRightState extends OptimizedState<InitialWidgetRight> {
-  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
-      ? context.theme.colorScheme.background
-      : Colors.transparent;
-
-  @override
-  void initState() {
-    super.initState();
-    // update widget when background color changes
-    if (kIsDesktop) {
-      ss.settings.windowEffect.listen((WindowEffect effect) {
-        setState(() {});
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
       extendBodyBehindAppBar: true,
       body: Center(
         child: Container(

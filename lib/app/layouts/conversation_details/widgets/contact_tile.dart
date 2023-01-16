@@ -48,6 +48,7 @@ class ContactTile extends StatelessWidget {
         }
       },
       child: ListTile(
+        mouseCursor: MouseCursor.defer,
         title: RichText(
           text: TextSpan(
             children: MessageHelper.buildEmojiText(

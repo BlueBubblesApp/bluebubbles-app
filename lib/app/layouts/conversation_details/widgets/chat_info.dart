@@ -72,6 +72,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
             child: Material(
               color: Colors.transparent,
               child: ListTile(
+                mouseCursor: MouseCursor.defer,
                 onTap: () {
                   if (!ss.settings.enablePrivateAPI.value || !chat.isIMessage) {
                     showChangeName(chat, "local", context);

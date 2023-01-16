@@ -582,7 +582,6 @@ class TextFieldComponent extends StatelessWidget {
                       maxLines: 14,
                       minLines: 1,
                       selectionControls: iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
-                      autofocus: kIsWeb || kIsDesktop,
                       enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                       textInputAction: TextInputAction.next,
                       cursorColor: context.theme.colorScheme.primary,
@@ -631,7 +630,7 @@ class TextFieldComponent extends StatelessWidget {
                     maxLines: 14,
                     minLines: 1,
                     selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
-                    autofocus: kIsWeb || kIsDesktop,
+                    autofocus: (kIsWeb || kIsDesktop) && !isChatCreator,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                     textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                         ? TextInputAction.send

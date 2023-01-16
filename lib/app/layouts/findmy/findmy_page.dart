@@ -164,6 +164,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     itemBuilder: (context, i) {
                       final item = devices[i];
                       return ListTile(
+                        mouseCursor: MouseCursor.defer,
                         title: Text(item.name ?? "Unknown Device"),
                         subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
                         onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
@@ -275,7 +276,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             children: <Widget>[
               NotificationListener<ScrollEndNotification>(
                 onNotification: (_) {
-                  if (ss.settings.skin.value != Skins.Samsung) return false;
+                  if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
                   final scrollDistance = context.height / 3 - 57;
 
                   if (controller1.offset > 0 && controller1.offset < scrollDistance) {
