@@ -128,21 +128,15 @@ class ActionHandler extends GetxService {
   }
   
   Future<void> prepAttachment(Chat c, Message m) async {
-    Logger.info("Grabbing attachment");
     final attachment = m.attachments.first!;
-    Logger.info("Setting progress");
     final progress = Tuple2(attachment.guid!, 0.0.obs);
     attachmentProgress.add(progress);
     // Save the attachment to storage and DB
     if (!kIsWeb) {
-      Logger.info("Getting path name");
       String pathName = "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
-      Logger.info("Creating empty file");
       final file = await File(pathName).create(recursive: true);
-      Logger.info("Writing file");
       await file.writeAsBytes(attachment.bytes!);
     }
-    Logger.info("Adding message");
     await c.addMessage(m);
   }
 
