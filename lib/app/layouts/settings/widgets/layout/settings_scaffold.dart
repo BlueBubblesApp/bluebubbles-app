@@ -71,7 +71,7 @@ class SettingsScaffold extends StatelessWidget {
         floatingActionButton: fab,
         body: NotificationListener<ScrollEndNotification>(
           onNotification: (_) {
-            if (ss.settings.skin.value != Skins.Samsung) return false;
+            if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
             final scrollDistance = context.height / 3 - 57;
             if (controller.offset > 0 &&
                 controller.offset < scrollDistance &&

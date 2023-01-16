@@ -66,6 +66,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
             body: SafeArea(
               child: NotificationListener<ScrollEndNotification>(
                 onNotification: (_) {
+                  if (kIsWeb || kIsDesktop) return false;
                   final scrollDistance = context.height / 3 - 57;
                   if (controller.samsungScrollController.offset > 0
                       && controller.samsungScrollController.offset < scrollDistance

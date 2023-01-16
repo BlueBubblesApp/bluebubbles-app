@@ -233,7 +233,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
           children: <Widget>[
             NotificationListener<ScrollEndNotification>(
               onNotification: (_) {
-                if (ss.settings.skin.value != Skins.Samsung) return false;
+                if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
                 final scrollDistance = context.height / 3 - 57;
 
                 if (controller1.offset > 0 && controller1.offset < scrollDistance) {
