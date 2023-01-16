@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -52,61 +53,74 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       });
     });
     if (response.statusCode == 200 && response.data['data'] != null) {
-      devices = (response.data['data'] as List).map((e) => FindMy.fromJson(e)).toList().cast<FindMy>();
-      markers = devices.where((e) => e.location != null).map((e) => Marker(
-        point: LatLng(e.location!.latitude, e.location!.longitude),
-        width: 30,
-        height: 35,
-        builder: (_) => ClipShadowPath(
-          clipper: const FindMyPinClipper(),
-          shadow: const BoxShadow(
-            color: Colors.black,
-            blurRadius: 2,
-          ),
-          child: Container(
-            color: Colors.white,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 5.0),
-                child: Icon((e.isMac ?? false)
-                    ? CupertinoIcons.desktopcomputer
-                    : (e.isConsideredAccessory ?? false)
-                    ? CupertinoIcons.headphones
-                    : CupertinoIcons.device_phone_portrait,
-                  color: Colors.black,
-                  size: 20,
+      try {
+        devices = (response.data['data'] as List).map((e) => FindMy.fromJson(e)).toList().cast<FindMy>();
+        markers = devices.where((e) => e.location?.latitude != null && e.location?.longitude != null).map((e) => Marker(
+          point: LatLng(e.location!.latitude!, e.location!.longitude!),
+          width: 30,
+          height: 35,
+          builder: (_) => ClipShadowPath(
+            clipper: const FindMyPinClipper(),
+            shadow: const BoxShadow(
+              color: Colors.black,
+              blurRadius: 2,
+            ),
+            child: Container(
+              color: Colors.white,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 5.0),
+                  child: Icon((e.isMac ?? false)
+                      ? CupertinoIcons.desktopcomputer
+                      : (e.isConsideredAccessory ?? false)
+                      ? CupertinoIcons.headphones
+                      : CupertinoIcons.device_phone_portrait,
+                    color: Colors.black,
+                    size: 20,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        anchorPos: AnchorPos.align(AnchorAlign.top),
-      )).toList();
-      final granted = await Geolocator.checkPermission();
-      if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
-        location = await Geolocator.getCurrentPosition();
-        markers.add(
-          Marker(
-            point: LatLng(location!.latitude, location!.longitude),
-            width: 25,
-            height: 25,
-            builder: (_) => Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-              padding: const EdgeInsets.all(5),
-              child: Container(
-                decoration: BoxDecoration(
+          anchorPos: AnchorPos.align(AnchorAlign.top),
+        )).toList();
+        final granted = await Geolocator.checkPermission();
+        if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
+          location = await Geolocator.getCurrentPosition();
+          markers.add(
+            Marker(
+              point: LatLng(location!.latitude, location!.longitude),
+              width: 25,
+              height: 25,
+              builder: (_) => Container(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: context.theme.colorScheme.primary,
+                  color: Colors.white,
+                ),
+                padding: const EdgeInsets.all(5),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: context.theme.colorScheme.primary,
+                  ),
                 ),
               ),
+              anchorPos: AnchorPos.align(AnchorAlign.center),
             ),
-            anchorPos: AnchorPos.align(AnchorAlign.center),
-          ),
-        );
+          );
+        }
+        setState(() {
+          fetching = false;
+        });
+      } catch (e, s) {
+        Logger.error(e);
+        Logger.error(s);
+        setState(() {
+          fetching = null;
+        });
+        return;
       }
+    } else {
       setState(() {
         fetching = false;
       });
@@ -150,15 +164,16 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     itemBuilder: (context, i) {
                       final item = devices[i];
                       return ListTile(
+                        mouseCursor: MouseCursor.defer,
                         title: Text(item.name ?? "Unknown Device"),
                         subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
-                        onTap: item.location != null ? () async {
+                        onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
                           index.value = 1;
                           tabController.animateTo(1);
                           await completer.future;
                           final marker = markers.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
                           popupController.showPopupsOnlyFor([marker]);
-                          mapController.move(LatLng(item.location!.latitude, item.location!.longitude), 10);
+                          mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
                         } : null,
                         onLongPress: () async {
                           const encoder = JsonEncoder.withIndent("     ");
@@ -261,7 +276,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             children: <Widget>[
               NotificationListener<ScrollEndNotification>(
                 onNotification: (_) {
-                  if (ss.settings.skin.value != Skins.Samsung) return false;
+                  if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
                   final scrollDistance = context.height / 3 - 57;
 
                   if (controller1.offset > 0 && controller1.offset < scrollDistance) {
@@ -440,7 +455,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               ),
             ],
             onDestinationSelected: (page) {
-              if (fetching != false) return;
+              if (fetching != false || devices.isEmpty) return;
               index.value = page;
               tabController.animateTo(page);
             },

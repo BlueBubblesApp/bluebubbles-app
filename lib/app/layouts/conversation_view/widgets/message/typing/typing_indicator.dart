@@ -88,7 +88,7 @@ class _AnimatedDotState extends OptimizedState<AnimatedDot> with SingleTickerPro
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 700), animationBehavior: AnimationBehavior.preserve);
     _controller.addStatusListener((state) {
       if (state == AnimationStatus.completed && mounted) {
         _controller.forward(from: 0.0);

@@ -109,6 +109,12 @@ class MethodChannelService extends GetxService {
         Logger.info("Received reply to message from FCM");
         final data = call.arguments as Map?;
         if (data == null) return;
+        // check and make sure that we aren't sending a duplicate reply
+        final recentReplyGuid = ss.prefs.getString("recent-reply")?.split("/").first;
+        final recentReplyText = ss.prefs.getString("recent-reply")?.split("/").last;
+        if (recentReplyGuid == data["guid"] && recentReplyText == data["text"]) return;
+        ss.prefs.setString("recent-reply", "${data["guid"]}/${data["text"]}");
+        Logger.info("Updated recent reply cache to ${ss.prefs.getString("recent-reply")}");
         Chat? chat = Chat.findOne(guid: data["chat"]);
         if (chat == null) {
           return false;

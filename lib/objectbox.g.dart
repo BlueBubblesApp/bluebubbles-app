@@ -84,11 +84,6 @@ final _entities = <ModelEntity>[
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(15, 5516087858141459065),
-            name: 'bytes',
-            type: 23,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(16, 396659320299238462),
             name: 'webUrl',
             type: 9,
@@ -615,7 +610,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(16, 1815690088052698449),
       name: 'ThemeStruct',
-      lastPropertyId: const IdUid(4, 1129102363347301238),
+      lastPropertyId: const IdUid(5, 5263969220071020408),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -637,6 +632,11 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(4, 1129102363347301238),
             name: 'dbThemeData',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(5, 5263969220071020408),
+            name: 'googleFont',
             type: 9,
             flags: 0)
       ],
@@ -814,7 +814,8 @@ ModelDefinition getObjectBoxModel() {
         8558367758823185430,
         7997144491374144435,
         1278586999912993922,
-        696004914151488398
+        696004914151488398,
+        5516087858141459065
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -841,8 +842,6 @@ ModelDefinition getObjectBoxModel() {
           final transferNameOffset = object.transferName == null
               ? null
               : fbb.writeString(object.transferName!);
-          final bytesOffset =
-              object.bytes == null ? null : fbb.writeListInt8(object.bytes!);
           final webUrlOffset =
               object.webUrl == null ? null : fbb.writeString(object.webUrl!);
           final dbMetadataOffset = object.dbMetadata == null
@@ -859,7 +858,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(8, object.totalBytes);
           fbb.addInt64(12, object.height);
           fbb.addInt64(13, object.width);
-          fbb.addOffset(14, bytesOffset);
           fbb.addOffset(15, webUrlOffset);
           fbb.addInt64(16, object.message.targetId);
           fbb.addOffset(17, dbMetadataOffset);
@@ -890,7 +888,6 @@ ModelDefinition getObjectBoxModel() {
               height:
                   const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
               width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
-              bytes: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 32) as Uint8List?,
               webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34))
             ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 38);
           object.message.targetId =
@@ -1419,11 +1416,13 @@ ModelDefinition getObjectBoxModel() {
         objectToFB: (ThemeStruct object, fb.Builder fbb) {
           final nameOffset = fbb.writeString(object.name);
           final dbThemeDataOffset = fbb.writeString(object.dbThemeData);
-          fbb.startTable(5);
+          final googleFontOffset = fbb.writeString(object.googleFont);
+          fbb.startTable(6);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, nameOffset);
           fbb.addBool(2, object.gradientBg);
           fbb.addOffset(3, dbThemeDataOffset);
+          fbb.addOffset(4, googleFontOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1437,7 +1436,9 @@ ModelDefinition getObjectBoxModel() {
               name: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 6, ''),
               gradientBg:
-                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false))
+                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false),
+              googleFont: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 12, ''))
             ..dbThemeData = const fb.StringReader(asciiOptimization: true)
                 .vTableGet(buffer, rootOffset, 10, '');
 
@@ -1545,21 +1546,17 @@ class Attachment_ {
   static final width =
       QueryIntegerProperty<Attachment>(_entities[0].properties[9]);
 
-  /// see [Attachment.bytes]
-  static final bytes =
-      QueryByteVectorProperty<Attachment>(_entities[0].properties[10]);
-
   /// see [Attachment.webUrl]
   static final webUrl =
-      QueryStringProperty<Attachment>(_entities[0].properties[11]);
+      QueryStringProperty<Attachment>(_entities[0].properties[10]);
 
   /// see [Attachment.message]
   static final message =
-      QueryRelationToOne<Attachment, Message>(_entities[0].properties[12]);
+      QueryRelationToOne<Attachment, Message>(_entities[0].properties[11]);
 
   /// see [Attachment.dbMetadata]
   static final dbMetadata =
-      QueryStringProperty<Attachment>(_entities[0].properties[13]);
+      QueryStringProperty<Attachment>(_entities[0].properties[12]);
 }
 
 /// [Chat] entity fields to define ObjectBox queries.
@@ -1930,6 +1927,10 @@ class ThemeStruct_ {
   /// see [ThemeStruct.dbThemeData]
   static final dbThemeData =
       QueryStringProperty<ThemeStruct>(_entities[7].properties[3]);
+
+  /// see [ThemeStruct.googleFont]
+  static final googleFont =
+      QueryStringProperty<ThemeStruct>(_entities[7].properties[4]);
 }
 
 /// [Contact] entity fields to define ObjectBox queries.

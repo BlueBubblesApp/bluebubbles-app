@@ -1,10 +1,11 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/models/models.dart' hide PlatformFile;
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
@@ -168,6 +169,82 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                 ],
               ),
+              if (!kIsWeb)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Sounds"),
+              if (!kIsWeb)
+                Obx(() => SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    if (ss.settings.sendSoundPath.value == null)
+                      SettingsTile(
+                        title: "Add Send Sound",
+                        subtitle: "Adds a sound to be played when sending a message",
+                        onTap: () async {
+                          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio, withData: true);
+                          if (result != null) {
+                            PlatformFile platformFile = result.files.first;
+                            String path = "${fs.appDocDir.path}/sounds/${"send-"}${platformFile.name}";
+                            await File(path).create(recursive: true);
+                            await File(path).writeAsBytes(platformFile.bytes!);
+                            ss.settings.sendSoundPath.value = path;
+                            ss.saveSettings();
+                          }
+                        },
+                      ),
+                    if (ss.settings.sendSoundPath.value != null)
+                      SettingsTile(
+                        title: "Delete Send Sound",
+                        onTap: () async {
+                          File file = File(ss.settings.sendSoundPath.value!);
+                          if (await file.exists()) {
+                            await file.delete();
+                          }
+                          ss.settings.sendSoundPath.value = null;
+                          ss.saveSettings();
+                        },
+                      ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                    if (ss.settings.receiveSoundPath.value == null)
+                      SettingsTile(
+                        title: "Add Receive Sound",
+                        subtitle: "Adds a sound to be played when receiving a message",
+                        onTap: () async {
+                          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio, withData: true);
+                          if (result != null) {
+                            PlatformFile platformFile = result.files.first;
+                            String path = "${fs.appDocDir.path}/sounds/${"receive-"}${platformFile.name}";
+                            await File(path).create(recursive: true);
+                            await File(path).writeAsBytes(platformFile.bytes!);
+                            ss.settings.receiveSoundPath.value = path;
+                            ss.saveSettings();
+                          }
+                        },
+                      ),
+                    if (ss.settings.receiveSoundPath.value != null)
+                      SettingsTile(
+                        title: "Delete Receive Sound",
+                        onTap: () async {
+                          File file = File(ss.settings.receiveSoundPath.value!);
+                          if (await file.exists()) {
+                            await file.delete();
+                          }
+                          ss.settings.receiveSoundPath.value = null;
+                          ss.saveSettings();
+                        },
+                      ),
+                  ]
+                )),
               SettingsHeader(
                   headerColor: headerColor,
                   tileColor: tileColor,

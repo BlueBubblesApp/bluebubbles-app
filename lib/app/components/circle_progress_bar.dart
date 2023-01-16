@@ -47,6 +47,7 @@ class CircleProgressBarState extends OptimizedState<CircleProgressBar> with Sing
     _controller = AnimationController(
       duration: widget.animationDuration ?? Duration(milliseconds: duration),
       vsync: this,
+      animationBehavior: AnimationBehavior.preserve,
     );
 
     curve = CurvedAnimation(

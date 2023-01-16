@@ -20,7 +20,7 @@ class SendButton extends StatefulWidget {
 }
 
 class SendButtonState extends OptimizedState<SendButton> with SingleTickerProviderStateMixin {
-  late final controller = AnimationController(vsync: this, duration: Duration(seconds: ss.settings.sendDelay.value));
+  late final controller = AnimationController(vsync: this, duration: Duration(seconds: ss.settings.sendDelay.value), animationBehavior: AnimationBehavior.preserve);
 
   Color get baseColor => iOS ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface;
 

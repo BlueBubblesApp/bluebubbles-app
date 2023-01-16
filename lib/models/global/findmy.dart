@@ -57,7 +57,7 @@ class FindMy {
   final List<dynamic> audioChannels;
   final bool lostModeCapable;
   final dynamic snd;
-  final int? batteryLevel;
+  final double? batteryLevel;
   final bool? locationEnabled;
   final bool? isConsideredAccessory;
   final Address? address;
@@ -72,7 +72,7 @@ class FindMy {
   final bool? remoteWipe;
   final bool? fmlyShare;
   final bool? thisDevice;
-  final bool? lostDevice;
+  final dynamic lostDevice;
   final bool? lostModeEnabled;
   final String? deviceDisplayName;
   final List<dynamic>? safeLocations;
@@ -93,7 +93,7 @@ class FindMy {
   final bool? deviceWithYou;
   final int? maxMsgChar;
   final String? deviceClass;
-  final bool? crowdSourcedLocation;
+  final dynamic crowdSourcedLocation;
 
   factory FindMy.fromJson(Map<String, dynamic> json) => FindMy(
     deviceModel: json["deviceModel"],
@@ -102,10 +102,10 @@ class FindMy {
     itemGroup: json["itemGroup"],
     id: json["id"],
     batteryStatus: json["batteryStatus"],
-    audioChannels: json["audioChannels"],
+    audioChannels: json["audioChannels"] ?? [],
     lostModeCapable: json["lostModeCapable"],
     snd: json["snd"],
-    batteryLevel: json["batteryLevel"],
+    batteryLevel: json["batteryLevel"]?.toDouble(),
     locationEnabled: json["locationEnabled"],
     isConsideredAccessory: json["isConsideredAccessory"],
     address: json["address"] == null ? null : Address.fromJson(json["address"]),
@@ -211,19 +211,19 @@ class Address {
     required this.country,
   });
 
-  final String subAdministrativeArea;
-  final String label;
-  final String streetAddress;
-  final String countryCode;
-  final String stateCode;
-  final String administrativeArea;
-  final String streetName;
+  final String? subAdministrativeArea;
+  final String? label;
+  final String? streetAddress;
+  final String? countryCode;
+  final String? stateCode;
+  final String? administrativeArea;
+  final String? streetName;
   final List<String> formattedAddressLines;
-  final String mapItemFullAddress;
-  final String fullThroroughfare;
+  final String? mapItemFullAddress;
+  final String? fullThroroughfare;
   final List<dynamic> areaOfInterest;
-  final String locality;
-  final String country;
+  final String? locality;
+  final String? country;
 
   factory Address.fromJson(Map<String, dynamic> json) => Address(
     subAdministrativeArea: json["subAdministrativeArea"],
@@ -233,10 +233,10 @@ class Address {
     stateCode: json["stateCode"],
     administrativeArea: json["administrativeArea"],
     streetName: json["streetName"],
-    formattedAddressLines: json["formattedAddressLines"].cast<String>(),
+    formattedAddressLines: json["formattedAddressLines"]?.cast<String>() ?? <String>[],
     mapItemFullAddress: json["mapItemFullAddress"],
     fullThroroughfare: json["fullThroroughfare"],
-    areaOfInterest: json["areaOfInterest"],
+    areaOfInterest: json["areaOfInterest"] ?? [],
     locality: json["locality"],
     country: json["country"],
   );
@@ -273,27 +273,27 @@ class Location {
     required this.locationFinished,
   });
 
-  final String positionType;
-  final int verticalAccuracy;
-  final double longitude;
-  final int floorLevel;
-  final bool isInaccurate;
-  final bool isOld;
-  final int horizontalAccuracy;
-  final double latitude;
-  final int timeStamp;
-  final int altitude;
-  final bool locationFinished;
+  final String? positionType;
+  final int? verticalAccuracy;
+  final double? longitude;
+  final int? floorLevel;
+  final bool? isInaccurate;
+  final bool? isOld;
+  final double? horizontalAccuracy;
+  final double? latitude;
+  final int? timeStamp;
+  final int? altitude;
+  final bool? locationFinished;
 
   factory Location.fromJson(Map<String, dynamic> json) => Location(
     positionType: json["positionType"],
     verticalAccuracy: json["verticalAccuracy"],
-    longitude: json["longitude"],
+    longitude: json["longitude"]?.toDouble(),
     floorLevel: json["floorLevel"],
     isInaccurate: json["isInaccurate"],
     isOld: json["isOld"],
-    horizontalAccuracy: json["horizontalAccuracy"],
-    latitude: json["latitude"],
+    horizontalAccuracy: json["horizontalAccuracy"]?.toDouble(),
+    latitude: json["latitude"]?.toDouble(),
     timeStamp: json["timeStamp"],
     altitude: json["altitude"],
     locationFinished: json["locationFinished"],

@@ -60,6 +60,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
+      animationBehavior: AnimationBehavior.preserve,
     );
     controller.forward();
   }
@@ -236,6 +237,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
             popPeekView();
           },
           child: ListTile(
+            mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.isPinned! ? "Unpin" : "Pin",
@@ -258,6 +260,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
             popPeekView();
           },
           child: ListTile(
+            mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
@@ -280,6 +283,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
             popPeekView();
           },
           child: ListTile(
+            mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
@@ -302,6 +306,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
             popPeekView();
           },
           child: ListTile(
+            mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.isArchived! ? 'Unarchive' : 'Archive',
@@ -325,6 +330,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
             popPeekView();
           },
           child: ListTile(
+            mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               'Delete',

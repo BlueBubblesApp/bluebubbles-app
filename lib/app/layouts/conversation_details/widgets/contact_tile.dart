@@ -2,7 +2,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_pic
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
@@ -11,6 +11,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:universal_io/io.dart';
 
 class ContactTile extends StatelessWidget {
   final Handle handle;
@@ -34,7 +35,9 @@ class ContactTile extends StatelessWidget {
     final child = InkWell(
       onLongPress: () {
         Clipboard.setData(ClipboardData(text: handle.address));
-        showSnackbar('Copied', 'Address copied to clipboard');
+        if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+          showSnackbar("Copied", "Address copied to clipboard!");
+        }
       },
       onTap: () async {
         if (contact == null) {
@@ -45,6 +48,7 @@ class ContactTile extends StatelessWidget {
         }
       },
       child: ListTile(
+        mouseCursor: MouseCursor.defer,
         title: RichText(
           text: TextSpan(
             children: MessageHelper.buildEmojiText(
@@ -145,9 +149,7 @@ class ContactTile extends StatelessWidget {
               http.chatParticipant("remove", chat.guid, handle.address).then((response) async {
                 Get.back();
                 Logger.info("Removed participant ${handle.address}");
-                Chat updatedChat = Chat.fromMap(response.data["data"]);
-                updatedChat.handles.addAll(updatedChat.participants);
-                updatedChat.save();
+                showSnackbar("Notice", "Removed participant from chat!");
               }).catchError((err) {
                 Logger.error("Failed to remove participant ${handle.address}");
                 late final String error;

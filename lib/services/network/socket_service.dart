@@ -96,6 +96,7 @@ class SocketService extends GetxService {
 
   void reconnect() {
     if (isNullOrEmpty(serverAddress)!) return;
+    state.value = SocketState.connecting;
     socket.connect();
   }
 

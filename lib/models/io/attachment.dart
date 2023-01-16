@@ -26,6 +26,7 @@ class Attachment {
   int? totalBytes;
   int? height;
   int? width;
+  @Transient()
   Uint8List? bytes;
   String? webUrl;
 

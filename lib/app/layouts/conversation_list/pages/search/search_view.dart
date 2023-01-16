@@ -241,7 +241,7 @@ class SearchViewState extends OptimizedState<SearchView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
                 child: ToggleButtons(
-                  constraints: BoxConstraints(minWidth: (context.width - 35) / 2),
+                  constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
                   fillColor: context.theme.colorScheme.primary.withOpacity(0.2),
                   splashColor: context.theme.colorScheme.primary.withOpacity(0.2),
                   children: [
@@ -348,6 +348,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                     ) : null,
                   ),
                   child: ListTile(
+                    mouseCursor: MouseCursor.defer,
                     title: RichText(
                       text: TextSpan(
                         children: MessageHelper.buildEmojiText(

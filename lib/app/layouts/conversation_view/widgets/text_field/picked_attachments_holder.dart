@@ -121,6 +121,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               widget.controller!.emojiMatches.clear();
                             },
                             child: Obx(() => ListTile(
+                                mouseCursor: MouseCursor.defer,
                                 dense: true,
                                 selectedTileColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
                                 selected: widget.controller!.emojiSelectedIndex.value == index,

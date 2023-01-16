@@ -65,6 +65,8 @@ class Settings {
   final RxBool cancelQueuedMessages = false.obs;
   final RxBool repliesToPrevious = false.obs;
   final RxnString localhostPort = RxnString(null);
+  final RxnString sendSoundPath = RxnString();
+  final RxnString receiveSoundPath = RxnString();
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -103,7 +105,7 @@ class Settings {
   final RxInt pinRowsPortrait = RxInt(3);
   final RxInt pinColumnsPortrait = RxInt(3);
   final RxInt pinRowsLandscape = RxInt(1);
-  final RxInt pinColumnsLandscape = RxInt(6);
+  final RxInt pinColumnsLandscape = RxInt(4);
 
   final RxInt maxAvatarsInGroupWidget = RxInt(4);
 
@@ -147,6 +149,8 @@ class Settings {
         ss.prefs.setDouble(key, value);
       } else if (value is List) {
         ss.prefs.setString(key, jsonEncode(value));
+      } else if (value == null) {
+        ss.prefs.remove(key);
       }
     });
     return this;
@@ -224,6 +228,8 @@ class Settings {
       'cancelQueuedMessages': cancelQueuedMessages.value,
       'repliesToPrevious': repliesToPrevious.value,
       'useLocalhost': localhostPort.value,
+      'sendSoundPath': sendSoundPath.value,
+      'receiveSoundPath': receiveSoundPath.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -326,6 +332,8 @@ class Settings {
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     ss.settings.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     ss.settings.localhostPort.value = map['useLocalhost'];
+    ss.settings.sendSoundPath.value = map['sendSoundPath'];
+    ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -358,11 +366,11 @@ class Settings {
     ss.settings.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     ss.settings.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     ss.settings.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
-    ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
+    ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    ss.settings.selectedActionIndices.value = map['selectedActionIndices'].cast<int>() ?? [0, 1, 2, 3, 4];
-    ss.settings.actionList.value = map['actionList'].cast<String>() ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
+    ss.settings.selectedActionIndices.value = map['selectedActionIndices']?.cast<int>() ?? [0, 1, 2, 3, 4];
+    ss.settings.actionList.value = map['actionList']?.cast<String>() ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
     ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
@@ -432,6 +440,8 @@ class Settings {
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     s.localhostPort.value = map['useLocalhost'];
+    s.sendSoundPath.value = map['sendSoundPath'];
+    s.receiveSoundPath.value = map['recieveSoundPath'];
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -464,7 +474,7 @@ class Settings {
     s.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     s.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
-    s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
+    s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     s.selectedActionIndices.value = (map['selectedActionIndices'] != null ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>();

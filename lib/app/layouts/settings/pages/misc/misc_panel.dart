@@ -2,7 +2,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -239,9 +239,9 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           onChangeEnd: (double val) {
                             saveSettings();
                             http.dio = Dio(BaseOptions(
-                              connectTimeout: const Duration(milliseconds: 15000),
-                              receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
-                              sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+                              connectTimeout: 15000,
+                              receiveTimeout: ss.settings.apiTimeout.value,
+                              sendTimeout: ss.settings.apiTimeout.value,
                             ));
                             http.dio.interceptors.add(ApiInterceptor());
                           },
@@ -346,7 +346,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             ]);
                           },
                           initialVal: ss.settings.allowUpsideDownRotation.value,
-                          title: "Alllow Upside-Down Rotation",
+                          title: "Allow Upside-Down Rotation",
                           backgroundColor: tileColor,
                         )),
                   if (Platform.isAndroid)

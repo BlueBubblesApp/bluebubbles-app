@@ -125,12 +125,11 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       /// Fetch and match handles
-      final handles =
-          handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+      final chat = chatBox.get(chatId);
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (handles.isNotEmpty && message.handleId != 0) {
-          Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+        if (chat!.participants.isNotEmpty && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
           if (handle == null && message.originalROWID != null) {
             messages.remove(message);
             i--;
@@ -444,26 +443,7 @@ class Chat {
       }
       dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
-        if (handles.isEmpty && participants.isNotEmpty) {
-          handles.addAll(participants);
-        }
         id = chatBox.put(this);
-        final _chat = chatBox.get(id!);
-        if (handles.isNotEmpty) {
-          if (_chat!.handles.length > handles.length) {
-            final remove = List<Handle>.from(_chat.handles.where((e) => handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-            for (Handle e in remove) {
-              _chat.handles.remove(e);
-            }
-            _chat.handles.applyToDb();
-          } else if (_chat.handles.length < handles.length) {
-            final add = List<Handle>.from(handles.where((e) => _chat.handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
-            for (Handle e in add) {
-              _chat.handles.add(e);
-            }
-            _chat.handles.applyToDb();
-          }
-        }
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -725,11 +705,10 @@ class Chat {
         ..offset = offset;
       final messages = query.find();
       query.close();
-      final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (handles.isNotEmpty && message.handleId != 0) {
-          Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+        if (chat.participants.isNotEmpty && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
           if (handle == null) {
             messages.remove(message);
             i--;

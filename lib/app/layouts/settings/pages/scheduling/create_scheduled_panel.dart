@@ -1,6 +1,5 @@
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/app/components/custom/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -8,8 +7,9 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
@@ -30,6 +30,7 @@ class CreateScheduledMessage extends StatefulWidget {
 class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage> {
   late final TextEditingController messageController = TextEditingController(text: widget.existing?.payload.message);
   final FocusNode messageNode = FocusNode();
+  late final TextEditingController numberController = TextEditingController(text: widget.existing?.schedule.interval?.toString() ?? '1');
 
   late String selectedChat = widget.existing?.payload.chatGuid ?? chats.chats.first.guid;
   late String schedule = widget.existing?.schedule.type ?? "once";
@@ -48,6 +49,12 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
        } else if (isEmpty) {
          isEmpty = false;
          setState(() {});
+       }
+     });
+     numberController.addListener(() {
+       final value = int.tryParse(numberController.text) ?? 1;
+       if (interval != value) {
+         setState(() => interval = value);
        }
      });
   }
@@ -172,7 +179,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                 ),
                 Padding(
                   padding: const EdgeInsets.all(15.0),
-                  child: CustomCupertinoTextField(
+                  child: TextField(
                     textCapitalization: TextCapitalization.sentences,
                     focusNode: messageNode,
                     autocorrect: true,
@@ -181,21 +188,37 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                     keyboardType: TextInputType.multiline,
                     maxLines: 14,
                     minLines: 1,
-                    placeholder: "Message",
-                    padding: EdgeInsets.all(iOS ? 10 : 12.5),
-                    placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                     textInputAction: TextInputAction.done,
                     cursorColor: context.theme.colorScheme.primary,
                     cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: context.theme.colorScheme.outline),
-                      borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
+                      isDense: true,
+                      isCollapsed: true,
+                      hintText: "Message",
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: context.theme.colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                      ),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: context.theme.colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: context.theme.colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(samsung ? 25 : 10)),
+                      ),
+                      fillColor: Colors.transparent,
+                      hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     ),
-                    onLongPressStart: () {
-                      Feedback.forLongPress(context);
-                    },
                     onTap: () {
                       HapticFeedback.selectionClick();
                     },
@@ -241,10 +264,25 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                             padding: const EdgeInsets.only(left: 15.0),
                             child: Text("Repeat every:", style: context.theme.textTheme.bodyLarge!),
                           ),
+                          if (kIsWeb || kIsDesktop)
+                            const Spacer(),
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                              child: NumberPicker(
+                              child: kIsWeb || kIsDesktop ? Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 5.0),
+                                child: TextField(
+                                  controller: numberController,
+                                  decoration: const InputDecoration(
+                                    labelText: "1-100",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.allow(RegExp(r'^[1-9][0-9]?$|^100$')),
+                                  ],
+                                ),
+                              ) : NumberPicker(
                                 value: interval,
                                 minValue: 1,
                                 maxValue: 100,

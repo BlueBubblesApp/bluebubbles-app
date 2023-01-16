@@ -70,6 +70,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
                                 itemCount: contacts.length,
                                 itemBuilder: (context, index) {
                                   return ListTile(
+                                    mouseCursor: MouseCursor.defer,
                                     title: Text(contacts[index].item2),
                                     subtitle: Text(contacts[index].item1),
                                     onTap: () {
@@ -128,10 +129,6 @@ void showAddParticipant(BuildContext context, Chat chat) {
               if (response.statusCode == 200) {
                 Get.back();
                 Get.back();
-                final _chat = Chat.fromMap(response.data['data']);
-                _chat.handles.addAll(_chat.participants);
-                chat = _chat.merge(chat);
-                chat.save();
                 showSnackbar("Notice", "Added ${participantController.text} successfully!");
               } else {
                 Get.back();

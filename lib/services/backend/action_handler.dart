@@ -12,11 +12,6 @@ import 'package:universal_io/io.dart';
 
 ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>() : Get.put(ActionHandler());
 
-Future<void> saveFileIsolate(Tuple2<String, Uint8List> data) async {
-  final file = await File(data.item1).create(recursive: true);
-  await file.writeAsBytes(data.item2);
-}
-
 class ActionHandler extends GetxService {
   final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
   final List<String> outOfOrderTempGuids = [];
@@ -139,7 +134,8 @@ class ActionHandler extends GetxService {
     // Save the attachment to storage and DB
     if (!kIsWeb) {
       String pathName = "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
-      await compute(saveFileIsolate, Tuple2(pathName, attachment.bytes!));
+      final file = await File(pathName).create(recursive: true);
+      await file.writeAsBytes(attachment.bytes!);
     }
     await c.addMessage(m);
   }
@@ -149,8 +145,8 @@ class ActionHandler extends GetxService {
     final attachment = m.attachments.first!;
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
-    http.sendAttachmentBytes(c.guid, attachment.guid!, attachment.bytes!, attachment.transferName!,
-        onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length
+    http.sendAttachment(c.guid, attachment.guid!, PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: attachment.path, size: attachment.totalBytes ?? 0),
+      onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
 
@@ -227,14 +223,7 @@ class ActionHandler extends GetxService {
     // Gets the chat from the db or server (if new)
     c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
     // Get the message handle
-    final handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId);
-    if (handle != null) {
-      m.handleId = handle.id;
-      m.handle = handle;
-    }
-    if (m.otherHandle != null) {
-      m.otherHandle = Handle.findOne(originalROWID: m.otherHandle)?.id;
-    }
+    m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId);
     // Display notification if needed and save everything to DB
     if (!ls.isAlive) {
       await MessageHelper.handleNotification(m, c);

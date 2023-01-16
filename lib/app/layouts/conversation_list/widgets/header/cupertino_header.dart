@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_vi
 import 'package:bluebubbles/app/wrappers/fade_on_scroll.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,7 +20,7 @@ class CupertinoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
         ? 20
-        : kIsDesktop
+        : kIsDesktop || kIsWeb
         ? 40
         : kToolbarHeight + 30;
 
@@ -134,7 +135,7 @@ class CupertinoMiniHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
         ? 20
-        : kIsDesktop
+        : kIsDesktop || kIsWeb
         ? 40
         : kToolbarHeight + 30;
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -154,6 +155,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                                     finalName = json[index]['name'].toString();
                                                   }
                                                   return ListTile(
+                                                    mouseCursor: MouseCursor.defer,
                                                     title: Text(finalName, style: context.theme.textTheme.bodyLarge),
                                                     onTap: () {
                                                       Settings.updateFromMap(json[index]);
@@ -172,7 +174,9 @@ class BackupRestoreDialog extends StatelessWidget {
                               ),
                             )
                         );
-                      } catch (_) {
+                      } catch (e, s) {
+                        Logger.error(e);
+                        Logger.error(s);
                         Get.back();
                         showSnackbar("Error", "Something went wrong");
                       }
@@ -292,6 +296,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                                     physics: const NeverScrollableScrollPhysics(),
                                                     itemBuilder: (context, index) {
                                                       return ListTile(
+                                                        mouseCursor: MouseCursor.defer,
                                                         title: Text(json[index]['name'], style: context.theme.textTheme.bodyLarge),
                                                         onTap: () async {
                                                           if (!json[index].containsKey('data')) {
@@ -315,7 +320,9 @@ class BackupRestoreDialog extends StatelessWidget {
                                   ),
                                 )
                             );
-                          } catch (_) {
+                          } catch (e, s) {
+                            Logger.error(e);
+                            Logger.error(s);
                             Get.back();
                             showSnackbar("Error", "Something went wrong");
                           }
@@ -436,7 +443,9 @@ class BackupRestoreDialog extends StatelessWidget {
                       Settings.updateFromMap(json);
                       Get.back();
                       showSnackbar("Success", "Settings restored successfully");
-                    } catch (_) {
+                    } catch (e, s) {
+                      Logger.error(e);
+                      Logger.error(s);
                       Get.back();
                       showSnackbar("Error", "Something went wrong");
                     }
@@ -555,7 +564,9 @@ class BackupRestoreDialog extends StatelessWidget {
                         }
                         Get.back();
                         showSnackbar("Success", "Theming restored successfully");
-                      } catch (_) {
+                      } catch (e, s) {
+                        Logger.error(e);
+                        Logger.error(s);
                         Get.back();
                         showSnackbar("Error", "Something went wrong");
                       }

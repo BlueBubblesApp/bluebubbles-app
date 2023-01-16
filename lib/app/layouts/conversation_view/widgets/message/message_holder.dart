@@ -17,7 +17,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/t
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/timestamp_separator.dart';
-import 'package:bluebubbles/app/components/custom/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -64,7 +63,12 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
   Chat get chat => widget.cvController.chat;
   MessagesService get service => ms(widget.cvController.chat.guid);
-  bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.isMinBigSurSync && chat.isIMessage && !widget.isReplyThread;
+  bool get canSwipeToReply => ss.settings.enablePrivateAPI.value
+      && ss.isMinBigSurSync
+      && chat.isIMessage
+      && !widget.isReplyThread
+      && !message.guid!.startsWith("temp")
+      && !message.guid!.startsWith("error");
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
       || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
   bool get showAvatar => (!iOS || chat.isGroup) && !samsung;
@@ -93,6 +97,13 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       replyOffsets = List.generate(messageParts.length, (_) => 0.0.obs);
       keys = List.generate(messageParts.length, (_) => GlobalKey());
     }
+
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 != 'refresh-avatar') return;
+      if (event.item2[0] != message.handle?.address) return;
+      message.handle?.color = event.item2[1];
+      setState(() {});
+    });
   }
 
   @override
@@ -195,7 +206,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           if (e.isEdited)
                             Padding(
                               padding: showAvatar || ss.settings.alwaysShowAvatars.value
-                                  ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                  ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                               child: Obx(() => AnimatedSize(
                                 duration: const Duration(milliseconds: 250),
                                 alignment: Alignment.bottomCenter,
@@ -260,7 +271,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
                             Padding(
                               padding: showAvatar || ss.settings.alwaysShowAvatars.value
-                                  ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                  ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                               child: MessageSender(olderMessage: olderMessage, message: message),
                             ),
                           // add a box to account for height of reactions
@@ -269,7 +280,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           if (!iOS && index == 0 && !widget.isReplyThread
                               && olderMessage != null
                               && message.threadOriginatorGuid != null
-                              && message.showUpperMessage(olderMessage!)
                               && replyTo != null
                               && getActiveMwc(replyTo!.guid!) != null)
                             Padding(
@@ -307,7 +317,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 ),
                               Padding(
                                 padding: (showAvatar || ss.settings.alwaysShowAvatars.value) && !(message.isGroupEvent || e.isUnsent)
-                                    ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                    ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                                 child: DecoratedBox(
                                   decoration: iOS && !widget.isReplyThread && replyTo != null && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
                                       || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null))
@@ -437,7 +447,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           minHeight: 40,
                                                                         ),
                                                                         padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
-                                                                        child: CustomCupertinoTextField(
+                                                                        child: TextField(
                                                                           textCapitalization: TextCapitalization.sentences,
                                                                           autocorrect: true,
                                                                           focusNode: editStuff.item4,
@@ -447,9 +457,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           keyboardType: TextInputType.multiline,
                                                                           maxLines: 14,
                                                                           minLines: 1,
-                                                                          placeholder: "Edited Message",
-                                                                          padding: EdgeInsets.all(iOS ? 10 : 12.5),
-                                                                          placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                                                                           selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                                                                           autofocus: true,
                                                                           enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
@@ -458,75 +465,96 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                               : TextInputAction.newline,
                                                                           cursorColor: context.theme.extension<BubbleText>()!.bubbleText.color,
                                                                           cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
-                                                                          decoration: BoxDecoration(
-                                                                            border: Border.fromBorderSide(BorderSide(
-                                                                              color: context.theme.colorScheme.outline,
-                                                                              width: 1.5,
-                                                                            )),
-                                                                            borderRadius: BorderRadius.circular(20),
+                                                                          decoration: InputDecoration(
+                                                                            contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
+                                                                            isDense: true,
+                                                                            isCollapsed: true,
+                                                                            hintText: "Edited Message",
+                                                                            enabledBorder: OutlineInputBorder(
+                                                                              borderSide: BorderSide(
+                                                                                  color: context.theme.colorScheme.outline,
+                                                                                  width: 1.5
+                                                                              ),
+                                                                              borderRadius: BorderRadius.circular(20),
+                                                                            ),
+                                                                            border: OutlineInputBorder(
+                                                                              borderSide: BorderSide(
+                                                                                color: context.theme.colorScheme.outline,
+                                                                                width: 1.5
+                                                                              ),
+                                                                              borderRadius: BorderRadius.circular(20),
+                                                                            ),
+                                                                            focusedBorder: OutlineInputBorder(
+                                                                              borderSide: BorderSide(
+                                                                                  color: context.theme.colorScheme.outline,
+                                                                                  width: 1.5
+                                                                              ),
+                                                                              borderRadius: BorderRadius.circular(20),
+                                                                            ),
+                                                                            fillColor: Colors.transparent,
+                                                                            hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
+                                                                            prefixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 40),
+                                                                            prefixIcon: IconButton(
+                                                                              constraints: const BoxConstraints(maxWidth: 27),
+                                                                              padding: const EdgeInsets.only(left: 5),
+                                                                              visualDensity: VisualDensity.compact,
+                                                                              icon: Icon(
+                                                                                CupertinoIcons.xmark_circle_fill,
+                                                                                color: context.theme.colorScheme.outline,
+                                                                                size: 22,
+                                                                              ),
+                                                                              onPressed: () {
+                                                                                widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
+                                                                              },
+                                                                              iconSize: 22,
+                                                                              style: const ButtonStyle(
+                                                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                                                visualDensity: VisualDensity.compact,
+                                                                              ),
+                                                                            ),
+                                                                            suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 40),
+                                                                            suffixIcon: ValueListenableBuilder(
+                                                                              valueListenable: editStuff.item3,
+                                                                              builder: (context, value, _) {
+                                                                                return Padding(
+                                                                                  padding: const EdgeInsets.all(3.0),
+                                                                                  child: TextButton(
+                                                                                    style: TextButton.styleFrom(
+                                                                                      backgroundColor: Colors.transparent,
+                                                                                      shape: const CircleBorder(),
+                                                                                      padding: const EdgeInsets.all(0),
+                                                                                      maximumSize: const Size(27, 27),
+                                                                                      minimumSize: const Size(27, 27),
+                                                                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                                                    ),
+                                                                                    child: AnimatedContainer(
+                                                                                      duration: const Duration(milliseconds: 150),
+                                                                                      constraints: const BoxConstraints(minHeight: 27, minWidth: 27),
+                                                                                      decoration: BoxDecoration(
+                                                                                        shape: iOS ? BoxShape.circle : BoxShape.rectangle,
+                                                                                        color: !iOS ? null : editStuff.item3.text.isNotEmpty ? Colors.white : context.theme.colorScheme.outline,
+                                                                                      ),
+                                                                                      alignment: Alignment.center,
+                                                                                      child: Icon(
+                                                                                        iOS ? CupertinoIcons.arrow_up : Icons.send_outlined,
+                                                                                        color: !iOS ? context.theme.extension<BubbleText>()!.bubbleText.color : context.theme.colorScheme.bubble(context, chat.isIMessage),
+                                                                                        size: iOS ? 18 : 26,
+                                                                                      ),
+                                                                                    ),
+                                                                                    onPressed: () {
+                                                                                      completeEdit(editStuff.item3.text, e.part);
+                                                                                    },
+                                                                                  ),
+                                                                                );
+                                                                              },
+                                                                            ),
                                                                           ),
-                                                                          onLongPressStart: () {
-                                                                            Feedback.forLongPress(context);
-                                                                          },
                                                                           onTap: () {
                                                                             HapticFeedback.selectionClick();
                                                                           },
                                                                           onSubmitted: (String value) {
                                                                             completeEdit(value, e.part);
                                                                           },
-                                                                          prefix: IconButton(
-                                                                            constraints: const BoxConstraints(maxWidth: 27),
-                                                                            padding: const EdgeInsets.only(left: 5),
-                                                                            visualDensity: VisualDensity.compact,
-                                                                            icon: Icon(
-                                                                              CupertinoIcons.xmark_circle_fill,
-                                                                              color: context.theme.colorScheme.outline,
-                                                                              size: 22,
-                                                                            ),
-                                                                            onPressed: () {
-                                                                              widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
-                                                                            },
-                                                                            iconSize: 22,
-                                                                            style: const ButtonStyle(
-                                                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                                              visualDensity: VisualDensity.compact,
-                                                                            ),
-                                                                          ),
-                                                                          suffix: ValueListenableBuilder(
-                                                                            valueListenable: editStuff.item3,
-                                                                            builder: (context, value, _) {
-                                                                              return Padding(
-                                                                                padding: const EdgeInsets.all(3.0),
-                                                                                child: TextButton(
-                                                                                  style: TextButton.styleFrom(
-                                                                                    backgroundColor: Colors.transparent,
-                                                                                    shape: const CircleBorder(),
-                                                                                    padding: const EdgeInsets.all(0),
-                                                                                    maximumSize: const Size(27, 27),
-                                                                                    minimumSize: const Size(27, 27),
-                                                                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                                                  ),
-                                                                                  child: AnimatedContainer(
-                                                                                    duration: const Duration(milliseconds: 150),
-                                                                                    constraints: const BoxConstraints(minHeight: 27, minWidth: 27),
-                                                                                    decoration: BoxDecoration(
-                                                                                      shape: iOS ? BoxShape.circle : BoxShape.rectangle,
-                                                                                      color: !iOS ? null : editStuff.item3.text.isNotEmpty ? Colors.white : context.theme.colorScheme.outline,
-                                                                                    ),
-                                                                                    alignment: Alignment.center,
-                                                                                    child: Icon(
-                                                                                      iOS ? CupertinoIcons.arrow_up : Icons.send_outlined,
-                                                                                      color: !iOS ? context.theme.extension<BubbleText>()!.bubbleText.color : context.theme.colorScheme.bubble(context, chat.isIMessage),
-                                                                                      size: iOS ? 18 : 26,
-                                                                                    ),
-                                                                                  ),
-                                                                                  onPressed: () {
-                                                                                    completeEdit(editStuff.item3.text, e.part);
-                                                                                  },
-                                                                                ),
-                                                                              );
-                                                                            },
-                                                                          ),
                                                                         ),
                                                                       ),
                                                                     )
@@ -580,7 +608,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           // message properties (replies, edits, effect)
                           Padding(
                             padding: showAvatar || ss.settings.alwaysShowAvatars.value
-                                ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                                ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                             child: MessageProperties(
                               globalKey: keys.length > index ? keys[index] : null,
                               parentController: controller,

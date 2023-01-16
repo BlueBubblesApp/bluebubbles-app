@@ -80,7 +80,7 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  metadata?.title ?? "Unknown Site",
+                  metadata?.title ?? siteText ?? message.text!,
                   style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

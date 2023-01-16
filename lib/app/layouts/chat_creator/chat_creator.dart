@@ -13,7 +13,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -106,7 +106,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     });
 
     updateObx(() {
-      if (widget.initialAttachments.isEmpty) {
+      if (widget.initialAttachments.isEmpty && !kIsWeb) {
         final query = (contactBox.query()..order(Contact_.displayName)).build();
         contacts = query.find();
         filteredContacts = List<Contact>.from(contacts);
@@ -214,7 +214,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: context.theme.colorScheme.background,
+        backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
         appBar: PreferredSize(
           preferredSize: Size(ns.width(context), 50),
           child: AppBar(
@@ -335,7 +335,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             ),
                           ),
                           ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: context.width - 50),
+                            constraints: BoxConstraints(maxWidth: ns.width(context) - 50),
                             child: FocusScope(
                               child: Focus(
                                 onKey: (_, ev) {

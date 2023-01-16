@@ -33,8 +33,8 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
   @override
   void initState() {
     super.initState();
-    _titleController = AnimationController(duration: const Duration(seconds: 1), vsync: this);
-    _subtitleController = AnimationController(duration: const Duration(seconds: 1), vsync: this);
+    _titleController = AnimationController(duration: const Duration(seconds: 1), vsync: this, animationBehavior: AnimationBehavior.preserve);
+    _subtitleController = AnimationController(duration: const Duration(seconds: 1), vsync: this, animationBehavior: AnimationBehavior.preserve);
 
     opacityTitle = Tween<double>(begin: 0, end: 1)
         .animate(CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));

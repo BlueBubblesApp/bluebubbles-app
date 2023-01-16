@@ -45,6 +45,7 @@ public class ReplyReceiver extends BroadcastReceiver {
         if (intent.getType().equals("reply")) {
             existingId = intent.getExtras().getInt("id");
             chatGuid = intent.getExtras().getString("chatGuid");
+            String messageGuid = intent.getExtras().getString("messageGuid");
 
             // Get the text message in the reply
             Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
@@ -79,6 +80,7 @@ public class ReplyReceiver extends BroadcastReceiver {
             Map<String, Object> params = new HashMap<>();
             params.put("chat", chatGuid);
             params.put("text", replyText);
+            params.put("guid", messageGuid);
 
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", params);

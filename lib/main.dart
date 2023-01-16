@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -43,6 +44,7 @@ import 'package:windows_taskbar/windows_taskbar.dart';
 // todo list desktop
 /// Show notif badges
 
+const databaseVersion = 2;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -209,9 +211,43 @@ Future<Null> initApp(bool bubble) async {
         ss.prefs.setString("selected-light", "Bright White");
         themeBox.putMany(ts.defaultThemes);
       }
+      int version = ss.prefs.getInt('dbVersion') ?? 1;
+
+      migrate() {
+        if (version < databaseVersion) {
+          switch (databaseVersion) {
+            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
+            case 2:
+              Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
+              final messages = messageBox.getAll();
+              if (messages.isNotEmpty) {
+                final handles = handleBox.getAll();
+                Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
+                for (Message m in messages) {
+                  if (m.handleId == 0 || m.handleId == null) continue;
+                  m.handleId = handles.firstWhereOrNull((e) => e.id == m.handleId)?.originalROWID ?? m.handleId;
+                }
+                Logger.info("Final save...", tag: "DB-Migration");
+                messageBox.putMany(messages);
+              }
+              version = 2;
+              migrate.call();
+              return;
+            default:
+              return;
+          }
+        }
+      }
+
+      final Stopwatch s = Stopwatch();
+      s.start();
+      migrate.call();
+      s.stop();
+      Logger.info("Done in ${s.elapsedMilliseconds}ms", tag: "DB-Migration");
     }
 
     /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
+    ss.prefs.setInt('dbVersion', databaseVersion);
     storeStartup.complete();
     ss.getFcmData();
     if (!kIsWeb) {
@@ -537,9 +573,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       ErrorWidget.builder = (FlutterErrorDetails error) {
         Logger.error(error.exception);
         Logger.error("Stacktrace: ${error.stack.toString()}");
-        return Text(
+        return CustomErrorWidget(
           "An unexpected error occurred when rendering.",
-          style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.error)
         );
       };
       /* ----- SERVER VERSION CHECK ----- */
@@ -579,6 +614,17 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         /* ----- WINDOWS NOTIFICATIONS INITIALIZATION ----- */
         if (Platform.isWindows) {
           await localNotifier.setup(appName: "BlueBubbles");
+        }
+
+        /* ----- WINDOW EFFECT INITIALIZATION ----- */
+        if (Platform.isWindows) {
+          await WindowEffects.setEffect(color: context.theme.backgroundColor);
+
+          eventDispatcher.stream.listen((event) async {
+            if (event.item1 == 'theme-update') {
+              await WindowEffects.setEffect(color: context.theme.backgroundColor);
+            }
+          });
         }
       }
 
@@ -630,37 +676,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
 
-    if (kIsDesktop && Platform.isWindows) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-        await WindowEffects.setEffect(color: context.theme.backgroundColor);
-        eventDispatcher.stream.listen((event) async {
-          if (event.item1 == 'theme-update') {
-            await WindowEffects.setEffect(color: context.theme.backgroundColor);
-          }
-
-          if (event.item1 == 'popup-pushed') {
-            bool popup = event.item2;
-            if (popup) {
-              ss.settings.windowEffect.value = WindowEffect.disabled;
-            } else {
-              ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == ss.prefs.getString('window-effect')) ?? WindowEffect.aero;
-            }
-          }
-        });
-      });
-    }
-
-    final Rx<Color> _backgroundColor = (ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
-
-    if (kIsDesktop) {
-      ss.settings.windowEffect.listen((WindowEffect effect) {
-        if (mounted) {
-          _backgroundColor.value =
-          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
-        }
-      });
-    }
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -679,7 +694,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           GoBackIntent: GoBackAction(context),
         },
         child: Obx(() => Scaffold(
-          backgroundColor: _backgroundColor.value,
+          backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
           body: Builder(
             builder: (BuildContext context) {
               if (ss.settings.finishedSetup.value) {

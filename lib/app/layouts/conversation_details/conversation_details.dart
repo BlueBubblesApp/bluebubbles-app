@@ -67,15 +67,17 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
       });
     }
 
-    updateObx(() {
-      fetchAttachments();
-      fetchLinks();
-    });
+    if (!kIsWeb) {
+      updateObx(() {
+        fetchAttachments();
+        fetchLinks();
+      });
+    }
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    if (!kIsWeb) sub.cancel();
     super.dispose();
   }
 
@@ -90,13 +92,13 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
           && e.mimeStart != "image" && e.mimeStart != "video" && !(e.mimeType ?? "").contains("location")).take(24);
       final _locations = value.where((e) => (e.mimeType ?? "").contains("location")).take(10);
       for (Attachment a in _media) {
-        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == a.message.target?.handleId);
       }
       for (Attachment a in _docs) {
-        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == a.message.target?.handleId);
       }
       for (Attachment a in _locations) {
-        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == a.message.target?.handleId);
       }
       setState(() {
         media = _media.toList();
@@ -189,6 +191,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final addMember = ListTile(
+                    mouseCursor: MouseCursor.defer,
                     title: Text("Add ${iOS ? "Member" : "people"}", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     leading: Container(
                       width: 40 * ss.settings.avatarScale.value,
@@ -219,6 +222,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   if (index == clippedParticipants.length) {
                     if (shouldShowMore) {
                       return ListTile(
+                        mouseCursor: SystemMouseCursors.click,
                         onTap: () {
                           setState(() {
                             showMoreParticipants = !showMoreParticipants;

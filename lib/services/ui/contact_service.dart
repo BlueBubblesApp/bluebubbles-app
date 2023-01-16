@@ -125,7 +125,7 @@ class ContactsService extends GetxService {
     if (!kIsWeb) {
       Handle.bulkSave(handles);
     }
-    if (kIsWeb || kIsDesktop) {
+    if (kIsWeb) {
       contacts = _contacts;
     }
     // only return contacts if things changed (or on web)
@@ -160,9 +160,9 @@ class ContactsService extends GetxService {
         continue;
       }
 
-      // try to match last 11 - 7 digits
+      // try to match last 15 - 7 digits
       for (String p in numericPhones) {
-        final matchLengths = [11, 10, 9, 8, 7];
+        final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
         if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
           handleMatches.add(h);
           continue;
@@ -259,25 +259,10 @@ class ContactsService extends GetxService {
 
     logger?.call("Fetching contacts (with avatars)...");
     try {
-      http.contacts(withAvatars: true).then((response) async {
-        if (!isNullOrEmpty(response.data['data'])!) {
-          logger?.call("Found contacts!");
-          // desktop, save everything; web, only check with contacts avatars
-          if (!kIsWeb) {
-            for (Map<String, dynamic> map in response.data['data']) {
-              final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
-              final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-              final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-              logger?.call("Parsing contact: $displayName");
-              networkContacts.add(Contact(
-                id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
-                displayName: displayName,
-                emails: emails,
-                phones: phones,
-                avatar: !isNullOrEmpty(map['avatar'])! ? base64Decode(map['avatar'].toString()) : null,
-              ));
-            }
-          } else {
+      if (kIsWeb) {
+        http.contacts(withAvatars: true).then((response) async {
+          if (!isNullOrEmpty(response.data['data'])!) {
+            logger?.call("Found contacts!");
             for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
               final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
               logger?.call("Adding avatar for contact: $displayName");
@@ -311,12 +296,34 @@ class ContactsService extends GetxService {
                 }
               }
             }
+          } else {
+            logger?.call("No contacts found!");
+          }
+          logger?.call("Finished contacts sync (with avatars)");
+        });
+      } else {
+        final response = await http.contacts(withAvatars: true);
+
+        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+          logger?.call("Found contacts!");
+          for (Map<String, dynamic> map in response.data['data']) {
+            final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
+            final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            logger?.call("Parsing contact: $displayName");
+            networkContacts.add(Contact(
+              id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
+              displayName: displayName,
+              emails: emails,
+              phones: phones,
+              avatar: !isNullOrEmpty(map['avatar'])! ? base64Decode(map['avatar'].toString()) : null,
+            ));
           }
         } else {
           logger?.call("No contacts found!");
         }
         logger?.call("Finished contacts sync (with avatars)");
-      });
+      }
     } catch (e, s) {
       logger?.call("Got exception: $e");
       logger?.call(s.toString());

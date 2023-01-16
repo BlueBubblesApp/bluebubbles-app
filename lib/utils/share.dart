@@ -7,6 +7,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:share_plus/share_plus.dart' as sp;
 
 class Share {
@@ -84,16 +85,48 @@ class Share {
     String _attachmentGuid = "temp-${randomString(8)}";
     String fileName = "$_attachmentGuid-CL.loc.vcf";
     final bytes = Uint8List.fromList(utf8.encode(vcfString));
+    final meta = await MetadataFetch.extract("https://maps.apple.com/?ll=${_locationData.latitude},${_locationData.longitude}&q=${_locationData.latitude},${_locationData.longitude}");
+    final url = meta?.image;
+    final title = meta?.title;
 
     await showDialog(
       context: Get.context!,
       builder: (context) => AlertDialog(
         backgroundColor: Get.theme.colorScheme.properSurface,
         title: Text("Send Location?", style: Get.textTheme.titleLarge),
-        /*content: Container(
+        content: Container(
           width: 150,
-          child: LocationWidget(file: pFile, showOpen: false),
-        ),*/
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.network(
+                url!,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, __, ___) {
+                  return const SizedBox.shrink();
+                },
+                frameBuilder: (_, child, frame, __) {
+                  if (frame == null) {
+                    return Center(
+                      heightFactor: 1,
+                      child: buildProgressIndicator(context),
+                    );
+                  } else {
+                    return child;
+                  }
+                },
+              ),
+              const SizedBox(height: 15),
+              Text(
+                title ?? "No location details found",
+                style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(onPressed: () => Get.back(), child: Text("Cancel", style: Get.textTheme.bodyLarge!.copyWith(color: Get.theme.colorScheme.primary))),
           TextButton(

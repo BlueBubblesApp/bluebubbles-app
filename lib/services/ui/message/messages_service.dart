@@ -6,7 +6,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:diox/diox.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
@@ -61,7 +61,7 @@ class MessagesService extends GetxController {
           final messages = event.find();
           event.limit = 0;
           for (Message message in messages) {
-            message.handle = Handle.findOne(id: message.handleId);
+            message.handle = message.getHandle();
             message.attachments = List<Attachment>.from(message.dbAttachments);
             // add this as a reaction if needed, update thread originators and associated messages
             if (message.associatedMessageGuid != null) {

@@ -1,10 +1,12 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class OldThemesDialog extends StatelessWidget {
   OldThemesDialog(this.oldThemes, this.clearOld, {Key? key}) : super(key: key);
@@ -38,6 +40,7 @@ class OldThemesDialog extends StatelessWidget {
                     itemCount: oldThemes.length,
                     itemBuilder: (context, index) {
                       return ListTile(
+                        mouseCursor: MouseCursor.defer,
                         title: Text(
                             oldThemes[index].name ?? "Unknown Theme",
                             style: context.theme.textTheme.bodyLarge),
@@ -61,6 +64,7 @@ class OldThemesDialog extends StatelessWidget {
                                           itemBuilder: (context, index2) {
                                             final hex = oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex;
                                             return ListTile(
+                                                mouseCursor: SystemMouseCursors.click,
                                                 title: Text(
                                                     ThemeColors.Colors.reversed.toList()[index2],
                                                     style: context.theme.textTheme.bodyLarge),
@@ -77,7 +81,9 @@ class OldThemesDialog extends StatelessWidget {
                                                 ),
                                                 onTap: () {
                                                   Clipboard.setData(ClipboardData(text: hex));
-                                                  showSnackbar('Copied', 'Hex code copied to clipboard');
+                                                  if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+                                                    showSnackbar("Copied", "Hex code copied to clipboard!");
+                                                  }
                                                 }
                                             );
                                           },
