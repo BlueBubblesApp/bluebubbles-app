@@ -61,7 +61,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                 preferredSize: const Size.fromHeight(60),
                 child: MaterialHeader(parentController: controller),
               ),
-              backgroundColor: Colors.transparent,
+              backgroundColor: backgroundColor,
               extendBodyBehindAppBar: true,
               floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
                   && !showArchived && !showUnknown

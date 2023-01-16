@@ -50,7 +50,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
       extendBodyBehindAppBar: !showArchived && !showUnknown,
       floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
           && !showArchived

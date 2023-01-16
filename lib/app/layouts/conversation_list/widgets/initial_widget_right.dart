@@ -1,8 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class InitialWidgetRight extends StatefulWidget {
@@ -17,7 +15,7 @@ class _InitialWidgetRightState extends OptimizedState<InitialWidgetRight> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
       extendBodyBehindAppBar: true,
       body: Center(
         child: Container(

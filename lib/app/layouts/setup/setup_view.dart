@@ -84,7 +84,7 @@ class _SetupViewState extends OptimizedState<SetupView> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
         body: SafeArea(
           child: Column(
             children: <Widget>[

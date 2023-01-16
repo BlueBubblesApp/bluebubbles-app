@@ -78,7 +78,7 @@ dependencies:
   file_picker: ^5.0.1
   firebase_dart: ^1.0.10+1
   dio: ^4.0.6
-  quick_notify: ^0.3.0-dev.0
+  quick_notify: ^0.2.0
   qr_flutter:
     git:
       url: https://github.com/theyakka/qr.flutter
