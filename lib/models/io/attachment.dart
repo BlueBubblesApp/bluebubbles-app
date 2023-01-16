@@ -104,9 +104,7 @@ class Attachment {
         }
 
         id = attachmentBox.put(this);
-      } catch (e) {
-        Logger.error(e);
-      }
+      } on UniqueViolationException catch (_) {}
     });
     return this;
   }
