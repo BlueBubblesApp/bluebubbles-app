@@ -147,6 +147,8 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
       samsungSkin: SamsungConversationList(parentController: controller),
     );
 
+    if (controller.showArchivedChats || controller.showUnknownSenders) return child;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value
