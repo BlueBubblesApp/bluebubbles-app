@@ -223,7 +223,7 @@ class ActionHandler extends GetxService {
     // Gets the chat from the db or server (if new)
     c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
     // Get the message handle
-    m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId);
+    m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId) ?? Handle.findOne(originalROWID: m.handleId);
     // Display notification if needed and save everything to DB
     if (!ls.isAlive) {
       await MessageHelper.handleNotification(m, c);
