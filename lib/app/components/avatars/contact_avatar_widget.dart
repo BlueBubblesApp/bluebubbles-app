@@ -214,6 +214,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                   cacheWidth: size.toInt() * 2,
                   filterQuality: FilterQuality.none,
                   fit: BoxFit.cover,
+                  gaplessPlayback: true,
                 ),
               );
             }
