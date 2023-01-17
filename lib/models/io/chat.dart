@@ -444,6 +444,13 @@ class Chat {
       dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
         id = chatBox.put(this);
+        // make sure to add participant relation if its a new chat
+        if (existing == null && participants.isNotEmpty) {
+          final toSave = chatBox.get(id!);
+          toSave!.handles.clear();
+          toSave.handles.addAll(participants);
+          toSave.handles.applyToDb();
+        }
       } on UniqueViolationException catch (_) {}
     });
     return this;
