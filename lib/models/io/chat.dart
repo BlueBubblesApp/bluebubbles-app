@@ -128,8 +128,8 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       final chat = chatBox.get(chatId);
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (chat!.participants.isNotEmpty && message.handleId != 0) {
-          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
+        if (chat!.participants.isNotEmpty && message.handleId != null && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
           if (handle == null && message.originalROWID != null) {
             messages.remove(message);
             i--;
@@ -714,8 +714,8 @@ class Chat {
       query.close();
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (chat.participants.isNotEmpty && message.handleId != 0) {
-          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
+        if (chat.participants.isNotEmpty && message.handleId != null && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
           if (handle == null) {
             messages.remove(message);
             i--;
