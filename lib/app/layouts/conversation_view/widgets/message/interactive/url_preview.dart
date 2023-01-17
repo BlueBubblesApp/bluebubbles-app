@@ -82,11 +82,18 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
             setState(() {});
           }
         } else {
-          MetadataFetch.extract((data.url ?? data.originalUrl)!).then((metadata) {
+          MetadataFetch.extract((data.url ?? data.originalUrl)!).then((metadata) async {
             if (metadata?.image != null) {
               data.imageMetadata = MediaMetadata(size: const Size.square(1), url: metadata!.image);
               widget.message.save();
               setState(() {});
+            } else {
+              final response = await http.dio.get((data.url ?? data.originalUrl)!);
+              if (response.headers.value('content-type')?.startsWith("image/") ?? false) {
+                data.imageMetadata = MediaMetadata(size: const Size.square(1), url: (data.url ?? data.originalUrl)!);
+                widget.message.save();
+                setState(() {});
+              }
             }
           });
         }
