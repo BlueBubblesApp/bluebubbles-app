@@ -110,7 +110,7 @@ class ChatManager extends GetxService {
         chat.handles.applyToDb();
       }
       chat.displayName = updatedChat.displayName;
-      chat.save();
+      chat.save(updateDisplayName: true);
       return updatedChat;
     }
 

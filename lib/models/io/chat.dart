@@ -396,6 +396,7 @@ class Chat {
     bool updateCustomAvatarPath = false,
     bool updateTextFieldText = false,
     bool updateTextFieldAttachments = false,
+    bool updateDisplayName = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -435,6 +436,9 @@ class Chat {
       if (!updateTextFieldAttachments) {
         textFieldAttachments = existing?.textFieldAttachments ?? textFieldAttachments;
       }
+      if (!updateDisplayName) {
+        displayName = existing?.displayName ?? displayName;
+      }
 
       /// Save the chat and add the participants
       for (int i = 0; i < participants.length; i++) {
@@ -463,7 +467,7 @@ class Chat {
       return this;
     }
     displayName = name;
-    save();
+    save(updateDisplayName: true);
     return this;
   }
 
