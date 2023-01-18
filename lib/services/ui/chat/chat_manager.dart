@@ -5,6 +5,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:tuple/tuple.dart';
 
 ChatManager cm = Get.isRegistered<ChatManager>() ? Get.find<ChatManager>() : Get.put(ChatManager());
 
@@ -105,7 +106,7 @@ class ChatManager extends GetxService {
       } else if (chat.handles.length < updatedChat.participants.length) {
         final existingAddresses = chat.participants.map((e) => e.address);
         final newHandle = updatedChat.participants.firstWhere((e) => !existingAddresses.contains(e.address));
-        final handle = Handle.findOne(address: newHandle.address) ?? newHandle.save();
+        final handle = Handle.findOne(addressAndService: Tuple2(newHandle.address, chat.isIMessage ? "iMessage" : "SMS")) ?? newHandle.save();
         chat.handles.add(handle);
         chat.handles.applyToDb();
       }
