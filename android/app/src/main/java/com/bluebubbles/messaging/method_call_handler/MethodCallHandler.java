@@ -5,6 +5,7 @@ import android.app.AlarmManager;
 import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.pm.PackageManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
@@ -138,6 +139,10 @@ public class MethodCallHandler {
             intent.putExtra(Settings.EXTRA_CONVERSATION_ID, channel.getConversationId());
             context.startActivity(intent);
             result.success("");
+        } else if (call.method.equals("check-chromeos")) {
+            PackageManager pm = context.getPackageManager();
+            Boolean chromeOS = pm.hasSystemFeature("org.chromium.arc") || pm.hasSystemFeature("org.chromium.arc.device_management");
+            result.success(chromeOS);
         } else {
             result.notImplemented();
         }

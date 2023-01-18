@@ -41,6 +41,7 @@ class MethodChannelService extends GetxService {
         if (!ls.isBubble) {
           BackgroundIsolate.initialize();
         }
+        chromeOS = await mcs.invokeMethod("check-chromeos") ?? false;
       } catch (_) {}
     }
   }
