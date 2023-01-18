@@ -673,6 +673,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                       );
                       http.createChat(participants, textController.text).then((response) async {
                         Chat newChat = Chat.fromMap(response.data["data"]);
+                        newChat = newChat.save();
                         final saved = await cm.fetchChat(newChat.guid);
                         if (saved == null) {
                           return showSnackbar("Error", "Failed to save chat!");
