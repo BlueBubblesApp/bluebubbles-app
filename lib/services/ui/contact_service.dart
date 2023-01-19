@@ -101,13 +101,13 @@ class ContactsService extends GetxService {
     final handlesToSearch = List<Handle>.from(handles);
     for (Contact c in _contacts) {
       final handles = cs.matchContactToHandles(c, handlesToSearch);
-      final addresses = handles.map((e) => e.address).toList();
+      final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
       if (handles.isNotEmpty) {
-        handlesToSearch.removeWhere((e) => addresses.contains(e.address));
+        handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
 
         // we have changes if the handle doesn't have an associated contact,
         // even if there were no contact changes in the first place
-        final matches = handles.where((e) => addresses.contains(e.address));
+        final matches = handles.where((e) => addressesAndServices.contains(e.uniqueAddressAndService));
         for (Handle h in matches) {
           if (kIsWeb) {
             h.webContact = c;
@@ -244,11 +244,11 @@ class ContactsService extends GetxService {
       final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
       for (Contact c in contacts) {
         final handles = cs.matchContactToHandles(c, handlesToSearch);
-        final addresses = handles.map((e) => e.address).toList();
+        final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
         if (handles.isNotEmpty) {
-          handlesToSearch.removeWhere((e) => addresses.contains(e.address));
+          handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
           for (Handle h in handles) {
-            if (addresses.contains(h.address)) {
+            if (addressesAndServices.contains(h.uniqueAddressAndService)) {
               h.webContact = c;
             }
           }
