@@ -122,7 +122,7 @@ class Handle {
 
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
-        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address);
+        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address && e.service == h.service);
         if (existing != null) {
           h.id = existing.id;
         }
