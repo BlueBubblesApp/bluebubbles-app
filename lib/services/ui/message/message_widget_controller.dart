@@ -127,6 +127,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   List<MessagePart> attributedBodyToMessagePart(AttributedBody body) {
     final mainString = body.string;
     final list = <MessagePart>[];
+    body.runs.sort((a, b) => a.range.first.compareTo(b.range.first));
     body.runs.forEachIndexed((i, e) {
       if (e.attributes?.messagePart == null) return;
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);

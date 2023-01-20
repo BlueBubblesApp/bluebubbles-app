@@ -146,7 +146,7 @@ class MessageHelper {
           bool attachment = false;
           if (message.associatedMessagePart != null && associatedMessage.attributedBody.firstOrNull != null) {
             final attrBod = associatedMessage.attributedBody.first;
-            final ranges = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart).map((e) => e.range);
+            final ranges = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart).map((e) => e.range).sorted((a, b) => a.first.compareTo(b.first));
             final attachmentGuids = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart && e.attributes?.attachmentGuid != null)
                 .map((e) => e.attributes?.attachmentGuid).toSet();
             if (attachmentGuids.isNotEmpty) {
