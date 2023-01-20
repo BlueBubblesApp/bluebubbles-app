@@ -16,7 +16,7 @@ class Handle {
   int? id;
   int? originalROWID;
   @Unique()
-  late String uniqueAddressAndService;
+  String uniqueAddressAndService;
   String address;
   String? formattedAddress;
   String service;
@@ -69,6 +69,7 @@ class Handle {
     this.address = "",
     this.formattedAddress,
     this.service = 'iMessage',
+    this.uniqueAddressAndService = "",
     this.country,
     String? handleColor,
     this.defaultEmail,
@@ -77,7 +78,9 @@ class Handle {
     if (service.isEmpty) {
       service = 'iMessage';
     }
-    uniqueAddressAndService = "$address/$service";
+    if (uniqueAddressAndService.isEmpty) {
+      uniqueAddressAndService = "$address/$service";
+    }
     color = handleColor;
   }
 
@@ -87,6 +90,7 @@ class Handle {
     address: json["address"],
     formattedAddress: json["formattedAddress"],
     service: json["service"] ?? "iMessage",
+    uniqueAddressAndService: json["uniqueAddrAndService"],
     country: json["country"],
     handleColor: json["color"],
     defaultPhone: json['defaultPhone'],
@@ -109,7 +113,9 @@ class Handle {
       }
       try {
         id = handleBox.put(this);
-      } on UniqueViolationException catch (_) {}
+      } on UniqueViolationException catch (_) {
+        print('unique violation');
+      }
     });
     return this;
   }
@@ -206,6 +212,7 @@ class Handle {
     "address": address,
     "formattedAddress": formattedAddress,
     "service": service,
+    "uniqueAddrAndService": uniqueAddressAndService,
     "country": country,
     "color": color,
     "defaultPhone": defaultPhone,

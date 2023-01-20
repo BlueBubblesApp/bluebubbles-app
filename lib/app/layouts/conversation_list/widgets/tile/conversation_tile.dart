@@ -318,6 +318,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
 
   @override
   Widget build(BuildContext context) {
+    print(controller.chat.getParticipants());
     return Obx(() {
       final hideContent = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
       final hideContacts = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
