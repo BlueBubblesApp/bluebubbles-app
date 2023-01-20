@@ -168,6 +168,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
         updateWidgets<AttachmentHolder>(null);
       }
     } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead) {
+      final edited = newItem.dateEdited != message.dateEdited;
       message = Message.merge(newItem, message);
       ms(message.chat.target!.guid).updateMessage(message);
       // update the latest 2 messages in case their indicators need to go away
@@ -176,6 +177,11 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
           .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       for (Message m in messages.take(2)) {
         getActiveMwc(m.guid!)?.updateWidgets<DeliveredIndicator>(null);
+      }
+      if (edited) {
+        parts.clear();
+        buildMessageParts();
+        updateWidgets<MessageHolder>(null);
       }
       updateWidgets<DeliveredIndicator>(null);
     } else if (newItem.dateEdited != message.dateEdited || newItem.error != message.error) {
