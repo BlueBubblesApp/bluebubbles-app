@@ -22,7 +22,7 @@ class MessageTimestamp extends StatelessWidget {
       duration: Duration(milliseconds: cvController.timestampOffset.value == 0 ? 150 : 0),
       width: ss.settings.skin.value == Skins.Samsung ? null : min(max(-cvController.timestampOffset.value, 0), 70),
       child: Offstage(
-        offstage: cvController.timestampOffset.value == 0,
+        offstage: ss.settings.skin.value != Skins.Samsung && cvController.timestampOffset.value == 0,
         child: Text(
           time,
           style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
