@@ -113,9 +113,7 @@ class Handle {
       }
       try {
         id = handleBox.put(this);
-      } on UniqueViolationException catch (_) {
-        print('unique violation');
-      }
+      } on UniqueViolationException catch (_) {}
     });
     return this;
   }

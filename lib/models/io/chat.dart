@@ -759,20 +759,16 @@ class Chat {
     if (kIsWeb || id == null) return this;
     store.runInTransaction(TxMode.read, () {
       /// Find the handles themselves
-      print(handles);
       _participants = List<Handle>.from(handles);
     });
 
     _deduplicateParticipants();
-    print(_participants);
     return this;
   }
 
   void _deduplicateParticipants() {
     if (_participants.isEmpty) return;
-    print(_participants.map((e) => e.address));
     final ids = _participants.map((e) => e.uniqueAddressAndService).toSet();
-    print(ids);
     _participants.retainWhere((element) => ids.remove(element.uniqueAddressAndService));
   }
 
