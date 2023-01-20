@@ -105,12 +105,15 @@ class MessageHelper {
     if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
       return "Message sent with Invisible Ink";
     }
-    String sender = !withSender ? "" : "${message.isFromMe! ? "You" : (message.handle?.displayName ?? "Someone")}: ";
+    String sender = !withSender ? "" : "${message.isFromMe! ? "You: " : (message.handle?.displayName ?? "Someone")}: ";
 
     if (message.isInteractive) {
       return "$sender${message.interactiveText}";
     }
     if (isNullOrEmpty(message.fullText)! && !message.hasAttachments && isNullOrEmpty(message.associatedMessageGuid)!) {
+      if (message.dateEdited != null) {
+        return "${sender}Unsent message";
+      }
       return "${sender}Empty message";
     }
     if (message.hasAttachments && message.attachments.isEmpty) {
