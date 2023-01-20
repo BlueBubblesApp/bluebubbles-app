@@ -137,6 +137,18 @@ class MethodChannelService extends GetxService {
           return true;
         }
       case "markAsRead":
+        if (ls.isAlive) return;
+        await storeStartup.future;
+        Logger.info("Received markAsRead from Java");
+        final data = call.arguments as Map?;
+        if (data != null) {
+          Chat? chat = Chat.findOne(guid: data["chat"]);
+          if (chat != null) {
+            chat.toggleHasUnread(false);
+            return true;
+          }
+        }
+        return false;
       case "chat-read-status-changed":
         if (ls.isAlive) return;
         await storeStartup.future;
