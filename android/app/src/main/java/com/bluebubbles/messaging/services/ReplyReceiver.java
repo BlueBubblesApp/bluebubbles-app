@@ -32,7 +32,7 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class ReplyReceiver extends BroadcastReceiver {
 
-    final String TAG = "reply-receiver";
+    final String TAG = "BlueBubblesApp";
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override

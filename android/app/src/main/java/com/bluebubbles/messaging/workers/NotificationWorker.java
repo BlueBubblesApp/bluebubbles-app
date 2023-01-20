@@ -62,7 +62,7 @@ public class NotificationWorker extends Worker implements DartWorker {
     public Result doWork() {
 
         String type = getInputData().getString("type");
-        Log.d("work", "type: " + type);
+        Log.d("BlueBubblesApp", "type: " + type);
         if (type.equals("reply") || type.equals("markAsRead") || type.equals("alarm-wake")) {
             getBackgroundChannel();
             invokeMethod();
@@ -81,7 +81,7 @@ public class NotificationWorker extends Worker implements DartWorker {
 
     @Override
     public void onStopped() {
-        Log.d("Stop", "Stopping Notification Worker...");
+        Log.d("BlueBubblesApp", "Stopping Notification Worker...");
 
         // When this worker gets cancelled, clean up
         destroyHeadlessThread();
@@ -98,14 +98,14 @@ public class NotificationWorker extends Worker implements DartWorker {
         String appBundlePath = info.flutterAssetsDir;
         AssetManager assets = context.getAssets();
 
-        if (engine == null) {
-            engine = new FlutterEngine(context);
-            DartExecutor executor = engine.getDartExecutor();
+        if (backgroundEngine == null) {
+            backgroundEngine = new FlutterEngine(context);
+            DartExecutor executor = backgroundEngine.getDartExecutor();
             Long callbackHandle = context.getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE).getLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, -1);
             FlutterCallbackInformation callbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
 
             if (callbackInformation == null) {
-                Log.e("Error", "Fatal: failed to find callback: " + callbackHandle);
+                Log.e("BlueBubblesApp", "Fatal: failed to find callback: " + callbackHandle);
                 return;
             }
 
@@ -116,23 +116,23 @@ public class NotificationWorker extends Worker implements DartWorker {
             );
             executor.executeDartCallback(dartCallback);
 
-            backgroundChannel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL);
+            backgroundChannel = new MethodChannel(backgroundEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
             backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, context, this));
         }
     }
 
     @Override
     public MethodChannel destroyHeadlessThread() {
-        if (engine == null) return null;
+        if (backgroundEngine == null) return null;
         new Handler(Looper.getMainLooper()).post(() -> {
-            if (engine != null) {
+            if (backgroundEngine != null) {
                 try {
-                    Log.d("Destroy", "Destroying Notification Worker isolate...");
-                    engine.destroy();
-                    engine = null;
+                    Log.d("BlueBubblesApp", "Destroying Notification Worker isolate...");
+                    backgroundEngine.destroy();
+                    backgroundEngine = null;
                     backgroundChannel = null;
                 } catch (Exception e) {
-                    Log.d("Destroy", "Failed to destroy Notification Worker isolate!");
+                    Log.d("BlueBubblesApp", "Failed to destroy Notification Worker isolate!");
                 }
             }
         });
