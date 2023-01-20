@@ -443,7 +443,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                               : context.theme.colorScheme.background,
                                                                         ),
                                                                         constraints: BoxConstraints(
-                                                                          maxWidth: message.isBigEmoji ? context.width : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
+                                                                          maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
                                                                           minHeight: 40,
                                                                         ),
                                                                         padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
@@ -453,7 +453,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           focusNode: editStuff.item4,
                                                                           controller: editStuff.item3,
                                                                           scrollPhysics: const CustomBouncingScrollPhysics(),
-                                                                          style: context.theme.extension<BubbleText>()!.bubbleText,
+                                                                          style: context.theme.extension<BubbleText>()!.bubbleText.apply(
+                                                                            fontSizeFactor: message.isBigEmoji ? 3 : 1,
+                                                                          ),
                                                                           keyboardType: TextInputType.multiline,
                                                                           maxLines: 14,
                                                                           minLines: 1,
@@ -464,7 +466,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                               ? TextInputAction.send
                                                                               : TextInputAction.newline,
                                                                           cursorColor: context.theme.extension<BubbleText>()!.bubbleText.color,
-                                                                          cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
+                                                                          cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25 * (message.isBigEmoji ? 3 : 1),
                                                                           decoration: InputDecoration(
                                                                             contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
                                                                             isDense: true,
