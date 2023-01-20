@@ -160,6 +160,12 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Widget build(BuildContext context) {
     final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
     final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")));
+    Iterable<Message> stickersForPart(int part) {
+      return stickers.where((s) => (s.associatedMessagePart ?? 0) == part);
+    }
+    Iterable<Message> reactionsForPart(int part) {
+      return reactions.where((s) => (s.associatedMessagePart ?? 0) == part);
+    }
     /// Layout tree
     /// - Timestamp
     /// - Stack (see code comment)
@@ -275,7 +281,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               child: MessageSender(olderMessage: olderMessage, message: message),
                             ),
                           // add a box to account for height of reactions
-                          if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty)
+                          if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(e.part).isNotEmpty)
                             const SizedBox(height: 12.5),
                           if (!iOS && index == 0 && !widget.isReplyThread
                               && olderMessage != null
@@ -353,7 +359,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                               ),
                                             if (samsung)
                                               Padding(
-                                                padding: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
+                                                padding: (messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(e.part).isNotEmpty
                                                     ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 20 : 0)
                                                     : const EdgeInsets.only(right: 10),
                                                 child: MessageTimestamp(controller: controller, cvController: widget.cvController),
@@ -569,9 +575,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                     ),
                                                   ),
                                                   // show stickers on top
-                                                  if (stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty)
+                                                  if ((messageParts.length == 1 ? stickers : stickersForPart(e.part)).isNotEmpty)
                                                     StickerHolder(
-                                                      stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                      stickerMessages: messageParts.length == 1 ? stickers : stickersForPart(e.part),
                                                       controller: widget.cvController,
                                                     ),
                                                   // show reactions on top
@@ -580,7 +586,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                       top: -14,
                                                       left: -20,
                                                       child: ReactionHolder(
-                                                        reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                        reactions: messageParts.length == 1 ? reactions : reactionsForPart(e.part),
                                                         message: message,
                                                       ),
                                                     ),
@@ -589,7 +595,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                       top: -14,
                                                       right: -20,
                                                       child: ReactionHolder(
-                                                        reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                        reactions: messageParts.length == 1 ? reactions : reactionsForPart(e.part),
                                                         message: message,
                                                       ),
                                                     ),
