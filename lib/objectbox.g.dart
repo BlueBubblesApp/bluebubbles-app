@@ -1132,16 +1132,15 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 20),
               service: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 28, ''),
+              uniqueAddressAndService: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 26, ''),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 10),
               defaultEmail: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
-              defaultPhone: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14))
-            ..color = const fb.StringReader(asciiOptimization: true)
-                .vTableGetNullable(buffer, rootOffset, 12)
-            ..uniqueAddressAndService =
-                const fb.StringReader(asciiOptimization: true).vTableGet(buffer, rootOffset, 26, '');
+              defaultPhone:
+                  const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 14))
+            ..color = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 12);
           object.contactRelation.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
           object.contactRelation.attach(store);
