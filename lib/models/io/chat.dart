@@ -588,6 +588,10 @@ class Chat {
       hasUnreadMessage = hasUnread;
       save(updateHasUnreadMessage: true);
     }
+    if (cm.isChatActive(guid)) {
+      hasUnread = false;
+      clearLocalNotifications = false;
+    }
 
     if (kIsDesktop) {
       notif.clearDesktopNotificationsForChat(guid);
