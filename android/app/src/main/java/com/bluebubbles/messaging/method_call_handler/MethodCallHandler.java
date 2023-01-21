@@ -129,8 +129,9 @@ public class MethodCallHandler {
             final String path = FileDirectory.INSTANCE.getAbsolutePath(context, Uri.parse((String) call.argument("uri")));
             result.success(path);
         } else if (call.method.equals("open-convo-notif-settings")) {
-            NotificationChannel channel = new NotificationChannel(call.argument("id"), call.argument("displayName"), NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel(call.argument("id"), call.argument("displayName"), NotificationManager.IMPORTANCE_MAX);
             channel.setConversationId(call.argument("parentId"), call.argument("id"));
+            channel.enableLights(true);
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
             Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
