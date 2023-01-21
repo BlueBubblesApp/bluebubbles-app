@@ -90,7 +90,7 @@ class Handle {
     address: json["address"],
     formattedAddress: json["formattedAddress"],
     service: json["service"] ?? "iMessage",
-    uniqueAddressAndService: json["uniqueAddrAndService"],
+    uniqueAddressAndService: json["uniqueAddrAndService"] ?? "${json["address"]}/${json["service"] ?? "iMessage"}",
     country: json["country"],
     handleColor: json["color"],
     defaultPhone: json['defaultPhone'],
