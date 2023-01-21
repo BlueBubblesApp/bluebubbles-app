@@ -113,13 +113,13 @@ class ChatsService extends GetxService {
     chats.sort(Chat.sort);
   }
 
-  void updateChat(Chat updated, {bool shouldSort = false}) {
+  void updateChat(Chat updated, {bool shouldSort = false, bool override = false}) {
     final index = chats.indexWhere((e) => updated.guid == e.guid);
     if (index != -1) {
       final toUpdate = chats[index];
       // this is so the list doesn't re-render
       // ignore: invalid_use_of_protected_member
-      chats.value[index] = updated.merge(toUpdate);
+      chats.value[index] = override ? updated : updated.merge(toUpdate);
       if (shouldSort) sort();
     }
   }

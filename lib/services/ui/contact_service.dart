@@ -34,10 +34,10 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<bool> refreshContacts({bool reloadUI = true}) async {
-    if (!(await cs.canAccessContacts())) return false;
+  Future<List<List<int>>> refreshContacts({bool reloadUI = true}) async {
+    if (!(await cs.canAccessContacts())) return [];
     final _contacts = <Contact>[];
-    bool hasChanges = false;
+    final changedIds = <List<int>>[<int>[], <int>[]];
     if (kIsWeb || kIsDesktop) {
       _contacts.addAll(await cs.fetchNetworkContacts());
     } else {
@@ -69,15 +69,17 @@ class ContactsService extends GetxService {
       // save any updated contacts
       for (Contact c in dbContacts) {
         final refreshedContact = _contacts.firstWhereOrNull((element) => element.id == c.id);
-        if (refreshedContact != null && c != refreshedContact) {
-          hasChanges = true;
-          refreshedContact.save();
+        if (refreshedContact != null) {
+          refreshedContact.dbId = c.dbId;
+          if (c != refreshedContact) {
+            changedIds.first.add(c.dbId!);
+            refreshedContact.save();
+          }
         }
       }
       // save any new contacts
-      final newContacts = _contacts.where((e) => !dbContacts.map((e) => e.id).contains(e.id)).toList();
+      final newContacts = _contacts.where((e) => !dbContacts.map((e2) => e2.id).contains(e.id)).toList();
       if (newContacts.isNotEmpty) {
-        hasChanges = true;
         final ids = contactBox.putMany(newContacts);
         for (int i = 0; i < newContacts.length; i++) {
           newContacts[i].dbId = ids[i];
@@ -115,7 +117,7 @@ class ContactsService extends GetxService {
           }
 
           if (h.contactRelation.target == null) {
-            hasChanges = true;
+            changedIds.last.add(h.id!);
           }
 
           h.contactRelation.target = c;
@@ -129,14 +131,14 @@ class ContactsService extends GetxService {
       contacts = _contacts;
     }
     // only return contacts if things changed (or on web)
-    return kIsWeb || hasChanges;
+    return changedIds;
   }
 
-  void completeContactsRefresh(List<Contact> refreshedContacts, {bool reloadUI = true}) {
+  void completeContactsRefresh(List<Contact> refreshedContacts, {List<List<int>>? reloadUI}) {
     if (refreshedContacts.isNotEmpty) {
       contacts = refreshedContacts;
-      if (reloadUI) {
-        eventDispatcher.emit('update-contacts', null);
+      if (reloadUI != null) {
+        eventDispatcher.emit('update-contacts', reloadUI);
       }
     }
   }
