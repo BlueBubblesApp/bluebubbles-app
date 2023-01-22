@@ -16,7 +16,7 @@ class ActionHandler extends GetxService {
   final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
   final List<String> outOfOrderTempGuids = [];
   
-  Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r) async {
+  Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
 
     final List<Message> messages = <Message>[];
@@ -52,11 +52,11 @@ class ActionHandler extends GetxService {
 
       for (Message message in messages) {
         message.generateTempGuid();
-        await c.addMessage(message);
+        await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       }
     } else {
       m.generateTempGuid();
-      await c.addMessage(m);
+      await c.addMessage(m, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       messages.add(m);
     }
     return messages;

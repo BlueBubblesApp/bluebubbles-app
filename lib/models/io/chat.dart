@@ -613,7 +613,7 @@ class Chat {
     return this;
   }
 
-  Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
+  Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true, bool clearNotificationsIfFromMe = true}) async {
     // If this is a message preview and we don't already have metadata for this, get it
     if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata) && !message.hasApplePayloadData) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
@@ -669,7 +669,7 @@ class Chat {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
-        toggleHasUnread(false);
+        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe);
       } else if (!cm.isChatActive(guid)) {
         toggleHasUnread(true);
       }
