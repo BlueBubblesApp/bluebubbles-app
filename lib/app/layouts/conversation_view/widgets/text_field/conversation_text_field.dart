@@ -508,6 +508,7 @@ class TextFieldComponent extends StatelessWidget {
   final ConversationViewController? controller;
   final RecorderController recorderController;
   final Future<void> Function({String? effect}) sendMessage;
+  final FocusNode? focusNode;
 
   final List<PlatformFile> initialAttachments;
 
