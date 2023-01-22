@@ -13,7 +13,7 @@ import 'package:get/get.dart';
 class PinnedOrderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _backgroundColor = (ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+    final Rx<Color> _backgroundColor = (kIsDesktop && ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
 
     if (kIsDesktop) {
       ss.settings.windowEffect.listen((WindowEffect effect) =>

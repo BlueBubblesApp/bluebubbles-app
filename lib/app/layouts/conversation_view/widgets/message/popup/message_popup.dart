@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
@@ -167,7 +168,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         child: TitleBarWrapper(
           child: Scaffold(
             extendBodyBehindAppBar: true,
-            backgroundColor: kIsWeb || kIsDesktop ? context.theme.colorScheme.background.withOpacity(0.5) : Colors.transparent,
+            backgroundColor: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? context.theme.colorScheme.properSurface.withOpacity(0.6) : Colors.transparent,
             appBar: iOS ? null : AppBar(
               backgroundColor: context.theme.colorScheme.background.oppositeLightenOrDarken(5),
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
@@ -353,7 +354,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 GestureDetector(
                   onTap: popDetails,
                   child: iOS ? BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                    filter: ImageFilter.blur(sigmaX: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30, sigmaY: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30),
                     child: Container(
                       color: context.theme.colorScheme.properSurface.withOpacity(0.3),
                     ),
