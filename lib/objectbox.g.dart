@@ -84,11 +84,6 @@ final _entities = <ModelEntity>[
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(15, 5516087858141459065),
-            name: 'bytes',
-            type: 23,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(16, 396659320299238462),
             name: 'webUrl',
             type: 9,
@@ -262,7 +257,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(7, 1716592500251888002),
       name: 'Handle',
-      lastPropertyId: const IdUid(11, 6784884866959942259),
+      lastPropertyId: const IdUid(13, 2987973275926761435),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -279,8 +274,7 @@ final _entities = <ModelEntity>[
             id: const IdUid(3, 2544513926695389102),
             name: 'address',
             type: 9,
-            flags: 2080,
-            indexId: const IdUid(3, 9132680703832217528)),
+            flags: 0),
         ModelProperty(
             id: const IdUid(4, 8884526609844353946),
             name: 'country',
@@ -312,7 +306,18 @@ final _entities = <ModelEntity>[
             type: 11,
             flags: 520,
             indexId: const IdUid(14, 1213475652575340910),
-            relationTarget: 'Contact')
+            relationTarget: 'Contact'),
+        ModelProperty(
+            id: const IdUid(12, 7288262795934250307),
+            name: 'uniqueAddressAndService',
+            type: 9,
+            flags: 2080,
+            indexId: const IdUid(15, 2647319022047266708)),
+        ModelProperty(
+            id: const IdUid(13, 2987973275926761435),
+            name: 'service',
+            type: 9,
+            flags: 0)
       ],
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
@@ -715,7 +720,7 @@ ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
       lastEntityId: const IdUid(17, 2547083341603323785),
-      lastIndexId: const IdUid(14, 1213475652575340910),
+      lastIndexId: const IdUid(15, 2647319022047266708),
       lastRelationId: const IdUid(1, 7492985733214117623),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [
@@ -728,7 +733,7 @@ ModelDefinition getObjectBoxModel() {
         3483028772414651169,
         4579555475244243263
       ],
-      retiredIndexUids: const [8277667704777683261],
+      retiredIndexUids: const [8277667704777683261, 9132680703832217528],
       retiredPropertyUids: const [
         8075530627827069587,
         614139107975861462,
@@ -819,7 +824,8 @@ ModelDefinition getObjectBoxModel() {
         8558367758823185430,
         7997144491374144435,
         1278586999912993922,
-        696004914151488398
+        696004914151488398,
+        5516087858141459065
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -846,8 +852,6 @@ ModelDefinition getObjectBoxModel() {
           final transferNameOffset = object.transferName == null
               ? null
               : fbb.writeString(object.transferName!);
-          final bytesOffset =
-              object.bytes == null ? null : fbb.writeListInt8(object.bytes!);
           final webUrlOffset =
               object.webUrl == null ? null : fbb.writeString(object.webUrl!);
           final dbMetadataOffset = object.dbMetadata == null
@@ -864,7 +868,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(8, object.totalBytes);
           fbb.addInt64(12, object.height);
           fbb.addInt64(13, object.width);
-          fbb.addOffset(14, bytesOffset);
           fbb.addOffset(15, webUrlOffset);
           fbb.addInt64(16, object.message.targetId);
           fbb.addOffset(17, dbMetadataOffset);
@@ -895,7 +898,6 @@ ModelDefinition getObjectBoxModel() {
               height:
                   const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
               width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
-              bytes: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 32) as Uint8List?,
               webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34))
             ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 38);
           object.message.targetId =
@@ -1097,7 +1099,10 @@ ModelDefinition getObjectBoxModel() {
           final formattedAddressOffset = object.formattedAddress == null
               ? null
               : fbb.writeString(object.formattedAddress!);
-          fbb.startTable(12);
+          final uniqueAddressAndServiceOffset =
+              fbb.writeString(object.uniqueAddressAndService);
+          final serviceOffset = fbb.writeString(object.service);
+          fbb.startTable(14);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, addressOffset);
@@ -1107,6 +1112,8 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(7, defaultEmailOffset);
           fbb.addOffset(8, formattedAddressOffset);
           fbb.addInt64(10, object.contactRelation.targetId);
+          fbb.addOffset(11, uniqueAddressAndServiceOffset);
+          fbb.addOffset(12, serviceOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1123,14 +1130,17 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 8, ''),
               formattedAddress: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 20),
+              service: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 28, ''),
+              uniqueAddressAndService: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 26, ''),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 10),
               defaultEmail: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
-              defaultPhone: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14))
-            ..color = const fb.StringReader(asciiOptimization: true)
-                .vTableGetNullable(buffer, rootOffset, 12);
+              defaultPhone:
+                  const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 14))
+            ..color = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 12);
           object.contactRelation.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
           object.contactRelation.attach(store);
@@ -1554,21 +1564,17 @@ class Attachment_ {
   static final width =
       QueryIntegerProperty<Attachment>(_entities[0].properties[9]);
 
-  /// see [Attachment.bytes]
-  static final bytes =
-      QueryByteVectorProperty<Attachment>(_entities[0].properties[10]);
-
   /// see [Attachment.webUrl]
   static final webUrl =
-      QueryStringProperty<Attachment>(_entities[0].properties[11]);
+      QueryStringProperty<Attachment>(_entities[0].properties[10]);
 
   /// see [Attachment.message]
   static final message =
-      QueryRelationToOne<Attachment, Message>(_entities[0].properties[12]);
+      QueryRelationToOne<Attachment, Message>(_entities[0].properties[11]);
 
   /// see [Attachment.dbMetadata]
   static final dbMetadata =
-      QueryStringProperty<Attachment>(_entities[0].properties[13]);
+      QueryStringProperty<Attachment>(_entities[0].properties[12]);
 }
 
 /// [Chat] entity fields to define ObjectBox queries.
@@ -1710,6 +1716,14 @@ class Handle_ {
   /// see [Handle.contactRelation]
   static final contactRelation =
       QueryRelationToOne<Handle, Contact>(_entities[3].properties[8]);
+
+  /// see [Handle.uniqueAddressAndService]
+  static final uniqueAddressAndService =
+      QueryStringProperty<Handle>(_entities[3].properties[9]);
+
+  /// see [Handle.service]
+  static final service =
+      QueryStringProperty<Handle>(_entities[3].properties[10]);
 }
 
 /// [ThemeEntry] entity fields to define ObjectBox queries.

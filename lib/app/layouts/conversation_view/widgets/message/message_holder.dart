@@ -160,6 +160,12 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Widget build(BuildContext context) {
     final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
     final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")));
+    Iterable<Message> stickersForPart(int part) {
+      return stickers.where((s) => (s.associatedMessagePart ?? 0) == part);
+    }
+    Iterable<Message> reactionsForPart(int part) {
+      return reactions.where((s) => (s.associatedMessagePart ?? 0) == part);
+    }
     /// Layout tree
     /// - Timestamp
     /// - Stack (see code comment)
@@ -275,7 +281,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               child: MessageSender(olderMessage: olderMessage, message: message),
                             ),
                           // add a box to account for height of reactions
-                          if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty)
+                          if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(e.part).isNotEmpty)
                             const SizedBox(height: 12.5),
                           if (!iOS && index == 0 && !widget.isReplyThread
                               && olderMessage != null
@@ -319,7 +325,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 padding: (showAvatar || ss.settings.alwaysShowAvatars.value) && !(message.isGroupEvent || e.isUnsent)
                                     ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                                 child: DecoratedBox(
-                                  decoration: iOS && !widget.isReplyThread && replyTo != null && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
+                                  decoration: iOS && !widget.isReplyThread && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
                                       || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null))
                                       ? ReplyLineDecoration(
                                     isFromMe: message.isFromMe!,
@@ -353,7 +359,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                               ),
                                             if (samsung)
                                               Padding(
-                                                padding: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
+                                                padding: (messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(e.part).isNotEmpty
                                                     ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 20 : 0)
                                                     : const EdgeInsets.only(right: 10),
                                                 child: MessageTimestamp(controller: controller, cvController: widget.cvController),
@@ -443,7 +449,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                               : context.theme.colorScheme.background,
                                                                         ),
                                                                         constraints: BoxConstraints(
-                                                                          maxWidth: message.isBigEmoji ? context.width : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
+                                                                          maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
                                                                           minHeight: 40,
                                                                         ),
                                                                         padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
@@ -453,7 +459,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           focusNode: editStuff.item4,
                                                                           controller: editStuff.item3,
                                                                           scrollPhysics: const CustomBouncingScrollPhysics(),
-                                                                          style: context.theme.extension<BubbleText>()!.bubbleText,
+                                                                          style: context.theme.extension<BubbleText>()!.bubbleText.apply(
+                                                                            fontSizeFactor: message.isBigEmoji ? 3 : 1,
+                                                                          ),
                                                                           keyboardType: TextInputType.multiline,
                                                                           maxLines: 14,
                                                                           minLines: 1,
@@ -464,7 +472,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                               ? TextInputAction.send
                                                                               : TextInputAction.newline,
                                                                           cursorColor: context.theme.extension<BubbleText>()!.bubbleText.color,
-                                                                          cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
+                                                                          cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25 * (message.isBigEmoji ? 3 : 1),
                                                                           decoration: InputDecoration(
                                                                             contentPadding: EdgeInsets.all(iOS ? 10 : 12.5),
                                                                             isDense: true,
@@ -567,9 +575,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                     ),
                                                   ),
                                                   // show stickers on top
-                                                  if (stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty)
+                                                  if ((messageParts.length == 1 ? stickers : stickersForPart(e.part)).isNotEmpty)
                                                     StickerHolder(
-                                                      stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                      stickerMessages: messageParts.length == 1 ? stickers : stickersForPart(e.part),
                                                       controller: widget.cvController,
                                                     ),
                                                   // show reactions on top
@@ -578,7 +586,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                       top: -14,
                                                       left: -20,
                                                       child: ReactionHolder(
-                                                        reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                        reactions: messageParts.length == 1 ? reactions : reactionsForPart(e.part),
                                                         message: message,
                                                       ),
                                                     ),
@@ -587,7 +595,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                       top: -14,
                                                       right: -20,
                                                       child: ReactionHolder(
-                                                        reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                        reactions: messageParts.length == 1 ? reactions : reactionsForPart(e.part),
                                                         message: message,
                                                       ),
                                                     ),

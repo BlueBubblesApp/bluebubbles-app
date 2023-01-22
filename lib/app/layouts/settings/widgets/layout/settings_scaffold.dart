@@ -162,6 +162,7 @@ class SettingsScaffold extends StatelessWidget {
                                         child: Align(
                                           alignment: Alignment.centerRight,
                                           child: Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: actions,
                                           ),
                                         ),

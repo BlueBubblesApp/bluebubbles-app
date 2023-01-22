@@ -41,15 +41,16 @@ class SyncService extends GetxService {
     isIncrementalSyncing.value = true;
 
     final contacts = <Contact>[];
+    List<List<int>> result = [];
     if (kIsWeb || kIsDesktop) {
-      final result = await incrementalSyncIsolate.call(null);
-      if (result) {
+      result = await incrementalSyncIsolate.call(null);
+      if (result.isNotEmpty && (result.first.isNotEmpty || result.last.isNotEmpty)) {
         contacts.addAll(cs.contacts);
       }
     } else {
-      final completer = Completer<bool>();
+      final completer = Completer<List<List<int>>>();
       final port = RawReceivePort();
-      port.handler = (bool response) {
+      port.handler = (List<List<int>> response) {
         port.close();
         completer.complete(response);
       };
@@ -61,20 +62,20 @@ class SyncService extends GetxService {
         Logger.error('Got error when opening isolate: $e');
         port.close();
       }
-      final result = await completer.future;
-      if (result) {
+      result = await completer.future;
+      if (result.isNotEmpty && (result.first.isNotEmpty || result.last.isNotEmpty)) {
         contacts.addAll(Contact.getContacts());
       }
       isolate?.kill();
     }
-    cs.completeContactsRefresh(contacts);
+    cs.completeContactsRefresh(contacts, reloadUI: result);
 
     isIncrementalSyncing.value = false;
   }
 }
 
 @pragma('vm:entry-point')
-Future<bool> incrementalSyncIsolate(SendPort? port) async {
+Future<List<List<int>>> incrementalSyncIsolate(SendPort? port) async {
   try {
     if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
@@ -101,13 +102,13 @@ Future<bool> incrementalSyncIsolate(SendPort? port) async {
   }
   Logger.info('Starting contact refresh');
   try {
-    final shouldRefresh = await cs.refreshContacts();
-    Logger.info('Finished contact refresh');
-    port?.send(shouldRefresh);
-    return shouldRefresh;
+    final refreshedItems = await cs.refreshContacts();
+    Logger.info('Finished contact refresh, shouldRefresh $refreshedItems');
+    port?.send(refreshedItems);
+    return refreshedItems;
   } catch (ex) {
     Logger.error('Contacts refresh failed! Error: $ex');
-    port?.send(false);
-    return false;
+    port?.send([]);
+    return [];
   }
 }

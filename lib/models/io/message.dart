@@ -403,7 +403,7 @@ class Message {
       text: sanitizeString(json["text"] ?? attributedBody.firstOrNull?.string),
       subject: json["subject"],
       country: json["country"],
-      error: json["_error"] ?? 0,
+      error: json["error"] ?? json["_error"] ?? 0,
       dateCreated: parseDate(json["dateCreated"]),
       dateRead: parseDate(json["dateRead"]),
       dateDelivered: parseDate(json["dateDelivered"]),

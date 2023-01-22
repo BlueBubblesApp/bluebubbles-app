@@ -166,7 +166,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                     ? HexColor("686868")
                     : colors[0]
               ],
-              stops: [0.4, 0.8],
+              stops: [0.3, 0.9],
             ),
             border: Border.all(
               color: ss.settings.skin.value == Skins.Samsung
@@ -214,6 +214,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                   cacheWidth: size.toInt() * 2,
                   filterQuality: FilterQuality.none,
                   fit: BoxFit.cover,
+                  gaplessPlayback: true,
                 ),
               );
             }

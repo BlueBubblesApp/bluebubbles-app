@@ -105,12 +105,15 @@ class MessageHelper {
     if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
       return "Message sent with Invisible Ink";
     }
-    String sender = !withSender ? "" : "${message.isFromMe! ? "You" : (message.handle?.displayName ?? "Someone")}: ";
+    String sender = !withSender ? "" : "${message.isFromMe! ? "You: " : (message.handle?.displayName ?? "Someone")}: ";
 
     if (message.isInteractive) {
       return "$sender${message.interactiveText}";
     }
     if (isNullOrEmpty(message.fullText)! && !message.hasAttachments && isNullOrEmpty(message.associatedMessageGuid)!) {
+      if (message.dateEdited != null) {
+        return "${sender}Unsent message";
+      }
       return "${sender}Empty message";
     }
     if (message.hasAttachments && message.attachments.isEmpty) {
@@ -143,7 +146,7 @@ class MessageHelper {
           bool attachment = false;
           if (message.associatedMessagePart != null && associatedMessage.attributedBody.firstOrNull != null) {
             final attrBod = associatedMessage.attributedBody.first;
-            final ranges = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart).map((e) => e.range);
+            final ranges = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart).map((e) => e.range).sorted((a, b) => a.first.compareTo(b.first));
             final attachmentGuids = attrBod.runs.where((e) => e.attributes?.messagePart == message.associatedMessagePart && e.attributes?.attachmentGuid != null)
                 .map((e) => e.attributes?.attachmentGuid).toSet();
             if (attachmentGuids.isNotEmpty) {

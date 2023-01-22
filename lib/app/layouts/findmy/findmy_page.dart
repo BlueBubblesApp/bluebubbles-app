@@ -130,6 +130,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
+    final withLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null).toList();
+    final withoutLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) == null).toList();
     final bodySlivers = [
       SliverList(
         delegate: SliverChildListDelegate([
@@ -152,7 +154,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 ),
               ),
             ),
-          if (devices.isNotEmpty)
+          if (withLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: tileColor,
               children: [
@@ -162,7 +164,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     itemBuilder: (context, i) {
-                      final item = devices[i];
+                      final item = withLocation[i];
                       return ListTile(
                         mouseCursor: MouseCursor.defer,
                         title: Text(item.name ?? "Unknown Device"),
@@ -217,7 +219,79 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         },
                       );
                     },
-                    itemCount: devices.length,
+                    itemCount: withLocation.length,
+                  ),
+                ),
+              ],
+            ),
+          if (withoutLocation.isNotEmpty)
+            SettingsHeader(
+                headerColor: headerColor,
+                tileColor: tileColor,
+                iosSubtitle: iosSubtitle,
+                materialSubtitle: materialSubtitle,
+                text: "Unknown Location"),
+          if (withoutLocation.isNotEmpty)
+            SettingsSection(
+              backgroundColor: tileColor,
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: ExpansionTile(
+                    title: const Text("Devices without locations"),
+                    children: withoutLocation.map((item) => ListTile(
+                      mouseCursor: MouseCursor.defer,
+                      title: Text(item.name ?? "Unknown Device"),
+                      subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                      onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
+                        index.value = 1;
+                        tabController.animateTo(1);
+                        await completer.future;
+                        final marker = markers.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
+                        popupController.showPopupsOnlyFor([marker]);
+                        mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
+                      } : null,
+                      onLongPress: () async {
+                        const encoder = JsonEncoder.withIndent("     ");
+                        final str = encoder.convert(item.toJson());
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(
+                              "Raw FindMy Data",
+                              style: context.theme.textTheme.titleLarge,
+                            ),
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                            content: SizedBox(
+                              width: ns.width(context) * 3 / 5,
+                              height: context.height * 1 / 4,
+                              child: Container(
+                                padding: const EdgeInsets.all(10.0),
+                                decoration: BoxDecoration(
+                                    color: context.theme.backgroundColor,
+                                    borderRadius: const BorderRadius.all(Radius.circular(10))
+                                ),
+                                child: SingleChildScrollView(
+                                  child: SelectableText(
+                                    str,
+                                    style: context.theme.textTheme.bodyLarge,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                child: Text(
+                                    "Close",
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
+                                ),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )).toList()
                   ),
                 ),
               ],

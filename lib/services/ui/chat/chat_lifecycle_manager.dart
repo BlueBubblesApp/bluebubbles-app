@@ -27,6 +27,22 @@ class ChatLifecycleManager {
           chat = _chat.merge(chat);
         }
       });
+      // listen for contacts update (this listens for all chats)
+      eventDispatcher.stream.listen((event) {
+        if (event.item1 != 'update-contacts') return;
+        if (event.item2.isNotEmpty) {
+          for (Handle h in chat.participants) {
+            if (event.item2.first.contains(h.contactRelation.targetId)) {
+              final contact = contactBox.get(h.contactRelation.targetId);
+              h.contactRelation.target = contact;
+            }
+            if (event.item2.last.contains(h.id)) {
+              h = handleBox.get(h.id!)!;
+            }
+          }
+          chats.updateChat(chat, override: true);
+        }
+      });
     }
   }
 }

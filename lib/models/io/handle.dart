@@ -9,14 +9,17 @@ import 'package:get/get.dart' hide Condition;
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
+import 'package:tuple/tuple.dart';
 
 @Entity()
 class Handle {
   int? id;
   int? originalROWID;
   @Unique()
+  String uniqueAddressAndService;
   String address;
   String? formattedAddress;
+  String service;
   String? country;
   String? defaultEmail;
   String? defaultPhone;
@@ -65,11 +68,19 @@ class Handle {
     this.originalROWID,
     this.address = "",
     this.formattedAddress,
+    this.service = 'iMessage',
+    this.uniqueAddressAndService = "",
     this.country,
     String? handleColor,
     this.defaultEmail,
     this.defaultPhone,
   }) {
+    if (service.isEmpty) {
+      service = 'iMessage';
+    }
+    if (uniqueAddressAndService.isEmpty) {
+      uniqueAddressAndService = "$address/$service";
+    }
     color = handleColor;
   }
 
@@ -78,6 +89,8 @@ class Handle {
     originalROWID: json["originalROWID"],
     address: json["address"],
     formattedAddress: json["formattedAddress"],
+    service: json["service"] ?? "iMessage",
+    uniqueAddressAndService: json["uniqueAddrAndService"] ?? "${json["address"]}/${json["service"] ?? "iMessage"}",
     country: json["country"],
     handleColor: json["color"],
     defaultPhone: json['defaultPhone'],
@@ -88,7 +101,7 @@ class Handle {
   Handle save({bool updateColor = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
-      Handle? existing = Handle.findOne(address: address);
+      Handle? existing = Handle.findOne(addressAndService: Tuple2(address, service));
       if (existing != null) {
         id = existing.id;
         contactRelation.target = existing.contactRelation.target;
@@ -113,7 +126,7 @@ class Handle {
 
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
-        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address);
+        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address && e.service == h.service);
         if (existing != null) {
           h.id = existing.id;
         }
@@ -147,7 +160,7 @@ class Handle {
     return this;
   }
 
-  static Handle? findOne({int? id, int? originalROWID, String? address}) {
+  static Handle? findOne({int? id, int? originalROWID, Tuple2<String, String>? addressAndService}) {
     if (kIsWeb || id == 0) return null;
     if (id != null) {
       final handle = handleBox.get(id) ?? Handle.findOne(originalROWID: id);
@@ -158,8 +171,8 @@ class Handle {
       final result = query.findFirst();
       query.close();
       return result;
-    } else if (address != null) {
-      final query = handleBox.query(Handle_.address.equals(address)).build();
+    } else if (addressAndService != null) {
+      final query = handleBox.query(Handle_.address.equals(addressAndService.item1) & Handle_.service.equals(addressAndService.item2)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
@@ -196,6 +209,8 @@ class Handle {
     "originalROWID": originalROWID,
     "address": address,
     "formattedAddress": formattedAddress,
+    "service": service,
+    "uniqueAddrAndService": uniqueAddressAndService,
     "country": country,
     "color": color,
     "defaultPhone": defaultPhone,
