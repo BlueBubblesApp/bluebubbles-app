@@ -40,7 +40,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                   padding: EdgeInsets.only(
                     left: 20.0,
                     right: 20,
-                    top: kIsDesktop ? 0 : (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)
+                    top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)
                   ),
                   child: Stack(
                     alignment: Alignment.center,
