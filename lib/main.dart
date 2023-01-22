@@ -306,27 +306,50 @@ Future<Null> initApp(bool bubble) async {
       doWhenWindowReady(() async {
         await WindowManager.instance.setMinimumSize(const Size(300, 300));
         Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
-        Size size = primary.size;
-        Rect bounds = Rect.fromLTWH(0, 0, size.width, size.height);
+        num scaleFactor = primary.scaleFactor ?? 1;
+        Size displaySize = Size(primary.size.width / scaleFactor, primary.size.height / scaleFactor);
 
         double? width = ss.prefs.getDouble("window-width");
         double? height = ss.prefs.getDouble("window-height");
         if (width != null && height != null) {
-          if ((width == width.clamp(300, bounds.width)) && (height == height.clamp(300, bounds.height))) {
-            await WindowManager.instance.setSize(Size(width, height));
-          }
+          width = width.clamp(300, displaySize.width);
+          height = height.clamp(300, displaySize.height);
+          await WindowManager.instance.setSize(Size(width, height));
+          ss.prefs.setDouble("window-width", width);
+          ss.prefs.setDouble("window-height", height);
+        } else {
+          Size size = await WindowManager.instance.getSize();
+          width = size.width;
+          height = size.height;
+          ss.prefs.setDouble("window-width", width);
+          ss.prefs.setDouble("window-height", height);
         }
 
         double? posX = ss.prefs.getDouble("window-x");
         double? posY = ss.prefs.getDouble("window-y");
-        if (posX != null && posY != null && width != null && height != null) {
-          if ((posX == posX.clamp(bounds.left, bounds.right - width)) &&
-              (posY == posY.clamp(bounds.top, bounds.bottom - height))) {
-            await WindowManager.instance.setPosition(Offset(posX, posY));
-          }
+        if (posX != null && posY != null) {
+          posX = posX.clamp(0, displaySize.width - width);
+          posY = posY.clamp(0, displaySize.height - height);
+          await WindowManager.instance.setPosition(Offset(posX, posY));
+          ss.prefs.setDouble("window-x", posX);
+          ss.prefs.setDouble("window-y", posY);
         } else {
           await WindowManager.instance.setAlignment(Alignment.center);
+          Offset offset = await WindowManager.instance.getPosition();
+          posX = offset.dx;
+          posY = offset.dy;
+          ss.prefs.setDouble("window-x", posX);
+          ss.prefs.setDouble("window-y", posY);
         }
+
+        Size size = await WindowManager.instance.getSize();
+        width = size.width;
+        height = size.height;
+        posX = posX.clamp(0, displaySize.width - width);
+        posY = posY.clamp(0, displaySize.height - height);
+        await WindowManager.instance.setPosition(Offset(posX, posY));
+        ss.prefs.setDouble("window-x", posX);
+        ss.prefs.setDouble("window-y", posY);
 
         await WindowManager.instance.setTitle('BlueBubbles');
         await WindowManager.instance.show();
@@ -390,14 +413,16 @@ class DesktopWindowListener extends WindowListener {
 
   @override
   void onWindowResized() async {
-    ss.prefs.setDouble("window-width", (await WindowManager.instance.getSize()).width);
-    ss.prefs.setDouble("window-height", (await WindowManager.instance.getSize()).height);
+    Size size = await WindowManager.instance.getSize();
+    ss.prefs.setDouble("window-width", size.width);
+    ss.prefs.setDouble("window-height", size.height);
   }
 
   @override
   void onWindowMoved() async {
-    ss.prefs.setDouble("window-x", (await WindowManager.instance.getPosition()).dx);
-    ss.prefs.setDouble("window-y", (await WindowManager.instance.getPosition()).dy);
+    Offset offset = await WindowManager.instance.getPosition();
+    ss.prefs.setDouble("window-x", offset.dx);
+    ss.prefs.setDouble("window-y", offset.dy);
   }
 }
 
