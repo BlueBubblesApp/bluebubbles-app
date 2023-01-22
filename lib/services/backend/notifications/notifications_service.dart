@@ -80,7 +80,7 @@ class NotificationsService extends GetxService {
     }
 
     // watch for new messages and handle the notification
-    if (!kIsWeb) {
+    if (!kIsWeb && !kIsDesktop) {
       final countQuery = (messageBox.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
