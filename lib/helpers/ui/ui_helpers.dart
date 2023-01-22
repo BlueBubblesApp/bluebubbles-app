@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -113,7 +114,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
           child: Container(width: width, height: height, color: context.theme.colorScheme.properSurface, child: child)));
 }
 
-Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
+Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
   bool ios = ss.settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
@@ -134,7 +135,6 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
             behavior: HitTestBehavior.opaque,
             onTap: () {
               chat.togglePin(!chat.isPinned!);
-              if (_this.mounted) _this.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(
@@ -166,7 +166,6 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
             behavior: HitTestBehavior.opaque,
             onTap: () {
               chat.toggleMute(chat.muteType != "mute");
-              if (_this.mounted) _this.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(

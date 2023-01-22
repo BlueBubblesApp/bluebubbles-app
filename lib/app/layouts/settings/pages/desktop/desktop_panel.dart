@@ -132,7 +132,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                       saveSettings();
                     },
                     title: "Improve Mouse Wheel Scrolling",
-                    subtitle: "Enabling this setting will break touch scrolling and degrade trackpad scrolling.",
+                    subtitle: "Enabling this setting will break touch scrolling and trackpad scrolling.",
                   ),
                   if (ss.settings.betterScrolling.value)
                     SettingsSlider(
