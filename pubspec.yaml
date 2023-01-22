@@ -83,7 +83,7 @@ dependencies:
     git:
       url: https://github.com/theyakka/qr.flutter
       ref: master
-  window_manager: ^0.2.5
+  window_manager: ^0.2.9
   objectbox: ^1.6.0
   objectbox_flutter_libs: any
   js: ^0.6.4
