@@ -101,7 +101,7 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
             : controller.shouldHighlight.value
             ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
             : controller.hoverHighlight.value
-            ? context.theme.colorScheme.properSurface
+            ? context.theme.colorScheme.properSurface.withOpacity(0.5)
             : null,
         borderRadius: BorderRadius.circular(
             controller.shouldHighlight.value
@@ -197,7 +197,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
               style: context.theme.textTheme.bodySmall!.copyWith(
                 color: (cachedLatestMessage?.error ?? 0) > 0
                     ? context.theme.colorScheme.error
-                    : context.theme.colorScheme.outline,
+                    : controller.shouldHighlight.value ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage) : context.theme.colorScheme.outline,
                 fontWeight: controller.shouldHighlight.value
                     ? FontWeight.w500 : null,
               ).apply(fontSizeFactor: 1.1),
