@@ -69,7 +69,10 @@ public class ReplyReceiver extends BroadcastReceiver {
                         NotificationCompat.MessagingStyle temp = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notif);
                         style = new Notification.MessagingStyle(temp.getUser().getName());
                     }
-                    style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, "You"));
+                    Person.Builder sender = new Person.Builder()
+                        .setName("You")
+                        .setImportant(true);
+                    style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, sender.build()));
                     builder.setStyle(style);
                     builder.setOnlyAlertOnce(true);
                     notificationManagerCompat.notify(NewMessageNotification.notificationTag, existingId, builder.build());

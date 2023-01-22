@@ -132,6 +132,7 @@ class MethodChannelService extends GetxService {
               isFromMe: true,
               handleId: 0,
             ),
+            customArgs: {'notifReply': true}
           ));
           await completer.future;
           return true;
