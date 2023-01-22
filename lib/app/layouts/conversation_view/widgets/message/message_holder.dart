@@ -152,7 +152,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         }
       );
       await http.edit(message.guid!, newEdit, "Edited to: “$newEdit”", partIndex: part);
-      Navigator.of(context).pop();
+      if (kIsDesktop) {
+        Get.close(1);
+      } else {
+        Navigator.of(context).pop();
+      }
     }
   }
 
