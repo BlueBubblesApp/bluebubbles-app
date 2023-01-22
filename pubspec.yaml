@@ -87,11 +87,7 @@ dependencies:
   objectbox: ^1.6.0
   objectbox_flutter_libs: any
   js: ^0.6.4
-  bitsdojo_window:
-    git:
-      url: https://github.com/jjoelj/bitsdojo_window.git
-      ref: 5317458a49240217931f749f700107b268bebf24
-      path: bitsdojo_window
+  bitsdojo_window: ^0.1.5
   system_tray: ^2.0.1
   flutter_improved_scrolling: ^0.0.3
   desktop_drop: ^0.3.3
@@ -153,22 +149,6 @@ dependency_overrides:
   material_color_utilities: ^0.2.0 # flutter test SDK depends on 0.1.4
   path: ^1.8.2 # flutter test SDK depends on 1.8.1
   ffi: ^2.0.1
-  win32: 2.6.1 # conflicts with bitsdojo_window
-  bitsdojo_window_linux:
-    git:
-      url: https://github.com/jjoelj/bitsdojo_window.git
-      ref: 5317458a49240217931f749f700107b268bebf24
-      path: bitsdojo_window_linux
-  bitsdojo_window_macos:
-    git:
-      url: https://github.com/jjoelj/bitsdojo_window.git
-      ref: 5317458a49240217931f749f700107b268bebf24
-      path: bitsdojo_window_macos
-  bitsdojo_window_windows:
-    git:
-      url: https://github.com/jjoelj/bitsdojo_window.git
-      ref: 5317458a49240217931f749f700107b268bebf24
-      path: bitsdojo_window_windows
 
 dev_dependencies:
   build_runner: ^2.2.0
