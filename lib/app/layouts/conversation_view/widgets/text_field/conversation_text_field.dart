@@ -404,8 +404,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                             return;
                           } catch (_) {}
                         }
-                      } else {
-                        showSnackbar("Error", "Something went wrong, please try again.");
                       }
                     }
                   ),
@@ -756,15 +754,16 @@ class TextFieldComponent extends StatelessWidget {
           windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter" || androidData?.physicalKey == PhysicalKeyboardKey.enter) {
         if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
           int index = controller!.emojiSelectedIndex.value;
-          String text = controller!.textController.text;
+          TextEditingController textField = controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
+          String text = textField.text;
           RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
           Iterable<RegExpMatch> matches = regExp.allMatches(text);
-          if (matches.isNotEmpty && matches.any((m) => m.start < controller!.textController.selection.start)) {
-            RegExpMatch match = matches.lastWhere((m) => m.start < controller!.textController.selection.start);
+          if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
+            RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
             String char = controller!.emojiMatches[index].char;
             String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
-            controller!.textController.text = _text;
-            controller!.textController.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
+            textField.text = _text;
+            textField.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
           } else {
             // If the user moved the cursor before trying to insert an emoji, reset the picker
             controller!.emojiScrollController.jumpTo(0);
@@ -773,6 +772,17 @@ class TextFieldComponent extends StatelessWidget {
           controller!.emojiMatches.value = <Emoji>[];
 
           return KeyEventResult.handled;
+        }
+        if (ss.settings.privateSubjectLine.value) {
+          // Tab to switch between text fields
+          if (!ev.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
+            controller!.focusNode.requestFocus();
+            return KeyEventResult.handled;
+          }
+          if (ev.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
+            controller!.subjectFocusNode.requestFocus();
+            return KeyEventResult.handled;
+          }
         }
       }
 
