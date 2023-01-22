@@ -34,12 +34,13 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
 
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-            .watch();
+        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
-          });
+          final chat = controller.chat.id == null
+              ? null
+              : await runAsync(() {
+                  return chatBox.get(controller.chat.id!);
+                });
           if (chat == null) return;
           if (chat.hasUnreadMessage != unread) {
             setState(() {
@@ -80,28 +81,29 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
             dense: ss.settings.denseChatTiles.value,
             visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
             minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
-            title: ChatTitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodyMedium!.copyWith(
-                fontWeight: unread
-                    ? FontWeight.bold
-                    : controller.shouldHighlight.value
-                    ? FontWeight.w600
-                    : null,
-              ).apply(fontSizeFactor: 1.1),
-            ),
-            subtitle: controller.subtitle ?? ChatSubtitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodySmall!.copyWith(
-                fontWeight: unread
-                    ? FontWeight.bold
-                    : null,
-                color: unread
-                    ? context.textTheme.bodyMedium!.color
-                    : context.theme.colorScheme.outline,
-                height: 1.5,
-              ).apply(fontSizeFactor: 1.05),
-            ),
+            title: Obx(() => ChatTitle(
+                parentController: controller,
+                style: context.theme.textTheme.bodyMedium!
+                    .copyWith(
+                      fontWeight: controller.shouldHighlight.value
+                          ? FontWeight.w600
+                          : unread
+                          ? FontWeight.bold
+                          : null,
+                    )
+                    .apply(fontSizeFactor: 1.1),
+              )),
+            subtitle: controller.subtitle ??
+                Obx(() => ChatSubtitle(
+                    parentController: controller,
+                    style: context.theme.textTheme.bodySmall!
+                        .copyWith(
+                          fontWeight: unread ? FontWeight.bold : null,
+                          color: controller.shouldHighlight.value || unread ? context.textTheme.bodyMedium!.color : context.theme.colorScheme.outline,
+                          height: 1.5,
+                        )
+                        .apply(fontSizeFactor: 1.05),
+                  )),
             contentPadding: const EdgeInsets.only(left: 6, right: 16),
             leading: ChatLeading(controller: controller),
             trailing: MaterialTrailing(parentController: controller),
@@ -112,23 +114,27 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
 
     return Padding(
       padding: const EdgeInsets.only(left: 10),
-      child: AnimatedContainer(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
+      child: Obx(
+        () => AnimatedContainer(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              bottomLeft: Radius.circular(20),
+            ),
+            color: controller.isSelected
+                ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
+                : shouldPartialHighlight
+                    ? context.theme.colorScheme.properSurface
+                    : shouldHighlight
+                        ? context.theme.colorScheme.primaryContainer
+                        : hoverHighlight
+                            ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                            : null,
           ),
-          color: controller.isSelected
-              ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
-              : shouldPartialHighlight || hoverHighlight
-              ? context.theme.colorScheme.properSurface
-              : shouldHighlight
-              ? context.theme.colorScheme.primaryContainer
-              : null,
+          duration: const Duration(milliseconds: 100),
+          child: child,
         ),
-        duration: const Duration(milliseconds: 100),
-        child: child,
       ),
     );
   }
@@ -164,8 +170,8 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
     if (!kIsWeb) {
       updateObx(() {
         final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
-          ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-          ..order(Message_.dateCreated, flags: Order.descending))
+              ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
+              ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
 
         sub = latestMessageQuery.listen((Query<Message> query) async {
@@ -184,14 +190,15 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
           cachedLatestMessageGuid = message?.guid;
         });
 
-        final unreadQuery = chatBox.query((Chat_.hasUnreadMessage.equals(true)
-            .or(Chat_.muteType.equals("mute")))
-            .and(Chat_.guid.equals(controller.chat.guid)))
+        final unreadQuery = chatBox
+            .query((Chat_.hasUnreadMessage.equals(true).or(Chat_.muteType.equals("mute"))).and(Chat_.guid.equals(controller.chat.guid)))
             .watch();
         sub2 = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
-          });
+          final chat = controller.chat.id == null
+              ? null
+              : await runAsync(() {
+                  return chatBox.get(controller.chat.id!);
+                });
           final newUnread = chat?.hasUnreadMessage ?? false;
           final newMute = chat?.muteType ?? "";
           if (chat != null && unread != newUnread) {
@@ -248,17 +255,20 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
                       ? "Error"
                       : "${indicatorText.isNotEmpty ? "$indicatorText\n" : ""}${buildChatListDateMaterial(dateCreated)}",
                   textAlign: TextAlign.right,
-                  style: context.theme.textTheme.bodySmall!.copyWith(
-                    color: (cachedLatestMessage?.error ?? 0) > 0
-                        ? context.theme.colorScheme.error
-                        : unread
-                        ? context.theme.colorScheme.onBackground
-                        : context.theme.colorScheme.outline,
-                    fontWeight: unread
-                        ? FontWeight.w600
-                        : controller.shouldHighlight.value
-                        ? FontWeight.w500 : null,
-                  ).apply(fontSizeFactor: 1.1),
+                  style: context.theme.textTheme.bodySmall!
+                      .copyWith(
+                        color: (cachedLatestMessage?.error ?? 0) > 0
+                            ? context.theme.colorScheme.error
+                            : controller.shouldHighlight.value || unread
+                                ? context.theme.colorScheme.onBackground
+                                : context.theme.colorScheme.outline,
+                        fontWeight: unread
+                            ? FontWeight.w600
+                            : controller.shouldHighlight.value
+                                ? FontWeight.w500
+                                : null,
+                      )
+                      .apply(fontSizeFactor: 1.1),
                   overflow: TextOverflow.clip,
                 );
               }),
@@ -282,20 +292,14 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (controller.chat.isPinned!)
-                Icon(
-                  Icons.push_pin_outlined,
-                  size: 15, color: context.theme.colorScheme.outline
-                ),
+              if (controller.chat.isPinned!) Icon(Icons.push_pin_outlined, size: 15, color: context.theme.colorScheme.outline),
               const SizedBox(width: 5),
               if (muteType == "mute")
-                Icon(
+                Obx(() => Icon(
                   Icons.notifications_off_outlined,
-                  color: unread
-                      ? context.theme.colorScheme.primary
-                      : context.theme.colorScheme.outline,
+                  color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.primary : context.theme.colorScheme.outline,
                   size: 15,
-                ),
+                )),
             ],
           ),
         ],
@@ -325,12 +329,13 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     unread = controller.chat.hasUnreadMessage ?? false;
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-            .watch();
+        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
-          });
+          final chat = controller.chat.id == null
+              ? null
+              : await runAsync(() {
+                  return chatBox.get(controller.chat.id!);
+                });
           if (chat == null) return;
           if (chat.hasUnreadMessage != unread) {
             setState(() {
@@ -354,13 +359,14 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
       child: (unread)
           ? Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(35),
-          color: context.theme.colorScheme.primary,
-        ),
-        width: 10,
-        height: 10,
-      ) : const SizedBox(width: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(35),
+                color: context.theme.colorScheme.primary,
+              ),
+              width: 10,
+              height: 10,
+            )
+          : const SizedBox(width: 10),
     );
   }
 }

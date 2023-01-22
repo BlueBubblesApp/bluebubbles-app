@@ -40,47 +40,48 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
           mouseCursor: MouseCursor.defer,
           onTap: () => controller.onTap(context),
           onLongPress: controller.onLongPress,
-          child: ListTile(
+          child: Obx(() => ListTile(
             mouseCursor: MouseCursor.defer,
             dense: ss.settings.denseChatTiles.value,
             visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
             minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
-            title: ChatTitle(
+            title: Obx(() => ChatTitle(
               parentController: controller,
               style: context.theme.textTheme.bodyMedium!.copyWith(
                 fontWeight: controller.shouldHighlight.value
                     ? FontWeight.w600
                     : null,
               ),
-            ),
-            subtitle: controller.subtitle ?? ChatSubtitle(
+            )),
+            subtitle: controller.subtitle ?? Obx(() => ChatSubtitle(
               parentController: controller,
               style: context.theme.textTheme.bodySmall!.copyWith(
-                color: context.theme.colorScheme.outline,
+                color: controller.shouldHighlight.value
+                    ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
                 height: 1.5,
               ),
-            ),
+            )),
             leading: ChatLeading(controller: controller, unreadIcon: UnreadIcon(parentController: controller)),
             trailing: SamsungTrailing(parentController: controller),
-          ),
+          )),
         ),
       ),
     );
 
-    return AnimatedContainer(
+    return Obx(() => AnimatedContainer(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: controller.isSelected
             ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
-            : shouldPartialHighlight || hoverHighlight
+            : shouldPartialHighlight
             ? context.theme.colorScheme.properSurface
             : shouldHighlight
             ? context.theme.colorScheme.primaryContainer
-            : null,
+            : hoverHighlight ? context.theme.colorScheme.properSurface.withOpacity(0.5) : null,
       ),
       duration: const Duration(milliseconds: 100),
       child: child,
-    );
+    ));
   }
 }
 
@@ -197,7 +198,8 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
               style: context.theme.textTheme.bodySmall!.copyWith(
                 color: (cachedLatestMessage?.error ?? 0) > 0
                     ? context.theme.colorScheme.error
-                    : context.theme.colorScheme.outline,
+                    : controller.shouldHighlight.value || unread
+                    ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
                 fontWeight: controller.shouldHighlight.value
                     ? FontWeight.w500 : null,
               ),
@@ -214,11 +216,12 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
           if (muteType == "mute")
             const SizedBox(width: 5.0),
           if (muteType == "mute")
-            Icon(
+            Obx(() => Icon(
               Icons.notifications_off,
-              color: context.theme.colorScheme.onBackground,
+              color: controller.shouldHighlight.value || unread
+                  ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
               size: 15,
-            ),
+            )),
         ],
       ),
     );
