@@ -47,7 +47,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
   void initState() {
     super.initState();
     updateObx(() {
-      if (!kIsWeb) {
+      if (!kIsWeb && widget.message != null) {
         final messageQuery = messageBox.query(Message_.id.equals(reaction.id!)).watch();
         sub = messageQuery.listen((Query<Message> query) async {
           final _message = await runAsync(() {
