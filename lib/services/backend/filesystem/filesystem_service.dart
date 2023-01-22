@@ -91,6 +91,7 @@ class FilesystemService extends GetxService {
     attachmentBox.removeAll();
     chatBox.removeAll();
     fcmDataBox.removeAll();
+    contactBox.removeAll();
     handleBox.removeAll();
     messageBox.removeAll();
     themeBox.removeAll();

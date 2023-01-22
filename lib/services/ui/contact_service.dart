@@ -34,7 +34,7 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<List<List<int>>> refreshContacts({bool reloadUI = true}) async {
+  Future<List<List<int>>> refreshContacts() async {
     if (!(await cs.canAccessContacts())) return [];
     final _contacts = <Contact>[];
     final changedIds = <List<int>>[<int>[], <int>[]];
