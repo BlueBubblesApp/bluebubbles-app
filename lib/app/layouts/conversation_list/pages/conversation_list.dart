@@ -135,6 +135,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                 : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))!),
           (route) => route.isFirst,
         );
+        eventDispatcher.emit("update-highlight", ss.prefs.getString('lastOpenedChat'));
       });
     }
   }

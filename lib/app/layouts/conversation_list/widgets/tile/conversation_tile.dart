@@ -47,6 +47,7 @@ class ConversationTileController extends StatefulController {
     if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
       onLongPress();
     } else {
+      eventDispatcher.emit('update-highlight', chat.guid);
       ns.pushAndRemoveUntil(
         context,
         ConversationView(
