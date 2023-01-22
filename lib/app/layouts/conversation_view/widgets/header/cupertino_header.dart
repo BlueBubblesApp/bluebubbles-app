@@ -36,11 +36,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: Material(
             color: Colors.transparent,
-            child: Stack(
-              children: [
-                if (ss.settings.showConnectionIndicator.value)
-                  const ConnectionIndicator(),
-                Padding(
+            child: Padding(
                   padding: EdgeInsets.only(
                     left: 20.0,
                     right: 20,
@@ -102,8 +98,6 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                     ]
                   ),
                 ),
-              ],
-            ),
           ),
         ),
       ),
