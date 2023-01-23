@@ -434,8 +434,9 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                       child: Align(
                                         alignment: Alignment.centerRight,
                                         child: Row(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: actions,
-                                        ),
+                                          ),
                                       ),
                                     ),
                                   ),
