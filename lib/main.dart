@@ -299,9 +299,7 @@ Future<Null> initApp(bool bubble) async {
       await windowManager.ensureInitialized();
       await windowManager.setTitle('BlueBubbles');
       await Window.initialize();
-      if (kIsDesktop) {
-        await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
-      }
+      await Window.hideWindowControls();
       windowManager.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
         await windowManager.setMinimumSize(const Size(300, 300));
