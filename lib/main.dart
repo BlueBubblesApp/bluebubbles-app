@@ -296,15 +296,15 @@ Future<Null> initApp(bool bubble) async {
       await DartVLC.initialize();
 
       /* ----- WINDOW INITIALIZATION ----- */
-      await WindowManager.instance.ensureInitialized();
-      await WindowManager.instance.setTitle('BlueBubbles');
+      await windowManager.ensureInitialized();
+      await windowManager.setTitle('BlueBubbles');
       await Window.initialize();
       if (kIsDesktop) {
-        await WindowManager.instance.setTitleBarStyle(TitleBarStyle.hidden);
+        await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
       }
-      WindowManager.instance.addListener(DesktopWindowListener());
+      windowManager.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
-        await WindowManager.instance.setMinimumSize(const Size(300, 300));
+        await windowManager.setMinimumSize(const Size(300, 300));
         Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
         num scaleFactor = primary.scaleFactor ?? 1;
         Size displaySize = Size(primary.size.width / scaleFactor, primary.size.height / scaleFactor);
@@ -314,11 +314,11 @@ Future<Null> initApp(bool bubble) async {
         if (width != null && height != null) {
           width = width.clamp(300, displaySize.width);
           height = height.clamp(300, displaySize.height);
-          await WindowManager.instance.setSize(Size(width, height));
+          await windowManager.setSize(Size(width, height));
           ss.prefs.setDouble("window-width", width);
           ss.prefs.setDouble("window-height", height);
         } else {
-          Size size = await WindowManager.instance.getSize();
+          Size size = await windowManager.getSize();
           width = size.width;
           height = size.height;
           ss.prefs.setDouble("window-width", width);
@@ -330,29 +330,29 @@ Future<Null> initApp(bool bubble) async {
         if (posX != null && posY != null) {
           posX = posX.clamp(0, displaySize.width - width);
           posY = posY.clamp(0, displaySize.height - height);
-          await WindowManager.instance.setPosition(Offset(posX, posY));
+          await windowManager.setPosition(Offset(posX, posY));
           ss.prefs.setDouble("window-x", posX);
           ss.prefs.setDouble("window-y", posY);
         } else {
-          await WindowManager.instance.setAlignment(Alignment.center);
-          Offset offset = await WindowManager.instance.getPosition();
+          await windowManager.setAlignment(Alignment.center);
+          Offset offset = await windowManager.getPosition();
           posX = offset.dx;
           posY = offset.dy;
           ss.prefs.setDouble("window-x", posX);
           ss.prefs.setDouble("window-y", posY);
         }
 
-        Size size = await WindowManager.instance.getSize();
+        Size size = await windowManager.getSize();
         width = size.width;
         height = size.height;
         posX = posX.clamp(0, displaySize.width - width);
         posY = posY.clamp(0, displaySize.height - height);
-        await WindowManager.instance.setPosition(Offset(posX, posY));
+        await windowManager.setPosition(Offset(posX, posY));
         ss.prefs.setDouble("window-x", posX);
         ss.prefs.setDouble("window-y", posY);
 
-        await WindowManager.instance.setTitle('BlueBubbles');
-        await WindowManager.instance.show();
+        await windowManager.setTitle('BlueBubbles');
+        await windowManager.show();
       });
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */
@@ -413,14 +413,14 @@ class DesktopWindowListener extends WindowListener {
 
   @override
   void onWindowResized() async {
-    Size size = await WindowManager.instance.getSize();
+    Size size = await windowManager.getSize();
     ss.prefs.setDouble("window-width", size.width);
     ss.prefs.setDouble("window-height", size.height);
   }
 
   @override
   void onWindowMoved() async {
-    Offset offset = await WindowManager.instance.getPosition();
+    Offset offset = await windowManager.getPosition();
     ss.prefs.setDouble("window-x", offset.dx);
     ss.prefs.setDouble("window-y", offset.dy);
   }
@@ -770,20 +770,20 @@ Future<void> initSystemTray() async {
         label: 'Open App',
         onClicked: (_) async {
           ls.open();
-          await WindowManager.instance.show();
+          await windowManager.show();
         },
       ),
       MenuItemLable(
         label: 'Hide App',
         onClicked: (_) async {
           ls.close();
-          await WindowManager.instance.hide();
+          await windowManager.hide();
         },
       ),
       MenuItemLable(
         label: 'Close App',
         onClicked: (_) async {
-          await WindowManager.instance.close();
+          await windowManager.close();
         },
       ),
     ]
@@ -795,7 +795,7 @@ Future<void> initSystemTray() async {
   systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
       case 'click':
-        await WindowManager.instance.show();
+        await windowManager.show();
         break;
       case "right-click":
         await systemTray.popUpContextMenu();

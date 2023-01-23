@@ -627,7 +627,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                     await ss.prefs.setString("selected-dark", "OLED Dark");
                                     await ss.prefs.setString("selected-light", "Bright White");
                                     await ss.prefs.setBool("use-custom-path", val);
-                                    await WindowManager.instance.close();
+                                    await windowManager.close();
                                   },
                                 ),
                               ],
@@ -688,7 +688,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                         await ss.prefs.setString("selected-light", "Bright White");
                                         await ss.prefs.setBool("use-custom-path", true);
                                         await ss.prefs.setString("custom-path", path);
-                                        await WindowManager.instance.close();
+                                        await windowManager.close();
                                       },
                                     ),
                                   ],

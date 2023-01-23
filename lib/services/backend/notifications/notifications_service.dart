@@ -80,7 +80,7 @@ class NotificationsService extends GetxService {
     }
 
     // watch for new messages and handle the notification
-    if (!kIsWeb && !kIsDesktop) {
+    if (!kIsWeb) {
       final countQuery = (messageBox.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
@@ -224,7 +224,7 @@ class NotificationsService extends GetxService {
           allToast!.onClick = () async {
             notifications = {};
             notificationCounts = {};
-            await WindowManager.instance.focus();
+            await windowManager.focus();
           };
 
           allToast!.onClickAction = (index) async {
@@ -315,7 +315,7 @@ class NotificationsService extends GetxService {
             Chat? chat = Chat.findOne(guid: guid);
             if (chat == null) return;
 
-            await WindowManager.instance.focus();
+            await windowManager.focus();
 
             if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
               ns.pushAndRemoveUntil(
@@ -399,7 +399,7 @@ class NotificationsService extends GetxService {
             Chat? chat = Chat.findOne(guid: guid);
             if (chat == null) return;
 
-            await WindowManager.instance.focus();
+            await windowManager.focus();
 
             if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
               ns.pushAndRemoveUntil(
@@ -424,7 +424,7 @@ class NotificationsService extends GetxService {
             chat.toggleHasUnread(false);
             EventDispatcher().emit('refresh', null);
 
-            await WindowManager.instance.focus();
+            await windowManager.focus();
 
             if (await File(path).exists()) {
               await File(path).delete();
