@@ -345,7 +345,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             ),
           ),
           body: TabBarView(
-            physics: ThemeSwitcher.getScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             controller: tabController,
             children: <Widget>[
               NotificationListener<ScrollEndNotification>(
