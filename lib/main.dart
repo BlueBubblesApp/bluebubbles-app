@@ -306,8 +306,6 @@ Future<Null> initApp(bool bubble) async {
       doWhenWindowReady(() async {
         await windowManager.setMinimumSize(const Size(300, 300));
         Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
-        num scaleFactor = primary.scaleFactor ?? 1;
-        Size displaySize = Size(primary.size.width / scaleFactor, primary.size.height / scaleFactor);
 
         double? width = ss.prefs.getDouble("window-width");
         double? height = ss.prefs.getDouble("window-height");
