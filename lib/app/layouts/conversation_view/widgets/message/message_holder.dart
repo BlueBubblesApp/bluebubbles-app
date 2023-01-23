@@ -464,15 +464,22 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                             RawKeyEventDataWindows? windowsData;
                                                                             RawKeyEventDataLinux? linuxData;
                                                                             RawKeyEventDataWeb? webData;
+                                                                            RawKeyEventDataAndroid? androidData;
                                                                             if (ev.data is RawKeyEventDataWindows) {
                                                                               windowsData = ev.data as RawKeyEventDataWindows;
                                                                             } else if (ev.data is RawKeyEventDataLinux) {
                                                                               linuxData = ev.data as RawKeyEventDataLinux;
                                                                             } else if (ev.data is RawKeyEventDataWeb) {
                                                                               webData = ev.data as RawKeyEventDataWeb;
+                                                                            } else if (ev.data is RawKeyEventDataAndroid) {
+                                                                              androidData = ev.data as RawKeyEventDataAndroid;
                                                                             }
                                                                             if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
                                                                               completeEdit(editStuff.item3.text, e.part);
+                                                                              return KeyEventResult.handled;
+                                                                            }
+                                                                            if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+                                                                              widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
                                                                               return KeyEventResult.handled;
                                                                             }
                                                                             return KeyEventResult.ignored;
