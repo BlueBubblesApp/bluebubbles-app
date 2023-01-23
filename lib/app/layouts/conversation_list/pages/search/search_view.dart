@@ -386,12 +386,13 @@ class SearchViewState extends OptimizedState<SearchView> {
                       final service = ms(chat.guid);
                       service.method = local ? "local" : "network";
                       service.struct.addMessages([message]);
-                      ns.push(
+                      ns.pushAndRemoveUntil(
                         context,
                         ConversationView(
                           chat: chat,
                           customService: service,
                         ),
+                        (route) => route.isFirst,
                       );
                     },
                   ),
