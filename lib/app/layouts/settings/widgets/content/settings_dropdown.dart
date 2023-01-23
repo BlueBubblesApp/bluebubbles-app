@@ -48,13 +48,16 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         width: context.width,
-        child: CupertinoSlidingSegmentedControl<T>(
-          children: map,
-          groupValue: initial,
-          thumbColor: context.theme.colorScheme.primary,
-          backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
-          onValueChanged: onChanged,
-          padding: EdgeInsets.zero,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: CupertinoSlidingSegmentedControl<T>(
+            children: map,
+            groupValue: initial,
+            thumbColor: context.theme.colorScheme.primary,
+            backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
+            onValueChanged: onChanged,
+            padding: EdgeInsets.zero,
+          ),
         ),
       );
     }
