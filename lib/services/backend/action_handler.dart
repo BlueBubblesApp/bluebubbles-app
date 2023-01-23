@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
+import 'package:window_manager/window_manager.dart';
 
 ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>() : Get.put(ActionHandler());
 
