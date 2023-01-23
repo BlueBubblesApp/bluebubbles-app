@@ -15,7 +15,7 @@ import 'package:universal_io/io.dart';
 FilesystemService fs = Get.isRegistered<FilesystemService>() ? Get.find<FilesystemService>() : Get.put(FilesystemService());
 
 class FilesystemService extends GetxService {
-  late final Directory appDocDir;
+  late Directory appDocDir;
   late final PackageInfo packageInfo;
   AndroidDeviceInfo? androidInfo;
   late final Database webDb;
