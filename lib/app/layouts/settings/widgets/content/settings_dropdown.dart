@@ -104,7 +104,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   child: Center(
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<T>(
-                        dropdownColor: secondaryColor ?? surfaceColor,
+                        dropdownColor: secondaryColor?.opacity != 1 ? surfaceColor : (secondaryColor ?? surfaceColor),
                         icon: Icon(
                           Icons.arrow_drop_down,
                           color: context.theme.textTheme.bodyLarge!.color,
