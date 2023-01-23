@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -31,8 +32,8 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
             children: [
               if (iOS)
                 IconButton(
-                  constraints: const BoxConstraints(maxWidth: 30),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  constraints: kIsWeb || kIsDesktop ? null : const BoxConstraints(maxWidth: 30),
+                  padding: EdgeInsets.symmetric(horizontal: kIsWeb || kIsDesktop ? 12 : 8, vertical: kIsWeb || kIsDesktop ? 20 : 5),
                   icon: Icon(
                     CupertinoIcons.xmark_circle_fill,
                     color: context.theme.colorScheme.properOnSurface,
@@ -78,8 +79,8 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
               ),
               if (!iOS)
                 IconButton(
-                  constraints: const BoxConstraints(maxWidth: 30),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  constraints: kIsWeb || kIsDesktop ? null : const BoxConstraints(maxWidth: 30),
+                  padding: EdgeInsets.symmetric(horizontal: kIsWeb || kIsDesktop ? 12 : 8, vertical: kIsWeb || kIsDesktop ? 20 : 5),
                   icon: Icon(
                     Icons.close,
                     color: context.theme.colorScheme.properOnSurface,
