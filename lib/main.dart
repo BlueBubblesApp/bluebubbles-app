@@ -312,8 +312,8 @@ Future<Null> initApp(bool bubble) async {
         double? width = ss.prefs.getDouble("window-width");
         double? height = ss.prefs.getDouble("window-height");
         if (width != null && height != null) {
-          width = width.clamp(300, displaySize.width);
-          height = height.clamp(300, displaySize.height);
+          width = width.clamp(300, primary.size.width);
+          height = height.clamp(300, primary.size.height);
           await windowManager.setSize(Size(width, height));
           ss.prefs.setDouble("window-width", width);
           ss.prefs.setDouble("window-height", height);
@@ -328,8 +328,8 @@ Future<Null> initApp(bool bubble) async {
         double? posX = ss.prefs.getDouble("window-x");
         double? posY = ss.prefs.getDouble("window-y");
         if (posX != null && posY != null) {
-          posX = posX.clamp(0, displaySize.width - width);
-          posY = posY.clamp(0, displaySize.height - height);
+          posX = posX.clamp(0, primary.size.width - width);
+          posY = posY.clamp(0, primary.size.height - height);
           await windowManager.setPosition(Offset(posX, posY));
           ss.prefs.setDouble("window-x", posX);
           ss.prefs.setDouble("window-y", posY);
@@ -345,8 +345,8 @@ Future<Null> initApp(bool bubble) async {
         Size size = await windowManager.getSize();
         width = size.width;
         height = size.height;
-        posX = posX.clamp(0, displaySize.width - width);
-        posY = posY.clamp(0, displaySize.height - height);
+        posX = posX.clamp(0, primary.size.width - width);
+        posY = posY.clamp(0, primary.size.height - height);
         await windowManager.setPosition(Offset(posX, posY));
         ss.prefs.setDouble("window-x", posX);
         ss.prefs.setDouble("window-y", posY);
