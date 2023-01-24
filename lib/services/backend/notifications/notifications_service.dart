@@ -197,7 +197,7 @@ class NotificationsService extends GetxService {
 
         List<LocalNotification> _notifications = List.from(notifications[guid]!);
 
-        Iterable<String> _chats = notifications.keys;
+        Iterable<String> _chats = notifications.keys.toList();
 
         if (_chats.length > maxChatCount) {
           for (String chat in _chats) {
