@@ -104,6 +104,7 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
         if (participants.isNotEmpty) {
           chat.handles.clear();
           chat.handles.addAll(participants);
+          chat.handles.applyToDb();
         }
       }
 
