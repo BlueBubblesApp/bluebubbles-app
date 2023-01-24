@@ -592,14 +592,11 @@ class Chat {
       ns.closeAllConversationView(Get.context!);
       await Future.delayed(const Duration(milliseconds: 500));
     }
-    List<Message> messages = Chat.getMessages(chat);
     store.runInTransaction(TxMode.write, () {
       chat.dateDeleted = DateTime.now().toUtc();
       chat.hasUnreadMessage = false;
       chat.save(updateDateDeleted: true, updateHasUnreadMessage: true);
-      for (Message m in messages) {
-        Message.softDelete(m.guid!);
-      }
+      chat.clearTranscript();
     });
   }
 
