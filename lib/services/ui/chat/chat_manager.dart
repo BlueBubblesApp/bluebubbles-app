@@ -25,6 +25,7 @@ class ChatManager extends GetxService {
   }
 
   void setActiveChat(Chat chat, {clearNotifications = true}) {
+    eventDispatcher.emit("update-highlight", chat.guid);
     Logger.debug('Setting active chat to ${chat.guid} (${chat.displayName})');
 
     ss.prefs.setString('lastOpenedChat', chat.guid);

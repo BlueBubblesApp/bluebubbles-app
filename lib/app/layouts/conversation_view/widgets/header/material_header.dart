@@ -48,7 +48,6 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
               SystemNavigator.pop();
               return true;
             }
-            eventDispatcher.emit("update-highlight", null);
             controller.close();
             return false;
           },

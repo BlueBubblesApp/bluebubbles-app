@@ -8,12 +8,13 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 
-void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service) {
+void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service, ConversationViewController? cvController) {
   final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!);
   final originatorPart = message.threadOriginatorGuid != null ? message.normalizedThreadPart : part.part;
   if (message.threadOriginatorGuid == null) {
@@ -96,5 +97,9 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
       fullscreenDialog: true,
       opaque: false,
     ),
-  );
+  ).then((_) {
+    if (kIsDesktop || kIsWeb) {
+      cvController?.focusNode.requestFocus();
+    }
+  });
 }

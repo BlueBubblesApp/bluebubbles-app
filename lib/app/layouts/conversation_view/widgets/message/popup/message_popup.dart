@@ -759,9 +759,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     if (message.threadOriginatorGuid != null) {
       final mwc = getActiveMwc(message.threadOriginatorGuid!);
       if (mwc == null) return showSnackbar("Error", "Failed to find thread!");
-      showReplyThread(context, mwc.message, mwc.parts[message.normalizedThreadPart], service);
+      showReplyThread(context, mwc.message, mwc.parts[message.normalizedThreadPart], service, cvController);
     } else {
-      showReplyThread(context, message, part, service);
+      showReplyThread(context, message, part, service, cvController);
     }
   }
 
@@ -769,7 +769,6 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     Handle? handle = message.handle;
     if (handle == null) return;
     popDetails();
-    eventDispatcher.emit("update-highlight", null);
     ns.pushAndRemoveUntil(
       context,
       ChatCreator(initialSelected: [SelectedContact(displayName: handle.displayName, address: handle.address)]),
@@ -794,7 +793,6 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       ));
     }
     if (attachments.isNotEmpty || !isNullOrEmpty(message.text)!) {
-      eventDispatcher.emit("update-highlight", null);
       ns.pushAndRemoveUntil(
         context,
         ChatCreator(

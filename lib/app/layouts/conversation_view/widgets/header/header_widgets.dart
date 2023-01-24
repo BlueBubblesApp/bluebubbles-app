@@ -104,7 +104,6 @@ class ManualMarkState extends OptimizedState<ManualMark> {
                 }
                 widget.controller.inSelectMode.value = false;
                 widget.controller.selected.clear();
-                eventDispatcher.emit("update-highlight", null);
                 ns.pushAndRemoveUntil(
                   context,
                   ChatCreator(

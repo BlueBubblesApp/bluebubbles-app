@@ -17,10 +17,12 @@ class ReplyBubble extends CustomStateful<MessageWidgetController> {
     required super.parentController,
     required this.part,
     required this.showAvatar,
+    required this.cvController,
   }) : super(key: key);
 
   final int part;
   final bool showAvatar;
+  final ConversationViewController cvController;
 
   @override
   CustomState createState() => _ReplyBubbleState();
@@ -64,7 +66,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
           ),
           child: GestureDetector(
             onTap: () {
-              showReplyThread(context, message, part, ms(controller.cvController!.chat.guid));
+              showReplyThread(context, message, part, ms(controller.cvController!.chat.guid), widget.cvController);
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -98,7 +100,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             onTap: () {
-              showReplyThread(context, message, part, ms(controller.cvController!.chat.guid));
+              showReplyThread(context, message, part, ms(controller.cvController!.chat.guid), widget.cvController);
             },
             behavior: HitTestBehavior.opaque,
             child: IgnorePointer(
