@@ -270,6 +270,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                     parentController: getActiveMwc(replyTo!.guid!)!,
                                     part: replyTo!.guid! == message.threadOriginatorGuid ? message.normalizedThreadPart : 0,
                                     showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS) && !replyTo!.isFromMe!,
+                                    cvController: widget.cvController,
                                   ),
                                 ),
                               ),
@@ -305,6 +306,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   part: replyTo!.guid! == message.threadOriginatorGuid ? message.normalizedThreadPart : 0,
                                   showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
                                       && !replyTo!.isFromMe!,
+                                  cvController: widget.cvController,
                                 ),
                               ),
                             ),
