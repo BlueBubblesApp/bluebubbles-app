@@ -36,20 +36,20 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
   }
 
   Future<void> send(Tuple6<List<PlatformFile>, String, String, String?, int?, String?> tuple) async {
-    await controller.scrollToBottom();
-    if (ss.settings.sendSoundPath.value != null) {
-      PlayerController controller = PlayerController();
-      await controller.preparePlayer(
-        ss.settings.sendSoundPath.value!, 1.0
-      );
-      controller.startPlayer();
-    }
+    // do not add anything above this line, the attachments must be extracted first
     final attachments = List<PlatformFile>.from(tuple.item1);
     final text = tuple.item2;
     final subject = tuple.item3;
     final replyGuid = tuple.item4;
     final part = tuple.item5;
     final effectId = tuple.item6;
+    await controller.scrollToBottom();
+    if (ss.settings.sendSoundPath.value != null) {
+      PlayerController controller = PlayerController();
+      controller.preparePlayer(
+        ss.settings.sendSoundPath.value!, 1.0
+      ).then((_) => controller.startPlayer());
+    }
     for (int i = 0; i < attachments.length; i++) {
       final file = attachments[i];
       final message = Message(

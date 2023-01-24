@@ -40,6 +40,7 @@ class OutgoingItem extends QueueItem {
   Message message;
   Message? selected;
   String? reaction;
+  Map<String, dynamic>? customArgs;
 
   OutgoingItem({
     required QueueType type,
@@ -48,5 +49,6 @@ class OutgoingItem extends QueueItem {
     required this.message,
     this.selected,
     this.reaction,
+    this.customArgs,
   }) : super(type: type, completer: completer);
 }

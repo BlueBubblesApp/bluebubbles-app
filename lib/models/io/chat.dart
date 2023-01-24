@@ -128,8 +128,8 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       final chat = chatBox.get(chatId);
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (chat!.participants.isNotEmpty && message.handleId != 0) {
-          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
+        if (chat!.participants.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
           if (handle == null && message.originalROWID != null) {
             messages.remove(message);
             i--;
@@ -396,6 +396,7 @@ class Chat {
     bool updateCustomAvatarPath = false,
     bool updateTextFieldText = false,
     bool updateTextFieldAttachments = false,
+    bool updateDisplayName = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -435,6 +436,9 @@ class Chat {
       if (!updateTextFieldAttachments) {
         textFieldAttachments = existing?.textFieldAttachments ?? textFieldAttachments;
       }
+      if (!updateDisplayName) {
+        displayName = existing?.displayName ?? displayName;
+      }
 
       /// Save the chat and add the participants
       for (int i = 0; i < participants.length; i++) {
@@ -444,6 +448,13 @@ class Chat {
       dbOnlyLatestMessageDate = latestMessage.dateCreated!;
       try {
         id = chatBox.put(this);
+        // make sure to add participant relation if its a new chat
+        if (existing == null && participants.isNotEmpty) {
+          final toSave = chatBox.get(id!);
+          toSave!.handles.clear();
+          toSave.handles.addAll(participants);
+          toSave.handles.applyToDb();
+        }
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -456,7 +467,7 @@ class Chat {
       return this;
     }
     displayName = name;
-    save();
+    save(updateDisplayName: true);
     return this;
   }
 
@@ -577,8 +588,12 @@ class Chat {
       hasUnreadMessage = hasUnread;
       save(updateHasUnreadMessage: true);
     }
+    if (cm.isChatActive(guid) && hasUnread) {
+      hasUnread = false;
+      clearLocalNotifications = false;
+    }
 
-    if (kIsDesktop) {
+    if (kIsDesktop && !hasUnread) {
       notif.clearDesktopNotificationsForChat(guid);
     }
 
@@ -598,7 +613,7 @@ class Chat {
     return this;
   }
 
-  Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
+  Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true, bool clearNotificationsIfFromMe = true}) async {
     // If this is a message preview and we don't already have metadata for this, get it
     if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata) && !message.hasApplePayloadData) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
@@ -654,7 +669,7 @@ class Chat {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
-        toggleHasUnread(false);
+        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe);
       } else if (!cm.isChatActive(guid)) {
         toggleHasUnread(true);
       }
@@ -707,8 +722,8 @@ class Chat {
       query.close();
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
-        if (chat.participants.isNotEmpty && message.handleId != 0) {
-          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId);
+        if (chat.participants.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
+          Handle? handle = chat.participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
           if (handle == null) {
             messages.remove(message);
             i--;
@@ -757,8 +772,8 @@ class Chat {
 
   void _deduplicateParticipants() {
     if (_participants.isEmpty) return;
-    final ids = _participants.map((e) => e.address).toSet();
-    _participants.retainWhere((element) => ids.remove(element.address));
+    final ids = _participants.map((e) => e.uniqueAddressAndService).toSet();
+    _participants.retainWhere((element) => ids.remove(element.uniqueAddressAndService));
   }
 
   Chat togglePin(bool isPinned) {

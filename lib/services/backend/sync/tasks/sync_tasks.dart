@@ -48,36 +48,36 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
       for (final chat in inputChats) {
         chatsToSave[chat.guid] = chat;
         for (final p in chat.participants) {
-          if (!handlesToSave.containsKey(p.address)) {
-            handlesToSave[p.address] = p;
+          if (!handlesToSave.containsKey(p.uniqueAddressAndService)) {
+            handlesToSave[p.uniqueAddressAndService] = p;
           }
 
           if (!chatHandles.containsKey(chat.guid)) {
             chatHandles[chat.guid] = [];
           }
 
-          if (!chatHandles[chat.guid]!.contains(p.address)) {
-            chatHandles[chat.guid]?.add(p.address);
+          if (!chatHandles[chat.guid]!.contains(p.uniqueAddressAndService)) {
+            chatHandles[chat.guid]?.add(p.uniqueAddressAndService);
           }
         }
       }
 
       // 1. Check for existing handles and save new ones
       List<Handle> inputHandles = handlesToSave.values.toList();
-      List<String> inputHandleAddresses = inputHandles.map((element) => element.address).toList();
-      final handleQuery = handleBox.query(Handle_.address.oneOf(inputHandleAddresses)).build();
-      List<String> existingHandleAddresses = handleQuery.find().map((e) => e.address).toList();
-      inputHandles = inputHandles.where((element) => !existingHandleAddresses.contains(element.address)).toList();
+      List<String> inputHandleAddressesAndServices = inputHandles.map((element) => element.uniqueAddressAndService).toList();
+      final handleQuery = handleBox.query(Handle_.uniqueAddressAndService.oneOf(inputHandleAddressesAndServices)).build();
+      List<String> existingHandleAddressesAndServices = handleQuery.find().map((e) => e.uniqueAddressAndService).toList();
+      inputHandles = inputHandles.where((element) => !existingHandleAddressesAndServices.contains(element.uniqueAddressAndService)).toList();
       handleBox.putMany(inputHandles);
 
       // 2. Fetch all inserted/existing handles based on input
-      final handleQuery2 = handleBox.query(Handle_.address.oneOf(inputHandleAddresses)).build();
+      final handleQuery2 = handleBox.query(Handle_.uniqueAddressAndService.oneOf(inputHandleAddressesAndServices)).build();
       List<Handle> handles = handleQuery2.find().toList();
 
       // 3. Create map of inserted/existing handles
       Map<String, Handle> handleMap = {};
       for (final h in handles) {
-        handleMap[h.address] = h;
+        handleMap[h.uniqueAddressAndService] = h;
       }
 
       // 4. Check for existing chats and save new ones
@@ -104,6 +104,7 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
         if (participants.isNotEmpty) {
           chat.handles.clear();
           chat.handles.addAll(participants);
+          chat.handles.applyToDb();
         }
       }
 
@@ -151,7 +152,7 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       // They should already exist because this function makes that assumption. #logic
       Map<String, Handle> handlesCache = {};
       for (var participant in inputChat.handles) {
-        String addr = participant.address;
+        String addr = participant.uniqueAddressAndService;
         if (handlesCache.containsKey(addr)) continue;
         handlesCache[addr] = participant;
       }

@@ -16,7 +16,7 @@ class ActionHandler extends GetxService {
   final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
   final List<String> outOfOrderTempGuids = [];
   
-  Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r) async {
+  Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
 
     final List<Message> messages = <Message>[];
@@ -52,11 +52,11 @@ class ActionHandler extends GetxService {
 
       for (Message message in messages) {
         message.generateTempGuid();
-        await c.addMessage(message);
+        await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       }
     } else {
       m.generateTempGuid();
-      await c.addMessage(m);
+      await c.addMessage(m, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       messages.add(m);
     }
     return messages;
@@ -223,7 +223,7 @@ class ActionHandler extends GetxService {
     // Gets the chat from the db or server (if new)
     c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
     // Get the message handle
-    m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId);
+    m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId) ?? Handle.findOne(originalROWID: m.handleId);
     // Display notification if needed and save everything to DB
     if (!ls.isAlive) {
       await MessageHelper.handleNotification(m, c);

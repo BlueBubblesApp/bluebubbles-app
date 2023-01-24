@@ -441,7 +441,7 @@ class Settings {
     s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     s.localhostPort.value = map['useLocalhost'];
     s.sendSoundPath.value = map['sendSoundPath'];
-    s.receiveSoundPath.value = map['recieveSoundPath'];
+    s.receiveSoundPath.value = map['receiveSoundPath'];
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

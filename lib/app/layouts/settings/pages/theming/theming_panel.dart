@@ -635,7 +635,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                         ),
                                         Obx(() => Text(
                                           controller.progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
-                                          maxLines: 2,
                                           textAlign: TextAlign.center,
                                           style: context.theme.textTheme.bodyLarge,
                                         )),

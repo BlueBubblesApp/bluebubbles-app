@@ -34,10 +34,10 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<bool> refreshContacts({bool reloadUI = true}) async {
-    if (!(await cs.canAccessContacts())) return false;
+  Future<List<List<int>>> refreshContacts({bool reloadUI = true}) async {
+    if (!(await cs.canAccessContacts())) return [];
     final _contacts = <Contact>[];
-    bool hasChanges = false;
+    final changedIds = <List<int>>[<int>[], <int>[]];
     if (kIsWeb || kIsDesktop) {
       _contacts.addAll(await cs.fetchNetworkContacts());
     } else {
@@ -69,15 +69,17 @@ class ContactsService extends GetxService {
       // save any updated contacts
       for (Contact c in dbContacts) {
         final refreshedContact = _contacts.firstWhereOrNull((element) => element.id == c.id);
-        if (refreshedContact != null && c != refreshedContact) {
-          hasChanges = true;
-          refreshedContact.save();
+        if (refreshedContact != null) {
+          refreshedContact.dbId = c.dbId;
+          if (c != refreshedContact) {
+            changedIds.first.add(c.dbId!);
+            refreshedContact.save();
+          }
         }
       }
       // save any new contacts
-      final newContacts = _contacts.where((e) => !dbContacts.map((e) => e.id).contains(e.id)).toList();
+      final newContacts = _contacts.where((e) => !dbContacts.map((e2) => e2.id).contains(e.id)).toList();
       if (newContacts.isNotEmpty) {
-        hasChanges = true;
         final ids = contactBox.putMany(newContacts);
         for (int i = 0; i < newContacts.length; i++) {
           newContacts[i].dbId = ids[i];
@@ -101,13 +103,13 @@ class ContactsService extends GetxService {
     final handlesToSearch = List<Handle>.from(handles);
     for (Contact c in _contacts) {
       final handles = cs.matchContactToHandles(c, handlesToSearch);
-      final addresses = handles.map((e) => e.address).toList();
+      final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
       if (handles.isNotEmpty) {
-        handlesToSearch.removeWhere((e) => addresses.contains(e.address));
+        handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
 
         // we have changes if the handle doesn't have an associated contact,
         // even if there were no contact changes in the first place
-        final matches = handles.where((e) => addresses.contains(e.address));
+        final matches = handles.where((e) => addressesAndServices.contains(e.uniqueAddressAndService));
         for (Handle h in matches) {
           if (kIsWeb) {
             h.webContact = c;
@@ -115,7 +117,7 @@ class ContactsService extends GetxService {
           }
 
           if (h.contactRelation.target == null) {
-            hasChanges = true;
+            changedIds.last.add(h.id!);
           }
 
           h.contactRelation.target = c;
@@ -129,14 +131,14 @@ class ContactsService extends GetxService {
       contacts = _contacts;
     }
     // only return contacts if things changed (or on web)
-    return kIsWeb || hasChanges;
+    return changedIds;
   }
 
-  void completeContactsRefresh(List<Contact> refreshedContacts, {bool reloadUI = true}) {
+  void completeContactsRefresh(List<Contact> refreshedContacts, {List<List<int>>? reloadUI}) {
     if (refreshedContacts.isNotEmpty) {
       contacts = refreshedContacts;
-      if (reloadUI) {
-        eventDispatcher.emit('update-contacts', null);
+      if (reloadUI != null) {
+        eventDispatcher.emit('update-contacts', reloadUI);
       }
     }
   }
@@ -144,7 +146,8 @@ class ContactsService extends GetxService {
   List<Handle> matchContactToHandles(Contact c, List<Handle> handles) {
     final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
     List<Handle> handleMatches = [];
-    int maxResults = c.phones.length + c.emails.length;
+    // multiply phones by 3 because a phone can be matched to iMessage / SMS / Android SMS
+    int maxResults = c.phones.length * 3 + c.emails.length;
     for (Handle h in handles) {
       // Match emails
       if (h.address.contains("@") && c.emails.contains(h.address)) {
@@ -244,11 +247,11 @@ class ContactsService extends GetxService {
       final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
       for (Contact c in contacts) {
         final handles = cs.matchContactToHandles(c, handlesToSearch);
-        final addresses = handles.map((e) => e.address).toList();
+        final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
         if (handles.isNotEmpty) {
-          handlesToSearch.removeWhere((e) => addresses.contains(e.address));
+          handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
           for (Handle h in handles) {
-            if (addresses.contains(h.address)) {
+            if (addressesAndServices.contains(h.uniqueAddressAndService)) {
               h.webContact = c;
             }
           }

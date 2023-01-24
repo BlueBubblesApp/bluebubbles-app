@@ -8,16 +8,26 @@ Below are the last few BlueBubbles App release changelogs
   - Backend completely redone to reduce potential for bugs and increase maintainability
   - Frontend completely redone to improve performance drastically and make the app prettier & more fun to use 
   - Some stats:
-    - 80,000+ lines of code modified
-    - 450+ files changed
+    - 100,000+ lines of code modified
+    - 500+ files changed
     - 100+ issues closed
-    - 4 months / hundreds of hours in the making
+    - 6 months / hundreds of hours in the making
 - iMessage parity
   - Display mentions in **bold**
   - Display unsent messages
   - Display edited messages, along with their past edits
+  - Display messages with attachments or other rich content in the correct order
+  - Allow reacting to individual parts of a message
   - Improved URL previews
   - Display more information for iMessage apps (e.g. Shazam, Apple Pay, YouTube, OpenTable, etc)
+  - Unsend sent messages (Ventura Private API)
+  - Edit sent messages (Ventura Private API)
+  - Send handwritten messages
+- View FindMy Devices
+- Scheduled messages
+- Notification for incoming FaceTimes
+- Option to use localhost address for low latency when on server WiFi network
+- Choose an app font from nearly 1,400 custom fonts
 - Way, way, way too many other changes to count. Bug fixes, performance improvements, new features - you name it, the app got it.
 
 ### Removed Features

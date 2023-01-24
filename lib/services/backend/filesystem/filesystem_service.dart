@@ -93,7 +93,6 @@ class FilesystemService extends GetxService {
     fcmDataBox.removeAll();
     handleBox.removeAll();
     messageBox.removeAll();
-    scheduledBox.removeAll();
     themeBox.removeAll();
   }
 

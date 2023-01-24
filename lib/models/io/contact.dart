@@ -114,8 +114,8 @@ class Contact {
           runtimeType == other.runtimeType &&
           id == other.id &&
           displayName == other.displayName &&
-          phones == other.phones &&
-          emails == other.emails &&
+          listEquals(phones, other.phones) &&
+          listEquals(emails, other.emails) &&
           avatar?.length == other.avatar?.length;
 
   @override

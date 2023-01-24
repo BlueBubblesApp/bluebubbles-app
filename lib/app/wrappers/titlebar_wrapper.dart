@@ -22,7 +22,12 @@ class TitleBarWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb || (!kIsWeb && !kIsDesktop)) {
+    if (chromeOS) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 50),
+        child: child,
+      );
+    } else if (kIsWeb || (!kIsWeb && !kIsDesktop)) {
       return child;
     }
 

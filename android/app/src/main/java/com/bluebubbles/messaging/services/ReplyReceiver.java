@@ -32,7 +32,7 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class ReplyReceiver extends BroadcastReceiver {
 
-    final String TAG = "reply-receiver";
+    final String TAG = "BlueBubblesApp";
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -69,7 +69,10 @@ public class ReplyReceiver extends BroadcastReceiver {
                         NotificationCompat.MessagingStyle temp = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notif);
                         style = new Notification.MessagingStyle(temp.getUser().getName());
                     }
-                    style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, "You"));
+                    Person.Builder sender = new Person.Builder()
+                        .setName("You")
+                        .setImportant(true);
+                    style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, sender.build()));
                     builder.setStyle(style);
                     builder.setOnlyAlertOnce(true);
                     notificationManagerCompat.notify(NewMessageNotification.notificationTag, existingId, builder.build());

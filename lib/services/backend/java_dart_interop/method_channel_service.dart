@@ -41,6 +41,7 @@ class MethodChannelService extends GetxService {
         if (!ls.isBubble) {
           BackgroundIsolate.initialize();
         }
+        chromeOS = await mcs.invokeMethod("check-chromeos") ?? false;
       } catch (_) {}
     }
   }
@@ -131,11 +132,24 @@ class MethodChannelService extends GetxService {
               isFromMe: true,
               handleId: 0,
             ),
+            customArgs: {'notifReply': true}
           ));
           await completer.future;
           return true;
         }
       case "markAsRead":
+        if (ls.isAlive) return;
+        await storeStartup.future;
+        Logger.info("Received markAsRead from Java");
+        final data = call.arguments as Map?;
+        if (data != null) {
+          Chat? chat = Chat.findOne(guid: data["chat"]);
+          if (chat != null) {
+            chat.toggleHasUnread(false);
+            return true;
+          }
+        }
+        return false;
       case "chat-read-status-changed":
         if (ls.isAlive) return;
         await storeStartup.future;

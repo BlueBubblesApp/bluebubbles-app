@@ -96,6 +96,11 @@ class FullSyncManager extends SyncManager {
                 }
               }
 
+              if (chat.participants.isEmpty) {
+                addToOutput('Deleting chat: $displayName (no participants were found)');
+                Chat.softDelete(chat);
+                continue;
+              }
               if (newMessages.isEmpty && skipEmptyChats) {
                 addToOutput('Deleting chat: $displayName (skip empty chats was selected)');
                 Chat.softDelete(chat);

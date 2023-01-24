@@ -149,6 +149,9 @@ class MetadataHelper {
 
     try {
       final response = await http.dio.get(url);
+      if (response.headers.value('content-type')?.startsWith("image/") ?? false) {
+        meta.image = url;
+      }
       final document = parser.parse(response.data);
       final props = document.head?.children
           .where((e) => e.localName == "meta" && e.attributes["property"].toString().contains("og:"))

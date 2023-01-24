@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -30,7 +31,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
 
   bool get shouldShow {
     if (widget.forceShow || message.guid!.contains("temp")) return true;
-    if (!message.isFromMe! && iOS) return false;
+    if ((!message.isFromMe! && iOS) || (controller.parts.lastOrNull?.isUnsent ?? false)) return false;
     final messages = ms(controller.cvController!.chat.guid).struct.messages
         .where((e) => (!iOS ? !e.isFromMe! : false) || (e.isFromMe! && (e.dateDelivered != null || e.dateRead != null)))
         .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));

@@ -213,6 +213,31 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
         });
       });
     }
+    // listen for contacts update (if tile is active, we can update it)
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 != 'update-contacts') return;
+      if (event.item2.isNotEmpty) {
+        bool changed = false;
+        for (Handle h in controller.chat.participants) {
+          if (event.item2.first.contains(h.contactRelation.targetId)) {
+            changed = true;
+            h.contactRelation.target = contactBox.get(h.contactRelation.targetId);
+          }
+          if (event.item2.last.contains(h.id)) {
+            changed = true;
+            h = handleBox.get(h.id!)!;
+          }
+        }
+        if (changed) {
+          final newTitle = controller.chat.getTitle();
+          if (newTitle != title) {
+            setState(() {
+              title = newTitle;
+            });
+          }
+        }
+      }
+    });
   }
 
   @override
