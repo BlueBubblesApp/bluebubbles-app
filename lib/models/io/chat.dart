@@ -404,6 +404,7 @@ class Chat {
     bool updateTextFieldText = false,
     bool updateTextFieldAttachments = false,
     bool updateDisplayName = false,
+    bool updateDateDeleted = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -445,6 +446,9 @@ class Chat {
       }
       if (!updateDisplayName) {
         displayName = existing?.displayName ?? displayName;
+      }
+      if (!updateDateDeleted) {
+        dateDeleted = existing?.dateDeleted ?? dateDeleted;
       }
 
       /// Save the chat and add the participants
@@ -592,7 +596,7 @@ class Chat {
     store.runInTransaction(TxMode.write, () {
       chat.dateDeleted = DateTime.now().toUtc();
       chat.hasUnreadMessage = false;
-      chat.save();
+      chat.save(updateDateDeleted: true, updateHasUnreadMessage: true);
       for (Message m in messages) {
         Message.softDelete(m.guid!);
       }
@@ -679,7 +683,7 @@ class Chat {
     // Save the chat.
     // This will update the latestMessage info as well as update some
     // other fields that we want to "mimic" from the server
-    save();
+    save(updateDateDeleted: true);
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
     if (checkForMessageText && changeUnreadStatus && isNewer) {
