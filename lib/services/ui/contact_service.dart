@@ -146,7 +146,8 @@ class ContactsService extends GetxService {
   List<Handle> matchContactToHandles(Contact c, List<Handle> handles) {
     final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
     List<Handle> handleMatches = [];
-    int maxResults = c.phones.length + c.emails.length;
+    // multiply phones by 3 because a phone can be matched to iMessage / SMS / Android SMS
+    int maxResults = c.phones.length * 3 + c.emails.length;
     for (Handle h in handles) {
       // Match emails
       if (h.address.contains("@") && c.emails.contains(h.address)) {

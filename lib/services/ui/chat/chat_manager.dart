@@ -90,8 +90,11 @@ class ChatManager extends GetxService {
 
       Logger.info("Got updated chat metadata from server. Saving.", tag: "Fetch-Chat");
       Chat updatedChat = Chat.fromMap(chatData);
-      Chat chat = Chat.findOne(guid: chatGuid)!;
-      if (chat.handles.length > updatedChat.participants.length) {
+      Chat? chat = Chat.findOne(guid: chatGuid);
+      if (chat == null) {
+        updatedChat.save();
+        chat = Chat.findOne(guid: chatGuid)!;
+      } else if (chat.handles.length > updatedChat.participants.length) {
         final newAddresses = updatedChat.participants.map((e) => e.address);
         final handlesToUse = chat.participants.where((e) => newAddresses.contains(e.address));
         chat.handles.clear();
@@ -105,8 +108,8 @@ class ChatManager extends GetxService {
         chat.handles.applyToDb();
       }
       chat.displayName = updatedChat.displayName;
-      chat.save(updateDisplayName: true);
-      return updatedChat;
+      chat = chat.save(updateDisplayName: true);
+      return chat;
     }
 
     return null;
