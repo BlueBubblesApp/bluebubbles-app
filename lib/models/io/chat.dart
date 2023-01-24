@@ -448,7 +448,7 @@ class Chat {
         displayName = existing?.displayName ?? displayName;
       }
       if (!updateDateDeleted) {
-        dateDeleted = existing?.dateDeleted ?? dateDeleted;
+        dateDeleted = existing?.dateDeleted;
       }
 
       /// Save the chat and add the participants
@@ -456,7 +456,7 @@ class Chat {
         participants[i] = participants[i].save();
         _deduplicateParticipants();
       }
-      dbOnlyLatestMessageDate = latestMessage.dateCreated!;
+      dbOnlyLatestMessageDate = dbLatestMessage.dateCreated!;
       try {
         id = chatBox.put(this);
         // make sure to add participant relation if its a new chat
@@ -667,6 +667,7 @@ class Chat {
         _latestMessage = message;
         if (dateDeleted != null) {
           dateDeleted = null;
+          save(updateDateDeleted: true);
           chats.addChat(this);
         }
       }
@@ -680,7 +681,7 @@ class Chat {
     // Save the chat.
     // This will update the latestMessage info as well as update some
     // other fields that we want to "mimic" from the server
-    save(updateDateDeleted: true);
+    save();
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
     if (checkForMessageText && changeUnreadStatus && isNewer) {
