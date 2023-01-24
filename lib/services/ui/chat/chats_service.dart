@@ -31,11 +31,18 @@ class ChatsService extends GetxService {
       // watch for new chats
       final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())
         ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
-      countSub = countQuery.listen((event) {
+      countSub = countQuery.listen((event) async {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
         if (newCount > currentCount && currentCount != 0) {
-          addChat(event.findFirst()!);
+          final chat = event.findFirst()!;
+          if (chat.latestMessage.dateCreated!.millisecondsSinceEpoch == 0) {
+            // wait for the chat.addMessage to go through
+            await Future.delayed(const Duration(milliseconds: 500));
+            // refresh the latest message
+            chat.dbLatestMessage;
+          }
+          addChat(chat);
         }
         currentCount = newCount;
       });
@@ -110,6 +117,8 @@ class ChatsService extends GetxService {
   }
 
   void sort() {
+    final ids = chats.map((e) => e.guid).toSet();
+    chats.retainWhere((element) => ids.remove(element.guid));
     chats.sort(Chat.sort);
   }
 

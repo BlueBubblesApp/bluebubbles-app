@@ -316,6 +316,13 @@ class Chat {
     );
     return _latestMessage!;
   }
+  Message get dbLatestMessage {
+    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull ?? Message(
+      dateCreated: DateTime.fromMillisecondsSinceEpoch(0),
+      guid: guid,
+    );
+    return _latestMessage!;
+  }
   set latestMessage(Message m) => _latestMessage = m;
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
@@ -559,8 +566,13 @@ class Chat {
   }
 
   /// Delete a chat locally. Prefer using softDelete so the chat doesn't come back
-  static void deleteChat(Chat chat) {
+  static void deleteChat(Chat chat) async {
     if (kIsWeb) return;
+    // close the convo view page if open and wait for it to be disposed before deleting
+    if (cm.activeChat?.chat.guid == chat.guid) {
+      ns.closeAllConversationView(Get.context!);
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
     List<Message> messages = Chat.getMessages(chat);
     store.runInTransaction(TxMode.write, () {
       /// Remove all references of chat and its messages
@@ -569,8 +581,13 @@ class Chat {
     });
   }
 
-  static void softDelete(Chat chat) {
+  static void softDelete(Chat chat) async {
     if (kIsWeb) return;
+    // close the convo view page if open and wait for it to be disposed before deleting
+    if (cm.activeChat?.chat.guid == chat.guid) {
+      ns.closeAllConversationView(Get.context!);
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
     List<Message> messages = Chat.getMessages(chat);
     store.runInTransaction(TxMode.write, () {
       chat.dateDeleted = DateTime.now().toUtc();
