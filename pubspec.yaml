@@ -108,8 +108,8 @@ dependencies:
   pasteboard: ^0.2.0
   local_notifier:
     git:
-      url: https://github.com/jjoelj/local_notifier.git
-      ref: 78d87ac4b89ad68854dad27aea0b819758d7228d
+      url: https://github.com/BlueBubblesApp/local_notifier.git
+      ref: d1d236e39e9bdf517dea32da36bed927dea18cdf
   dynamic_color: ^1.4.0
   material_color_utilities: ^0.2.0
   dart_vlc: ^0.3.0
@@ -149,6 +149,11 @@ dependency_overrides:
   material_color_utilities: ^0.2.0 # flutter test SDK depends on 0.1.4
   path: ^1.8.2 # flutter test SDK depends on 1.8.1
   ffi: ^2.0.1
+  geolocator_windows:
+    git:
+      url: https://github.com/BlueBubblesApp/flutter-geolocator.git
+      ref: 0b697a937422174cc01c92c6da7eebadc708a4c3
+      path: geolocator_windows
 
 dev_dependencies:
   build_runner: ^2.2.0

@@ -911,12 +911,14 @@ packages:
     source: hosted
     version: "2.1.6"
   geolocator_windows:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: geolocator_windows
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.1"
+      path: geolocator_windows
+      ref: "0b697a937422174cc01c92c6da7eebadc708a4c3"
+      resolved-ref: "0b697a937422174cc01c92c6da7eebadc708a4c3"
+      url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
+    source: git
+    version: "0.1.2"
   get:
     dependency: "direct main"
     description:
