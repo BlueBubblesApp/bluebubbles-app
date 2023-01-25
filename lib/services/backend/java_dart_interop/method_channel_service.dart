@@ -97,6 +97,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "incoming-facetime":
+        await storeStartup.future;
         Logger.info("Received incoming facetime from FCM");
         final replaced = call.arguments.toString().replaceAll("\\", "");
         Map<String, dynamic> data = jsonDecode(replaced.substring(1, replaced.length - 1)) ?? {};
