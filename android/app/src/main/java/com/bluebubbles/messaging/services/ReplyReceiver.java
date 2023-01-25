@@ -32,7 +32,7 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class ReplyReceiver extends BroadcastReceiver {
 
-    final String TAG = "reply-receiver";
+    final String TAG = "BlueBubblesApp";
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -45,6 +45,7 @@ public class ReplyReceiver extends BroadcastReceiver {
         if (intent.getType().equals("reply")) {
             existingId = intent.getExtras().getInt("id");
             chatGuid = intent.getExtras().getString("chatGuid");
+            String messageGuid = intent.getExtras().getString("messageGuid");
 
             // Get the text message in the reply
             Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
@@ -68,7 +69,10 @@ public class ReplyReceiver extends BroadcastReceiver {
                         NotificationCompat.MessagingStyle temp = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notif);
                         style = new Notification.MessagingStyle(temp.getUser().getName());
                     }
-                    style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, "You"));
+                    Person.Builder sender = new Person.Builder()
+                        .setName("You")
+                        .setImportant(true);
+                    style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, sender.build()));
                     builder.setStyle(style);
                     builder.setOnlyAlertOnce(true);
                     notificationManagerCompat.notify(NewMessageNotification.notificationTag, existingId, builder.build());
@@ -79,6 +83,7 @@ public class ReplyReceiver extends BroadcastReceiver {
             Map<String, Object> params = new HashMap<>();
             params.put("chat", chatGuid);
             params.put("text", replyText);
+            params.put("guid", messageGuid);
 
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", params);
@@ -116,5 +121,10 @@ public class ReplyReceiver extends BroadcastReceiver {
             existingId = intent.getExtras().getInt("id");
             HelperUtils.tryCancelNotifications(context, existingId, null);
         }
+        intent.replaceExtras(new Bundle());
+        intent.setType("");
+        intent.setAction("");
+        intent.setData(null);
+        intent.setFlags(0);
     }
 }

@@ -7,12 +7,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   dart_vlc
   desktop_drop
   flutter_acrylic
+  local_notifier
   maps_launcher
   objectbox_flutter_libs
   pasteboard
   printing
   quick_notify
-  record_linux
   screen_retriever
   system_tray
   url_launcher_linux

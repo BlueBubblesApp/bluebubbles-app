@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+/lib/generated_plugin_registrant.dart
 
 # IntelliJ related
 *.iml
@@ -31,7 +32,6 @@
 pubspeck.lock
 
 # Web related
-**/lib/generated_plugin_registrant.dart
 
 # Exceptions to above rules.
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
@@ -52,4 +52,4 @@ pubspeck.lock
 #private keys
 *.env
 .vscode/launch.json
-/lib/repository/models/html/giphy.dart
+/lib/models/html/giphy.dart

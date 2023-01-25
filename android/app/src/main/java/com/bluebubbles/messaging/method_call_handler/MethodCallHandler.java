@@ -3,7 +3,11 @@ package com.bluebubbles.messaging.method_call_handler;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.pm.PackageManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.content.Intent;
 import android.provider.Settings;
@@ -39,6 +43,8 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
+
+import com.kasem.receive_sharing_intent.FileDirectory;
 import java.util.HashMap;
 
 
@@ -119,6 +125,25 @@ public class MethodCallHandler {
                 Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
                 activity.startActivityForResult(intent, 3000);
             }
+        } else if (call.method.equals("get-content-path")) {
+            final String path = FileDirectory.INSTANCE.getAbsolutePath(context, Uri.parse((String) call.argument("uri")));
+            result.success(path);
+        } else if (call.method.equals("open-convo-notif-settings")) {
+            NotificationChannel channel = new NotificationChannel(call.argument("id"), call.argument("displayName"), NotificationManager.IMPORTANCE_MAX);
+            channel.setConversationId(call.argument("parentId"), call.argument("id"));
+            channel.enableLights(true);
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+            Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+            intent.putExtra(Settings.EXTRA_CHANNEL_ID, channel.getId());
+            intent.putExtra(Settings.EXTRA_CONVERSATION_ID, channel.getConversationId());
+            context.startActivity(intent);
+            result.success("");
+        } else if (call.method.equals("check-chromeos")) {
+            PackageManager pm = context.getPackageManager();
+            Boolean chromeOS = pm.hasSystemFeature("org.chromium.arc") || pm.hasSystemFeature("org.chromium.arc.device_management");
+            result.success(chromeOS);
         } else {
             result.notImplemented();
         }

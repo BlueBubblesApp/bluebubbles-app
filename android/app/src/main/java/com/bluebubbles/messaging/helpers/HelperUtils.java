@@ -60,7 +60,7 @@ public class HelperUtils {
         final Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         final Canvas canvas = new Canvas(output);
 
-        final int color = Color.RED;
+        final int color = Color.TRANSPARENT;
         final Paint paint = new Paint();
         final int bitmapSize = Math.round(73 * Resources.getSystem().getDisplayMetrics().density);
         final int padding = (size - bitmapSize) / 2;

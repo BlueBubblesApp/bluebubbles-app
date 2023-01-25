@@ -36,9 +36,10 @@ public class CreateNotificationChannel implements Handler{
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = channel_name;
             String description = channel_description;
-            int importance = NotificationManager.IMPORTANCE_HIGH;
+            int importance = NotificationManager.IMPORTANCE_MAX;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
+            channel.enableLights(true);
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
             if (soundPath != null) {

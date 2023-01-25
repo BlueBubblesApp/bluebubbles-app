@@ -86,7 +86,7 @@ public class NewMessageNotification implements Handler {
         String soundPath = (String) call.argument("sound");
 
         // Find any notifications that already exist for the chat
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification existingNotification = null;
         Integer existingNotificationId = notificationId;
         Boolean shouldReturn = false;
@@ -99,13 +99,13 @@ public class NewMessageNotification implements Handler {
                 String existingMessageGuid = notification.getNotification().extras.getString("messageGuid");
                 if (existingMessageGuid != null && existingMessageGuid.equals(messageGuid)) {
                     shouldReturn = true;
+                    break;
                 }
-                break;
             }
         }
 
         // if a notif with the same message guid exists, don't post a new one
-        if (shouldReturn == true) {
+        if (shouldReturn) {
             return;
         }
 
@@ -143,6 +143,9 @@ public class NewMessageNotification implements Handler {
             group = sender;
         }
 
+        // Update the share target so a contact icon is always available
+        ShareShortcutManager.publishShareTarget(context, new Contact(chatTitle, chatGuid, chatIcon));
+
         // If we have an existing style, load it
         // This will load all the other messages as part of the notification as well
         NotificationCompat.MessagingStyle style;
@@ -170,8 +173,8 @@ public class NewMessageNotification implements Handler {
 
         // Create a bundle with some extra information in it
         Bundle extras = new Bundle();
-        extras.putCharSequence("chatGuid", chatGuid);
-        extras.putCharSequence("messageGuid", messageGuid);
+        extras.putString("chatGuid", chatGuid);
+        extras.putString("messageGuid", messageGuid);
 
         // Create intent for opening the conversation in the app
         PendingIntent openIntent = PendingIntent.getActivity(
@@ -237,7 +240,7 @@ public class NewMessageNotification implements Handler {
             .build();
 
         PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Action.Builder replyActionBuilder = null;
+        NotificationCompat.Action.Builder replyActionBuilder;
 
         // SEMANTIC_ACTION_REPLY isn't supported until API level 28 so we need to programatically
         // apply it
@@ -277,7 +280,7 @@ public class NewMessageNotification implements Handler {
                 // Tell android that it's a message/conversation
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 // Set the priority to high since it's a message they should see
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openIntent)
                 // Sets the intent for when it is swiped away
@@ -294,12 +297,6 @@ public class NewMessageNotification implements Handler {
                 .addExtras(extras)
                 // Set the color. This is the blue primary color
                 .setColor(4888294);
-
-        // Set the sound of the notification (Android 7 and below)
-        if (soundPath != "default") {
-            int soundResourceId = context.getResources().getIdentifier(soundPath, "raw", context.getPackageName());
-            notificationBuilder.setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + soundResourceId));
-        }
 
         // Disable the alert if it's from you
         notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
@@ -353,13 +350,15 @@ public class NewMessageNotification implements Handler {
                 .setGroup(GROUP_KEY)
                 // Tell Android this is a summary notification so everything should be grouped inside it
                 .setGroupSummary(true)
+                // Tell Android it is a message / conversation
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 // Prevent the message group notification from making sound, only let the child
                 // notification make sound
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
                 // Let's the notification dismiss itself when it's tapped
                 .setAutoCancel(true)
                 // Set the priority to high since it's a notification they should see
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openSummaryIntent)
                 // Set the color. This is the blue primary color

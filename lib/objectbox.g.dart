@@ -13,15 +13,15 @@ import 'package:objectbox/internal.dart'; // generated code can access "internal
 import 'package:objectbox/objectbox.dart';
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'repository/models/io/attachment.dart';
-import 'repository/models/io/chat.dart';
-import 'repository/models/io/fcm_data.dart';
-import 'repository/models/io/handle.dart';
-import 'repository/models/io/message.dart';
-import 'repository/models/io/scheduled.dart';
-import 'repository/models/io/theme.dart';
-import 'repository/models/io/theme_entry.dart';
-import 'repository/models/io/theme_object.dart';
+import 'models/io/attachment.dart';
+import 'models/io/chat.dart';
+import 'models/io/contact.dart';
+import 'models/io/fcm_data.dart';
+import 'models/io/handle.dart';
+import 'models/io/message.dart';
+import 'models/io/theme.dart';
+import 'models/io/theme_entry.dart';
+import 'models/io/theme_object.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 
@@ -59,11 +59,6 @@ final _entities = <ModelEntity>[
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 2957720185959973011),
-            name: 'transferState',
-            type: 9,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(7, 2217746424870068461),
             name: 'isOutgoing',
             type: 1,
@@ -79,21 +74,6 @@ final _entities = <ModelEntity>[
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(10, 226618350909080419),
-            name: 'isSticker',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(11, 7216531465575414151),
-            name: 'hideAttachment',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(12, 8776591297555015451),
-            name: 'blurhash',
-            type: 9,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(13, 171869175523313868),
             name: 'height',
             type: 6,
@@ -102,11 +82,6 @@ final _entities = <ModelEntity>[
             id: const IdUid(14, 2450795986531805384),
             name: 'width',
             type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(15, 5516087858141459065),
-            name: 'bytes',
-            type: 23,
             flags: 0),
         ModelProperty(
             id: const IdUid(16, 396659320299238462),
@@ -131,7 +106,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(3, 9017250848141753702),
       name: 'Chat',
-      lastPropertyId: const IdUid(21, 55197157095191277),
+      lastPropertyId: const IdUid(24, 1609660383308913679),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -140,21 +115,11 @@ final _entities = <ModelEntity>[
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 8252364803444354563),
-            name: 'originalROWID',
-            type: 6,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(3, 318412581013308394),
             name: 'guid',
             type: 9,
             flags: 2080,
             indexId: const IdUid(2, 4712841847590882583)),
-        ModelProperty(
-            id: const IdUid(4, 4143511131199296878),
-            name: 'style',
-            type: 6,
-            flags: 0),
         ModelProperty(
             id: const IdUid(5, 9099706644901956287),
             name: 'chatIdentifier',
@@ -163,11 +128,6 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(6, 9117376896883192460),
             name: 'isArchived',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(7, 172817608355620424),
-            name: 'isFiltered',
             type: 1,
             flags: 0),
         ModelProperty(
@@ -192,18 +152,8 @@ final _entities = <ModelEntity>[
             flags: 0),
         ModelProperty(
             id: const IdUid(12, 526293286661780207),
-            name: 'latestMessageDate',
+            name: 'dbOnlyLatestMessageDate',
             type: 10,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(13, 4983193271800913860),
-            name: 'latestMessageText',
-            type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(14, 130925169208448361),
-            name: 'fakeLatestMessageText',
-            type: 9,
             flags: 0),
         ModelProperty(
             id: const IdUid(15, 4266631519717388837),
@@ -234,6 +184,21 @@ final _entities = <ModelEntity>[
             id: const IdUid(21, 55197157095191277),
             name: 'autoSendTypingIndicators',
             type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(22, 8357397541593794158),
+            name: 'textFieldText',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(23, 7756745453707268462),
+            name: 'textFieldAttachments',
+            type: 30,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(24, 1609660383308913679),
+            name: 'dateDeleted',
+            type: 10,
             flags: 0)
       ],
       relations: <ModelRelation>[
@@ -292,7 +257,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(7, 1716592500251888002),
       name: 'Handle',
-      lastPropertyId: const IdUid(8, 9192015144235467286),
+      lastPropertyId: const IdUid(13, 2987973275926761435),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -309,8 +274,7 @@ final _entities = <ModelEntity>[
             id: const IdUid(3, 2544513926695389102),
             name: 'address',
             type: 9,
-            flags: 2080,
-            indexId: const IdUid(3, 9132680703832217528)),
+            flags: 0),
         ModelProperty(
             id: const IdUid(4, 8884526609844353946),
             name: 'country',
@@ -327,13 +291,31 @@ final _entities = <ModelEntity>[
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 549408491521049277),
-            name: 'uncanonicalizedId',
+            id: const IdUid(8, 9192015144235467286),
+            name: 'defaultEmail',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(8, 9192015144235467286),
-            name: 'defaultEmail',
+            id: const IdUid(9, 7485620678567449081),
+            name: 'formattedAddress',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(11, 6784884866959942259),
+            name: 'contactRelationId',
+            type: 11,
+            flags: 520,
+            indexId: const IdUid(14, 1213475652575340910),
+            relationTarget: 'Contact'),
+        ModelProperty(
+            id: const IdUid(12, 7288262795934250307),
+            name: 'uniqueAddressAndService',
+            type: 9,
+            flags: 2080,
+            indexId: const IdUid(15, 2647319022047266708)),
+        ModelProperty(
+            id: const IdUid(13, 2987973275926761435),
+            name: 'service',
             type: 9,
             flags: 0)
       ],
@@ -393,7 +375,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(40, 5039085638407799291),
+      lastPropertyId: const IdUid(46, 55112057161128513),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -458,48 +440,8 @@ final _entities = <ModelEntity>[
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(13, 6839394073781850549),
-            name: 'isDelayed',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(14, 4584830839955803056),
-            name: 'isAutoReply',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(15, 5300777612659164835),
-            name: 'isSystemMessage',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(16, 7579043230224812288),
-            name: 'isServiceMessage',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(17, 5309991997782167547),
-            name: 'isForward',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(18, 6035615005231958928),
-            name: 'isArchived',
-            type: 1,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(19, 5938275663538454436),
             name: 'hasDdResults',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(20, 457159365740007120),
-            name: 'cacheRoomnames',
-            type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(21, 6085502636952418888),
-            name: 'isAudioMessage',
             type: 1,
             flags: 0),
         ModelProperty(
@@ -523,11 +465,6 @@ final _entities = <ModelEntity>[
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(26, 7378813296315172429),
-            name: 'isExpired',
-            type: 1,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(27, 4765948580516232913),
             name: 'balloonBundleId',
             type: 9,
@@ -546,11 +483,6 @@ final _entities = <ModelEntity>[
             id: const IdUid(30, 7125401610778464945),
             name: 'expressiveSendStyleId',
             type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(31, 7968765094195569385),
-            name: 'timeExpressiveSendStyleId',
-            type: 10,
             flags: 0),
         ModelProperty(
             id: const IdUid(32, 397296906153054772),
@@ -598,6 +530,36 @@ final _entities = <ModelEntity>[
             id: const IdUid(40, 5039085638407799291),
             name: 'dbAttributedBody',
             type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(41, 4740279940509235463),
+            name: 'associatedMessagePart',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(42, 5528059355711105816),
+            name: 'hasApplePayloadData',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(43, 3013626603452809145),
+            name: 'dateEdited',
+            type: 10,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(44, 317511503043460053),
+            name: 'dbMessageSummaryInfo',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(45, 9157460167218193355),
+            name: 'dbPayloadData',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(46, 55112057161128513),
+            name: 'dbMetadata',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -605,40 +567,6 @@ final _entities = <ModelEntity>[
         ModelBacklink(
             name: 'dbAttachments', srcEntity: 'Attachment', srcField: 'message')
       ]),
-  ModelEntity(
-      id: const IdUid(14, 4579555475244243263),
-      name: 'ScheduledMessage',
-      lastPropertyId: const IdUid(5, 696004914151488398),
-      flags: 0,
-      properties: <ModelProperty>[
-        ModelProperty(
-            id: const IdUid(1, 4810718806330671770),
-            name: 'id',
-            type: 6,
-            flags: 1),
-        ModelProperty(
-            id: const IdUid(2, 8558367758823185430),
-            name: 'chatGuid',
-            type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(3, 7997144491374144435),
-            name: 'message',
-            type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(4, 1278586999912993922),
-            name: 'epochTime',
-            type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(5, 696004914151488398),
-            name: 'completed',
-            type: 1,
-            flags: 0)
-      ],
-      relations: <ModelRelation>[],
-      backlinks: <ModelBacklink>[]),
   ModelEntity(
       id: const IdUid(15, 7753273527865539946),
       name: 'ThemeObject',
@@ -692,7 +620,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(16, 1815690088052698449),
       name: 'ThemeStruct',
-      lastPropertyId: const IdUid(4, 1129102363347301238),
+      lastPropertyId: const IdUid(5, 5263969220071020408),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -714,6 +642,56 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(4, 1129102363347301238),
             name: 'dbThemeData',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(5, 5263969220071020408),
+            name: 'googleFont',
+            type: 9,
+            flags: 0)
+      ],
+      relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[]),
+  ModelEntity(
+      id: const IdUid(17, 2547083341603323785),
+      name: 'Contact',
+      lastPropertyId: const IdUid(10, 3612117664568604198),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 755766469677376751),
+            name: 'dbId',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 708918913606465689),
+            name: 'id',
+            type: 9,
+            flags: 2048,
+            indexId: const IdUid(12, 8665353868334070555)),
+        ModelProperty(
+            id: const IdUid(3, 3572501485957552445),
+            name: 'displayName',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(4, 4938259396546143140),
+            name: 'phones',
+            type: 30,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(6, 2909427687923431080),
+            name: 'emails',
+            type: 30,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(8, 765867408744391809),
+            name: 'avatar',
+            type: 23,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(10, 3612117664568604198),
+            name: 'dbStructuredName',
             type: 9,
             flags: 0)
       ],
@@ -741,8 +719,8 @@ Future<Store> openStore(
 ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
-      lastEntityId: const IdUid(16, 1815690088052698449),
-      lastIndexId: const IdUid(11, 8452066780532720626),
+      lastEntityId: const IdUid(17, 2547083341603323785),
+      lastIndexId: const IdUid(15, 2647319022047266708),
       lastRelationId: const IdUid(1, 7492985733214117623),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [
@@ -752,9 +730,10 @@ ModelDefinition getObjectBoxModel() {
         1619417403499629985,
         4450451951397945314,
         1700370751061310153,
-        3483028772414651169
+        3483028772414651169,
+        4579555475244243263
       ],
-      retiredIndexUids: const [],
+      retiredIndexUids: const [8277667704777683261, 9132680703832217528],
       retiredPropertyUids: const [
         8075530627827069587,
         614139107975861462,
@@ -816,7 +795,37 @@ ModelDefinition getObjectBoxModel() {
         5203631054946486128,
         2649653758394363860,
         1439376349402210172,
-        8308083337629235136
+        8308083337629235136,
+        790519381961958997,
+        5176315239890900498,
+        4255445772578528269,
+        4403726864971073396,
+        2957720185959973011,
+        226618350909080419,
+        7216531465575414151,
+        8776591297555015451,
+        549408491521049277,
+        6839394073781850549,
+        4584830839955803056,
+        5300777612659164835,
+        7579043230224812288,
+        5309991997782167547,
+        6035615005231958928,
+        457159365740007120,
+        6085502636952418888,
+        7378813296315172429,
+        7968765094195569385,
+        8252364803444354563,
+        4143511131199296878,
+        172817608355620424,
+        130925169208448361,
+        4983193271800913860,
+        4810718806330671770,
+        8558367758823185430,
+        7997144491374144435,
+        1278586999912993922,
+        696004914151488398,
+        5516087858141459065
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -840,17 +849,9 @@ ModelDefinition getObjectBoxModel() {
           final mimeTypeOffset = object.mimeType == null
               ? null
               : fbb.writeString(object.mimeType!);
-          final transferStateOffset = object.transferState == null
-              ? null
-              : fbb.writeString(object.transferState!);
           final transferNameOffset = object.transferName == null
               ? null
               : fbb.writeString(object.transferName!);
-          final blurhashOffset = object.blurhash == null
-              ? null
-              : fbb.writeString(object.blurhash!);
-          final bytesOffset =
-              object.bytes == null ? null : fbb.writeListInt8(object.bytes!);
           final webUrlOffset =
               object.webUrl == null ? null : fbb.writeString(object.webUrl!);
           final dbMetadataOffset = object.dbMetadata == null
@@ -862,16 +863,11 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(2, guidOffset);
           fbb.addOffset(3, utiOffset);
           fbb.addOffset(4, mimeTypeOffset);
-          fbb.addOffset(5, transferStateOffset);
           fbb.addBool(6, object.isOutgoing);
           fbb.addOffset(7, transferNameOffset);
           fbb.addInt64(8, object.totalBytes);
-          fbb.addBool(9, object.isSticker);
-          fbb.addBool(10, object.hideAttachment);
-          fbb.addOffset(11, blurhashOffset);
           fbb.addInt64(12, object.height);
           fbb.addInt64(13, object.width);
-          fbb.addOffset(14, bytesOffset);
           fbb.addOffset(15, webUrlOffset);
           fbb.addInt64(16, object.message.targetId);
           fbb.addOffset(17, dbMetadataOffset);
@@ -893,19 +889,15 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 10),
               mimeType: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 12),
-              transferState: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14),
               isOutgoing: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 16),
               transferName: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
-              totalBytes: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 20),
-              isSticker: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 22),
-              hideAttachment: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 24),
-              blurhash: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 26),
-              height: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
+              totalBytes: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 20),
+              height:
+                  const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
               width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
-              bytes: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 32) as Uint8List?,
               webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34))
             ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 38);
           object.message.targetId =
@@ -937,13 +929,6 @@ ModelDefinition getObjectBoxModel() {
           final muteArgsOffset = object.muteArgs == null
               ? null
               : fbb.writeString(object.muteArgs!);
-          final latestMessageTextOffset = object.latestMessageText == null
-              ? null
-              : fbb.writeString(object.latestMessageText!);
-          final fakeLatestMessageTextOffset =
-              object.fakeLatestMessageText == null
-                  ? null
-                  : fbb.writeString(object.fakeLatestMessageText!);
           final titleOffset =
               object.title == null ? null : fbb.writeString(object.title!);
           final displayNameOffset = object.displayName == null
@@ -952,62 +937,71 @@ ModelDefinition getObjectBoxModel() {
           final customAvatarPathOffset = object.customAvatarPath == null
               ? null
               : fbb.writeString(object.customAvatarPath!);
-          fbb.startTable(22);
+          final textFieldTextOffset = object.textFieldText == null
+              ? null
+              : fbb.writeString(object.textFieldText!);
+          final textFieldAttachmentsOffset = fbb.writeList(object
+              .textFieldAttachments
+              .map(fbb.writeString)
+              .toList(growable: false));
+          fbb.startTable(25);
           fbb.addInt64(0, object.id ?? 0);
-          fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
-          fbb.addInt64(3, object.style);
           fbb.addOffset(4, chatIdentifierOffset);
           fbb.addBool(5, object.isArchived);
-          fbb.addBool(6, object.isFiltered);
           fbb.addOffset(7, muteTypeOffset);
           fbb.addOffset(8, muteArgsOffset);
           fbb.addBool(9, object.isPinned);
           fbb.addBool(10, object.hasUnreadMessage);
-          fbb.addInt64(11, object.latestMessageDate?.millisecondsSinceEpoch);
-          fbb.addOffset(12, latestMessageTextOffset);
-          fbb.addOffset(13, fakeLatestMessageTextOffset);
+          fbb.addInt64(
+              11, object.dbOnlyLatestMessageDate?.millisecondsSinceEpoch);
           fbb.addOffset(14, titleOffset);
           fbb.addOffset(15, displayNameOffset);
           fbb.addOffset(17, customAvatarPathOffset);
           fbb.addInt64(18, object.pinIndex);
           fbb.addBool(19, object.autoSendReadReceipts);
           fbb.addBool(20, object.autoSendTypingIndicators);
+          fbb.addOffset(21, textFieldTextOffset);
+          fbb.addOffset(22, textFieldAttachmentsOffset);
+          fbb.addInt64(23, object.dateDeleted?.millisecondsSinceEpoch);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-          final latestMessageDateValue =
+          final dbOnlyLatestMessageDateValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 26);
+          final dateDeletedValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 50);
           final object = Chat(
               id: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 4),
-              originalROWID: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 6),
               guid: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, ''),
-              style: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 10),
               chatIdentifier: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 12),
               isArchived: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 14),
-              isFiltered: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 16),
               isPinned: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 22),
               muteType: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
-              muteArgs: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 20),
-              hasUnreadMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 24),
-              displayName: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
-              latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
-              latestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 28),
-              fakeLatestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 30),
+              muteArgs: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 20),
+              hasUnreadMessage: const fb.BoolReader()
+                  .vTableGetNullable(buffer, rootOffset, 24),
+              displayName:
+                  const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
               autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
-              autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44))
+              autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
+              textFieldText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 46),
+              textFieldAttachments: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false).vTableGet(buffer, rootOffset, 48, []),
+              dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue))
+            ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    dbOnlyLatestMessageDateValue)
             ..title = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 32)
             ..customAvatarPath = const fb.StringReader(asciiOptimization: true)
@@ -1084,7 +1078,7 @@ ModelDefinition getObjectBoxModel() {
         }),
     Handle: EntityDefinition<Handle>(
         model: _entities[3],
-        toOneRelations: (Handle object) => [],
+        toOneRelations: (Handle object) => [object.contactRelation],
         toManyRelations: (Handle object) => {},
         getId: (Handle object) => object.id,
         setId: (Handle object, int id) {
@@ -1099,21 +1093,27 @@ ModelDefinition getObjectBoxModel() {
           final defaultPhoneOffset = object.defaultPhone == null
               ? null
               : fbb.writeString(object.defaultPhone!);
-          final uncanonicalizedIdOffset = object.uncanonicalizedId == null
-              ? null
-              : fbb.writeString(object.uncanonicalizedId!);
           final defaultEmailOffset = object.defaultEmail == null
               ? null
               : fbb.writeString(object.defaultEmail!);
-          fbb.startTable(9);
+          final formattedAddressOffset = object.formattedAddress == null
+              ? null
+              : fbb.writeString(object.formattedAddress!);
+          final uniqueAddressAndServiceOffset =
+              fbb.writeString(object.uniqueAddressAndService);
+          final serviceOffset = fbb.writeString(object.service);
+          fbb.startTable(14);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, addressOffset);
           fbb.addOffset(3, countryOffset);
           fbb.addOffset(4, colorOffset);
           fbb.addOffset(5, defaultPhoneOffset);
-          fbb.addOffset(6, uncanonicalizedIdOffset);
           fbb.addOffset(7, defaultEmailOffset);
+          fbb.addOffset(8, formattedAddressOffset);
+          fbb.addInt64(10, object.contactRelation.targetId);
+          fbb.addOffset(11, uniqueAddressAndServiceOffset);
+          fbb.addOffset(12, serviceOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1128,17 +1128,22 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 6),
               address: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, ''),
+              formattedAddress: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 20),
+              service: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 28, ''),
+              uniqueAddressAndService: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 26, ''),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 10),
               defaultEmail: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
-              defaultPhone: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14),
-              uncanonicalizedId: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 16))
-            ..color = const fb.StringReader(asciiOptimization: true)
-                .vTableGetNullable(buffer, rootOffset, 12);
-
+              defaultPhone:
+                  const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 14))
+            ..color = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 12);
+          object.contactRelation.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
+          object.contactRelation.attach(store);
           return object;
         }),
     ThemeEntry: EntityDefinition<ThemeEntry>(
@@ -1211,9 +1216,6 @@ ModelDefinition getObjectBoxModel() {
               object.subject == null ? null : fbb.writeString(object.subject!);
           final countryOffset =
               object.country == null ? null : fbb.writeString(object.country!);
-          final cacheRoomnamesOffset = object.cacheRoomnames == null
-              ? null
-              : fbb.writeString(object.cacheRoomnames!);
           final groupTitleOffset = object.groupTitle == null
               ? null
               : fbb.writeString(object.groupTitle!);
@@ -1241,7 +1243,16 @@ ModelDefinition getObjectBoxModel() {
           final dbAttributedBodyOffset = object.dbAttributedBody == null
               ? null
               : fbb.writeString(object.dbAttributedBody!);
-          fbb.startTable(41);
+          final dbMessageSummaryInfoOffset = object.dbMessageSummaryInfo == null
+              ? null
+              : fbb.writeString(object.dbMessageSummaryInfo!);
+          final dbPayloadDataOffset = object.dbPayloadData == null
+              ? null
+              : fbb.writeString(object.dbPayloadData!);
+          final dbMetadataOffset = object.dbMetadata == null
+              ? null
+              : fbb.writeString(object.dbMetadata!);
+          fbb.startTable(47);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1254,26 +1265,15 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(9, object.dateRead?.millisecondsSinceEpoch);
           fbb.addInt64(10, object.dateDelivered?.millisecondsSinceEpoch);
           fbb.addBool(11, object.isFromMe);
-          fbb.addBool(12, object.isDelayed);
-          fbb.addBool(13, object.isAutoReply);
-          fbb.addBool(14, object.isSystemMessage);
-          fbb.addBool(15, object.isServiceMessage);
-          fbb.addBool(16, object.isForward);
-          fbb.addBool(17, object.isArchived);
           fbb.addBool(18, object.hasDdResults);
-          fbb.addOffset(19, cacheRoomnamesOffset);
-          fbb.addBool(20, object.isAudioMessage);
           fbb.addInt64(21, object.datePlayed?.millisecondsSinceEpoch);
           fbb.addInt64(22, object.itemType);
           fbb.addOffset(23, groupTitleOffset);
           fbb.addInt64(24, object.groupActionType);
-          fbb.addBool(25, object.isExpired);
           fbb.addOffset(26, balloonBundleIdOffset);
           fbb.addOffset(27, associatedMessageGuidOffset);
           fbb.addOffset(28, associatedMessageTypeOffset);
           fbb.addOffset(29, expressiveSendStyleIdOffset);
-          fbb.addInt64(
-              30, object.timeExpressiveSendStyleId?.millisecondsSinceEpoch);
           fbb.addBool(31, object.hasAttachments);
           fbb.addBool(32, object.hasReactions);
           fbb.addInt64(33, object.dateDeleted?.millisecondsSinceEpoch);
@@ -1283,6 +1283,12 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(37, object.error);
           fbb.addInt64(38, object.chat.targetId);
           fbb.addOffset(39, dbAttributedBodyOffset);
+          fbb.addInt64(40, object.associatedMessagePart);
+          fbb.addBool(41, object.hasApplePayloadData);
+          fbb.addInt64(42, object.dateEdited?.millisecondsSinceEpoch);
+          fbb.addOffset(43, dbMessageSummaryInfoOffset);
+          fbb.addOffset(44, dbPayloadDataOffset);
+          fbb.addOffset(45, dbMetadataOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1297,10 +1303,10 @@ ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 24);
           final datePlayedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 46);
-          final timeExpressiveSendStyleIdValue =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 64);
           final dateDeletedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 70);
+          final dateEditedValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 88);
           final object = Message(
               id: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 4),
@@ -1318,46 +1324,41 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 16),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
+              error:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0),
               dateCreated: dateCreatedValue == null
                   ? null
                   : DateTime.fromMillisecondsSinceEpoch(dateCreatedValue),
-              isFromMe:
-                  const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 26),
-              isDelayed: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 28),
-              isAutoReply: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 30),
-              isSystemMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 32),
-              isServiceMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 34),
-              isForward: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 36),
-              isArchived: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 38),
+              dateRead: dateReadValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateReadValue),
+              dateDelivered: dateDeliveredValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue),
+              isFromMe: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 26),
               hasDdResults: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 40),
-              cacheRoomnames: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 42),
-              isAudioMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
               datePlayed: datePlayedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(datePlayedValue),
               itemType: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 48),
               groupTitle: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 50),
               groupActionType: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52),
-              isExpired: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 54),
               balloonBundleId: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 56),
               associatedMessageGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 58),
+              associatedMessagePart: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 84),
               associatedMessageType: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 60),
               expressiveSendStyleId: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 62),
-              timeExpressiveSendStyleId: timeExpressiveSendStyleIdValue == null ? null : DateTime.fromMillisecondsSinceEpoch(timeExpressiveSendStyleIdValue),
               hasAttachments: const fb.BoolReader().vTableGet(buffer, rootOffset, 66, false),
               hasReactions: const fb.BoolReader().vTableGet(buffer, rootOffset, 68, false),
               dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
               threadOriginatorGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 72),
-              threadOriginatorPart: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 74))
-            ..dateRead = dateReadValue == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(dateReadValue)
-            ..dateDelivered = dateDeliveredValue == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue)
+              threadOriginatorPart: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 74),
+              hasApplePayloadData: const fb.BoolReader().vTableGet(buffer, rootOffset, 86, false),
+              dateEdited: dateEditedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateEditedValue))
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
-            ..error =
-                const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0)
-            ..dbAttributedBody = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 82);
+            ..dbAttributedBody = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 82)
+            ..dbMessageSummaryInfo =
+                const fb.StringReader(asciiOptimization: true)
+                    .vTableGetNullable(buffer, rootOffset, 90)
+            ..dbPayloadData = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 92)
+            ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 94);
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
           object.chat.attach(store);
@@ -1369,49 +1370,8 @@ ModelDefinition getObjectBoxModel() {
               store.box<Message>());
           return object;
         }),
-    ScheduledMessage: EntityDefinition<ScheduledMessage>(
-        model: _entities[6],
-        toOneRelations: (ScheduledMessage object) => [],
-        toManyRelations: (ScheduledMessage object) => {},
-        getId: (ScheduledMessage object) => object.id,
-        setId: (ScheduledMessage object, int id) {
-          object.id = id;
-        },
-        objectToFB: (ScheduledMessage object, fb.Builder fbb) {
-          final chatGuidOffset = object.chatGuid == null
-              ? null
-              : fbb.writeString(object.chatGuid!);
-          final messageOffset =
-              object.message == null ? null : fbb.writeString(object.message!);
-          fbb.startTable(6);
-          fbb.addInt64(0, object.id ?? 0);
-          fbb.addOffset(1, chatGuidOffset);
-          fbb.addOffset(2, messageOffset);
-          fbb.addInt64(3, object.epochTime);
-          fbb.addBool(4, object.completed);
-          fbb.finish(fbb.endTable());
-          return object.id ?? 0;
-        },
-        objectFromFB: (Store store, ByteData fbData) {
-          final buffer = fb.BufferContext(fbData);
-          final rootOffset = buffer.derefObject(0);
-
-          final object = ScheduledMessage(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              chatGuid: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              message: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 8),
-              epochTime: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 10),
-              completed: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 12));
-
-          return object;
-        }),
     ThemeObject: EntityDefinition<ThemeObject>(
-        model: _entities[7],
+        model: _entities[6],
         toOneRelations: (ThemeObject object) => [],
         toManyRelations: (ThemeObject object) => {
               RelInfo<ThemeEntry>.toOneBacklink(8, object.id!,
@@ -1464,7 +1424,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     ThemeStruct: EntityDefinition<ThemeStruct>(
-        model: _entities[8],
+        model: _entities[7],
         toOneRelations: (ThemeStruct object) => [],
         toManyRelations: (ThemeStruct object) => {},
         getId: (ThemeStruct object) => object.id,
@@ -1474,11 +1434,13 @@ ModelDefinition getObjectBoxModel() {
         objectToFB: (ThemeStruct object, fb.Builder fbb) {
           final nameOffset = fbb.writeString(object.name);
           final dbThemeDataOffset = fbb.writeString(object.dbThemeData);
-          fbb.startTable(5);
+          final googleFontOffset = fbb.writeString(object.googleFont);
+          fbb.startTable(6);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, nameOffset);
           fbb.addBool(2, object.gradientBg);
           fbb.addOffset(3, dbThemeDataOffset);
+          fbb.addOffset(4, googleFontOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1492,9 +1454,66 @@ ModelDefinition getObjectBoxModel() {
               name: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 6, ''),
               gradientBg:
-                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false))
+                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false),
+              googleFont: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 12, ''))
             ..dbThemeData = const fb.StringReader(asciiOptimization: true)
                 .vTableGet(buffer, rootOffset, 10, '');
+
+          return object;
+        }),
+    Contact: EntityDefinition<Contact>(
+        model: _entities[8],
+        toOneRelations: (Contact object) => [],
+        toManyRelations: (Contact object) => {},
+        getId: (Contact object) => object.dbId,
+        setId: (Contact object, int id) {
+          object.dbId = id;
+        },
+        objectToFB: (Contact object, fb.Builder fbb) {
+          final idOffset = fbb.writeString(object.id);
+          final displayNameOffset = fbb.writeString(object.displayName);
+          final phonesOffset = fbb.writeList(
+              object.phones.map(fbb.writeString).toList(growable: false));
+          final emailsOffset = fbb.writeList(
+              object.emails.map(fbb.writeString).toList(growable: false));
+          final avatarOffset =
+              object.avatar == null ? null : fbb.writeListInt8(object.avatar!);
+          final dbStructuredNameOffset = object.dbStructuredName == null
+              ? null
+              : fbb.writeString(object.dbStructuredName!);
+          fbb.startTable(11);
+          fbb.addInt64(0, object.dbId ?? 0);
+          fbb.addOffset(1, idOffset);
+          fbb.addOffset(2, displayNameOffset);
+          fbb.addOffset(3, phonesOffset);
+          fbb.addOffset(5, emailsOffset);
+          fbb.addOffset(7, avatarOffset);
+          fbb.addOffset(9, dbStructuredNameOffset);
+          fbb.finish(fbb.endTable());
+          return object.dbId ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = Contact(
+              dbId: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 4),
+              id: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 6, ''),
+              displayName: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 8, ''),
+              phones:
+                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                      .vTableGet(buffer, rootOffset, 10, []),
+              emails:
+                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                      .vTableGet(buffer, rootOffset, 14, []),
+              avatar: const fb.Uint8ListReader(lazy: false)
+                  .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?)
+            ..dbStructuredName = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 22);
 
           return object;
         })
@@ -1525,57 +1544,37 @@ class Attachment_ {
   static final mimeType =
       QueryStringProperty<Attachment>(_entities[0].properties[4]);
 
-  /// see [Attachment.transferState]
-  static final transferState =
-      QueryStringProperty<Attachment>(_entities[0].properties[5]);
-
   /// see [Attachment.isOutgoing]
   static final isOutgoing =
-      QueryBooleanProperty<Attachment>(_entities[0].properties[6]);
+      QueryBooleanProperty<Attachment>(_entities[0].properties[5]);
 
   /// see [Attachment.transferName]
   static final transferName =
-      QueryStringProperty<Attachment>(_entities[0].properties[7]);
+      QueryStringProperty<Attachment>(_entities[0].properties[6]);
 
   /// see [Attachment.totalBytes]
   static final totalBytes =
-      QueryIntegerProperty<Attachment>(_entities[0].properties[8]);
-
-  /// see [Attachment.isSticker]
-  static final isSticker =
-      QueryBooleanProperty<Attachment>(_entities[0].properties[9]);
-
-  /// see [Attachment.hideAttachment]
-  static final hideAttachment =
-      QueryBooleanProperty<Attachment>(_entities[0].properties[10]);
-
-  /// see [Attachment.blurhash]
-  static final blurhash =
-      QueryStringProperty<Attachment>(_entities[0].properties[11]);
+      QueryIntegerProperty<Attachment>(_entities[0].properties[7]);
 
   /// see [Attachment.height]
   static final height =
-      QueryIntegerProperty<Attachment>(_entities[0].properties[12]);
+      QueryIntegerProperty<Attachment>(_entities[0].properties[8]);
 
   /// see [Attachment.width]
   static final width =
-      QueryIntegerProperty<Attachment>(_entities[0].properties[13]);
-
-  /// see [Attachment.bytes]
-  static final bytes =
-      QueryByteVectorProperty<Attachment>(_entities[0].properties[14]);
+      QueryIntegerProperty<Attachment>(_entities[0].properties[9]);
 
   /// see [Attachment.webUrl]
   static final webUrl =
-      QueryStringProperty<Attachment>(_entities[0].properties[15]);
+      QueryStringProperty<Attachment>(_entities[0].properties[10]);
 
   /// see [Attachment.message]
   static final message =
-      QueryRelationToOne<Attachment, Message>(_entities[0].properties[16]);
+      QueryRelationToOne<Attachment, Message>(_entities[0].properties[11]);
 
   /// see [Attachment.dbMetadata]
   static final dbMetadata =
-      QueryStringProperty<Attachment>(_entities[0].properties[17]);
+      QueryStringProperty<Attachment>(_entities[0].properties[12]);
 }
 
 /// [Chat] entity fields to define ObjectBox queries.
@@ -1583,76 +1582,69 @@ class Chat_ {
   /// see [Chat.id]
   static final id = QueryIntegerProperty<Chat>(_entities[1].properties[0]);
 
-  /// see [Chat.originalROWID]
-  static final originalROWID =
-      QueryIntegerProperty<Chat>(_entities[1].properties[1]);
-
   /// see [Chat.guid]
-  static final guid = QueryStringProperty<Chat>(_entities[1].properties[2]);
-
-  /// see [Chat.style]
-  static final style = QueryIntegerProperty<Chat>(_entities[1].properties[3]);
+  static final guid = QueryStringProperty<Chat>(_entities[1].properties[1]);
 
   /// see [Chat.chatIdentifier]
   static final chatIdentifier =
-      QueryStringProperty<Chat>(_entities[1].properties[4]);
+      QueryStringProperty<Chat>(_entities[1].properties[2]);
 
   /// see [Chat.isArchived]
   static final isArchived =
-      QueryBooleanProperty<Chat>(_entities[1].properties[5]);
-
-  /// see [Chat.isFiltered]
-  static final isFiltered =
-      QueryBooleanProperty<Chat>(_entities[1].properties[6]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[3]);
 
   /// see [Chat.muteType]
-  static final muteType = QueryStringProperty<Chat>(_entities[1].properties[7]);
+  static final muteType = QueryStringProperty<Chat>(_entities[1].properties[4]);
 
   /// see [Chat.muteArgs]
-  static final muteArgs = QueryStringProperty<Chat>(_entities[1].properties[8]);
+  static final muteArgs = QueryStringProperty<Chat>(_entities[1].properties[5]);
 
   /// see [Chat.isPinned]
   static final isPinned =
-      QueryBooleanProperty<Chat>(_entities[1].properties[9]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[6]);
 
   /// see [Chat.hasUnreadMessage]
   static final hasUnreadMessage =
-      QueryBooleanProperty<Chat>(_entities[1].properties[10]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[7]);
 
-  /// see [Chat.latestMessageDate]
-  static final latestMessageDate =
-      QueryIntegerProperty<Chat>(_entities[1].properties[11]);
-
-  /// see [Chat.latestMessageText]
-  static final latestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[12]);
-
-  /// see [Chat.fakeLatestMessageText]
-  static final fakeLatestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[13]);
+  /// see [Chat.dbOnlyLatestMessageDate]
+  static final dbOnlyLatestMessageDate =
+      QueryIntegerProperty<Chat>(_entities[1].properties[8]);
 
   /// see [Chat.title]
-  static final title = QueryStringProperty<Chat>(_entities[1].properties[14]);
+  static final title = QueryStringProperty<Chat>(_entities[1].properties[9]);
 
   /// see [Chat.displayName]
   static final displayName =
-      QueryStringProperty<Chat>(_entities[1].properties[15]);
+      QueryStringProperty<Chat>(_entities[1].properties[10]);
 
   /// see [Chat.customAvatarPath]
   static final customAvatarPath =
-      QueryStringProperty<Chat>(_entities[1].properties[16]);
+      QueryStringProperty<Chat>(_entities[1].properties[11]);
 
   /// see [Chat.pinIndex]
   static final pinIndex =
-      QueryIntegerProperty<Chat>(_entities[1].properties[17]);
+      QueryIntegerProperty<Chat>(_entities[1].properties[12]);
 
   /// see [Chat.autoSendReadReceipts]
   static final autoSendReadReceipts =
-      QueryBooleanProperty<Chat>(_entities[1].properties[18]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[13]);
 
   /// see [Chat.autoSendTypingIndicators]
   static final autoSendTypingIndicators =
-      QueryBooleanProperty<Chat>(_entities[1].properties[19]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[14]);
+
+  /// see [Chat.textFieldText]
+  static final textFieldText =
+      QueryStringProperty<Chat>(_entities[1].properties[15]);
+
+  /// see [Chat.textFieldAttachments]
+  static final textFieldAttachments =
+      QueryStringVectorProperty<Chat>(_entities[1].properties[16]);
+
+  /// see [Chat.dateDeleted]
+  static final dateDeleted =
+      QueryIntegerProperty<Chat>(_entities[1].properties[17]);
 
   /// see [Chat.handles]
   static final handles =
@@ -1713,13 +1705,25 @@ class Handle_ {
   static final defaultPhone =
       QueryStringProperty<Handle>(_entities[3].properties[5]);
 
-  /// see [Handle.uncanonicalizedId]
-  static final uncanonicalizedId =
-      QueryStringProperty<Handle>(_entities[3].properties[6]);
-
   /// see [Handle.defaultEmail]
   static final defaultEmail =
+      QueryStringProperty<Handle>(_entities[3].properties[6]);
+
+  /// see [Handle.formattedAddress]
+  static final formattedAddress =
       QueryStringProperty<Handle>(_entities[3].properties[7]);
+
+  /// see [Handle.contactRelation]
+  static final contactRelation =
+      QueryRelationToOne<Handle, Contact>(_entities[3].properties[8]);
+
+  /// see [Handle.uniqueAddressAndService]
+  static final uniqueAddressAndService =
+      QueryStringProperty<Handle>(_entities[3].properties[9]);
+
+  /// see [Handle.service]
+  static final service =
+      QueryStringProperty<Handle>(_entities[3].properties[10]);
 }
 
 /// [ThemeEntry] entity fields to define ObjectBox queries.
@@ -1804,188 +1808,182 @@ class Message_ {
   static final isFromMe =
       QueryBooleanProperty<Message>(_entities[5].properties[11]);
 
-  /// see [Message.isDelayed]
-  static final isDelayed =
-      QueryBooleanProperty<Message>(_entities[5].properties[12]);
-
-  /// see [Message.isAutoReply]
-  static final isAutoReply =
-      QueryBooleanProperty<Message>(_entities[5].properties[13]);
-
-  /// see [Message.isSystemMessage]
-  static final isSystemMessage =
-      QueryBooleanProperty<Message>(_entities[5].properties[14]);
-
-  /// see [Message.isServiceMessage]
-  static final isServiceMessage =
-      QueryBooleanProperty<Message>(_entities[5].properties[15]);
-
-  /// see [Message.isForward]
-  static final isForward =
-      QueryBooleanProperty<Message>(_entities[5].properties[16]);
-
-  /// see [Message.isArchived]
-  static final isArchived =
-      QueryBooleanProperty<Message>(_entities[5].properties[17]);
-
   /// see [Message.hasDdResults]
   static final hasDdResults =
-      QueryBooleanProperty<Message>(_entities[5].properties[18]);
-
-  /// see [Message.cacheRoomnames]
-  static final cacheRoomnames =
-      QueryStringProperty<Message>(_entities[5].properties[19]);
-
-  /// see [Message.isAudioMessage]
-  static final isAudioMessage =
-      QueryBooleanProperty<Message>(_entities[5].properties[20]);
+      QueryBooleanProperty<Message>(_entities[5].properties[12]);
 
   /// see [Message.datePlayed]
   static final datePlayed =
-      QueryIntegerProperty<Message>(_entities[5].properties[21]);
+      QueryIntegerProperty<Message>(_entities[5].properties[13]);
 
   /// see [Message.itemType]
   static final itemType =
-      QueryIntegerProperty<Message>(_entities[5].properties[22]);
+      QueryIntegerProperty<Message>(_entities[5].properties[14]);
 
   /// see [Message.groupTitle]
   static final groupTitle =
-      QueryStringProperty<Message>(_entities[5].properties[23]);
+      QueryStringProperty<Message>(_entities[5].properties[15]);
 
   /// see [Message.groupActionType]
   static final groupActionType =
-      QueryIntegerProperty<Message>(_entities[5].properties[24]);
-
-  /// see [Message.isExpired]
-  static final isExpired =
-      QueryBooleanProperty<Message>(_entities[5].properties[25]);
+      QueryIntegerProperty<Message>(_entities[5].properties[16]);
 
   /// see [Message.balloonBundleId]
   static final balloonBundleId =
-      QueryStringProperty<Message>(_entities[5].properties[26]);
+      QueryStringProperty<Message>(_entities[5].properties[17]);
 
   /// see [Message.associatedMessageGuid]
   static final associatedMessageGuid =
-      QueryStringProperty<Message>(_entities[5].properties[27]);
+      QueryStringProperty<Message>(_entities[5].properties[18]);
 
   /// see [Message.associatedMessageType]
   static final associatedMessageType =
-      QueryStringProperty<Message>(_entities[5].properties[28]);
+      QueryStringProperty<Message>(_entities[5].properties[19]);
 
   /// see [Message.expressiveSendStyleId]
   static final expressiveSendStyleId =
-      QueryStringProperty<Message>(_entities[5].properties[29]);
-
-  /// see [Message.timeExpressiveSendStyleId]
-  static final timeExpressiveSendStyleId =
-      QueryIntegerProperty<Message>(_entities[5].properties[30]);
+      QueryStringProperty<Message>(_entities[5].properties[20]);
 
   /// see [Message.hasAttachments]
   static final hasAttachments =
-      QueryBooleanProperty<Message>(_entities[5].properties[31]);
+      QueryBooleanProperty<Message>(_entities[5].properties[21]);
 
   /// see [Message.hasReactions]
   static final hasReactions =
-      QueryBooleanProperty<Message>(_entities[5].properties[32]);
+      QueryBooleanProperty<Message>(_entities[5].properties[22]);
 
   /// see [Message.dateDeleted]
   static final dateDeleted =
-      QueryIntegerProperty<Message>(_entities[5].properties[33]);
+      QueryIntegerProperty<Message>(_entities[5].properties[23]);
 
   /// see [Message.threadOriginatorGuid]
   static final threadOriginatorGuid =
-      QueryStringProperty<Message>(_entities[5].properties[34]);
+      QueryStringProperty<Message>(_entities[5].properties[24]);
 
   /// see [Message.threadOriginatorPart]
   static final threadOriginatorPart =
-      QueryStringProperty<Message>(_entities[5].properties[35]);
+      QueryStringProperty<Message>(_entities[5].properties[25]);
 
   /// see [Message.bigEmoji]
   static final bigEmoji =
-      QueryBooleanProperty<Message>(_entities[5].properties[36]);
+      QueryBooleanProperty<Message>(_entities[5].properties[26]);
 
   /// see [Message.error]
   static final error =
-      QueryIntegerProperty<Message>(_entities[5].properties[37]);
+      QueryIntegerProperty<Message>(_entities[5].properties[27]);
 
   /// see [Message.chat]
   static final chat =
-      QueryRelationToOne<Message, Chat>(_entities[5].properties[38]);
+      QueryRelationToOne<Message, Chat>(_entities[5].properties[28]);
 
   /// see [Message.dbAttributedBody]
   static final dbAttributedBody =
-      QueryStringProperty<Message>(_entities[5].properties[39]);
-}
+      QueryStringProperty<Message>(_entities[5].properties[29]);
 
-/// [ScheduledMessage] entity fields to define ObjectBox queries.
-class ScheduledMessage_ {
-  /// see [ScheduledMessage.id]
-  static final id =
-      QueryIntegerProperty<ScheduledMessage>(_entities[6].properties[0]);
+  /// see [Message.associatedMessagePart]
+  static final associatedMessagePart =
+      QueryIntegerProperty<Message>(_entities[5].properties[30]);
 
-  /// see [ScheduledMessage.chatGuid]
-  static final chatGuid =
-      QueryStringProperty<ScheduledMessage>(_entities[6].properties[1]);
+  /// see [Message.hasApplePayloadData]
+  static final hasApplePayloadData =
+      QueryBooleanProperty<Message>(_entities[5].properties[31]);
 
-  /// see [ScheduledMessage.message]
-  static final message =
-      QueryStringProperty<ScheduledMessage>(_entities[6].properties[2]);
+  /// see [Message.dateEdited]
+  static final dateEdited =
+      QueryIntegerProperty<Message>(_entities[5].properties[32]);
 
-  /// see [ScheduledMessage.epochTime]
-  static final epochTime =
-      QueryIntegerProperty<ScheduledMessage>(_entities[6].properties[3]);
+  /// see [Message.dbMessageSummaryInfo]
+  static final dbMessageSummaryInfo =
+      QueryStringProperty<Message>(_entities[5].properties[33]);
 
-  /// see [ScheduledMessage.completed]
-  static final completed =
-      QueryBooleanProperty<ScheduledMessage>(_entities[6].properties[4]);
+  /// see [Message.dbPayloadData]
+  static final dbPayloadData =
+      QueryStringProperty<Message>(_entities[5].properties[34]);
+
+  /// see [Message.dbMetadata]
+  static final dbMetadata =
+      QueryStringProperty<Message>(_entities[5].properties[35]);
 }
 
 /// [ThemeObject] entity fields to define ObjectBox queries.
 class ThemeObject_ {
   /// see [ThemeObject.id]
   static final id =
-      QueryIntegerProperty<ThemeObject>(_entities[7].properties[0]);
+      QueryIntegerProperty<ThemeObject>(_entities[6].properties[0]);
 
   /// see [ThemeObject.name]
   static final name =
-      QueryStringProperty<ThemeObject>(_entities[7].properties[1]);
+      QueryStringProperty<ThemeObject>(_entities[6].properties[1]);
 
   /// see [ThemeObject.selectedLightTheme]
   static final selectedLightTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[2]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[2]);
 
   /// see [ThemeObject.selectedDarkTheme]
   static final selectedDarkTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[3]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[3]);
 
   /// see [ThemeObject.gradientBg]
   static final gradientBg =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[4]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[4]);
 
   /// see [ThemeObject.previousLightTheme]
   static final previousLightTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[5]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[5]);
 
   /// see [ThemeObject.previousDarkTheme]
   static final previousDarkTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[6]);
+      QueryBooleanProperty<ThemeObject>(_entities[6].properties[6]);
 }
 
 /// [ThemeStruct] entity fields to define ObjectBox queries.
 class ThemeStruct_ {
   /// see [ThemeStruct.id]
   static final id =
-      QueryIntegerProperty<ThemeStruct>(_entities[8].properties[0]);
+      QueryIntegerProperty<ThemeStruct>(_entities[7].properties[0]);
 
   /// see [ThemeStruct.name]
   static final name =
-      QueryStringProperty<ThemeStruct>(_entities[8].properties[1]);
+      QueryStringProperty<ThemeStruct>(_entities[7].properties[1]);
 
   /// see [ThemeStruct.gradientBg]
   static final gradientBg =
-      QueryBooleanProperty<ThemeStruct>(_entities[8].properties[2]);
+      QueryBooleanProperty<ThemeStruct>(_entities[7].properties[2]);
 
   /// see [ThemeStruct.dbThemeData]
   static final dbThemeData =
-      QueryStringProperty<ThemeStruct>(_entities[8].properties[3]);
+      QueryStringProperty<ThemeStruct>(_entities[7].properties[3]);
+
+  /// see [ThemeStruct.googleFont]
+  static final googleFont =
+      QueryStringProperty<ThemeStruct>(_entities[7].properties[4]);
+}
+
+/// [Contact] entity fields to define ObjectBox queries.
+class Contact_ {
+  /// see [Contact.dbId]
+  static final dbId = QueryIntegerProperty<Contact>(_entities[8].properties[0]);
+
+  /// see [Contact.id]
+  static final id = QueryStringProperty<Contact>(_entities[8].properties[1]);
+
+  /// see [Contact.displayName]
+  static final displayName =
+      QueryStringProperty<Contact>(_entities[8].properties[2]);
+
+  /// see [Contact.phones]
+  static final phones =
+      QueryStringVectorProperty<Contact>(_entities[8].properties[3]);
+
+  /// see [Contact.emails]
+  static final emails =
+      QueryStringVectorProperty<Contact>(_entities[8].properties[4]);
+
+  /// see [Contact.avatar]
+  static final avatar =
+      QueryByteVectorProperty<Contact>(_entities[8].properties[5]);
+
+  /// see [Contact.dbStructuredName]
+  static final dbStructuredName =
+      QueryStringProperty<Contact>(_entities[8].properties[6]);
 }

@@ -11,7 +11,8 @@ description: Send iMessages on Android using BlueBubbles!
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.10.1+37
+
+version: 1.11.0+42
 publish_to: none
 
 environment:
@@ -30,25 +31,17 @@ dependencies:
   connectivity_plus: ^2.3.6+1
   tuple: ^2.0.0
   encrypt: ^5.0.1
-  assorted_layout_widgets: ^6.1.1
-  record: ^4.3.3 # mobile and web
   fast_contacts: ^1.1.1 # mobile only
   permission_handler: ^9.2.0 # mobile only
   path_provider: ^2.0.11 # no web support
-  sqflite: ^2.0.3+1 # mobile only
-  sqflite_common_ffi: ^2.1.1+1 # desktop
   path: ^1.8.2
   intl: ^0.17.0
   flutter_svg: ^1.1.3
   photo_manager: ^2.2.0 # only mobile
   video_player: ^2.4.6 # no desktop support, todo desktop
-  chewie_audio: # no desktop support, todo desktop
-    git:
-      url: https://github.com/BlueBubblesApp/chewie_audio.git
-      ref: BlueBubbles
   mime_type: ^1.0.0
-  receive_sharing_intent: ^1.4.5 # mobile only
-  flutter_map: ^2.2.0
+  receive_intent: ^0.2.3 # mobile only
+  receive_sharing_intent: ^1.4.5
   video_thumbnail: ^0.5.2 # mobile only
   flutter_slidable: ^2.0.0
   image_size_getter: ^2.1.2
@@ -58,11 +51,9 @@ dependencies:
   slugify: ^2.0.0
   metadata_fetch: ^0.4.1
   maps_launcher: ^2.0.1
-  latlong2: ^0.8.1
   smooth_page_indicator: ^1.0.0+2
   flex_color_picker: ^2.5.0
   image_gallery_saver: ^1.7.1 # mobile only
-  visibility_detector: ^0.3.3
   flutter_displaymode: ^0.4.0 # android only
   libphonenumber_plugin: ^0.2.3 # no desktop support, todo desktop
   flutter_libphonenumber: ^1.2.4 # no web or desktop support, used to speed up chat loading on mobile
@@ -76,22 +67,19 @@ dependencies:
   secure_application: ^3.8.0 # no linux support
   local_auth: ^2.1.2 # mobile only, todo windows
   crop_your_image: ^0.7.2
-  chewie: ^1.3.4 # no desktop support, todo desktop
+  chewie: ^1.3.5 # no desktop support, todo desktop
   simple_animations: ^5.0.0+2
   flutter_keyboard_visibility: ^5.3.0 # no desktop support
   flutter_local_notifications: ^9.7.1 # mobile only
   flutter_native_timezone: ^2.0.0 # no desktop support
   package_info_plus: ^1.4.3+1
   shared_preferences: ^2.0.15
-  location: ^4.4.0 # no desktop support, todo desktop
   universal_io: ^2.0.4 # cross-platform dart:io implementation
   universal_html: ^2.0.8 # cross-platform dart:html implementation
   file_picker: ^5.0.1
   firebase_dart: ^1.0.10+1
   dio: ^4.0.6
-  flutter_dropzone: ^3.0.5
-  transparent_pointer: ^1.0.0
-  quick_notify: ^0.2.1
+  quick_notify: ^0.2.0
   qr_flutter:
     git:
       url: https://github.com/theyakka/qr.flutter
@@ -109,11 +97,6 @@ dependencies:
   flutter_improved_scrolling: ^0.0.3
   desktop_drop: ^0.3.3
   particles_flutter: ^0.1.4
-  # used for percent progress when downloading font
-  dynamic_cached_fonts:
-    git:
-      url: https://github.com/jjoelj/dynamic_cached_fonts
-      ref: main
   confetti: ^0.7.0
   supercharged: ^2.1.1
   pdf: ^3.8.2
@@ -122,30 +105,48 @@ dependencies:
   giphy_get: ^3.1.0
   flutter_dotenv: ^5.0.2
   image: ^3.2.0
-  launch_at_startup: ^0.1.8
+  launch_at_startup: ^0.2.0
   async_task: ^1.0.18
-  filesystem_picker: ^3.0.0
   version: ^3.0.2
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
   pasteboard: ^0.2.0
-  win_toast:
+  local_notifier:
     git:
-      url: https://github.com/jjoelj/flutter-plugins.git
-      ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      path: packages/win_toast
+      url: https://github.com/jjoelj/local_notifier.git
+      ref: 78d87ac4b89ad68854dad27aea0b819758d7228d
   dynamic_color: ^1.4.0
   material_color_utilities: ^0.2.0
   dart_vlc: ^0.3.0
   geolocator: 8.2.1
   flex_color_scheme: ^5.1.0
   reorderables: ^0.5.0
-  screen_retriever: ^0.1.2
+  screen_retriever: ^0.1.4
   flutter_acrylic: ^1.0.0+2
-  expandable_page_view: ^1.0.17
+  windows_taskbar: ^1.1.0+1
+  animated_size_and_fade: ^3.0.0
   idb_shim: ^2.0.1+1
   chunked_stream: ^1.4.1
   image_picker: ^0.8.5+3
+  scroll_to_index: ^3.0.1
+  animations: ^2.0.7
+  flutter_isolate: ^2.0.3
+  # for VCard parsing
+  flutter_contacts: ^1.1.5+1
+  multi_value_listenable_builder: ^0.0.2
+  audio_waveforms: ^0.1.5+1
+  flutter_staggered_grid_view: ^0.6.2
+  store_checker: ^1.1.0
+  github: ^9.7.0
+  numberpicker: ^2.1.1
+  hand_signature: ^2.3.0+1
+  network_tools: ^3.0.0+3
+  network_info_plus: 2.1.4+1
+  open_filex: 4.1.1
+  auto_size_text: ^3.0.0
+  flutter_map: ^3.0.0
+  flutter_map_marker_popup: ^4.0.0
+  google_fonts: ^3.0.1
 
 dependency_overrides:
   rxdart: ^0.27.5
@@ -240,6 +241,16 @@ flutter:
     - assets/icon/icon.png
     - assets/changelog/changelog.md
     - assets/icon/icon.ico
+    - assets/badges/badge-1.ico
+    - assets/badges/badge-2.ico
+    - assets/badges/badge-3.ico
+    - assets/badges/badge-4.ico
+    - assets/badges/badge-5.ico
+    - assets/badges/badge-6.ico
+    - assets/badges/badge-7.ico
+    - assets/badges/badge-8.ico
+    - assets/badges/badge-9.ico
+    - assets/badges/badge-10.ico
     - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
@@ -269,7 +280,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.9.102.0
+  msix_version: 1.10.100.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

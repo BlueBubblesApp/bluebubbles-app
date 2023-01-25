@@ -15,19 +15,20 @@
 #include <flutter_native_view/flutter_native_view_plugin.h>
 #include <geolocator_windows/geolocator_windows.h>
 #include <local_auth_windows/local_auth_plugin.h>
+#include <local_notifier/local_notifier_plugin.h>
 #include <maps_launcher/maps_launcher_plugin.h>
+#include <network_info_plus_windows/network_info_plus_windows_plugin.h>
 #include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
 #include <pasteboard/pasteboard_plugin.h>
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
 #include <printing/printing_plugin.h>
 #include <quick_notify/quick_notify_plugin.h>
-#include <record_windows/record_windows_plugin_c_api.h>
 #include <screen_retriever/screen_retriever_plugin.h>
 #include <secure_application/secure_application_plugin.h>
 #include <system_tray/system_tray_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
-#include <win_toast/win_toast_plugin.h>
 #include <window_manager/window_manager_plugin.h>
+#include <windows_taskbar/windows_taskbar_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
   BitsdojoWindowPluginRegisterWithRegistrar(
@@ -48,8 +49,12 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("GeolocatorWindows"));
   LocalAuthPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("LocalAuthPlugin"));
+  LocalNotifierPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("LocalNotifierPlugin"));
   MapsLauncherPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("MapsLauncherPlugin"));
+  NetworkInfoPlusWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("NetworkInfoPlusWindowsPlugin"));
   ObjectboxFlutterLibsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ObjectboxFlutterLibsPlugin"));
   PasteboardPluginRegisterWithRegistrar(
@@ -60,8 +65,6 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("PrintingPlugin"));
   QuickNotifyPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("QuickNotifyPlugin"));
-  RecordWindowsPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("RecordWindowsPluginCApi"));
   ScreenRetrieverPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ScreenRetrieverPlugin"));
   SecureApplicationPluginRegisterWithRegistrar(
@@ -70,8 +73,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("SystemTrayPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UrlLauncherWindows"));
-  WinToastPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("WinToastPlugin"));
   WindowManagerPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("WindowManagerPlugin"));
+  WindowsTaskbarPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("WindowsTaskbarPlugin"));
 }

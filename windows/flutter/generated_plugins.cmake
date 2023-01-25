@@ -12,19 +12,20 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_native_view
   geolocator_windows
   local_auth_windows
+  local_notifier
   maps_launcher
+  network_info_plus_windows
   objectbox_flutter_libs
   pasteboard
   permission_handler_windows
   printing
   quick_notify
-  record_windows
   screen_retriever
   secure_application
   system_tray
   url_launcher_windows
-  win_toast
   window_manager
+  windows_taskbar
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
