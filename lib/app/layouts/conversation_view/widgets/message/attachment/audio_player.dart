@@ -59,7 +59,7 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
       controller = PlayerController()..addListener(() {
         setState(() {});
       });
-      await controller!.preparePlayer(file.path!);
+      await controller!.preparePlayer(path: file.path!);
       if (attachment != null) cvController?.audioPlayers[attachment!.guid!] = controller!;
     }
     setState(() {});

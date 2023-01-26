@@ -47,14 +47,14 @@ class NotificationsService extends GetxService {
     if (!kIsWeb && !kIsDesktop) {
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-      await flnp.initialize(initializationSettings, onSelectNotification: (String? payload) {
-        if (payload != null) {
-          intents.openChat(payload);
+      await flnp.initialize(initializationSettings, onDidReceiveNotificationResponse: (NotificationResponse? response) {
+        if (response?.payload != null) {
+          intents.openChat(response!.payload);
         }
       });
       final details = await flnp.getNotificationAppLaunchDetails();
-      if (details != null && details.didNotificationLaunchApp && details.payload != null) {
-        intents.openChat(details.payload!);
+      if (details != null && details.didNotificationLaunchApp && details.notificationResponse?.payload != null) {
+        intents.openChat(details.notificationResponse!.payload!);
       }
       // create notif channels
       createNotificationChannel(

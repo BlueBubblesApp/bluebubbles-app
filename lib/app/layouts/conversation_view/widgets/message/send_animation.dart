@@ -47,7 +47,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     if (ss.settings.sendSoundPath.value != null) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(
-        ss.settings.sendSoundPath.value!, 1.0
+        path: ss.settings.sendSoundPath.value!, volume: 1.0
       ).then((_) => controller.startPlayer());
     }
     for (int i = 0; i < attachments.length; i++) {

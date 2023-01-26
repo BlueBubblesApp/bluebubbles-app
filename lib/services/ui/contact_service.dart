@@ -41,10 +41,13 @@ class ContactsService extends GetxService {
     if (kIsWeb || kIsDesktop) {
       _contacts.addAll(await cs.fetchNetworkContacts());
     } else {
-      _contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
+      _contacts.addAll((await FastContacts.getAllContacts(
+        fields: ContactField.values
+          ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription, ContactField.emailLabels, ContactField.phoneLabels].contains(e))
+      )).map((e) => Contact(
         displayName: e.displayName,
-        emails: e.emails,
-        phones: e.phones,
+        emails: e.emails.map((e) => e.address).toList(),
+        phones: e.phones.map((e) => e.number).toList(),
         structuredName: e.structuredName == null ? null : StructuredName(
           namePrefix: e.structuredName!.namePrefix,
           givenName: e.structuredName!.givenName,

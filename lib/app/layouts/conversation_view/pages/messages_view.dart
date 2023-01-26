@@ -204,7 +204,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(
-        ss.settings.receiveSoundPath.value!, 1.0
+        path: ss.settings.receiveSoundPath.value!, volume: 1.0
       ).then((_) {
         controller.startPlayer();
       });

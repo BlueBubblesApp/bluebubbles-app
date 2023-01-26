@@ -293,7 +293,7 @@ Future<Null> initApp(bool bubble) async {
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
     if (kIsDesktop) {
       /* ----- VLC INITIALIZATION ----- */
-      await DartVLC.initialize();
+      DartVLC.initialize();
 
       /* ----- WINDOW INITIALIZATION ----- */
       await windowManager.ensureInitialized();
@@ -794,21 +794,21 @@ Future<void> initSystemTray() async {
   final Menu menu = Menu();
   await menu.buildFrom(
     [
-      MenuItemLable(
+      MenuItemLabel(
         label: 'Open App',
         onClicked: (_) async {
           ls.open();
           await windowManager.show();
         },
       ),
-      MenuItemLable(
+      MenuItemLabel(
         label: 'Hide App',
         onClicked: (_) async {
           ls.close();
           await windowManager.hide();
         },
       ),
-      MenuItemLable(
+      MenuItemLabel(
         label: 'Close App',
         onClicked: (_) async {
           await windowManager.close();
