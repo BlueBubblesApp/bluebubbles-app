@@ -16,7 +16,7 @@ class Share {
     if (kIsDesktop) {
       showSnackbar("Unsupported", "Can't share files on desktop yet!");
     } else {
-      sp.Share.shareFiles([filepath], text: subject);
+      sp.Share.shareXFiles([sp.XFile(filepath)], text: subject);
     }
   }
 

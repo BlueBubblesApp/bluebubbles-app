@@ -3,8 +3,9 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
@@ -108,6 +109,7 @@ class AttachmentDownloadController extends GetxController {
 
       error.value = true;
       attachmentDownloader._removeFromQueue(this);
+      return Response(requestOptions: RequestOptions(path: ''));
     });
     if (response.statusCode != 200) return;
     if (!kIsWeb && !kIsDesktop) {

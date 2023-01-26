@@ -6,8 +6,9 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
 
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
@@ -54,7 +55,8 @@ class ChatsService extends GetxService {
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
-    })).data['data']['total'];
+      return Response(requestOptions: RequestOptions(path: ''));
+    })).data['data']['total'] ?? 0;
     loadedAllChats = Completer();
     if (currentCount != 0) {
       hasChats.value = true;

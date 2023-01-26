@@ -452,7 +452,7 @@ Future<void> paintGroupAvatar({
     } else {
       Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung
             ? theme.colorScheme.secondary
-            : theme.backgroundColor;
+            : theme.colorScheme.background;
       canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
       await paintAvatar(
         handle: participants[index],
@@ -559,7 +559,7 @@ Future<Uint8List?> clip(Uint8List data, {required int size, required bool circle
   if (_image != null) {
     _image = img.copyResize(_image, width: size, height: size);
 
-    _data = img.encodePng(_image) as Uint8List;
+    _data = img.encodePng(_image);
   }
 
   image = await loadImage(_data);

@@ -5,11 +5,11 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
-import 'package:window_manager/window_manager.dart';
 
 ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>() : Get.put(ActionHandler());
 
@@ -195,6 +195,7 @@ class ActionHandler extends GetxService {
     final response = await http.createChat(addresses, text.trim()).catchError((err) {
       message = handleSendError(err, message);
       showSnackbar("Error", "Failed to create chat! Error code: ${message.error}");
+      return Response(requestOptions: RequestOptions(path: ''));
     });
 
     if (message.error != 0) {

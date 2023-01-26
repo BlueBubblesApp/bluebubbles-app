@@ -17,7 +17,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide MenuItem;
+import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -264,12 +264,12 @@ Future<Null> initApp(bool bubble) async {
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
     if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(MaterialApp(
-          home: SplashScreen(shouldNavigate: false),
-          theme: ThemeData(
-              backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
-                  ? Colors.black
-                  : Colors.white
-          )
+        home: SplashScreen(shouldNavigate: false),
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSwatch(backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
+            ? Colors.black
+            : Colors.white),
+        )
       ));
     }
 
@@ -639,11 +639,11 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
         /* ----- WINDOW EFFECT INITIALIZATION ----- */
         if (Platform.isWindows) {
-          await WindowEffects.setEffect(color: context.theme.backgroundColor);
+          await WindowEffects.setEffect(color: context.theme.colorScheme.background);
 
           eventDispatcher.stream.listen((event) async {
             if (event.item1 == 'theme-update') {
-              await WindowEffects.setEffect(color: context.theme.backgroundColor);
+              await WindowEffects.setEffect(color: context.theme.colorScheme.background);
             }
           });
         }

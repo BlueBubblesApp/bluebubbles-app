@@ -1,7 +1,6 @@
 import 'dart:isolate';
 import 'dart:ui' hide window;
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -9,10 +8,8 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:universal_html/html.dart';
-import 'package:window_manager/window_manager.dart';
 
 LifecycleService ls = Get.isRegistered<LifecycleService>() ? Get.find<LifecycleService>() : Get.put(LifecycleService());
 

@@ -161,6 +161,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     // Start loading the next chunk of messages
     noMoreMessages = !(await messageService.loadChunk(_messages.length, controller).catchError((e) {
       Logger.error("Failed to fetch message chunk! $e");
+      return true;
     }));
 
     if (noMoreMessages) return;
