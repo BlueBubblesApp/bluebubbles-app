@@ -6,9 +6,9 @@ import FlutterMacOS
 import Foundation
 
 import bitsdojo_window_macos
-import connectivity_plus_macos
+import connectivity_plus
 import desktop_drop
-import device_info_plus_macos
+import device_info_plus
 import dynamic_color
 import flutter_local_notifications
 import flutter_native_timezone
@@ -17,17 +17,17 @@ import local_notifier
 import macos_window_utils
 import maps_launcher
 import mobile_scanner
-import network_info_plus_macos
+import network_info_plus
 import objectbox_flutter_libs
-import package_info_plus_macos
+import package_info_plus
 import pasteboard
-import path_provider_macos
+import path_provider_foundation
 import photo_manager
 import printing
 import quick_notify
 import screen_retriever
-import share_plus_macos
-import shared_preferences_macos
+import share_plus
+import shared_preferences_foundation
 import system_tray
 import url_launcher_macos
 import wakelock_macos
