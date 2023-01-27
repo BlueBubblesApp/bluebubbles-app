@@ -143,6 +143,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics:21.2.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "androidx.core:core:1.9.0"
+    implementation 'androidx.core:core-google-shortcuts:1.1.0'
     implementation "androidx.sharetarget:sharetarget:1.2.0"
 
     //for location sending

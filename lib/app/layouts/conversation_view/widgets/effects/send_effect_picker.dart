@@ -251,7 +251,7 @@ void sendEffectAction(
                                                         laserController.stop();
                                                       }
                                                     } else if (screenSelected == "confetti") {
-                                                      confettiController.play();
+                                                      // todo dart fix confettiController.play();
                                                     }
                                                   },
                                                   child: Container(
