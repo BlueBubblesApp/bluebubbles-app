@@ -32,7 +32,7 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     lintOptions {
         checkReleaseBuilds false
@@ -46,7 +46,7 @@ android {
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
-        targetSdkVersion 32
+        targetSdkVersion 33
         versionCode 20000000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

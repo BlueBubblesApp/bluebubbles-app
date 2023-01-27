@@ -137,6 +137,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.3"
+  bidi:
+    dependency: transitive
+    description:
+      name: bidi
+      sha256: dc00274c7edabae2ab30c676e736ea1eb0b1b7a1b436cb5fe372e431ccb39ab0
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.6"
   bitsdojo_window:
     dependency: "direct main"
     description:
@@ -1803,10 +1811,10 @@ packages:
     dependency: "direct main"
     description:
       name: pdf
-      sha256: "10659b915e65832b106f6d1d213e09b789cc1f24bf282ee911e49db35b96be4d"
+      sha256: "6cd57e8e6d052bd1078f18e0dc7cd6701fad6288231c1ce99d66ef5034d14e61"
       url: "https://pub.dev"
     source: hosted
-    version: "3.8.4"
+    version: "3.9.0"
   peanut:
     dependency: "direct dev"
     description:
@@ -1931,10 +1939,10 @@ packages:
     dependency: "direct main"
     description:
       name: printing
-      sha256: "4df9e22bd4cb2ecea67183e5b328711b10276127b8878d9d5cb60ccd4c24a77c"
+      sha256: "075d6804ddf4332ecb647d7a196490005dc4f025629b1d3e049682b3ac94c0bf"
       url: "https://pub.dev"
     source: hosted
-    version: "5.9.3"
+    version: "5.10.0"
   process:
     dependency: transitive
     description:

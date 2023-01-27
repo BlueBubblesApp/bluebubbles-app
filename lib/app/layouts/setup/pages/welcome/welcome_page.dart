@@ -11,6 +11,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:simple_animations/simple_animations.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -228,6 +229,12 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
         opacity: opacitySubtitle,
         child: child,
       ),
+      onNextPressed: () async {
+        if ((fs.androidInfo?.version.sdkInt ?? 0) >= 33) {
+          await Permission.notification.request();
+        }
+        return true;
+      },
     );
   }
 }

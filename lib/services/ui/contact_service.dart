@@ -42,7 +42,7 @@ class ContactsService extends GetxService {
       _contacts.addAll(await cs.fetchNetworkContacts());
     } else {
       _contacts.addAll((await FastContacts.getAllContacts(
-        fields: ContactField.values
+        fields: List<ContactField>.from(ContactField.values)
           ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription, ContactField.emailLabels, ContactField.phoneLabels].contains(e))
       )).map((e) => Contact(
         displayName: e.displayName,

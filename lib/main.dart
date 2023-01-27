@@ -31,6 +31,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:system_tray/system_tray.dart';
@@ -650,32 +651,37 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       }
 
       // only show the dialog if setup is finished
-      if (ss.settings.finishedSetup.value && ss.prefs.getBool('1.11-warning') != true && !kIsWeb) {
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text(
-                "Important Notice",
-                style: context.theme.textTheme.titleLarge,
-              ),
-              content: Text(
-                "You now have the highly-anticipated v1.11 release! Due to a change with how the app handles contacts, you will need to fully quit and reopen the app this one time only to ensure your contacts populate.\n\nCheck out the changelog for some huge new features, and we hope you enjoy!",
-                style: context.theme.textTheme.bodyLarge
-              ),
-              backgroundColor: context.theme.colorScheme.properSurface,
-              actions: <Widget>[
-                TextButton(
-                  child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+      if (ss.settings.finishedSetup.value) {
+        if (ss.prefs.getBool('1.11-warning') != true && !kIsWeb) {
+          showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "Important Notice",
+                  style: context.theme.textTheme.titleLarge,
                 ),
-              ],
-            );
-          }
-        );
+                content: Text(
+                  "You now have the highly-anticipated v1.11 release! Due to a change with how the app handles contacts, you will need to fully quit and reopen the app this one time only to ensure your contacts populate.\n\nCheck out the changelog for some huge new features, and we hope you enjoy!",
+                  style: context.theme.textTheme.bodyLarge
+                ),
+                backgroundColor: context.theme.colorScheme.properSurface,
+                actions: <Widget>[
+                  TextButton(
+                    child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            }
+          );
+        }
+        if ((fs.androidInfo?.version.sdkInt ?? 0) >= 33) {
+          Permission.notification.request();
+        }
       }
       if (ss.prefs.getBool('1.11-warning') != true) {
         ss.prefs.setBool('1.11-warning', true);
