@@ -41,7 +41,7 @@ class FullSyncManager extends SyncManager {
     }
     addToOutput('Full sync is starting...');
     addToOutput("Reloading your contacts...");
-    await cs.refreshContacts(reloadUI: false);
+    await cs.refreshContacts();
 
     addToOutput('Fetching chats from the server...');
 
@@ -224,7 +224,9 @@ class FullSyncManager extends SyncManager {
   @override
   Future<void> complete() async {
     addToOutput("Reloading your contacts...");
-    await cs.refreshContacts(reloadUI: false);
+    // Use reset because it's after the full-sync so all the
+    // handles and contacts are assumed new.
+    await cs.resetContacts();
     addToOutput("Reloading your chats...");
     Get.reload<ChatsService>(force: true);
     await chats.init(force: true);

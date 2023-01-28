@@ -34,7 +34,7 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<List<List<int>>> refreshContacts({bool reloadUI = true}) async {
+  Future<List<List<int>>> refreshContacts() async {
     if (!(await cs.canAccessContacts())) return [];
     final _contacts = <Contact>[];
     final changedIds = <List<int>>[<int>[], <int>[]];
@@ -132,6 +132,129 @@ class ContactsService extends GetxService {
     }
     // only return contacts if things changed (or on web)
     return changedIds;
+  }
+
+  Future<void> resetContacts() async {
+    if (!(await cs.canAccessContacts())) return [];
+    final _contacts = <Contact>[];
+    final changedIds = <List<int>>[<int>[], <int>[]];
+
+    // Clear all the contacts from the contact box (non-web only)
+    if (!kIsWeb) {
+      contactBox.removeAll();
+    }
+
+    // Fetch all the contacts (network and/or DB)
+    _contacts = this.fetchAllContacts();
+
+    // Save the contacts to the contactBox (non-web only)
+    if (!kIsWeb) {
+      List<int> contactIds = contactBox.putMany(_contacts);
+      
+      // Just in case, if the length of IDs we get back don't match what
+      // we tried to save, just refresh them from the DB entirely.
+      // Otherwise, just insert t
+      if (contactIds.length == _contacts.length) {
+        for (int i = 0; i < contactIds.length; i++) {
+          _contacts[i].id = contactIds[i];
+        }
+      } else {
+        _contacts = this.fetchAllContacts();
+      }
+    }
+
+    // Load handles (DB or web-cache)
+    final List<Handle> handles = [];
+    if (kIsWeb) {
+      handles.addAll(chats.webCachedHandles);
+    } else {
+      handles.addAll(handleBox.getAll());
+    }
+
+    // Set the formatted addresses.
+    // Clear all contact relations (DB) and/or web contacts
+    for (Handle h in handles) {
+      if (!h.address.contains("@") && h.formattedAddress == null) {
+        h.formattedAddress = await formatPhoneNumber(h.address);
+      }
+
+      if (kIsWeb) {
+        h.webContact = null;
+      } else {
+        h.contactRelation.target = null;
+      }
+    }
+
+    // Save the handles without contact relationships (DB only)
+    if (!kIsWeb) {
+      handleBox.putMany(handles);
+    }
+
+    // Match handles to contacts and save match
+    for (Contact c in _contacts) {
+      // Find matching handles
+      final matchingHandles = cs.matchContactToHandles(c, handlesToSearch);
+      if (matchingHandles.isEmpty) continue;
+
+      // Get a list of the unique addresses for handles matching the contact
+      final addressesAndServices = matchingHandles.map((e) => e.uniqueAddressAndService).toList();
+
+      // Insert the relationship for all handles that have contacts
+      final matches = handles.where((e) => addressesAndServices.contains(e.uniqueAddressAndService));
+      for (Handle h in matches) {
+        if (kIsWeb) {
+          h.webContact = c;
+        } else {
+          h.contactRelation.target = c;
+        }
+      }
+    }
+
+    // Save all the updated handles (with contacts now)
+    if (!kIsWeb) {
+      Handle.bulkSave(handles);
+    }
+
+    // Only store the contacts globally if web.
+    // We don't need them for Android/Desktop because
+    // the contacts should be stored with the handles
+    if (kIsWeb) {
+      contacts = _contacts;
+    }
+  }
+
+  Future<Contact[]> fetchAllContacts() {
+    final _contacts = <Contact>[];
+
+    // Fetch all the contacts
+    if (kIsWeb || kIsDesktop) {
+      _contacts.addAll(await cs.fetchNetworkContacts());
+    } else {
+      _contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
+        displayName: e.displayName,
+        emails: e.emails,
+        phones: e.phones,
+        structuredName: e.structuredName == null ? null : StructuredName(
+          namePrefix: e.structuredName!.namePrefix,
+          givenName: e.structuredName!.givenName,
+          middleName: e.structuredName!.middleName,
+          familyName: e.structuredName!.familyName,
+          nameSuffix: e.structuredName!.nameSuffix,
+        ),
+        id: e.id,
+      )));
+
+      // Get avatars on ANdroid
+      for (Contact c in _contacts) {
+        try {
+          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
+        } catch (_) {
+          c.avatar = await FastContacts.getContactImage(c.id);
+        }
+      }
+    }
+
+    return _contacts;
   }
 
   void completeContactsRefresh(List<Contact> refreshedContacts, {List<List<int>>? reloadUI}) {
