@@ -93,7 +93,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
               backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
               extendBodyBehindAppBar: true,
               appBar: PreferredSize(
-                  preferredSize: Size(ns.width(context), (kIsDesktop ? 5 : 0) + 80 * (iOS ? ss.settings.avatarScale.value : 1)),
+                  preferredSize: Size(ns.width(context), (kIsDesktop ? 5 : 0) + 80 * (iOS ? ss.settings.avatarScale.value : 0) + (!iOS ? kToolbarHeight : 0)),
                   child: iOS
                   ? CupertinoHeader(controller: controller)
                   : MaterialHeader(controller: controller) as PreferredSizeWidget),

@@ -32,7 +32,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
       automaticallyImplyLeading: false,
-      toolbarHeight: (kIsDesktop ? 5 : 0) + 80 * (ss.settings.skin.value == Skins.iOS ? ss.settings.avatarScale.value : 1),
+      toolbarHeight: (kIsDesktop ? 5 : 0) + kToolbarHeight,
       leadingWidth: 40,
       leading: Padding(
         padding: const EdgeInsets.only(left: 10.0),
