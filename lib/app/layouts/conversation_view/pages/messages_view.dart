@@ -355,7 +355,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                         Padding(
                           padding: const EdgeInsets.only(top: 5),
                           child: TypingIndicator(
-                            visible: controller.showTypingIndicator.value,
+                            controller: controller,
                           ),
                         ),
                       ],

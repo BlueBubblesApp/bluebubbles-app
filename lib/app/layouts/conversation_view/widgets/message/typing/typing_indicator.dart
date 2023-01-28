@@ -11,24 +11,26 @@ import 'package:get/get.dart';
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({
     Key? key,
-    required this.visible,
+    this.visible,
+    this.controller,
     this.scale = 1.0,
   }) : super(key: key);
 
-  final bool visible;
+  final bool? visible;
+  final ConversationViewController? controller;
   final double scale;
 
   @override
   State<TypingIndicator> createState() => _TypingIndicatorState();
 }
 
-class _TypingIndicatorState extends OptimizedState<TypingIndicator> with SingleTickerProviderStateMixin {
+class _TypingIndicatorState extends OptimizedState<TypingIndicator> {
 
   @override
   Widget build(BuildContext context) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
-      child: widget.visible ? (iOS || cm.activeChat == null ? ClipPath(
+      child: (widget.controller?.showTypingIndicator.value ?? widget.visible)! ? (iOS || cm.activeChat == null ? ClipPath(
         clipper: const TypingClipper(),
         child: Container(
           height: 50,

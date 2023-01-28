@@ -21,8 +21,6 @@ class SettingsSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final thumbColor = context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
-        ? context.theme.colorScheme.onSurface.withOpacity(0.6) : context.theme.colorScheme.surface;
     return Material(
       color: Colors.transparent,
       child: InkWell(
