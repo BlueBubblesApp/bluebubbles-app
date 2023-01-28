@@ -65,13 +65,16 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (metadata?.image != null)
-            Image.network(
-              metadata!.image!,
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) {
-                return const SizedBox.shrink();
-              },
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: context.height * 0.4),
+              child: Image.network(
+                metadata!.image!,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, __, ___) {
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
           Padding(
             padding: const EdgeInsets.all(15.0),
