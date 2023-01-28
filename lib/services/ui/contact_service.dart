@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
@@ -36,6 +37,8 @@ class ContactsService extends GetxService {
 
   Future<List<List<int>>> refreshContacts() async {
     if (!(await cs.canAccessContacts())) return [];
+
+    final startTime = DateTime.now().millisecondsSinceEpoch;
     final _contacts = <Contact>[];
     final changedIds = <List<int>>[<int>[], <int>[]];
     if (kIsWeb || kIsDesktop) {
@@ -133,8 +136,140 @@ class ContactsService extends GetxService {
     if (kIsWeb) {
       contacts = _contacts;
     }
+
+    final endTime = DateTime.now().millisecondsSinceEpoch;
+    Logger.debug("Contact refresh took ${endTime - startTime} ms");
+
     // only return contacts if things changed (or on web)
     return changedIds;
+  }
+
+  Future<void> resetContacts() async {
+    if (!(await cs.canAccessContacts())) return;
+    List<Contact> _contacts = [];
+
+    // Track how long this takes
+    final startTime = DateTime.now().millisecondsSinceEpoch;
+
+    // Clear all the contacts from the contact box (non-web only)
+    if (!kIsWeb) {
+      contactBox.removeAll();
+    }
+
+    // Fetch all the contacts (network and/or DB)
+    _contacts = await cs.fetchAllContacts();
+
+    // Save the contacts to the contactBox (non-web only)
+    if (!kIsWeb) {
+      List<int> contactIds = contactBox.putMany(_contacts);
+      
+      // Just in case, if the length of IDs we get back don't match what
+      // we tried to save, just refresh them from the DB entirely.
+      // Otherwise, just insert t
+      if (contactIds.length == _contacts.length) {
+        for (int i = 0; i < contactIds.length; i++) {
+          _contacts[i].dbId = contactIds[i];
+        }
+      } else {
+        _contacts = await cs.fetchAllContacts();
+      }
+    }
+
+    // Load handles (DB or web-cache)
+    final List<Handle> handles = [];
+    if (kIsWeb) {
+      handles.addAll(chats.webCachedHandles);
+    } else {
+      handles.addAll(handleBox.getAll());
+    }
+
+    // Set the formatted addresses.
+    // Clear all contact relations (DB) and/or web contacts
+    for (Handle h in handles) {
+      if (!h.address.contains("@") && h.formattedAddress == null) {
+        h.formattedAddress = await formatPhoneNumber(h.address);
+      }
+
+      if (kIsWeb) {
+        h.webContact = null;
+      } else {
+        h.contactRelation.target = null;
+      }
+    }
+
+    // Save the handles without contact relationships (DB only)
+    if (!kIsWeb) {
+      handleBox.putMany(handles);
+    }
+
+    // Match handles to contacts and save match
+    for (Contact c in _contacts) {
+      // Find matching handles
+      final matchingHandles = cs.matchContactToHandles(c, handles);
+      if (matchingHandles.isEmpty) continue;
+
+      // Get a list of the unique addresses for handles matching the contact
+      final addressesAndServices = matchingHandles.map((e) => e.uniqueAddressAndService).toList();
+
+      // Insert the relationship for all handles that have contacts
+      final matches = handles.where((e) => addressesAndServices.contains(e.uniqueAddressAndService));
+      for (Handle h in matches) {
+        if (kIsWeb) {
+          h.webContact = c;
+        } else {
+          h.contactRelation.target = c;
+        }
+      }
+    }
+
+    // Save all the updated handles (with contacts now)
+    if (!kIsWeb) {
+      handleBox.putMany(handles);
+    }
+
+    // Only store the contacts globally if web.
+    // We don't need them for Android/Desktop because
+    // the contacts should be stored with the handles
+    if (kIsWeb) {
+      contacts = _contacts;
+    }
+
+    final endTime = DateTime.now().millisecondsSinceEpoch;
+    Logger.debug("Contact reset took ${endTime - startTime} ms");
+  }
+
+  Future<List<Contact>> fetchAllContacts() async {
+    final _contacts = <Contact>[];
+
+    // Fetch all the contacts
+    if (kIsWeb || kIsDesktop) {
+      _contacts.addAll(await cs.fetchNetworkContacts());
+    } else {
+      _contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
+        displayName: e.displayName,
+        emails: e.emails,
+        phones: e.phones,
+        structuredName: e.structuredName == null ? null : StructuredName(
+          namePrefix: e.structuredName!.namePrefix,
+          givenName: e.structuredName!.givenName,
+          middleName: e.structuredName!.middleName,
+          familyName: e.structuredName!.familyName,
+          nameSuffix: e.structuredName!.nameSuffix,
+        ),
+        id: e.id,
+      )));
+
+      // Get avatars on ANdroid
+      for (Contact c in _contacts) {
+        try {
+          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
+        } catch (_) {
+          c.avatar = await FastContacts.getContactImage(c.id);
+        }
+      }
+    }
+
+    return _contacts;
   }
 
   void completeContactsRefresh(List<Contact> refreshedContacts, {List<List<int>>? reloadUI}) {

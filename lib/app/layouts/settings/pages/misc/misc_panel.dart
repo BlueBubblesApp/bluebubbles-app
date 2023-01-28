@@ -401,7 +401,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       title: "Refresh contacts",
                       onTap: () async {
                           refreshingContacts.value = true;
-                          await cs.refreshContacts();
+                          await cs.resetContacts();
                           eventDispatcher.emit("refresh-all", null);
                           refreshingContacts.value = false;
                       },
