@@ -174,6 +174,11 @@ Future<Null> initApp(bool bubble) async {
           } catch (e, s) {
             Logger.error(e);
             Logger.error(s);
+            // this can very rarely happen
+            if (e.toString().contains("another store is still open using the same path")) {
+              Logger.info("Retrying to attach to an existing ObjectBox store");
+              store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+            }
           }
         }
       } else {
