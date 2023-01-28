@@ -251,9 +251,39 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () async {
-              chats.removeChat(chat);
-              Chat.softDelete(chat);
-              Navigator.pop(context);
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: context.theme.textTheme.titleLarge,
+                    ),
+                    content: Text(
+                        "This chat will be deleted from this device only",
+                        style: context.theme.textTheme.bodyLarge
+                    ),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          chats.removeChat(chat);
+                          Chat.softDelete(chat);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),

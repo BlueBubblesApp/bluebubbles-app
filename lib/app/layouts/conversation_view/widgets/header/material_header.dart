@@ -109,12 +109,45 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
               }
               Navigator.of(context).pop();
             } else if (value == 2) {
-              chats.removeChat(controller.chat);
-              Chat.softDelete(controller.chat);
-              while (Get.isOverlaysOpen) {
-                Get.back();
-              }
-              Navigator.of(context).pop();
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: context.theme.textTheme.titleLarge,
+                    ),
+                    content: Text(
+                      "This chat will be deleted from this device only",
+                      style: context.theme.textTheme.bodyLarge
+                    ),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          while (Get.isOverlaysOpen) {
+                            Get.back();
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          chats.removeChat(controller.chat);
+                          Chat.softDelete(controller.chat);
+                          while (Get.isOverlaysOpen) {
+                            Get.back();
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             }
           },
           itemBuilder: (context) {
