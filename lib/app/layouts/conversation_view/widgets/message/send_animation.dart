@@ -115,7 +115,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     return AnimatedPositioned(
       duration: Duration(milliseconds: message != null ? 400 : 0),
       bottom: message != null ? textFieldSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) + (!iOS ? 15 : 0) : 0,
-      right: 5,
+      right: samsung ? -37.5 : 5,
       curve: Curves.easeInOutCubic,
       onEnd: () async {
         if (message != null) {
