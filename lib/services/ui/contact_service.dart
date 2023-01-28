@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
@@ -36,6 +37,8 @@ class ContactsService extends GetxService {
 
   Future<List<List<int>>> refreshContacts() async {
     if (!(await cs.canAccessContacts())) return [];
+
+    final startTime = DateTime.now().millisecondsSinceEpoch;
     final _contacts = <Contact>[];
     final changedIds = <List<int>>[<int>[], <int>[]];
     if (kIsWeb || kIsDesktop) {
@@ -130,6 +133,10 @@ class ContactsService extends GetxService {
     if (kIsWeb) {
       contacts = _contacts;
     }
+
+    final endTime = DateTime.now().millisecondsSinceEpoch;
+    Logger.debug("Contact refresh took ${endTime - startTime} ms");
+
     // only return contacts if things changed (or on web)
     return changedIds;
   }
@@ -137,6 +144,9 @@ class ContactsService extends GetxService {
   Future<void> resetContacts() async {
     if (!(await cs.canAccessContacts())) return;
     List<Contact> _contacts = [];
+
+    // Track how long this takes
+    final startTime = DateTime.now().millisecondsSinceEpoch;
 
     // Clear all the contacts from the contact box (non-web only)
     if (!kIsWeb) {
@@ -220,6 +230,9 @@ class ContactsService extends GetxService {
     if (kIsWeb) {
       contacts = _contacts;
     }
+
+    final endTime = DateTime.now().millisecondsSinceEpoch;
+    Logger.debug("Contact reset took ${endTime - startTime} ms");
   }
 
   Future<List<Contact>> fetchAllContacts() async {
