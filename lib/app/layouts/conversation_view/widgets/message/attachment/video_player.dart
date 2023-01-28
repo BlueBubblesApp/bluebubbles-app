@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -238,7 +239,7 @@ class PlayPauseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => AnimatedOpacity(
-      opacity: showPlayPauseOverlay.value ? 1 : 0,
+      opacity: showPlayPauseOverlay.value && ReplyScope.maybeOf(context) == null ? 1 : 0,
       duration: const Duration(milliseconds: 250),
       child: Container(
         height: 75,
@@ -307,7 +308,7 @@ class MuteButton extends StatelessWidget {
       bottom: 8,
       right: (isFromMe) ? 15 : 8,
       child: Obx(() => AnimatedOpacity(
-        opacity: showPlayPauseOverlay.value ? 1 : 0,
+        opacity: showPlayPauseOverlay.value && ReplyScope.maybeOf(context) == null ? 1 : 0,
         duration: const Duration(milliseconds: 250),
         child: AbsorbPointer(
           absorbing: !showPlayPauseOverlay.value,
