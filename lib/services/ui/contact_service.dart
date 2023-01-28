@@ -135,9 +135,8 @@ class ContactsService extends GetxService {
   }
 
   Future<void> resetContacts() async {
-    if (!(await cs.canAccessContacts())) return [];
-    final _contacts = <Contact>[];
-    final changedIds = <List<int>>[<int>[], <int>[]];
+    if (!(await cs.canAccessContacts())) return;
+    List<Contact> _contacts = [];
 
     // Clear all the contacts from the contact box (non-web only)
     if (!kIsWeb) {
@@ -145,7 +144,7 @@ class ContactsService extends GetxService {
     }
 
     // Fetch all the contacts (network and/or DB)
-    _contacts = this.fetchAllContacts();
+    _contacts = await cs.fetchAllContacts();
 
     // Save the contacts to the contactBox (non-web only)
     if (!kIsWeb) {
@@ -156,10 +155,10 @@ class ContactsService extends GetxService {
       // Otherwise, just insert t
       if (contactIds.length == _contacts.length) {
         for (int i = 0; i < contactIds.length; i++) {
-          _contacts[i].id = contactIds[i];
+          _contacts[i].dbId = contactIds[i];
         }
       } else {
-        _contacts = this.fetchAllContacts();
+        _contacts = await cs.fetchAllContacts();
       }
     }
 
@@ -193,7 +192,7 @@ class ContactsService extends GetxService {
     // Match handles to contacts and save match
     for (Contact c in _contacts) {
       // Find matching handles
-      final matchingHandles = cs.matchContactToHandles(c, handlesToSearch);
+      final matchingHandles = cs.matchContactToHandles(c, handles);
       if (matchingHandles.isEmpty) continue;
 
       // Get a list of the unique addresses for handles matching the contact
@@ -223,7 +222,7 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<Contact[]> fetchAllContacts() {
+  Future<List<Contact>> fetchAllContacts() async {
     final _contacts = <Contact>[];
 
     // Fetch all the contacts
