@@ -119,31 +119,40 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_data.imageMetadata?.url != null && _data.imageMetadata?.size != Size.zero)
-            Image.network(
-              _data.imageMetadata!.url!,
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) {
-                return const SizedBox.shrink();
-              },
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: context.height * 0.4),
+              child: Image.network(
+                _data.imageMetadata!.url!,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, __, ___) {
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
           if (content is PlatformFile && hasAppleImage && content.bytes != null)
-            Image.memory(
-              content.bytes!,
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) {
-                return const SizedBox.shrink();
-              },
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: context.height * 0.4),
+              child: Image.memory(
+                content.bytes!,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, __, ___) {
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
           if (content is PlatformFile && hasAppleImage && content.bytes == null && content.path != null)
-            Image.file(
-              file,
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) {
-                return const SizedBox.shrink();
-              },
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: context.height * 0.4),
+              child: Image.file(
+                file,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, __, ___) {
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
           Padding(
             padding: const EdgeInsets.all(15.0),

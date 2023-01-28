@@ -656,6 +656,10 @@ class Chat {
         Logger.error(stacktrace.toString());
       }
     }
+    // Save any attachments
+    for (Attachment? attachment in message.attachments) {
+      attachment!.save(newMessage);
+    }
     bool isNewer = false;
 
     // If the message was saved correctly, update this chat's latestMessage info,
@@ -671,11 +675,6 @@ class Chat {
           chats.addChat(this);
         }
       }
-    }
-
-    // Save any attachments
-    for (Attachment? attachment in message.attachments) {
-      attachment!.save(newMessage);
     }
 
     // Save the chat.

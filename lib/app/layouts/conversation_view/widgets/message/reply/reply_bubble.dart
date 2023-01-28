@@ -190,9 +190,11 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                       ),
                     ) : ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 70),
-                      child: AttachmentHolder(
-                        parentController: controller,
-                        message: part,
+                      child: ReplyScope(
+                        child: AttachmentHolder(
+                          parentController: controller,
+                          message: part,
+                        ),
                       ),
                     ),
                   ),
@@ -204,4 +206,24 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
       ),
     );
   }
+}
+
+class ReplyScope extends InheritedWidget {
+  const ReplyScope({
+    super.key,
+    required super.child,
+  });
+
+  static ReplyScope? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ReplyScope>();
+  }
+
+  static ReplyScope of(BuildContext context) {
+    final ReplyScope? result = maybeOf(context);
+    assert(result != null, 'No ReplyScope found in context');
+    return result!;
+  }
+
+  @override
+  bool updateShouldNotify(ReplyScope oldWidget) => true;
 }
