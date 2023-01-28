@@ -55,7 +55,15 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
       title: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: controller.chat.isGroup ? null : () async {
+        onTap: controller.chat.isGroup ? () {
+          Navigator.of(context).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (context) => ConversationDetails(
+                chat: controller.chat,
+              ),
+            ),
+          );
+        } : () async {
           final handle = controller.chat.participants.first;
           final contact = handle.contact;
           if (contact == null) {
