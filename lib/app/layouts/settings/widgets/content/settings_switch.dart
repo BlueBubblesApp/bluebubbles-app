@@ -40,15 +40,7 @@ class SettingsSwitch extends StatelessWidget {
             style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
           ) : null,
           value: initialVal,
-          activeColor: context.theme.colorScheme.primary,
-          activeTrackColor: context.theme.colorScheme.primaryContainer,
-          // make sure the track color does not blend in with the background color of the tiles
-          inactiveTrackColor: context.theme.colorScheme.surfaceVariant.computeDifference(backgroundColor) < 15
-              ? context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
-              ? thumbColor.darkenPercent(20)
-              : context.theme.colorScheme.surface.withOpacity(0.6)
-              : context.theme.colorScheme.surfaceVariant,
-          inactiveThumbColor: thumbColor,
+          activeColor: context.theme.colorScheme.primary.lightenOrDarken(15),
           onChanged: onChanged,
           contentPadding: EdgeInsets.symmetric(vertical: isThreeLine ? 10 : 0, horizontal: 16.0),
         ),
