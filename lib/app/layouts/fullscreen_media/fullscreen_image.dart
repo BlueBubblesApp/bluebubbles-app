@@ -47,7 +47,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
   @override
   void initState() {
     super.initState();
-    message?.getHandle();
+    message?.handle = message?.getHandle();
     updateObx(() {
       initBytes();
     });
