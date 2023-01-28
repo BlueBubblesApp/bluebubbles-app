@@ -27,20 +27,25 @@ class SettingsSwitch extends StatelessWidget {
         onTap: () => onChanged.call(!initialVal),
         splashColor: context.theme.colorScheme.surfaceVariant,
         splashFactory: context.theme.splashFactory,
-        child: SwitchListTile(
+        child: ListTile(
+          mouseCursor: MouseCursor.defer,
+          enableFeedback: true,
+          minVerticalPadding: 10,
+          horizontalTitleGap: 10,
           title: Text(
             title,
             style: context.theme.textTheme.bodyLarge,
           ),
-          subtitle: subtitle != null
-              ? Text(
+          trailing: Switch(
+            value: initialVal,
+            activeColor: context.theme.colorScheme.primary.lightenOrDarken(15),
+            onChanged: onChanged,
+          ),
+          subtitle: subtitle != null ? Text(
             subtitle!,
-            style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
+            style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: 1.5),
           ) : null,
-          value: initialVal,
-          activeColor: context.theme.colorScheme.primary.lightenOrDarken(15),
-          onChanged: onChanged,
-          contentPadding: EdgeInsets.symmetric(vertical: isThreeLine ? 10 : 0, horizontal: 16.0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
         ),
       ),
     );

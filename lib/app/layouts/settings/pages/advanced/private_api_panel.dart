@@ -322,26 +322,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                     ),
                                   ),
-                                  FutureBuilder(
-                                      initialData: false,
-                                      future: ss.isMinBigSur,
-                                      builder: (context, snapshot) {
-                                        if (snapshot.data as bool) {
-                                          return Column(
-                                            children: [
-                                              Container(
-                                                color: tileColor,
-                                                child: Padding(
-                                                  padding: const EdgeInsets.only(left: 15.0),
-                                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        } else {
-                                          return const SizedBox.shrink();
-                                        }
-                                      }),
                                 ],
                               ),
                             ),

@@ -114,16 +114,17 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                     children: [
                       const SettingsSubtitle(
                         subtitle: "Set where videos start playing muted",
+                        bottomPadding: false,
                       ),
                       Obx(() => SettingsSwitch(
-                            onChanged: (bool val) {
-                              ss.settings.startVideosMuted.value = val;
-                              saveSettings();
-                            },
-                            initialVal: ss.settings.startVideosMuted.value,
-                            title: "Mute in Attachment Preview",
-                            backgroundColor: tileColor,
-                          )),
+                        onChanged: (bool val) {
+                          ss.settings.startVideosMuted.value = val;
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.startVideosMuted.value,
+                        title: "Mute in Attachment Preview",
+                        backgroundColor: tileColor,
+                      )),
                       Container(
                         color: tileColor,
                         child: Padding(
