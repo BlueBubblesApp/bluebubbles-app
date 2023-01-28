@@ -211,7 +211,7 @@ class ContactsService extends GetxService {
 
     // Save all the updated handles (with contacts now)
     if (!kIsWeb) {
-      Handle.bulkSave(handles);
+      handleBox.putMany(handles);
     }
 
     // Only store the contacts globally if web.
