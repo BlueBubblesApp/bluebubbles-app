@@ -99,10 +99,16 @@ class Handle {
 
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
   /// than iterating through them
-  Handle save({bool updateColor = false}) {
+  Handle save({bool updateColor = false, matchOnOriginalROWID = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
-      Handle? existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      Handle? existing;
+      if (matchOnOriginalROWID) {
+        existing = Handle.findOne(originalROWID: originalROWID);
+      } else {
+        existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      }
+
       if (existing != null) {
         id = existing.id;
         contactRelation.target = existing.contactRelation.target;
@@ -120,13 +126,21 @@ class Handle {
   }
 
   /// Save a list of handles
-  static List<Handle> bulkSave(List<Handle> handles) {
+  static List<Handle> bulkSave(List<Handle> handles, {matchOnOriginalROWID = false}) {
     store.runInTransaction(TxMode.write, () {
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
-        Handle? existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
+        Handle? existing;
+        if (matchOnOriginalROWID) {
+          existing = Handle.findOne(originalROWID: h.originalROWID);
+        } else {
+          existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
+        }
+
         if (existing != null) {
           h.id = existing.id;
+        } else {
+          h.contactRelation.target ??= cs.matchHandleToContact(h);
         }
       }
 

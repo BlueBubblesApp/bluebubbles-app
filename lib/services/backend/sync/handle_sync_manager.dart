@@ -1,9 +1,11 @@
 import 'package:async_task/async_task_extension.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
@@ -47,11 +49,35 @@ class HandleSyncManager extends SyncManager {
       return await complete();
     }
 
+    addToOutput("Backing up handles...");
+    List<Handle> currentHandles = Handle.find();
+    final handleBackup = currentHandles.map((e) => e.toMap()).toList();
+
     try {
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.normal);
       }
 
+      // First, get all the chats and cache all the handle original ROWIDs associated
+      addToOutput("Loading chats...");
+      final chatQuery = chatBox.query().build();
+      List<Chat> chats = chatQuery.find();
+      addToOutput("Loaded ${chats.length} from the database...");
+
+      addToOutput("Caching chat participants...");
+      Map<Chat, List<int>> chatHandleCache = {};
+      for (Chat c in chats) {
+        List<Handle> handles = c.participants;
+        List<int> rowIds = handles.map((e) => e.originalROWID).whereNotNull().toList();
+        chatHandleCache[c] = rowIds;
+      }
+
+      // Clearing handle database
+      addToOutput("Clearing handle database...");
+      handleBox.removeAll();
+
+      addToOutput("Streaming handles from server...");
+      Map<int, Handle> newHandlesMap = {};
       await for (final handleEvent in streamHandlePages(totalHandles)) {
         double handleProgress = handleEvent.item1;
         List<Handle> newHandles = handleEvent.item2;
@@ -63,13 +89,29 @@ class HandleSyncManager extends SyncManager {
           if (!h.address.contains("@") && h.formattedAddress == null) {
             h.formattedAddress = await formatPhoneNumber(h.address);
           }
+
+          h.contactRelation.target ??= cs.matchHandleToContact(h);
         }
 
         // Synchronously save the handles
-        List<Handle> handles = Handle.bulkSave(newHandles);
+        List<Handle> handles = Handle.bulkSave(newHandles, matchOnOriginalROWID: true);
         handlesSynced += handles.length;
 
+        for (Handle h in handles) {
+          if (h.originalROWID != null) {
+            newHandlesMap[h.originalROWID!] = h;
+          }
+        }
+
         if (handleProgress >= 1.0) {
+          // When we've finished, apply the handles to the chats
+          addToOutput("Re-creating chat <-> handle relationships");
+          chatHandleCache.forEach((key, value) {
+            List<Handle> relations = value.map((e) => newHandlesMap[e]).whereNotNull().toList();
+            key.handles.addAll(relations);
+            key.handles.applyToDb();
+          });
+
           // When we've hit the last chunk, we're finished
           await complete();
           if (kIsDesktop && Platform.isWindows) {
@@ -88,6 +130,11 @@ class HandleSyncManager extends SyncManager {
     } catch (e, s) {
       addToOutput('Failed to sync handles! Error: ${e.toString()}', level: LogLevel.ERROR);
       addToOutput(s.toString(), level: LogLevel.ERROR);
+
+      addToOutput('Restoring original handles...');
+      List<Handle> originalHandles = handleBackup.map((e) => Handle.fromMap(e)).toList();
+      Handle.bulkSave(originalHandles);
+
       completeWithError(e.toString());
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.error);
@@ -130,8 +177,6 @@ class HandleSyncManager extends SyncManager {
   @override
   Future<void> complete() async {
     addToOutput("Synced $handlesSynced handle(s)!");
-    addToOutput("Reseting your contacts...");
-    await cs.resetContacts();
     addToOutput("Reloading your chats...");
     Get.reload<ChatsService>(force: true);
     await chats.init(force: true);
