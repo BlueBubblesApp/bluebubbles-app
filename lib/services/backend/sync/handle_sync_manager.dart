@@ -53,6 +53,8 @@ class HandleSyncManager extends SyncManager {
     List<Handle> currentHandles = Handle.find();
     final handleBackup = currentHandles.map((e) => e.toMap()).toList();
 
+    Map<Chat, List<int>> chatHandleCache = {};
+
     try {
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.normal);
@@ -65,7 +67,6 @@ class HandleSyncManager extends SyncManager {
       addToOutput("Loaded ${chats.length} from the database...");
 
       addToOutput("Caching chat participants...");
-      Map<Chat, List<int>> chatHandleCache = {};
       for (Chat c in chats) {
         List<Handle> handles = c.participants;
         List<int> rowIds = handles.map((e) => e.originalROWID).whereNotNull().toList();
@@ -133,7 +134,21 @@ class HandleSyncManager extends SyncManager {
 
       addToOutput('Restoring original handles...');
       List<Handle> originalHandles = handleBackup.map((e) => Handle.fromMap(e)).toList();
-      Handle.bulkSave(originalHandles);
+      handleBox.removeAll();
+
+      List<Handle> loadedHandles = Handle.bulkSave(originalHandles);
+      Map<int, Handle> loadedHandlesMap = {};
+      for (Handle h in loadedHandles) {
+        if (h.originalROWID != null) {
+          loadedHandlesMap[h.originalROWID!] = h;
+        }
+      }
+
+      chatHandleCache.forEach((key, value) {
+        List<Handle> relations = value.map((e) => loadedHandlesMap[e]).whereNotNull().toList();
+        key.handles.addAll(relations);
+        key.handles.applyToDb();
+      });
 
       completeWithError(e.toString());
       if (kIsDesktop && Platform.isWindows) {
