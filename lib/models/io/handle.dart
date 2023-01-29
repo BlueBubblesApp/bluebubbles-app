@@ -102,7 +102,7 @@ class Handle {
   Handle save({bool updateColor = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
-      Handle? existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      Handle? existing = Handle.findOne(originalROWID: originalROWID);
       if (existing != null) {
         id = existing.id;
         contactRelation.target = existing.contactRelation.target;
@@ -124,9 +124,11 @@ class Handle {
     store.runInTransaction(TxMode.write, () {
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
-        Handle? existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
+        Handle? existing = Handle.findOne(originalROWID: h.originalROWID);
         if (existing != null) {
           h.id = existing.id;
+        } else {
+          h.contactRelation.target = cs.matchHandleToContact(h);
         }
       }
 
