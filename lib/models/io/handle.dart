@@ -134,6 +134,22 @@ class Handle {
       }
 
       try {
+        for (Handle h in handles) {
+          try {
+            int insertedId = handleBox.put(h);
+            h.id = insertedId;
+          } catch (ex) {
+            Logger.warn("Failed to insert handle into database!");
+            Logger.warn(ex.toString());
+            Logger.warn("Current:");
+            Logger.warn(h.toMap().toString());
+            
+            Logger.warn("Existing:");
+            final query = handleBox.query(Handle_.address.equals(h.address)).build();
+            List<Handle> result = query.find();
+            Logger.warn(result.map((e) => e.toMap().toString()).toList().toString());
+          }
+        }
         /// Save the handles and update their IDs
         final ids = handleBox.putMany(handles);
         for (int i = 0; i < handles.length; i++) {
