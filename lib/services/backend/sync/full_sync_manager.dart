@@ -230,7 +230,7 @@ class FullSyncManager extends SyncManager {
     addToOutput("Reloading your contacts...");
     // Use reset because it's after the full-sync so all the
     // handles and contacts are assumed new.
-    await cs.resetContacts();
+    await cs.refreshContacts();
     addToOutput("Reloading your chats...");
     Get.reload<ChatsService>(force: true);
     await chats.init(force: true);

@@ -39,36 +39,11 @@ class ContactsService extends GetxService {
     if (!(await cs.canAccessContacts())) return [];
 
     final startTime = DateTime.now().millisecondsSinceEpoch;
-    final _contacts = <Contact>[];
+    List<Contact> _contacts = [];
     final changedIds = <List<int>>[<int>[], <int>[]];
-    if (kIsWeb || kIsDesktop) {
-      _contacts.addAll(await cs.fetchNetworkContacts());
-    } else {
-      _contacts.addAll((await FastContacts.getAllContacts(
-        fields: List<ContactField>.from(ContactField.values)
-          ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription, ContactField.emailLabels, ContactField.phoneLabels].contains(e))
-      )).map((e) => Contact(
-        displayName: e.displayName,
-        emails: e.emails.map((e) => e.address).toList(),
-        phones: e.phones.map((e) => e.number).toList(),
-        structuredName: e.structuredName == null ? null : StructuredName(
-          namePrefix: e.structuredName!.namePrefix,
-          givenName: e.structuredName!.givenName,
-          middleName: e.structuredName!.middleName,
-          familyName: e.structuredName!.familyName,
-          nameSuffix: e.structuredName!.nameSuffix,
-        ),
-        id: e.id,
-      )));
-      // get avatars
-      for (Contact c in _contacts) {
-        try {
-          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
-        } catch (_) {
-          c.avatar = await FastContacts.getContactImage(c.id);
-        }
-      }
-    }
+
+    _contacts = await cs.fetchAllContacts();
+
     // compare loaded contacts to db contacts
     if (!kIsWeb) {
       final dbContacts = contactBox.getAll();
@@ -153,6 +128,7 @@ class ContactsService extends GetxService {
 
     // Clear all the contacts from the contact box (non-web only)
     if (!kIsWeb) {
+      Logger.debug("Clearing existing contacts...");
       contactBox.removeAll();
     }
 
@@ -161,6 +137,7 @@ class ContactsService extends GetxService {
 
     // Save the contacts to the contactBox (non-web only)
     if (!kIsWeb) {
+      Logger.debug("Inserting ${_contacts.length} new contacts...");
       List<int> contactIds = contactBox.putMany(_contacts);
       
       // Just in case, if the length of IDs we get back don't match what
@@ -176,15 +153,18 @@ class ContactsService extends GetxService {
     }
 
     // Load handles (DB or web-cache)
+    Logger.debug("Loading handles...");
     final List<Handle> handles = [];
     if (kIsWeb) {
       handles.addAll(chats.webCachedHandles);
     } else {
       handles.addAll(handleBox.getAll());
     }
+    Logger.debug("Loaded ${handles.length} handles...");
 
     // Set the formatted addresses.
     // Clear all contact relations (DB) and/or web contacts
+    Logger.debug("Clearing contact relationships...");
     for (Handle h in handles) {
       if (!h.address.contains("@") && h.formattedAddress == null) {
         h.formattedAddress = await formatPhoneNumber(h.address);
@@ -198,11 +178,14 @@ class ContactsService extends GetxService {
     }
 
     // Save the handles without contact relationships (DB only)
+    Logger.debug("Saving handles without contacts...");
     if (!kIsWeb) {
       handleBox.putMany(handles);
     }
 
     // Match handles to contacts and save match
+    Logger.debug("Matching handles to contacts...");
+    int count = 0;
     for (Contact c in _contacts) {
       // Find matching handles
       final matchingHandles = cs.matchContactToHandles(c, handles);
@@ -213,6 +196,7 @@ class ContactsService extends GetxService {
 
       // Insert the relationship for all handles that have contacts
       final matches = handles.where((e) => addressesAndServices.contains(e.uniqueAddressAndService));
+      count += matches.length;
       for (Handle h in matches) {
         if (kIsWeb) {
           h.webContact = c;
@@ -222,7 +206,10 @@ class ContactsService extends GetxService {
       }
     }
 
+    Logger.debug("Matched $count handles to contacts");
+
     // Save all the updated handles (with contacts now)
+    Logger.debug("Saving new handle data...");
     if (!kIsWeb) {
       handleBox.putMany(handles);
     }
@@ -241,14 +228,19 @@ class ContactsService extends GetxService {
   Future<List<Contact>> fetchAllContacts() async {
     final _contacts = <Contact>[];
 
-    // Fetch all the contacts
+    int startTime = DateTime.now().millisecondsSinceEpoch;
     if (kIsWeb || kIsDesktop) {
       _contacts.addAll(await cs.fetchNetworkContacts());
+      int endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("Contacts fetched in ${endTime - startTime} ms");
     } else {
-      _contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
+      _contacts.addAll((await FastContacts.getAllContacts(
+        fields: List<ContactField>.from(ContactField.values)
+          ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription, ContactField.emailLabels, ContactField.phoneLabels].contains(e))
+      )).map((e) => Contact(
         displayName: e.displayName,
-        emails: e.emails,
-        phones: e.phones,
+        emails: e.emails.map((e) => e.address).toList(),
+        phones: e.phones.map((e) => e.number).toList(),
         structuredName: e.structuredName == null ? null : StructuredName(
           namePrefix: e.structuredName!.namePrefix,
           givenName: e.structuredName!.givenName,
@@ -259,7 +251,11 @@ class ContactsService extends GetxService {
         id: e.id,
       )));
 
-      // Get avatars on ANdroid
+      int endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("Contacts fetched in ${endTime - startTime} ms");
+
+      // get avatars
+      startTime = DateTime.now().millisecondsSinceEpoch;
       for (Contact c in _contacts) {
         try {
           c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
@@ -267,6 +263,9 @@ class ContactsService extends GetxService {
           c.avatar = await FastContacts.getContactImage(c.id);
         }
       }
+
+      endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("Avatars fetched in ${endTime - startTime} ms");
     }
 
     return _contacts;

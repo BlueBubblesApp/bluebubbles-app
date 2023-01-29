@@ -2,6 +2,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -398,11 +399,19 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                     ),
                   ),
                   SettingsTile(
-                      title: "Refresh contacts",
+                      title: "Reset contacts",
                       onTap: () async {
                           refreshingContacts.value = true;
-                          await cs.resetContacts();
-                          eventDispatcher.emit("refresh-all", null);
+
+                          try {
+                            await cs.resetContacts();
+                            eventDispatcher.emit("refresh-all", null);
+                          } catch (ex, stacktrace) {
+                            Logger.error("Failed to reset contacts!");
+                            Logger.error(ex.toString());
+                            Logger.error(stacktrace.toString());
+                          }
+
                           refreshingContacts.value = false;
                       },
                       trailing: Obx(() => refreshingContacts.value == null
