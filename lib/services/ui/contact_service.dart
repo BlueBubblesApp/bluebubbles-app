@@ -10,6 +10,7 @@ import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:tuple/tuple.dart';
 
 ContactsService cs = Get.isRegistered<ContactsService>() ? Get.find<ContactsService>() : Get.put(ContactsService());
 
@@ -180,7 +181,18 @@ class ContactsService extends GetxService {
     // Save the handles without contact relationships (DB only)
     Logger.debug("Saving handles without contacts...");
     if (!kIsWeb) {
-      handleBox.putMany(handles);
+      // handleBox.putMany(handles);
+      for (Handle h in handles) {
+        try {
+          h.save();
+        } catch (ex) {
+          Logger.warn("Failed to save handle");
+          Logger.warn(h.toMap().toString());
+          Logger.warn("Existing:");
+          Handle? existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
+          Logger.warn(existing?.toMap().toString());
+        }
+      }
     }
 
     // Match handles to contacts and save match
