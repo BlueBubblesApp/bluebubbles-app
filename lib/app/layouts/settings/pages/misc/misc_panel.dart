@@ -1,3 +1,4 @@
+import 'package:bluebubbles/services/backend/sync/handle_sync_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -404,7 +405,8 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           refreshingContacts.value = true;
 
                           try {
-                            await cs.resetContacts();
+                            final handleSyncer = HandleSyncManager(saveLogs: true);
+                            await handleSyncer.start();
                             eventDispatcher.emit("refresh-all", null);
                           } catch (ex, stacktrace) {
                             Logger.error("Failed to reset contacts!");

@@ -139,6 +139,7 @@ class Handle {
         }
       } on UniqueViolationException catch (_) {}
     });
+
     return handles;
   }
 
