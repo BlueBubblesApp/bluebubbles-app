@@ -210,15 +210,25 @@ class Handle {
     return query.find();
   }
 
-  Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "originalROWID": originalROWID,
-    "address": address,
-    "formattedAddress": formattedAddress,
-    "service": service,
-    "uniqueAddrAndService": uniqueAddressAndService,
-    "country": country,
-    "color": color,
-    "defaultPhone": defaultPhone,
-  };
+  Map<String, dynamic> toMap({includeObjects = false}) {
+
+    final output = {
+      "ROWID": id,
+      "originalROWID": originalROWID,
+      "address": address,
+      "formattedAddress": formattedAddress,
+      "service": service,
+      "uniqueAddrAndService": uniqueAddressAndService,
+      "country": country,
+      "color": color,
+      "defaultPhone": defaultPhone,
+    };
+
+    if (includeObjects) {
+      output['contact'] = contact?.toMap();
+      output['contactRelation'] = contactRelation.target?.toMap();
+    }
+
+    return output;
+  }
 }
