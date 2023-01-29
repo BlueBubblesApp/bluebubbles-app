@@ -122,32 +122,22 @@ class Handle {
   /// Save a list of handles
   static List<Handle> bulkSave(List<Handle> handles) {
     store.runInTransaction(TxMode.write, () {
-      /// Find a list of existing handles
-      List<Handle> existingHandles = Handle.find(cond: Handle_.address.oneOf(handles.map((e) => e.address).toList()));
-
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
-        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address && e.service == h.service);
+        Handle? existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
         if (existing != null) {
           h.id = existing.id;
         }
       }
 
-      for (Handle h in handles) {
-        try {
-          int insertedId = handleBox.put(h);
-          h.id = insertedId;
-        } catch (ex) {
-          Logger.warn("Failed to insert handle into database!");
-          Logger.warn(ex.toString());
-          Logger.warn("Current:");
-          Logger.warn(h.toMap().toString());
-          
-          Logger.warn("Existing:");
-          final query = handleBox.query(Handle_.address.equals(h.address)).build();
-          List<Handle> result = query.find();
-          Logger.warn(result.map((e) => e.toMap().toString()).toList().toString());
+      try {
+        List<int> insertedIds = handleBox.putMany(handles);
+        for (int i = 0; i < insertedIds.length; i++) {
+          handles[i].id = insertedIds[i];
         }
+      } catch (ex) {
+        Logger.warn("Failed to insert handles into database!");
+        Logger.warn(ex.toString());
       }
     });
 
