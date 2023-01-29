@@ -87,8 +87,6 @@ class ContactsService extends GetxService {
       final handles = cs.matchContactToHandles(c, handlesToSearch);
       final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
       if (handles.isNotEmpty) {
-        handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
-
         // we have changes if the handle doesn't have an associated contact,
         // even if there were no contact changes in the first place
         final matches = handles.where((e) => addressesAndServices.contains(e.uniqueAddressAndService));
