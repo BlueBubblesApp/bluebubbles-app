@@ -102,7 +102,13 @@ class Handle {
   Handle save({bool updateColor = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
-      Handle? existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      Handle? existing;
+      if (originalROWID != null) {
+        existing = Handle.findOne(originalROWID: originalROWID);
+      } else {
+        existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      }
+
       if (existing != null) {
         id = existing.id;
         contactRelation.target = existing.contactRelation.target;
@@ -119,15 +125,17 @@ class Handle {
     return this;
   }
 
-  /// Save a list of handles
+  /// Save a list of handle
   static List<Handle> bulkSave(List<Handle> handles) {
     store.runInTransaction(TxMode.write, () {
       /// Find a list of existing handles
-      List<Handle> existingHandles = Handle.find(cond: Handle_.address.oneOf(handles.map((e) => e.address).toList()));
+      List<int> originalIds = handles.map((e) => e.originalROWID).whereNotNull().toList();
+      List<Handle> existingHandles = Handle.find(cond: Handle_.originalROWID.oneOf(originalIds));
 
-      /// Match existing to the handles to save, where possible
+      /// Match existing to the handles to save, where possible.
+      /// First try using the originalROWID, then the address/service if that is null
       for (Handle h in handles) {
-        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address && e.service == h.service);
+        Handle? existing = existingHandles.firstWhereOrNull((e) => e.originalROWID == h.originalROWID);
         if (existing != null) {
           h.id = existing.id;
         }
