@@ -58,6 +58,13 @@ class HandleSyncManager extends SyncManager {
 
         addToOutput('Saving chunk of ${newHandles.length} handles(s)...');
 
+        // Generate the formatted address for each
+        for (Handle h in newHandles) {
+          if (!h.address.contains("@") && h.formattedAddress == null) {
+            h.formattedAddress = await formatPhoneNumber(h.address);
+          }
+        }
+
         // Synchronously save the handles
         List<Handle> handles = Handle.bulkSave(newHandles);
         handlesSynced += handles.length;

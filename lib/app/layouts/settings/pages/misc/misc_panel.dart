@@ -428,6 +428,34 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
                       )),
+                  SettingsTile(
+                      title: "Refresh contacts",
+                      onTap: () async {
+                          refreshingContacts.value = true;
+
+                          try {
+                            await cs.refreshContacts();
+                            eventDispatcher.emit("refresh-all", null);
+                          } catch (ex, stacktrace) {
+                            Logger.error("Failed to refresh contacts!");
+                            Logger.error(ex.toString());
+                            Logger.error(stacktrace.toString());
+                          }
+
+                          refreshingContacts.value = false;
+                      },
+                      trailing: Obx(() => refreshingContacts.value == null
+                          ? const SizedBox.shrink()
+                          : refreshingContacts.value == true ? Container(
+                          constraints: const BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
+                      )),
                 ],
               ),
             ],

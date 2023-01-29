@@ -181,18 +181,7 @@ class ContactsService extends GetxService {
     // Save the handles without contact relationships (DB only)
     Logger.debug("Saving handles without contacts...");
     if (!kIsWeb) {
-      // handleBox.putMany(handles);
-      for (Handle h in handles) {
-        try {
-          h.save();
-        } catch (ex) {
-          Logger.warn("Failed to save handle");
-          Logger.warn(h.toMap().toString());
-          Logger.warn("Existing:");
-          Handle? existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
-          Logger.warn(existing?.toMap().toString());
-        }
-      }
+      Handle.bulkSave(handles);
     }
 
     // Match handles to contacts and save match
@@ -223,7 +212,7 @@ class ContactsService extends GetxService {
     // Save all the updated handles (with contacts now)
     Logger.debug("Saving new handle data...");
     if (!kIsWeb) {
-      handleBox.putMany(handles);
+      Handle.bulkSave(handles);
     }
 
     // Only store the contacts globally if web.
