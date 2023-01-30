@@ -3,6 +3,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
       ));
       textSpans.addAll(MessageHelper.buildEmojiText(
         part.displayText!.substring(range.first, range.last),
-        textStyle.apply(fontWeightDelta: 2, color: message.isFromMe! || colorOverride != null ? null : context.theme.colorScheme.bubble(context, true)),
+        textStyle.apply(fontWeightDelta: 2),
         recognizer: TapGestureRecognizer()..onTap = () async {
           if (kIsDesktop || kIsWeb) return;
           final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
@@ -145,7 +146,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
         final mention = type.split("-").last;
         textSpans.addAll(MessageHelper.buildEmojiText(
           text,
-          textStyle.apply(fontWeightDelta: 2, color: message.isFromMe! || colorOverride != null ? null : context.theme.colorScheme.bubble(context, true)),
+          textStyle.apply(fontWeightDelta: 2),
           recognizer: TapGestureRecognizer()..onTap = () async {
             if (kIsDesktop || kIsWeb) return;
             final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == mention);
