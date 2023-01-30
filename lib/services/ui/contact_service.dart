@@ -18,10 +18,18 @@ class ContactsService extends GetxService {
   /// The master list of contact objects
   List<Contact> contacts = [];
 
-  bool hasContactAccess = false;
+  bool _hasContactAccess = false;
+
+  Future<bool> get hasContactAccess async {
+    if (_hasContactAccess) return true;
+
+    _hasContactAccess = await canAccessContacts();
+    return _hasContactAccess;
+  }
 
   Future<void> init() async {
-    hasContactAccess = await canAccessContacts();
+    // Load the contact access state
+    await hasContactAccess;
 
     if (!kIsWeb) {
       contacts = Contact.getContacts();
@@ -40,8 +48,7 @@ class ContactsService extends GetxService {
   }
 
   Future<List<List<int>>> refreshContacts() async {
-    hasContactAccess = await canAccessContacts();
-    if (!hasContactAccess) return [];
+    if (!(await hasContactAccess)) return [];
 
     final startTime = DateTime.now().millisecondsSinceEpoch;
     List<Contact> _contacts = [];
@@ -215,7 +222,7 @@ class ContactsService extends GetxService {
   }
 
   Contact? matchHandleToContact(Handle h) {
-    if (!hasContactAccess) return null;
+    if (!_hasContactAccess) return null;
 
     Contact? contact;
     final numericAddress = h.address.numericOnly();

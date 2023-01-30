@@ -84,7 +84,7 @@ class HandleSyncManager extends SyncManager {
       }
 
       addToOutput("Streaming handles from server...");
-      bool hasContactAccess = cs.hasContactAccess;
+      bool hasContactAccess = await cs.hasContactAccess;
       await for (final handleEvent in streamHandlePages(totalHandles)) {
         double handleProgress = handleEvent.item1;
         List<Handle> serverHandles = handleEvent.item2;
