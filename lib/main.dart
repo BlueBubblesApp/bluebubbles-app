@@ -689,6 +689,11 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                         "To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
                         style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)
                       ),
+                      Container(height: 5),
+                      Text(
+                        "Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
+                        style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)
+                      ),
                     ],
                   ),
                   backgroundColor: context.theme.colorScheme.properSurface,

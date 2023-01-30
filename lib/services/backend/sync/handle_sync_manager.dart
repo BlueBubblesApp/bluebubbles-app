@@ -42,6 +42,14 @@ class HandleSyncManager extends SyncManager {
       completer = Completer<void>();
     }
 
+    // Check if the user is on v1.5.2 or newer
+    int serverVersion = (await ss.getServerDetails()).item4;
+    // 100(major) + 21(minor) + 1(bug)
+    bool isMin1_5_2 = serverVersion >= 207; // Server: v1.5.2
+    if (!isMin1_5_2) {
+      throw Exception("Failed to sync handles! Please update your server to v1.5.2 or newer!");
+    }
+
     super.start();
     if (kIsDesktop && Platform.isWindows) {
       await WindowsTaskbar.setProgressMode(TaskbarProgressMode.indeterminate);
