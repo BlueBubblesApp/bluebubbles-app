@@ -12,6 +12,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -23,138 +24,174 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        AppBar(
-          backgroundColor: context.theme.colorScheme.background
-              .withOpacity(ss.settings.skin.value == Skins.Samsung ? 1 : 0.95),
-          systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
-              ? SystemUiOverlayStyle.light
-              : SystemUiOverlayStyle.dark,
-          automaticallyImplyLeading: false,
-          leadingWidth: 40,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 10.0),
-            child: BackButton(
-              color: context.theme.colorScheme.onBackground,
-              onPressed: () {
-                if (controller.inSelectMode.value) {
-                  controller.inSelectMode.value = false;
-                  controller.selected.clear();
-                  return true;
-                }
-                if (ls.isBubble) {
-                  SystemNavigator.pop();
-                  return true;
-                }
-                eventDispatcher.emit("update-highlight", null);
-                controller.close();
-                return false;
-              },
-            ),
-          ),
-          title: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: controller.chat.isGroup ? null : () async {
-              final handle = controller.chat.participants.first;
-              final contact = handle.contact;
-              if (contact == null) {
-                await mcs.invokeMethod("open-contact-form",
-                    {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
-              } else {
-                await mcs.invokeMethod("view-contact-form", {'id': contact.id});
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(5.0),
-              child: _ChatIconAndTitle(parentController: controller),
-            ),
-          ),
-          actions: [
-            ManualMark(controller: controller),
-            if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isPhoneNumber)
-              IconButton(
-                icon: Icon(Icons.call_outlined, color: context.theme.colorScheme.onBackground),
-                onPressed: () {
-                  launchUrl(Uri(scheme: "tel", path: controller.chat.participants.first.address));
-                },
-              ),
-            if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isEmail)
-              IconButton(
-                icon: Icon(Icons.mail_outlined, color: context.theme.colorScheme.onBackground),
-                onPressed: () {
-                  launchUrl(Uri(scheme: "mailto", path: controller.chat.participants.first.address));
-                },
-              ),
-            PopupMenuButton<int>(
-              color: context.theme.colorScheme.properSurface,
-              shape: ss.settings.skin.value != Skins.Material ? const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(20.0),
-                ),
-              ) : null,
-              onSelected: (int value) {
-                if (value == 0) {
-                  Navigator.of(context).push(
-                    ThemeSwitcher.buildPageRoute(
-                      builder: (context) => ConversationDetails(
-                        chat: controller.chat,
-                      ),
-                    ),
-                  );
-                } else if (value == 1) {
-                  controller.chat.toggleArchived(!controller.chat.isArchived!);
-                  while (Get.isOverlaysOpen) {
-                    Get.back();
-                  }
-                  Navigator.of(context).pop();
-                } else if (value == 2) {
-                  chats.removeChat(controller.chat);
-                  Chat.softDelete(controller.chat);
-                  while (Get.isOverlaysOpen) {
-                    Get.back();
-                  }
-                  Navigator.of(context).pop();
-                }
-              },
-              itemBuilder: (context) {
-                return <PopupMenuItem<int>>[
-                  PopupMenuItem(
-                    value: 0,
-                    child: Text(
-                      'Details',
-                      style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                    ),
-                  ),
-                  if (!ls.isBubble)
-                    PopupMenuItem(
-                      value: 1,
-                      child: Text(
-                        controller.chat.isArchived! ? 'Unarchive' : 'Archive',
-                        style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                      ),
-                    ),
-                  if (!ls.isBubble)
-                    PopupMenuItem(
-                      value: 2,
-                      child: Text(
-                        'Delete',
-                        style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                      ),
-                    ),
-                ];
-              },
-              icon: Icon(
-                Icons.more_vert,
-                color: context.theme.colorScheme.onBackground,
-              ),
-            )
-          ]
+    final Rx<Color> _backgroundColor = context.theme.colorScheme.background.withOpacity((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled) ? 0.4 : ss.settings.skin.value == Skins.Samsung ? 1 : 0.95).obs;
+
+    return Obx(() => AppBar(
+      backgroundColor: _backgroundColor.value,
+      systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
+      automaticallyImplyLeading: false,
+      toolbarHeight: (kIsDesktop ? 5 : 0) + kToolbarHeight,
+      leadingWidth: 40,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 10.0),
+        child: BackButton(
+          color: context.theme.colorScheme.onBackground,
+          onPressed: () {
+            if (controller.inSelectMode.value) {
+              controller.inSelectMode.value = false;
+              controller.selected.clear();
+              return true;
+            }
+            if (ls.isBubble) {
+              SystemNavigator.pop();
+              return true;
+            }
+            controller.close();
+            return false;
+          },
         ),
-        if (ss.settings.showConnectionIndicator.value)
-          const ConnectionIndicator(),
+      ),
+      title: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: controller.chat.isGroup ? () {
+          Navigator.of(context).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (context) => ConversationDetails(
+                chat: controller.chat,
+              ),
+            ),
+          );
+        } : () async {
+          final handle = controller.chat.participants.first;
+          final contact = handle.contact;
+          if (contact == null) {
+            await mcs.invokeMethod("open-contact-form",
+                {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+          } else {
+            await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: _ChatIconAndTitle(parentController: controller),
+        ),
+      ),
+      actions: [
+        ManualMark(controller: controller),
+        if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isPhoneNumber)
+          IconButton(
+            icon: Icon(Icons.call_outlined, color: context.theme.colorScheme.onBackground),
+            onPressed: () {
+              launchUrl(Uri(scheme: "tel", path: controller.chat.participants.first.address));
+            },
+          ),
+        if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isEmail)
+          IconButton(
+            icon: Icon(Icons.mail_outlined, color: context.theme.colorScheme.onBackground),
+            onPressed: () {
+              launchUrl(Uri(scheme: "mailto", path: controller.chat.participants.first.address));
+            },
+          ),
+        PopupMenuButton<int>(
+          color: context.theme.colorScheme.properSurface,
+          shape: ss.settings.skin.value != Skins.Material ? const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(20.0),
+            ),
+          ) : null,
+          onSelected: (int value) {
+            if (value == 0) {
+              Navigator.of(context).push(
+                ThemeSwitcher.buildPageRoute(
+                  builder: (context) => ConversationDetails(
+                    chat: controller.chat,
+                  ),
+                ),
+              );
+            } else if (value == 1) {
+              controller.chat.toggleArchived(!controller.chat.isArchived!);
+              while (Get.isOverlaysOpen) {
+                Get.back();
+              }
+              Navigator.of(context).pop();
+            } else if (value == 2) {
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: context.theme.textTheme.titleLarge,
+                    ),
+                    content: Text(
+                      "This chat will be deleted from this device only",
+                      style: context.theme.textTheme.bodyLarge
+                    ),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          while (Get.isOverlaysOpen) {
+                            Get.back();
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          chats.removeChat(controller.chat);
+                          Chat.softDelete(controller.chat);
+                          while (Get.isOverlaysOpen) {
+                            Get.back();
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
+          },
+          itemBuilder: (context) {
+            return <PopupMenuItem<int>>[
+              PopupMenuItem(
+                value: 0,
+                child: Text(
+                  'Details',
+                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                ),
+              ),
+              if (!ls.isBubble)
+                PopupMenuItem(
+                  value: 1,
+                  child: Text(
+                    controller.chat.isArchived! ? 'Unarchive' : 'Archive',
+                    style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                  ),
+                ),
+              if (!ls.isBubble)
+                PopupMenuItem(
+                  value: 2,
+                  child: Text(
+                    'Delete',
+                    style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                  ),
+                ),
+            ];
+          },
+          icon: Icon(
+            Icons.more_vert,
+            color: context.theme.colorScheme.onBackground,
+          ),
+        )
       ],
-    );
+    ));
   }
 
   @override

@@ -524,7 +524,7 @@ class HttpService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout* 12),
+          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12),
       );
       return returnSuccessOrError(response);
     });
@@ -656,7 +656,7 @@ class HttpService extends GetxService {
           queryParameters: buildQueryParams(),
           data: contacts,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: null, receiveTimeout: dio.options.receiveTimeout* 12),
+          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);

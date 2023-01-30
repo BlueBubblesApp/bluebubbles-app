@@ -161,6 +161,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     // Start loading the next chunk of messages
     noMoreMessages = !(await messageService.loadChunk(_messages.length, controller).catchError((e) {
       Logger.error("Failed to fetch message chunk! $e");
+      return true;
     }));
 
     if (noMoreMessages) return;
@@ -204,7 +205,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(
-        ss.settings.receiveSoundPath.value!, 1.0
+        path: ss.settings.receiveSoundPath.value!, volume: 1.0
       ).then((_) {
         controller.startPlayer();
       });
@@ -354,7 +355,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                         Padding(
                           padding: const EdgeInsets.only(top: 5),
                           child: TypingIndicator(
-                            visible: controller.showTypingIndicator.value,
+                            controller: controller,
                           ),
                         ),
                       ],

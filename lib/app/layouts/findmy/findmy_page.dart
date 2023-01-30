@@ -10,6 +10,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:latlong2/latlong.dart';
 
 class FindMyPage extends StatefulWidget {
@@ -47,10 +48,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   }
 
   void getLocations() async {
-    final response = await http.findMyDevices().catchError((_) {
+    final response = await http.findMyDevices().catchError((_) async {
       setState(() {
         fetching = null;
       });
+      return Response(requestOptions: RequestOptions(path: ''));
     });
     if (response.statusCode == 200 && response.data['data'] != null) {
       try {
@@ -194,7 +196,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                 child: Container(
                                   padding: const EdgeInsets.all(10.0),
                                   decoration: BoxDecoration(
-                                      color: context.theme.backgroundColor,
+                                      color: context.theme.colorScheme.background,
                                       borderRadius: const BorderRadius.all(Radius.circular(10))
                                   ),
                                   child: SingleChildScrollView(
@@ -268,7 +270,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                               child: Container(
                                 padding: const EdgeInsets.all(10.0),
                                 decoration: BoxDecoration(
-                                    color: context.theme.backgroundColor,
+                                    color: context.theme.colorScheme.background,
                                     borderRadius: const BorderRadius.all(Radius.circular(10))
                                 ),
                                 child: SingleChildScrollView(
@@ -345,7 +347,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             ),
           ),
           body: TabBarView(
-            physics: ThemeSwitcher.getScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             controller: tabController,
             children: <Widget>[
               NotificationListener<ScrollEndNotification>(
@@ -434,8 +436,9 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                       child: Align(
                                         alignment: Alignment.centerRight,
                                         child: Row(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: actions,
-                                        ),
+                                          ),
                                       ),
                                     ),
                                   ),

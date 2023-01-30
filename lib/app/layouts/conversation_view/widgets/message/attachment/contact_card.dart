@@ -9,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -103,13 +104,7 @@ class _ContactCardState extends OptimizedState<ContactCard> with AutomaticKeepAl
                 ..setAttribute("download", widget.file.name)
                 ..click();
             } else {
-              mcs.invokeMethod(
-                "open_file",
-                {
-                  "path": "/attachments/${widget.attachment.guid!}/${basename(widget.file.path!)}",
-                  "mimeType": "text/x-vcard",
-                },
-              );
+              await OpenFilex.open("${fs.appDocDir.path}/attachments/${widget.attachment.guid!}/${basename(widget.file.path!)}", type: widget.attachment.mimeType);
             }
           },
           child: Padding(

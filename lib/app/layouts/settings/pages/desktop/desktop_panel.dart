@@ -132,7 +132,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                       saveSettings();
                     },
                     title: "Improve Mouse Wheel Scrolling",
-                    subtitle: "Enabling this setting will break touch scrolling and degrade trackpad scrolling.",
+                    subtitle: "Enabling this setting will break touch scrolling and trackpad scrolling.",
                   ),
                   if (ss.settings.betterScrolling.value)
                     SettingsSlider(
@@ -278,7 +278,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                                           style: TextStyle(
                                                               fontSize: 16,
                                                               color: (hardDisabled && value == "Mark Read")
-                                                                  ? context.textTheme.subtitle1!.color
+                                                                  ? context.textTheme.titleMedium!.color
                                                                   : null),
                                                           textAlign: TextAlign.center,
                                                         ),
@@ -627,7 +627,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                     await ss.prefs.setString("selected-dark", "OLED Dark");
                                     await ss.prefs.setString("selected-light", "Bright White");
                                     await ss.prefs.setBool("use-custom-path", val);
-                                    await WindowManager.instance.close();
+                                    await windowManager.close();
                                   },
                                 ),
                               ],
@@ -688,7 +688,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                         await ss.prefs.setString("selected-light", "Bright White");
                                         await ss.prefs.setBool("use-custom-path", true);
                                         await ss.prefs.setString("custom-path", path);
-                                        await WindowManager.instance.close();
+                                        await windowManager.close();
                                       },
                                     ),
                                   ],

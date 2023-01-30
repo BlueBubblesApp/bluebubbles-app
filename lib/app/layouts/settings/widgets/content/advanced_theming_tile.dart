@@ -148,9 +148,8 @@ class _AdvancedThemingTileState extends OptimizedState<AdvancedThemingTile> {
                 newColor = color;
               },
               title: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text('Choose a Color',
-                      style: Theme.of(context).textTheme.headline6)
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('Choose a Color', style: Theme.of(context).textTheme.titleLarge)
               ),
               width: 40,
               height: 40,

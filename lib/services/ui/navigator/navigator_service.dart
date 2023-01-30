@@ -164,6 +164,7 @@ class NavigatorService extends GetxService {
         return route.settings.name == "initial";
       }, id: 2);
     }
+    eventDispatcher.emit("update-highlight", null);
   }
 
   void backSettings(BuildContext context, {bool closeOverlays = false}) {

@@ -38,12 +38,26 @@ class DatabaseService extends GetxService {
       // Use firebase_dart on web and desktop
       if (kIsWeb || kIsDesktop) {
         // Instantiate the FirebaseDatabase, and try to access the serverUrl field
-        final db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
-        final ref = db.reference().child('config').child('serverUrl');
+        final defaultOptions = FirebaseOptions(
+            apiKey: ss.fcmData.apiKey ?? '',
+            appId: ss.fcmData.applicationID ?? '',
+            messagingSenderId: '',
+            projectId: ss.fcmData.projectID ?? '',
+            databaseURL: ss.fcmData.firebaseURL
+        );
 
-        ref.onValue.listen((event) {
-          url = sanitizeServerAddress(address: event.snapshot.value);
-        });
+        late final FirebaseApp app;
+        if (Firebase.apps.isEmpty) {
+          app = await Firebase.initializeApp(options: defaultOptions);
+        } else {
+          app = Firebase.apps.first;
+        }
+
+        final FirebaseDatabase db = FirebaseDatabase(app: app);
+        final DatabaseReference ref = db.reference().child('config').child('serverUrl');
+
+        final Event event = await ref.onValue.first;
+        url = sanitizeServerAddress(address: event.snapshot.value);
       } else {
         // First, try to auth with FCM with the current data
         Logger.info('Authenticating with FCM', tag: 'FCM-Auth');

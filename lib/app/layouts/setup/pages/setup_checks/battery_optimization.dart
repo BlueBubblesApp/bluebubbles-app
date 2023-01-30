@@ -61,13 +61,6 @@ class BatteryOptimizationCheck extends StatelessWidget {
                         isDisabled = await DisableBatteryOptimization
                             .showDisableBatteryOptimizationSettings();
                       }
-
-                      bool? isManDisabled = await DisableBatteryOptimization
-                          .isManufacturerBatteryOptimizationDisabled;
-                      if (isManDisabled == null || !isManDisabled) {
-                        isManDisabled = await DisableBatteryOptimization
-                            .showDisableManufacturerBatteryOptimizationSettings("", "");
-                      }
                     },
                     child: Shimmer.fromColors(
                       baseColor: Colors.white70,

@@ -74,7 +74,7 @@ class Contact {
       query.close();
       return result;
     } else if (address != null) {
-      final query = contactBox.query(Contact_.phones.contains(address) | Contact_.emails.contains(address)).build();
+      final query = contactBox.query(Contact_.phones.containsElement(address) | Contact_.emails.containsElement(address)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();

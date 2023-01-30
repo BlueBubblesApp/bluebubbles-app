@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -113,7 +114,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
           child: Container(width: width, height: height, color: context.theme.colorScheme.properSurface, child: child)));
 }
 
-Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
+Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
   bool ios = ss.settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
@@ -134,7 +135,6 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
             behavior: HitTestBehavior.opaque,
             onTap: () {
               chat.togglePin(!chat.isPinned!);
-              if (_this.mounted) _this.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(
@@ -166,7 +166,6 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
             behavior: HitTestBehavior.opaque,
             onTap: () {
               chat.toggleMute(chat.muteType != "mute");
-              if (_this.mounted) _this.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(
@@ -252,9 +251,39 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () async {
-              chats.removeChat(chat);
-              Chat.softDelete(chat);
-              Navigator.pop(context);
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: context.theme.textTheme.titleLarge,
+                    ),
+                    content: Text(
+                        "This chat will be deleted from this device only",
+                        style: context.theme.textTheme.bodyLarge
+                    ),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          chats.removeChat(chat);
+                          Chat.softDelete(chat);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
@@ -369,12 +398,12 @@ Future<void> paintGroupAvatar({
   required bool usingParticipantsOverride,
 }) async {
   late final ThemeData theme;
+  final bool systemDark = SchedulerBinding.instance.window.platformBrightness == Brightness.dark;
   if (!ls.isAlive) {
-    final brightness = SchedulerBinding.instance.window.platformBrightness;
-    if (brightness == Brightness.light) {
-      theme = ThemeStruct.getLightTheme().data;
-    } else {
+    if (systemDark) {
       theme = ThemeStruct.getDarkTheme().data;
+    } else {
+      theme = ThemeStruct.getLightTheme().data;
     }
   } else {
     theme = Get.context!.theme;
@@ -406,7 +435,11 @@ Future<void> paintGroupAvatar({
     return;
   }
 
-  Paint paint = Paint()..color = theme.colorScheme.properSurface;
+  Color bgColor = theme.colorScheme.properSurface;
+  if (kIsDesktop && systemDark && ss.settings.useWindowsAccent.value && Platform.isWindows) {
+    bgColor = ts.windowsAccentColor ?? bgColor;
+  }
+  Paint paint = Paint()..color = bgColor;
   Offset _offset = Offset(size * 0.5, size * 0.5);
   if (kIsDesktop) {
     canvas.drawCircle(_offset, size * 0.5, paint);
@@ -449,7 +482,7 @@ Future<void> paintGroupAvatar({
     } else {
       Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung
             ? theme.colorScheme.secondary
-            : theme.backgroundColor;
+            : theme.colorScheme.background;
       canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
       await paintAvatar(
         handle: participants[index],
@@ -556,7 +589,7 @@ Future<Uint8List?> clip(Uint8List data, {required int size, required bool circle
   if (_image != null) {
     _image = img.copyResize(_image, width: size, height: size);
 
-    _data = img.encodePng(_image) as Uint8List;
+    _data = img.encodePng(_image);
   }
 
   image = await loadImage(_data);

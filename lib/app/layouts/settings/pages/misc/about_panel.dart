@@ -201,7 +201,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                         final devs = {
                           "Zach": "zlshames",
                           "Tanay": "tneotia",
-                          "Joel": "jojejo",
+                          "Joel": "jjoelj",
                         };
                         showDialog(
                           context: context,

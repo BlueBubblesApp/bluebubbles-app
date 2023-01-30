@@ -25,6 +25,7 @@ class ChatManager extends GetxService {
   }
 
   void setActiveChat(Chat chat, {clearNotifications = true}) {
+    eventDispatcher.emit("update-highlight", chat.guid);
     Logger.debug('Setting active chat to ${chat.guid} (${chat.displayName})');
 
     ss.prefs.setString('lastOpenedChat', chat.guid);
@@ -82,7 +83,9 @@ class ChatManager extends GetxService {
     final response = await http.singleChat(chatGuid, withQuery: withQuery.join(",")).catchError((err) {
       if (err is! Response) {
         Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
+        return err;
       }
+      return Response(requestOptions: RequestOptions(path: ''));
     });
 
     if (response.statusCode == 200 && response.data["data"] != null) {
@@ -123,7 +126,9 @@ class ChatManager extends GetxService {
     final response = await http.chats(withQuery: withQuery, offset: offset, limit: limit).catchError((err) {
       if (err is! Response) {
         Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
+        return err;
       }
+      return Response(requestOptions: RequestOptions(path: ''));
     });
 
     // parse chats from the response

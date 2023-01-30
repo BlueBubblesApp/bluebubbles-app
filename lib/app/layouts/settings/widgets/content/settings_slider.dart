@@ -41,18 +41,19 @@ class SettingsSlider extends StatelessWidget {
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
       minLeadingWidth: leadingMinWidth,
-      title: ss.settings.skin.value == Skins.iOS
-          ? CupertinoSlider(
-        activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
-        thumbColor: context.theme.colorScheme.primary,
-        value: startingVal,
-        onChanged: update,
-        onChangeEnd: onChangeEnd,
-        divisions: divisions,
-        min: min,
-        max: max,
-      )
-          : Slider(
+      title: ss.settings.skin.value == Skins.iOS ? MouseRegion(
+        cursor: SystemMouseCursors.click,
+          child: CupertinoSlider(
+          activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
+          thumbColor: context.theme.colorScheme.primary,
+          value: startingVal,
+          onChanged: update,
+          onChangeEnd: onChangeEnd,
+          divisions: divisions,
+          min: min,
+          max: max,
+        ),
+      ) : Slider(
         activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
         thumbColor: context.theme.colorScheme.primary,
         inactiveColor: context.theme.colorScheme.primary.withOpacity(0.2),

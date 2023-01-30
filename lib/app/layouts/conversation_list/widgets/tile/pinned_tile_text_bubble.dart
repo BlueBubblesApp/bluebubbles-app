@@ -113,7 +113,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   List<Color> getBubbleColors() {
     List<Color> bubbleColors = [context.theme.colorScheme.bubble(context, chat.isIMessage), context.theme.colorScheme.bubble(context, chat.isIMessage)];
     if (lastMessage == null) return bubbleColors;
-    if (ss.settings.colorfulBubbles.value && !lastMessage!.isFromMe!) {
+    if (!ss.settings.colorfulAvatars.value && ss.settings.colorfulBubbles.value && !lastMessage!.isFromMe!) {
       if (lastMessage!.handle?.color == null) {
         bubbleColors = toColorGradient(lastMessage!.handle?.address);
       } else {
@@ -159,18 +159,18 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
             if (showTail)
               Positioned(
                 top: -size * 0.08,
-                right: leftSide ? null : size * 0.08,
-                left: leftSide ? size * 0.08 : null,
+                right: leftSide ? null : size * 0.05,
+                left: leftSide ? size * 0.05 : null,
                 child: CustomPaint(
                   size: Size(size * 0.21, size * 0.105),
                   painter: TailPainter(leftSide: leftSide, background: background),
                 ),
               ),
             ConstrainedBox(
-              constraints: BoxConstraints(minWidth: showTail ? size * 0.5 : 0),
+              constraints: BoxConstraints(minWidth: showTail ? size * 0.3 : 0),
               child: ClipRRect(
                 clipBehavior: Clip.antiAlias,
-                borderRadius: BorderRadius.circular(10.0),
+                borderRadius: BorderRadius.circular(size * 0.125),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
                   child: Container(
@@ -179,7 +179,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
                       horizontal: 6.0,
                     ),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(size * 0.125),
                       color: background,
                     ),
                     child: Text(
@@ -188,6 +188,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
                       maxLines: size ~/ 30,
                       textAlign: TextAlign.center,
                       style: context.theme.textTheme.bodySmall!.copyWith(
+                        fontSize: (size / 10).clamp(context.theme.textTheme.bodySmall!.fontSize!, double.infinity),
                           color: context.theme.colorScheme.onBubble(context, chat.isIMessage)
                               .withOpacity(ss.settings.colorfulBubbles.value ? 1 : 0.85)
                       ),

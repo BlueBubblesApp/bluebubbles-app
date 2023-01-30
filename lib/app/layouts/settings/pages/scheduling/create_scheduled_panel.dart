@@ -37,7 +37,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
   late String frequency = widget.existing?.schedule.intervalType ?? "daily";
   late int interval = widget.existing?.schedule.interval ?? 1;
   late DateTime date = widget.existing?.scheduledFor ?? DateTime.now();
-  bool isEmpty = true;
+  late bool isEmpty = widget.existing?.payload.message.isNotEmpty ?? false;
 
   @override
   void initState() {
@@ -116,7 +116,11 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
               "intervalType": frequency,
             });
           }
-          Navigator.of(context).pop();
+          if (kIsDesktop) {
+            Get.close(1);
+          } else {
+            Navigator.of(context).pop();
+          }
           if (response.statusCode == 200 && response.data != null) {
             final data = widget.existing != null ? widget.existing!.toJson() : response.data['data'];
             // merge new with old

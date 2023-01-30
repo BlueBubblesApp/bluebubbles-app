@@ -44,18 +44,31 @@ class SettingsTile extends StatelessWidget {
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
-            leading: leading,
+            enableFeedback: true,
+            minVerticalPadding: 10,
+            horizontalTitleGap: 10,
+            leading: leading == null ? null : Padding(
+              padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0),
+              child: leading,
+            ),
             title: title != null ? Text(
               title!,
               style: context.theme.textTheme.bodyLarge,
             ) : null,
-            trailing: trailing,
-            subtitle: subtitle != null
-                ? Text(
+            trailing: trailing == null ? null : Padding(
+              padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  trailing!,
+                ],
+              ),
+            ),
+            subtitle: subtitle != null ? Text(
               subtitle!,
-              style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
+              style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: 1.5),
             ) : null,
-            contentPadding: EdgeInsets.symmetric(vertical: isThreeLine ? 10 : 0, horizontal: 16.0),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
           ),
         ),
       ),

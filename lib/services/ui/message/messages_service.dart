@@ -53,7 +53,7 @@ class MessagesService extends GetxController {
       final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
         ..link(Message_.chat, Chat_.id.equals(chat.id!))
         ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
-      countSub = countQuery.listen((event) {
+      countSub = countQuery.listen((event) async {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
         if (!isFetching && newCount > currentCount && currentCount != 0) {
@@ -62,7 +62,15 @@ class MessagesService extends GetxController {
           event.limit = 0;
           for (Message message in messages) {
             message.handle = message.getHandle();
-            message.attachments = List<Attachment>.from(message.dbAttachments);
+            if (message.hasAttachments) {
+              message.attachments = List<Attachment>.from(message.dbAttachments);
+              // we may need an artificial delay in some cases since the attachment
+              // relation is initialized after message itself is saved
+              if (message.attachments.isEmpty) {
+                await Future.delayed(const Duration(milliseconds: 250));
+                message.attachments = List<Attachment>.from(message.dbAttachments);
+              }
+            }
             // add this as a reaction if needed, update thread originators and associated messages
             if (message.associatedMessageGuid != null) {
               struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);

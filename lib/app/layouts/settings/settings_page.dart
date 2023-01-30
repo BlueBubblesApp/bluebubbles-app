@@ -590,6 +590,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
 
                                       closeDialog.call();
                                       showSnackbar("Error", "Failed to export contacts to server");
+                                      return Response(requestOptions: RequestOptions(path: ''));
                                     });
                                   },
                                   leading: const SettingsLeadingIcon(
