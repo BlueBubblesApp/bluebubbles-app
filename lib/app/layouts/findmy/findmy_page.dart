@@ -40,6 +40,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   List<Marker> markers = [];
   Position? location;
   bool? fetching = true;
+  bool refreshing = false;
 
   @override
   void initState() {
@@ -47,8 +48,14 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     getLocations();
   }
 
-  void getLocations() async {
-    final response = await http.findMyDevices().catchError((_) async {
+  void getLocations({bool refresh = false}) async {
+    final response = refresh ? await http.refreshFindMyDevices().catchError((_) async {
+      setState(() {
+        refreshing = false;
+      });
+      showSnackbar("Error", "Something went wrong refreshing FindMy data!");
+      return Response(requestOptions: RequestOptions(path: ''));
+    }) : await http.findMyDevices().catchError((_) async {
       setState(() {
         fetching = null;
       });
@@ -113,18 +120,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
         }
         setState(() {
           fetching = false;
+          refreshing = false;
         });
       } catch (e, s) {
         Logger.error(e);
         Logger.error(s);
         setState(() {
           fetching = null;
+          refreshing = false;
         });
         return;
       }
     } else {
       setState(() {
         fetching = false;
+        refreshing = false;
       });
     }
   }
@@ -303,16 +313,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     ];
 
     final actions = [
-      IconButton(
-        icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground),
-        onPressed: () {
-          setState(() {
-            fetching = true;
-            devices.clear();
-          });
-          getLocations();
-        },
-      ),
+      if (!refreshing)
+        IconButton(
+          icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground),
+          onPressed: () {
+            setState(() {
+              refreshing = true;
+            });
+            getLocations(refresh: true);
+          },
+        ),
+      if (refreshing)
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: buildProgressIndicator(context),
+        ),
     ];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
