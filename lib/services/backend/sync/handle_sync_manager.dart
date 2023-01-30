@@ -17,8 +17,22 @@ class HandleSyncManager extends SyncManager {
 
   int handlesSynced = 0;
 
-  HandleSyncManager({bool saveLogs = false})
-      : super("Handle", saveLogs: saveLogs);
+  Map<Chat, List<int>> chatHandleCache = {};
+
+  Map<int, Handle> handleBackup = {};
+
+  Map<int, Handle> newHandles = {};
+
+  bool simulateError;
+
+  HandleSyncManager({bool saveLogs = false, this.simulateError = false}) : super("Handle", saveLogs: saveLogs);
+
+  flush() {
+    chatHandleCache = {};
+    handlesSynced = 0;
+    handleBackup = {};
+    newHandles = {};
+  }
 
   @override
   Future<void> start() async {
@@ -32,87 +46,75 @@ class HandleSyncManager extends SyncManager {
     if (kIsDesktop && Platform.isWindows) {
       await WindowsTaskbar.setProgressMode(TaskbarProgressMode.indeterminate);
     }
-    addToOutput('Handle sync is starting...');
+
+    flush();
     addToOutput('Fetching handles from the server...');
 
-    // Get the total handles so we can properly fetch them all
-    Response handleCountResponse = await http.handleCount();
-    Map<String, dynamic> res = handleCountResponse.data;
-    int? totalHandles;
-    if (handleCountResponse.statusCode == 200) {
-      totalHandles = res["data"]["total"];
+    int? totalHandles = await getHandleCount();
+    if (totalHandles == null) {
+      throw Exception("Failed to sync handles! Unable to get handle count from server!");
+    } else {
+      addToOutput('Received $totalHandles handles(s) from the server!');
     }
-
-    addToOutput('Received $totalHandles handles(s) from the server!');
 
     if (totalHandles == 0) {
       return await complete();
     }
-
-    addToOutput("Backing up handles...");
-    List<Handle> currentHandles = Handle.find();
-    final handleBackup = currentHandles.map((e) => e.toMap()).toList();
-
-    Map<Chat, List<int>> chatHandleCache = {};
 
     try {
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.normal);
       }
 
-      // First, get all the chats and cache all the handle original ROWIDs associated
-      addToOutput("Loading chats...");
-      final chatQuery = chatBox.query().build();
-      List<Chat> chats = chatQuery.find();
-      addToOutput("Loaded ${chats.length} from the database...");
-
-      addToOutput("Caching chat participants...");
-      for (Chat c in chats) {
-        List<Handle> handles = c.participants;
-        List<int> rowIds = handles.map((e) => e.originalROWID).whereNotNull().toList();
-        chatHandleCache[c] = rowIds;
+      // This flag can be used to test the restore functionality
+      if (simulateError) {
+        throw Exception('Simulated Error!');
       }
+
+      // First, backup the handles so we can restore them if required later.
+      backupHandles();
+
+      // Second, fetch all the chats and cache the chat <-> handle relationships.
+      // This is so we can re-apply them later during the resync or a restore.
+      List<Chat> chats = await getChatsFromDb();
+      cacheChatHandleRelationships(chats);
 
       // Clearing handle database
       addToOutput("Clearing handle database...");
       handleBox.removeAll();
 
       addToOutput("Streaming handles from server...");
-      Map<int, Handle> newHandlesMap = {};
+      bool hasContactAccess = cs.hasContactAccess;
       await for (final handleEvent in streamHandlePages(totalHandles)) {
         double handleProgress = handleEvent.item1;
-        List<Handle> newHandles = handleEvent.item2;
+        List<Handle> serverHandles = handleEvent.item2;
 
         addToOutput('Saving chunk of ${newHandles.length} handles(s)...');
 
-        // Generate the formatted address for each
-        for (Handle h in newHandles) {
+        // Generate the formatted address for each.
+        // And load the matching contact, if we can.
+        for (Handle h in serverHandles) {
           if (!h.address.contains("@") && h.formattedAddress == null) {
             h.formattedAddress = await formatPhoneNumber(h.address);
           }
 
-          h.contactRelation.target ??= cs.matchHandleToContact(h);
+          if (hasContactAccess) {
+            h.contactRelation.target ??= cs.matchHandleToContact(h);
+          }
         }
 
-        // Synchronously save the handles
-        List<Handle> handles = Handle.bulkSave(newHandles, matchOnOriginalROWID: true);
+        // Save the new handles to the DB
+        List<Handle> handles = Handle.bulkSave(serverHandles, matchOnOriginalROWID: true);
         handlesSynced += handles.length;
 
+        // Save the new handles to a cache
         for (Handle h in handles) {
           if (h.originalROWID != null) {
-            newHandlesMap[h.originalROWID!] = h;
+            newHandles[h.originalROWID!] = h;
           }
         }
 
         if (handleProgress >= 1.0) {
-          // When we've finished, apply the handles to the chats
-          addToOutput("Re-creating chat <-> handle relationships");
-          chatHandleCache.forEach((key, value) {
-            List<Handle> relations = value.map((e) => newHandlesMap[e]).whereNotNull().toList();
-            key.handles.addAll(relations);
-            key.handles.applyToDb();
-          });
-
           // When we've hit the last chunk, we're finished
           await complete();
           if (kIsDesktop && Platform.isWindows) {
@@ -120,8 +122,14 @@ class HandleSyncManager extends SyncManager {
             await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
           }
         } else if (status.value == SyncStatus.STOPPING) {
-          // If we are supposed to be stopping, complete the future
-          if (completer != null && !completer!.isCompleted) completer!.complete();
+          // If we are supposed to be stopping, complete the future.
+          // Also treat it as if there was an error and restore the original handles.
+          // This is to prevent any incomplete work from being committed.
+          if (completer != null && !completer!.isCompleted) {
+            restoreOriginalHandles();
+            completer!.complete();
+          }
+
           if (kIsDesktop && Platform.isWindows) {
             await WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
             await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
@@ -131,25 +139,6 @@ class HandleSyncManager extends SyncManager {
     } catch (e, s) {
       addToOutput('Failed to sync handles! Error: ${e.toString()}', level: LogLevel.ERROR);
       addToOutput(s.toString(), level: LogLevel.ERROR);
-
-      addToOutput('Restoring original handles...');
-      List<Handle> originalHandles = handleBackup.map((e) => Handle.fromMap(e)).toList();
-      handleBox.removeAll();
-
-      List<Handle> loadedHandles = Handle.bulkSave(originalHandles);
-      Map<int, Handle> loadedHandlesMap = {};
-      for (Handle h in loadedHandles) {
-        if (h.originalROWID != null) {
-          loadedHandlesMap[h.originalROWID!] = h;
-        }
-      }
-
-      chatHandleCache.forEach((key, value) {
-        List<Handle> relations = value.map((e) => loadedHandlesMap[e]).whereNotNull().toList();
-        key.handles.addAll(relations);
-        key.handles.applyToDb();
-      });
-
       completeWithError(e.toString());
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.error);
@@ -158,6 +147,66 @@ class HandleSyncManager extends SyncManager {
     }
 
     return completer!.future;
+  }
+
+  Future<int?> getHandleCount() async {
+    Response handleCountResponse = await http.handleCount();
+    Map<String, dynamic> res = handleCountResponse.data;
+    if (handleCountResponse.statusCode == 200) {
+      return res["data"]["total"];
+    }
+
+    return null;
+  }
+
+  backupHandles() {
+    addToOutput("Backing up handles...");
+    List<Handle> existingHandles = Handle.find();
+    for (Handle h in existingHandles) {
+      if (h.originalROWID != null) {
+        handleBackup[h.originalROWID!] = Handle.fromMap(h.toMap());
+      }
+    }
+  }
+
+  Future<List<Chat>> getChatsFromDb() async {
+    addToOutput("Loading chats from database...");
+    final chatQuery = chatBox.query().build();
+    List<Chat> chats = chatQuery.find();
+    addToOutput("Loaded ${chats.length} from the database...");
+    return chats;
+  }
+
+  cacheChatHandleRelationships(List<Chat> chats) {
+    addToOutput("Caching chat participants...");
+    for (Chat c in chats) {
+      List<Handle> handles = c.participants;
+      List<int> rowIds = handles.map((e) => e.originalROWID).whereNotNull().toList();
+      chatHandleCache[c] = rowIds;
+    }
+  }
+
+  restoreOriginalHandles() {
+    addToOutput('Restoring original handles...');
+    handleBox.removeAll();
+
+    List<Handle> newHandles = Handle.bulkSave(handleBackup.values.toList());
+    for (Handle h in newHandles) {
+      if (h.originalROWID != null) {
+        handleBackup[h.originalROWID!] = h;
+      }
+    }
+
+    rebuildRelationships(handleBackup);
+  }
+
+  rebuildRelationships(Map<int, Handle> handleMap) {
+    addToOutput("Re-creating chat <-> handle relationships");
+    chatHandleCache.forEach((key, value) {
+      List<Handle> relations = value.map((e) => handleMap[e]).whereNotNull().toList();
+      key.handles.addAll(relations);
+      key.handles.applyToDb();
+    });
   }
 
   Stream<Tuple2<double, List<Handle>>> streamHandlePages(int? count, {int batchSize = 200}) async* {
@@ -190,8 +239,15 @@ class HandleSyncManager extends SyncManager {
   }
 
   @override
+  completeWithError(String errorMessage) {
+    restoreOriginalHandles();
+    super.completeWithError(errorMessage);
+  }
+
+  @override
   Future<void> complete() async {
-    addToOutput("Synced $handlesSynced handle(s)!");
+    rebuildRelationships(newHandles);
+    addToOutput("Successfully synced $handlesSynced handle(s)!");
     addToOutput("Reloading your chats...");
     Get.reload<ChatsService>(force: true);
     await chats.init(force: true);

@@ -10,7 +10,6 @@ import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:tuple/tuple.dart';
 
 ContactsService cs = Get.isRegistered<ContactsService>() ? Get.find<ContactsService>() : Get.put(ContactsService());
 
@@ -19,8 +18,11 @@ class ContactsService extends GetxService {
   /// The master list of contact objects
   List<Contact> contacts = [];
 
+  bool hasContactAccess = false;
+
   Future<void> init() async {
     if (!kIsWeb) {
+      hasContactAccess = await canAccessContacts();
       contacts = Contact.getContacts();
     } else {
       await fetchNetworkContacts();
@@ -37,13 +39,13 @@ class ContactsService extends GetxService {
   }
 
   Future<List<List<int>>> refreshContacts() async {
-    if (!(await cs.canAccessContacts())) return [];
+    if (!hasContactAccess) return [];
 
     final startTime = DateTime.now().millisecondsSinceEpoch;
     List<Contact> _contacts = [];
     final changedIds = <List<int>>[<int>[], <int>[]];
 
-    _contacts = await cs.fetchAllContacts();
+    _contacts = await fetchAllContacts();
 
     // compare loaded contacts to db contacts
     if (!kIsWeb) {
@@ -84,7 +86,7 @@ class ContactsService extends GetxService {
     // match handles to contacts and save match
     final handlesToSearch = List<Handle>.from(handles);
     for (Contact c in _contacts) {
-      final handles = cs.matchContactToHandles(c, handlesToSearch);
+      final handles = matchContactToHandles(c, handlesToSearch);
       final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
       if (handles.isNotEmpty) {
         handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
@@ -121,7 +123,7 @@ class ContactsService extends GetxService {
   }
 
   Future<void> resetContacts() async {
-    if (!(await cs.canAccessContacts())) return;
+    if (!(await canAccessContacts())) return;
     List<Contact> _contacts = [];
 
     // Track how long this takes
@@ -134,7 +136,7 @@ class ContactsService extends GetxService {
     }
 
     // Fetch all the contacts (network and/or DB)
-    _contacts = await cs.fetchAllContacts();
+    _contacts = await fetchAllContacts();
 
     // Save the contacts to the contactBox (non-web only)
     if (!kIsWeb) {
@@ -149,7 +151,7 @@ class ContactsService extends GetxService {
           _contacts[i].dbId = contactIds[i];
         }
       } else {
-        _contacts = await cs.fetchAllContacts();
+        _contacts = await fetchAllContacts();
       }
     }
 
@@ -189,7 +191,7 @@ class ContactsService extends GetxService {
     int count = 0;
     for (Contact c in _contacts) {
       // Find matching handles
-      final matchingHandles = cs.matchContactToHandles(c, handles);
+      final matchingHandles = matchContactToHandles(c, handles);
       if (matchingHandles.isEmpty) continue;
 
       // Get a list of the unique addresses for handles matching the contact
@@ -231,7 +233,7 @@ class ContactsService extends GetxService {
 
     int startTime = DateTime.now().millisecondsSinceEpoch;
     if (kIsWeb || kIsDesktop) {
-      _contacts.addAll(await cs.fetchNetworkContacts());
+      _contacts.addAll(await fetchNetworkContacts());
       int endTime = DateTime.now().millisecondsSinceEpoch;
       Logger.debug("Contacts fetched in ${endTime - startTime} ms");
     } else {
@@ -317,6 +319,8 @@ class ContactsService extends GetxService {
   }
 
   Contact? matchHandleToContact(Handle h) {
+    if (!hasContactAccess) return null;
+
     Contact? contact;
     final numericAddress = h.address.numericOnly();
     for (Contact c in contacts) {
@@ -384,7 +388,7 @@ class ContactsService extends GetxService {
       }
       final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
       for (Contact c in contacts) {
-        final handles = cs.matchContactToHandles(c, handlesToSearch);
+        final handles = matchContactToHandles(c, handlesToSearch);
         final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
         if (handles.isNotEmpty) {
           handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));

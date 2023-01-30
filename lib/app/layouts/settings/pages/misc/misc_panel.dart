@@ -1,9 +1,7 @@
-import 'package:bluebubbles/services/backend/sync/handle_sync_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/utils/logger.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +18,6 @@ class MiscPanel extends StatefulWidget {
 }
 
 class _MiscPanelState extends OptimizedState<MiscPanel> {
-  final RxnBool refreshingContacts = RxnBool();
-
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -392,70 +388,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       }
                     },
                   ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
-                  SettingsTile(
-                      title: "Reset contacts",
-                      onTap: () async {
-                          refreshingContacts.value = true;
-
-                          try {
-                            final handleSyncer = HandleSyncManager(saveLogs: true);
-                            await handleSyncer.start();
-                            eventDispatcher.emit("refresh-all", null);
-                          } catch (ex, stacktrace) {
-                            Logger.error("Failed to reset contacts!");
-                            Logger.error(ex.toString());
-                            Logger.error(stacktrace.toString());
-                          }
-
-                          refreshingContacts.value = false;
-                      },
-                      trailing: Obx(() => refreshingContacts.value == null
-                          ? const SizedBox.shrink()
-                          : refreshingContacts.value == true ? Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
-                      )),
-                  SettingsTile(
-                      title: "Refresh contacts",
-                      onTap: () async {
-                          refreshingContacts.value = true;
-
-                          try {
-                            await cs.refreshContacts();
-                            eventDispatcher.emit("refresh-all", null);
-                          } catch (ex, stacktrace) {
-                            Logger.error("Failed to refresh contacts!");
-                            Logger.error(ex.toString());
-                            Logger.error(stacktrace.toString());
-                          }
-
-                          refreshingContacts.value = false;
-                      },
-                      trailing: Obx(() => refreshingContacts.value == null
-                          ? const SizedBox.shrink()
-                          : refreshingContacts.value == true ? Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
-                      )),
                 ],
               ),
             ],

@@ -12,6 +12,8 @@ import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../../services/backend/sync/handle_sync_manager.dart';
+
 class TroubleshootPanel extends StatefulWidget {
 
   @override
@@ -21,6 +23,7 @@ class TroubleshootPanel extends StatefulWidget {
 class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
   late final savedLogsDir = kIsDesktop ? Directory(join(Logger.logFile.parent.path, "Saved Logs")) : null;
   final RxList<File> savedLogs = <File>[].obs;
+  final RxnBool resyncingHandles = RxnBool();
 
   @override
   void initState() {
@@ -316,6 +319,91 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     );
                   }),
                 ]),
+              if (!kIsWeb)
+                Container(
+                  color: tileColor,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 15.0),
+                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                  ),
+                ),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Database Re-syncing"
+                    ),
+                    SettingsTile(
+                      title: "Re-sync Handles / Contacts",
+                      onTap: () async {
+                          resyncingHandles.value = true;
+
+                          try {
+                            final handleSyncer = HandleSyncManager(saveLogs: true);
+                            await handleSyncer.start();
+                            eventDispatcher.emit("refresh-all", null);
+
+                            showSnackbar("Success", "Successfully re-synced handles! You may need to close and re-open the app for changes to take effect.");
+                          } catch (ex, stacktrace) {
+                            Logger.error("Failed to reset contacts!");
+                            Logger.error(ex.toString());
+                            Logger.error(stacktrace.toString());
+
+                            showSnackbar("Failed to re-sync handles!", "Run Logging and try again. Error: ${ex.toString()}");
+                          } finally {
+                            resyncingHandles.value = false;
+                          }
+                      },
+                      trailing: Obx(() => resyncingHandles.value == null
+                          ? const SizedBox.shrink()
+                          : resyncingHandles.value == true ? Container(
+                          constraints: const BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
+                      )),
+                    SettingsTile(
+                      title: "Re-sync Handles / Contacts (Simulate Error)",
+                      onTap: () async {
+                          resyncingHandles.value = true;
+
+                          try {
+                            final handleSyncer = HandleSyncManager(saveLogs: true, simulateError: true);
+                            await handleSyncer.start();
+                            eventDispatcher.emit("refresh-all", null);
+
+                            showSnackbar("Success", "Successfully re-synced handles! You may need to close and re-open the app for changes to take effect.");
+                          } catch (ex, stacktrace) {
+                            Logger.error("Failed to reset contacts!");
+                            Logger.error(ex.toString());
+                            Logger.error(stacktrace.toString());
+
+                            showSnackbar("Failed to re-sync handles!", "Run Logging and try again. Error: ${ex.toString()}");
+                          } finally {
+                            resyncingHandles.value = false;
+                          }
+                      },
+                      trailing: Obx(() => resyncingHandles.value == null
+                          ? const SizedBox.shrink()
+                          : resyncingHandles.value == true ? Container(
+                          constraints: const BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
+                      )),
+                  ]),
               if (kIsDesktop)
                 const SizedBox(height: 100),
             ],
