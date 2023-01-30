@@ -2,6 +2,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -98,10 +99,16 @@ class Handle {
 
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
   /// than iterating through them
-  Handle save({bool updateColor = false}) {
+  Handle save({bool updateColor = false, matchOnOriginalROWID = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
-      Handle? existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      Handle? existing;
+      if (matchOnOriginalROWID) {
+        existing = Handle.findOne(originalROWID: originalROWID);
+      } else {
+        existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      }
+
       if (existing != null) {
         id = existing.id;
         contactRelation.target = existing.contactRelation.target;
@@ -119,26 +126,35 @@ class Handle {
   }
 
   /// Save a list of handles
-  static List<Handle> bulkSave(List<Handle> handles) {
+  static List<Handle> bulkSave(List<Handle> handles, {matchOnOriginalROWID = false}) {
     store.runInTransaction(TxMode.write, () {
-      /// Find a list of existing handles
-      List<Handle> existingHandles = Handle.find(cond: Handle_.address.oneOf(handles.map((e) => e.address).toList()));
-
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
-        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address && e.service == h.service);
+        Handle? existing;
+        if (matchOnOriginalROWID) {
+          existing = Handle.findOne(originalROWID: h.originalROWID);
+        } else {
+          existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
+        }
+
         if (existing != null) {
           h.id = existing.id;
+        } else {
+          h.contactRelation.target ??= cs.matchHandleToContact(h);
         }
       }
+
       try {
-        /// Save the handles and update their IDs
-        final ids = handleBox.putMany(handles);
-        for (int i = 0; i < handles.length; i++) {
-          handles[i].id = ids[i];
+        List<int> insertedIds = handleBox.putMany(handles);
+        for (int i = 0; i < insertedIds.length; i++) {
+          handles[i].id = insertedIds[i];
         }
-      } on UniqueViolationException catch (_) {}
+      } catch (ex) {
+        Logger.warn("Failed to insert handles into database!");
+        Logger.warn(ex.toString());
+      }
     });
+
     return handles;
   }
 
@@ -204,15 +220,25 @@ class Handle {
     return query.find();
   }
 
-  Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "originalROWID": originalROWID,
-    "address": address,
-    "formattedAddress": formattedAddress,
-    "service": service,
-    "uniqueAddrAndService": uniqueAddressAndService,
-    "country": country,
-    "color": color,
-    "defaultPhone": defaultPhone,
-  };
+  Map<String, dynamic> toMap({includeObjects = false}) {
+
+    final output = {
+      "ROWID": id,
+      "originalROWID": originalROWID,
+      "address": address,
+      "formattedAddress": formattedAddress,
+      "service": service,
+      "uniqueAddrAndService": uniqueAddressAndService,
+      "country": country,
+      "color": color,
+      "defaultPhone": defaultPhone,
+    };
+
+    if (includeObjects) {
+      output['contact'] = contact?.toMap();
+      output['contactRelation'] = contactRelation.target?.toMap();
+    }
+
+    return output;
+  }
 }

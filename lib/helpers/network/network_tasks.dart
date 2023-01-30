@@ -19,8 +19,19 @@ class NetworkTasks {
       await fcm.registerDevice();
       await sync.startIncrementalSync();
       await ss.getServerDetails(refresh: true);
-      ss.checkServerUpdate();
-      ss.checkClientUpdate();
+
+      try {
+        ss.checkServerUpdate();
+      } catch (ex) {
+        Logger.warn("Failed to check for server update: ${ex.toString()}");
+      }
+
+      try {
+        ss.checkClientUpdate();
+      } catch (ex) {
+        Logger.warn("Failed to check for client update: ${ex.toString()}");
+      }
+
       // scan if server is on localhost
       if (!kIsWeb && ss.settings.localhostPort.value != null) {
         detectLocalhost();

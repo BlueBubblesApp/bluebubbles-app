@@ -25,7 +25,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 
@@ -290,6 +292,32 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     }
   }
 
+  Future<void> openFullCamera({String type = 'camera'}) async {
+    bool granted = (await Permission.camera.request()).isGranted;
+    if (!granted) {
+      showSnackbar(
+        "Error",
+        "Camera access was denied!"
+      );
+      return;
+    }
+
+    late final XFile? file;
+    if (type == 'camera') {
+      file = await ImagePicker().pickImage(source: ImageSource.camera);
+    } else {
+      file = await ImagePicker().pickVideo(source: ImageSource.camera);
+    }
+    if (file != null) {
+      controller.pickedAttachments.add(PlatformFile(
+        path: file.path,
+        name: file.path.split('/').last,
+        size: await file.length(),
+        bytes: await file.readAsBytes(),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -302,6 +330,19 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              if (iOS && Platform.isAndroid)
+                IconButton(
+                  padding: const EdgeInsets.only(left: 10),
+                  icon: Icon(
+                    CupertinoIcons.camera_fill,
+                    color: context.theme.colorScheme.outline,
+                    size: 28,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    openFullCamera();
+                  }
+                ),
               IconButton(
                 icon: Icon(
                   iOS
