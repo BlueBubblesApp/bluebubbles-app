@@ -320,13 +320,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                   }),
                 ]),
               if (!kIsWeb)
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                  ),
-                ),
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [

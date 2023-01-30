@@ -66,11 +66,6 @@ class HandleSyncManager extends SyncManager {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.normal);
       }
 
-      // This flag can be used to test the restore functionality
-      if (simulateError) {
-        throw Exception('Simulated Error!');
-      }
-
       // First, backup the handles so we can restore them if required later.
       backupHandles();
 
@@ -82,6 +77,11 @@ class HandleSyncManager extends SyncManager {
       // Clearing handle database
       addToOutput("Clearing handle database...");
       handleBox.removeAll();
+
+      // This flag can be used to test the restore functionality
+      if (simulateError) {
+        throw Exception('Simulated Error!');
+      }
 
       addToOutput("Streaming handles from server...");
       bool hasContactAccess = cs.hasContactAccess;
@@ -187,6 +187,10 @@ class HandleSyncManager extends SyncManager {
   }
 
   restoreOriginalHandles() {
+    // Don't try and restore if there is nothing backed up to re-create.
+    // Or no relationships to recreate.
+    if (handleBackup.isEmpty || chatHandleCache.isEmpty) return;
+
     addToOutput('Restoring original handles...');
     handleBox.removeAll();
 
