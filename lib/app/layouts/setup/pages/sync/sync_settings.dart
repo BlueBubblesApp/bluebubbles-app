@@ -253,10 +253,6 @@ class _StatefulSwitchState extends CustomState<StatefulSwitch, int, SetupViewCon
   Widget build(BuildContext context) {
     return Switch(
       value: value,
-      activeColor: context.theme.colorScheme.primary,
-      activeTrackColor: context.theme.colorScheme.primaryContainer,
-      inactiveTrackColor: context.theme.colorScheme.onSurfaceVariant,
-      inactiveThumbColor: context.theme.colorScheme.onBackground,
       onChanged: (bool newVal) {
         widget.update.call(newVal);
         setState(() {

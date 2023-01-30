@@ -173,7 +173,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                 ? tileColor
                 : context.theme.colorScheme.background,
               width: widget.borderThickness,
-              strokeAlign: StrokeAlign.outside
+              strokeAlign: BorderSide.strokeAlignOutside
             ),
             shape: BoxShape.circle,
           ),

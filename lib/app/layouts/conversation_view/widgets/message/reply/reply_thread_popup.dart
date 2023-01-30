@@ -2,16 +2,19 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 
-void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service) {
+void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service, ConversationViewController? cvController) {
   final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!);
   final originatorPart = message.threadOriginatorGuid != null ? message.normalizedThreadPart : part.part;
   if (message.threadOriginatorGuid == null) {
@@ -51,9 +54,9 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
                     statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
                   ),
                   child: Scaffold(
-                    backgroundColor: Colors.transparent,
+                    backgroundColor: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? context.theme.colorScheme.properSurface.withOpacity(0.6) : Colors.transparent,
                     body: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      filter: ImageFilter.blur(sigmaX: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30, sigmaY: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30),
                       child: Container(
                         color: context.theme.colorScheme.background.withAlpha(150),
                         child: SafeArea(
@@ -94,5 +97,9 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
       fullscreenDialog: true,
       opaque: false,
     ),
-  );
+  ).then((_) {
+    if (kIsDesktop || kIsWeb) {
+      cvController?.focusNode.requestFocus();
+    }
+  });
 }

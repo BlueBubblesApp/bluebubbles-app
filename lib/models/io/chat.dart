@@ -316,6 +316,13 @@ class Chat {
     );
     return _latestMessage!;
   }
+  Message get dbLatestMessage {
+    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull ?? Message(
+      dateCreated: DateTime.fromMillisecondsSinceEpoch(0),
+      guid: guid,
+    );
+    return _latestMessage!;
+  }
   set latestMessage(Message m) => _latestMessage = m;
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
@@ -397,6 +404,7 @@ class Chat {
     bool updateTextFieldText = false,
     bool updateTextFieldAttachments = false,
     bool updateDisplayName = false,
+    bool updateDateDeleted = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -439,13 +447,16 @@ class Chat {
       if (!updateDisplayName) {
         displayName = existing?.displayName ?? displayName;
       }
+      if (!updateDateDeleted) {
+        dateDeleted = existing?.dateDeleted;
+      }
 
       /// Save the chat and add the participants
       for (int i = 0; i < participants.length; i++) {
         participants[i] = participants[i].save();
         _deduplicateParticipants();
       }
-      dbOnlyLatestMessageDate = latestMessage.dateCreated!;
+      dbOnlyLatestMessageDate = dbLatestMessage.dateCreated!;
       try {
         id = chatBox.put(this);
         // make sure to add participant relation if its a new chat
@@ -559,8 +570,13 @@ class Chat {
   }
 
   /// Delete a chat locally. Prefer using softDelete so the chat doesn't come back
-  static void deleteChat(Chat chat) {
+  static void deleteChat(Chat chat) async {
     if (kIsWeb) return;
+    // close the convo view page if open and wait for it to be disposed before deleting
+    if (cm.activeChat?.chat.guid == chat.guid) {
+      ns.closeAllConversationView(Get.context!);
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
     List<Message> messages = Chat.getMessages(chat);
     store.runInTransaction(TxMode.write, () {
       /// Remove all references of chat and its messages
@@ -569,16 +585,18 @@ class Chat {
     });
   }
 
-  static void softDelete(Chat chat) {
+  static void softDelete(Chat chat) async {
     if (kIsWeb) return;
-    List<Message> messages = Chat.getMessages(chat);
+    // close the convo view page if open and wait for it to be disposed before deleting
+    if (cm.activeChat?.chat.guid == chat.guid) {
+      ns.closeAllConversationView(Get.context!);
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
     store.runInTransaction(TxMode.write, () {
       chat.dateDeleted = DateTime.now().toUtc();
       chat.hasUnreadMessage = false;
-      chat.save();
-      for (Message m in messages) {
-        Message.softDelete(m.guid!);
-      }
+      chat.save(updateDateDeleted: true, updateHasUnreadMessage: true);
+      chat.clearTranscript();
     });
   }
 
@@ -638,6 +656,10 @@ class Chat {
         Logger.error(stacktrace.toString());
       }
     }
+    // Save any attachments
+    for (Attachment? attachment in message.attachments) {
+      attachment!.save(newMessage);
+    }
     bool isNewer = false;
 
     // If the message was saved correctly, update this chat's latestMessage info,
@@ -649,14 +671,10 @@ class Chat {
         _latestMessage = message;
         if (dateDeleted != null) {
           dateDeleted = null;
+          save(updateDateDeleted: true);
           chats.addChat(this);
         }
       }
-    }
-
-    // Save any attachments
-    for (Attachment? attachment in message.attachments) {
-      attachment!.save(newMessage);
     }
 
     // Save the chat.

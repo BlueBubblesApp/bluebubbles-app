@@ -7,6 +7,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 
 class ManualEntryDialog extends StatefulWidget {
@@ -36,18 +37,32 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     // Check if the URL is valid
     bool isValid = url.isURL;
     if (url.contains(":") && !isValid) {
-      if (":".allMatches(url).length == 2) {
-        final newUrl = url.split(":")[1].split("/").last;
+      if (":"
+          .allMatches(url)
+          .length == 2) {
+        final newUrl = url.split(":")[1]
+            .split("/")
+            .last;
         isValid = newUrl.isIPv6 || newUrl.isIPv4;
       } else {
-        final newUrl = url.split(":").first;
+        final newUrl = url
+            .split(":")
+            .first;
         isValid = newUrl.isIPv6 || newUrl.isIPv4;
       }
     }
     // the getx regex only allows extensions up to 6 characters in length
     // this is a workaround for that
-    if (!isValid && url.split(".").last.isAlphabetOnly && url.split(".").last.length > 6) {
-      final newUrl = url.split(".").sublist(0, url.split(".").length - 1).join(".");
+    if (!isValid && url
+        .split(".")
+        .last
+        .isAlphabetOnly && url
+        .split(".")
+        .last
+        .length > 6) {
+      final newUrl = url.split(".").sublist(0, url
+          .split(".")
+          .length - 1).join(".");
       isValid = ("$newUrl.com").isURL;
     }
 
@@ -110,44 +125,63 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              cursorColor: context.theme.colorScheme.primary,
-              autocorrect: false,
-              autofocus: true,
-              controller: urlController,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
-                    borderRadius: BorderRadius.circular(20)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
-                    borderRadius: BorderRadius.circular(20)),
-                labelText: "URL",
-              ),
+            Focus(
+              onKey: (node, event) {
+                if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                  node.nextFocus();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: TextField(
+                cursorColor: context.theme.colorScheme.primary,
+                autocorrect: false,
+                autofocus: true,
+                controller: urlController,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                      borderRadius: BorderRadius.circular(20)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                      borderRadius: BorderRadius.circular(20)),
+                  labelText: "URL",
+                ),
+            ),
             ),
             const SizedBox(height: 10),
-            TextField(
-              cursorColor: context.theme.colorScheme.primary,
-              autocorrect: false,
-              autofocus: false,
-              controller: passwordController,
-              textInputAction: TextInputAction.next,
-              onSubmitted: (_) {
-                connect(urlController.text, passwordController.text);
-                connecting = true;
-                if (mounted) setState(() {});
+            Focus(
+              onKey: (node, event) {
+                if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                  node.previousFocus();
+                  node.previousFocus(); // This is intentional. Should probably figure out why it's needed
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
               },
-              decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
-                    borderRadius: BorderRadius.circular(20)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
-                    borderRadius: BorderRadius.circular(20)),
-                labelText: "Password",
+              child: TextField(
+                cursorColor: context.theme.colorScheme.primary,
+                autocorrect: false,
+                autofocus: false,
+                controller: passwordController,
+                textInputAction: TextInputAction.next,
+                onSubmitted: (_) {
+                  connect(urlController.text, passwordController.text);
+                  connecting = true;
+                  if (mounted) setState(() {});
+                },
+                decoration: InputDecoration(
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                      borderRadius: BorderRadius.circular(20)),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                      borderRadius: BorderRadius.circular(20)),
+                  labelText: "Password",
+                ),
+                obscureText: true,
               ),
-              obscureText: true,
             ),
           ],
         ),
@@ -180,7 +214,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
             if (mounted) {
               setState(() {
                 error =
-                    "Failed to connect to ${sanitizeServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
+                "Failed to connect to ${sanitizeServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
               });
             }
           }

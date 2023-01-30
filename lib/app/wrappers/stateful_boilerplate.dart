@@ -59,6 +59,7 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
 
     // complete the completer when we know the page animation has finished
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) return;
       if (ModalRoute.of(context)?.animation != null) {
         if (ModalRoute.of(context)?.animation?.status != AnimationStatus.completed) {
           late final AnimationStatusListener listener;
@@ -177,7 +178,7 @@ abstract class OptimizedState<T extends StatefulWidget> extends State<T> with Th
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (ModalRoute.of(context)?.animation != null) {
+      if (mounted && ModalRoute.of(context)?.animation != null) {
         if (ModalRoute.of(context)?.animation?.status != AnimationStatus.completed) {
           late final AnimationStatusListener listener;
           listener = (AnimationStatus status) {

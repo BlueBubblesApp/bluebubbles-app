@@ -1035,7 +1035,7 @@ class Message {
       "associatedMessagePart": associatedMessagePart,
       "associatedMessageType": associatedMessageType,
       "expressiveSendStyleId": expressiveSendStyleId,
-      "handle": handle?.toMap(),
+      "handle": handle?.toMap(includeObjects: true),
       "hasAttachments": hasAttachments,
       "hasReactions": hasReactions,
       "dateDeleted": dateDeleted?.millisecondsSinceEpoch,

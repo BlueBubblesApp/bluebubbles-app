@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
@@ -6,6 +7,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class MaterialHeader extends CustomStateful<ConversationListController> {
@@ -21,13 +23,15 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
 
   @override
   Widget build(BuildContext context) {
+    final Rx<Color> _backgroundColor = (kIsDesktop && ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+
     return Stack(
       children: [
-        Container(
+        Obx(() => Container(
           height: controller.selectedChats.isEmpty ? 80 : null,
           width: ns.width(context),
-          color: context.theme.colorScheme.background,
-        ),
+          color: _backgroundColor.value,
+        )),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: controller.selectedChats.isEmpty ? SafeArea(

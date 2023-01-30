@@ -16,8 +16,9 @@ LifecycleService ls = Get.isRegistered<LifecycleService>() ? Get.find<LifecycleS
 class LifecycleService extends GetxService with WidgetsBindingObserver {
   bool isBubble = false;
   bool isUiThread = true;
+  bool windowFocused = true;
   bool get isAlive => kIsWeb ? !(window.document.hidden ?? false)
-      : (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed
+      : kIsDesktop ? windowFocused : (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed
         || IsolateNameServer.lookupPortByName('bg_isolate') != null);
 
   @override
@@ -61,6 +62,10 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       }
       socket.reconnect();
     }
+
+    if (kIsDesktop) {
+      windowFocused = true;
+    }
   }
 
   // clever trick so we can see if the app is active in an isolate or not
@@ -75,6 +80,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     if (!kIsDesktop && !kIsWeb) {
       IsolateNameServer.removePortNameMapping('bg_isolate');
       socket.disconnect();
+    }
+    if (kIsDesktop) {
+      windowFocused = false;
     }
   }
 

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -23,8 +22,10 @@ SettingsService ss = Get.isRegistered<SettingsService>() ? Get.find<SettingsServ
 class SettingsService extends GetxService {
   late Settings settings;
   late FCMData fcmData;
-  bool canAuthenticate = false;
+  bool _canAuthenticate = false;
   late final SharedPreferences prefs;
+
+  bool get canAuthenticate => _canAuthenticate && (fs.androidInfo?.version.sdkInt ?? 0) > 28;
 
   Future<void> init({bool headless = false}) async {
     prefs = await SharedPreferences.getInstance();
@@ -32,7 +33,7 @@ class SettingsService extends GetxService {
     if (!headless && !kIsWeb && !kIsDesktop) {
       // refresh rate
       try {
-        canAuthenticate = await LocalAuthentication().isDeviceSupported();
+        _canAuthenticate = await LocalAuthentication().isDeviceSupported();
         final mode = await settings.getDisplayMode();
         if (mode != DisplayMode.auto) {
           FlutterDisplayMode.setPreferredMode(mode);

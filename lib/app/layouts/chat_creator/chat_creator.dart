@@ -65,6 +65,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   Timer? _debounce;
   Completer<void>? createCompleter;
 
+  final messageNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -83,15 +85,19 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             }
           }
           final query = addressController.text.toLowerCase();
-          final _contacts = contacts.where((e) => e.displayName.toLowerCase().contains(query)
-              || e.phones.firstWhereOrNull((e) => e.toLowerCase().numericOnly().contains(query)) != null
-              || e.emails.firstWhereOrNull((e) => e.toLowerCase().contains(query)) != null).toList();
+          final _contacts = contacts
+              .where((e) =>
+                  e.displayName.toLowerCase().contains(query) ||
+                  e.phones.firstWhereOrNull((e) => e.toLowerCase().numericOnly().contains(query)) != null ||
+                  e.emails.firstWhereOrNull((e) => e.toLowerCase().contains(query)) != null)
+              .toList();
           final ids = _contacts.map((e) => e.id);
-          final _chats = existingChats.where((e) => ((iMessage && e.isIMessage) || (sms && !e.isIMessage))
-              && ((e.title?.toLowerCase().contains(query) ?? false)
-                  || e.participants.firstWhereOrNull((e) => ids.contains(e.contact?.id)
-                  || e.address.contains(query)
-                  || e.displayName.toLowerCase().contains(query)) != null));
+          final _chats = existingChats.where((e) =>
+              ((iMessage && e.isIMessage) || (sms && !e.isIMessage)) &&
+              ((e.title?.toLowerCase().contains(query) ?? false) ||
+                  e.participants.firstWhereOrNull(
+                          (e) => ids.contains(e.contact?.id) || e.address.contains(query) || e.displayName.toLowerCase().contains(query)) !=
+                      null));
           return Tuple2(_contacts, _chats);
         }, Priority.animation);
         _debounce = null;
@@ -184,7 +190,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             }
           }
         }
-        if (matches == selectedContacts.length)  {
+        if (matches == selectedContacts.length) {
           existingChat = c;
           break;
         }
@@ -216,12 +222,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       child: Scaffold(
         backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
         appBar: PreferredSize(
-          preferredSize: Size(ns.width(context), 50),
+          preferredSize: Size(ns.width(context), kIsDesktop ? 90 : 50),
           child: AppBar(
-            systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
-                ? SystemUiOverlayStyle.light
-                : SystemUiOverlayStyle.dark,
-            toolbarHeight: 50,
+            systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+            toolbarHeight: kIsDesktop ? 90 : 50,
             elevation: 0,
             scrolledUnderElevation: 3,
             surfaceTintColor: context.theme.colorScheme.primary,
@@ -238,113 +242,113 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   icon: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: context.theme.colorScheme.error),
                   onPressed: () {
                     showDialog(
-                      barrierDismissible: false,
-                      context: Get.context!,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text(
-                            "Group Chat Creation",
-                            style: context.theme.textTheme.titleLarge,
-                          ),
-                          content: Text(
-                              "Creating group chats from BlueBubbles is not possible on macOS 11 (Big Sur) and later due to limitations from Apple.",
-                              style: context.theme.textTheme.bodyLarge
-                          ),
-                          backgroundColor: context.theme.colorScheme.properSurface,
-                          actions: <Widget>[
-                            TextButton(
-                              child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
+                        barrierDismissible: false,
+                        context: Get.context!,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text(
+                              "Group Chat Creation",
+                              style: context.theme.textTheme.titleLarge,
                             ),
-                          ],
-                        );
-                      }
-                    );
+                            content: Text(
+                                "Creating group chats from BlueBubbles is not possible on macOS 11 (Big Sur) and later due to limitations from Apple.",
+                                style: context.theme.textTheme.bodyLarge),
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        });
                   },
                 ),
             ],
           ),
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
-              child: Row(
-                children: [
-                  Text(
-                    "To: ",
-                    style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: ThemeSwitcher.getScrollPhysics(),
-                      controller: addressScrollController,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeIn,
-                            alignment: Alignment.centerLeft,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(maxHeight: context.theme.textTheme.bodyMedium!.fontSize! + 20),
-                              child: Obx(() => ListView.builder(
-                                itemCount: selectedContacts.length,
-                                shrinkWrap: true,
-                                scrollDirection: Axis.horizontal,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemBuilder: (context, index) {
-                                  final e = selectedContacts[index];
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 2.5),
-                                    child: Material(
-                                      key: ValueKey(e.address),
-                                      color: context.theme.colorScheme.properSurface,
-                                      borderRadius: BorderRadius.circular(5),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: InkWell(
-                                        onTap: () {
-                                          removeSelected(e);
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.0),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: <Widget>[
-                                              Text(
-                                                  e.displayName,
-                                                  style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.primary)
+        body: FocusScope(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
+                child: Row(
+                  children: [
+                    Text(
+                      "To: ",
+                      style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: ThemeSwitcher.getScrollPhysics(),
+                        controller: addressScrollController,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeIn,
+                              alignment: Alignment.centerLeft,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxHeight: context.theme.textTheme.bodyMedium!.fontSize! + 20),
+                                child: Obx(() => ListView.builder(
+                                      itemCount: selectedContacts.length,
+                                      shrinkWrap: true,
+                                      scrollDirection: Axis.horizontal,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemBuilder: (context, index) {
+                                        final e = selectedContacts[index];
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                                          child: Material(
+                                            key: ValueKey(e.address),
+                                            color: context.theme.colorScheme.properSurface,
+                                            borderRadius: BorderRadius.circular(5),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: InkWell(
+                                              onTap: () {
+                                                removeSelected(e);
+                                              },
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.0),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.start,
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: <Widget>[
+                                                    Text(e.displayName,
+                                                        style:
+                                                            context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.primary)),
+                                                    const SizedBox(width: 5.0),
+                                                    Icon(
+                                                      iOS ? CupertinoIcons.xmark : Icons.close,
+                                                      size: 15.0,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                              const SizedBox(width: 5.0),
-                                              Icon(
-                                                iOS ? CupertinoIcons.xmark : Icons.close,
-                                                size: 15.0,
-                                              ),
-                                            ],
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )),
+                                        );
+                                      },
+                                    )),
+                              ),
                             ),
-                          ),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: ns.width(context) - 50),
-                            child: FocusScope(
+                            ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: ns.width(context) - 50),
                               child: Focus(
-                                onKey: (_, ev) {
-                                  if (ev is RawKeyDownEvent) {
-                                    if (ev.logicalKey == LogicalKeyboardKey.backspace
-                                        && (addressController.selection.start == 0 || addressController.text.isEmpty)) {
+                                onKey: (node, event) {
+                                  if (event is RawKeyDownEvent) {
+                                    if (event.logicalKey == LogicalKeyboardKey.backspace &&
+                                        (addressController.selection.start == 0 || addressController.text.isEmpty)) {
                                       if (selectedContacts.isNotEmpty) {
                                         removeSelected(selectedContacts.last);
                                       }
+                                      return KeyEventResult.handled;
+                                    } else if (!event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                      messageNode.requestFocus();
                                       return KeyEventResult.handled;
                                     }
                                   }
@@ -389,94 +393,92 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
-              child: ToggleButtons(
-                constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
-                fillColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
-                splashColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
-                children: [
-                  Row(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text("iMessage"),
-                      ),
-                      const Icon(CupertinoIcons.chat_bubble, size: 16),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text("SMS Forwarding"),
-                      ),
-                      const Icon(Icons.messenger_outline, size: 16),
-                    ],
-                  ),
-                ],
-                borderRadius: BorderRadius.circular(20),
-                selectedBorderColor: context.theme.colorScheme.bubble(context, iMessage),
-                selectedColor: context.theme.colorScheme.bubble(context, iMessage),
-                isSelected: [iMessage, sms],
-                onPressed: (index) {
-                  selectedContacts.clear();
-                  addressController.text = "";
-                  if (index == 0) {
-                    setState(() {
-                      iMessage = true;
-                      sms = false;
-                      filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
-                    });
-                    cm.setAllInactive();
-                    fakeController.value = null;
-                  } else {
-                    setState(() {
-                      iMessage = false;
-                      sms = true;
-                      filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
-                    });
-                    cm.setAllInactive();
-                    fakeController.value = null;
-                  }
-                },
-              ),
-            ),
-            Expanded(
-              child: Theme(
-                data: context.theme.copyWith(
-                  // in case some components still use legacy theming
-                  primaryColor: context.theme.colorScheme.bubble(context, iMessage),
-                  colorScheme: context.theme.colorScheme.copyWith(
-                    primary: context.theme.colorScheme.bubble(context, iMessage),
-                    onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
-                    surface: ss.settings.monetTheming.value == Monet.full
-                        ? null
-                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-                    onSurface: ss.settings.monetTheming.value == Monet.full
-                        ? null
-                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
-                  ),
+                  ],
                 ),
-                child: Stack(
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
+                child: ToggleButtons(
+                  constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
+                  fillColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
+                  splashColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
                   children: [
-                    CustomScrollView(
-                      shrinkWrap: true,
-                      physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                          ? const NeverScrollableScrollPhysics()
-                          : ThemeSwitcher.getScrollPhysics(),
-                      slivers: <Widget>[
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
+                    Row(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("iMessage"),
+                        ),
+                        const Icon(CupertinoIcons.chat_bubble, size: 16),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("SMS Forwarding"),
+                        ),
+                        const Icon(Icons.messenger_outline, size: 16),
+                      ],
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(20),
+                  selectedBorderColor: context.theme.colorScheme.bubble(context, iMessage),
+                  selectedColor: context.theme.colorScheme.bubble(context, iMessage),
+                  isSelected: [iMessage, sms],
+                  onPressed: (index) {
+                    selectedContacts.clear();
+                    addressController.text = "";
+                    if (index == 0) {
+                      setState(() {
+                        iMessage = true;
+                        sms = false;
+                        filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
+                      });
+                      cm.setAllInactive();
+                      fakeController.value = null;
+                    } else {
+                      setState(() {
+                        iMessage = false;
+                        sms = true;
+                        filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
+                      });
+                      cm.setAllInactive();
+                      fakeController.value = null;
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: Theme(
+                  data: context.theme.copyWith(
+                    // in case some components still use legacy theming
+                    primaryColor: context.theme.colorScheme.bubble(context, iMessage),
+                    colorScheme: context.theme.colorScheme.copyWith(
+                      primary: context.theme.colorScheme.bubble(context, iMessage),
+                      onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
+                      surface: ss.settings.monetTheming.value == Monet.full
+                          ? null
+                          : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                      onSurface: ss.settings.monetTheming.value == Monet.full
+                          ? null
+                          : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      CustomScrollView(
+                        shrinkWrap: true,
+                        physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                            ? const NeverScrollableScrollPhysics()
+                            : ThemeSwitcher.getScrollPhysics(),
+                        slivers: <Widget>[
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate((context, index) {
                               if (filteredChats.isEmpty) {
                                 return Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -505,238 +507,239 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     addSelectedList(chat.participants
                                         .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
                                         .map((e) => SelectedContact(
-                                      displayName: e.displayName,
-                                      address: e.address,
-                                    )));
+                                              displayName: e.displayName,
+                                              address: e.address,
+                                            )));
                                   },
                                   child: ChatCreatorTile(
                                     key: ValueKey(chat.guid),
                                     title: _title,
-                                    subtitle: hideInfo ? "" : !chat.isGroup
-                                        ? (chat.participants.first.formattedAddress ?? chat.participants.first.address)
-                                        : chat.getChatCreatorSubtitle(),
+                                    subtitle: hideInfo
+                                        ? ""
+                                        : !chat.isGroup
+                                            ? (chat.participants.first.formattedAddress ?? chat.participants.first.address)
+                                            : chat.getChatCreatorSubtitle(),
                                     chat: chat,
                                   ),
                                 ),
                               );
-                            },
-                            childCount: filteredChats.length.clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity).toInt()
+                            }, childCount: filteredChats.length.clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity).toInt()),
                           ),
-                        ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                              final contact = filteredContacts[index];
-                              contact.phones = getUniqueNumbers(contact.phones);
-                              contact.emails = getUniqueEmails(contact.emails);
-                              final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-                              return Column(
-                                key: ValueKey(contact.id),
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ...contact.phones.map((e) => Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () {
-                                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                        addSelected(SelectedContact(
-                                            displayName: contact.displayName,
-                                            address: e
-                                        ));
-                                      },
-                                      child: ChatCreatorTile(
-                                        title: hideInfo ? "Contact" : contact.displayName,
-                                        subtitle: hideInfo ? "" : e,
-                                        contact: contact,
-                                        format: true,
-                                      ),
-                                    ),
-                                  )),
-                                  ...contact.emails.map((e) => Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () {
-                                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                        addSelected(SelectedContact(
-                                            displayName: contact.displayName,
-                                            address: e
-                                        ));
-                                      },
-                                      child: ChatCreatorTile(
-                                        title: hideInfo ? "Contact" : contact.displayName,
-                                        subtitle: hideInfo ? "" : e,
-                                        contact: contact,
-                                      ),
-                                    ),
-                                  )),
-                                ],
-                              );
-                            },
-                            childCount: filteredContacts.length,
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final contact = filteredContacts[index];
+                                contact.phones = getUniqueNumbers(contact.phones);
+                                contact.emails = getUniqueEmails(contact.emails);
+                                final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                                return Column(
+                                  key: ValueKey(contact.id),
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ...contact.phones.map((e) => Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () {
+                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
+                                              addSelected(SelectedContact(displayName: contact.displayName, address: e));
+                                            },
+                                            child: ChatCreatorTile(
+                                              title: hideInfo ? "Contact" : contact.displayName,
+                                              subtitle: hideInfo ? "" : e,
+                                              contact: contact,
+                                              format: true,
+                                            ),
+                                          ),
+                                        )),
+                                    ...contact.emails.map((e) => Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () {
+                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
+                                              addSelected(SelectedContact(displayName: contact.displayName, address: e));
+                                            },
+                                            child: ChatCreatorTile(
+                                              title: hideInfo ? "Contact" : contact.displayName,
+                                              subtitle: hideInfo ? "" : e,
+                                              contact: contact,
+                                            ),
+                                          ),
+                                        )),
+                                  ],
+                                );
+                              },
+                              childCount: filteredContacts.length,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    Obx(() {
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 150),
-                        child: fakeController.value == null ? const SizedBox.shrink() : Container(
-                          color: context.theme.colorScheme.background,
-                          child: MessagesView(
-                            controller: fakeController.value!,
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 5.0, top: 10.0, bottom: 5.0),
-              child: Theme(
-                data: context.theme.copyWith(
-                  // in case some components still use legacy theming
-                  primaryColor: context.theme.colorScheme.bubble(context, iMessage),
-                  colorScheme: context.theme.colorScheme.copyWith(
-                    primary: context.theme.colorScheme.bubble(context, iMessage),
-                    onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
-                    surface: ss.settings.monetTheming.value == Monet.full
-                        ? null
-                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-                    onSurface: ss.settings.monetTheming.value == Monet.full
-                        ? null
-                        : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                        ],
+                      ),
+                      Obx(() {
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 150),
+                          child: fakeController.value == null
+                              ? const SizedBox.shrink()
+                              : Container(
+                                  color: context.theme.colorScheme.background,
+                                  child: MessagesView(
+                                    controller: fakeController.value!,
+                                  ),
+                                ),
+                        );
+                      }),
+                    ],
                   ),
                 ),
-                child: TextFieldComponent(
-                  subjectTextController: TextEditingController(),
-                  textController: textController,
-                  controller: null,
-                  recorderController: RecorderController(),
-                  initialAttachments: widget.initialAttachments,
-                  sendMessage: ({String? effect}) async {
-                    if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
-                      final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
-                      ns.pushAndRemoveUntil(
-                        Get.context!,
-                        ConversationView(chat: chat),
-                        (route) => route.isFirst,
-                        customRoute: PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => TitleBarWrapper(
-                            child: ConversationView(
-                              chat: chat,
-                              fromChatCreator: true,
-                            )
-                          ),
-                          transitionDuration: Duration.zero,
-                        ),
-                      );
-                      await Future.delayed(const Duration(milliseconds: 500));
-                      if (fakeController.value == null) {
-                        cm.setActiveChat(chat, clearNotifications: false);
-                        cm.activeChat!.controller = cvc(chat);
-                        fakeController.value = cm.activeChat!.controller;
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 5.0, top: 10.0, bottom: 5.0),
+                child: Theme(
+                  data: context.theme.copyWith(
+                    // in case some components still use legacy theming
+                    primaryColor: context.theme.colorScheme.bubble(context, iMessage),
+                    colorScheme: context.theme.colorScheme.copyWith(
+                      primary: context.theme.colorScheme.bubble(context, iMessage),
+                      onPrimary: context.theme.colorScheme.onBubble(context, iMessage),
+                      surface: ss.settings.monetTheming.value == Monet.full
+                          ? null
+                          : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                      onSurface: ss.settings.monetTheming.value == Monet.full
+                          ? null
+                          : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                    ),
+                  ),
+                  child: Focus(
+                    onKey: (node, event) {
+                      if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                        addressNode.requestFocus();
+                        return KeyEventResult.handled;
                       }
-                      await fakeController.value!.send(
-                        widget.initialAttachments,
-                        textController.text,
-                        "",
-                        null,
-                        null,
-                        null,
-                      );
-                    } else {
-                      if (!(createCompleter?.isCompleted ?? true)) return;
-                      createCompleter = Completer();
-                      final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : e.address.numericOnly()).toList();
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            backgroundColor: context.theme.colorScheme.properSurface,
-                            title: Text(
-                              "Creating a new iMessage chat...",
-                              style: context.theme.textTheme.titleLarge,
-                            ),
-                            content: Container(
-                              height: 70,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                                ),
+                      return KeyEventResult.ignored;
+                    },
+                    child: TextFieldComponent(
+                        focusNode: messageNode,
+                        subjectTextController: TextEditingController(),
+                        textController: textController,
+                        controller: null,
+                        recorderController: RecorderController(),
+                        initialAttachments: widget.initialAttachments,
+                        sendMessage: ({String? effect}) async {
+                          if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
+                            final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
+                            ns.pushAndRemoveUntil(
+                              Get.context!,
+                              ConversationView(chat: chat),
+                              (route) => route.isFirst,
+                              customRoute: PageRouteBuilder(
+                                pageBuilder: (_, __, ___) => TitleBarWrapper(
+                                    child: ConversationView(
+                                  chat: chat,
+                                  fromChatCreator: true,
+                                )),
+                                transitionDuration: Duration.zero,
                               ),
-                            ),
-                          );
-                        }
-                      );
-                      http.createChat(participants, textController.text).then((response) async {
-                        Chat newChat = Chat.fromMap(response.data["data"]);
-                        newChat = newChat.save();
-                        final saved = await cm.fetchChat(newChat.guid);
-                        if (saved == null) {
-                          return showSnackbar("Error", "Failed to save chat!");
-                        }
-                        newChat = saved;
-                        createCompleter?.complete();
-                        Navigator.of(context).pop();
-                        ns.pushAndRemoveUntil(
-                          Get.context!,
-                          ConversationView(chat: newChat),
-                          (route) => route.isFirst,
-                          customRoute: PageRouteBuilder(
-                            pageBuilder: (_, __, ___) => TitleBarWrapper(
-                              child: ConversationView(
-                                chat: newChat,
-                                fromChatCreator: true,
-                              ),
-                            ),
-                            transitionDuration: Duration.zero,
-                          ),
-                        );
-                      }).catchError((error) {
-                        Navigator.of(context).pop();
-                        showDialog(
-                          barrierDismissible: false,
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              backgroundColor: context.theme.colorScheme.properSurface,
-                              title: Text(
-                                "Failed to create chat!",
-                                style: context.theme.textTheme.titleLarge,
-                              ),
-                              content: Text(
-                                error is Response
-                                    ? "Reason: (${error.data["error"]["type"]}) -> ${error.data["error"]["message"]}"
-                                    : error.toString(),
-                                style: context.theme.textTheme.bodyLarge,
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: Text(
-                                    "OK",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                )
-                              ],
                             );
+                            await Future.delayed(const Duration(milliseconds: 500));
+                            if (fakeController.value == null) {
+                              cm.setActiveChat(chat, clearNotifications: false);
+                              cm.activeChat!.controller = cvc(chat);
+                              fakeController.value = cm.activeChat!.controller;
+                            }
+                            await fakeController.value!.send(
+                              widget.initialAttachments,
+                              textController.text,
+                              "",
+                              null,
+                              null,
+                              null,
+                            );
+                          } else {
+                            if (!(createCompleter?.isCompleted ?? true)) return;
+                            createCompleter = Completer();
+                            final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : e.address.numericOnly()).toList();
+                            showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    backgroundColor: context.theme.colorScheme.properSurface,
+                                    title: Text(
+                                      "Creating a new iMessage chat...",
+                                      style: context.theme.textTheme.titleLarge,
+                                    ),
+                                    content: Container(
+                                      height: 70,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          backgroundColor: context.theme.colorScheme.properSurface,
+                                          valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                });
+                            http.createChat(participants, textController.text).then((response) async {
+                              Chat newChat = Chat.fromMap(response.data["data"]);
+                              newChat = newChat.save();
+                              final saved = await cm.fetchChat(newChat.guid);
+                              if (saved == null) {
+                                return showSnackbar("Error", "Failed to save chat!");
+                              }
+                              newChat = saved;
+                              createCompleter?.complete();
+                              Navigator.of(context).pop();
+                              ns.pushAndRemoveUntil(
+                                Get.context!,
+                                ConversationView(chat: newChat),
+                                (route) => route.isFirst,
+                                customRoute: PageRouteBuilder(
+                                  pageBuilder: (_, __, ___) => TitleBarWrapper(
+                                    child: ConversationView(
+                                      chat: newChat,
+                                      fromChatCreator: true,
+                                    ),
+                                  ),
+                                  transitionDuration: Duration.zero,
+                                ),
+                              );
+                            }).catchError((error) {
+                              Navigator.of(context).pop();
+                              showDialog(
+                                  barrierDismissible: false,
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      backgroundColor: context.theme.colorScheme.properSurface,
+                                      title: Text(
+                                        "Failed to create chat!",
+                                        style: context.theme.textTheme.titleLarge,
+                                      ),
+                                      content: Text(
+                                        error is Response
+                                            ? "Reason: (${error.data["error"]["type"]}) -> ${error.data["error"]["message"]}"
+                                            : error.toString(),
+                                        style: context.theme.textTheme.bodyLarge,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("OK",
+                                              style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        )
+                                      ],
+                                    );
+                                  });
+                              if (!createCompleter!.isCompleted) {
+                                createCompleter?.completeError(error);
+                              }
+                            });
                           }
-                        );
-                        if (!createCompleter!.isCompleted) {
-                          createCompleter?.completeError(error);
-                        }
-                      });
-                    }
-                  }
+                        }),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

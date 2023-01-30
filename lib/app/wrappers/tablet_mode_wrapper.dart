@@ -34,6 +34,7 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
   //from 0-1
   late final RxDouble _ratio;
   double? _maxWidth;
+  bool? altLayoutCache;
 
   get _width1 => _ratio * _maxWidth!;
 
@@ -58,8 +59,14 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
   @override
   Widget build(BuildContext context) {
     if (!showAltLayout) {
+      // this forcefully closes the chat controller if rotating from landscape -> portrait
+      if ((altLayoutCache ?? false) && cm.activeChat != null) {
+        altLayoutCache = false;
+        cvc(cm.activeChat!.chat).close();
+      }
       return TitleBarWrapper(child: widget.left);
     }
+    altLayoutCache = true;
     return LayoutBuilder(
       builder: (context, BoxConstraints constraints) {
         _maxWidth = constraints.maxWidth - widget.dividerWidth;

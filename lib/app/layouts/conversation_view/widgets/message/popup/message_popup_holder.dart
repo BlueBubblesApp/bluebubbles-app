@@ -89,6 +89,9 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     if (result != false) {
       widget.cvController.selected.clear();
     }
+    if (kIsDesktop || kIsWeb) {
+      widget.cvController.focusNode.requestFocus();
+    }
     eventDispatcher.emit('popup-pushed', false);
   }
 

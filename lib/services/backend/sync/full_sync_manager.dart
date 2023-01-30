@@ -41,7 +41,7 @@ class FullSyncManager extends SyncManager {
     }
     addToOutput('Full sync is starting...');
     addToOutput("Reloading your contacts...");
-    await cs.refreshContacts(reloadUI: false);
+    await cs.refreshContacts();
 
     addToOutput('Fetching chats from the server...');
 
@@ -74,6 +74,8 @@ class FullSyncManager extends SyncManager {
         // This returns the IDs, so we need to fetch them next
         List<Chat> chats = await Chat.bulkSyncChats(newChats);
 
+        int deletedChats = 0;
+
         // 2: For each chat, get the messages.
         // We will stream the messages by page
         for (final chat in chats) {
@@ -99,11 +101,13 @@ class FullSyncManager extends SyncManager {
               if (chat.participants.isEmpty) {
                 addToOutput('Deleting chat: $displayName (no participants were found)');
                 Chat.softDelete(chat);
+                deletedChats++;
                 continue;
               }
               if (newMessages.isEmpty && skipEmptyChats) {
                 addToOutput('Deleting chat: $displayName (skip empty chats was selected)');
                 Chat.softDelete(chat);
+                deletedChats++;
                 continue;
               }
 
@@ -115,10 +119,10 @@ class FullSyncManager extends SyncManager {
 
               // Increment how many chats we've synced, then set the progress
               completedChats += 1;
-              setProgress(completedChats, totalChats ?? newChats.length);
+              setProgress(completedChats, (totalChats ?? newChats.length) - deletedChats);
               chatsSynced += 1;
               if (kIsDesktop && Platform.isWindows) {
-                await WindowsTaskbar.setProgress(completedChats, totalChats ?? newChats.length);
+                await WindowsTaskbar.setProgress(completedChats, (totalChats ?? newChats.length) - deletedChats);
               }
               // If we're supposed to be stopping, break out
               if (status.value == SyncStatus.STOPPING) break;
@@ -224,7 +228,9 @@ class FullSyncManager extends SyncManager {
   @override
   Future<void> complete() async {
     addToOutput("Reloading your contacts...");
-    await cs.refreshContacts(reloadUI: false);
+    // Use reset because it's after the full-sync so all the
+    // handles and contacts are assumed new.
+    await cs.refreshContacts();
     addToOutput("Reloading your chats...");
     Get.reload<ChatsService>(force: true);
     await chats.init(force: true);

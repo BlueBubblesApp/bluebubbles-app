@@ -251,7 +251,7 @@ void sendEffectAction(
                                                         laserController.stop();
                                                       }
                                                     } else if (screenSelected == "confetti") {
-                                                      confettiController.play();
+                                                      // todo dart fix confettiController.play();
                                                     }
                                                   },
                                                   child: Container(
@@ -298,69 +298,73 @@ void sendEffectAction(
                                             : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                                       ),
                                     ),
-                                    child: Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Padding(
-                                        key: key,
-                                        padding: const EdgeInsets.only(right: 5.0),
-                                        child: BubbleEffects(
-                                          globalKey: key,
-                                          part: 0,
-                                          message: message,
-                                          showTail: true,
-                                          child: ClipPath(
-                                            clipper: TailClipper(
-                                              isFromMe: true,
+                                    child: Builder(
+                                      builder: (context) {
+                                        return Align(
+                                          alignment: Alignment.centerRight,
+                                          child: Padding(
+                                            key: key,
+                                            padding: const EdgeInsets.only(right: 5.0),
+                                            child: BubbleEffects(
+                                              globalKey: key,
+                                              part: 0,
+                                              message: message,
                                               showTail: true,
-                                              connectLower: false,
-                                              connectUpper: false,
-                                            ),
-                                            child: Container(
-                                              key: key,
-                                              constraints: BoxConstraints(
-                                                maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
-                                                minHeight: 40,
-                                              ),
-                                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
-                                              color: context.theme.colorScheme.primary.darkenAmount(0.2),
-                                              child: CustomAnimationBuilder<Movie>(
-                                                control: animController,
-                                                tween: MovieTween()
-                                                  ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 1), curve: Curves.easeInOut)
-                                                      .tween("size", 1.0.tweenTo(1.0))
-                                                  ..scene(begin: const Duration(milliseconds: 1), duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
-                                                      .tween("size", 0.0.tweenTo(0.5))
-                                                  ..scene(begin: const Duration(milliseconds: 1000), duration: const Duration(milliseconds: 800), curve: Curves.easeInOut)
-                                                      .tween("size", 0.5.tweenTo(1.0)),
-                                                duration: const Duration(milliseconds: 1800),
-                                                animationStatusListener: (status) {
-                                                  if (status == AnimationStatus.completed) {
-                                                    setState(() {
-                                                      animController = Control.stop;
-                                                    });
-                                                  }
-                                                },
-                                                builder: (context, anim, child) {
-                                                  final value1 = anim.get("size");
-                                                  return Transform.scale(
-                                                    scale: value1,
-                                                    alignment: Alignment.center,
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        children: buildMessageSpans(
-                                                          context,
-                                                          MessagePart(part: 0, text: message.text),
-                                                          message,
+                                              child: ClipPath(
+                                                clipper: TailClipper(
+                                                  isFromMe: true,
+                                                  showTail: true,
+                                                  connectLower: false,
+                                                  connectUpper: false,
+                                                ),
+                                                child: Container(
+                                                  key: key,
+                                                  constraints: BoxConstraints(
+                                                    maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40,
+                                                    minHeight: 40,
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
+                                                  color: context.theme.colorScheme.primary,
+                                                  child: CustomAnimationBuilder<Movie>(
+                                                    control: animController,
+                                                    tween: MovieTween()
+                                                      ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 1), curve: Curves.easeInOut)
+                                                          .tween("size", 1.0.tweenTo(1.0))
+                                                      ..scene(begin: const Duration(milliseconds: 1), duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+                                                          .tween("size", 0.0.tweenTo(0.5))
+                                                      ..scene(begin: const Duration(milliseconds: 1000), duration: const Duration(milliseconds: 800), curve: Curves.easeInOut)
+                                                          .tween("size", 0.5.tweenTo(1.0)),
+                                                    duration: const Duration(milliseconds: 1800),
+                                                    animationStatusListener: (status) {
+                                                      if (status == AnimationStatus.completed) {
+                                                        setState(() {
+                                                          animController = Control.stop;
+                                                        });
+                                                      }
+                                                    },
+                                                    builder: (context, anim, child) {
+                                                      final value1 = anim.get("size");
+                                                      return Transform.scale(
+                                                        scale: value1,
+                                                        alignment: Alignment.center,
+                                                        child: RichText(
+                                                          text: TextSpan(
+                                                            children: buildMessageSpans(
+                                                              context,
+                                                              MessagePart(part: 0, text: message.text),
+                                                              message,
+                                                            ),
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ),
+                                        );
+                                      }
                                     ),
                                   ),
                                   const Spacer(),

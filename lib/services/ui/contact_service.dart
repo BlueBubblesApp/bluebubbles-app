@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
@@ -17,7 +18,19 @@ class ContactsService extends GetxService {
   /// The master list of contact objects
   List<Contact> contacts = [];
 
+  bool _hasContactAccess = false;
+
+  Future<bool> get hasContactAccess async {
+    if (_hasContactAccess) return true;
+
+    _hasContactAccess = await canAccessContacts();
+    return _hasContactAccess;
+  }
+
   Future<void> init() async {
+    // Load the contact access state
+    await hasContactAccess;
+
     if (!kIsWeb) {
       contacts = Contact.getContacts();
     } else {
@@ -34,35 +47,15 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<List<List<int>>> refreshContacts({bool reloadUI = true}) async {
-    if (!(await cs.canAccessContacts())) return [];
-    final _contacts = <Contact>[];
+  Future<List<List<int>>> refreshContacts() async {
+    if (!(await hasContactAccess)) return [];
+
+    final startTime = DateTime.now().millisecondsSinceEpoch;
+    List<Contact> _contacts = [];
     final changedIds = <List<int>>[<int>[], <int>[]];
-    if (kIsWeb || kIsDesktop) {
-      _contacts.addAll(await cs.fetchNetworkContacts());
-    } else {
-      _contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
-        displayName: e.displayName,
-        emails: e.emails,
-        phones: e.phones,
-        structuredName: e.structuredName == null ? null : StructuredName(
-          namePrefix: e.structuredName!.namePrefix,
-          givenName: e.structuredName!.givenName,
-          middleName: e.structuredName!.middleName,
-          familyName: e.structuredName!.familyName,
-          nameSuffix: e.structuredName!.nameSuffix,
-        ),
-        id: e.id,
-      )));
-      // get avatars
-      for (Contact c in _contacts) {
-        try {
-          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
-        } catch (_) {
-          c.avatar = await FastContacts.getContactImage(c.id);
-        }
-      }
-    }
+
+    _contacts = await fetchAllContacts();
+
     // compare loaded contacts to db contacts
     if (!kIsWeb) {
       final dbContacts = contactBox.getAll();
@@ -102,7 +95,7 @@ class ContactsService extends GetxService {
     // match handles to contacts and save match
     final handlesToSearch = List<Handle>.from(handles);
     for (Contact c in _contacts) {
-      final handles = cs.matchContactToHandles(c, handlesToSearch);
+      final handles = matchContactToHandles(c, handlesToSearch);
       final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
       if (handles.isNotEmpty) {
         handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
@@ -130,8 +123,58 @@ class ContactsService extends GetxService {
     if (kIsWeb) {
       contacts = _contacts;
     }
+
+    final endTime = DateTime.now().millisecondsSinceEpoch;
+    Logger.debug("Contact refresh took ${endTime - startTime} ms");
+
     // only return contacts if things changed (or on web)
     return changedIds;
+  }
+
+  Future<List<Contact>> fetchAllContacts() async {
+    final _contacts = <Contact>[];
+
+    int startTime = DateTime.now().millisecondsSinceEpoch;
+    if (kIsWeb || kIsDesktop) {
+      _contacts.addAll(await fetchNetworkContacts());
+      int endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("Contacts fetched in ${endTime - startTime} ms");
+    } else {
+      _contacts.addAll((await FastContacts.getAllContacts(
+        fields: List<ContactField>.from(ContactField.values)
+          ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription, ContactField.emailLabels, ContactField.phoneLabels].contains(e))
+      )).map((e) => Contact(
+        displayName: e.displayName,
+        emails: e.emails.map((e) => e.address).toList(),
+        phones: e.phones.map((e) => e.number).toList(),
+        structuredName: e.structuredName == null ? null : StructuredName(
+          namePrefix: e.structuredName!.namePrefix,
+          givenName: e.structuredName!.givenName,
+          middleName: e.structuredName!.middleName,
+          familyName: e.structuredName!.familyName,
+          nameSuffix: e.structuredName!.nameSuffix,
+        ),
+        id: e.id,
+      )));
+
+      int endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("Contacts fetched in ${endTime - startTime} ms");
+
+      // get avatars
+      startTime = DateTime.now().millisecondsSinceEpoch;
+      for (Contact c in _contacts) {
+        try {
+          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
+        } catch (_) {
+          c.avatar = await FastContacts.getContactImage(c.id);
+        }
+      }
+
+      endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("Avatars fetched in ${endTime - startTime} ms");
+    }
+
+    return _contacts;
   }
 
   void completeContactsRefresh(List<Contact> refreshedContacts, {List<List<int>>? reloadUI}) {
@@ -179,6 +222,8 @@ class ContactsService extends GetxService {
   }
 
   Contact? matchHandleToContact(Handle h) {
+    if (!_hasContactAccess) return null;
+
     Contact? contact;
     final numericAddress = h.address.numericOnly();
     for (Contact c in contacts) {
@@ -246,7 +291,7 @@ class ContactsService extends GetxService {
       }
       final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
       for (Contact c in contacts) {
-        final handles = cs.matchContactToHandles(c, handlesToSearch);
+        final handles = matchContactToHandles(c, handlesToSearch);
         final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
         if (handles.isNotEmpty) {
           handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));

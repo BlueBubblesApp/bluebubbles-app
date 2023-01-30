@@ -1,19 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/async_connecting_dialog.dart';
+import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
@@ -29,7 +30,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   final TextEditingController passwordController = TextEditingController();
   final controller = Get.find<SetupViewController>();
 
-  bool showManualEntry = false;
+  bool showManualEntry = kIsDesktop || kIsWeb;
+  bool obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +41,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           ? "Enter your server URL and password to access your messages."
           : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
       contentWrapper: (child) => AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          child: showManualEntry && context.isPhone
-              ? const SizedBox.shrink() : child,
+        duration: const Duration(milliseconds: 200),
+        child: showManualEntry && context.isPhone ? const SizedBox.shrink() : child,
       ),
       customButton: Column(
         children: [
@@ -79,174 +80,215 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                       const SizedBox(width: 10),
                       Padding(
                         padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                        child: Text("Scan QR Code",
-                            style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                        child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              gradient: LinearGradient(
-                begin: AlignmentDirectional.topStart,
-                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-              ),
-            ),
-            height: 40,
-            padding: const EdgeInsets.all(2),
-            child: ElevatedButton(
-              style: ButtonStyle(
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
+          if (!kIsDesktop && !kIsWeb) const SizedBox(height: 20),
+          if (!kIsDesktop && !kIsWeb)
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+                gradient: LinearGradient(
+                  begin: AlignmentDirectional.topStart,
+                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
                 ),
-                backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
               ),
-              onPressed: () async {
-                setState(() {
-                  showManualEntry = !showManualEntry;
-                });
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(CupertinoIcons.text_cursor,
-                      color: context.theme.colorScheme.onBackground, size: 20),
-                  const SizedBox(width: 10),
-                  Text("Manual entry",
-                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
-                ],
+              height: 40,
+              padding: const EdgeInsets.all(2),
+              child: ElevatedButton(
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                  ),
+                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                ),
+                onPressed: () async {
+                  setState(() {
+                    showManualEntry = !showManualEntry;
+                  });
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
+                    const SizedBox(width: 10),
+                    Text("Manual entry",
+                        style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                  ],
+                ),
               ),
             ),
-          ),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             child: !showManualEntry
                 ? const SizedBox.shrink()
                 : Theme(
-              data: context.theme.copyWith(
-                  inputDecorationTheme: InputDecorationTheme(
-                    labelStyle: TextStyle(color: context.theme.colorScheme.outline),
-                  )),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  Container(
-                    width: context.width * 2 / 3,
-                    child: TextField(
-                      cursorColor: context.theme.colorScheme.primary,
-                      autocorrect: false,
-                      autofocus: true,
-                      controller: urlController,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: context.theme.colorScheme.outline),
-                            borderRadius: BorderRadius.circular(20)),
-                        focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: context.theme.colorScheme.primary),
-                            borderRadius: BorderRadius.circular(20)),
-                        labelText: "URL",
+                    data: context.theme.copyWith(
+                      inputDecorationTheme: InputDecorationTheme(
+                        labelStyle: TextStyle(color: context.theme.colorScheme.outline),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  PasswordField(controller: passwordController, onSubmitted: (pass) {
-                    connect(urlController.text, pass);
-                  }),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
-                          gradient: LinearGradient(
-                            begin: AlignmentDirectional.topStart,
-                            colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                          ),
-                        ),
-                        height: 40,
-                        padding: const EdgeInsets.all(2),
-                        child: ElevatedButton(
-                          style: ButtonStyle(
-                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        Container(
+                          width: context.width * 2 / 3,
+                          child: Focus(
+                            onKey: (node, event) {
+                              if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                node.nextFocus();
+                                return KeyEventResult.handled;
+                              }
+                              return KeyEventResult.ignored;
+                            },
+                            child: TextField(
+                              cursorColor: context.theme.colorScheme.primary,
+                              autocorrect: false,
+                              autofocus: true,
+                              controller: urlController,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: context.theme.colorScheme.outline), borderRadius: BorderRadius.circular(20)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: context.theme.colorScheme.primary), borderRadius: BorderRadius.circular(20)),
+                                labelText: "URL",
                               ),
                             ),
-                            backgroundColor:
-                            MaterialStateProperty.all(context.theme.colorScheme.background),
-                            shadowColor:
-                            MaterialStateProperty.all(context.theme.colorScheme.background),
-                            maximumSize: MaterialStateProperty.all(const Size(200, 36)),
-                            minimumSize: MaterialStateProperty.all(const Size(30, 30)),
-                          ),
-                          onPressed: () async {
-                            setState(() {
-                              showManualEntry = false;
-                            });
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.close, color: context.theme.colorScheme.onBackground, size: 20),
-                              const SizedBox(width: 10),
-                              Text("Cancel",
-                                  style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
-                            ],
                           ),
                         ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
-                          gradient: LinearGradient(
-                            begin: AlignmentDirectional.topStart,
-                            colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                        const SizedBox(height: 20),
+                        Container(
+                          width: context.width * 2 / 3,
+                          child: Focus(
+                            onKey: (node, event) {
+                              if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                node.previousFocus();
+                                node.previousFocus(); // This is intentional. Should probably figure out why it's needed
+                                return KeyEventResult.handled;
+                              }
+                              return KeyEventResult.ignored;
+                            },
+                            child: TextField(
+                              cursorColor: context.theme.colorScheme.primary,
+                              autocorrect: false,
+                              autofocus: false,
+                              controller: passwordController,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (pass) => connect(urlController.text, pass),
+                              decoration: InputDecoration(
+                                enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: context.theme.colorScheme.outline), borderRadius: BorderRadius.circular(20)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: context.theme.colorScheme.primary), borderRadius: BorderRadius.circular(20)),
+                                labelText: "Password",
+                                contentPadding: const EdgeInsets.fromLTRB(12, 24, 40, 16),
+                                suffixIcon: IconButton(
+                                  icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
+                                  color: context.theme.colorScheme.outline,
+                                  onPressed: () {
+                                    setState(() {
+                                      obscureText = !obscureText;
+                                    });
+                                  },
+                                ),
+                              ),
+                              obscureText: obscureText,
+                            ),
                           ),
                         ),
-                        height: 40,
-                        child: ElevatedButton(
-                          style: ButtonStyle(
-                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                gradient: LinearGradient(
+                                  begin: AlignmentDirectional.topStart,
+                                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                                ),
+                              ),
+                              height: 40,
+                              padding: const EdgeInsets.all(2),
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20.0),
+                                    ),
+                                  ),
+                                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                                  maximumSize: MaterialStateProperty.all(const Size(200, 36)),
+                                  minimumSize: MaterialStateProperty.all(const Size(30, 30)),
+                                ),
+                                onPressed: () async {
+                                  setState(() {
+                                    showManualEntry = false;
+                                  });
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.close, color: context.theme.colorScheme.onBackground, size: 20),
+                                    const SizedBox(width: 10),
+                                    Text("Cancel",
+                                        style: context.theme.textTheme.bodyLarge!
+                                            .apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                                  ],
+                                ),
                               ),
                             ),
-                            backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                            shadowColor: MaterialStateProperty.all(Colors.transparent),
-                            maximumSize: MaterialStateProperty.all(const Size(200, 36)),
-                            minimumSize: MaterialStateProperty.all(const Size(30, 30)),
-                          ),
-                          onPressed: () async {
-                            connect(urlController.text, passwordController.text);
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text("Connect",
-                                  style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
-                              const SizedBox(width: 10),
-                              const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                            ],
-                          ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                gradient: LinearGradient(
+                                  begin: AlignmentDirectional.topStart,
+                                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                                ),
+                              ),
+                              height: 40,
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20.0),
+                                    ),
+                                  ),
+                                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                                  shadowColor: MaterialStateProperty.all(Colors.transparent),
+                                  maximumSize: MaterialStateProperty.all(const Size(200, 36)),
+                                  minimumSize: MaterialStateProperty.all(const Size(30, 30)),
+                                ),
+                                onPressed: () async {
+                                  connect(urlController.text, passwordController.text);
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("Connect", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                    const SizedBox(width: 10),
+                                    const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-          )
+          ),
         ],
       ),
     );
@@ -379,7 +421,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           dio.Response fcmResponse = await fcmFuture;
           Map<String, dynamic> data = fcmResponse.data;
           if (fcmResponse.statusCode != 200) {
-            controller.updateConnectError("Failed to connect to server! ${data["error"]?["type"] ?? "API_ERROR"}: ${data["message"] ?? data["error"]["message"]}");
+            controller.updateConnectError(
+                "Failed to connect to server! ${data["error"]?["type"] ?? "API_ERROR"}: ${data["message"] ?? data["error"]["message"]}");
             return;
           }
 
@@ -410,7 +453,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               return;
             }
           } else {
-            controller.updateConnectError("Failed to connect to $addr! Please ensure your credentials are correct and check the server logs for more info.");
+            controller.updateConnectError(
+                "Failed to connect to $addr! Please ensure your credentials are correct and check the server logs for more info.");
             return;
           }
         }
@@ -427,7 +471,6 @@ class ErrorText extends CustomStateful<SetupViewController> {
 }
 
 class _ErrorTextState extends CustomState<ErrorText, String, SetupViewController> {
-
   @override
   void updateWidget(String newVal) {
     controller.error = newVal;
@@ -445,64 +488,16 @@ class _ErrorTextState extends CustomState<ErrorText, String, SetupViewController
             child: Align(
               alignment: Alignment.center,
               child: Text(controller.error,
-                  style: context.theme.textTheme.bodyLarge!.apply(
-                    fontSizeDelta: 1.5,
-                    color: context.theme.colorScheme.error,
-                  ).copyWith(height: 2)),
+                  style: context.theme.textTheme.bodyLarge!
+                      .apply(
+                        fontSizeDelta: 1.5,
+                        color: context.theme.colorScheme.error,
+                      )
+                      .copyWith(height: 2)),
             ),
           ),
-        if (controller.error.isNotEmpty) 
-          const SizedBox(height: 20),
+        if (controller.error.isNotEmpty) const SizedBox(height: 20),
       ],
-    );
-  }
-}
-
-class PasswordField extends StatefulWidget {
-  PasswordField({required this.controller, required this.onSubmitted});
-
-  final TextEditingController controller;
-  final Function(String) onSubmitted;
-
-  @override
-  State<StatefulWidget> createState() => _PasswordFieldState();
-}
-
-class _PasswordFieldState extends OptimizedState<PasswordField> {
-  bool obscureText = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: context.width * 2 / 3,
-      child: TextField(
-        cursorColor: context.theme.colorScheme.primary,
-        autocorrect: false,
-        autofocus: false,
-        controller: widget.controller,
-        textInputAction: TextInputAction.next,
-        onSubmitted: widget.onSubmitted,
-        decoration: InputDecoration(
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: context.theme.colorScheme.outline),
-              borderRadius: BorderRadius.circular(20)),
-          focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: context.theme.colorScheme.primary),
-              borderRadius: BorderRadius.circular(20)),
-          labelText: "Password",
-          contentPadding: const EdgeInsets.fromLTRB(12, 24, 40, 16),
-          suffixIcon: IconButton(
-            icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
-            color: context.theme.colorScheme.outline,
-            onPressed: () {
-              setState(() {
-                obscureText = !obscureText;
-              });
-            },
-          ),
-        ),
-        obscureText: obscureText,
-      ),
     );
   }
 }

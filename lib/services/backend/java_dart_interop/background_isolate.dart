@@ -36,6 +36,11 @@ backgroundIsolateEntrypoint() async {
     } catch (e, s) {
       debugPrint(e.toString());
       debugPrint(s.toString());
+      // this can very rarely happen
+      if (e.toString().contains("another store is still open using the same path")) {
+        debugPrint("Retrying to attach to an existing ObjectBox store");
+        store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+      }
     }
   }
   debugPrint("Opening boxes");

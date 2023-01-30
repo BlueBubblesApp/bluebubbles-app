@@ -18,8 +18,6 @@ class MiscPanel extends StatefulWidget {
 }
 
 class _MiscPanelState extends OptimizedState<MiscPanel> {
-  final RxnBool refreshingContacts = RxnBool();
-
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -390,33 +388,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       }
                     },
                   ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
-                  SettingsTile(
-                      title: "Refresh contacts",
-                      onTap: () async {
-                          refreshingContacts.value = true;
-                          await cs.refreshContacts();
-                          eventDispatcher.emit("refresh-all", null);
-                          refreshingContacts.value = false;
-                      },
-                      trailing: Obx(() => refreshingContacts.value == null
-                          ? const SizedBox.shrink()
-                          : refreshingContacts.value == true ? Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
-                      )),
                 ],
               ),
             ],

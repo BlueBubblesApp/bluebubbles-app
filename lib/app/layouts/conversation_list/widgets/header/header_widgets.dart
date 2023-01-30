@@ -92,13 +92,17 @@ class OverflowMenu extends StatelessWidget {
             ),
           );
           if (currentChat != null) {
-            ns.pushAndRemoveUntil(
-              context,
-              ConversationView(
-                chat: currentChat,
-              ),
-              (route) => route.isFirst,
-            );
+            if (ss.settings.tabletMode.value) {
+              ns.pushAndRemoveUntil(
+                context,
+                ConversationView(
+                  chat: currentChat,
+                ),
+                    (route) => route.isFirst,
+              );
+            } else {
+              cvc(currentChat).close();
+            }
           }
         } else if (value == 3) {
           ns.pushLeft(

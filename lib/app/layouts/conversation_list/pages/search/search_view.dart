@@ -11,6 +11,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 
@@ -51,6 +52,10 @@ class SearchViewState extends OptimizedState<SearchView> {
   String? currentSearchTerm;
   bool local = false;
   bool network = true;
+
+  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
+      ? context.theme.colorScheme.background
+      : Colors.transparent;
 
   @override
   void initState() {
@@ -149,8 +154,8 @@ class SearchViewState extends OptimizedState<SearchView> {
       initialHeader: null,
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
-      tileColor: context.theme.colorScheme.background,
-      headerColor: context.theme.colorScheme.background,
+      tileColor: backgroundColor,
+      headerColor: backgroundColor,
       bodySlivers: [
         SliverList(
           delegate: SliverChildListDelegate([
@@ -348,7 +353,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                     ) : null,
                   ),
                   child: ListTile(
-                    mouseCursor: MouseCursor.defer,
+                    mouseCursor: SystemMouseCursors.click,
                     title: RichText(
                       text: TextSpan(
                         children: MessageHelper.buildEmojiText(
@@ -381,12 +386,13 @@ class SearchViewState extends OptimizedState<SearchView> {
                       final service = ms(chat.guid);
                       service.method = local ? "local" : "network";
                       service.struct.addMessages([message]);
-                      ns.push(
+                      ns.pushAndRemoveUntil(
                         context,
                         ConversationView(
                           chat: chat,
                           customService: service,
                         ),
+                        (route) => route.isFirst,
                       );
                     },
                   ),

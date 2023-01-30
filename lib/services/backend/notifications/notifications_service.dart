@@ -47,14 +47,14 @@ class NotificationsService extends GetxService {
     if (!kIsWeb && !kIsDesktop) {
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-      await flnp.initialize(initializationSettings, onSelectNotification: (String? payload) {
-        if (payload != null) {
-          intents.openChat(payload);
+      await flnp.initialize(initializationSettings, onDidReceiveNotificationResponse: (NotificationResponse? response) {
+        if (response?.payload != null) {
+          intents.openChat(response!.payload);
         }
       });
       final details = await flnp.getNotificationAppLaunchDetails();
-      if (details != null && details.didNotificationLaunchApp && details.payload != null) {
-        intents.openChat(details.payload!);
+      if (details != null && details.didNotificationLaunchApp && details.notificationResponse?.payload != null) {
+        intents.openChat(details.notificationResponse!.payload!);
       }
       // create notif channels
       createNotificationChannel(
@@ -197,7 +197,7 @@ class NotificationsService extends GetxService {
 
         List<LocalNotification> _notifications = List.from(notifications[guid]!);
 
-        Iterable<String> _chats = notifications.keys;
+        Iterable<String> _chats = notifications.keys.toList();
 
         if (_chats.length > maxChatCount) {
           for (String chat in _chats) {
@@ -224,7 +224,7 @@ class NotificationsService extends GetxService {
           allToast!.onClick = () async {
             notifications = {};
             notificationCounts = {};
-            await WindowManager.instance.focus();
+            await windowManager.focus();
           };
 
           allToast!.onClickAction = (index) async {
@@ -315,7 +315,7 @@ class NotificationsService extends GetxService {
             Chat? chat = Chat.findOne(guid: guid);
             if (chat == null) return;
 
-            await WindowManager.instance.focus();
+            await windowManager.focus();
 
             if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
               ns.pushAndRemoveUntil(
@@ -399,7 +399,7 @@ class NotificationsService extends GetxService {
             Chat? chat = Chat.findOne(guid: guid);
             if (chat == null) return;
 
-            await WindowManager.instance.focus();
+            await windowManager.focus();
 
             if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
               ns.pushAndRemoveUntil(
@@ -424,7 +424,7 @@ class NotificationsService extends GetxService {
             chat.toggleHasUnread(false);
             EventDispatcher().emit('refresh', null);
 
-            await WindowManager.instance.focus();
+            await windowManager.focus();
 
             if (await File(path).exists()) {
               await File(path).delete();

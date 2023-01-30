@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-class TypingClipper extends CustomClipper<Path>{
+class TypingClipper extends CustomClipper<Path> {
   const TypingClipper();
 
   @override

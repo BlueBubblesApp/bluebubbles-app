@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 /// functionality to the app, the new classes/methods must be added here.
 
 class DartVLC {
-  static Future<void> initialize({bool useFlutterNativeView = false}) => throw Exception('Unsupported Platform');
+  static void initialize() => throw Exception('Unsupported Platform');
 }
 
 /// State of a [Player] instance.

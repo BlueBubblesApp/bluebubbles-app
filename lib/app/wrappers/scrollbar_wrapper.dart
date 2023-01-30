@@ -42,7 +42,10 @@ class ScrollbarWrapper extends StatelessWidget {
             thumbColor: context.theme.colorScheme.properOnSurface.withOpacity(0.3),
             thickness: 10,
             radius: const Radius.circular(5),
-            child: child,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(scrollbars: !showScrollbar),
+              child: child,
+            ),
           )
       : ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: showScrollbar),

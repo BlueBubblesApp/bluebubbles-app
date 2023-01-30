@@ -6,9 +6,10 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 
 class ScheduledMessagesPanel extends StatefulWidget {
   ScheduledMessagesPanel({
@@ -34,6 +35,7 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
       setState(() {
         fetching = null;
       });
+      return Response(requestOptions: RequestOptions(path: ''));
     });
     if (response.statusCode == 200 && response.data['data'] != null) {
       scheduled = (response.data['data'] as List).map((e) => ScheduledMessage.fromJson(e)).toList().cast<ScheduledMessage>();
