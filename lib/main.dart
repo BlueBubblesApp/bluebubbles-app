@@ -681,7 +681,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats.",
+                        "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
                         style: context.theme.textTheme.bodyLarge
                       ),
                       Container(height: 5),
