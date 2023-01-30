@@ -177,6 +177,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         onChanged: (bool val) {
                           ss.settings.tabletMode.value = val;
                           saveSettings();
+                          // update the conversation view UI
+                          eventDispatcher.emit('split-refresh', null);
                         },
                         initialVal: ss.settings.tabletMode.value,
                         title: "Tablet Mode",
