@@ -137,7 +137,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                           if (content is Tuple2<String, RxDouble>) {
                             final Tuple2<String, RxDouble> _content = content;
                             return Padding(
-                              padding: const EdgeInsets.all(20.0),
+                              padding: EdgeInsets.only(left: 10.0, top: 10.0, right: 10.0, bottom: _content.item2.value < 1 && message.error == 0 ? 0 : 10.0),
                               child: Obx(() {
                                 return Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -153,14 +153,24 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 5),
+                                    const SizedBox(height: 10),
                                     Text(
                                       "${(attachment.totalBytes! * min(_content.item2.value, 1.0)).toDouble().getFriendlySize(withPostfix: false)} / ${attachment.getFriendlySize()}",
                                       style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
-                                    )
+                                    ),
+                                    if (_content.item2.value < 1 && message.error == 0)
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                        child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                        onPressed: () {
+                                          ah.latestCancelToken?.cancel("User cancelled send.");
+                                        },
+                                      ),
                                   ],
                                 );
                               }),

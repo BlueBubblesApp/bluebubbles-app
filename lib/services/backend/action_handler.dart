@@ -16,6 +16,7 @@ ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>()
 class ActionHandler extends GetxService {
   final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
   final List<String> outOfOrderTempGuids = [];
+  CancelToken? latestCancelToken;
   
   Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
@@ -146,9 +147,12 @@ class ActionHandler extends GetxService {
     final attachment = m.attachments.first!;
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
+    latestCancelToken = CancelToken();
     http.sendAttachment(c.guid, attachment.guid!, PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: attachment.path, size: attachment.totalBytes ?? 0),
-      onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length
+      onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length,
+      cancelToken: latestCancelToken,
     ).then((response) async {
+      latestCancelToken = null;
       final newMessage = Message.fromMap(response.data['data']);
 
       for (Attachment? a in newMessage.attachments) {
@@ -165,6 +169,7 @@ class ActionHandler extends GetxService {
 
       completer.complete();
     }).catchError((error) async {
+      latestCancelToken = null;
       Logger.error('Failed to send message! Error: ${error.toString()}');
 
       final tempGuid = m.guid;
