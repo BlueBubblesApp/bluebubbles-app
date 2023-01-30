@@ -363,39 +363,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                             valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
                       )),
-                    SettingsTile(
-                      title: "Re-sync Handles / Contacts (Simulate Error)",
-                      onTap: () async {
-                          resyncingHandles.value = true;
-
-                          try {
-                            final handleSyncer = HandleSyncManager(saveLogs: true, simulateError: true);
-                            await handleSyncer.start();
-                            eventDispatcher.emit("refresh-all", null);
-
-                            showSnackbar("Success", "Successfully re-synced handles! You may need to close and re-open the app for changes to take effect.");
-                          } catch (ex, stacktrace) {
-                            Logger.error("Failed to reset contacts!");
-                            Logger.error(ex.toString());
-                            Logger.error(stacktrace.toString());
-
-                            showSnackbar("Failed to re-sync handles!", "Run Logging and try again. Error: ${ex.toString()}");
-                          } finally {
-                            resyncingHandles.value = false;
-                          }
-                      },
-                      trailing: Obx(() => resyncingHandles.value == null
-                          ? const SizedBox.shrink()
-                          : resyncingHandles.value == true ? Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
-                      )),
                   ]),
               if (kIsDesktop)
                 const SizedBox(height: 100),

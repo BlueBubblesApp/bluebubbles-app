@@ -89,7 +89,7 @@ class HandleSyncManager extends SyncManager {
         double handleProgress = handleEvent.item1;
         List<Handle> serverHandles = handleEvent.item2;
 
-        addToOutput('Saving chunk of ${newHandles.length} handles(s)...');
+        addToOutput('Saving chunk of ${serverHandles.length} handles(s)...');
 
         // Generate the formatted address for each.
         // And load the matching contact, if we can.
