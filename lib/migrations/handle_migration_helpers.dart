@@ -7,11 +7,12 @@ Future<bool> needsMigrationForUniqueService(Future chatLoader) async {
   List<Handle> existingHandles = Handle.find();
 
   // Extract DMs (this won't apply to group chats or emails)
-  List<Chat> dms = existingChats.where((element) => !element.isGroup && !element.guid.contains('@')).toList();
+  List<Chat> dms = existingChats.where((element) => !element.isGroup && !element.guid.contains('@') && !element.guid.contains(';+;')).toList();
 
   // Create a mapping of address -> services for the existing chats
   Map<String, List<String>> chatServices = {};
   for (Chat c in dms) {
+    if (!c.guid.contains(';-;')) continue;
     List<String> guidSplit = c.guid.split(';-;');
     String service = guidSplit[0];
     String address = guidSplit[1];
@@ -39,7 +40,6 @@ Future<bool> needsMigrationForUniqueService(Future chatLoader) async {
       return true;
     }
   }
-
 
   return false;
 }

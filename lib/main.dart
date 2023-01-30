@@ -659,7 +659,15 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       // only show these dialogs if setup is finished
       if (ss.settings.finishedSetup.value) {
         if (ss.prefs.getBool('1.11.1-warning') != true && !kIsWeb) {
-          if ((await needsMigrationForUniqueService(chats.loadedAllChats.future))) {
+          bool needsMigration = false;
+
+          try {
+            needsMigration = await needsMigrationForUniqueService(chats.loadedAllChats.future);
+          } catch (ex) {
+            Logger.error("Error checking for handle migration: $ex");
+          }
+  
+          if (needsMigration) {
             showDialog(
               barrierDismissible: false,
               context: context,
@@ -669,9 +677,19 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                     "Handle Migration",
                     style: context.theme.textTheme.titleLarge,
                   ),
-                  content: Text(
-                    "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues with displaying contact names for your chats. To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
-                    style: context.theme.textTheme.bodyLarge
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats.",
+                        style: context.theme.textTheme.bodyLarge
+                      ),
+                      Container(height: 5),
+                      Text(
+                        "To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
+                        style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)
+                      ),
+                    ],
                   ),
                   backgroundColor: context.theme.colorScheme.properSurface,
                   actions: <Widget>[
