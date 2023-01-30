@@ -94,7 +94,8 @@ class Handle {
     uniqueAddressAndService: json["uniqueAddrAndService"] ?? "${json["address"]}/${json["service"] ?? "iMessage"}",
     country: json["country"],
     handleColor: json["color"],
-    defaultPhone: json['defaultPhone'],
+    defaultPhone: json["defaultPhone"],
+    defaultEmail: json["defaultEmail"],
   );
 
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
@@ -232,6 +233,7 @@ class Handle {
       "country": country,
       "color": color,
       "defaultPhone": defaultPhone,
+      "defaultEmail": defaultEmail,
     };
 
     if (includeObjects) {
