@@ -21,8 +21,9 @@ class ContactsService extends GetxService {
   bool hasContactAccess = false;
 
   Future<void> init() async {
+    hasContactAccess = await canAccessContacts();
+
     if (!kIsWeb) {
-      hasContactAccess = await canAccessContacts();
       contacts = Contact.getContacts();
     } else {
       await fetchNetworkContacts();
@@ -39,6 +40,7 @@ class ContactsService extends GetxService {
   }
 
   Future<List<List<int>>> refreshContacts() async {
+    hasContactAccess = await canAccessContacts();
     if (!hasContactAccess) return [];
 
     final startTime = DateTime.now().millisecondsSinceEpoch;
