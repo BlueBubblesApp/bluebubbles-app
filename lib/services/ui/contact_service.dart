@@ -119,8 +119,7 @@ class ContactsService extends GetxService {
     }
     if (!kIsWeb) {
       Handle.bulkSave(handles);
-    }
-    if (kIsWeb) {
+    } else {
       contacts = _contacts;
     }
 
