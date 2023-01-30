@@ -47,7 +47,7 @@ class HandleSyncManager extends SyncManager {
     // 100(major) + 21(minor) + 1(bug)
     bool isMin1_5_2 = serverVersion >= 207; // Server: v1.5.2
     if (!isMin1_5_2) {
-      throw Exception("Failed to sync handles! Please update your server to v1.5.2 or newer!");
+      throw Exception("Please update your server to v1.5.2 or newer!");
     }
 
     super.start();
@@ -60,7 +60,7 @@ class HandleSyncManager extends SyncManager {
 
     int? totalHandles = await getHandleCount();
     if (totalHandles == null) {
-      throw Exception("Failed to sync handles! Unable to get handle count from server!");
+      throw Exception("Unable to get handle count from server!");
     } else {
       addToOutput('Received $totalHandles handles(s) from the server!');
     }

@@ -346,7 +346,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                             Logger.error(ex.toString());
                             Logger.error(stacktrace.toString());
 
-                            showSnackbar("Failed to re-sync handles!", "Run Logging and try again. Error: ${ex.toString()}");
+                            showSnackbar("Failed to re-sync handles!", "Error: ${ex.toString()}");
                           } finally {
                             resyncingHandles.value = false;
                           }
