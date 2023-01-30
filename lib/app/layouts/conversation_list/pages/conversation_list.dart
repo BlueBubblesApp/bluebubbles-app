@@ -195,6 +195,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
               },
               child: Navigator(
                 key: Get.nestedKey(1),
+                requestFocus: false,
                 onPopPage: (route, _) {
                   return false;
                 },
