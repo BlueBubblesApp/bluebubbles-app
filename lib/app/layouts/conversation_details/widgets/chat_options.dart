@@ -75,10 +75,10 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            backgroundColor: context.theme.colorScheme.secondary,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             title: Text(
                               "Custom Avatar",
-                              style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.textTheme.bodyMedium!.color)
+                              style: context.theme.textTheme.titleLarge
                             ),
                             content: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -87,23 +87,19 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                               children: [
                                 Text(
                                   "You already have a custom avatar for this chat. What would you like to do?",
-                                  style: context.theme.textTheme.bodyMedium
+                                  style: context.theme.textTheme.bodyLarge
                                 ),
                               ],
                             ),
                             actions: <Widget>[
                               TextButton(
-                                child: Text("Cancel", style: context.theme.textTheme.labelLarge!
-                                    .apply(color: context.theme.primaryColor)
-                                ),
+                                child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
                                   Navigator.of(context).pop();
-                                }
+                                },
                               ),
                               TextButton(
-                                child: Text("Reset", style: context.theme.textTheme.labelLarge!
-                                    .apply(color: context.theme.primaryColor),
-                                ),
+                                child: Text("Reset", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
                                   File file = File(chat.customAvatarPath!);
                                   file.delete();
@@ -113,9 +109,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                                 },
                               ),
                               TextButton(
-                                child: Text("Set New", style: context.theme.textTheme.labelLarge!
-                                    .apply(color: context.theme.primaryColor)
-                                ),
+                                child: Text("Set New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                   Get.to(() => AvatarCrop(chat: chat));
