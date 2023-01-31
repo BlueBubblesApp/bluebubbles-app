@@ -325,7 +325,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            showDialog(
+            await showDialog(
               barrierDismissible: false,
               context: context,
               builder: (BuildContext context) {
