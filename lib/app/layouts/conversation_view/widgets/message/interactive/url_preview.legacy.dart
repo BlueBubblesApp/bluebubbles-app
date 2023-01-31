@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -64,16 +67,33 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (metadata?.image != null)
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: context.height * 0.4),
-              child: Image.network(
-                metadata!.image!,
-                gaplessPlayback: true,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) {
-                  return const SizedBox.shrink();
-                },
+          if (metadata?.image != null && ReplyScope.maybeOf(context) == null)
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(metadata!.image!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                  child: Center(
+                    heightFactor: 1,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: context.height * 0.4),
+                      child: Image.network(
+                        metadata!.image!,
+                        gaplessPlayback: true,
+                        filterQuality: FilterQuality.none,
+                        errorBuilder: (_, __, ___) {
+                          return const SizedBox.shrink();
+                        },
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           Padding(
@@ -83,7 +103,10 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  metadata?.title ?? siteText ?? message.text!,
+                  !isNullOrEmpty(metadata?.title)!
+                      ? metadata!.title!
+                      : !isNullOrEmpty(siteText)!
+                      ? siteText! : message.text!,
                   style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -93,7 +116,7 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
                 if (!isNullOrEmpty(metadata?.description)!)
                   Text(
                     metadata!.description!,
-                    maxLines: 3,
+                    maxLines: ReplyScope.maybeOf(context) == null ? 3 : 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal)
                   ),
