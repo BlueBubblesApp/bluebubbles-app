@@ -5,6 +5,7 @@
 // See also https://docs.objectbox.io/getting-started#generate-objectbox-code
 
 // ignore_for_file: camel_case_types
+// coverage:ignore-file
 
 import 'dart:typed_data';
 
@@ -106,7 +107,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(3, 9017250848141753702),
       name: 'Chat',
-      lastPropertyId: const IdUid(24, 1609660383308913679),
+      lastPropertyId: const IdUid(25, 2054740103145852197),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -199,6 +200,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(24, 1609660383308913679),
             name: 'dateDeleted',
             type: 10,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(25, 2054740103145852197),
+            name: 'style',
+            type: 6,
             flags: 0)
       ],
       relations: <ModelRelation>[
@@ -944,7 +950,7 @@ ModelDefinition getObjectBoxModel() {
               .textFieldAttachments
               .map(fbb.writeString)
               .toList(growable: false));
-          fbb.startTable(25);
+          fbb.startTable(26);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(2, guidOffset);
           fbb.addOffset(4, chatIdentifierOffset);
@@ -964,6 +970,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(21, textFieldTextOffset);
           fbb.addOffset(22, textFieldAttachmentsOffset);
           fbb.addInt64(23, object.dateDeleted?.millisecondsSinceEpoch);
+          fbb.addInt64(24, object.style);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -997,7 +1004,8 @@ ModelDefinition getObjectBoxModel() {
               autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
               textFieldText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 46),
               textFieldAttachments: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false).vTableGet(buffer, rootOffset, 48, []),
-              dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue))
+              dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
+              style: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52))
             ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
                 ? null
                 : DateTime.fromMillisecondsSinceEpoch(
@@ -1645,6 +1653,9 @@ class Chat_ {
   /// see [Chat.dateDeleted]
   static final dateDeleted =
       QueryIntegerProperty<Chat>(_entities[1].properties[17]);
+
+  /// see [Chat.style]
+  static final style = QueryIntegerProperty<Chat>(_entities[1].properties[18]);
 
   /// see [Chat.handles]
   static final handles =

@@ -102,6 +102,11 @@ class HandleSyncManager extends SyncManager {
         // Generate the formatted address for each.
         // And load the matching contact, if we can.
         for (Handle h in serverHandles) {
+          // restore preferences from backed up handle
+          final backedUpHandle = handleBackup[h.originalROWID!];
+          h.color = backedUpHandle?.color;
+          h.defaultEmail = backedUpHandle?.defaultEmail;
+          h.defaultPhone = backedUpHandle?.defaultPhone;
           if (!h.address.contains("@") && h.formattedAddress == null) {
             h.formattedAddress = await formatPhoneNumber(h.address);
           }

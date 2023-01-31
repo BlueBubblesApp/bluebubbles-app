@@ -144,10 +144,12 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                         ),
                       ),
                     ) : message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 70),
-                      child: InteractiveHolder(
-                        parentController: controller,
-                        message: part,
+                      constraints: const BoxConstraints(maxHeight: 100),
+                      child: ReplyScope(
+                        child: InteractiveHolder(
+                          parentController: controller,
+                          message: part,
+                        ),
                       ),
                     ) : part.attachments.isEmpty ? Container(
                       constraints: BoxConstraints(
@@ -189,7 +191,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                         ),
                       ),
                     ) : ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 70),
+                      constraints: const BoxConstraints(maxHeight: 100),
                       child: ReplyScope(
                         child: AttachmentHolder(
                           parentController: controller,

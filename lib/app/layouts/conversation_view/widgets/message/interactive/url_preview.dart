@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:ui';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -118,40 +120,84 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_data.imageMetadata?.url != null && _data.imageMetadata?.size != Size.zero)
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: context.height * 0.4),
-              child: Image.network(
-                _data.imageMetadata!.url!,
-                gaplessPlayback: true,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) {
-                  return const SizedBox.shrink();
-                },
+          if (_data.imageMetadata?.url != null && _data.imageMetadata?.size != Size.zero && ReplyScope.maybeOf(context) == null)
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(_data.imageMetadata!.url!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                  child: Center(
+                    heightFactor: 1,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: context.height * 0.4),
+                      child: Image.network(
+                        _data.imageMetadata!.url!,
+                        gaplessPlayback: true,
+                        filterQuality: FilterQuality.none,
+                        errorBuilder: (_, __, ___) {
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          if (content is PlatformFile && hasAppleImage && content.bytes != null)
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: context.height * 0.4),
-              child: Image.memory(
-                content.bytes!,
-                gaplessPlayback: true,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) {
-                  return const SizedBox.shrink();
-                },
+          if (content is PlatformFile && hasAppleImage && content.bytes != null && ReplyScope.maybeOf(context) == null)
+           Container(
+             decoration: BoxDecoration(
+               image: DecorationImage(
+                 image: MemoryImage(content.bytes!),
+                 fit: BoxFit.cover,
+               ),
+             ),
+             child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: Center(
+                  heightFactor: 1,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: context.height * 0.4),
+                    child: Image.memory(
+                      content.bytes!,
+                      gaplessPlayback: true,
+                      filterQuality: FilterQuality.none,
+                      errorBuilder: (_, __, ___) {
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                ),
               ),
-            ),
-          if (content is PlatformFile && hasAppleImage && content.bytes == null && content.path != null)
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: context.height * 0.4),
-              child: Image.file(
-                file,
-                gaplessPlayback: true,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) {
-                  return const SizedBox.shrink();
-                },
+           ),
+          if (content is PlatformFile && hasAppleImage && content.bytes == null && content.path != null && ReplyScope.maybeOf(context) == null)
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: FileImage(file),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: Center(
+                  heightFactor: 1,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: context.height * 0.4),
+                    child: Image.file(
+                      file,
+                      gaplessPlayback: true,
+                      filterQuality: FilterQuality.none,
+                      errorBuilder: (_, __, ___) {
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                ),
               ),
             ),
           Padding(
@@ -165,7 +211,10 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _data.title ?? siteText ?? widget.message.text!,
+                        !isNullOrEmpty(_data.title)!
+                            ? _data.title!
+                            : !isNullOrEmpty(siteText)!
+                            ? siteText! : widget.message.text!,
                         style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -175,7 +224,7 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                       if (!isNullOrEmpty(_data.summary)!)
                         Text(
                           _data.summary ?? "",
-                          maxLines: 3,
+                          maxLines: ReplyScope.maybeOf(context) == null ? 3 : 1,
                           overflow: TextOverflow.ellipsis,
                           style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal)
                         ),

@@ -21,8 +21,9 @@ class TitleBarWrapper extends StatelessWidget {
         padding: const EdgeInsets.only(top: 50),
         child: Stack(
           children: <Widget>[
-            if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
             child,
+            if (ss.settings.showConnectionIndicator.value)
+              const ConnectionIndicator(),
           ],
         ),
       );
@@ -30,28 +31,32 @@ class TitleBarWrapper extends StatelessWidget {
     if (!kIsDesktop) {
       return Stack(
         children: <Widget>[
-          if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
           child,
+          if (ss.settings.showConnectionIndicator.value)
+            const ConnectionIndicator(),
         ],
       );
     }
 
-    return Obx(() => (ss.settings.useCustomTitleBar.value && Platform.isLinux) || (kIsDesktop && !Platform.isLinux)
-        ? WindowBorder(
-            color: Colors.transparent,
-            width: 0,
-            child: Stack(children: <Widget>[
-              child,
-              const TitleBar(),
-              if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
-            ]),
-          )
-        : Stack(
-            children: <Widget>[
-              child,
-              if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
-            ],
-          ));
+    return Obx(() => (ss.settings.useCustomTitleBar.value && Platform.isLinux) || (kIsDesktop && !Platform.isLinux) ? WindowBorder(
+        color: Colors.transparent,
+        width: 0,
+        child: Stack(
+          children: <Widget>[
+            child,
+            const TitleBar(),
+            if (ss.settings.showConnectionIndicator.value)
+              const ConnectionIndicator(),
+          ]
+        ),
+      ) : Stack(
+        children: <Widget>[
+          child,
+          if (ss.settings.showConnectionIndicator.value)
+            const ConnectionIndicator(),
+        ],
+      ),
+    );
   }
 }
 

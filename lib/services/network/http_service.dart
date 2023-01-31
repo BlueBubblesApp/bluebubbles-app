@@ -37,6 +37,14 @@ class HttpService extends GetxService {
     try {
       return await func();
     } catch (e, s) {
+      // try again if 502 error and Cloudflare
+      if (e is Response && e.statusCode == 502 && origin.contains("trycloudflare")) {
+        try {
+          return await func();
+        } catch (e, s) {
+          return Future.error(e, s);
+        }
+      }
       return Future.error(e, s);
     }
   }
@@ -800,6 +808,19 @@ class HttpService extends GetxService {
         "$origin/icloud/findmy/devices",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Refresh FindMy devices on server
+  Future<Response> refreshFindMyDevices({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$origin/icloud/findmy/devices/refresh",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+        options: Options(receiveTimeout: dio.options.receiveTimeout * 12),
       );
       return returnSuccessOrError(response);
     });
