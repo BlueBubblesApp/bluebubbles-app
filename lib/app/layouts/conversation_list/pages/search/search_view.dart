@@ -87,7 +87,12 @@ class SearchViewState extends OptimizedState<SearchView> {
       isSearching = true;
     });
 
-    List<dynamic> response = [];
+    final search = SearchResult(
+      search: currentSearchTerm!,
+      method: local ? "local" : "network",
+      results: [],
+    );
+
     if (local) {
       final query = (messageBox.query(Message_.text.contains(currentSearchTerm!)
           .and(Message_.associatedMessageGuid.isNull())
@@ -95,48 +100,52 @@ class SearchViewState extends OptimizedState<SearchView> {
           .and(Message_.dateCreated.notNull()))
         ..order(Message_.dateCreated, flags: Order.descending)).build();
       query.limit = 50;
-      final messages = query.find();
+      final results = query.find();
       query.close();
 
-      response = messages.map((e) {
+      List<Chat> chats = [];
+      List<Message> messages = [];
+      messages = results.map((e) {
         // grab attachments and associated messages
         e.realAttachments;
         e.fetchAssociatedMessages();
-        final map = e.toMap(includeObjects: true);
-        final chat = e.chat.target!;
-        // grab participants
-        chat.getParticipants();
-        map['chats'] = [chat.toMap()];
-        return map;
+        return e;
       }).toList();
+      chats = results.map((e) => e.chat.target!).toList();
+      chats.forEachIndexed((index, element) {
+        element.latestMessage = messages[index];
+        search.results.add(Tuple2(element, messages[index]));
+      });
     } else {
-      response = await MessagesService.getMessages(
-          limit: 50,
-          withChats: true,
-          withHandles: true,
-          withAttachments: true,
-          withChatParticipants: true,
-          where: [
-            {
-              'statement': 'message.text LIKE :term',
-              'args': {'term': "%$currentSearchTerm%"}
-            },
-            {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-          ]
+      final results = await MessagesService.getMessages(
+        limit: 50,
+        withChats: true,
+        withHandles: true,
+        withAttachments: true,
+        withChatParticipants: true,
+        where: [
+          {
+            'statement': 'message.text LIKE :term',
+            'args': {'term': "%$currentSearchTerm%"}
+          },
+          {'statement': 'message.associated_message_guid IS NULL', 'args': null}
+        ],
       );
-    }
-
-    final search = SearchResult(
-      search: currentSearchTerm!,
-      method: local ? "local" : "network",
-      results: [],
-    );
-
-    for (dynamic item in response) {
-      final chat = Chat.fromMap(item['chats'][0]);
-      final message = Message.fromMap(item);
-      chat.latestMessage = message;
-      search.results.add(Tuple2(chat, message));
+      // we query chats from DB so we can get contact names
+      final items = Tuple2(<Chat>[], <Message>[]);
+      for (dynamic item in results) {
+        final chat = Chat.fromMap(item['chats'][0]);
+        final message = Message.fromMap(item);
+        items.item1.add(chat);
+        items.item2.add(message);
+      }
+      final chatsToGet = items.item1.map((e) => e.guid).toList();
+      final dbChats = chatBox.query(Chat_.guid.oneOf(chatsToGet)).build().find();
+      for (int i = 0; i < items.item1.length; i++) {
+        final chat = dbChats.firstWhereOrNull((e) => e.guid == items.item1[i].guid) ?? items.item1[i];
+        chat.latestMessage = items.item2[i];
+        search.results.add(Tuple2(chat, items.item2[i]));
+      }
     }
 
     pastSearches.add(search);

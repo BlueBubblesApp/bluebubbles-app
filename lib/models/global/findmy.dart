@@ -46,6 +46,8 @@ class FindMy {
     required this.maxMsgChar,
     required this.deviceClass,
     required this.crowdSourcedLocation,
+    required this.role,
+    required this.lostModeMetadata,
   });
 
   final String? deviceModel;
@@ -59,7 +61,7 @@ class FindMy {
   final dynamic snd;
   final double? batteryLevel;
   final dynamic locationEnabled;
-  final dynamic isConsideredAccessory;
+  final bool isConsideredAccessory;
   final Address? address;
   final Location? location;
   final String? modelDisplayName;
@@ -94,6 +96,8 @@ class FindMy {
   final int? maxMsgChar;
   final String? deviceClass;
   final dynamic crowdSourcedLocation;
+  final Map<String, dynamic>? role;
+  final Map<String, dynamic>? lostModeMetadata;
 
   factory FindMy.fromJson(Map<String, dynamic> json) => FindMy(
     deviceModel: json["deviceModel"],
@@ -107,7 +111,7 @@ class FindMy {
     snd: json["snd"],
     batteryLevel: json["batteryLevel"]?.toDouble(),
     locationEnabled: json["locationEnabled"],
-    isConsideredAccessory: json["isConsideredAccessory"],
+    isConsideredAccessory: json["isConsideredAccessory"] ?? false,
     address: json["address"] == null ? null : Address.fromJson(json["address"]),
     location: json["location"] == null ? null : Location.fromJson(json["location"]),
     modelDisplayName: json["modelDisplayName"],
@@ -142,6 +146,8 @@ class FindMy {
     maxMsgChar: json["maxMsgChar"],
     deviceClass: json["deviceClass"],
     crowdSourcedLocation: json["crowdSourcedLocation"],
+    role: json["role"],
+    lostModeMetadata: json["lostModeMetadata"],
   );
 
   Map<String, dynamic> toJson() => {
