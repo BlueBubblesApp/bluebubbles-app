@@ -1,4 +1,4 @@
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
+import 'package:bluebubbles/app/components/sliver_decoration.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
@@ -123,103 +123,39 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                       if (_chats.bigPinHelper(true).isNotEmpty)
                         SliverPadding(
                           padding: const EdgeInsets.only(bottom: 15),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final chat = _chats.bigPinHelper(true)[index];
-                                final item = ListItem(chat: chat, controller: controller, update: () {
-                                  setState(() {});
-                                });
-                                // give the list rounded corners at top and bottom
-                                if (_chats.bigPinHelper(true).length == 1) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(25),
-                                        topRight: Radius.circular(25),
-                                        bottomLeft: Radius.circular(25),
-                                        bottomRight: Radius.circular(25),
-                                      ),
-                                      color: _tileColor,
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: item,
-                                  );
-                                } else if (index == 0 || index == _chats.bigPinHelper(true).length - 1) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: index == 0 ? const BorderRadius.only(
-                                        topLeft: Radius.circular(25),
-                                        topRight: Radius.circular(25),
-                                      ) : const BorderRadius.only(
-                                        bottomLeft: Radius.circular(25),
-                                        bottomRight: Radius.circular(25),
-                                      ),
-                                      color: _tileColor,
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: item,
-                                  );
-                                } else {
-                                  return Container(
-                                    color: _tileColor,
-                                    child: item,
-                                  );
-                                }
-                              },
-                              childCount: _chats.bigPinHelper(true).length,
-                            )
+                          sliver: SliverDecoration(
+                            color: _tileColor,
+                            borderRadius: BorderRadius.circular(25),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final chat = _chats.bigPinHelper(true)[index];
+                                  return ListItem(chat: chat, controller: controller, update: () {
+                                    setState(() {});
+                                  });
+                                },
+                                childCount: _chats.bigPinHelper(true).length,
+                              )
+                            ),
                           ),
                         ),
 
                       SliverPadding(
                         padding: const EdgeInsets.only(bottom: 15),
-                        sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                final chat = _chats.bigPinHelper(false)[index];
-                                final item = ListItem(chat: chat, controller: controller, update: () {
-                                  setState(() {});
-                                });
-                                // give the list rounded corners at top and bottom
-                                if (_chats.bigPinHelper(false).length == 1) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(25),
-                                        topRight: Radius.circular(25),
-                                        bottomLeft: Radius.circular(25),
-                                        bottomRight: Radius.circular(25),
-                                      ),
-                                      color: _tileColor,
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: item,
-                                  );
-                                } else if (index == 0 || index == _chats.bigPinHelper(false).length - 1) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: index == 0 ? const BorderRadius.only(
-                                        topLeft: Radius.circular(25),
-                                        topRight: Radius.circular(25),
-                                      ) : const BorderRadius.only(
-                                        bottomLeft: Radius.circular(25),
-                                        bottomRight: Radius.circular(25),
-                                      ),
-                                      color: _tileColor,
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: item,
-                                  );
-                                } else {
-                                  return Container(
-                                    color: _tileColor,
-                                    child: item,
-                                  );
-                                }
-                              },
-                              childCount: _chats.bigPinHelper(false).length,
-                            )
+                        sliver: SliverDecoration(
+                          color: _tileColor,
+                          borderRadius: BorderRadius.circular(25),
+                          sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                  final chat = _chats.bigPinHelper(false)[index];
+                                  return ListItem(chat: chat, controller: controller, update: () {
+                                    setState(() {});
+                                  });
+                                },
+                                childCount: _chats.bigPinHelper(false).length,
+                              ),
+                          ),
                         ),
                       ),
                     ],
