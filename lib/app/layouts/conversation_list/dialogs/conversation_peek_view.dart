@@ -168,7 +168,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                             child: DeferredPointerHandler(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: ts.inDarkMode(context) ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background,
+                                  color: ts.inDarkMode(context) ? context.theme.colorScheme.properSurface.darkenPercent(30) : context.theme.colorScheme.background,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 width: min(context.width - 50, 500),
