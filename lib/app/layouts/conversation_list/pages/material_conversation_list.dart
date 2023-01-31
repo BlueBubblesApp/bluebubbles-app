@@ -51,101 +51,95 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
         }
         return true;
       },
-      child: Stack(
-        children: [
-          Container(
-            color: backgroundColor,
-            padding: EdgeInsets.only(top: kIsDesktop ? 30 : 0),
-            child: Scaffold(
-              appBar: PreferredSize(
-                preferredSize: const Size.fromHeight(60),
-                child: MaterialHeader(parentController: controller),
-              ),
-              backgroundColor: backgroundColor,
-              extendBodyBehindAppBar: true,
-              floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
-                  && !showArchived && !showUnknown
-                  ? ConversationListFAB(parentController: controller)
-                  : const SizedBox.shrink()),
-              body: Obx(() {
-                final _chats = chats.chats
-                    .archivedHelper(showArchived)
-                    .unknownSendersHelper(showUnknown);
-
-                if (!chats.loadedChatBatch.value || _chats.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 100),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              !chats.loadedChatBatch.value
-                                  ? "Loading chats..."
-                                  : showArchived
-                                  ? "You have no archived chats"
-                                  : showUnknown
-                                  ? "You have no messages from unknown senders :)"
-                                  : "You have no chats :(",
-                              style: context.theme.textTheme.labelLarge,
-                            ),
-                          ),
-                          if (!chats.loadedChatBatch.value)
-                            buildProgressIndicator(context, size: 15),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return NotificationListener(
-                  onNotification: (notif) {
-                    if (notif is ScrollStartNotification) {
-                      controller.materialScrollStartPosition = controller.materialScrollController.offset;
-                    }
-                    return true;
-                  },
-                  child: ScrollbarWrapper(
-                    showScrollbar: true,
-                    controller: controller.materialScrollController,
-                    child: Obx(() => ListView.builder(
-                      controller: controller.materialScrollController,
-                      physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                          ? const NeverScrollableScrollPhysics()
-                          : ThemeSwitcher.getScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final chat = _chats[index];
-                        final child = ListItem(chat: chat, controller: controller, update: () {
-                          setState(() {});
-                        });
-                        final separator = Obx(() => !ss.settings.hideDividers.value ? Padding(
-                          padding: const EdgeInsets.only(left: 20),
-                          child: Divider(
-                            color: context.theme.colorScheme.outline.withOpacity(0.5),
-                            thickness: 0.5,
-                            height: 0.5,
-                          ),
-                        ) : const SizedBox.shrink());
-
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            child,
-                            separator,
-                          ],
-                        );
-                      },
-                      itemCount: _chats.length,
-                    )),
-                  ),
-                );
-              }),
-            ),
+      child: Container(
+        color: backgroundColor,
+        padding: EdgeInsets.only(top: kIsDesktop ? 30 : 0),
+        child: Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: MaterialHeader(parentController: controller),
           ),
-          if (ss.settings.showConnectionIndicator.value)
-            const ConnectionIndicator(),
-        ],
+          backgroundColor: backgroundColor,
+          extendBodyBehindAppBar: true,
+          floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
+              && !showArchived && !showUnknown
+              ? ConversationListFAB(parentController: controller)
+              : const SizedBox.shrink()),
+          body: Obx(() {
+            final _chats = chats.chats
+                .archivedHelper(showArchived)
+                .unknownSendersHelper(showUnknown);
+
+            if (!chats.loadedChatBatch.value || _chats.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 100),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          !chats.loadedChatBatch.value
+                              ? "Loading chats..."
+                              : showArchived
+                              ? "You have no archived chats"
+                              : showUnknown
+                              ? "You have no messages from unknown senders :)"
+                              : "You have no chats :(",
+                          style: context.theme.textTheme.labelLarge,
+                        ),
+                      ),
+                      if (!chats.loadedChatBatch.value)
+                        buildProgressIndicator(context, size: 15),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return NotificationListener(
+              onNotification: (notif) {
+                if (notif is ScrollStartNotification) {
+                  controller.materialScrollStartPosition = controller.materialScrollController.offset;
+                }
+                return true;
+              },
+              child: ScrollbarWrapper(
+                showScrollbar: true,
+                controller: controller.materialScrollController,
+                child: Obx(() => ListView.builder(
+                  controller: controller.materialScrollController,
+                  physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                      ? const NeverScrollableScrollPhysics()
+                      : ThemeSwitcher.getScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final chat = _chats[index];
+                    final child = ListItem(chat: chat, controller: controller, update: () {
+                      setState(() {});
+                    });
+                    final separator = Obx(() => !ss.settings.hideDividers.value ? Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Divider(
+                        color: context.theme.colorScheme.outline.withOpacity(0.5),
+                        thickness: 0.5,
+                        height: 0.5,
+                      ),
+                    ) : const SizedBox.shrink());
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        child,
+                        separator,
+                      ],
+                    );
+                  },
+                  itemCount: _chats.length,
+                )),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
