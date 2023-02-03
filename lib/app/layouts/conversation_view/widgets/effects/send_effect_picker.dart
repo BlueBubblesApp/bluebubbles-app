@@ -397,7 +397,6 @@ void sendEffectAction(
                 ),
               ),
             ),
-          ),
         );
       },
       fullscreenDialog: true,
