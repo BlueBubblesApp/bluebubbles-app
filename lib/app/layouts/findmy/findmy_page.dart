@@ -10,6 +10,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:latlong2/latlong.dart';
 
 class FindMyPage extends StatefulWidget {
@@ -39,6 +40,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   List<Marker> markers = [];
   Position? location;
   bool? fetching = true;
+  bool refreshing = false;
 
   @override
   void initState() {
@@ -46,11 +48,18 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     getLocations();
   }
 
-  void getLocations() async {
-    final response = await http.findMyDevices().catchError((_) {
+  void getLocations({bool refresh = false}) async {
+    final response = refresh ? await http.refreshFindMyDevices().catchError((_) async {
+      setState(() {
+        refreshing = false;
+      });
+      showSnackbar("Error", "Something went wrong refreshing FindMy data!");
+      return Response(requestOptions: RequestOptions(path: ''));
+    }) : await http.findMyDevices().catchError((_) async {
       setState(() {
         fetching = null;
       });
+      return Response(requestOptions: RequestOptions(path: ''));
     });
     if (response.statusCode == 200 && response.data['data'] != null) {
       try {
@@ -70,9 +79,10 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 5.0),
-                  child: Icon((e.isMac ?? false)
+                  child: e.role?['emoji'] != null ? Text(e.role!['emoji'], style: context.theme.textTheme.bodyLarge!.copyWith(fontFamily: 'Apple Color Emoji'))
+                      : Icon((e.isMac ?? false)
                       ? CupertinoIcons.desktopcomputer
-                      : (e.isConsideredAccessory ?? false)
+                      : e.isConsideredAccessory
                       ? CupertinoIcons.headphones
                       : CupertinoIcons.device_phone_portrait,
                     color: Colors.black,
@@ -111,18 +121,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
         }
         setState(() {
           fetching = false;
+          refreshing = false;
         });
       } catch (e, s) {
         Logger.error(e);
         Logger.error(s);
         setState(() {
           fetching = null;
+          refreshing = false;
         });
         return;
       }
     } else {
       setState(() {
         fetching = false;
+        refreshing = false;
       });
     }
   }
@@ -130,7 +143,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
-    final withLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null).toList();
+    final devicesWithLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null && !item.isConsideredAccessory).toList();
+    final itemsWithLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null && item.isConsideredAccessory).toList();
     final withoutLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) == null).toList();
     final bodySlivers = [
       SliverList(
@@ -154,7 +168,14 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 ),
               ),
             ),
-          if (withLocation.isNotEmpty)
+          if (devicesWithLocation.isNotEmpty)
+            SettingsHeader(
+                headerColor: headerColor,
+                tileColor: tileColor,
+                iosSubtitle: iosSubtitle,
+                materialSubtitle: materialSubtitle,
+                text: "Devices"),
+          if (devicesWithLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: tileColor,
               children: [
@@ -164,7 +185,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     itemBuilder: (context, i) {
-                      final item = withLocation[i];
+                      final item = devicesWithLocation[i];
                       return ListTile(
                         mouseCursor: MouseCursor.defer,
                         title: Text(item.name ?? "Unknown Device"),
@@ -194,7 +215,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                 child: Container(
                                   padding: const EdgeInsets.all(10.0),
                                   decoration: BoxDecoration(
-                                      color: context.theme.backgroundColor,
+                                      color: context.theme.colorScheme.background,
                                       borderRadius: const BorderRadius.all(Radius.circular(10))
                                   ),
                                   child: SingleChildScrollView(
@@ -219,7 +240,84 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         },
                       );
                     },
-                    itemCount: withLocation.length,
+                    itemCount: devicesWithLocation.length,
+                  ),
+                ),
+              ],
+            ),
+          if (itemsWithLocation.isNotEmpty)
+            SettingsHeader(
+                headerColor: headerColor,
+                tileColor: tileColor,
+                iosSubtitle: iosSubtitle,
+                materialSubtitle: materialSubtitle,
+                text: "Items"),
+          if (itemsWithLocation.isNotEmpty)
+            SettingsSection(
+              backgroundColor: tileColor,
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, i) {
+                      final item = itemsWithLocation[i];
+                      return ListTile(
+                        mouseCursor: MouseCursor.defer,
+                        title: Text(item.name ?? "Unknown Device"),
+                        subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                        onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
+                          index.value = 1;
+                          tabController.animateTo(1);
+                          await completer.future;
+                          final marker = markers.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
+                          popupController.showPopupsOnlyFor([marker]);
+                          mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
+                        } : null,
+                        onLongPress: () async {
+                          const encoder = JsonEncoder.withIndent("     ");
+                          final str = encoder.convert(item.toJson());
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(
+                                "Raw FindMy Data",
+                                style: context.theme.textTheme.titleLarge,
+                              ),
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              content: SizedBox(
+                                width: ns.width(context) * 3 / 5,
+                                height: context.height * 1 / 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(10.0),
+                                  decoration: BoxDecoration(
+                                      color: context.theme.colorScheme.background,
+                                      borderRadius: const BorderRadius.all(Radius.circular(10))
+                                  ),
+                                  child: SingleChildScrollView(
+                                    child: SelectableText(
+                                      str,
+                                      style: context.theme.textTheme.bodyLarge,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  child: Text(
+                                      "Close",
+                                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
+                                  ),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    itemCount: itemsWithLocation.length,
                   ),
                 ),
               ],
@@ -268,7 +366,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                               child: Container(
                                 padding: const EdgeInsets.all(10.0),
                                 decoration: BoxDecoration(
-                                    color: context.theme.backgroundColor,
+                                    color: context.theme.colorScheme.background,
                                     borderRadius: const BorderRadius.all(Radius.circular(10))
                                 ),
                                 child: SingleChildScrollView(
@@ -301,16 +399,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     ];
 
     final actions = [
-      IconButton(
-        icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground),
-        onPressed: () {
-          setState(() {
-            fetching = true;
-            devices.clear();
-          });
-          getLocations();
-        },
-      ),
+      if (!refreshing)
+        IconButton(
+          icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground),
+          onPressed: () {
+            setState(() {
+              refreshing = true;
+            });
+            getLocations(refresh: true);
+          },
+        ),
+      if (refreshing)
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: buildProgressIndicator(context),
+        ),
     ];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(

@@ -6,8 +6,9 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
 
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
@@ -54,7 +55,8 @@ class ChatsService extends GetxService {
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
-    })).data['data']['total'];
+      return Response(requestOptions: RequestOptions(path: ''));
+    })).data['data']['total'] ?? 0;
     loadedAllChats = Completer();
     if (currentCount != 0) {
       hasChats.value = true;
@@ -145,10 +147,15 @@ class ChatsService extends GetxService {
   }
 
   void markAllAsRead() {
-    chats.where((element) => element.hasUnreadMessage!).forEach((element) {
-      element.toggleHasUnread(false);
-      mcs.invokeMethod("clear-chat-notifs", {"chatGuid": element.guid});
-    });
+    final _chats = chatBox.query(Chat_.hasUnreadMessage.equals(true)).build().find();
+    for (Chat c in _chats) {
+      c.hasUnreadMessage = false;
+      mcs.invokeMethod("clear-chat-notifs", {"chatGuid": c.guid});
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
+        http.markChatRead(c.guid);
+      }
+    }
+    chatBox.putMany(_chats);
   }
 
   void updateChatPinIndex(int oldIndex, int newIndex) {

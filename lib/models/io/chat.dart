@@ -327,6 +327,7 @@ class Chat {
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
+  int? style;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -360,6 +361,7 @@ class Chat {
     this.textFieldText,
     this.textFieldAttachments = const [],
     this.dateDeleted,
+    this.style,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -387,6 +389,7 @@ class Chat {
       autoSendReadReceipts: json["autoSendReadReceipts"],
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
       dateDeleted: parseDate(json["dateDeleted"]),
+      style: json["style"],
     );
   }
 
@@ -656,6 +659,10 @@ class Chat {
         Logger.error(stacktrace.toString());
       }
     }
+    // Save any attachments
+    for (Attachment? attachment in message.attachments) {
+      attachment!.save(newMessage);
+    }
     bool isNewer = false;
 
     // If the message was saved correctly, update this chat's latestMessage info,
@@ -671,11 +678,6 @@ class Chat {
           chats.addChat(this);
         }
       }
-    }
-
-    // Save any attachments
-    for (Attachment? attachment in message.attachments) {
-      attachment!.save(newMessage);
     }
 
     // Save the chat.
@@ -912,7 +914,7 @@ class Chat {
 
   bool get isIMessage => !isTextForwarding && !isSMS;
 
-  bool get isGroup => participants.length > 1;
+  bool get isGroup => participants.length > 1 || style == 43;
 
   Chat merge(Chat other) {
     id ??= other.id;
@@ -936,6 +938,7 @@ class Chat {
     muteArgs ??= other.muteArgs;
     title ??= other.title;
     dateDeleted ??= other.dateDeleted;
+    style ??= other.style;
     return this;
   }
 
@@ -974,5 +977,6 @@ class Chat {
     "autoSendReadReceipts": autoSendReadReceipts!,
     "autoSendTypingIndicators": autoSendTypingIndicators!,
     "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
+    "style": style,
   };
 }

@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
+import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -17,7 +18,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide MenuItem;
+import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -31,6 +32,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:system_tray/system_tray.dart';
@@ -173,6 +175,11 @@ Future<Null> initApp(bool bubble) async {
           } catch (e, s) {
             Logger.error(e);
             Logger.error(s);
+            // this can very rarely happen
+            if (e.toString().contains("another store is still open using the same path")) {
+              Logger.info("Retrying to attach to an existing ObjectBox store");
+              store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+            }
           }
         }
       } else {
@@ -264,12 +271,12 @@ Future<Null> initApp(bool bubble) async {
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
     if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(MaterialApp(
-          home: SplashScreen(shouldNavigate: false),
-          theme: ThemeData(
-              backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
-                  ? Colors.black
-                  : Colors.white
-          )
+        home: SplashScreen(shouldNavigate: false),
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSwatch(backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
+            ? Colors.black
+            : Colors.white),
+        )
       ));
     }
 
@@ -293,7 +300,7 @@ Future<Null> initApp(bool bubble) async {
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
     if (kIsDesktop) {
       /* ----- VLC INITIALIZATION ----- */
-      await DartVLC.initialize();
+      DartVLC.initialize();
 
       /* ----- WINDOW INITIALIZATION ----- */
       await windowManager.ensureInitialized();
@@ -639,14 +646,103 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
         /* ----- WINDOW EFFECT INITIALIZATION ----- */
         if (Platform.isWindows) {
-          await WindowEffects.setEffect(color: context.theme.backgroundColor);
+          await WindowEffects.setEffect(color: context.theme.colorScheme.background);
 
           eventDispatcher.stream.listen((event) async {
             if (event.item1 == 'theme-update') {
-              await WindowEffects.setEffect(color: context.theme.backgroundColor);
+              await WindowEffects.setEffect(color: context.theme.colorScheme.background);
             }
           });
         }
+      }
+
+      // only show these dialogs if setup is finished
+      if (ss.settings.finishedSetup.value) {
+        if (ss.prefs.getBool('1.11.1-warning') != true && !kIsWeb) {
+          bool needsMigration = false;
+
+          try {
+            needsMigration = await needsMigrationForUniqueService(chats.loadedAllChats.future);
+          } catch (ex) {
+            Logger.error("Error checking for handle migration: $ex");
+          }
+  
+          if (needsMigration) {
+            showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(
+                    "Handle Migration",
+                    style: context.theme.textTheme.titleLarge,
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
+                        style: context.theme.textTheme.bodyLarge
+                      ),
+                      Container(height: 5),
+                      Text(
+                        "To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
+                        style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)
+                      ),
+                    ],
+                  ),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  actions: <Widget>[
+                    TextButton(
+                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              }
+            );
+          }
+        }
+
+        if (ss.prefs.getBool('1.11-warning') != true && !kIsWeb) {
+          showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "Important Notice",
+                  style: context.theme.textTheme.titleLarge,
+                ),
+                content: Text(
+                  "You now have the highly-anticipated v1.11 release! Due to a change with how the app handles contacts, you will need to fully quit and reopen the app this one time only to ensure your contacts populate.\n\nCheck out the changelog for some huge new features, and we hope you enjoy!",
+                  style: context.theme.textTheme.bodyLarge
+                ),
+                backgroundColor: context.theme.colorScheme.properSurface,
+                actions: <Widget>[
+                  TextButton(
+                    child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            }
+          );
+        }
+
+        if ((fs.androidInfo?.version.sdkInt ?? 0) >= 33) {
+          Permission.notification.request();
+        }
+      }
+      if (ss.prefs.getBool('1.11-warning') != true) {
+        ss.prefs.setBool('1.11-warning', true);
+      }
+      if (ss.prefs.getBool('1.11.1-warning') != true) {
+        ss.prefs.setBool('1.11.1-warning', true);
       }
 
       if (!ss.settings.finishedSetup.value) {
@@ -762,21 +858,21 @@ Future<void> initSystemTray() async {
   final Menu menu = Menu();
   await menu.buildFrom(
     [
-      MenuItemLable(
+      MenuItemLabel(
         label: 'Open App',
         onClicked: (_) async {
           ls.open();
           await windowManager.show();
         },
       ),
-      MenuItemLable(
+      MenuItemLabel(
         label: 'Hide App',
         onClicked: (_) async {
           ls.close();
           await windowManager.hide();
         },
       ),
-      MenuItemLable(
+      MenuItemLabel(
         label: 'Close App',
         onClicked: (_) async {
           await windowManager.close();

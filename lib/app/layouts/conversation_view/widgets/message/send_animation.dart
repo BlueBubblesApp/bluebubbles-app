@@ -47,7 +47,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     if (ss.settings.sendSoundPath.value != null) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(
-        ss.settings.sendSoundPath.value!, 1.0
+        path: ss.settings.sendSoundPath.value!, volume: 1.0
       ).then((_) => controller.startPlayer());
     }
     for (int i = 0; i < attachments.length; i++) {
@@ -114,8 +114,8 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
     return AnimatedPositioned(
       duration: Duration(milliseconds: message != null ? 400 : 0),
-      bottom: message != null ? textFieldSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) : 0,
-      right: 5,
+      bottom: message != null ? textFieldSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) + (!iOS ? 15 : 0) : 0,
+      right: samsung ? -37.5 : 5,
       curve: Curves.easeInOutCubic,
       onEnd: () async {
         if (message != null) {

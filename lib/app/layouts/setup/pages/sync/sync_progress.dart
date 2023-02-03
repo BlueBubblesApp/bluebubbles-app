@@ -49,7 +49,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
         setState(() {
           hasPlayed = true;
         });
-        confettiController.play();
+        // todo dart fix confettiController.play();
       }
     });
   }

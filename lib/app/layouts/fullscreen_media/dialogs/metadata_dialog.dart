@@ -44,7 +44,7 @@ void showMetadataDialog(Attachment a, BuildContext context) {
         child: Container(
           padding: const EdgeInsets.all(10.0),
           decoration: BoxDecoration(
-            color: context.theme.backgroundColor,
+            color: context.theme.colorScheme.background,
             borderRadius: BorderRadius.circular(10)
           ),
           child: ListView(

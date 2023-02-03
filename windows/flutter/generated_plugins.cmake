@@ -4,17 +4,16 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
-  connectivity_plus_windows
+  connectivity_plus
   dart_vlc
   desktop_drop
   dynamic_color
   flutter_acrylic
-  flutter_native_view
   geolocator_windows
   local_auth_windows
   local_notifier
   maps_launcher
-  network_info_plus_windows
+  network_info_plus
   objectbox_flutter_libs
   pasteboard
   permission_handler_windows
@@ -22,6 +21,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   quick_notify
   screen_retriever
   secure_application
+  share_plus
   system_tray
   url_launcher_windows
   window_manager

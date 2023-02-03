@@ -251,9 +251,39 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () async {
-              chats.removeChat(chat);
-              Chat.softDelete(chat);
-              Navigator.pop(context);
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: context.theme.textTheme.titleLarge,
+                    ),
+                    content: Text(
+                        "This chat will be deleted from this device only",
+                        style: context.theme.textTheme.bodyLarge
+                    ),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          chats.removeChat(chat);
+                          Chat.softDelete(chat);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
@@ -452,7 +482,7 @@ Future<void> paintGroupAvatar({
     } else {
       Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung
             ? theme.colorScheme.secondary
-            : theme.backgroundColor;
+            : theme.colorScheme.background;
       canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
       await paintAvatar(
         handle: participants[index],
@@ -559,7 +589,7 @@ Future<Uint8List?> clip(Uint8List data, {required int size, required bool circle
   if (_image != null) {
     _image = img.copyResize(_image, width: size, height: size);
 
-    _data = img.encodePng(_image) as Uint8List;
+    _data = img.encodePng(_image);
   }
 
   image = await loadImage(_data);

@@ -278,7 +278,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                                           style: TextStyle(
                                                               fontSize: 16,
                                                               color: (hardDisabled && value == "Mark Read")
-                                                                  ? context.textTheme.subtitle1!.color
+                                                                  ? context.textTheme.titleMedium!.color
                                                                   : null),
                                                           textAlign: TextAlign.center,
                                                         ),

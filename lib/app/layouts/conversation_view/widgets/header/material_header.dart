@@ -32,7 +32,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
       automaticallyImplyLeading: false,
-      toolbarHeight: (kIsDesktop ? 5 : 0) + 80 * (ss.settings.skin.value == Skins.iOS ? ss.settings.avatarScale.value : 1),
+      toolbarHeight: (kIsDesktop ? 5 : 0) + kToolbarHeight,
       leadingWidth: 40,
       leading: Padding(
         padding: const EdgeInsets.only(left: 10.0),
@@ -55,7 +55,15 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
       title: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: controller.chat.isGroup ? null : () async {
+        onTap: controller.chat.isGroup ? () {
+          Navigator.of(context).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (context) => ConversationDetails(
+                chat: controller.chat,
+              ),
+            ),
+          );
+        } : () async {
           final handle = controller.chat.participants.first;
           final contact = handle.contact;
           if (contact == null) {
@@ -109,12 +117,45 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
               }
               Navigator.of(context).pop();
             } else if (value == 2) {
-              chats.removeChat(controller.chat);
-              Chat.softDelete(controller.chat);
-              while (Get.isOverlaysOpen) {
-                Get.back();
-              }
-              Navigator.of(context).pop();
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: context.theme.textTheme.titleLarge,
+                    ),
+                    content: Text(
+                      "This chat will be deleted from this device only",
+                      style: context.theme.textTheme.bodyLarge
+                    ),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          while (Get.isOverlaysOpen) {
+                            Get.back();
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          chats.removeChat(controller.chat);
+                          Chat.softDelete(controller.chat);
+                          while (Get.isOverlaysOpen) {
+                            Get.back();
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             }
           },
           itemBuilder: (context) {

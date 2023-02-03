@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -176,6 +177,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         onChanged: (bool val) {
                           ss.settings.tabletMode.value = val;
                           saveSettings();
+                          // update the conversation view UI
+                          eventDispatcher.emit('split-refresh', null);
                         },
                         initialVal: ss.settings.tabletMode.value,
                         title: "Tablet Mode",
@@ -243,7 +246,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               ss.settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
                             }
                             ss.prefs.setString('window-effect', effect.toString());
-                            await WindowEffects.setEffect(color: context.theme.backgroundColor);
+                            await WindowEffects.setEffect(color: context.theme.colorScheme.background);
                             saveSettings();
                           },
                           title: "Window Effect",
@@ -260,7 +263,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                   "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
                             )),
                       Obx(() {
-                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.colorScheme.background)) {
                           return SettingsTile(
                             title: "Background Opacity (Light)",
                             trailing: ss.settings.windowEffectCustomOpacityLight.value != WindowEffects.defaultOpacity(dark: false) ? ElevatedButton(
@@ -275,7 +278,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         return const SizedBox.shrink();
                       }),
                       Obx(() {
-                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.colorScheme.background)) {
                           return SettingsSlider(
                             startingVal: ss.settings.windowEffectCustomOpacityLight.value,
                             max: 1,
@@ -291,7 +294,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         return const SizedBox.shrink();
                       }),
                       Obx(() {
-                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.colorScheme.background)) {
                           return SettingsTile(
                             title: "Background Opacity (Dark)",
                             trailing: ss.settings.windowEffectCustomOpacityDark.value != WindowEffects.defaultOpacity(dark: true) ? ElevatedButton(
@@ -306,7 +309,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         return const SizedBox.shrink();
                       }),
                       Obx(() {
-                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.colorScheme.background)) {
                           return SettingsSlider(
                             startingVal: ss.settings.windowEffectCustomOpacityDark.value,
                             max: 1,
@@ -672,6 +675,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               ).catchError((err) {
                                 Logger.error(err.toString());
                                 showSnackbar("Error", "Failed to fetch font");
+                                return Response(requestOptions: RequestOptions(path: ''));
                               });
                               Navigator.of(context).pop();
                               controller.downloadingFont.value = false;

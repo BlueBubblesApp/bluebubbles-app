@@ -168,7 +168,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                             child: DeferredPointerHandler(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: ts.inDarkMode(context) ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background,
+                                  color: ts.inDarkMode(context) ? context.theme.colorScheme.properSurface.darkenPercent(30) : context.theme.colorScheme.background,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 width: min(context.width - 50, 500),
@@ -325,8 +325,39 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            chats.removeChat(widget.chat);
-            Chat.softDelete(widget.chat);
+            await showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(
+                    "Are you sure?",
+                    style: context.theme.textTheme.titleLarge,
+                  ),
+                  content: Text(
+                      "This chat will be deleted from this device only",
+                      style: context.theme.textTheme.bodyLarge
+                  ),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  actions: <Widget>[
+                    TextButton(
+                      child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                      onPressed: () {
+                        popPeekView();
+                      },
+                    ),
+                    TextButton(
+                      child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                      onPressed: () async {
+                        chats.removeChat(widget.chat);
+                        Chat.softDelete(widget.chat);
+                        popPeekView();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
             popPeekView();
           },
           child: ListTile(

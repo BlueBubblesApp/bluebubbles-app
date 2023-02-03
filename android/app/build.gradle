@@ -32,7 +32,7 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     lintOptions {
         checkReleaseBuilds false
@@ -46,8 +46,8 @@ android {
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
-        targetSdkVersion 32
-        versionCode 20000000 + flutterVersionCode.toInteger()
+        targetSdkVersion 33
+        versionCode 20002000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -135,27 +135,28 @@ flutter {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.5.0'
+    implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'junit:junit:4.13.1'
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    implementation 'com.google.firebase:firebase-analytics:21.1.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'com.google.firebase:firebase-analytics:21.2.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.core:core:1.8.0"
-    implementation "androidx.sharetarget:sharetarget:1.2.0-rc02"
+    implementation "androidx.core:core:1.9.0"
+    implementation 'androidx.core:core-google-shortcuts:1.1.0'
+    implementation "androidx.sharetarget:sharetarget:1.2.0"
 
     //for location sending
-    implementation "com.google.android.gms:play-services-location:20.0.0"
+    implementation "com.google.android.gms:play-services-location:21.0.1"
 
     // for album art color
     implementation 'androidx.palette:palette:1.0.0'
 
     // Add the SDK for Firebase Cloud Messaging
-    implementation 'com.google.firebase:firebase-messaging:23.0.7'
-    implementation 'com.google.firebase:firebase-analytics:21.1.0'
-    implementation 'com.google.firebase:firebase-database:20.0.5'
-    implementation 'com.google.firebase:firebase-messaging-directboot:23.0.7'
+    implementation 'com.google.firebase:firebase-messaging:23.1.1'
+    implementation 'com.google.firebase:firebase-analytics:21.2.0'
+    implementation 'com.google.firebase:firebase-database:20.1.0'
+    implementation 'com.google.firebase:firebase-messaging-directboot:23.1.1'
     implementation 'com.google.firebase:firebase-iid:21.1.0'
 
     //for json string to map

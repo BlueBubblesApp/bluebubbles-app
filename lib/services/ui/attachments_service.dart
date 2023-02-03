@@ -171,38 +171,33 @@ class AttachmentsService extends GetxService {
         showSnackbar('Success', 'Saved attachment to $savePath!');
       }
     } else {
-      final canSave = (await Permission.storage.request()).isGranted;
       String? savePath;
 
-      if (!canSave) {
-        showSnackbar("Error", "Please grant the storage permission and try again!");
+      if (ss.settings.askWhereToSave.value && !isAutoDownload) {
+        savePath = await FilePicker.platform.getDirectoryPath(
+          initialDirectory: "/storage/emulated/0/Download/",
+          dialogTitle: 'Choose a location to save this file',
+          lockParentWindow: true,
+        );
       } else {
-        if (ss.settings.askWhereToSave.value && !isAutoDownload) {
-          savePath = await FilePicker.platform.getDirectoryPath(
-            initialDirectory: "/storage/emulated/0/Download/",
-            dialogTitle: 'Choose a location to save this file',
-            lockParentWindow: true,
-          );
-        } else {
-          try {
-            if (file.path == null && file.bytes != null) {
-              await ImageGallerySaver.saveImage(file.bytes!, quality: 100, name: file.name);
-            } else {
-              await ImageGallerySaver.saveFile(file.path!);
-            }
-            return showSnackbar('Success', 'Saved attachment to gallery!');
-          } catch (_) {
-            savePath = "/storage/emulated/0/Download/";
+        try {
+          if (file.path == null && file.bytes != null) {
+            await ImageGallerySaver.saveImage(file.bytes!, quality: 100, name: file.name);
+          } else {
+            await ImageGallerySaver.saveFile(file.path!);
           }
+          return showSnackbar('Success', 'Saved attachment to gallery!');
+        } catch (_) {
+          savePath = "/storage/emulated/0/Download/";
         }
+      }
 
-        if (savePath != null) {
-          final bytes = file.bytes ?? await File(file.path!).readAsBytes();
-          await File(join(savePath, file.name)).writeAsBytes(bytes);
-          showSnackbar('Success', 'Saved attachment to ${savePath.replaceAll("/storage/emulated/0/", "")} folder!');
-        } else {
-          return showSnackbar('Error', 'You didn\'t select a file path!');
-        }
+      if (savePath != null) {
+        final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+        await File(join(savePath, file.name)).writeAsBytes(bytes);
+        showSnackbar('Success', 'Saved attachment to ${savePath.replaceAll("/storage/emulated/0/", "")} folder!');
+      } else {
+        return showSnackbar('Error', 'You didn\'t select a file path!');
       }
     }
   }

@@ -203,88 +203,88 @@ void sendEffectAction(
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 20.0),
                                       child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            maxHeight: 350,
-                                            maxWidth: ns.width(context),
-                                          ),
-                                          child: SingleChildScrollView(
-                                            child: Wrap(
-                                              alignment: WrapAlignment.center,
-                                              children: List.generate(screenEffects.length, (index) {
-                                                return Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: GestureDetector(
-                                                    onTap: () async {
-                                                      setState(() {
-                                                        screenSelected = screenEffects[index];
-                                                      });
-                                                      if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
-                                                        fireworkController.windowSize = Size(ns.width(context), context.height);
-                                                        fireworkController.start();
+                                        constraints: BoxConstraints(
+                                          maxHeight: 350,
+                                          maxWidth: ns.width(context),
+                                        ),
+                                        child: SingleChildScrollView(
+                                          child: Wrap(
+                                            alignment: WrapAlignment.center,
+                                            children: List.generate(screenEffects.length, (index) {
+                                              return Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: GestureDetector(
+                                                  onTap: () async {
+                                                    setState(() {
+                                                      screenSelected = screenEffects[index];
+                                                    });
+                                                    if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
+                                                      fireworkController.windowSize = Size(ns.width(context), context.height);
+                                                      fireworkController.start();
+                                                      await Future.delayed(const Duration(seconds: 1));
+                                                      fireworkController.stop();
+                                                    } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
+                                                      celebrationController.windowSize = Size(ns.width(context), context.height);
+                                                      celebrationController.start();
+                                                      await Future.delayed(const Duration(seconds: 1));
+                                                      celebrationController.stop();
+                                                    } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
+                                                      balloonController.windowSize = Size(ns.width(context), context.height);
+                                                      balloonController.start();
+                                                      await Future.delayed(const Duration(seconds: 1));
+                                                      balloonController.stop();
+                                                    } else if (screenSelected == "love" && !loveController.isPlaying) {
+                                                      if (key.globalPaintBounds(context) != null) {
+                                                        loveController.windowSize = Size(ns.width(context), context.height);
+                                                        loveController.start(Point((key.globalPaintBounds(context)!.left + key.globalPaintBounds(context)!.right) / 2, (key.globalPaintBounds(context)!.top + key.globalPaintBounds(context)!.bottom) / 2));
                                                         await Future.delayed(const Duration(seconds: 1));
-                                                        fireworkController.stop();
-                                                      } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
-                                                        celebrationController.windowSize = Size(ns.width(context), context.height);
-                                                        celebrationController.start();
-                                                        await Future.delayed(const Duration(seconds: 1));
-                                                        celebrationController.stop();
-                                                      } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
-                                                        balloonController.windowSize = Size(ns.width(context), context.height);
-                                                        balloonController.start();
-                                                        await Future.delayed(const Duration(seconds: 1));
-                                                        balloonController.stop();
-                                                      } else if (screenSelected == "love" && !loveController.isPlaying) {
-                                                        if (key.globalPaintBounds(context) != null) {
-                                                          loveController.windowSize = Size(ns.width(context), context.height);
-                                                          loveController.start(Point(
-                                                              (key.globalPaintBounds(context)!.left + key.globalPaintBounds(context)!.right) / 2,
-                                                              (key.globalPaintBounds(context)!.top + key.globalPaintBounds(context)!.bottom) / 2));
-                                                          await Future.delayed(const Duration(seconds: 1));
-                                                          loveController.stop();
-                                                        }
-                                                      } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
-                                                        if (key.globalPaintBounds(context) != null) {
-                                                          spotlightController.windowSize = Size(ns.width(context), context.height);
-                                                          spotlightController.start(key.globalPaintBounds(context)!);
-                                                          await Future.delayed(const Duration(seconds: 1));
-                                                          spotlightController.stop();
-                                                        }
-                                                      } else if (screenSelected == "lasers" && !laserController.isPlaying) {
-                                                        if (key.globalPaintBounds(context) != null) {
-                                                          laserController.windowSize = Size(ns.width(context), context.height);
-                                                          laserController.start(key.globalPaintBounds(context)!);
-                                                          await Future.delayed(const Duration(seconds: 1));
-                                                          laserController.stop();
-                                                        }
-                                                      } else if (screenSelected == "confetti") {
-                                                        confettiController.play();
+                                                        loveController.stop();
                                                       }
-                                                    },
-                                                    child: Container(
-                                                      width: ns.width(context) / 3,
-                                                      height: 50,
-                                                      decoration: BoxDecoration(
-                                                        color: CupertinoColors.tertiarySystemFill,
-                                                        border: Border.fromBorderSide(screenSelected == screenEffects[index]
-                                                            ? BorderSide(
-                                                                color: context.theme.colorScheme.primary,
-                                                                width: 1.5,
-                                                                style: BorderStyle.solid,
-                                                              )
-                                                            : BorderSide.none),
-                                                        borderRadius: BorderRadius.circular(5),
-                                                      ),
-                                                      child: Center(
-                                                        child: Text(
-                                                          screenEffects[index].toUpperCase(),
-                                                        ),
+                                                    } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
+                                                      if (key.globalPaintBounds(context) != null) {
+                                                        spotlightController.windowSize = Size(ns.width(context), context.height);
+                                                        spotlightController.start(key.globalPaintBounds(context)!);
+                                                        await Future.delayed(const Duration(seconds: 1));
+                                                        spotlightController.stop();
+                                                      }
+                                                    } else if (screenSelected == "lasers" && !laserController.isPlaying) {
+                                                      if (key.globalPaintBounds(context) != null) {
+                                                        laserController.windowSize = Size(ns.width(context), context.height);
+                                                        laserController.start(key.globalPaintBounds(context)!);
+                                                        await Future.delayed(const Duration(seconds: 1));
+                                                        laserController.stop();
+                                                      }
+                                                    } else if (screenSelected == "confetti") {
+                                                      // todo dart fix confettiController.play();
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: ns.width(context) / 3,
+                                                    height: 50,
+                                                    decoration: BoxDecoration(
+                                                      color: CupertinoColors.tertiarySystemFill,
+                                                      border:
+                                                      Border.fromBorderSide(screenSelected == screenEffects[index]
+                                                          ? BorderSide(
+                                                        color: context.theme.colorScheme.primary,
+                                                        width: 1.5,
+                                                        style: BorderStyle.solid,
+                                                      )
+                                                          : BorderSide.none),
+                                                      borderRadius: BorderRadius.circular(5),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        screenEffects[index].toUpperCase(),
                                                       ),
                                                     ),
                                                   ),
-                                                );
-                                              }),
-                                            ),
-                                          )),
+                                                ),
+                                              );
+                                            }),
+                                          ),
+                                        )
+                                      ),
                                     ),
                                   const Spacer(),
                                   Theme(
@@ -396,7 +396,9 @@ void sendEffectAction(
                   ),
                 ),
               ),
-            ));
+            ),
+          ),
+        );
       },
       fullscreenDialog: true,
       opaque: false,
