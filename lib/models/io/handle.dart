@@ -144,14 +144,9 @@ class Handle {
         }
       }
 
-      try {
-        List<int> insertedIds = handleBox.putMany(handles);
-        for (int i = 0; i < insertedIds.length; i++) {
-          handles[i].id = insertedIds[i];
-        }
-      } catch (ex) {
-        Logger.warn("Failed to insert handles into database!");
-        Logger.warn(ex.toString());
+      List<int> insertedIds = handleBox.putMany(handles);
+      for (int i = 0; i < insertedIds.length; i++) {
+        handles[i].id = insertedIds[i];
       }
     });
 
