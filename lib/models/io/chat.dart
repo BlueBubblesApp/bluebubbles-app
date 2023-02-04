@@ -689,8 +689,9 @@ class Chat {
     if (checkForMessageText && changeUnreadStatus && isNewer) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
-      if (message.isFromMe!) {
-        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe);
+      if (message.isFromMe! || cm.isChatActive(guid)) {
+        // force if the chat is active to ensure private api mark read
+        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe, force: cm.isChatActive(guid));
       } else if (!cm.isChatActive(guid)) {
         toggleHasUnread(true);
       }
