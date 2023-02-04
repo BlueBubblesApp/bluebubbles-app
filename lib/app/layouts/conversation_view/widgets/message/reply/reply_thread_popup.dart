@@ -23,7 +23,7 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
   Navigator.push(
-    context,
+    Get.context!,
     PageRouteBuilder(
       transitionDuration: const Duration(milliseconds: 150),
       pageBuilder: (context, animation, secondaryAnimation) {
