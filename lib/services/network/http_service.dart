@@ -531,6 +531,7 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
+        // "isAudioMessage": isAudioMessage,
       });
       final response = await dio.post(
           "$origin/message/attachment",
