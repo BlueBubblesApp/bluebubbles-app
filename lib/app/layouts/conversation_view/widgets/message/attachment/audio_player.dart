@@ -125,11 +125,11 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
     }
     var hours = duration.inHours % 24;
     if (hours != 0) {
-      components.add('$hours:');
+      components.add('${hours < 10 ? '0' : ''}$hours:');
     }
     var minutes = duration.inMinutes % 60;
     if (minutes != 0) {
-      components.add('$minutes:');
+      components.add('${minutes < 10 ? '0' : ''}$minutes:');
     }
 
     var seconds = duration.inSeconds % 60;
@@ -137,9 +137,14 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
       if (components.isEmpty) {
         components.add('00:');
       }
-      components.add('$seconds');
+      components.add('${seconds < 10 ? '0' : ''}$seconds');
     }
-    return components.join();
+    var joined = components.join();
+    if (joined.characters.first == '0') {
+      return joined.substring(1);
+    } else {
+      return joined;
+    }
   }
 
   @override
