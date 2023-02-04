@@ -443,9 +443,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             goToNextPage();
           }
         } else if (mounted) {
-          if (err != null) {
-            final errorData = jsonDecode(err as String);
-            if (errorData['status'] == 401) {
+          if (err != null && err is dio.DioError && err.response != null) {
+            final errorData = jsonDecode(err.response!.data as String);
+            if (errorData.st == 401) {
               controller.updateConnectError("Authentication failed. Incorrect password!");
               return;
             } else {
