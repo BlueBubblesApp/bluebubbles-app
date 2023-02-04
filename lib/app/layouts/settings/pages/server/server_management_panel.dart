@@ -12,7 +12,6 @@ import 'package:bluebubbles/app/layouts/setup/dialogs/manual_entry_dialog.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
