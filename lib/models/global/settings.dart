@@ -387,7 +387,7 @@ class Settings {
     Settings s = Settings();
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
-    s.customHeaders.value = map['customHeaders'] is String ? jsonDecode(map['customHeaders']) as Map<String, String> : <String, String>{};
+    s.customHeaders.value = map['customHeaders'] is String ? jsonDecode(map['customHeaders']).cast<String, String>() : <String, String>{};
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
