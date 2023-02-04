@@ -564,6 +564,25 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         }
                       },
                     )),
+                  if (Platform.isAndroid)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (Platform.isAndroid)
+                    Obx(() => SettingsSwitch(
+                      initialVal: ss.settings.syncContactsAutomatically.value,
+                      title: "Auto-Sync Contacts",
+                      subtitle: "Automatically re-upload contacts to server when changes are detected",
+                      backgroundColor: tileColor,
+                      onChanged: (bool val) async {
+                        ss.settings.syncContactsAutomatically.value = val;
+                        ss.saveSettings();
+                      },
+                    )),
                   Container(
                     color: tileColor,
                     child: Padding(

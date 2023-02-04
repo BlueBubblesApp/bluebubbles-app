@@ -67,6 +67,7 @@ class Settings {
   final RxnString localhostPort = RxnString(null);
   final RxnString sendSoundPath = RxnString();
   final RxnString receiveSoundPath = RxnString();
+  final RxBool syncContactsAutomatically = false.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -230,6 +231,7 @@ class Settings {
       'useLocalhost': localhostPort.value,
       'sendSoundPath': sendSoundPath.value,
       'receiveSoundPath': receiveSoundPath.value,
+      'syncContactsAutomatically': syncContactsAutomatically.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -334,6 +336,7 @@ class Settings {
     ss.settings.localhostPort.value = map['useLocalhost'];
     ss.settings.sendSoundPath.value = map['sendSoundPath'];
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
+    ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -442,6 +445,7 @@ class Settings {
     s.localhostPort.value = map['useLocalhost'];
     s.sendSoundPath.value = map['sendSoundPath'];
     s.receiveSoundPath.value = map['receiveSoundPath'];
+    s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

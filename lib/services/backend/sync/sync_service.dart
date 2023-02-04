@@ -6,10 +6,11 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:path/path.dart' show join;
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
@@ -65,6 +66,23 @@ class SyncService extends GetxService {
       result = await completer.future;
       if (result.isNotEmpty && (result.first.isNotEmpty || result.last.isNotEmpty)) {
         contacts.addAll(Contact.getContacts());
+        // auto upload contacts if requested
+        if (ss.settings.syncContactsAutomatically.value) {
+          Logger.debug("Contact changes detected, uploading to server...");
+          final _contacts = <Map<String, dynamic>>[];
+          for (Contact c in contacts) {
+            var map = c.toMap();
+            _contacts.add(map);
+          }
+          http.createContact(_contacts).catchError((err) {
+            if (err is Response) {
+              Logger.error(err.data["error"]["message"].toString());
+            } else {
+              Logger.error(err.toString());
+            }
+            return Response(requestOptions: RequestOptions(path: ''));
+          });
+        }
       }
       isolate?.kill();
     }
