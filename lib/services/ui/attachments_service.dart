@@ -301,7 +301,10 @@ class AttachmentsService extends GetxService {
     if (kIsWeb || attachment.mimeType == null || !["image", "video"].contains(attachment.mimeStart)) return null;
 
     final filePath = actualPath ?? attachment.path;
-    dynamic originalFile = File(filePath);
+    File originalFile = File(filePath);
+    if (kIsDesktop) {
+      await originalFile.create(recursive: true);
+    }
 
     // Handle getting heic and tiff images
     if (attachment.mimeType!.contains('image/hei') && !kIsDesktop) {
