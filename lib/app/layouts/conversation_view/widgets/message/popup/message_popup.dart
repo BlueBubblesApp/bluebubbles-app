@@ -432,7 +432,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                           tween: Tween<double>(begin: 0.8, end: 1),
                           curve: Curves.easeOutBack,
                           duration: const Duration(milliseconds: 500),
-                          child: widget.child,
+                          child: ConstrainedBox(constraints: BoxConstraints(maxWidth: widget.size.width), child: widget.child),
                           builder: (context, size, child) {
                             return Transform.scale(
                               scale: size.clamp(1, double.infinity),

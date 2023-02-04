@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -5,6 +7,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
@@ -55,12 +58,14 @@ class Handle {
 
     // Split by a space or special character delimiter, take each of the items and
     // reduce it to just the capitalized first letter. Then join the array by an empty char
-    String reduced = importantChars
-        .split(RegExp(r' |-|_'))
-        .take(2)
+    List<String> initials = importantChars
+        .split(RegExp(r'[ \-_]'))
         .map((e) => e.isEmpty ? '' : e[0].toUpperCase())
-        .join('');
-    return reduced.isEmpty ? null : reduced;
+        .toList();
+
+    initials.removeRange(1, max(initials.length - 1, 1));
+
+    return initials.isEmpty ? null : initials.join("");
   }
 
   Handle({

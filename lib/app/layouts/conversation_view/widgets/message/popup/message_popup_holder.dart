@@ -45,7 +45,6 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     final version = tuple.item4;
     final minSierra = await ss.isMinSierra;
     final minBigSur = await ss.isMinBigSur;
-    eventDispatcher.emit('popup-pushed', true);
     if (!iOS) {
       widget.cvController.selected.add(message);
     }
@@ -92,7 +91,6 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     if (kIsDesktop || kIsWeb) {
       widget.cvController.focusNode.requestFocus();
     }
-    eventDispatcher.emit('popup-pushed', false);
   }
 
   void sendTapback([String? type, int? part]) {
