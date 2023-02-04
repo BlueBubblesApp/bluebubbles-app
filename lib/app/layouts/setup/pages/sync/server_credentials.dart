@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/async_connecting_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
@@ -10,6 +11,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -271,6 +273,12 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                   minimumSize: MaterialStateProperty.all(const Size(30, 30)),
                                 ),
                                 onPressed: () async {
+                                  ss.settings.customHeaders.value = {};
+                                  http.onInit();
+                                  connect(urlController.text, passwordController.text);
+                                },
+                                onLongPress: () async {
+                                  await showCustomHeadersDialog(context);
                                   connect(urlController.text, passwordController.text);
                                 },
                                 child: Row(

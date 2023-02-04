@@ -52,7 +52,7 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   final filename = getFilenameFromUri(url);
 
   try {
-    final response = await http.dio.get(url, options: Options(responseType: ResponseType.bytes));
+    final response = await http.dio.get(url, options: Options(responseType: ResponseType.bytes, headers: ss.settings.customHeaders));
 
     Directory baseDir = Directory("${Attachment.baseDirectory}/$guid");
     if (!await baseDir.exists()) {

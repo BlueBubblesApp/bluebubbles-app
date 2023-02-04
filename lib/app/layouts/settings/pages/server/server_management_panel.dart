@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -11,6 +12,7 @@ import 'package:bluebubbles/app/layouts/setup/dialogs/manual_entry_dialog.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -510,6 +512,21 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
+                  SettingsTile(
+                    title: "Configure Custom Headers",
+                    subtitle: "Add or edit custom headers to connect to your server",
+                    backgroundColor: tileColor,
+                    onTap: () async {
+                      await showCustomHeadersDialog(context);
+                      socket.restartSocket();
+                    }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                       initialVal: ss.settings.localhostPort.value != null,

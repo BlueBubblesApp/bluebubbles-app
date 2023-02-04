@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 class Settings {
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
+  final RxMap<String, String> customHeaders = <String, String>{}.obs;
   final RxBool finishedSetup = false.obs;
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
@@ -148,7 +149,7 @@ class Settings {
         ss.prefs.setInt(key, value);
       } else if (value is double) {
         ss.prefs.setDouble(key, value);
-      } else if (value is List) {
+      } else if (value is List || value is Map) {
         ss.prefs.setString(key, jsonEncode(value));
       } else if (value == null) {
         ss.prefs.remove(key);
@@ -270,6 +271,7 @@ class Settings {
       map.addAll({
         'guidAuthKey': guidAuthKey.value,
         'serverAddress': serverAddress.value,
+        'customHeaders': customHeaders,
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
         'monetTheming': monetTheming.value.index,
@@ -385,6 +387,7 @@ class Settings {
     Settings s = Settings();
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
+    s.customHeaders.value = map['customHeaders'] is String ? jsonDecode(map['customHeaders']) as Map<String, String> : <String, String>{};
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
