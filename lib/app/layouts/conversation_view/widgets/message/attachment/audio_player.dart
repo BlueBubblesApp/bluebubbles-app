@@ -91,24 +91,17 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
             color: context.theme.colorScheme.properOnSurface,
             visualDensity: VisualDensity.compact,
           ),
-          GestureDetector(
-            onTapDown: (details) {
-              if (controller == null) return;
-              controller!.seekTo((details.localPosition.dx / (ns.width(context) * 0.25) * controller!.maxDuration).toInt());
-            },
-            child: (controller?.maxDuration ?? 0) == 0 ? SizedBox(width: ns.width(context) * 0.25) : AudioFileWaveforms(
-              size: Size(ns.width(context) * 0.25, 40),
-              playerController: controller!,
-              padding: EdgeInsets.zero,
-              enableSeekGesture: false,
-              playerWaveStyle: PlayerWaveStyle(
-                fixedWaveColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
-                liveWaveColor: context.theme.colorScheme.properOnSurface,
-                waveCap: StrokeCap.square,
-                scaleFactor: 0.25,
-                waveThickness: 2,
-                seekLineThickness: 2,
-              ),
+          (controller?.maxDuration ?? 0) == 0 ? SizedBox(width: ns.width(context) * 0.25) : AudioFileWaveforms(
+            size: Size(ns.width(context) * 0.25, 40),
+            playerController: controller!,
+            padding: EdgeInsets.zero,
+            playerWaveStyle: PlayerWaveStyle(
+              fixedWaveColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
+              liveWaveColor: context.theme.colorScheme.properOnSurface,
+              waveCap: StrokeCap.square,
+              waveThickness: 2,
+              seekLineThickness: 2,
+              showSeekLine: false
             ),
           ),
           const SizedBox(width: 5),
