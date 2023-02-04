@@ -518,7 +518,7 @@ class HttpService extends GetxService {
   /// Send an attachment. [chatGuid] specifies the chat, [tempGuid] specifies a
   /// temporary guid to avoid duplicate messages being sent, [file] is the
   /// body of the message.
-  Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+  Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final fileName = file.path!.split('/').last;
       final formData = FormData.fromMap({
@@ -526,6 +526,11 @@ class HttpService extends GetxService {
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
+        "method": method,
+        "effectId": effectId,
+        "subject": subject,
+        "selectedMessageGuid": selectedMessageGuid,
+        "partIndex": partIndex,
       });
       final response = await dio.post(
           "$origin/message/attachment",

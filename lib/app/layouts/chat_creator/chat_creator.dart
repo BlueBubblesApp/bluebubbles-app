@@ -651,6 +651,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               null,
                               null,
                               null,
+                              false,
                             );
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;

@@ -263,13 +263,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         showSnackbar("Error", "Something went wrong!");
       }
     } else {
-      if (controller.textController.text.isEmpty && controller.subjectTextController.text.isEmpty) {
-        if (controller.replyToMessage != null) {
-          return showSnackbar("Error", "Replies must be sent with a text message!");
-        } else if (effect != null) {
-          return showSnackbar("Error", "Effects must be sent with a text message!");
-        }
-      }
       await controller.send(
         controller.pickedAttachments,
         controller.textController.text,
@@ -277,6 +270,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
         controller.replyToMessage?.item2,
         effect,
+        false,
       );
     }
     controller.pickedAttachments.clear();

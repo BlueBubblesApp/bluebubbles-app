@@ -135,7 +135,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                               onPressed: () async {
                                 await widget.controller!.send(
                                   [file],
-                                  "", "", null, null, null,
+                                  "", "", null, null, null, true,
                                 );
                                 deleteAudioRecording(file.path!);
                                 Get.back();

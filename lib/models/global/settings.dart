@@ -78,6 +78,7 @@ class Settings {
   final RxBool privateManualMarkAsRead = false.obs;
   final RxBool privateSubjectLine = false.obs;
   final RxBool privateAPISend = false.obs;
+  final RxBool privateAPIAttachmentSend = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -234,6 +235,7 @@ class Settings {
       'receiveSoundPath': receiveSoundPath.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
       'privateAPISend': privateAPISend.value,
+      'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -340,6 +342,7 @@ class Settings {
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
     ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
+    ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     ss.settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -450,6 +453,7 @@ class Settings {
     s.receiveSoundPath.value = map['receiveSoundPath'];
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
+    s.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
