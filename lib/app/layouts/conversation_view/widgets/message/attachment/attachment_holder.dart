@@ -161,15 +161,17 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
                                     ),
-                                    if (_content.item2.value < 1 && message.error == 0)
+                                    if (message.error == 0)
                                       TextButton(
                                         style: TextButton.styleFrom(
                                           visualDensity: VisualDensity.compact,
                                         ),
-                                        child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                        onPressed: () {
+                                        child: _content.item2.value < 1
+                                            ? Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary))
+                                            : Text("Waiting for iMessage...", style: context.theme.textTheme.bodyLarge!, textAlign: TextAlign.center),
+                                        onPressed: _content.item2.value < 1 ? () {
                                           ah.latestCancelToken?.cancel("User cancelled send.");
-                                        },
+                                        } : null,
                                       ),
                                   ],
                                 );
