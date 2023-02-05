@@ -5,6 +5,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
+import 'package:bluebubbles/services/backend/sync/handle_sync_manager.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -177,7 +178,7 @@ Future<Null> initApp(bool bubble) async {
           Logger.error(s);
           if (Platform.isWindows) {
             Logger.info("Failed to open store from default path. Using custom path");
-            const customStorePath = "C:\\bluebubbles_app";
+            const customStorePath = "C:\\BlueBubbles\\bluebubbles";
             ss.prefs.setBool("use-custom-path", true);
             ss.prefs.setString("custom-path", customStorePath);
             objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
@@ -631,6 +632,18 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       // only show these dialogs if setup is finished
       if (ss.settings.finishedSetup.value) {
         if (ss.prefs.getBool('1.11.1-warning') == false && !kIsWeb) {
+          if (kIsDesktop) {
+            try {
+              final handleSyncer = HandleSyncManager(saveLogs: true);
+              await handleSyncer.start();
+              eventDispatcher.emit("refresh-all", null);
+              return;
+            } catch (ex, stacktrace) {
+              Logger.error("Failed to reset contacts!");
+              Logger.error(ex.toString());
+              Logger.error(stacktrace.toString());
+            }
+          }
           bool needsMigration = false;
 
           try {
@@ -683,9 +696,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           Permission.notification.request();
         }
       }
-      if (ss.prefs.getBool('1.11-warning') != true) {
-        ss.prefs.setBool('1.11-warning', true);
-      }
+
       if (ss.prefs.getBool('1.11.1-warning') != true) {
         ss.prefs.setBool('1.11.1-warning', true);
       }
