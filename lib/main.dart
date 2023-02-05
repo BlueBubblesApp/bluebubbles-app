@@ -639,7 +639,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
             Logger.error("Error checking for handle migration: $ex");
           }
 
-          if (needsMigration || true) {
+          if (needsMigration) {
             showDialog(
               barrierDismissible: false,
               context: context,
