@@ -340,7 +340,7 @@ class Settings {
     ss.settings.localhostPort.value = map['useLocalhost'];
     ss.settings.sendSoundPath.value = map['sendSoundPath'];
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
-    ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'];
+    ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? true;
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
