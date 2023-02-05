@@ -630,7 +630,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
       // only show these dialogs if setup is finished
       if (ss.settings.finishedSetup.value) {
-        if (ss.prefs.getBool('1.11.1-warning') == true && !kIsWeb) {
+        if (ss.prefs.getBool('1.11.1-warning') == false && !kIsWeb) {
           bool needsMigration = false;
 
           try {

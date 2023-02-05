@@ -65,6 +65,7 @@ class HttpService extends GetxService {
       connectTimeout: 15000,
       receiveTimeout: ss.settings.apiTimeout.value,
       sendTimeout: ss.settings.apiTimeout.value,
+      headers: ss.settings.customHeaders,
     ));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
@@ -237,7 +238,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$origin/attachment/$guid/download",
           queryParameters: buildQueryParams({"original": original}),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -251,7 +252,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
         "$origin/attachment/$guid/blurhash",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
@@ -418,7 +419,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$origin/chat/$guid/icon",
           queryParameters: buildQueryParams(),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -517,7 +518,7 @@ class HttpService extends GetxService {
   /// Send an attachment. [chatGuid] specifies the chat, [tempGuid] specifies a
   /// temporary guid to avoid duplicate messages being sent, [file] is the
   /// body of the message.
-  Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+  Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final fileName = file.path!.split('/').last;
       final formData = FormData.fromMap({
@@ -525,6 +526,12 @@ class HttpService extends GetxService {
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
+        "method": method,
+        "effectId": effectId,
+        "subject": subject,
+        "selectedMessageGuid": selectedMessageGuid,
+        "partIndex": partIndex,
+        // "isAudioMessage": isAudioMessage,
       });
       final response = await dio.post(
           "$origin/message/attachment",
@@ -532,7 +539,7 @@ class HttpService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
       );
       return returnSuccessOrError(response);
     });
@@ -664,7 +671,7 @@ class HttpService extends GetxService {
           queryParameters: buildQueryParams(),
           data: contacts,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12),
+          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -820,7 +827,7 @@ class HttpService extends GetxService {
         "$origin/icloud/findmy/devices/refresh",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
-        options: Options(receiveTimeout: dio.options.receiveTimeout * 12),
+        options: Options(receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
       );
       return returnSuccessOrError(response);
     });
@@ -842,7 +849,7 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           url,
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
           onReceiveProgress: progress,
       );

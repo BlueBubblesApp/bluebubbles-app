@@ -351,6 +351,32 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                 ],
                               ),
                             ),
+                            AnimatedSizeAndFade.showHide(
+                              show: controller.serverVersionCode.value >= 208,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    color: tileColor,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 15.0),
+                                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                    ),
+                                  ),
+                                  SettingsSwitch(
+                                    onChanged: (bool val) {
+                                      ss.settings.privateAPIAttachmentSend.value = val;
+                                      saveSettings();
+                                    },
+                                    initialVal: ss.settings.privateAPIAttachmentSend.value,
+                                    title: "Private API Attachment Send",
+                                    subtitle: "Send attachments using the Private API",
+                                    backgroundColor: tileColor,
+                                    isThreeLine: true,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         )
                       ]

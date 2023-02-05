@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 class Settings {
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
+  final RxMap<String, String> customHeaders = <String, String>{}.obs;
   final RxBool finishedSetup = false.obs;
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
@@ -67,6 +68,7 @@ class Settings {
   final RxnString localhostPort = RxnString(null);
   final RxnString sendSoundPath = RxnString();
   final RxnString receiveSoundPath = RxnString();
+  final RxBool syncContactsAutomatically = false.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -76,6 +78,7 @@ class Settings {
   final RxBool privateManualMarkAsRead = false.obs;
   final RxBool privateSubjectLine = false.obs;
   final RxBool privateAPISend = false.obs;
+  final RxBool privateAPIAttachmentSend = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -147,7 +150,7 @@ class Settings {
         ss.prefs.setInt(key, value);
       } else if (value is double) {
         ss.prefs.setDouble(key, value);
-      } else if (value is List) {
+      } else if (value is List || value is Map) {
         ss.prefs.setString(key, jsonEncode(value));
       } else if (value == null) {
         ss.prefs.remove(key);
@@ -230,7 +233,9 @@ class Settings {
       'useLocalhost': localhostPort.value,
       'sendSoundPath': sendSoundPath.value,
       'receiveSoundPath': receiveSoundPath.value,
+      'syncContactsAutomatically': syncContactsAutomatically.value,
       'privateAPISend': privateAPISend.value,
+      'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -268,6 +273,7 @@ class Settings {
       map.addAll({
         'guidAuthKey': guidAuthKey.value,
         'serverAddress': serverAddress.value,
+        'customHeaders': customHeaders,
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
         'monetTheming': monetTheming.value.index,
@@ -334,7 +340,9 @@ class Settings {
     ss.settings.localhostPort.value = map['useLocalhost'];
     ss.settings.sendSoundPath.value = map['sendSoundPath'];
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
+    ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
+    ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     ss.settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -382,6 +390,7 @@ class Settings {
     Settings s = Settings();
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
+    s.customHeaders.value = map['customHeaders'] is String ? jsonDecode(map['customHeaders']).cast<String, String>() : <String, String>{};
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
@@ -442,7 +451,9 @@ class Settings {
     s.localhostPort.value = map['useLocalhost'];
     s.sendSoundPath.value = map['sendSoundPath'];
     s.receiveSoundPath.value = map['receiveSoundPath'];
+    s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
+    s.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;

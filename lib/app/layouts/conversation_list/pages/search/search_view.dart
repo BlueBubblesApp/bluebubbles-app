@@ -132,6 +132,7 @@ class SearchViewState extends OptimizedState<SearchView> {
         ],
       );
       // we query chats from DB so we can get contact names
+      // ignore: prefer_const_constructors
       final items = Tuple2(<Chat>[], <Message>[]);
       for (dynamic item in results) {
         final chat = Chat.fromMap(item['chats'][0]);

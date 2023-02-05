@@ -109,10 +109,13 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                             children: [
                               Text("Review your audio snippet before sending it", style: context.theme.textTheme.bodyLarge),
                               Container(height: 10.0),
-                              AudioPlayer(
-                                key: Key("AudioMessage-$path"),
-                                file: file,
-                                attachment: null,
+                              ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: context.width * 0.6),
+                                child: AudioPlayer(
+                                  key: Key("AudioMessage-$path"),
+                                  file: file,
+                                  attachment: null,
+                                ),
                               )
                             ],
                           ),
@@ -135,7 +138,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                               onPressed: () async {
                                 await widget.controller!.send(
                                   [file],
-                                  "", "", null, null, null,
+                                  "", "", null, null, null, true,
                                 );
                                 deleteAudioRecording(file.path!);
                                 Get.back();

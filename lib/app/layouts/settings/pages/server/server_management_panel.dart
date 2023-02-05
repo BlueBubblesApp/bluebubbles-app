@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -510,6 +511,21 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
+                  SettingsTile(
+                    title: "Configure Custom Headers",
+                    subtitle: "Add or edit custom headers to connect to your server",
+                    backgroundColor: tileColor,
+                    onTap: () async {
+                      await showCustomHeadersDialog(context);
+                      socket.restartSocket();
+                    }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                       initialVal: ss.settings.localhostPort.value != null,
@@ -562,6 +578,25 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         } else {
                           NetworkTasks.detectLocalhost(createSnackbar: true);
                         }
+                      },
+                    )),
+                  if (Platform.isAndroid)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (Platform.isAndroid)
+                    Obx(() => SettingsSwitch(
+                      initialVal: ss.settings.syncContactsAutomatically.value,
+                      title: "Auto-Sync Contacts",
+                      subtitle: "Automatically re-upload contacts to server when changes are detected",
+                      backgroundColor: tileColor,
+                      onChanged: (bool val) async {
+                        ss.settings.syncContactsAutomatically.value = val;
+                        ss.saveSettings();
                       },
                     )),
                   Container(

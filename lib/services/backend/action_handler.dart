@@ -142,14 +142,27 @@ class ActionHandler extends GetxService {
     await c.addMessage(m);
   }
 
-  Future<void> sendAttachment(Chat c, Message m) async {
+  Future<void> sendAttachment(Chat c, Message m, bool isAudioMessage) async {
     if (m.attachments.isEmpty || m.attachments.firstOrNull?.bytes == null) return;
     final attachment = m.attachments.first!;
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
     latestCancelToken = CancelToken();
-    http.sendAttachment(c.guid, attachment.guid!, PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: attachment.path, size: attachment.totalBytes ?? 0),
+    http.sendAttachment(
+      c.guid,
+      attachment.guid!,
+      PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: attachment.path, size: attachment.totalBytes ?? 0),
       onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length,
+      method: (ss.settings.enablePrivateAPI.value
+          && ss.settings.privateAPIAttachmentSend.value)
+          || (m.subject?.isNotEmpty ?? false)
+          || m.threadOriginatorGuid != null
+          || m.expressiveSendStyleId != null
+          ? "private-api" : "apple-script",
+      selectedMessageGuid: m.threadOriginatorGuid,
+      effectId: m.expressiveSendStyleId,
+      partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
+      isAudioMessage: isAudioMessage,
       cancelToken: latestCancelToken,
     ).then((response) async {
       latestCancelToken = null;

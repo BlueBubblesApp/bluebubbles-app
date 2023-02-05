@@ -91,24 +91,17 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
             color: context.theme.colorScheme.properOnSurface,
             visualDensity: VisualDensity.compact,
           ),
-          GestureDetector(
-            onTapDown: (details) {
-              if (controller == null) return;
-              controller!.seekTo((details.localPosition.dx / (ns.width(context) * 0.25) * controller!.maxDuration).toInt());
-            },
-            child: (controller?.maxDuration ?? 0) == 0 ? SizedBox(width: ns.width(context) * 0.25) : AudioFileWaveforms(
-              size: Size(ns.width(context) * 0.25, 40),
-              playerController: controller!,
-              padding: EdgeInsets.zero,
-              enableSeekGesture: false,
-              playerWaveStyle: PlayerWaveStyle(
-                fixedWaveColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
-                liveWaveColor: context.theme.colorScheme.properOnSurface,
-                waveCap: StrokeCap.square,
-                scaleFactor: 0.25,
-                waveThickness: 2,
-                seekLineThickness: 2,
-              ),
+          (controller?.maxDuration ?? 0) == 0 ? SizedBox(width: ns.width(context) * 0.25) : AudioFileWaveforms(
+            size: Size(ns.width(context) * 0.25, 40),
+            playerController: controller!,
+            padding: EdgeInsets.zero,
+            playerWaveStyle: PlayerWaveStyle(
+              fixedWaveColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
+              liveWaveColor: context.theme.colorScheme.properOnSurface,
+              waveCap: StrokeCap.square,
+              waveThickness: 2,
+              seekLineThickness: 2,
+              showSeekLine: false
             ),
           ),
           const SizedBox(width: 5),
@@ -132,11 +125,11 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
     }
     var hours = duration.inHours % 24;
     if (hours != 0) {
-      components.add('$hours:');
+      components.add('${hours < 10 ? '0' : ''}$hours:');
     }
     var minutes = duration.inMinutes % 60;
     if (minutes != 0) {
-      components.add('$minutes:');
+      components.add('${minutes < 10 ? '0' : ''}$minutes:');
     }
 
     var seconds = duration.inSeconds % 60;
@@ -144,9 +137,14 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
       if (components.isEmpty) {
         components.add('00:');
       }
-      components.add('$seconds');
+      components.add('${seconds < 10 ? '0' : ''}$seconds');
     }
-    return components.join();
+    var joined = components.join();
+    if (joined.characters.first == '0') {
+      return joined.substring(1);
+    } else {
+      return joined;
+    }
   }
 
   @override

@@ -52,6 +52,7 @@ class SocketService extends GetxService {
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": encodeUri(password)})
         .setTransports(['websocket', 'polling'])
+        .setExtraHeaders(ss.settings.customHeaders)
         // Disable so that we can create the listeners first
         .disableAutoConnect()
         .enableReconnection();
