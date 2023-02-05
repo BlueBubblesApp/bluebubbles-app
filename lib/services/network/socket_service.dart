@@ -27,7 +27,7 @@ class SocketService extends GetxService {
   Timer? _reconnectTimer;
   late Socket socket;
   
-  String get serverAddress => ss.settings.serverAddress.value;
+  String get serverAddress => http.origin;
   String get password => ss.settings.guidAuthKey.value;
 
   @override
