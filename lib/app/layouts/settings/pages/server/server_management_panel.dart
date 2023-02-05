@@ -47,15 +47,14 @@ class ServerManagementPanelController extends StatefulController {
   final RxBool isRestartingMessages = false.obs;
   final RxBool isRestartingPrivateAPI = false.obs;
   final RxDouble opacity = 1.0.obs;
+  final RxBool hasCheckedStats = false.obs;
 
   @override
   void onReady() {
     super.onReady();
-    if (socket.state.value == SocketState.connected) {
-      updateObx(() {
-        getServerStats();
-      });
-    }
+    updateObx(() {
+      getServerStats();
+    });
   }
 
   void getServerStats() async {
@@ -73,6 +72,7 @@ class ServerManagementPanelController extends StatefulController {
       proxyService.value = response.data['data']['proxy_service'];
       iCloudAccount.value = response.data['data']['detected_icloud'];
       timeSync.value = response.data['data']['macos_time_sync'];
+      hasCheckedStats.value = true;
 
       http.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
@@ -90,6 +90,7 @@ class ServerManagementPanelController extends StatefulController {
       });
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
+      hasCheckedStats.value = true;
     });
   }
 }
@@ -134,8 +135,15 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             child: SelectableText.rich(
                               TextSpan(
                                   children: [
-                                    const TextSpan(text: "Connection Status: "),
+                                    const TextSpan(text: "API Connection: "),
+                                    TextSpan(text: (controller.hasCheckedStats.value ? (controller.stats.isEmpty ? 'Disconnected' : 'Connected') : 'Connecting').toUpperCase(), style: TextStyle(color: getIndicatorColor(controller.hasCheckedStats.value ? (controller.stats.isEmpty ? SocketState.disconnected : SocketState.connected) : SocketState.connecting))),
+                                    const TextSpan(text: "\n\n"),
+                                    const TextSpan(text: "Socket Connection: "),
                                     TextSpan(text: describeEnum(socket.state.value).toUpperCase(), style: TextStyle(color: getIndicatorColor(socket.state.value))),
+                                    // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                                    //   const TextSpan(text: "\n"),
+                                    // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                                    //   TextSpan(text: " (${socket.lastError.value})", style: TextStyle(color: getIndicatorColor(socket.state.value))),
                                     const TextSpan(text: "\n\n"),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       const TextSpan(text: "Private API Status: "),

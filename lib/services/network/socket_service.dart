@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/crypto_utils.dart';
@@ -24,6 +25,7 @@ enum SocketState {
 class SocketService extends GetxService {
   final Rx<SocketState> state = SocketState.disconnected.obs;
   SocketState _lastState = SocketState.disconnected;
+  RxString lastError = "".obs;
   Timer? _reconnectTimer;
   late Socket socket;
   
@@ -156,6 +158,11 @@ class SocketService extends GetxService {
         return;
       case SocketState.error:
         Logger.info("Socket connect error, fetching new URL...");
+        
+        if (data is SocketException) {
+          handleSocketException(data);
+        }
+
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection
         _reconnectTimer = Timer(const Duration(seconds: 5), () async {
@@ -167,6 +174,15 @@ class SocketService extends GetxService {
         return;
       default:
         return;
+    }
+  }
+
+  void handleSocketException(SocketException e) {
+    String msg = e.message;
+    if (msg.contains("Failed host lookup")) {
+      lastError.value = "Failed to resolve hostname";
+    } else {
+      lastError.value = msg;
     }
   }
 

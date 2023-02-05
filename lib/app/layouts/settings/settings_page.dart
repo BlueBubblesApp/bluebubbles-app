@@ -136,7 +136,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   );
                                 },
                                 onLongPress: () {
-                                  Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
+                                  Clipboard.setData(ClipboardData(text: http.origin));
                                   if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
                                     showSnackbar("Copied", "Server address copied to clipboard!");
                                   }
