@@ -261,14 +261,6 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
         c._participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
         c.title = c.getTitle();
-        if ([c.autoSendReadReceipts, c.autoSendTypingIndicators].contains(null)) {
-          c.autoSendReadReceipts ??= true;
-          c.autoSendTypingIndicators ??= true;
-          c.save(
-            updateAutoSendReadReceipts: true,
-            updateAutoSendTypingIndicators: true,
-          );
-        }
       }
       return chats;
     });
@@ -303,8 +295,8 @@ class Chat {
     }
     return _participants;
   }
-  bool? autoSendReadReceipts = true;
-  bool? autoSendTypingIndicators = true;
+  bool? autoSendReadReceipts;
+  bool? autoSendTypingIndicators;
   String? textFieldText;
   List<String> textFieldAttachments = [];
   Message? _latestMessage;
@@ -356,8 +348,8 @@ class Chat {
     int? pinnedIndex,
     List<Handle>? participants,
     Message? latestMessage,
-    this.autoSendReadReceipts = true,
-    this.autoSendTypingIndicators = true,
+    this.autoSendReadReceipts,
+    this.autoSendTypingIndicators,
     this.textFieldText,
     this.textFieldAttachments = const [],
     this.dateDeleted,
@@ -433,10 +425,10 @@ class Chat {
         hasUnreadMessage = existing?.hasUnreadMessage ?? hasUnreadMessage;
       }
       if (!updateAutoSendReadReceipts) {
-        autoSendReadReceipts = existing?.autoSendReadReceipts ?? autoSendReadReceipts;
+        autoSendReadReceipts = existing?.autoSendReadReceipts;
       }
       if (!updateAutoSendTypingIndicators) {
-        autoSendTypingIndicators = existing?.autoSendTypingIndicators ?? autoSendTypingIndicators;
+        autoSendTypingIndicators = existing?.autoSendTypingIndicators;
       }
       if (!updateCustomAvatarPath) {
         customAvatarPath = existing?.customAvatarPath ?? customAvatarPath;
@@ -622,8 +614,8 @@ class Chat {
       if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
         mcs.invokeMethod("clear-chat-notifs", {"chatGuid": guid});
       }
-      if (privateMark && ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
-        if (!hasUnread && autoSendReadReceipts!) {
+      if (privateMark && ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
+        if (!hasUnread) {
           http.markChatRead(guid);
         } else if (hasUnread) {
           http.markChatUnread(guid);
@@ -825,21 +817,21 @@ class Chat {
     return this;
   }
 
-  Chat toggleAutoRead(bool autoSendReadReceipts) {
+  Chat toggleAutoRead(bool? autoSendReadReceipts) {
     if (id == null) return this;
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
-    if (autoSendReadReceipts) {
+    if (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value) {
       http.markChatRead(guid);
     }
     return this;
   }
 
-  Chat toggleAutoType(bool autoSendTypingIndicators) {
+  Chat toggleAutoType(bool? autoSendTypingIndicators) {
     if (id == null) return this;
     this.autoSendTypingIndicators = autoSendTypingIndicators;
     save(updateAutoSendTypingIndicators: true);
-    if (!autoSendTypingIndicators) {
+    if (!(autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
       socket.sendMessage("stopped-typing", {"chatGuid": guid});
     }
     return this;
@@ -974,8 +966,8 @@ class Chat {
     "hasUnreadMessage": hasUnreadMessage!,
     "_customAvatarPath": _customAvatarPath.value,
     "_pinIndex": _pinIndex.value,
-    "autoSendReadReceipts": autoSendReadReceipts!,
-    "autoSendTypingIndicators": autoSendTypingIndicators!,
+    "autoSendReadReceipts": autoSendReadReceipts,
+    "autoSendTypingIndicators": autoSendTypingIndicators,
     "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
     "style": style,
   };
