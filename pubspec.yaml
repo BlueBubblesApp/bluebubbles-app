@@ -70,7 +70,11 @@ dependencies:
   flutter_slidable: ^2.0.0
   flutter_staggered_grid_view: ^0.6.2
   flutter_svg: ^1.1.6
-  geolocator: ^9.0.2
+  geolocator:
+    git:
+      url: https://github.com/BlueBubblesApp/flutter-geolocator.git
+      ref: no_windows_streams
+      path: geolocator
   get: 4.3.8 # pinned because of snackbar issue
   giphy_get: ^3.2.0
   github: ^9.7.0
@@ -146,12 +150,6 @@ dependencies:
   windows_taskbar: ^1.1.1
 
 dependency_overrides:
-  # overrides for custom packages
-  geolocator_windows:
-    git:
-      url: https://github.com/BlueBubblesApp/flutter-geolocator.git
-      ref: 0b697a937422174cc01c92c6da7eebadc708a4c3
-      path: geolocator_windows
   # overrides for packages stuck on outdated versions
   path: ^1.8.3 # flutter test SDK
   js: ^0.6.6 # flutter test SDK
