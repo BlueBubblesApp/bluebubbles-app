@@ -209,7 +209,7 @@ Future<Null> initApp(bool bubble) async {
       migrate() {
         if (version < databaseVersion) {
           switch (databaseVersion) {
-            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
+          // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
             case 2:
               Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
               final messages = messageBox.getAll();
@@ -292,6 +292,8 @@ Future<Null> initApp(bool bubble) async {
       await Window.initialize();
       if (Platform.isWindows) {
         await Window.hideWindowControls();
+      } else if (Platform.isLinux && ss.settings.useCustomTitleBar.value) {
+        await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
       }
       windowManager.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
@@ -380,8 +382,8 @@ class BadCertOverride extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      // If there is a bad certificate callback, override it if the host is part of
-      // your server URL
+    // If there is a bad certificate callback, override it if the host is part of
+    // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
         return serverUrl.contains(host);
@@ -481,7 +483,7 @@ class Main extends StatelessWidget {
                       isAuthing = true;
                       localAuth
                           .authenticate(
-                              localizedReason: 'Please authenticate to unlock BlueBubbles', options: const AuthenticationOptions(stickyAuth: true))
+                          localizedReason: 'Please authenticate to unlock BlueBubbles', options: const AuthenticationOptions(stickyAuth: true))
                           .then((result) {
                         isAuthing = false;
                         if (result) {
@@ -654,41 +656,41 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
           if (needsMigration) {
             showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (BuildContext context) {
-                return TitleBarWrapper(
-                  child: AlertDialog(
-                    title: Text(
-                      "Handle Migration",
-                      style: context.theme.textTheme.titleLarge,
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                            "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
-                            style: context.theme.textTheme.bodyLarge),
-                        Container(height: 5),
-                        Text("To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
-                            style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
-                        Container(height: 5),
-                        Text("Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
-                            style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return TitleBarWrapper(
+                    child: AlertDialog(
+                      title: Text(
+                        "Handle Migration",
+                        style: context.theme.textTheme.titleLarge,
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                              "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
+                              style: context.theme.textTheme.bodyLarge),
+                          Container(height: 5),
+                          Text("To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
+                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                          Container(height: 5),
+                          Text("Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
+                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                        ],
+                      ),
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
                       ],
                     ),
-                    backgroundColor: context.theme.colorScheme.properSurface,
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              });
+                  );
+                });
           }
         }
 
@@ -853,14 +855,14 @@ Future<void> initSystemTray() async {
 }
 
 void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) async {
-      if (element is Directory) {
-        Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        newDirectory.createSync();
-        Logger.info("Created new directory ${basename(element.path)}");
+  if (element is Directory) {
+    Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
+    newDirectory.createSync();
+    Logger.info("Created new directory ${basename(element.path)}");
 
-        copyDirectory(element.absolute, newDirectory);
-      } else if (element is File) {
-        element.copySync(join(destination.path, basename(element.path)));
-        Logger.info("Created file ${basename(element.path)}");
-      }
-    });
+    copyDirectory(element.absolute, newDirectory);
+  } else if (element is File) {
+    element.copySync(join(destination.path, basename(element.path)));
+    Logger.info("Created file ${basename(element.path)}");
+  }
+});
