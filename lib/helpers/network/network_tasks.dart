@@ -49,10 +49,11 @@ class NetworkTasks {
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) async {
     ConnectivityResult status = await (Connectivity().checkConnectivity());
-    if (status != ConnectivityResult.wifi) {
+    if (status != ConnectivityResult.wifi || ss.settings.localhostPort.value == null || kIsWeb) {
       http.originOverride = null;
       return;
     }
+
     final wifiIP = await NetworkInfo().getWifiIP();
     final schemes = ['http', 'https'];
     if (wifiIP != null) {
