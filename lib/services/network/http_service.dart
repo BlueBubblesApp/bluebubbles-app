@@ -16,7 +16,8 @@ class HttpService extends GetxService {
   String? originOverride;
 
   /// Get the URL origin from the current server address
-  String get origin => "${originOverride ?? Uri.parse(ss.settings.serverAddress.value).origin}/api/v1";
+  String get origin => originOverride ?? Uri.parse(ss.settings.serverAddress.value).origin;
+  String get apiRoot => "$origin/api/v1";
 
   /// Helper function to build query params, this way we only need to add the
   /// required guid auth param in one place
@@ -31,14 +32,14 @@ class HttpService extends GetxService {
 
   /// Global try-catch function
   Future<Response> runApiGuarded(Future<Response> Function() func) async {
-    if (ss.settings.serverAddress.value.isEmpty) {
+    if (http.origin.isEmpty) {
       return Future.error("No server URL!");
     }
     try {
       return await func();
     } catch (e, s) {
       // try again if 502 error and Cloudflare
-      if (e is Response && e.statusCode == 502 && origin.contains("trycloudflare")) {
+      if (e is Response && e.statusCode == 502 && apiRoot.contains("trycloudflare")) {
         try {
           return await func();
         } catch (e, s) {
@@ -77,7 +78,7 @@ class HttpService extends GetxService {
   Future<Response> ping({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/ping",
+          "$apiRoot/ping",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -89,7 +90,7 @@ class HttpService extends GetxService {
   Future<Response> lockMac({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/mac/lock",
+          "$apiRoot/mac/lock",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -101,7 +102,7 @@ class HttpService extends GetxService {
   Future<Response> restartImessage({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/mac/imessage/restart",
+          "$apiRoot/mac/imessage/restart",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -113,7 +114,7 @@ class HttpService extends GetxService {
   Future<Response> serverInfo({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/info",
+          "$apiRoot/server/info",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -125,7 +126,7 @@ class HttpService extends GetxService {
   Future<Response> softRestart({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/restart/soft",
+          "$apiRoot/server/restart/soft",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -137,7 +138,7 @@ class HttpService extends GetxService {
   Future<Response> hardRestart({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/restart/hard",
+          "$apiRoot/server/restart/hard",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -149,7 +150,7 @@ class HttpService extends GetxService {
   Future<Response> checkUpdate({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/update/check",
+          "$apiRoot/server/update/check",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -161,7 +162,7 @@ class HttpService extends GetxService {
   Future<Response> serverStatTotals({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/statistics/totals",
+          "$apiRoot/server/statistics/totals",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -175,7 +176,7 @@ class HttpService extends GetxService {
   Future<Response> serverStatMedia({bool byChat = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/statistics/media${byChat ? "/chat" : ""}",
+          "$apiRoot/server/statistics/media${byChat ? "/chat" : ""}",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -187,7 +188,7 @@ class HttpService extends GetxService {
   Future<Response> serverLogs({int count = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/logs",
+          "$apiRoot/server/logs",
           queryParameters: buildQueryParams({"count": count}),
           cancelToken: cancelToken
       );
@@ -199,7 +200,7 @@ class HttpService extends GetxService {
   Future<Response> addFcmDevice(String name, String identifier, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/fcm/device",
+          "$apiRoot/fcm/device",
           data: {"name": name, "identifier": identifier},
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
@@ -212,7 +213,7 @@ class HttpService extends GetxService {
   Future<Response> fcmClient({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/fcm/client",
+          "$apiRoot/fcm/client",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -224,7 +225,7 @@ class HttpService extends GetxService {
   Future<Response> attachment(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/attachment/$guid",
+          "$apiRoot/attachment/$guid",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -236,7 +237,7 @@ class HttpService extends GetxService {
   Future<Response> downloadAttachment(String guid, {void Function(int, int)? onReceiveProgress, bool original = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/attachment/$guid/download",
+          "$apiRoot/attachment/$guid/download",
           queryParameters: buildQueryParams({"original": original}),
           options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
@@ -250,7 +251,7 @@ class HttpService extends GetxService {
   Future<Response> attachmentBlurhash(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-        "$origin/attachment/$guid/blurhash",
+        "$apiRoot/attachment/$guid/blurhash",
         queryParameters: buildQueryParams(),
         options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
         cancelToken: cancelToken,
@@ -264,7 +265,7 @@ class HttpService extends GetxService {
   Future<Response> attachmentCount({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/attachment/count",
+          "$apiRoot/attachment/count",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -279,7 +280,7 @@ class HttpService extends GetxService {
   Future<Response> chats({List<String> withQuery = const [], int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/chat/query",
+          "$apiRoot/chat/query",
           queryParameters: buildQueryParams(),
           data: {"with": withQuery, "offset": offset, "limit": limit},
           cancelToken: cancelToken
@@ -296,7 +297,7 @@ class HttpService extends GetxService {
   Future<Response> chatMessages(String guid, {String withQuery = "", String sort = "DESC", int? before, int? after, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/chat/$guid/message",
+          "$apiRoot/chat/$guid/message",
           queryParameters: buildQueryParams({"with": withQuery, "sort": sort, "before": before, "after": after, "offset": offset, "limit": limit}),
           cancelToken: cancelToken
       );
@@ -310,7 +311,7 @@ class HttpService extends GetxService {
   Future<Response> chatParticipant(String method, String guid, String address, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/chat/$guid/participant/$method",
+          "$apiRoot/chat/$guid/participant/$method",
           queryParameters: buildQueryParams(),
           data: {"address": address},
           cancelToken: cancelToken
@@ -324,7 +325,7 @@ class HttpService extends GetxService {
   Future<Response> updateChat(String guid, String displayName, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.put(
-          "$origin/chat/$guid",
+          "$apiRoot/chat/$guid",
           queryParameters: buildQueryParams(),
           data: {"displayName": displayName},
           cancelToken: cancelToken
@@ -338,7 +339,7 @@ class HttpService extends GetxService {
   Future<Response> createChat(List<String> addresses, String? message, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/chat/new",
+          "$apiRoot/chat/new",
           queryParameters: buildQueryParams(),
           data: {"addresses": addresses, "message": message},
           cancelToken: cancelToken
@@ -351,7 +352,7 @@ class HttpService extends GetxService {
   Future<Response> chatCount({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/chat/count",
+          "$apiRoot/chat/count",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -367,7 +368,7 @@ class HttpService extends GetxService {
   Future<Response> singleChat(String guid, {String withQuery = "", CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/chat/$guid",
+          "$apiRoot/chat/$guid",
           queryParameters: buildQueryParams({"with": withQuery}),
           cancelToken: cancelToken
       );
@@ -379,7 +380,7 @@ class HttpService extends GetxService {
   Future<Response> markChatRead(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/chat/$guid/read",
+          "$apiRoot/chat/$guid/read",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken,
       );
@@ -391,7 +392,7 @@ class HttpService extends GetxService {
   Future<Response> markChatUnread(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-        "$origin/chat/$guid/unread",
+        "$apiRoot/chat/$guid/unread",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
       );
@@ -404,7 +405,7 @@ class HttpService extends GetxService {
   Future<Response> addRemoveParticipant(String method, String guid, String address, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/chat/$guid/participant/$method",
+          "$apiRoot/chat/$guid/participant/$method",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken,
           data: {"address": address}
@@ -417,7 +418,7 @@ class HttpService extends GetxService {
   Future<Response> getChatIcon(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/chat/$guid/icon",
+          "$apiRoot/chat/$guid/icon",
           queryParameters: buildQueryParams(),
           options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
@@ -431,7 +432,7 @@ class HttpService extends GetxService {
   Future<Response> deleteChat(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.delete(
-          "$origin/chat/$guid",
+          "$apiRoot/chat/$guid",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -450,7 +451,7 @@ class HttpService extends GetxService {
     print(params);
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/message/count${updated ? "/updated" : onlyMe ? "/me" : ""}",
+          "$apiRoot/message/count${updated ? "/updated" : onlyMe ? "/me" : ""}",
           queryParameters: buildQueryParams(params),
           cancelToken: cancelToken);
       return returnSuccessOrError(response);
@@ -465,7 +466,7 @@ class HttpService extends GetxService {
   Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, bool convertAttachment = true, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/message/query",
+          "$apiRoot/message/query",
           queryParameters: buildQueryParams(),
           data: {"with": withQuery, "where": where, "sort": sort, "before": before, "after": after, "chatGuid": chatGuid, "offset": offset, "limit": limit, "convertAttachment": convertAttachment},
           cancelToken: cancelToken
@@ -482,7 +483,7 @@ class HttpService extends GetxService {
   Future<Response> singleMessage(String guid, {String withQuery = "", CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/message/$guid",
+          "$apiRoot/message/$guid",
           queryParameters: buildQueryParams({"with": withQuery}),
           cancelToken: cancelToken
       );
@@ -497,7 +498,7 @@ class HttpService extends GetxService {
   Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/message/text",
+          "$apiRoot/message/text",
           queryParameters: buildQueryParams(),
           data: {
             "chatGuid": chatGuid,
@@ -531,10 +532,10 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
-        // "isAudioMessage": isAudioMessage,
+        "isAudioMessage": isAudioMessage,
       });
       final response = await dio.post(
-          "$origin/message/attachment",
+          "$apiRoot/message/attachment",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken,
           data: formData,
@@ -551,7 +552,7 @@ class HttpService extends GetxService {
   Future<Response> sendTapback(String chatGuid, String selectedMessageText, String selectedMessageGuid, String reaction, {int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/message/react",
+          "$apiRoot/message/react",
           queryParameters: buildQueryParams(),
           data: {
             "chatGuid": chatGuid,
@@ -569,7 +570,7 @@ class HttpService extends GetxService {
   Future<Response> unsend(String selectedMessageGuid, {int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/message/$selectedMessageGuid/unsend",
+          "$apiRoot/message/$selectedMessageGuid/unsend",
           queryParameters: buildQueryParams(),
           data: {
             "partIndex": partIndex ?? 0,
@@ -583,7 +584,7 @@ class HttpService extends GetxService {
   Future<Response> edit(String selectedMessageGuid, String edit, String backwardsCompatText, {int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/message/$selectedMessageGuid/edit",
+          "$apiRoot/message/$selectedMessageGuid/edit",
           queryParameters: buildQueryParams(),
           data: {
             "editedMessage": edit,
@@ -600,7 +601,7 @@ class HttpService extends GetxService {
   Future<Response> handleCount({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/handle/count",
+          "$apiRoot/handle/count",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -616,7 +617,7 @@ class HttpService extends GetxService {
   Future<Response> handles({List<String> withQuery = const [], String? address, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/handle/query",
+          "$apiRoot/handle/query",
           queryParameters: buildQueryParams(),
           data: {"with": withQuery, "address": address, "offset": offset, "limit": limit},
           cancelToken: cancelToken
@@ -629,7 +630,7 @@ class HttpService extends GetxService {
   Future<Response> handle(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/handle/$guid",
+          "$apiRoot/handle/$guid",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -641,7 +642,7 @@ class HttpService extends GetxService {
   Future<Response> contacts({bool withAvatars = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/contact",
+          "$apiRoot/contact",
           queryParameters: buildQueryParams(withAvatars ? {"extraProperties": "avatar"} : {}),
           cancelToken: cancelToken
       );
@@ -654,7 +655,7 @@ class HttpService extends GetxService {
   Future<Response> contactByAddresses(List<String> addresses, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/contact/query",
+          "$apiRoot/contact/query",
           queryParameters: buildQueryParams(),
           data: {"addresses": addresses},
           cancelToken: cancelToken
@@ -667,7 +668,7 @@ class HttpService extends GetxService {
   Future<Response> createContact(List<Map<String, dynamic>> contacts, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/contact",
+          "$apiRoot/contact",
           queryParameters: buildQueryParams(),
           data: contacts,
           onSendProgress: onSendProgress,
@@ -682,7 +683,7 @@ class HttpService extends GetxService {
   Future<Response> getTheme({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/backup/theme",
+          "$apiRoot/backup/theme",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -694,7 +695,7 @@ class HttpService extends GetxService {
   Future<Response> setTheme(String name, Map<String, dynamic> json, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/backup/theme",
+          "$apiRoot/backup/theme",
           data: {"name": name, "data": json},
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
@@ -707,7 +708,7 @@ class HttpService extends GetxService {
   Future<Response> getSettings({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/backup/settings",
+          "$apiRoot/backup/settings",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -719,7 +720,7 @@ class HttpService extends GetxService {
   Future<Response> setSettings(String name, Map<String, dynamic> json, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-          "$origin/backup/settings",
+          "$apiRoot/backup/settings",
           data: {"name": name, "data": json},
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
@@ -732,7 +733,7 @@ class HttpService extends GetxService {
   Future<Response> landingPage({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          origin.replaceAll("/api/v1", ""),
+          origin,
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -744,7 +745,7 @@ class HttpService extends GetxService {
   Future<Response> getScheduled({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-        "$origin/message/schedule",
+        "$apiRoot/message/schedule",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
       );
@@ -756,7 +757,7 @@ class HttpService extends GetxService {
   Future<Response> createScheduled(String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-        "$origin/message/schedule",
+        "$apiRoot/message/schedule",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
         data: {
@@ -778,7 +779,7 @@ class HttpService extends GetxService {
   Future<Response> updateScheduled(int id, String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.put(
-          "$origin/message/schedule/$id",
+          "$apiRoot/message/schedule/$id",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken,
           data: {
@@ -800,7 +801,7 @@ class HttpService extends GetxService {
   Future<Response> deleteScheduled(int id, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.delete(
-        "$origin/message/schedule/$id",
+        "$apiRoot/message/schedule/$id",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken
       );
@@ -812,7 +813,7 @@ class HttpService extends GetxService {
   Future<Response> findMyDevices({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-        "$origin/icloud/findmy/devices",
+        "$apiRoot/icloud/findmy/devices",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
       );
@@ -824,7 +825,7 @@ class HttpService extends GetxService {
   Future<Response> refreshFindMyDevices({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
-        "$origin/icloud/findmy/devices/refresh",
+        "$apiRoot/icloud/findmy/devices/refresh",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
         options: Options(receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
@@ -837,7 +838,7 @@ class HttpService extends GetxService {
   Future<Response> findMyFriends({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-        "$origin/icloud/findmy/friends",
+        "$apiRoot/icloud/findmy/friends",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
       );
