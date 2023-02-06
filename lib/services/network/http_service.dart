@@ -16,7 +16,7 @@ class HttpService extends GetxService {
   String? originOverride;
 
   /// Get the URL origin from the current server address
-  String get origin => originOverride ?? Uri.parse(ss.settings.serverAddress.value).origin;
+  String get origin => originOverride ?? (Uri.parse(ss.settings.serverAddress.value).hasScheme ? Uri.parse(ss.settings.serverAddress.value).origin : '');
   String get apiRoot => "$origin/api/v1";
 
   /// Helper function to build query params, this way we only need to add the
