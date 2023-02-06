@@ -153,7 +153,7 @@ dependency_overrides:
   # overrides for packages stuck on outdated versions
   path: ^1.8.3 # flutter test SDK
   js: ^0.6.6 # flutter test SDK
-  image: ^3.3.0 # msix
+  image: ^4.0.12 # msix
   intl: ^0.18.0 # network_tools
   rxdart: ^0.27.7 # secure_application
 
