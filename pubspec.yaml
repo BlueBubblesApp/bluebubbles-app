@@ -163,7 +163,10 @@ dev_dependencies:
   flutter_launcher_icons: ^0.11.0
   flutter_native_splash: ^2.2.17
   flutter_lints: ^2.0.1
-  msix: ^3.7.0
+  msix:
+    git:
+      url: https://github.com/BlueBubblesApp/msix.git
+      ref: a0fcbf7ffa6838888dcc62f3c219cc948fb376a5
   peanut: ^4.3.0
   objectbox_generator: any
   flutter_test:
