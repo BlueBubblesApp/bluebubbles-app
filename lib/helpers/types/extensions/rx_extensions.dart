@@ -36,13 +36,9 @@ extension ChatListHelpers on RxList<Chat> {
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!ss.settings.filterUnknownSenders.value) return this;
     if (unknown) {
-      return where((e) => e.participants.length == 1 && cs.getContact(e.participants[0].address) == null)
-          .toList()
-          .obs;
+      return where((e) => !e.isGroup && e.participants.first.contact == null).toList().obs;
     } else {
-      return where((e) =>
-      e.participants.length > 1 ||
-          (e.participants.length == 1 && cs.getContact(e.participants[0].address) != null)).toList().obs;
+      return where((e) => e.isGroup || (!e.isGroup && e.participants.first.contact != null)).toList().obs;
     }
   }
 }
