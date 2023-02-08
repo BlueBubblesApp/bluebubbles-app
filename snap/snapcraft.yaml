@@ -1,21 +1,28 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.9.102.0
+version: 1.10.100.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
 confinement: strict
 base: core20
-grade: devel
+grade: stable
 
 apps:
   bluebubbles:
-    command: bluebubbles
+    command: bin/bluebubbles
     extensions: [gnome-3-38]
+    slots: [dbus-bluebubbles]
     plugs:
       - network
       - camera
-      - microphone
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - home
+      - opengl
+      - audio-playback
 
 parts:
   flutter-git:
@@ -29,20 +36,13 @@ parts:
       cp -r $SNAPCRAFT_PART_SRC $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter
       ln -s $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter/bin/flutter $SNAPCRAFT_PART_INSTALL/usr/bin/flutter
     build-packages:
-      - bash
       - curl
       - clang
       - cmake
       - libgtk-3-dev
       - ninja-build
       - xz-utils
-      - zip
-    stage-packages:
-      - libappindicator3-dev
-      - gir1.2-appindicator3-0.1
-      - libnotify-dev
-      - vlc
-      - libvlc-dev
+      - unzip
     override-prime: ''
 
   bluebubbles:
@@ -53,9 +53,30 @@ parts:
       set -eux
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
       flutter upgrade
+      flutter config --no-analytics
       flutter config --enable-linux-desktop
       flutter doctor
       flutter pub get
-      rm -rf build
+      find build -type f -name 'CMakeCache.txt' -delete
       flutter build linux --release -v
+      tmp=$(mktemp)
+      jq '.version = "1.10.100.0"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
+      chmod +x build/linux/*/release/bundle/bluebubbles
       cp -r build/linux/*/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
+      mv build/linux/*/release/bundle/lib/libobjectbox.so $SNAPCRAFT_PART_INSTALL/usr/lib/
+    build-packages:
+      - jq
+    stage-packages:
+      - libglu1-mesa
+      - freeglut3
+      - libnotify-dev
+      - vlc
+      - libvlc-dev
+      - gir1.2-appindicator3-0.1
+      - zenity
+      
+slots:
+  dbus-bluebubbles:
+    interface: dbus
+    bus: session
+    name: app.bluebubbles.BlueBubbles

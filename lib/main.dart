@@ -5,6 +5,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
+import 'package:bluebubbles/services/backend/sync/handle_sync_manager.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -177,7 +178,7 @@ Future<Null> initApp(bool bubble) async {
           Logger.error(s);
           if (Platform.isWindows) {
             Logger.info("Failed to open store from default path. Using custom path");
-            const customStorePath = "C:\\bluebubbles_app";
+            const customStorePath = "C:\\BlueBubbles\\bluebubbles";
             ss.prefs.setBool("use-custom-path", true);
             ss.prefs.setString("custom-path", customStorePath);
             objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
@@ -208,7 +209,7 @@ Future<Null> initApp(bool bubble) async {
       migrate() {
         if (version < databaseVersion) {
           switch (databaseVersion) {
-            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
+          // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
             case 2:
               Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
               final messages = messageBox.getAll();
@@ -291,6 +292,8 @@ Future<Null> initApp(bool bubble) async {
       await Window.initialize();
       if (Platform.isWindows) {
         await Window.hideWindowControls();
+      } else if (Platform.isLinux) {
+        await windowManager.setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
       }
       windowManager.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
@@ -379,8 +382,8 @@ class BadCertOverride extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      // If there is a bad certificate callback, override it if the host is part of
-      // your server URL
+    // If there is a bad certificate callback, override it if the host is part of
+    // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
         return serverUrl.contains(host);
@@ -480,7 +483,7 @@ class Main extends StatelessWidget {
                       isAuthing = true;
                       localAuth
                           .authenticate(
-                              localizedReason: 'Please authenticate to unlock BlueBubbles', options: const AuthenticationOptions(stickyAuth: true))
+                          localizedReason: 'Please authenticate to unlock BlueBubbles', options: const AuthenticationOptions(stickyAuth: true))
                           .then((result) {
                         isAuthing = false;
                         if (result) {
@@ -631,6 +634,18 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       // only show these dialogs if setup is finished
       if (ss.settings.finishedSetup.value) {
         if (ss.prefs.getBool('1.11.1-warning') == false && !kIsWeb) {
+          if (kIsDesktop) {
+            try {
+              final handleSyncer = HandleSyncManager(saveLogs: true);
+              await handleSyncer.start();
+              eventDispatcher.emit("refresh-all", null);
+              return;
+            } catch (ex, stacktrace) {
+              Logger.error("Failed to reset contacts!");
+              Logger.error(ex.toString());
+              Logger.error(stacktrace.toString());
+            }
+          }
           bool needsMigration = false;
 
           try {
@@ -641,41 +656,41 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
           if (needsMigration) {
             showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (BuildContext context) {
-                return TitleBarWrapper(
-                  child: AlertDialog(
-                    title: Text(
-                      "Handle Migration",
-                      style: context.theme.textTheme.titleLarge,
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                            "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
-                            style: context.theme.textTheme.bodyLarge),
-                        Container(height: 5),
-                        Text("To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
-                            style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
-                        Container(height: 5),
-                        Text("Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
-                            style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return TitleBarWrapper(
+                    child: AlertDialog(
+                      title: Text(
+                        "Handle Migration",
+                        style: context.theme.textTheme.titleLarge,
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                              "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
+                              style: context.theme.textTheme.bodyLarge),
+                          Container(height: 5),
+                          Text("To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
+                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                          Container(height: 5),
+                          Text("Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
+                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                        ],
+                      ),
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
                       ],
                     ),
-                    backgroundColor: context.theme.colorScheme.properSurface,
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              });
+                  );
+                });
           }
         }
 
@@ -683,9 +698,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           Permission.notification.request();
         }
       }
-      if (ss.prefs.getBool('1.11-warning') != true) {
-        ss.prefs.setBool('1.11-warning', true);
-      }
+
       if (ss.prefs.getBool('1.11.1-warning') != true) {
         ss.prefs.setBool('1.11.1-warning', true);
       }
@@ -842,14 +855,14 @@ Future<void> initSystemTray() async {
 }
 
 void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) async {
-      if (element is Directory) {
-        Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        newDirectory.createSync();
-        Logger.info("Created new directory ${basename(element.path)}");
+  if (element is Directory) {
+    Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
+    newDirectory.createSync();
+    Logger.info("Created new directory ${basename(element.path)}");
 
-        copyDirectory(element.absolute, newDirectory);
-      } else if (element is File) {
-        element.copySync(join(destination.path, basename(element.path)));
-        Logger.info("Created file ${basename(element.path)}");
-      }
-    });
+    copyDirectory(element.absolute, newDirectory);
+  } else if (element is File) {
+    element.copySync(join(destination.path, basename(element.path)));
+    Logger.info("Created file ${basename(element.path)}");
+  }
+});

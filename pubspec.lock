@@ -952,10 +952,11 @@ packages:
   geolocator:
     dependency: "direct main"
     description:
-      name: geolocator
-      sha256: "5c23f3613f50586c0bbb2b8f970240ae66b3bd992088cf60dd5ee2e6f7dde3a8"
-      url: "https://pub.dev"
-    source: hosted
+      path: geolocator
+      ref: no_windows_streams
+      resolved-ref: "21ce4f94a6aa4079c764f459481e136cde92d1f6"
+      url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
+    source: git
     version: "9.0.2"
   geolocator_android:
     dependency: transitive
@@ -990,11 +991,11 @@ packages:
     source: hosted
     version: "2.1.6"
   geolocator_windows:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       path: geolocator_windows
-      ref: "0b697a937422174cc01c92c6da7eebadc708a4c3"
-      resolved-ref: "0b697a937422174cc01c92c6da7eebadc708a4c3"
+      ref: no_windows_streams
+      resolved-ref: "21ce4f94a6aa4079c764f459481e136cde92d1f6"
       url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
     source: git
     version: "0.1.2"
@@ -1578,10 +1579,11 @@ packages:
   msix:
     dependency: "direct dev"
     description:
-      name: msix
-      sha256: e3de4d9f52543ad6e4b0f534991e1303cbd379d24be28dd241ac60bd9439a201
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: a0fcbf7ffa6838888dcc62f3c219cc948fb376a5
+      resolved-ref: a0fcbf7ffa6838888dcc62f3c219cc948fb376a5
+      url: "https://github.com/BlueBubblesApp/msix.git"
+    source: git
     version: "3.7.0"
   multi_value_listenable_builder:
     dependency: "direct main"
@@ -2750,5 +2752,5 @@ packages:
     source: hosted
     version: "3.1.1"
 sdks:
-  dart: ">=2.19.0 <4.0.0"
+  dart: ">=2.19.0 <3.0.0"
   flutter: ">=3.7.0"

@@ -146,7 +146,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       _debounceTyping?.cancel();
       oldText = newText;
       // don't send a bunch of duplicate events for every typing change
-      if (_debounceTyping == null && ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+      if (_debounceTyping == null &&
+          ss.settings.enablePrivateAPI.value &&
+          (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
         socket.sendMessage("started-typing", {"chatGuid": chatGuid});
         _debounceTyping = Timer(const Duration(seconds: 3), () {
           socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
@@ -221,7 +223,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.textController.dispose();
     controller.subjectTextController.dispose();
     recorderController.dispose();
-    if (ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+    if (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value) {
       socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
     }
 
