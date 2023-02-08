@@ -210,6 +210,24 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     return existingChat;
   }
 
+  void addressOnSubmitted() {
+    final text = addressController.text;
+    if (text.isEmail || text.isPhoneNumber) {
+      addSelected(SelectedContact(
+        displayName: text,
+        address: text,
+      ));
+    } else if (filteredContacts.length == 1) {
+      final possibleAddresses = [...filteredContacts.first.phones, ...filteredContacts.first.emails];
+      if (possibleAddresses.length == 1) {
+        addSelected(SelectedContact(
+          displayName: filteredContacts.first.displayName,
+          address: possibleAddresses.first,
+        ));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -374,21 +392,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
                                   ),
                                   onSubmitted: (String value) {
-                                    final text = addressController.text;
-                                    if (text.isEmail || text.isPhoneNumber) {
-                                      addSelected(SelectedContact(
-                                        displayName: text,
-                                        address: text,
-                                      ));
-                                    } else if (filteredContacts.length == 1) {
-                                      final possibleAddresses = [...filteredContacts.first.phones, ...filteredContacts.first.emails];
-                                      if (possibleAddresses.length == 1) {
-                                        addSelected(SelectedContact(
-                                          displayName: filteredContacts.first.displayName,
-                                          address: possibleAddresses.first,
-                                        ));
-                                      }
-                                    }
+                                    addressOnSubmitted();
                                   },
                                 ),
                               ),
@@ -623,6 +627,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         recorderController: RecorderController(),
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
+                          addressOnSubmitted();
                           if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
                             final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
                             ns.pushAndRemoveUntil(
