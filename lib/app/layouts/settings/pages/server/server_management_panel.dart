@@ -524,8 +524,10 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     subtitle: "Add or edit custom headers to connect to your server",
                     backgroundColor: tileColor,
                     onTap: () async {
-                      await showCustomHeadersDialog(context);
-                      socket.restartSocket();
+                      final result = await showCustomHeadersDialog(context);
+                      if (result) {
+                        socket.restartSocket();
+                      }
                     }),
                   Container(
                     color: tileColor,

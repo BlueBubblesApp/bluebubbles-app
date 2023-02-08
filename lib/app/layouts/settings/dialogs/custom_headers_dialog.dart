@@ -4,7 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-Future<void> showCustomHeadersDialog(BuildContext context) async {
+Future<bool> showCustomHeadersDialog(BuildContext context) async {
   int headers = ss.settings.customHeaders.length.clamp(1, 100);
   List<TextEditingController> keyControllers = [];
   List<TextEditingController> valueControllers = [];
@@ -17,7 +17,7 @@ Future<void> showCustomHeadersDialog(BuildContext context) async {
     keyControllers.add(TextEditingController());
     valueControllers.add(TextEditingController());
   }
-  await showDialog(
+  return await showDialog(
     context: context,
     builder: (context) => AlertDialog(
       title: Text("Custom Headers", style: context.theme.textTheme.titleLarge),
@@ -94,7 +94,7 @@ Future<void> showCustomHeadersDialog(BuildContext context) async {
         TextButton(
             child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(false);
             }
         ),
         TextButton(
@@ -111,10 +111,10 @@ Future<void> showCustomHeadersDialog(BuildContext context) async {
               ss.settings.customHeaders.value = map;
               ss.settings.save();
               http.onInit();
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(true);
             }
         ),
       ],
     ),
-  );
+  ) ?? false;
 }
