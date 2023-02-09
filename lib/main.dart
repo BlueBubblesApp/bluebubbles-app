@@ -233,10 +233,14 @@ Future<Null> initApp(bool bubble) async {
               final typeGlobal = ss.settings.privateSendTypingIndicators.value;
               final readGlobal = ss.settings.privateMarkChatAsRead.value;
               for (Chat c in chats) {
-                if (!papi || c.autoSendReadReceipts == readGlobal) {
+                if (papi && readGlobal && !(c.autoSendReadReceipts ?? true)) {
+                  // dont do anything
+                } else {
                   c.autoSendReadReceipts = null;
                 }
-                if (!papi || c.autoSendTypingIndicators == typeGlobal) {
+                if (papi && typeGlobal && !(c.autoSendTypingIndicators ?? true)) {
+                  // dont do anything
+                } else {
                   c.autoSendTypingIndicators = null;
                 }
               }
