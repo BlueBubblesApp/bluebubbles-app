@@ -48,6 +48,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       _init = true;
       final messageQuery = messageBox.query(Message_.id.equals(message.id!)).watch();
       sub = messageQuery.listen((Query<Message> query) async {
+        if (message.id == null) return;
         final _message = await runAsync(() {
           return messageBox.get(message.id!);
         });
