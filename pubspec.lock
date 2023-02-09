@@ -954,7 +954,7 @@ packages:
     description:
       path: geolocator
       ref: no_windows_streams
-      resolved-ref: "21ce4f94a6aa4079c764f459481e136cde92d1f6"
+      resolved-ref: "59aced3f0dc47f6c2e8b220da23e126a8609f493"
       url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
     source: git
     version: "9.0.2"
@@ -995,7 +995,7 @@ packages:
     description:
       path: geolocator_windows
       ref: no_windows_streams
-      resolved-ref: "21ce4f94a6aa4079c764f459481e136cde92d1f6"
+      resolved-ref: "59aced3f0dc47f6c2e8b220da23e126a8609f493"
       url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
     source: git
     version: "0.1.2"
@@ -2752,5 +2752,5 @@ packages:
     source: hosted
     version: "3.1.1"
 sdks:
-  dart: ">=2.19.0 <4.0.0"
+  dart: ">=2.19.0 <3.0.0"
   flutter: ">=3.7.0"
