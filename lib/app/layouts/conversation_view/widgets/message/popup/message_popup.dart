@@ -40,7 +40,7 @@ class MessagePopup extends StatefulWidget {
   final ConversationViewController cvController;
   final Tuple3<bool, bool, bool> serverDetails;
   final Function([String? type, int? part]) sendTapback;
-  final BuildContext widthContext;
+  final BuildContext Function() widthContext;
 
   const MessagePopup({
     Key? key,
@@ -101,7 +101,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   bool get supportsOriginalDownload => widget.serverDetails.item3;
 
-  BuildContext get widthContext => widget.widthContext;
+  BuildContext get widthContext => widget.widthContext.call();
 
   @override
   void initState() {
