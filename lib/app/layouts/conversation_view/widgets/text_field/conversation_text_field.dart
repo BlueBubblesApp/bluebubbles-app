@@ -161,7 +161,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final newEmojiText = _controller.text;
     if (newEmojiText.contains(":") && newEmojiText != oldEmojiText) {
       oldEmojiText = newEmojiText;
-      final regExp = RegExp(r"(?<=^| |\n|[^a-zA-Z]):[^: \n]{2,}((?=[ \n]|$)|:)", multiLine: true);
+      final regExp = RegExp(r"(?<=^|[^a-zA-Z\d]):[^: \n]{2,}(?:(?=[ \n]|$)|:)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
       List<Emoji> allMatches = [];
       String emojiName = "";
