@@ -106,9 +106,10 @@ class SearchViewState extends OptimizedState<SearchView> {
       List<Chat> chats = [];
       List<Message> messages = [];
       messages = results.map((e) {
-        // grab attachments and associated messages
+        // grab attachments, associated messages, and handle
         e.realAttachments;
         e.fetchAssociatedMessages();
+        e.getHandle();
         return e;
       }).toList();
       chats = results.map((e) => e.chat.target!).toList();
