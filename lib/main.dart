@@ -47,7 +47,7 @@ import 'package:windows_taskbar/windows_taskbar.dart';
 // todo list desktop
 /// Show notif badges
 
-const databaseVersion = 2;
+const databaseVersion = 3;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -209,7 +209,7 @@ Future<Null> initApp(bool bubble) async {
       migrate() {
         if (version < databaseVersion) {
           switch (databaseVersion) {
-          // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
+            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
             case 2:
               Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
               final messages = messageBox.getAll();
@@ -224,6 +224,23 @@ Future<Null> initApp(bool bubble) async {
                 messageBox.putMany(messages);
               }
               version = 2;
+              migrate.call();
+              return;
+            // Version 3 modifies chat typing indicators and read receipts values to follow global setting initially
+            case 3:
+              final chats = chatBox.getAll();
+              final typeGlobal = ss.settings.privateSendTypingIndicators.value;
+              final readGlobal = ss.settings.privateMarkChatAsRead.value;
+              for (Chat c in chats) {
+                if (c.autoSendReadReceipts == readGlobal) {
+                  c.autoSendReadReceipts = null;
+                }
+                if (c.autoSendTypingIndicators == typeGlobal) {
+                  c.autoSendTypingIndicators = null;
+                }
+              }
+              chatBox.putMany(chats);
+              version = 3;
               migrate.call();
               return;
             default:
