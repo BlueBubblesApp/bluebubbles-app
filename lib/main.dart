@@ -229,13 +229,14 @@ Future<Null> initApp(bool bubble) async {
             // Version 3 modifies chat typing indicators and read receipts values to follow global setting initially
             case 3:
               final chats = chatBox.getAll();
+              final papi = ss.settings.enablePrivateAPI.value;
               final typeGlobal = ss.settings.privateSendTypingIndicators.value;
               final readGlobal = ss.settings.privateMarkChatAsRead.value;
               for (Chat c in chats) {
-                if (c.autoSendReadReceipts == readGlobal) {
+                if (!papi || c.autoSendReadReceipts == readGlobal) {
                   c.autoSendReadReceipts = null;
                 }
-                if (c.autoSendTypingIndicators == typeGlobal) {
+                if (!papi || c.autoSendTypingIndicators == typeGlobal) {
                   c.autoSendTypingIndicators = null;
                 }
               }
