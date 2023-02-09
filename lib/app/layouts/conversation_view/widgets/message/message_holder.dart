@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
 
 class MessageHolder extends CustomStateful<MessageWidgetController> {
   MessageHolder({
@@ -701,16 +702,29 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   Navigator.of(context).pop();
                                   service.removeMessage(message);
                                   Message.delete(message.guid!);
+                                  for (Attachment? a in message.attachments) {
+                                    if (a == null) continue;
+                                    Attachment.delete(a.guid!);
+                                    a.bytes = await File(a.path).readAsBytes();
+                                  }
                                   await notif.clearFailedToSend(chat.id!);
                                   // Re-send
                                   message.id = null;
                                   message.error = 0;
                                   message.dateCreated = DateTime.now();
-                                  outq.queue(OutgoingItem(
-                                    type: QueueType.sendMessage,
-                                    chat: chat,
-                                    message: message,
-                                  ));
+                                  if (message.attachments.isNotEmpty) {
+                                    outq.queue(OutgoingItem(
+                                      type: QueueType.sendAttachment,
+                                      chat: chat,
+                                      message: message,
+                                    ));
+                                  } else {
+                                    outq.queue(OutgoingItem(
+                                      type: QueueType.sendMessage,
+                                      chat: chat,
+                                      message: message,
+                                    ));
+                                  }
                                 },
                               ),
                               TextButton(
