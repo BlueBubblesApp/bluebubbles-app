@@ -189,7 +189,7 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
                                           ),
                                           GestureDetector(
                                             onTap: () {
-                                              // todo dart fix confettiController.play();
+                                              confettiController.play();
                                             },
                                             child: Padding(
                                               padding: const EdgeInsets.symmetric(horizontal: 15).add(const EdgeInsets.only(top: 3)),
