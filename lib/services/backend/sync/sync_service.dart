@@ -6,13 +6,13 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:path/path.dart' show join;
-import 'package:tuple/tuple.dart';
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
 
@@ -59,7 +59,7 @@ class SyncService extends GetxService {
 
       FlutterIsolate? isolate;
       try {
-        isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, Tuple2(port.sendPort, http.originOverride));
+        isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, [port.sendPort, http.originOverride]);
       } catch (e) {
         Logger.error('Got error when opening isolate: $e');
         port.close();
@@ -94,9 +94,9 @@ class SyncService extends GetxService {
 }
 
 @pragma('vm:entry-point')
-Future<List<List<int>>> incrementalSyncIsolate(Tuple2<SendPort, String?>? items) async {
-  final port = items?.item1;
-  final address = items?.item2;
+Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
+  final SendPort? port = items?.firstOrNull;
+  final String? address = items?.lastOrNull;
   try {
     if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
