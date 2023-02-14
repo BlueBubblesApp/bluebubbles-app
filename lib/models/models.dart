@@ -41,3 +41,4 @@ export 'package:bluebubbles/models/global/message_summary_info.dart';
 export 'package:bluebubbles/models/global/message_part.dart';
 export 'package:bluebubbles/models/global/scheduled_message.dart';
 export 'package:bluebubbles/models/global/findmy.dart';
+export 'package:bluebubbles/models/global/server_payload.dart';
