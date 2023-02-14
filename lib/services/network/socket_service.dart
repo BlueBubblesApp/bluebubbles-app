@@ -191,9 +191,10 @@ class SocketService extends GetxService {
     switch (event) {
       case "new-message":
         if (!isNullOrEmpty(data)!) {
-          final message = Message.fromMap(data);
+          final payload = ServerPayload.fromJson(data);
+          final message = Message.fromMap(payload.data);
           if (message.isFromMe!) {
-            if (data['tempGuid'] == null) {
+            if (payload.data['tempGuid'] == null) {
               ah.outOfOrderTempGuids.add(message.guid!);
               await Future.delayed(const Duration(milliseconds: 500));
               if (!ah.outOfOrderTempGuids.contains(message.guid!)) return;
@@ -201,12 +202,13 @@ class SocketService extends GetxService {
               ah.outOfOrderTempGuids.remove(message.guid!);
             }
           }
-          inq.queue(IncomingItem.fromMap(QueueType.newMessage, data));
+          inq.queue(IncomingItem.fromMap(QueueType.newMessage, payload.data));
         }
         return;
       case "updated-message":
         if (!isNullOrEmpty(data)!) {
-          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data));
+          final payload = ServerPayload.fromJson(data);
+          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, payload.data));
         }
         return;
       case "group-name-change":
