@@ -64,7 +64,7 @@ class ServerPayload {
 
   factory ServerPayload.fromJson(Map<String, dynamic> json) => ServerPayload(
     originalJson: json,
-    data: json["data"],
+    data: json["data"] ?? json,
     isLegacy: json.containsKey("type"),
     type: PayloadType.values.firstWhereOrNull((element) => describeEnum(element) == json["type"]) ?? PayloadType.OTHER,
     subtype: json["subtype"],
