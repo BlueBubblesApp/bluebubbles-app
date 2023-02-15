@@ -68,7 +68,7 @@ class AttachmentsService extends GetxService {
         size: attachment.totalBytes ?? 0,
       );
     } else if (autoDownload ?? ss.settings.autoDownload.value) {
-      return Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete), tag: attachment.guid);
+      return attachmentDownloader.startDownload(attachment, onComplete: onComplete);
     } else {
       return attachment;
     }
