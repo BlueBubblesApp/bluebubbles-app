@@ -60,6 +60,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           ),
           backgroundColor: backgroundColor,
           extendBodyBehindAppBar: true,
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
               && !showArchived && !showUnknown
               ? ConversationListFAB(parentController: controller)
