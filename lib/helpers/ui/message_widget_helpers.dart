@@ -27,7 +27,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
 
   if (!isNullOrEmpty(part.subject)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      "${part.displaySubject}\n",
+      "${part.displaySubject}${!isNullOrEmpty(part.displayText)! ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
     ));
   }
@@ -59,7 +59,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
         ));
       }
     });
-  } else {
+  } else if (!isNullOrEmpty(part.displayText)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       part.displayText!,
       textStyle,
@@ -79,55 +79,57 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
   final linkIndexMatches = <Tuple2<String, List<int>>>[];
   final controller = cvc(message.chat.target ?? cm.activeChat!.chat);
-  if (!kIsWeb && !kIsDesktop) {
-    if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
-      try {
-        controller.mlKitParsedText["${message.guid!}-${part.part}"] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english)
-            .annotateText(part.text!);
-      } catch (ex) {
-        Logger.warn('Failed to extract entities using mlkit! Error: ${ex.toString()}');
-      }
-    }
-    final entities = controller.mlKitParsedText["${message.guid!}-${part.part}"] ?? [];
-    entities.insertAll(0, part.mentions.map((e) => EntityAnnotation(
-      start: e.range.first,
-      end: e.range.last,
-      text: message.text!.substring(e.range.first, e.range.last),
-      entities: [
-        MentionEntity(e.mentionedAddress ?? ""),
-      ]
-    )));
-    List<EntityAnnotation> normalizedEntities = [];
-    if (entities.isNotEmpty) {
-      for (int i = 0; i < entities.length; i++) {
-        if (i == 0 || entities[i].start > normalizedEntities.last.end) {
-          normalizedEntities.add(entities[i]);
+  if (!isNullOrEmpty(part.text)!) {
+    if (!kIsWeb && !kIsDesktop) {
+      if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
+        try {
+          controller.mlKitParsedText["${message.guid!}-${part.part}"] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english)
+              .annotateText(part.text!);
+        } catch (ex) {
+          Logger.warn('Failed to extract entities using mlkit! Error: ${ex.toString()}');
         }
       }
-    }
-    for (EntityAnnotation element in normalizedEntities) {
-      if (element.entities.first is AddressEntity) {
-        linkIndexMatches.add(Tuple2("map", [element.start, element.end]));
-      } else if (element.entities.first is PhoneEntity) {
-        linkIndexMatches.add(Tuple2("phone", [element.start, element.end]));
-      } else if (element.entities.first is EmailEntity) {
-        linkIndexMatches.add(Tuple2("email", [element.start, element.end]));
-      } else if (element.entities.first is UrlEntity) {
-        linkIndexMatches.add(Tuple2("link", [element.start, element.end]));
-      } else if (element.entities.first is MentionEntity) {
-        linkIndexMatches.add(Tuple2("mention-${element.entities.first.rawValue}", [element.start, element.end]));
+      final entities = controller.mlKitParsedText["${message.guid!}-${part.part}"] ?? [];
+      entities.insertAll(0, part.mentions.map((e) => EntityAnnotation(
+          start: e.range.first,
+          end: e.range.last,
+          text: message.text!.substring(e.range.first, e.range.last),
+          entities: [
+            MentionEntity(e.mentionedAddress ?? ""),
+          ]
+      )));
+      List<EntityAnnotation> normalizedEntities = [];
+      if (entities.isNotEmpty) {
+        for (int i = 0; i < entities.length; i++) {
+          if (i == 0 || entities[i].start > normalizedEntities.last.end) {
+            normalizedEntities.add(entities[i]);
+          }
+        }
       }
-    }
-  } else {
-    List<RegExpMatch> matches = urlRegex.allMatches(part.text!).toList();
-    for (RegExpMatch match in matches) {
-      linkIndexMatches.add(Tuple2("link", [match.start, match.end]));
+      for (EntityAnnotation element in normalizedEntities) {
+        if (element.entities.first is AddressEntity) {
+          linkIndexMatches.add(Tuple2("map", [element.start, element.end]));
+        } else if (element.entities.first is PhoneEntity) {
+          linkIndexMatches.add(Tuple2("phone", [element.start, element.end]));
+        } else if (element.entities.first is EmailEntity) {
+          linkIndexMatches.add(Tuple2("email", [element.start, element.end]));
+        } else if (element.entities.first is UrlEntity) {
+          linkIndexMatches.add(Tuple2("link", [element.start, element.end]));
+        } else if (element.entities.first is MentionEntity) {
+          linkIndexMatches.add(Tuple2("mention-${element.entities.first.rawValue}", [element.start, element.end]));
+        }
+      }
+    } else {
+      List<RegExpMatch> matches = urlRegex.allMatches(part.text!).toList();
+      for (RegExpMatch match in matches) {
+        linkIndexMatches.add(Tuple2("link", [match.start, match.end]));
+      }
     }
   }
   // render subject
   if (!isNullOrEmpty(part.subject)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      "${part.displaySubject}\n",
+      "${part.displaySubject}${!isNullOrEmpty(part.displayText)! ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
     ));
   }
@@ -193,7 +195,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
         ));
       }
     });
-  } else {
+  } else if (!isNullOrEmpty(part.displayText)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       part.displayText!,
       textStyle,
