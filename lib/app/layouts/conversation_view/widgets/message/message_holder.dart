@@ -420,21 +420,26 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                           crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                                                           children: [
                                                             // interactive messages may have subjects, so render them here
-                                                            if ((message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive)
+                                                            // also render the subject for attachments that may have not rendered already
+                                                            if ((message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive
+                                                                || (e.part == 0 && isNullOrEmpty(e.text)! && e.attachments.isNotEmpty))
                                                                 && !isNullOrEmpty(message.subject)!)
-                                                              ClipPath(
-                                                                clipper: TailClipper(
-                                                                  isFromMe: message.isFromMe!,
-                                                                  showTail: false,
-                                                                  connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
-                                                                      || (e.part == 0 && controller.parts.length > 1),
-                                                                  connectUpper: iOS ? false : e.part != 0,
-                                                                ),
-                                                                child: TextBubble(
-                                                                  parentController: controller,
-                                                                  message: MessagePart(
-                                                                    subject: e.subject,
-                                                                    part: e.part,
+                                                              Padding(
+                                                                padding: const EdgeInsets.only(bottom: 2.0),
+                                                                child: ClipPath(
+                                                                  clipper: TailClipper(
+                                                                    isFromMe: message.isFromMe!,
+                                                                    showTail: false,
+                                                                    connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
+                                                                        || (e.part == 0 && controller.parts.length > 1),
+                                                                    connectUpper: iOS ? false : e.part != 0,
+                                                                  ),
+                                                                  child: TextBubble(
+                                                                    parentController: controller,
+                                                                    message: MessagePart(
+                                                                      subject: e.subject,
+                                                                      part: e.part,
+                                                                    ),
                                                                   ),
                                                                 ),
                                                               ),
