@@ -327,17 +327,22 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               if (iOS && Platform.isAndroid)
-                IconButton(
-                  padding: const EdgeInsets.only(left: 10),
-                  icon: Icon(
-                    CupertinoIcons.camera_fill,
-                    color: context.theme.colorScheme.outline,
-                    size: 28,
+                GestureDetector(
+                  onLongPress: () {
+                    openFullCamera(type: 'video');
+                  },
+                  child: IconButton(
+                    padding: const EdgeInsets.only(left: 10),
+                    icon: Icon(
+                      CupertinoIcons.camera_fill,
+                      color: context.theme.colorScheme.outline,
+                      size: 28,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      openFullCamera();
+                    }
                   ),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    openFullCamera();
-                  }
                 ),
               IconButton(
                 icon: Icon(
