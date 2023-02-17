@@ -78,7 +78,7 @@ void sendEffectAction(
                 value: SystemUiOverlayStyle(
                   systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background,
                   // navigation bar color
-                  systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+                  systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
                   statusBarColor: Colors.transparent,
                   // status bar color
                   statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
