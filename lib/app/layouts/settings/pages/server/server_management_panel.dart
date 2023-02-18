@@ -509,7 +509,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             );
                             await manager!.start();
                           } catch (_) {}
-                          Navigator.of(context).pop();
+                          Get.back();
                           manager = null;
                         }
                       }),
