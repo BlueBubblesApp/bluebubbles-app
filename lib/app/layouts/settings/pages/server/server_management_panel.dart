@@ -278,16 +278,19 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: context.theme.colorScheme.properSurface,
-                            content: Container(
-                              height: 320,
-                              width: 320,
-                              child: QrImageView(
-                                data: qrtext,
-                                version: QrVersions.auto,
-                                size: 320,
-                                gapless: true,
-                                backgroundColor: context.theme.colorScheme.properSurface,
-                                foregroundColor: context.theme.colorScheme.properOnSurface,
+                            content: AspectRatio(
+                              aspectRatio: 1,
+                              child: Container(
+                                height: 320,
+                                width: 320,
+                                child: QrImageView(
+                                  data: qrtext,
+                                  version: QrVersions.auto,
+                                  size: 320,
+                                  gapless: true,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  foregroundColor: context.theme.colorScheme.properOnSurface,
+                                ),
                               ),
                             ),
                             title: Text("QR Code", style: context.theme.textTheme.titleLarge),
