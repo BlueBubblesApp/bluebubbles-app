@@ -632,14 +632,15 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
                             ns.pushAndRemoveUntil(
                               Get.context!,
-                              ConversationView(chat: chat),
+                              ConversationView(chat: chat, fromChatCreator: true),
                               (route) => route.isFirst,
+                              // don't force close the active chat in tablet mode
+                              closeActiveChat: false,
+                              // only used in non-tablet mode context
                               customRoute: PageRouteBuilder(
                                 pageBuilder: (_, __, ___) => TitleBarWrapper(
-                                    child: ConversationView(
-                                  chat: chat,
-                                  fromChatCreator: true,
-                                )),
+                                  child: ConversationView(chat: chat, fromChatCreator: true,)
+                                ),
                                 transitionDuration: Duration.zero,
                               ),
                             );
