@@ -62,6 +62,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) async {
                         ss.settings.useCustomTitleBar.value = val;
+                        await windowManager.setTitleBarStyle(val ? TitleBarStyle.hidden : TitleBarStyle.normal);
                         saveSettings();
                       },
                       initialVal: ss.settings.useCustomTitleBar.value,

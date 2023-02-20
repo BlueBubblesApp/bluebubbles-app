@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -34,18 +36,18 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
 
   Message get message => widget.controller.message;
 
-  void openPopup(BuildContext context) async {
+  void openPopup() async {
     widget.cvController.focusNode.unfocus();
     widget.cvController.subjectFocusNode.unfocus();
     HapticFeedback.lightImpact();
     final size = globalKey.currentContext?.size;
-    final childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
+    Offset? childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
     if (size == null || childPos == null) return;
+    childPos = Offset(childPos.dx - MediaQueryData.fromWindow(window).padding.left, childPos.dy);
     final tuple = await ss.getServerDetails();
     final version = tuple.item4;
     final minSierra = await ss.isMinSierra;
     final minBigSur = await ss.isMinBigSur;
-    eventDispatcher.emit('popup-pushed', true);
     if (!iOS) {
       widget.cvController.selected.add(message);
     }
@@ -53,22 +55,22 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       Get.context!,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 150),
-        pageBuilder: (_, animation, secondaryAnimation) {
+        pageBuilder: (ctx, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
             child: Theme(
-              data: context.theme.copyWith(
+              data: ctx.theme.copyWith(
                 // in case some components still use legacy theming
-                primaryColor: context.theme.colorScheme.bubble(context, true),
-                colorScheme: context.theme.colorScheme.copyWith(
-                  primary: context.theme.colorScheme.bubble(context, true),
-                  onPrimary: context.theme.colorScheme.onBubble(context, true),
-                  surface: ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-                  onSurface: ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                primaryColor: ctx.theme.colorScheme.bubble(ctx, true),
+                colorScheme: ctx.theme.colorScheme.copyWith(
+                  primary: ctx.theme.colorScheme.bubble(ctx, true),
+                  onPrimary: ctx.theme.colorScheme.onBubble(ctx, true),
+                  surface: ss.settings.monetTheming.value == Monet.full ? null : (ctx.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                  onSurface: ss.settings.monetTheming.value == Monet.full ? null : (ctx.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                 ),
               ),
               child: MessagePopup(
-                childPosition: childPos,
+                childPosition: childPos!,
                 size: size,
                 child: widget.child,
                 part: widget.part,
@@ -76,7 +78,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
                 cvController: widget.cvController,
                 serverDetails: Tuple3(minSierra, minBigSur, version > 100),
                 sendTapback: sendTapback,
-                widthContext: context,
+                widthContext: () => mounted ? context : null,
               ),
             ),
           );
@@ -92,7 +94,6 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     if (kIsDesktop || kIsWeb) {
       widget.cvController.focusNode.requestFocus();
     }
-    eventDispatcher.emit('popup-pushed', false);
   }
 
   void sendTapback([String? type, int? part]) {
@@ -121,7 +122,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     return GestureDetector(
       key: globalKey,
       onDoubleTap: ss.settings.doubleTapForDetails.value || message.guid!.startsWith('temp')
-        ? () => openPopup(context)
+        ? () => openPopup()
         : ss.settings.enableQuickTapback.value && widget.cvController.chat.isIMessage
         ? () => sendTapback(null, widget.part.part)
         : null,
@@ -130,13 +131,13 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
         widget.cvController.chat.isIMessage &&
         !message.guid!.startsWith('temp')
         ? () => sendTapback(null, widget.part.part)
-        : () => openPopup(context),
+        : () => openPopup(),
       onSecondaryTapUp: (details) async {
         if (!kIsWeb && !kIsDesktop) return;
         if (kIsWeb) {
           (await html.document.onContextMenu.first).preventDefault();
         }
-        openPopup(context);
+        openPopup();
       },
       child: widget.child,
     );

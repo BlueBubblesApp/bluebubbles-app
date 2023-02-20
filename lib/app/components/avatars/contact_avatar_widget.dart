@@ -190,8 +190,8 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                   initials!,
                   key: Key("$keyPrefix-avatar-text"),
                   style: TextStyle(
-                    fontSize: (widget.fontSize ?? 18).roundToDouble(),
-                    color: Colors.white,
+                    fontSize: (widget.fontSize ?? 18).roundToDouble() * (material ? 1.25 : 1),
+                    color: material ? context.theme.colorScheme.background : Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 );
@@ -200,9 +200,9 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                   padding: const EdgeInsets.only(left: 1),
                   child: Icon(
                     iOS ? CupertinoIcons.person_fill : Icons.person,
-                    color: Colors.white,
+                    color: material ? context.theme.colorScheme.background : Colors.white,
                     key: Key("$keyPrefix-avatar-icon"),
-                    size: size / 2,
+                    size: size / 2 * (material ? 1.25 : 1),
                   )
                 );
               }

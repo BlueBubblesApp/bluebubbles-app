@@ -37,6 +37,7 @@ public class ShareShortcutManager {
                 .setShortLabel(contact.name)
                 .setIntent(staticLauncherShortcutIntent)
                 .setCategories(contactCategories)
+                .addCapabilityBinding("actions.intent.CREATE_MESSAGE")
                 .setLongLived(true)
                 .setIsConversation()
                 .setPerson(new Person.Builder()

@@ -67,7 +67,8 @@ class MethodChannelService extends GetxService {
         Logger.info("Received new message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
-          final item = IncomingItem.fromMap(QueueType.newMessage, data!);
+          final payload = ServerPayload.fromJson(data!);
+          final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
           if (ls.isAlive) {
             inq.queue(item);
           } else {
@@ -80,7 +81,8 @@ class MethodChannelService extends GetxService {
         Logger.info("Received updated message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
-          final item = IncomingItem.fromMap(QueueType.updatedMessage, data!);
+          final payload = ServerPayload.fromJson(data!);
+          final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
           if (ls.isAlive) {
             inq.queue(item);
           } else {

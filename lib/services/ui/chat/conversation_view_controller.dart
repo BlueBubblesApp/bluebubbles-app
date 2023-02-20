@@ -75,7 +75,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   bool keyboardOpen = false;
   double _keyboardOffset = 0;
   Timer? _scrollDownDebounce;
-  Future<void> Function(Tuple6<List<PlatformFile>, String, String, String?, int?, String?>)? sendFunc;
+  Future<void> Function(Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, bool)? sendFunc;
   bool isProcessingImage = false;
 
   @override
@@ -146,8 +146,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     }
   }
 
-  Future<void> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, int? replyPart, String? effectId) async {
-    sendFunc?.call(Tuple6(attachments, text, subject, replyGuid, replyPart, effectId));
+  Future<void> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, int? replyPart, String? effectId, bool isAudioMessage) async {
+    sendFunc?.call(Tuple6(attachments, text, subject, replyGuid, replyPart, effectId), isAudioMessage);
   }
 
   void queueImage(Tuple4<Attachment, PlatformFile, BuildContext, Completer<Uint8List>> item) {

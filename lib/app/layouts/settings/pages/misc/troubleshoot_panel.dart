@@ -320,21 +320,22 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                   }),
                 ]),
               if (!kIsWeb)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Database Re-syncing"
+                ),
+              if (!kIsWeb)
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Database Re-syncing"
-                    ),
                     SettingsTile(
-                      title: "Re-sync Handles / Contacts",
+                      title: "Re-Sync Handles & Contacts",
+                      subtitle: "Run this troubleshooter if you are experiencing issues with missing or incorrect contact names and photos",
                       onTap: () async {
                           resyncingHandles.value = true;
-
                           try {
                             final handleSyncer = HandleSyncManager(saveLogs: true);
                             await handleSyncer.start();

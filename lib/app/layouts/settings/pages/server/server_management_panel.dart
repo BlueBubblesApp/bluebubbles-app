@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -46,15 +47,14 @@ class ServerManagementPanelController extends StatefulController {
   final RxBool isRestartingMessages = false.obs;
   final RxBool isRestartingPrivateAPI = false.obs;
   final RxDouble opacity = 1.0.obs;
+  final RxBool hasCheckedStats = false.obs;
 
   @override
   void onReady() {
     super.onReady();
-    if (socket.state.value == SocketState.connected) {
-      updateObx(() {
-        getServerStats();
-      });
-    }
+    updateObx(() {
+      getServerStats();
+    });
   }
 
   void getServerStats() async {
@@ -72,6 +72,7 @@ class ServerManagementPanelController extends StatefulController {
       proxyService.value = response.data['data']['proxy_service'];
       iCloudAccount.value = response.data['data']['detected_icloud'];
       timeSync.value = response.data['data']['macos_time_sync'];
+      hasCheckedStats.value = true;
 
       http.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
@@ -89,6 +90,7 @@ class ServerManagementPanelController extends StatefulController {
       });
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
+      hasCheckedStats.value = true;
     });
   }
 }
@@ -133,8 +135,15 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             child: SelectableText.rich(
                               TextSpan(
                                   children: [
-                                    const TextSpan(text: "Connection Status: "),
+                                    const TextSpan(text: "API Connection: "),
+                                    TextSpan(text: (controller.hasCheckedStats.value ? (controller.stats.isEmpty ? 'Disconnected' : 'Connected') : 'Connecting').toUpperCase(), style: TextStyle(color: getIndicatorColor(controller.hasCheckedStats.value ? (controller.stats.isEmpty ? SocketState.disconnected : SocketState.connected) : SocketState.connecting))),
+                                    const TextSpan(text: "\n\n"),
+                                    const TextSpan(text: "Socket Connection: "),
                                     TextSpan(text: describeEnum(socket.state.value).toUpperCase(), style: TextStyle(color: getIndicatorColor(socket.state.value))),
+                                    // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                                    //   const TextSpan(text: "\n"),
+                                    // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                                    //   TextSpan(text: " (${socket.lastError.value})", style: TextStyle(color: getIndicatorColor(socket.state.value))),
                                     const TextSpan(text: "\n\n"),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       const TextSpan(text: "Private API Status: "),
@@ -152,9 +161,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       const TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : http.originOverride ?? ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
+                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : http.origin}", recognizer: TapGestureRecognizer()
                                       ..onTap = () {
-                                        Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
+                                        Clipboard.setData(ClipboardData(text: http.origin));
                                         if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
                                           showSnackbar("Copied", "Server address copied to clipboard!");
                                         }
@@ -269,16 +278,19 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: context.theme.colorScheme.properSurface,
-                            content: Container(
-                              height: 320,
-                              width: 320,
-                              child: QrImageView(
-                                data: qrtext,
-                                version: QrVersions.auto,
-                                size: 320,
-                                gapless: true,
-                                backgroundColor: context.theme.colorScheme.properSurface,
-                                foregroundColor: context.theme.colorScheme.properOnSurface,
+                            content: AspectRatio(
+                              aspectRatio: 1,
+                              child: Container(
+                                height: 320,
+                                width: 320,
+                                child: QrImageView(
+                                  data: qrtext,
+                                  version: QrVersions.auto,
+                                  size: 320,
+                                  gapless: true,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  foregroundColor: context.theme.colorScheme.properOnSurface,
+                                ),
                               ),
                             ),
                             title: Text("QR Code", style: context.theme.textTheme.titleLarge),
@@ -497,7 +509,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             );
                             await manager!.start();
                           } catch (_) {}
-                          Navigator.of(context).pop();
+                          Get.back();
                           manager = null;
                         }
                       }),
@@ -510,6 +522,23 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
+                  SettingsTile(
+                    title: "Configure Custom Headers",
+                    subtitle: "Add or edit custom headers to connect to your server",
+                    backgroundColor: tileColor,
+                    onTap: () async {
+                      final result = await showCustomHeadersDialog(context);
+                      if (result) {
+                        socket.restartSocket();
+                      }
+                    }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                       initialVal: ss.settings.localhostPort.value != null,
@@ -562,6 +591,25 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         } else {
                           NetworkTasks.detectLocalhost(createSnackbar: true);
                         }
+                      },
+                    )),
+                  if (Platform.isAndroid)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (Platform.isAndroid)
+                    Obx(() => SettingsSwitch(
+                      initialVal: ss.settings.syncContactsAutomatically.value,
+                      title: "Auto-Sync Contacts",
+                      subtitle: "Automatically re-upload contacts to server when changes are detected",
+                      backgroundColor: tileColor,
+                      onChanged: (bool val) async {
+                        ss.settings.syncContactsAutomatically.value = val;
+                        ss.saveSettings();
                       },
                     )),
                   Container(

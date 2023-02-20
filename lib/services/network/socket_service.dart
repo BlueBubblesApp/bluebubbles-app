@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/crypto_utils.dart';
@@ -24,10 +25,11 @@ enum SocketState {
 class SocketService extends GetxService {
   final Rx<SocketState> state = SocketState.disconnected.obs;
   SocketState _lastState = SocketState.disconnected;
+  RxString lastError = "".obs;
   Timer? _reconnectTimer;
   late Socket socket;
   
-  String get serverAddress => ss.settings.serverAddress.value;
+  String get serverAddress => http.origin;
   String get password => ss.settings.guidAuthKey.value;
 
   @override
@@ -52,6 +54,7 @@ class SocketService extends GetxService {
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": encodeUri(password)})
         .setTransports(['websocket', 'polling'])
+        .setExtraHeaders(ss.settings.customHeaders)
         // Disable so that we can create the listeners first
         .disableAutoConnect()
         .enableReconnection();
@@ -155,6 +158,11 @@ class SocketService extends GetxService {
         return;
       case SocketState.error:
         Logger.info("Socket connect error, fetching new URL...");
+        
+        if (data is SocketException) {
+          handleSocketException(data);
+        }
+
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection
         _reconnectTimer = Timer(const Duration(seconds: 5), () async {
@@ -169,14 +177,24 @@ class SocketService extends GetxService {
     }
   }
 
+  void handleSocketException(SocketException e) {
+    String msg = e.message;
+    if (msg.contains("Failed host lookup")) {
+      lastError.value = "Failed to resolve hostname";
+    } else {
+      lastError.value = msg;
+    }
+  }
+
   void handleCustomEvent(String event, Map<String, dynamic> data) async {
     Logger.info("Received $event from socket");
     switch (event) {
       case "new-message":
         if (!isNullOrEmpty(data)!) {
-          final message = Message.fromMap(data);
+          final payload = ServerPayload.fromJson(data);
+          final message = Message.fromMap(payload.data);
           if (message.isFromMe!) {
-            if (data['tempGuid'] == null) {
+            if (payload.data['tempGuid'] == null) {
               ah.outOfOrderTempGuids.add(message.guid!);
               await Future.delayed(const Duration(milliseconds: 500));
               if (!ah.outOfOrderTempGuids.contains(message.guid!)) return;
@@ -184,12 +202,13 @@ class SocketService extends GetxService {
               ah.outOfOrderTempGuids.remove(message.guid!);
             }
           }
-          inq.queue(IncomingItem.fromMap(QueueType.newMessage, data));
+          inq.queue(IncomingItem.fromMap(QueueType.newMessage, payload.data));
         }
         return;
       case "updated-message":
         if (!isNullOrEmpty(data)!) {
-          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data));
+          final payload = ServerPayload.fromJson(data);
+          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, payload.data));
         }
         return;
       case "group-name-change":

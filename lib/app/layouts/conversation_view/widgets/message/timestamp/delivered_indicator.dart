@@ -59,6 +59,8 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       text = "Delivered${ss.settings.showDeliveryTimestamps.value || !iOS ? " ${buildDate(message.dateDelivered)}" : ""}";
     } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
       text = "Sending...";
+    } else if (!iOS && widget.forceShow) {
+      text = "Sent ${buildDate(message.dateCreated)}";
     }
 
     return text;

@@ -35,7 +35,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     });
   }
 
-  Future<void> send(Tuple6<List<PlatformFile>, String, String, String?, int?, String?> tuple) async {
+  Future<void> send(Tuple6<List<PlatformFile>, String, String, String?, int?, String?> tuple, bool isAudioMessage) async {
     // do not add anything above this line, the attachments must be extracted first
     final attachments = List<PlatformFile>.from(tuple.item1);
     final text = tuple.item2;
@@ -67,6 +67,9 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         ],
         isFromMe: true,
         handleId: 0,
+        threadOriginatorGuid: i == 0 ? replyGuid : null,
+        threadOriginatorPart: i == 0 ? "${part ?? 0}:0:0" : null,
+        expressiveSendStyleId: effectId,
       );
       message.generateTempGuid();
       message.attachments.first!.guid = message.guid;
@@ -74,6 +77,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         type: QueueType.sendAttachment,
         chat: controller.chat,
         message: message,
+        customArgs: {"audio": isAudioMessage}
       ));
     }
 
@@ -81,8 +85,8 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
       final _message = Message(
         text: text.isEmpty && subject.isNotEmpty ? subject : text,
         subject: text.isEmpty && subject.isNotEmpty ? null : subject,
-        threadOriginatorGuid: replyGuid,
-        threadOriginatorPart: "${part ?? 0}:0:0",
+        threadOriginatorGuid: attachments.isEmpty ? replyGuid : null,
+        threadOriginatorPart: attachments.isEmpty ? "${part ?? 0}:0:0" : null,
         expressiveSendStyleId: effectId,
         dateCreated: DateTime.now(),
         hasAttachments: false,

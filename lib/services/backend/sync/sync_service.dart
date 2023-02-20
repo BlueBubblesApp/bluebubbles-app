@@ -6,10 +6,12 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:path/path.dart' show join;
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
@@ -57,7 +59,7 @@ class SyncService extends GetxService {
 
       FlutterIsolate? isolate;
       try {
-        isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, port.sendPort);
+        isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, [port.sendPort, http.originOverride]);
       } catch (e) {
         Logger.error('Got error when opening isolate: $e');
         port.close();
@@ -65,6 +67,23 @@ class SyncService extends GetxService {
       result = await completer.future;
       if (result.isNotEmpty && (result.first.isNotEmpty || result.last.isNotEmpty)) {
         contacts.addAll(Contact.getContacts());
+        // auto upload contacts if requested
+        if (ss.settings.syncContactsAutomatically.value) {
+          Logger.debug("Contact changes detected, uploading to server...");
+          final _contacts = <Map<String, dynamic>>[];
+          for (Contact c in contacts) {
+            var map = c.toMap();
+            _contacts.add(map);
+          }
+          http.createContact(_contacts).catchError((err) {
+            if (err is Response) {
+              Logger.error(err.data["error"]["message"].toString());
+            } else {
+              Logger.error(err.toString());
+            }
+            return Response(requestOptions: RequestOptions(path: ''));
+          });
+        }
       }
       isolate?.kill();
     }
@@ -75,7 +94,9 @@ class SyncService extends GetxService {
 }
 
 @pragma('vm:entry-point')
-Future<List<List<int>>> incrementalSyncIsolate(SendPort? port) async {
+Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
+  final SendPort? port = items?.firstOrNull;
+  final String? address = items?.lastOrNull;
   try {
     if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
@@ -90,6 +111,7 @@ Future<List<List<int>>> incrementalSyncIsolate(SendPort? port) async {
       handleBox = store.box<Handle>();
       messageBox = store.box<Message>();
       themeBox = store.box<ThemeStruct>();
+      http.originOverride = address;
     }
 
     int syncStart = ss.settings.lastIncrementalSync.value;

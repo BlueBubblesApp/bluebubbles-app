@@ -207,8 +207,10 @@ class ContactsService extends GetxService {
 
       // try to match last 15 - 7 digits
       for (String p in numericPhones) {
+        // remove leading zeros which indicate "same country"
+        final leadingZerosRemoved = int.tryParse(p)?.toString() ?? p;
         final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
-        if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
+        if (matchLengths.contains(leadingZerosRemoved.length) && numericAddress.endsWith(leadingZerosRemoved)) {
           handleMatches.add(h);
           continue;
         }

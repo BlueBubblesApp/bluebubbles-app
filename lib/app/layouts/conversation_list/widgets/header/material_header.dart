@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
@@ -23,14 +22,12 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
 
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _backgroundColor = (kIsDesktop && ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
-
     return Stack(
       children: [
         Obx(() => Container(
           height: controller.selectedChats.isEmpty ? 80 : null,
           width: ns.width(context),
-          color: _backgroundColor.value,
+          color: ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent,
         )),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),

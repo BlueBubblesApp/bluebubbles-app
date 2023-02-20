@@ -4,4 +4,15 @@
         <data android:mimeType="*/*" />
         <category android:name="com.bluebubbles.messaging.directshare.category.TEXT_SHARE_TARGET" />
     </share-target>
+    <capability android:name="actions.intent.CREATE_MESSAGE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${applicationId}"
+            android:targetClass="${applicationId}.MainActivity">
+            <parameter android:name="message.recipient.name" android:key="contactName" />
+            <parameter android:name="message.recipient.telephone" android:key="address" />
+            <parameter android:name="message.recipient.email" android:key="address" />
+            <parameter android:name="message.text" android:key="message" />
+        </intent>
+    </capability>
 </shortcuts>

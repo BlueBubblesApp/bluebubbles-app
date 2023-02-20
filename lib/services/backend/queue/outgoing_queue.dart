@@ -35,7 +35,7 @@ class OutgoingQueue extends Queue {
         await ah.sendMessage(item.chat, item.message, item.selected, item.reaction);
         break;
       case QueueType.sendAttachment:
-        await ah.sendAttachment(item.chat, item.message);
+        await ah.sendAttachment(item.chat, item.message, item.customArgs?['audio'] ?? false);
         break;
       default:
         Logger.info("Unhandled queue event: ${describeEnum(item.type)}");

@@ -86,7 +86,10 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   if (widget.controller == null) return;
                   widget.controller!.showRecording.toggle();
                   if (widget.controller!.showRecording.value) {
-                    await widget.recorderController.record();
+                    await widget.recorderController.record(
+                      sampleRate: 44100,
+                      bitRate: 320000,
+                    );
                   } else {
                     final path = await widget.recorderController.stop();
                     if (path == null) return;
@@ -109,10 +112,13 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                             children: [
                               Text("Review your audio snippet before sending it", style: context.theme.textTheme.bodyLarge),
                               Container(height: 10.0),
-                              AudioPlayer(
-                                key: Key("AudioMessage-$path"),
-                                file: file,
-                                attachment: null,
+                              ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: context.width * 0.6),
+                                child: AudioPlayer(
+                                  key: Key("AudioMessage-$path"),
+                                  file: file,
+                                  attachment: null,
+                                ),
                               )
                             ],
                           ),
@@ -135,7 +141,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                               onPressed: () async {
                                 await widget.controller!.send(
                                   [file],
-                                  "", "", null, null, null,
+                                  "", "", null, null, null, true,
                                 );
                                 deleteAudioRecording(file.path!);
                                 Get.back();

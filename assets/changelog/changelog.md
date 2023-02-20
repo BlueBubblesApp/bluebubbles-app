@@ -2,6 +2,21 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## 1.11.2
+
+### Changes
+
+- Fixes issue where contact info would not show when searching
+- Ability to set a default email for a given handle
+- Mentions are now bold (previously was the primary theme color)
+- When a 502 Gateway error is hit (for Cloudflare), the request is auto-retried
+- The refresh button for the FindMy devices page will actually refresh locations now
+- Improved URL preview design
+- Better reply generation on swipe to show timestamp
+- Fixes issue where media/files were not able to be saved to the device
+- Fixes the connection indicator
+- Fixes issue where the re-sync handles button would run against servers < v1.5.2
+
 ## 1.11.1
 
 ### The Big Stuff

@@ -40,7 +40,7 @@ class MessagePopup extends StatefulWidget {
   final ConversationViewController cvController;
   final Tuple3<bool, bool, bool> serverDetails;
   final Function([String? type, int? part]) sendTapback;
-  final BuildContext widthContext;
+  final BuildContext? Function() widthContext;
 
   const MessagePopup({
     Key? key,
@@ -101,7 +101,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   bool get supportsOriginalDownload => widget.serverDetails.item3;
 
-  BuildContext get widthContext => widget.widthContext;
+  BuildContext get widthContext => widget.widthContext.call() ?? context;
 
   @override
   void initState() {
@@ -153,7 +153,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
@@ -432,7 +432,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                           tween: Tween<double>(begin: 0.8, end: 1),
                           curve: Curves.easeOutBack,
                           duration: const Duration(milliseconds: 500),
-                          child: widget.child,
+                          child: ConstrainedBox(constraints: BoxConstraints(maxWidth: widget.size.width), child: widget.child),
                           builder: (context, size, child) {
                             return Transform.scale(
                               scale: size.clamp(1, double.infinity),

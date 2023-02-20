@@ -87,7 +87,7 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-          systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+          systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
           statusBarColor: Colors.transparent, // status bar color
           statusBarIconBrightness: ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
         ),

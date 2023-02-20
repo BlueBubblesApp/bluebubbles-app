@@ -5,6 +5,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
+import 'package:bluebubbles/services/backend/sync/handle_sync_manager.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -46,7 +47,7 @@ import 'package:windows_taskbar/windows_taskbar.dart';
 // todo list desktop
 /// Show notif badges
 
-const databaseVersion = 2;
+const databaseVersion = 3;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -101,8 +102,7 @@ Future<Null> initApp(bool bubble) async {
     if (!await Directory(join(appData.path, "objectbox")).exists()) {
       // Migrate to new appdata location if this function returns the new place and we still have the old place
       if (basename(appData.absolute.path) == "bluebubbles") {
-        Directory oldAppData =
-        Platform.isWindows
+        Directory oldAppData = Platform.isWindows
             ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"))
             : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
         bool storeApp = basename(dirname(dirname(appData.absolute.path))) != "Roaming";
@@ -127,25 +127,11 @@ Future<Null> initApp(bool bubble) async {
               Logger.info("Finished migrating appData");
             }
           } else {
-            oldAppData = Directory(join(
-                appDataRoot,
-                "Local",
-                "Packages",
-                "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw",
-                "LocalCache",
-                "Roaming",
-                "BlueBubbles",
-                "bluebubbles"));
+            oldAppData = Directory(join(appDataRoot, "Local", "Packages", "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw", "LocalCache", "Roaming",
+                "BlueBubbles", "bluebubbles"));
             if (!await oldAppData.exists()) {
-              oldAppData = Directory(join(
-                  appDataRoot,
-                  "Local",
-                  "Packages",
-                  "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw",
-                  "LocalCache",
-                  "Roaming",
-                  "com.bluebubbles",
-                  "bluebubbles_app"));
+              oldAppData = Directory(join(appDataRoot, "Local", "Packages", "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw", "LocalCache", "Roaming",
+                  "com.bluebubbles", "bluebubbles_app"));
             }
             if (await oldAppData.exists()) {
               Logger.info("Copying appData from STORE location to new directory");
@@ -192,7 +178,7 @@ Future<Null> initApp(bool bubble) async {
           Logger.error(s);
           if (Platform.isWindows) {
             Logger.info("Failed to open store from default path. Using custom path");
-            const customStorePath = "C:\\bluebubbles_app";
+            const customStorePath = "C:\\BlueBubbles\\bluebubbles";
             ss.prefs.setBool("use-custom-path", true);
             ss.prefs.setString("custom-path", customStorePath);
             objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
@@ -240,6 +226,28 @@ Future<Null> initApp(bool bubble) async {
               version = 2;
               migrate.call();
               return;
+            // Version 3 modifies chat typing indicators and read receipts values to follow global setting initially
+            case 3:
+              final chats = chatBox.getAll();
+              final papi = ss.settings.enablePrivateAPI.value;
+              final typeGlobal = ss.settings.privateSendTypingIndicators.value;
+              final readGlobal = ss.settings.privateMarkChatAsRead.value;
+              for (Chat c in chats) {
+                if (papi && readGlobal && !(c.autoSendReadReceipts ?? true)) {
+                  // dont do anything
+                } else {
+                  c.autoSendReadReceipts = null;
+                }
+                if (papi && typeGlobal && !(c.autoSendTypingIndicators ?? true)) {
+                  // dont do anything
+                } else {
+                  c.autoSendTypingIndicators = null;
+                }
+              }
+              chatBox.putMany(chats);
+              version = 3;
+              migrate.call();
+              return;
             default:
               return;
           }
@@ -271,13 +279,11 @@ Future<Null> initApp(bool bubble) async {
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
     if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(MaterialApp(
-        home: SplashScreen(shouldNavigate: false),
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSwatch(backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
-            ? Colors.black
-            : Colors.white),
-        )
-      ));
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSwatch(
+                backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark ? Colors.black : Colors.white),
+          )));
     }
 
     /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
@@ -306,7 +312,11 @@ Future<Null> initApp(bool bubble) async {
       await windowManager.ensureInitialized();
       await windowManager.setTitle('BlueBubbles');
       await Window.initialize();
-      await Window.hideWindowControls();
+      if (Platform.isWindows) {
+        await Window.hideWindowControls();
+      } else if (Platform.isLinux) {
+        await windowManager.setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
+      }
       windowManager.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
         await windowManager.setMinimumSize(const Size(300, 300));
@@ -451,35 +461,24 @@ class Main extends StatelessWidget {
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
           if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
           if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
-                const StartIncrementalSyncIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
-              const HeartRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
-              const LikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
-              const DislikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
-              const LaughRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
-              const EmphasizeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
-              const QuestionRecentIntent(),
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): const StartIncrementalSyncIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation): const HeartRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at): const LikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign): const DislikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar): const LaughRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent): const EmphasizeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret): const QuestionRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
           if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
-                const OpenPreviousChatIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab): const OpenPreviousChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
@@ -504,10 +503,10 @@ class Main extends StatelessWidget {
                     final localAuth = LocalAuthentication();
                     if (!isAuthing) {
                       isAuthing = true;
-                      localAuth.authenticate(
-                          localizedReason: 'Please authenticate to unlock BlueBubbles',
-                          options: const AuthenticationOptions(stickyAuth: true)
-                      ).then((result) {
+                      localAuth
+                          .authenticate(
+                          localizedReason: 'Please authenticate to unlock BlueBubbles', options: const AuthenticationOptions(stickyAuth: true))
+                          .then((result) {
                         isAuthing = false;
                         if (result) {
                           SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
@@ -533,14 +532,12 @@ class Main extends StatelessWidget {
                               child: Material(
                                 color: context.theme.colorScheme.primary, // button color
                                 child: InkWell(
-                                  child: SizedBox(
-                                      width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                  child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
                                   onTap: () async {
                                     final localAuth = LocalAuthentication();
                                     bool didAuthenticate = await localAuth.authenticate(
                                         localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                        options: const AuthenticationOptions(stickyAuth: true)
-                                    );
+                                        options: const AuthenticationOptions(stickyAuth: true));
                                     if (didAuthenticate) {
                                       controller!.authSuccess(unlock: true);
                                     }
@@ -658,7 +655,19 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
       // only show these dialogs if setup is finished
       if (ss.settings.finishedSetup.value) {
-        if (ss.prefs.getBool('1.11.1-warning') != true && !kIsWeb) {
+        if (ss.prefs.getBool('1.11.1-warning') == false && !kIsWeb) {
+          if (kIsDesktop) {
+            try {
+              final handleSyncer = HandleSyncManager(saveLogs: true);
+              await handleSyncer.start();
+              eventDispatcher.emit("refresh-all", null);
+              return;
+            } catch (ex, stacktrace) {
+              Logger.error("Failed to reset contacts!");
+              Logger.error(ex.toString());
+              Logger.error(stacktrace.toString());
+            }
+          }
           bool needsMigration = false;
 
           try {
@@ -666,86 +675,52 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           } catch (ex) {
             Logger.error("Error checking for handle migration: $ex");
           }
-  
+
           if (needsMigration) {
             showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text(
-                    "Handle Migration",
-                    style: context.theme.textTheme.titleLarge,
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
-                        style: context.theme.textTheme.bodyLarge
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return TitleBarWrapper(
+                    child: AlertDialog(
+                      title: Text(
+                        "Handle Migration",
+                        style: context.theme.textTheme.titleLarge,
                       ),
-                      Container(height: 5),
-                      Text(
-                        "To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
-                        style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                              "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
+                              style: context.theme.textTheme.bodyLarge),
+                          Container(height: 5),
+                          Text("To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
+                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                          Container(height: 5),
+                          Text("Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
+                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
+                        ],
                       ),
-                      Container(height: 5),
-                      Text(
-                        "Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
-                        style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)
-                      ),
-                    ],
-                  ),
-                  backgroundColor: context.theme.colorScheme.properSurface,
-                  actions: <Widget>[
-                    TextButton(
-                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                );
-              }
-            );
+                  );
+                });
           }
-        }
-
-        if (ss.prefs.getBool('1.11-warning') != true && !kIsWeb) {
-          showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text(
-                  "Important Notice",
-                  style: context.theme.textTheme.titleLarge,
-                ),
-                content: Text(
-                  "You now have the highly-anticipated v1.11 release! Due to a change with how the app handles contacts, you will need to fully quit and reopen the app this one time only to ensure your contacts populate.\n\nCheck out the changelog for some huge new features, and we hope you enjoy!",
-                  style: context.theme.textTheme.bodyLarge
-                ),
-                backgroundColor: context.theme.colorScheme.properSurface,
-                actions: <Widget>[
-                  TextButton(
-                    child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
-            }
-          );
         }
 
         if ((fs.androidInfo?.version.sdkInt ?? 0) >= 33) {
           Permission.notification.request();
         }
       }
-      if (ss.prefs.getBool('1.11-warning') != true) {
-        ss.prefs.setBool('1.11-warning', true);
-      }
+
       if (ss.prefs.getBool('1.11.1-warning') != true) {
         ss.prefs.setBool('1.11.1-warning', true);
       }
@@ -755,6 +730,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           fullyLoaded = true;
         });
       }
+
+      NetworkTasks.detectLocalhost();
     });
   }
 
@@ -791,9 +768,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: ss.settings.immersiveMode.value
-          ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-      systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+      systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+      systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       statusBarColor: Colors.transparent, // status bar color
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
@@ -801,7 +777,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
@@ -834,8 +810,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
               } else {
                 return WillPopScope(
                   onWillPop: () async => false,
-                  child: TitleBarWrapper(
-                      child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
+                  child: TitleBarWrapper(child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
                 );
               }
             },
@@ -883,7 +858,7 @@ Future<void> initSystemTray() async {
           await windowManager.close();
         },
       ),
-    ]
+    ],
   );
 
   await systemTray.setContextMenu(menu);
@@ -901,16 +876,15 @@ Future<void> initSystemTray() async {
   });
 }
 
-void copyDirectory(Directory source, Directory destination) =>
-    source.listSync(recursive: false).forEach((element) async {
-      if (element is Directory) {
-        Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        newDirectory.createSync();
-        Logger.info("Created new directory ${basename(element.path)}");
+void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) async {
+  if (element is Directory) {
+    Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
+    newDirectory.createSync();
+    Logger.info("Created new directory ${basename(element.path)}");
 
-        copyDirectory(element.absolute, newDirectory);
-      } else if (element is File) {
-        element.copySync(join(destination.path, basename(element.path)));
-        Logger.info("Created file ${basename(element.path)}");
-      }
-    });
+    copyDirectory(element.absolute, newDirectory);
+  } else if (element is File) {
+    element.copySync(join(destination.path, basename(element.path)));
+    Logger.info("Created file ${basename(element.path)}");
+  }
+});

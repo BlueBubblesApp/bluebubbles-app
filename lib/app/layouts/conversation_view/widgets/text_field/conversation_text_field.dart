@@ -146,7 +146,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       _debounceTyping?.cancel();
       oldText = newText;
       // don't send a bunch of duplicate events for every typing change
-      if (_debounceTyping == null && ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+      if (_debounceTyping == null &&
+          ss.settings.enablePrivateAPI.value &&
+          (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
         socket.sendMessage("started-typing", {"chatGuid": chatGuid});
         _debounceTyping = Timer(const Duration(seconds: 3), () {
           socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
@@ -159,7 +161,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final newEmojiText = _controller.text;
     if (newEmojiText.contains(":") && newEmojiText != oldEmojiText) {
       oldEmojiText = newEmojiText;
-      final regExp = RegExp(r"(?<=^| |\n|[^a-zA-Z]):[^: \n]{2,}((?=[ \n]|$)|:)", multiLine: true);
+      final regExp = RegExp(r"(?<=^|[^a-zA-Z\d]):[^: \n]{2,}(?:(?=[ \n]|$)|:)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
       List<Emoji> allMatches = [];
       String emojiName = "";
@@ -221,7 +223,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.textController.dispose();
     controller.subjectTextController.dispose();
     recorderController.dispose();
-    if (ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+    if (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value) {
       socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
     }
 
@@ -263,13 +265,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         showSnackbar("Error", "Something went wrong!");
       }
     } else {
-      if (controller.textController.text.isEmpty && controller.subjectTextController.text.isEmpty) {
-        if (controller.replyToMessage != null) {
-          return showSnackbar("Error", "Replies must be sent with a text message!");
-        } else if (effect != null) {
-          return showSnackbar("Error", "Effects must be sent with a text message!");
-        }
-      }
       await controller.send(
         controller.pickedAttachments,
         controller.textController.text,
@@ -277,6 +272,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
         controller.replyToMessage?.item2,
         effect,
+        false,
       );
     }
     controller.pickedAttachments.clear();
@@ -331,17 +327,22 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               if (iOS && Platform.isAndroid)
-                IconButton(
-                  padding: const EdgeInsets.only(left: 10),
-                  icon: Icon(
-                    CupertinoIcons.camera_fill,
-                    color: context.theme.colorScheme.outline,
-                    size: 28,
+                GestureDetector(
+                  onLongPress: () {
+                    openFullCamera(type: 'video');
+                  },
+                  child: IconButton(
+                    padding: const EdgeInsets.only(left: 10),
+                    icon: Icon(
+                      CupertinoIcons.camera_fill,
+                      color: context.theme.colorScheme.outline,
+                      size: 28,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      openFullCamera();
+                    }
                   ),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    openFullCamera();
-                  }
                 ),
               IconButton(
                 icon: Icon(
