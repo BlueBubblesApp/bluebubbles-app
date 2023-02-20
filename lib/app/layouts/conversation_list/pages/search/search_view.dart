@@ -106,9 +106,10 @@ class SearchViewState extends OptimizedState<SearchView> {
       List<Chat> chats = [];
       List<Message> messages = [];
       messages = results.map((e) {
-        // grab attachments and associated messages
+        // grab attachments, associated messages, and handle
         e.realAttachments;
         e.fetchAssociatedMessages();
+        e.getHandle();
         return e;
       }).toList();
       chats = results.map((e) => e.chat.target!).toList();
@@ -132,6 +133,7 @@ class SearchViewState extends OptimizedState<SearchView> {
         ],
       );
       // we query chats from DB so we can get contact names
+      // ignore: prefer_const_constructors
       final items = Tuple2(<Chat>[], <Message>[]);
       for (dynamic item in results) {
         final chat = Chat.fromMap(item['chats'][0]);

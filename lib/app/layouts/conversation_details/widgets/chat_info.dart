@@ -47,14 +47,23 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
           Padding(
             padding: const EdgeInsets.only(top: 12.0),
             child: Center(
-              child: Text(
-                _title,
-                style: context.theme.textTheme.headlineMedium!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: context.theme.colorScheme.onBackground
-                ),
+              child: RichText(
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: context.theme.textTheme.headlineMedium!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: context.theme.colorScheme.onBackground,
+                  ),
+                  children: MessageHelper.buildEmojiText(
+                    _title,
+                    context.theme.textTheme.headlineMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: context.theme.colorScheme.onBackground,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -83,7 +92,15 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 onLongPress: () {
                   showChangeName(chat, "local", context);
                 },
-                title: Text(_title, style: context.theme.textTheme.bodyLarge!),
+                title: RichText(
+                  text: TextSpan(
+                    style: context.theme.textTheme.bodyLarge,
+                    children: MessageHelper.buildEmojiText(
+                      _title,
+                      context.theme.textTheme.bodyLarge!,
+                    ),
+                  ),
+                ),
                 trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
               ),
             ),

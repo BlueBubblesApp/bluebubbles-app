@@ -147,10 +147,15 @@ class ChatsService extends GetxService {
   }
 
   void markAllAsRead() {
-    chats.where((element) => element.hasUnreadMessage!).forEach((element) {
-      element.toggleHasUnread(false);
-      mcs.invokeMethod("clear-chat-notifs", {"chatGuid": element.guid});
-    });
+    final _chats = chatBox.query(Chat_.hasUnreadMessage.equals(true)).build().find();
+    for (Chat c in _chats) {
+      c.hasUnreadMessage = false;
+      mcs.invokeMethod("clear-chat-notifs", {"chatGuid": c.guid});
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
+        http.markChatRead(c.guid);
+      }
+    }
+    chatBox.putMany(_chats);
   }
 
   void updateChatPinIndex(int oldIndex, int newIndex) {

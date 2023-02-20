@@ -25,7 +25,7 @@ class SyncSettings extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 8),
               child: Text(
                 "Sync Options",
                 style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
@@ -56,10 +56,8 @@ class SyncSettings extends StatelessWidget {
               ),
             ),
             if (!kIsWeb)
-              const SizedBox(height: 10),
-            if (!kIsWeb)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                padding: const EdgeInsets.only(left: 40.0, right: 40.0, bottom: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   mainAxisSize: MainAxisSize.max,

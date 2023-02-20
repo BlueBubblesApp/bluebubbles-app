@@ -42,21 +42,28 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
   @override
   void initState() {
     super.initState();
-     messageController.addListener(() {
-       if (messageController.text.isEmpty && !isEmpty) {
-         isEmpty = true;
-         setState(() {});
-       } else if (isEmpty) {
-         isEmpty = false;
-         setState(() {});
-       }
-     });
-     numberController.addListener(() {
-       final value = int.tryParse(numberController.text) ?? 1;
-       if (interval != value) {
-         setState(() => interval = value);
-       }
-     });
+    if (messageController.text.isEmpty && !isEmpty) {
+      isEmpty = true;
+      setState(() {});
+    } else if (isEmpty) {
+      isEmpty = false;
+      setState(() {});
+    }
+    messageController.addListener(() {
+     if (messageController.text.isEmpty && !isEmpty) {
+       isEmpty = true;
+       setState(() {});
+     } else if (isEmpty) {
+       isEmpty = false;
+       setState(() {});
+     }
+    });
+    numberController.addListener(() {
+     final value = int.tryParse(numberController.text) ?? 1;
+     if (interval != value) {
+       setState(() => interval = value);
+     }
+});
   }
 
   @override
@@ -283,7 +290,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                                   ),
                                   keyboardType: TextInputType.number,
                                   inputFormatters: <TextInputFormatter>[
-                                    FilteringTextInputFormatter.allow(RegExp(r'^[1-9][0-9]?$|^100$')),
+                                    FilteringTextInputFormatter.allow(RegExp(r'^[1-9]\d?$|^100$|^$'), replacementString: numberController.text),
                                   ],
                                 ),
                               ) : NumberPicker(

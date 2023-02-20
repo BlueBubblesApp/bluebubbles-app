@@ -46,11 +46,11 @@ class IntentsService extends GetxService {
     switch (intent.action) {
       case "android.intent.action.SEND":
       case "android.intent.action.SEND_MULTIPLE":
-        if (intent.extra?["android.intent.extra.TEXT"] != null) {
-          await openChat(intent.extra?["android.intent.extra.shortcut.ID"], text: intent.extra?["android.intent.extra.TEXT"]);
-        } else if (intent.extra?["android.intent.extra.STREAM"] != null) {
+        final id = intent.extra?["android.intent.extra.shortcut.ID"];
+        final text = intent.extra?["android.intent.extra.TEXT"];
+        final files = <PlatformFile>[];
+        if (intent.extra?["android.intent.extra.STREAM"] != null) {
           final data = intent.extra!["android.intent.extra.STREAM"];
-          final files = <PlatformFile>[];
           if (data is List) {
             for (String? s in data) {
               if (s == null) continue;
@@ -73,8 +73,8 @@ class IntentsService extends GetxService {
               size: bytes.length,
             ));
           }
-          await openChat(intent.extra?["android.intent.extra.shortcut.ID"], attachments: files);
         }
+        await openChat(id, text: text, attachments: files);
         return;
       default:
         if (intent.extra?["chatGuid"] != null) {

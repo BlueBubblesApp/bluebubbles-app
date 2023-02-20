@@ -7,7 +7,7 @@ import 'package:universal_io/io.dart';
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
 String? sanitizeServerAddress({String? address}) {
-  String serverAddress = address ?? ss.settings.serverAddress.value;
+  String serverAddress = address ?? http.origin;
 
   String sanitized = serverAddress.replaceAll('"', "").trim();
   if (sanitized.isEmpty) return null;

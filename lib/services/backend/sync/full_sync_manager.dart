@@ -41,6 +41,7 @@ class FullSyncManager extends SyncManager {
     }
     addToOutput('Full sync is starting...');
     addToOutput("Reloading your contacts...");
+    await ss.getServerDetails(refresh: true);
     await cs.refreshContacts();
 
     addToOutput('Fetching chats from the server...');

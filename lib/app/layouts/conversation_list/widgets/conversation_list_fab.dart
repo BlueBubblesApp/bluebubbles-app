@@ -114,7 +114,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
                 ),
               ),
               Positioned(
-                right: 0,
+                right: material ? 15 : 0,
                 child: InkWell(
                   onLongPress: ss.settings.cameraFAB.value
                       ? () => controller.openCamera(context) : null,

@@ -18,7 +18,7 @@ import 'package:universal_io/io.dart';
 
 class ChatOptions extends StatefulWidget {
   const ChatOptions({Key? key, required this.chat}) : super(key: key);
-  
+
   final Chat chat;
 
   @override
@@ -27,7 +27,7 @@ class ChatOptions extends StatefulWidget {
 
 class _ChatOptionsState extends OptimizedState<ChatOptions> {
   Chat get chat => widget.chat;
-  
+
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
@@ -37,10 +37,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
-            child: Text(
-              "OPTIONS & ACTIONS",
-              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)
-            ),
+            child: Text("OPTIONS & ACTIONS", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
           ),
           SettingsSection(
             backgroundColor: tileColor,
@@ -57,7 +54,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                   ),
                   isThreeLine: true,
                   onTap: () async {
-                    await mcs.invokeMethod("open-convo-notif-settings", {"parentId": NotificationsService.NEW_MESSAGE_CHANNEL, "id": chat.guid, "displayName": chat.getTitle()});
+                    await mcs.invokeMethod("open-convo-notif-settings",
+                        {"parentId": NotificationsService.NEW_MESSAGE_CHANNEL, "id": chat.guid, "displayName": chat.getTitle()});
                   },
                 ),
               if (!kIsWeb)
@@ -169,40 +167,64 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (context) => ChatSyncDialog(
-                      chat: chat,
-                      initialMessage: "Resyncing messages...",
-                      limit: 25
-                    ),
+                    builder: (context) => ChatSyncDialog(chat: chat, initialMessage: "Resyncing messages...", limit: 25),
                   );
                 },
               ),
-              if (!kIsWeb &&
-                  !chat.isGroup &&
-                  ss.settings.enablePrivateAPI.value &&
-                  ss.settings.privateMarkChatAsRead.value)
-                SettingsSwitch(
-                  title: "Send Read Receipts",
-                  initialVal: chat.autoSendReadReceipts!,
-                  onChanged: (value) {
-                    chat.toggleAutoRead(!chat.autoSendReadReceipts!);
-                    setState(() {});
-                  },
-                  backgroundColor: tileColor,
-                ),
-              if (!kIsWeb &&
-                  !chat.isGroup &&
-                  ss.settings.enablePrivateAPI.value &&
-                  ss.settings.privateSendTypingIndicators.value)
+              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
+                const SettingsDivider(),
+              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
                 SettingsSwitch(
                   title: "Send Typing Indicators",
-                  initialVal: chat.autoSendTypingIndicators!,
+                  initialVal: chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value,
                   onChanged: (value) {
-                    chat.toggleAutoType(!chat.autoSendTypingIndicators!);
+                    chat.toggleAutoType(value);
                     setState(() {});
                   },
                   backgroundColor: tileColor,
                 ),
+              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
+                SettingsSwitch(
+                    title: "Follow Global Setting",
+                    subtitle: "Typing Indicators ${ss.settings.privateSendTypingIndicators.value ? "Enabled" : "Disabled"}",
+                    initialVal: chat.autoSendTypingIndicators == null,
+                    onChanged: (value) {
+                      if (!value) {
+                        chat.toggleAutoType(ss.settings.privateSendTypingIndicators.value);
+                      } else {
+                        chat.toggleAutoType(null);
+                      }
+                      setState(() {});
+                    }
+                ),
+              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
+                const SettingsDivider(),
+              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
+                SettingsSwitch(
+                  title: "${ss.settings.privateManualMarkAsRead.value ? "Automatically " : ""}Send Read Receipts",
+                  initialVal: chat.autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value,
+                  onChanged: (value) {
+                    chat.toggleAutoRead(value);
+                    setState(() {});
+                  },
+                  backgroundColor: tileColor,
+                ),
+              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
+                SettingsSwitch(
+                  title: "Follow Global Setting",
+                  subtitle: "${ss.settings.privateManualMarkAsRead.value ? "Automatic " : ""}Read Receipts ${ss.settings.privateMarkChatAsRead.value ? "Enabled" : "Disabled"}",
+                  initialVal: chat.autoSendReadReceipts == null,
+                  onChanged: (value) {
+                    if (!value) {
+                      chat.toggleAutoRead(ss.settings.privateMarkChatAsRead.value);
+                    } else {
+                      chat.toggleAutoRead(null);
+                    }
+                    setState(() {});
+                  },
+                ),
+              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
+                const SettingsDivider(),
               if (!kIsWeb)
                 SettingsSwitch(
                   title: "Pin Conversation",
@@ -305,8 +327,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       ),
                       barrierDismissible: false,
                     );
-                    final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true)).reversed
-                        .where((e) => e.dateCreated!.isAfter(date));
+                    final messages =
+                        (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true)).reversed.where((e) => e.dateCreated!.isAfter(date));
                     if (messages.isEmpty) {
                       Get.back();
                       showSnackbar("Error", "No messages found!");
@@ -315,8 +337,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     final List<String> lines = [];
                     for (Message m in messages) {
                       final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
-                      final deliveredStr =
-                      m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
+                      final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                       final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                       final text = MessageHelper.getNotificationText(m, withSender: true);
                       final line = "($readStr$deliveredStr$sentStr) $text";
@@ -327,10 +348,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     if (kIsDesktop) {
                       filePath = (await getDownloadsDirectory())!.path;
                     }
-                    filePath = p.join(filePath, "${(chat.title ?? "Unknown Chat").replaceAll(
-                      RegExp(r'[<>:"/\\|?*]'),
-                      "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt"
-                    );
+                    filePath = p.join(filePath,
+                        "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
                     File file = File(filePath);
                     await file.create(recursive: true);
                     await file.writeAsString(lines.join('\n'));
@@ -358,8 +377,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       ),
                       barrierDismissible: false,
                     );
-                    final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true)).reversed
-                        .where((e) => e.dateCreated!.isAfter(date));
+                    final messages =
+                        (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true)).reversed.where((e) => e.dateCreated!.isAfter(date));
                     if (messages.isEmpty) {
                       Get.back();
                       showSnackbar("Error", "No messages found!");
@@ -371,14 +390,12 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     final List<Size?> dimensions = [];
                     for (Message m in messages) {
                       final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
-                      final deliveredStr =
-                      m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
+                      final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                       final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                       if (m.hasAttachments) {
-                        final attachments = m.attachments.where((e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
-                        final files = attachments
-                            .map((e) => as.getContent(e!, autoDownload: false))
-                            .whereType<PlatformFile>();
+                        final attachments =
+                            m.attachments.where((e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
+                        final files = attachments.map((e) => as.getContent(e!, autoDownload: false)).whereType<PlatformFile>();
                         if (files.isNotEmpty) {
                           for (PlatformFile f in files) {
                             final a = attachments.firstWhere((e) => e!.transferName == f.name);
@@ -447,10 +464,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     if (kIsDesktop) {
                       filePath = (await getDownloadsDirectory())!.path;
                     }
-                    filePath = p.join(filePath, "${(chat.title ?? "Unknown Chat").replaceAll(
-                      RegExp(r'[<>:"/\\|?*]'),
-                      "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf"
-                    );
+                    filePath = p.join(filePath,
+                        "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf");
                     File file = File(filePath);
                     await file.create(recursive: true);
                     await file.writeAsBytes(await doc.save());

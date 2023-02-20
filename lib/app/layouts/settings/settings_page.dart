@@ -75,7 +75,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
@@ -136,7 +136,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   );
                                 },
                                 onLongPress: () {
-                                  Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
+                                  Clipboard.setData(ClipboardData(text: http.origin));
                                   if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
                                     showSnackbar("Copied", "Server address copied to clipboard!");
                                   }

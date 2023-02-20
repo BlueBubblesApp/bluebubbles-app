@@ -210,12 +210,30 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     return existingChat;
   }
 
+  void addressOnSubmitted() {
+    final text = addressController.text;
+    if (text.isEmail || text.isPhoneNumber) {
+      addSelected(SelectedContact(
+        displayName: text,
+        address: text,
+      ));
+    } else if (filteredContacts.length == 1) {
+      final possibleAddresses = [...filteredContacts.first.phones, ...filteredContacts.first.emails];
+      if (possibleAddresses.length == 1) {
+        addSelected(SelectedContact(
+          displayName: filteredContacts.first.displayName,
+          address: possibleAddresses.first,
+        ));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
@@ -374,21 +392,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
                                   ),
                                   onSubmitted: (String value) {
-                                    final text = addressController.text;
-                                    if (text.isEmail || text.isPhoneNumber) {
-                                      addSelected(SelectedContact(
-                                        displayName: text,
-                                        address: text,
-                                      ));
-                                    } else if (filteredContacts.length == 1) {
-                                      final possibleAddresses = [...filteredContacts.first.phones, ...filteredContacts.first.emails];
-                                      if (possibleAddresses.length == 1) {
-                                        addSelected(SelectedContact(
-                                          displayName: filteredContacts.first.displayName,
-                                          address: possibleAddresses.first,
-                                        ));
-                                      }
-                                    }
+                                    addressOnSubmitted();
                                   },
                                 ),
                               ),
@@ -623,18 +627,20 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         recorderController: RecorderController(),
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
+                          addressOnSubmitted();
                           if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
                             final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
                             ns.pushAndRemoveUntil(
                               Get.context!,
-                              ConversationView(chat: chat),
+                              ConversationView(chat: chat, fromChatCreator: true),
                               (route) => route.isFirst,
+                              // don't force close the active chat in tablet mode
+                              closeActiveChat: false,
+                              // only used in non-tablet mode context
                               customRoute: PageRouteBuilder(
                                 pageBuilder: (_, __, ___) => TitleBarWrapper(
-                                    child: ConversationView(
-                                  chat: chat,
-                                  fromChatCreator: true,
-                                )),
+                                  child: ConversationView(chat: chat, fromChatCreator: true,)
+                                ),
                                 transitionDuration: Duration.zero,
                               ),
                             );
@@ -651,6 +657,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               null,
                               null,
                               null,
+                              false,
                             );
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
