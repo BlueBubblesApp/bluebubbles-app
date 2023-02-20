@@ -16,6 +16,7 @@ Below are the last few BlueBubbles App release changelogs
 ### The Nitty Gritty
 
 #### New Features
+
 - Automatically re-upload contacts to server when contacts changes are detected
 - Added ability to connect with custom headers
 - Added ability to enable read receipts / typing indicators for specific chats without enabling globally
@@ -28,6 +29,7 @@ Below are the last few BlueBubbles App release changelogs
    - Voice notes now show up as voice notes for the recipient
 
 #### Bug Fixes
+
 - Fixed issues with matching contacts if phone number starts with "0" for contact
 - Fixed message size in message popup when in tablet mode
 - Fixed delete chat not working on iOS
@@ -44,6 +46,7 @@ Below are the last few BlueBubbles App release changelogs
 - Fixed sending a message to existing chat via chat creator would not send (tablet mode)
 
 #### Improvements
+
 - Added custom renderbox to chat list on samsung theme to fix weird issues with divider lines
 - Mark all as read will now fetch chats from database to accurately mark everything as read
 - Scheduled message interval field will not clear itself when a bad input is entered (Desktop)
@@ -65,9 +68,11 @@ Below are the last few BlueBubbles App release changelogs
 - Account for left system padding (e.g. punch hole camera) when rendering message popup
 
 #### Re-added Features
+
 - Confetti effect re-added (Flutter 3.7 crash is fixed)
 
 #### For Developers
+
 - Updated to Flutter 3.7.3
 - Parts of backend updated to successfully parse new server payload type (support for encryption)
 
