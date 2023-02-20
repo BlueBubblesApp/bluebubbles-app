@@ -68,7 +68,7 @@ Below are the last few BlueBubbles App release changelogs
 - Confetti effect re-added (Flutter 3.7 crash is fixed)
 
 #### For Developers
-- Updated to Flutter 3.7.2
+- Updated to Flutter 3.7.3
 - Parts of backend updated to successfully parse new server payload type (support for encryption)
 
 ## 1.11.2
