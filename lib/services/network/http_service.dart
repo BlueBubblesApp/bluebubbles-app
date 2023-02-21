@@ -535,14 +535,18 @@ class HttpService extends GetxService {
         "method": method
       });
 
-      // Only add the PAPI fields if they are enabled
-      formData.fields.addAllIf(ss.settings.enablePrivateAPI.value && ss.settings.privateAPIAttachmentSend.value, {
-        "effectId": effectId,
-        "subject": subject,
-        "selectedMessageGuid": selectedMessageGuid,
-        "partIndex": partIndex,
-        "isAudioMessage": isAudioMessage,
-      } as Iterable<MapEntry<String, String>>);
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateAPIAttachmentSend.value) {
+        Map<String, dynamic> papiData = {
+          "effectId": effectId,
+          "subject": subject,
+          "selectedMessageGuid": selectedMessageGuid,
+          "partIndex": partIndex,
+          "isAudioMessage": isAudioMessage,
+        };
+
+        papiData.removeWhere((key, value) => value == null);
+        formData.fields.addAll(papiData.entries.map((entry) => MapEntry(entry.key, entry.value.toString())));
+      }
 
       final response = await dio.post(
           "$apiRoot/message/attachment",
