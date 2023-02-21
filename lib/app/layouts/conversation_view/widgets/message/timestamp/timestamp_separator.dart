@@ -20,7 +20,7 @@ class TimestampSeparator extends StatelessWidget {
   }
 
   Tuple2<String?, String>? buildTimeStamp() {
-    if (ss.settings.skin.value == Skins.Samsung && (olderMessage?.dateCreated?.isTomorrow(otherDate: message.dateCreated) ?? false)) {
+    if (ss.settings.skin.value == Skins.Samsung && message.dateCreated?.day != olderMessage?.dateCreated?.day) {
       return Tuple2(null, buildSeparatorDateSamsung(message.dateCreated!));
     } else if (ss.settings.skin.value != Skins.Samsung && withinTimeThreshold(message, olderMessage)) {
       final time = message.dateCreated!;
