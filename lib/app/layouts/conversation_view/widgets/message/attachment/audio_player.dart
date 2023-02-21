@@ -46,6 +46,7 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
     if (attachment == null) {
       controller?.dispose();
     }
+    animController.dispose();
     super.dispose();
   }
 
@@ -57,6 +58,12 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
         await File(file.path!).copy(uriPath);
       }
       controller = PlayerController()..addListener(() {
+        setState(() {});
+      });
+      controller!.onPlayerStateChanged.listen((event) {
+        if ((controller!.playerState == PlayerState.paused || controller!.playerState == PlayerState.stopped) && animController.value > 0) {
+          animController.reverse();
+        }
         setState(() {});
       });
       await controller!.preparePlayer(path: file.path!);
@@ -80,7 +87,7 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
                 await controller!.pausePlayer();
               } else {
                 animController.forward();
-                await controller!.startPlayer(finishMode: FinishMode.loop);
+                await controller!.startPlayer(finishMode: FinishMode.pause);
               }
               setState(() {});
             },

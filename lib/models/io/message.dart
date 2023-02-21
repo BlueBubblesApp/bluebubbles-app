@@ -810,11 +810,11 @@ class Message {
     final olderPartCount = getActiveMwc(olderMessage.guid!)?.parts.length ?? 1;
     // make sure the older message is none of the following:
     // 1) thread originator
-    // 2) part of the thread
+    // 2) part of the thread with the same thread partIndex
     // OR
     // 1) It is the thread originator but the part is not the last part of the older message
     // 2) It is part of the thread but has multiple parts
-    return (olderMessage.guid != threadOriginatorGuid && olderMessage.threadOriginatorGuid != threadOriginatorGuid)
+    return (olderMessage.guid != threadOriginatorGuid && (olderMessage.threadOriginatorGuid != threadOriginatorGuid || olderMessage.normalizedThreadPart != normalizedThreadPart))
         || (olderMessage.guid == threadOriginatorGuid && normalizedThreadPart != olderPartCount - 1)
         || (olderMessage.threadOriginatorGuid == threadOriginatorGuid && olderPartCount > 1);
   }
