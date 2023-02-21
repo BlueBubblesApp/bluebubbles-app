@@ -4,7 +4,7 @@
         <data android:mimeType="*/*" />
         <category android:name="com.bluebubbles.messaging.directshare.category.TEXT_SHARE_TARGET" />
     </share-target>
-    <capability android:name="actions.intent.CREATE_MESSAGE">
+    <!-- <capability android:name="actions.intent.CREATE_MESSAGE">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="${applicationId}"
@@ -13,5 +13,5 @@
             <parameter android:name="message.recipient.telephone" android:key="address" />
             <parameter android:name="message.text" android:key="message" />
         </intent>
-    </capability>
+    </capability> -->
 </shortcuts>
