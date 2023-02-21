@@ -497,19 +497,24 @@ class HttpService extends GetxService {
   /// [effectId] to send with an effect, or [subject] to send with a subject.
   Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
+      Map<String, dynamic> data = {
+        "chatGuid": chatGuid,
+        "tempGuid": tempGuid,
+        "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
+        "method": method,
+      };
+
+      data.addAllIf(ss.settings.enablePrivateAPI.value && ss.settings.privateAPISend.value, {
+        "effectId": effectId,
+        "subject": subject,
+        "selectedMessageGuid": selectedMessageGuid,
+        "partIndex": partIndex,
+      });
+
       final response = await dio.post(
           "$apiRoot/message/text",
           queryParameters: buildQueryParams(),
-          data: {
-            "chatGuid": chatGuid,
-            "tempGuid": tempGuid,
-            "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
-            "method": method,
-            "effectId": effectId,
-            "subject": subject,
-            "selectedMessageGuid": selectedMessageGuid,
-            "partIndex": partIndex,
-          },
+          data: data,
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -527,13 +532,18 @@ class HttpService extends GetxService {
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
-        "method": method,
+        "method": method
+      });
+
+      // Only add the PAPI fields if they are enabled
+      formData.fields.addAllIf(ss.settings.enablePrivateAPI.value && ss.settings.privateAPIAttachmentSend.value, {
         "effectId": effectId,
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
         "isAudioMessage": isAudioMessage,
-      });
+      } as Iterable<MapEntry<String, String>>);
+
       final response = await dio.post(
           "$apiRoot/message/attachment",
           queryParameters: buildQueryParams(),
