@@ -15,8 +15,11 @@ import 'package:get/get.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 
 void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service, ConversationViewController? cvController) {
+  final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!);
   final originatorPart = message.threadOriginatorGuid != null ? message.normalizedThreadPart : part.part;
-  final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!, originatorPart);
+  if (message.threadOriginatorGuid == null) {
+    _messages.removeWhere((e) => !(e.threadOriginatorPart?.startsWith(originatorPart.toString()) ?? true));
+  }
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
   Navigator.push(
