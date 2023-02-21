@@ -7,7 +7,6 @@ Below are the last few BlueBubbles App release changelogs
 ### Changes
 
 - Fixes issue sending attachments if the BlueBubbles server was v1.5.3/v1.5.4, and the Private API was not enabled.
-- Improved accuracy of reply UI
 - Audio player will now stop after it completes (rather than repeat)
 - Fixes issue where timestamp dividers would not appear on the Samsung theme
 - Fixes issue where audio would not pause when leaving a chat or closing the app
