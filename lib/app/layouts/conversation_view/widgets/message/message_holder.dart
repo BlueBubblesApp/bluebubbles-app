@@ -60,7 +60,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Message? get replyTo => message.threadOriginatorGuid == null
       ? null
       : ss.settings.repliesToPrevious.value
-      ? (service.struct.getPreviousReply(message.threadOriginatorGuid!, message.guid!) ?? service.struct.getThreadOriginator(message.threadOriginatorGuid!))
+      ? (service.struct.getPreviousReply(message.threadOriginatorGuid!, message.normalizedThreadPart, message.guid!) ?? service.struct.getThreadOriginator(message.threadOriginatorGuid!))
       : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
   Chat get chat => widget.cvController.chat;
   MessagesService get service => ms(widget.cvController.chat.guid);
@@ -333,7 +333,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                     ? EdgeInsets.only(left: 35.0 * ss.settings.avatarScale.value) : EdgeInsets.zero,
                                 child: DecoratedBox(
                                   decoration: iOS && !widget.isReplyThread && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
-                                      || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null))
+                                      || (index == messageParts.length - 1 && service.struct.threads(message.guid!, index).isNotEmpty && newerMessage != null))
                                       ? ReplyLineDecoration(
                                     isFromMe: message.isFromMe!,
                                     color: context.theme.colorScheme.properSurface,
