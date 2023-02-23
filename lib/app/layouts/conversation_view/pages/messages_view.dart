@@ -202,7 +202,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       }
     }
 
-    if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null) {
+    if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null && cm.isChatActive(chat.guid)) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(
         path: ss.settings.receiveSoundPath.value!, volume: 1.0
