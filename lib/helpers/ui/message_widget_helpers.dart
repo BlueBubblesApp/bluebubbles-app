@@ -18,7 +18,7 @@ class MentionEntity extends Entity {
       : super(rawValue: rawValue, type: EntityType.unknown);
 }
 
-List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride}) {
+List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride, bool hideBodyText = false}) {
   final textSpans = <InlineSpan>[];
   final textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
     color: colorOverride ?? (message.isFromMe! ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface),
@@ -27,7 +27,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
 
   if (!isNullOrEmpty(part.subject)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      "${part.displaySubject}${!isNullOrEmpty(part.displayText)! ? "\n" : ""}",
+      "${part.displaySubject}${!hideBodyText ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
     ));
   }
@@ -69,7 +69,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
   return textSpans;
 }
 
-Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride}) async {
+Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride, bool hideBodyText = false}) async {
   final textSpans = <InlineSpan>[];
   final textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
     color: colorOverride ?? (message.isFromMe! ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface),
@@ -129,7 +129,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   // render subject
   if (!isNullOrEmpty(part.subject)!) {
     textSpans.addAll(MessageHelper.buildEmojiText(
-      "${part.displaySubject}${!isNullOrEmpty(part.displayText)! ? "\n" : ""}",
+      "${part.displaySubject}${!hideBodyText ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
     ));
   }

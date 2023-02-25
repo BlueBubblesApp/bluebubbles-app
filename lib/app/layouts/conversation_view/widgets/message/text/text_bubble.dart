@@ -13,9 +13,11 @@ class TextBubble extends CustomStateful<MessageWidgetController> {
     Key? key,
     required super.parentController,
     required this.message,
+    this.subjectOnly = false,
   }) : super(key: key);
 
   final MessagePart message;
+  final bool subjectOnly;
 
   @override
   CustomState createState() => _TextBubbleState();
@@ -117,6 +119,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           colorOverride: selected ? context.theme.colorScheme.onTertiaryContainer
               : ss.settings.colorfulBubbles.value && !message.isFromMe!
               ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
+          hideBodyText: widget.subjectOnly,
         ),
         initialData: buildMessageSpans(
           context,
@@ -125,6 +128,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           colorOverride: selected ? context.theme.colorScheme.onTertiaryContainer
               : ss.settings.colorfulBubbles.value && !message.isFromMe!
               ? getBubbleColors().first.oppositeLightenOrDarken(75) : null,
+          hideBodyText: widget.subjectOnly,
         ),
         builder: (context, snapshot) {
           if (snapshot.data != null) {
