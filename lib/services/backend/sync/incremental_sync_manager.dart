@@ -31,11 +31,8 @@ class IncrementalSyncManager extends SyncManager {
 
   Function? onComplete;
 
-  int get syncStart => endTimestamp ?? DateTime.now().millisecondsSinceEpoch;
-
   IncrementalSyncManager(this.startTimestamp,
-      {this.endTimestamp,
-      this.batchSize = 1000,
+      {this.batchSize = 1000,
       this.maxMessages = 10000,
       this.chatGuid,
       this.updateChatList = true,
@@ -55,7 +52,7 @@ class IncrementalSyncManager extends SyncManager {
 
     super.start();
     addToOutput(
-        "Starting incremental sync for messages since: $startTimestamp - $syncStart");
+        "Starting incremental sync for messages since: $startTimestamp");
 
     // 0: Hit API endpoint to check for updated messages
     // 1: If no new updated messages, complete the sync
@@ -77,7 +74,6 @@ class IncrementalSyncManager extends SyncManager {
     // 0: Hit API endpoint to check for updated messages
     dio.Response<dynamic> uMessageCountRes = await http.messageCount(
       after: DateTime.fromMillisecondsSinceEpoch(startTimestamp),
-      before: DateTime.fromMillisecondsSinceEpoch(syncStart),
     );
 
     // 1: If no new updated messages, complete the sync
@@ -108,7 +104,6 @@ class IncrementalSyncManager extends SyncManager {
       addToOutput('Fetching page ${i + 1} of $pages...');
       dio.Response<dynamic> messages = await http.messages(
           after: startTimestamp,
-          before: syncStart,
           offset: i * batchSize,
           limit: batchSize,
           withQuery: ["chats", "chats.participants", "attachments", "attributedBody", "messageSummaryInfo", "payloadData"]);
@@ -139,7 +134,7 @@ class IncrementalSyncManager extends SyncManager {
           // If the message is out of our date range, skip it,
           // then break out of the loop after syncing
           var date = msg.dateCreated!.millisecondsSinceEpoch;
-          bool skip = date > syncStart || date < startTimestamp;
+          bool skip = date < startTimestamp;
           if (!shouldStop && skip) {
             shouldStop = true;
           }
@@ -188,9 +183,9 @@ class IncrementalSyncManager extends SyncManager {
   Future<void> complete() async {
     // Once we have added everything, save the last sync date
     if (saveDate) {
-      addToOutput("Saving last sync date: $syncStart");
+      addToOutput("Saving last sync date...");
 
-      ss.settings.lastIncrementalSync.value = syncStart;
+      ss.settings.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
       await ss.saveSettings();
     }
 
