@@ -212,6 +212,9 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                             return Padding(
                               padding: const EdgeInsets.all(20.0),
                               child: Obx(() {
+                                if (_content.progress.value == 1) {
+                                  updateContent();
+                                }
                                 return Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: <Widget>[
