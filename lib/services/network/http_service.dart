@@ -497,19 +497,24 @@ class HttpService extends GetxService {
   /// [effectId] to send with an effect, or [subject] to send with a subject.
   Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
+      Map<String, dynamic> data = {
+        "chatGuid": chatGuid,
+        "tempGuid": tempGuid,
+        "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
+        "method": method,
+      };
+
+      data.addAllIf(ss.settings.enablePrivateAPI.value && ss.settings.privateAPISend.value, {
+        "effectId": effectId,
+        "subject": subject,
+        "selectedMessageGuid": selectedMessageGuid,
+        "partIndex": partIndex,
+      });
+
       final response = await dio.post(
           "$apiRoot/message/text",
           queryParameters: buildQueryParams(),
-          data: {
-            "chatGuid": chatGuid,
-            "tempGuid": tempGuid,
-            "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
-            "method": method,
-            "effectId": effectId,
-            "subject": subject,
-            "selectedMessageGuid": selectedMessageGuid,
-            "partIndex": partIndex,
-          },
+          data: data,
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -527,13 +532,22 @@ class HttpService extends GetxService {
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
-        "method": method,
-        "effectId": effectId,
-        "subject": subject,
-        "selectedMessageGuid": selectedMessageGuid,
-        "partIndex": partIndex,
-        "isAudioMessage": isAudioMessage,
+        "method": method
       });
+
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateAPIAttachmentSend.value) {
+        Map<String, dynamic> papiData = {
+          "effectId": effectId,
+          "subject": subject,
+          "selectedMessageGuid": selectedMessageGuid,
+          "partIndex": partIndex,
+          "isAudioMessage": isAudioMessage,
+        };
+
+        papiData.removeWhere((key, value) => value == null);
+        formData.fields.addAll(papiData.entries.map((entry) => MapEntry(entry.key, entry.value.toString())));
+      }
+
       final response = await dio.post(
           "$apiRoot/message/attachment",
           queryParameters: buildQueryParams(),

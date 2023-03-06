@@ -244,7 +244,11 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                   onPressed: openDm,
                                 ),
                               ),
-                            if (message.threadOriginatorGuid != null || service.struct.threads(message.guid!, part.part, returnOriginator: false).isNotEmpty)
+                            if (message.threadOriginatorGuid != null ||
+                                service.struct
+                                    .threads(message.guid!)
+                                    .where((e) => e.threadOriginatorPart?.startsWith(part.part.toString()) ?? false)
+                                    .isNotEmpty)
                               Padding(
                                 padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
                                 child: IconButton(
@@ -1042,7 +1046,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (message.threadOriginatorGuid != null || service.struct.threads(message.guid!, part.part, returnOriginator: false).isNotEmpty)
+      if (message.threadOriginatorGuid != null ||
+          service.struct.threads(message.guid!).where((e) => e.threadOriginatorPart?.startsWith(part.part.toString()) ?? false).isNotEmpty)
         Material(
           color: Colors.transparent,
           child: InkWell(

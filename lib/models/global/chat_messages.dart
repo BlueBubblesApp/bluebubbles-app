@@ -12,9 +12,7 @@ class ChatMessages {
   List<Message> get messages => _messages.values.toList();
   List<Message> get reactions => _reactions.values.toList();
   List<Attachment> get attachments => _attachments.values.toList();
-  List<Message> threads(String originatorGuid, int originatorPart, {bool returnOriginator = true}) =>
-      _threads[originatorGuid]?.values.where((e) =>
-      (e.normalizedThreadPart == originatorPart && e.guid != originatorGuid) || (returnOriginator ? e.guid == originatorGuid : false)).toList() ?? [];
+  List<Message> threads(String originatorGuid) => _threads[originatorGuid]?.values.toList() ?? [];
 
   void addMessages(List<Message> __messages) {
     for (Message m in __messages) {
@@ -88,8 +86,8 @@ class ChatMessages {
     }
   }
 
-  Message? getPreviousReply(String threadGuid, int threadPart, String messageGuid) {
-    final thread = threads(threadGuid, threadPart)..sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+  Message? getPreviousReply(String threadGuid, String messageGuid) {
+    final thread = threads(threadGuid)..sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
     final index = thread.indexWhere((element) => element.guid == messageGuid);
     if (index > 0) {
       return thread[index - 1];

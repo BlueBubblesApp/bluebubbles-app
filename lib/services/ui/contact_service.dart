@@ -50,6 +50,11 @@ class ContactsService extends GetxService {
   Future<List<List<int>>> refreshContacts() async {
     if (!(await hasContactAccess)) return [];
 
+    // Check if the user is on v1.5.2 or newer
+    int serverVersion = (await ss.getServerDetails()).item4;
+    // 100(major) + 21(minor) + 1(bug)
+    bool isMin1_5_2 = serverVersion >= 207; // Server: v1.5.2
+
     final startTime = DateTime.now().millisecondsSinceEpoch;
     List<Contact> _contacts = [];
     final changedIds = <List<int>>[<int>[], <int>[]];
@@ -118,7 +123,7 @@ class ContactsService extends GetxService {
       }
     }
     if (!kIsWeb) {
-      Handle.bulkSave(handles);
+      Handle.bulkSave(handles, matchOnOriginalROWID: isMin1_5_2);
     } else {
       contacts = _contacts;
     }
