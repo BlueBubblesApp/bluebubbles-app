@@ -265,6 +265,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         showSnackbar("Error", "Something went wrong!");
       }
     } else {
+      if (controller.textController.text.isEmpty && controller.subjectTextController.text.isEmpty && !ss.settings.privateAPIAttachmentSend.value) {
+        if (controller.replyToMessage != null) {
+          return showSnackbar("Error", "Turn on Private API Attachment Send to send replies with media!");
+        } else if (effect != null) {
+          return showSnackbar("Error", "Turn on Private API Attachment Send to send effects with media!");
+        }
+      }
       await controller.send(
         controller.pickedAttachments,
         controller.textController.text,
