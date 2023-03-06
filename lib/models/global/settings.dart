@@ -69,6 +69,7 @@ class Settings {
   final RxnString sendSoundPath = RxnString();
   final RxnString receiveSoundPath = RxnString();
   final RxBool syncContactsAutomatically = false.obs;
+  final RxBool scrollToBottomOnSend = true.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -234,6 +235,7 @@ class Settings {
       'sendSoundPath': sendSoundPath.value,
       'receiveSoundPath': receiveSoundPath.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
+      'scrollToBottomOnSend': scrollToBottomOnSend.value,
       'privateAPISend': privateAPISend.value,
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -341,6 +343,7 @@ class Settings {
     ss.settings.sendSoundPath.value = map['sendSoundPath'];
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
     ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
+    ss.settings.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -452,6 +455,7 @@ class Settings {
     s.sendSoundPath.value = map['sendSoundPath'];
     s.receiveSoundPath.value = map['receiveSoundPath'];
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
+    s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;

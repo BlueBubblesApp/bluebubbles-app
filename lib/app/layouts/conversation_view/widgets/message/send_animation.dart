@@ -43,7 +43,9 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     final replyGuid = tuple.item4;
     final part = tuple.item5;
     final effectId = tuple.item6;
-    await controller.scrollToBottom();
+    if (ss.settings.scrollToBottomOnSend.value) {
+      await controller.scrollToBottom();
+    }
     if (ss.settings.sendSoundPath.value != null) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(

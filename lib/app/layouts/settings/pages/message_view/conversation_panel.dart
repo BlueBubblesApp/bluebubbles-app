@@ -379,6 +379,23 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       title: "Send Message with Enter",
                       backgroundColor: tileColor,
                     )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      ss.settings.scrollToBottomOnSend.value = val;
+                      saveSettings();
+                    },
+                    initialVal: ss.settings.scrollToBottomOnSend.value,
+                    title: "Scroll To Bottom When Sending Messages",
+                    subtitle: "Scroll to the most recent messages in the chat when sending a new text",
+                    backgroundColor: tileColor,
+                  )),
                 ],
               ),
             ],
