@@ -460,6 +460,8 @@ class Chat {
           toSave!.handles.clear();
           toSave.handles.addAll(participants);
           toSave.handles.applyToDb();
+        } else if (existing == null && participants.isEmpty) {
+          cm.fetchChat(guid);
         }
       } on UniqueViolationException catch (_) {}
     });
