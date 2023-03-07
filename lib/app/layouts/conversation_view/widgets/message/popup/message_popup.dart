@@ -1101,7 +1101,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (!kIsWeb && !kIsDesktop && part.text!.isNotEmpty))
+      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (!kIsWeb && !kIsDesktop && !isNullOrEmpty(part.text)!))
         Material(
           color: Colors.transparent,
           child: InkWell(
