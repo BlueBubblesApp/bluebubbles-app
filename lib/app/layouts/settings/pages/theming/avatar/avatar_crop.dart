@@ -31,7 +31,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
         await file.create(recursive: true);
       }
       await file.writeAsBytes(croppedData);
-      chats.chats[widget.index!].customAvatarPath = file.path;
+      chats.chats[widget.index!].refreshCustomAvatar(file.path);
       chats.chats[widget.index!].save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
       ns.backSettings(context);
@@ -42,10 +42,10 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
         await file.create(recursive: true);
       }
       await file.writeAsBytes(croppedData);
-      widget.chat!.customAvatarPath = file.path;
+      widget.chat!.refreshCustomAvatar(file.path);
       widget.chat!.save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
-      ns.backSettings(context);
+      ns.backSettings(context, result: croppedData);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
   }
@@ -146,9 +146,11 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: Text("Saving avatar...", style: context.theme.textTheme.titleLarge),
-                          content: Padding(
-                            padding: const EdgeInsets.only(top: 15.0),
-                            child: buildProgressIndicator(context),
+                          content: Container(
+                            height: 70,
+                            child: Center(
+                              child: buildProgressIndicator(context),
+                            ),
                           ),
                           backgroundColor: context.theme.colorScheme.properSurface,
                         ),
@@ -178,9 +180,11 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Saving avatar...", style: context.theme.textTheme.titleLarge),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 15.0),
-          child: buildProgressIndicator(context),
+        content: Container(
+          height: 70,
+          child: Center(
+            child: buildProgressIndicator(context),
+          ),
         ),
         backgroundColor: context.theme.colorScheme.properSurface,
       ),

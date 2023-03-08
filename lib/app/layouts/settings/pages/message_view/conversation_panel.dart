@@ -156,7 +156,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                             await file.create(recursive: true);
                           }
                           await file.writeAsBytes(response.data);
-                          c.customAvatarPath = file.path;
+                          c.refreshCustomAvatar(file.path);
                           c.save(updateCustomAvatarPath: true);
                         }
                         gettingIcons.value = false;

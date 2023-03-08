@@ -440,6 +440,36 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get a group chat icon by the chat [guid]
+  Future<Response> setChatIcon(String guid, String path, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+    final formData = FormData.fromMap({
+      "icon": await MultipartFile.fromFile(path),
+    });
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$apiRoot/chat/$guid/icon",
+        queryParameters: buildQueryParams(),
+        data: formData,
+        options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+        cancelToken: cancelToken,
+        onSendProgress: onSendProgress,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get a group chat icon by the chat [guid]
+  Future<Response> deleteChatIcon(String guid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+        "$apiRoot/chat/$guid/icon",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Delete a chat by [guid]
   Future<Response> deleteChat(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {

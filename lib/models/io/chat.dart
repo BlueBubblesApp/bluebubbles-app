@@ -324,6 +324,10 @@ class Chat {
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
+  void refreshCustomAvatar(String s) {
+    _customAvatarPath.value = null;
+    _customAvatarPath.value = s;
+  }
 
   final RxnInt _pinIndex = RxnInt();
   int? get pinIndex => _pinIndex.value;
