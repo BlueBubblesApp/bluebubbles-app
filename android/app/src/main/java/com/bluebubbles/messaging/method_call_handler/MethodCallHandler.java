@@ -15,6 +15,7 @@ import android.provider.Settings;
 import androidx.annotation.RequiresApi;
 
 import com.bluebubbles.messaging.MainActivity;
+import com.bluebubbles.messaging.helpers.FileDirectory;
 import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearFailedToSend;
@@ -44,7 +45,6 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
-import com.kasem.receive_sharing_intent.FileDirectory;
 import java.util.HashMap;
 
 
