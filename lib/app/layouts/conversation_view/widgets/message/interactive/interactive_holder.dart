@@ -1,4 +1,4 @@
-
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/apple_pay.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/supported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/unsupported_interactive.dart';
@@ -145,7 +145,10 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                                     message: message,
                                   );
                                 case "Apple Pay":
-                                  // todo
+                                  return ApplePay(
+                                    data: data,
+                                    message: message,
+                                  );
                                 default:
                                   return UnsupportedInteractive(
                                     message: message,
