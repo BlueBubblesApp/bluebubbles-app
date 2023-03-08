@@ -1,11 +1,11 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/apple_pay.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/embedded_media.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/supported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/unsupported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.legacy.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart' hide PayloadType;
@@ -107,9 +107,9 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                               switch (message.interactiveText) {
                                 case "Handwritten Message":
                                 case "Digital Touch Message":
-                                  return UnsupportedInteractive(
+                                  return EmbeddedMedia(
                                     message: message,
-                                    payloadData: null,
+                                    controller: controller,
                                   );
                                 default:
                                   return UnsupportedInteractive(

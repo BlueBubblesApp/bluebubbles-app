@@ -533,6 +533,20 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get embedded media for a single digital touch or handwritten message by [guid].
+  Future<Response> embeddedMedia(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/message/$guid/embedded-media",
+          queryParameters: buildQueryParams(),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+          cancelToken: cancelToken,
+          onReceiveProgress: onReceiveProgress,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Send a message. [chatGuid] specifies the chat, [tempGuid] specifies a
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
