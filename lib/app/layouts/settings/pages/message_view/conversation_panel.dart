@@ -145,19 +145,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       onTap: () async {
                         gettingIcons.value = true;
                         for (Chat c in chats.chats.where((c) => c.isGroup)) {
-                          final response = await http.getChatIcon(c.guid).catchError((err) async {
-                            Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
-                            return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
-                          });
-                          if (response.statusCode != 200 || isNullOrEmpty(response.data)!) continue;
-                          Logger.debug("Got chat icon for chat ${c.getTitle()}");
-                          File file = File(c.customAvatarPath ?? "${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-                          if (c.customAvatarPath == null) {
-                            await file.create(recursive: true);
-                          }
-                          await file.writeAsBytes(response.data);
-                          c.refreshCustomAvatar(file.path);
-                          c.save(updateCustomAvatarPath: true);
+                          await Chat.getIcon(c);
                         }
                         gettingIcons.value = false;
                       },

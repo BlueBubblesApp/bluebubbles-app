@@ -90,6 +90,18 @@ class MethodChannelService extends GetxService {
           }
         }
         return true;
+      case "group-icon-changed":
+        await storeStartup.future;
+        Logger.info("Received group icon change from FCM");
+        Map<String, dynamic>? data = jsonDecode(call.arguments);
+        if (!isNullOrEmpty(data)!) {
+          final guid = data!["chats"].first["guid"];
+          final chat = Chat.findOne(guid: guid);
+          if (chat != null) {
+            Chat.getIcon(chat);
+          }
+        }
+        return;
       case "scheduled-message-error":
         Logger.info("Received scheduled message error from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments) ?? {};
