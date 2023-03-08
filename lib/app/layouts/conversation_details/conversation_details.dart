@@ -264,7 +264,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   );
                 }, childCount: clippedParticipants.length + 2),
               ),
-            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value)
+            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value && ss.serverDetailsSync().item4 >= 226)
               SliverToBoxAdapter(
                 child: Builder(
                   builder: (context) {
