@@ -361,7 +361,7 @@
     },
     {
       "id": "13:4148278195232901830",
-      "lastPropertyId": "46:55112057161128513",
+      "lastPropertyId": "48:8353240741127563871",
       "name": "Message",
       "properties": [
         {
@@ -549,6 +549,16 @@
           "id": "46:55112057161128513",
           "name": "dbMetadata",
           "type": 9
+        },
+        {
+          "id": "47:2946661728932667087",
+          "name": "wasDeliveredQuietly",
+          "type": 1
+        },
+        {
+          "id": "48:8353240741127563871",
+          "name": "didNotifyRecipient",
+          "type": 1
         }
       ],
       "relations": []

@@ -653,6 +653,17 @@ class HttpService extends GetxService {
     });
   }
 
+  Future<Response> notify(String selectedMessageGuid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/message/$selectedMessageGuid/notify",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get the number of handles in the server iMessage DB
   Future<Response> handleCount({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
@@ -687,6 +698,18 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/handle/$guid",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get a single handle's focus state by [address]
+  Future<Response> handleFocusState(String address, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/handle/$address/focus",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );

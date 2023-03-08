@@ -169,7 +169,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       if (message.isFromMe! && message.attachments.isNotEmpty) {
         updateWidgets<AttachmentHolder>(null);
       }
-    } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead) {
+    } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead || newItem.didNotifyRecipient != message.didNotifyRecipient) {
       final edited = newItem.dateEdited != message.dateEdited;
       message = Message.merge(newItem, message);
       ms(message.chat.target!.guid).updateMessage(message);

@@ -381,7 +381,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(46, 55112057161128513),
+      lastPropertyId: const IdUid(48, 8353240741127563871),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -566,6 +566,16 @@ final _entities = <ModelEntity>[
             id: const IdUid(46, 55112057161128513),
             name: 'dbMetadata',
             type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(47, 2946661728932667087),
+            name: 'wasDeliveredQuietly',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(48, 8353240741127563871),
+            name: 'didNotifyRecipient',
+            type: 1,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -1260,7 +1270,7 @@ ModelDefinition getObjectBoxModel() {
           final dbMetadataOffset = object.dbMetadata == null
               ? null
               : fbb.writeString(object.dbMetadata!);
-          fbb.startTable(47);
+          fbb.startTable(49);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1297,6 +1307,8 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(43, dbMessageSummaryInfoOffset);
           fbb.addOffset(44, dbPayloadDataOffset);
           fbb.addOffset(45, dbMetadataOffset);
+          fbb.addBool(46, object.wasDeliveredQuietly);
+          fbb.addBool(47, object.didNotifyRecipient);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1356,7 +1368,9 @@ ModelDefinition getObjectBoxModel() {
               threadOriginatorGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 72),
               threadOriginatorPart: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 74),
               hasApplePayloadData: const fb.BoolReader().vTableGet(buffer, rootOffset, 86, false),
-              dateEdited: dateEditedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateEditedValue))
+              dateEdited: dateEditedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateEditedValue),
+              wasDeliveredQuietly: const fb.BoolReader().vTableGet(buffer, rootOffset, 96, false),
+              didNotifyRecipient: const fb.BoolReader().vTableGet(buffer, rootOffset, 98, false))
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
             ..dbAttributedBody = const fb.StringReader(asciiOptimization: true)
@@ -1914,6 +1928,14 @@ class Message_ {
   /// see [Message.dbMetadata]
   static final dbMetadata =
       QueryStringProperty<Message>(_entities[5].properties[35]);
+
+  /// see [Message.wasDeliveredQuietly]
+  static final wasDeliveredQuietly =
+      QueryBooleanProperty<Message>(_entities[5].properties[36]);
+
+  /// see [Message.didNotifyRecipient]
+  static final didNotifyRecipient =
+      QueryBooleanProperty<Message>(_entities[5].properties[37]);
 }
 
 /// [ThemeObject] entity fields to define ObjectBox queries.

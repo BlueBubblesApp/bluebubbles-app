@@ -56,7 +56,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     } else if (message.dateRead != null) {
       text = "Read ${buildDate(message.dateRead)}";
     } else if (message.dateDelivered != null) {
-      text = "Delivered${ss.settings.showDeliveryTimestamps.value || !iOS ? " ${buildDate(message.dateDelivered)}" : ""}";
+      text = "Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}${ss.settings.showDeliveryTimestamps.value || !iOS ? " ${buildDate(message.dateDelivered)}" : ""}";
     } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
       text = "Sending...";
     } else if (!iOS && widget.forceShow) {
