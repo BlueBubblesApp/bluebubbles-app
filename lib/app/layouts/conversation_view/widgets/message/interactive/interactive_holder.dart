@@ -107,10 +107,17 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                               switch (message.interactiveText) {
                                 case "Handwritten Message":
                                 case "Digital Touch Message":
-                                  return EmbeddedMedia(
-                                    message: message,
-                                    controller: controller,
-                                  );
+                                  if (ss.settings.enablePrivateAPI.value && ss.isMinBigSurSync && ss.serverDetailsSync().item4 >= 226) {
+                                    return EmbeddedMedia(
+                                      message: message,
+                                      controller: controller,
+                                    );
+                                  } else {
+                                    return UnsupportedInteractive(
+                                      message: message,
+                                      payloadData: null,
+                                    );
+                                  }
                                 default:
                                   return UnsupportedInteractive(
                                     message: message,
