@@ -320,6 +320,18 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Leave a chat
+  Future<Response> leaveChat(String guid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/chat/$guid/leave",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Update the specified chat (using [guid]). Use [displayName] to specify the
   /// new chat name.
   Future<Response> updateChat(String guid, String displayName, {CancelToken? cancelToken}) async {

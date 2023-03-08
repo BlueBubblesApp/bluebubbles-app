@@ -264,6 +264,62 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   );
                 }, childCount: clippedParticipants.length + 2),
               ),
+            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value)
+              SliverToBoxAdapter(
+                child: Builder(
+                  builder: (context) {
+                    return ListTile(
+                      mouseCursor: MouseCursor.defer,
+                      title: Text("Leave ${iOS ? "Chat" : "chat"}", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.error)),
+                      leading: Container(
+                        width: 40 * ss.settings.avatarScale.value,
+                        height: 40 * ss.settings.avatarScale.value,
+                        decoration: BoxDecoration(
+                          color: !iOS ? null : context.theme.colorScheme.properSurface,
+                          shape: BoxShape.circle,
+                          border: iOS ? null : Border.all(color: context.theme.colorScheme.error, width: 3)
+                        ),
+                        child: Icon(
+                          Icons.error_outline,
+                          color: context.theme.colorScheme.error,
+                          size: 20
+                        ),
+                      ),
+                      onTap: () async {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              title: Text(
+                                "Leaving chat...",
+                                style: context.theme.textTheme.titleLarge,
+                              ),
+                              content: Container(
+                                height: 70,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    backgroundColor: context.theme.colorScheme.properSurface,
+                                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                        );
+                        final response = await http.leaveChat(chat.guid);
+                        if (response.statusCode == 200) {
+                          Get.back();
+                          showSnackbar("Notice", "Left chat successfully!");
+                        } else {
+                          Get.back();
+                          showSnackbar("Error", "Failed to leave chat!");
+                        }
+                      },
+                    );
+                  }
+                ),
+              ),
             const SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 10),
             ),
