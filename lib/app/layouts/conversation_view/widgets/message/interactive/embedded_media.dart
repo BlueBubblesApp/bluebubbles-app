@@ -10,21 +10,20 @@ import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
-class EmbeddedMedia extends StatefulWidget {
+class EmbeddedMedia extends CustomStateful<MessageWidgetController> {
   EmbeddedMedia({
     Key? key,
     required this.message,
-    required this.controller,
+    required super.parentController,
   }) : super(key: key);
 
   final Message message;
-  final MessageWidgetController controller;
 
   @override
   State<EmbeddedMedia> createState() => _EmbeddedMediaState();
 }
 
-class _EmbeddedMediaState extends OptimizedState<EmbeddedMedia> with AutomaticKeepAliveClientMixin {
+class _EmbeddedMediaState extends CustomState<EmbeddedMedia, void, MessageWidgetController> with AutomaticKeepAliveClientMixin {
   Message get message => widget.message;
 
   dynamic content;
@@ -38,12 +37,11 @@ class _EmbeddedMediaState extends OptimizedState<EmbeddedMedia> with AutomaticKe
   }
 
   void getContent() async {
-    final extension = message.balloonBundleId!.contains("Digital") ? ".mov" : ".png";
-    final path = "${fs.appDocDir.path}/messages/${message.guid}/embedded-media/${message.balloonBundleId}$extension";
+    final path = message.interactiveMediaPath!;
     if (await File(path).exists()) {
       final bytes = await File(path).readAsBytes();
       content = PlatformFile(
-        name: "${message.balloonBundleId}$extension",
+        name: path.split("/").last,
         path: path,
         size: bytes.length,
         bytes: bytes,
@@ -60,7 +58,7 @@ class _EmbeddedMediaState extends OptimizedState<EmbeddedMedia> with AutomaticKe
         await File(path).create(recursive: true);
         await File(path).writeAsBytes(response.data);
         content = PlatformFile(
-          name: "${message.balloonBundleId}$extension",
+          name: path.split("/").last,
           path: path,
           size: response.data.length,
           bytes: response.data,
@@ -83,6 +81,16 @@ class _EmbeddedMediaState extends OptimizedState<EmbeddedMedia> with AutomaticKe
       name = temp;
     }
     return name ?? "Unknown";
+  }
+
+  @override
+  void updateWidget(void _) {
+    if (File(message.interactiveMediaPath!).existsSync()) {
+      File(message.interactiveMediaPath!).deleteSync();
+      content = null;
+      super.updateWidget(_);
+      getContent();
+    }
   }
 
   @override
@@ -109,7 +117,7 @@ class _EmbeddedMediaState extends OptimizedState<EmbeddedMedia> with AutomaticKe
             attachment: Attachment(
               guid: message.guid,
             ),
-            controller: widget.controller.cvController,
+            controller: controller.cvController,
             isFromMe: message.isFromMe!,
           ),
         if (content is! PlatformFile)

@@ -27,7 +27,7 @@ class InteractiveHolder extends CustomStateful<MessageWidgetController> {
   CustomState createState() => _InteractiveHolderState();
 }
 
-class _InteractiveHolderState extends CustomState<InteractiveHolder, void, MessageWidgetController> {
+class _InteractiveHolderState extends CustomState<InteractiveHolder, void, MessageWidgetController> with AutomaticKeepAliveClientMixin {
   MessagePart get part => widget.message;
   Message get message => controller.message;
   PayloadData? get payloadData => message.payloadData;
@@ -53,7 +53,11 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return ColorFiltered(
       colorFilter: ColorFilter.mode(!selected ? Colors.transparent : context.theme.colorScheme.tertiaryContainer.withOpacity(0.5), BlendMode.srcOver),
       child: Material(
@@ -110,7 +114,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                                   if (ss.settings.enablePrivateAPI.value && ss.isMinBigSurSync && ss.serverDetailsSync().item4 >= 226) {
                                     return EmbeddedMedia(
                                       message: message,
-                                      controller: controller,
+                                      parentController: controller,
                                     );
                                   } else {
                                     return UnsupportedInteractive(

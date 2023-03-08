@@ -696,6 +696,11 @@ class Message {
     return text;
   }
 
+  String? get interactiveMediaPath {
+    final extension = balloonBundleId!.contains("com.apple.Digital") ? ".mov" : balloonBundleId!.contains("com.apple.Handwriting") ? ".png" : null;
+    return "${fs.appDocDir.path}/messages/$guid/embedded-media/$balloonBundleId$extension";
+  }
+
   bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
 
   String get groupEventText {
