@@ -112,9 +112,9 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                                     payloadData: null,
                                   );
                                 default:
-                                  return TextBubble(
-                                    parentController: controller,
-                                    message: part,
+                                  return UnsupportedInteractive(
+                                    message: message,
+                                    payloadData: null,
                                   );
                               }
                             } else if (payloadData?.type == PayloadType.url || message.isLegacyUrlPreview) {
