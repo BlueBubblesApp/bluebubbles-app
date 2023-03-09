@@ -5,12 +5,15 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class Handle {
   int? id;
   int? originalROWID;
+  String uniqueAddressAndService;
   String address;
   String? formattedAddress;
+  String service;
   String? country;
   String? defaultEmail;
   String? defaultPhone;
@@ -56,12 +59,20 @@ class Handle {
     this.id,
     this.originalROWID,
     this.address = "",
+    this.service = "iMessage",
+    this.uniqueAddressAndService = "",
     this.formattedAddress,
     this.country,
     String? handleColor,
     this.defaultEmail,
     this.defaultPhone,
   }) {
+    if (service.isEmpty) {
+      service = 'iMessage';
+    }
+    if (uniqueAddressAndService.isEmpty) {
+      uniqueAddressAndService = "$address/$service";
+    }
     color = handleColor;
   }
 
@@ -69,6 +80,8 @@ class Handle {
     id: json["ROWID"] ?? json["id"],
     originalROWID: json["originalROWID"],
     address: json["address"],
+    service: json["service"] ?? "iMessage",
+    uniqueAddressAndService: json["uniqueAddrAndService"] ?? "${json["address"]}/${json["service"] ?? "iMessage"}",
     formattedAddress: json["formattedAddress"],
     country: json["country"],
     handleColor: json["color"],
@@ -79,7 +92,7 @@ class Handle {
     return this;
   }
 
-  static List<Handle> bulkSave(List<Handle> handles) {
+  static List<Handle> bulkSave(List<Handle> handles, {bool matchOnOriginalROWID = false}) {
     return [];
   }
 
@@ -101,9 +114,9 @@ class Handle {
     return this;
   }
 
-  static Handle? findOne({int? id, int? originalROWID, String? address}) {
+  static Handle? findOne({int? id, int? originalROWID, Tuple2<String, String>? addressAndService}) {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return chats.webCachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.address == address);
+    return chats.webCachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.uniqueAddressAndService == "${addressAndService?.item1}/${addressAndService?.item2}");
   }
 
   static List<Handle> find() {
@@ -134,5 +147,7 @@ class Handle {
     "country": country,
     "color": color,
     "defaultPhone": defaultPhone,
+    "service": service,
+    "uniqueAddrAndService": uniqueAddressAndService,
   };
 }

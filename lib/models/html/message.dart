@@ -51,6 +51,8 @@ class Message {
   List<MessageSummaryInfo> messageSummaryInfo;
   PayloadData? payloadData;
   bool hasApplePayloadData;
+  bool wasDeliveredQuietly;
+  bool didNotifyRecipient;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -109,6 +111,8 @@ class Message {
     this.payloadData,
     this.hasApplePayloadData = false,
     DateTime? dateEdited,
+    this.wasDeliveredQuietly = false,
+    this.didNotifyRecipient = false,
   }) {
     if (error != null) _error.value = error;
     if (dateRead != null) _dateRead.value = dateRead;
@@ -197,6 +201,8 @@ class Message {
       payloadData: payloadData,
       hasApplePayloadData: json['hasApplePayloadData'] == true || payloadData != null,
       dateEdited: parseDate(json["dateEdited"]),
+      wasDeliveredQuietly: json['wasDeliveredQuietly'] ?? false,
+      didNotifyRecipient: json['didNotifyRecipient'] ?? false,
     );
   }
 
@@ -287,6 +293,10 @@ class Message {
       text = temp.toString();
     }
     return text;
+  }
+
+  String? get interactiveMediaPath {
+    return null;
   }
 
   bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
@@ -550,6 +560,14 @@ class Message {
       existing.payloadData = newMessage.payloadData;
     }
 
+    if (!existing.wasDeliveredQuietly && newMessage.wasDeliveredQuietly) {
+      existing.wasDeliveredQuietly = newMessage.wasDeliveredQuietly;
+    }
+
+    if (!existing.didNotifyRecipient && newMessage.didNotifyRecipient) {
+      existing.didNotifyRecipient = newMessage.didNotifyRecipient;
+    }
+
     return existing;
   }
 
@@ -587,6 +605,8 @@ class Message {
       "threadOriginatorPart": threadOriginatorPart,
       "hasApplePayloadData": hasApplePayloadData,
       "dateEdited": dateEdited,
+      "wasDeliveredQuietly": wasDeliveredQuietly,
+      "didNotifyRecipient": didNotifyRecipient,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();
