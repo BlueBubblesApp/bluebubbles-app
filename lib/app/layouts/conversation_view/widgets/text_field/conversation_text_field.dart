@@ -46,7 +46,7 @@ class ConversationTextField extends CustomStateful<ConversationViewController> {
 }
 
 class ConversationTextFieldState extends CustomState<ConversationTextField, void, ConversationViewController> with TickerProviderStateMixin {
-  final recorderController = RecorderController();
+  final recorderController = kIsWeb ? null : RecorderController();
 
   // emoji
   final Map<String, Emoji> emojiNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.shortName, e)));
@@ -222,7 +222,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.subjectFocusNode.dispose();
     controller.textController.dispose();
     controller.subjectTextController.dispose();
-    recorderController.dispose();
+    recorderController?.dispose();
     if (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value) {
       socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
     }
@@ -333,7 +333,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              if (iOS && Platform.isAndroid)
+              if (!kIsWeb && iOS && Platform.isAndroid)
                 GestureDetector(
                   onLongPress: () {
                     openFullCamera(type: 'video');
@@ -428,7 +428,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                   }
                 },
               ),
-              if (!Platform.isAndroid)
+              if (!kIsWeb && !Platform.isAndroid)
                 IconButton(
                     icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
                     onPressed: () async {
@@ -473,40 +473,41 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                       recorderController: recorderController,
                       sendMessage: sendMessage,
                     ),
-                    Positioned(
-                        top: 0,
-                        bottom: 0,
-                        child: Obx(() => AnimatedSize(
-                              duration: const Duration(milliseconds: 500),
-                              curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
-                              child: !controller.showRecording.value
-                                  ? const SizedBox.shrink()
-                                  : Builder(builder: (context) {
-                                      final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
-                                      final textFieldSize = box?.size ?? const Size(250, 35);
-                                      return AudioWaveforms(
-                                        size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
-                                        recorderController: recorderController,
-                                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                                        waveStyle: const WaveStyle(
-                                          waveColor: Colors.white,
-                                          waveCap: StrokeCap.square,
-                                          spacing: 4.0,
-                                          showBottom: true,
-                                          extendWaveform: true,
-                                          showMiddleLine: false,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          border: Border.fromBorderSide(BorderSide(
-                                            color: context.theme.colorScheme.outline,
-                                            width: 1,
-                                          )),
-                                          borderRadius: BorderRadius.circular(20),
-                                          color: context.theme.colorScheme.properSurface,
-                                        ),
-                                      );
-                                    }),
-                            ))),
+                    if (!kIsWeb)
+                      Positioned(
+                          top: 0,
+                          bottom: 0,
+                          child: Obx(() => AnimatedSize(
+                                duration: const Duration(milliseconds: 500),
+                                curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
+                                child: !controller.showRecording.value
+                                    ? const SizedBox.shrink()
+                                    : Builder(builder: (context) {
+                                        final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+                                        final textFieldSize = box?.size ?? const Size(250, 35);
+                                        return AudioWaveforms(
+                                          size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
+                                          recorderController: recorderController!,
+                                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                                          waveStyle: const WaveStyle(
+                                            waveColor: Colors.white,
+                                            waveCap: StrokeCap.square,
+                                            spacing: 4.0,
+                                            showBottom: true,
+                                            extendWaveform: true,
+                                            showMiddleLine: false,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border.fromBorderSide(BorderSide(
+                                              color: context.theme.colorScheme.outline,
+                                              width: 1,
+                                            )),
+                                            borderRadius: BorderRadius.circular(20),
+                                            color: context.theme.colorScheme.properSurface,
+                                          ),
+                                        );
+                                      }),
+                              ))),
                     SendAnimation(parentController: controller),
                   ],
                 ),
@@ -555,7 +556,7 @@ class TextFieldComponent extends StatelessWidget {
   final TextEditingController subjectTextController;
   final TextEditingController textController;
   final ConversationViewController? controller;
-  final RecorderController recorderController;
+  final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
   final FocusNode? focusNode;
 
