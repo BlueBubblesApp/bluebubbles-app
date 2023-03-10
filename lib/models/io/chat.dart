@@ -692,9 +692,15 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe! || cm.isChatActive(guid)) {
         // force if the chat is active to ensure private api mark read
-        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe, force: cm.isChatActive(guid));
+        toggleHasUnread(
+          false,
+          clearLocalNotifications: clearNotificationsIfFromMe,
+          force: cm.isChatActive(guid),
+          // only private mark if the chat is active
+          privateMark: cm.isChatActive(guid)
+        );
       } else if (!cm.isChatActive(guid)) {
-        toggleHasUnread(true);
+        toggleHasUnread(true, privateMark: false);
       }
     }
 
