@@ -395,8 +395,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                                   return TextButton(
                                     child: Text("Notify Anyway", style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.tertiaryContainer)),
                                     onPressed: () async {
-                                      final response = await http.notify(_messages.first.guid!);
-                                      inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, response.data['data']));
+                                      await http.notify(_messages.first.guid!);
                                     },
                                   );
                                 }
