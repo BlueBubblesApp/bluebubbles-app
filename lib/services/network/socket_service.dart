@@ -86,7 +86,7 @@ class SocketService extends GetxService {
     socket.on("new-message", (data) => handleCustomEvent("new-message", data));
     socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
     socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
-    socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-change", data));
+    socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-changed", data));
 
     socket.connect();
   }
