@@ -216,8 +216,8 @@ class SocketService extends GetxService {
       case "participant-added":
       case "participant-left":
         try {
-          final newChat = Chat.fromMap(data);
-          ah.handleNewOrUpdatedChat(newChat);
+          final item = IncomingItem.fromMap(QueueType.updatedMessage, data);
+          ah.handleNewOrUpdatedChat(item.chat);
         } catch (_) {}
         return;
       case "chat-read-status-changed":
