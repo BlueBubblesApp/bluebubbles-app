@@ -149,6 +149,7 @@ class MessagesService extends GetxController {
           final reactions = temp.where((e) => e.associatedMessageGuid != null);
           for (Message m in reactions) {
             final associatedMessage = temp.firstWhereOrNull((element) => element.guid == m.associatedMessageGuid);
+            associatedMessage?.hasReactions = true;
             associatedMessage?.associatedMessages.add(m);
           }
           _messages = temp;
