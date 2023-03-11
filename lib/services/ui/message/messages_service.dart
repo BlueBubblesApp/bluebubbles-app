@@ -30,7 +30,6 @@ class MessagesService extends GetxController {
 
   int currentCount = 0;
   bool isFetching = false;
-  bool _init = false;
   String? method;
 
   Message? get mostRecentSent => (struct.messages.where((e) => e.isFromMe!).toList()
@@ -49,7 +48,6 @@ class MessagesService extends GetxController {
 
     // watch for new messages
     if (chat.id != null) {
-      _init = true;
       final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
         ..link(Message_.chat, Chat_.id.equals(chat.id!))
         ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
@@ -61,38 +59,23 @@ class MessagesService extends GetxController {
           final messages = event.find();
           event.limit = 0;
           for (Message message in messages) {
-            message.handle = message.getHandle();
-            if (message.hasAttachments) {
-              message.attachments = List<Attachment>.from(message.dbAttachments);
-              // we may need an artificial delay in some cases since the attachment
-              // relation is initialized after message itself is saved
-              if (message.attachments.isEmpty) {
-                await Future.delayed(const Duration(milliseconds: 250));
-                message.attachments = List<Attachment>.from(message.dbAttachments);
-              }
-            }
-            // add this as a reaction if needed, update thread originators and associated messages
-            if (message.associatedMessageGuid != null) {
-              struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
-              getActiveMwc(message.associatedMessageGuid!)?.updateAssociatedMessage(message);
-            }
-            if (message.threadOriginatorGuid != null) {
-              getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
-            }
-            struct.addMessages([message]);
-            if (message.associatedMessageGuid == null) {
-              newFunc.call(message);
-            }
+            await _handleNewMessage(message);
           }
         }
         currentCount = newCount;
+      });
+    } else if (kIsWeb) {
+      countSub = WebListeners.newMessage.listen((tuple) {
+        if (tuple.item2?.guid == chat.guid) {
+          _handleNewMessage(tuple.item1);
+        }
       });
     }
   }
 
   @override
   void onClose() {
-    if (_init) countSub.cancel();
+    countSub.cancel();
     super.onClose();
   }
 
@@ -106,6 +89,31 @@ class MessagesService extends GetxController {
   void reload() {
     Get.put<String>(tag, tag: 'lastReloadedChat');
     Get.reload<MessagesService>(tag: tag);
+  }
+
+  Future<void> _handleNewMessage(Message message) async {
+    message.handle = message.getHandle();
+    if (message.hasAttachments && !kIsWeb) {
+      message.attachments = List<Attachment>.from(message.dbAttachments);
+      // we may need an artificial delay in some cases since the attachment
+      // relation is initialized after message itself is saved
+      if (message.attachments.isEmpty) {
+        await Future.delayed(const Duration(milliseconds: 250));
+        message.attachments = List<Attachment>.from(message.dbAttachments);
+      }
+    }
+    // add this as a reaction if needed, update thread originators and associated messages
+    if (message.associatedMessageGuid != null) {
+      struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
+      getActiveMwc(message.associatedMessageGuid!)?.updateAssociatedMessage(message);
+    }
+    if (message.threadOriginatorGuid != null) {
+      getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
+    }
+    struct.addMessages([message]);
+    if (message.associatedMessageGuid == null) {
+      newFunc.call(message);
+    }
   }
 
   void updateMessage(Message updated, {String? oldGuid}) {
@@ -138,6 +146,12 @@ class MessagesService extends GetxController {
           // re-fetch from the DB because it will find handles / associated messages for us
           _messages = await Chat.getMessagesAsync(chat, offset: offset);
         } else {
+          final reactions = temp.where((e) => e.associatedMessageGuid != null);
+          for (Message m in reactions) {
+            final associatedMessage = temp.firstWhereOrNull((element) => element.guid == m.associatedMessageGuid);
+            associatedMessage?.hasReactions = true;
+            associatedMessage?.associatedMessages.add(m);
+          }
           _messages = temp;
         }
       }

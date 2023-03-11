@@ -28,7 +28,6 @@ import 'package:giphy_get/giphy_get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
@@ -904,20 +903,13 @@ class TextFieldComponent extends StatelessWidget {
 
     if (webData != null) {
       if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        getPastedImageWeb().then((value) {
-          if (value != null) {
-            var r = html.FileReader();
-            r.readAsArrayBuffer(value);
-            r.onLoadEnd.listen((e) {
-              if (r.result != null && r.result is Uint8List) {
-                Uint8List data = r.result as Uint8List;
-                controller!.pickedAttachments.add(PlatformFile(
-                  name: "${randomString(8)}.png",
-                  bytes: data,
-                  size: data.length,
-                ));
-              }
-            });
+        Pasteboard.image.then((image) {
+          if (image != null) {
+            controller!.pickedAttachments.add(PlatformFile(
+              name: "${randomString(8)}.png",
+              bytes: image,
+              size: image.length,
+            ));
           }
         });
       }

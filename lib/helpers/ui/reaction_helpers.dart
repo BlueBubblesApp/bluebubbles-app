@@ -65,6 +65,8 @@ List<Message> getUniqueReactionMessages(List<Message> messages) {
   List<int> handleCache = [];
   List<Message> output = [];
   // Sort the messages, putting the latest at the top
+  final ids = messages.map((e) => e.guid).toSet();
+  messages.retainWhere((element) => ids.remove(element.guid));
   messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
   // Iterate over the messages and insert the latest reaction for each user
   for (Message msg in messages) {

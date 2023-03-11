@@ -203,8 +203,7 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
   String title = "Unknown";
-  late final StreamSubscription<Query<Chat>> sub;
-  bool hasStream = false;
+  late final StreamSubscription sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -240,17 +239,30 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           cachedDisplayName = chat.displayName;
           cachedParticipants = chat.handles;
         });
-
-        hasStream = true;
+      });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.participants.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
+          }
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.participants;
+        }
       });
     }
   }
 
   @override
   void dispose() {
-    if (hasStream) {
-      sub.cancel();
-    }
+    sub.cancel();
     super.dispose();
   }
 

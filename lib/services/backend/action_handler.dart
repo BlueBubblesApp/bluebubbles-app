@@ -241,7 +241,7 @@ class ActionHandler extends GetxService {
     if (tempGuid != null) return;
     Logger.info("New message: [${m.text}] - for chat [${c.guid}]", tag: "ActionHandler");
     // Gets the chat from the db or server (if new)
-    c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
+    c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : kIsWeb ? c : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
     // Get the message handle
     m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId) ?? Handle.findOne(originalROWID: m.handleId);
     // Display notification if needed and save everything to DB

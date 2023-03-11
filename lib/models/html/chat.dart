@@ -171,6 +171,8 @@ class Chat {
     bool updateDisplayName = false,
     bool updateDateDeleted = false,
   }) {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    WebListeners.notifyChat(this);
     return this;
   }
 

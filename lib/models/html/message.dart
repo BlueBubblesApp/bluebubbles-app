@@ -207,18 +207,30 @@ class Message {
   }
 
   Message save({Chat? chat}) {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    WebListeners.notifyMessage(this, chat: chat);
     return this;
   }
 
   static Future<List<Message>> bulkSaveNewMessages(Chat chat, List<Message> messages) async {
+    for (Message m in messages) {
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+      WebListeners.notifyMessage(m, chat: chat);
+    }
     return [];
   }
 
   static List<Message> bulkSave(List<Message> messages) {
+    for (Message m in messages) {
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+      WebListeners.notifyMessage(m);
+    }
     return [];
   }
 
   static Future<Message> replaceMessage(String? oldGuid, Message newMessage, {bool awaitNewMessageEvent = true, Chat? chat}) async {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    WebListeners.notifyMessage(newMessage, tempGuid: oldGuid, chat: chat);
     return newMessage;
   }
 
@@ -255,7 +267,8 @@ class Message {
   }
 
   Handle? getHandle() {
-    return null;
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    return chats.webCachedHandles.firstWhereOrNull((element) => element.originalROWID == handleId);
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
