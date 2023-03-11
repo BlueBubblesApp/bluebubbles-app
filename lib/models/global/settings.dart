@@ -405,7 +405,7 @@ class Settings {
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
     s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
-    s.lastIncrementalSyncRowId.value = map['lastIncrementalSyncRowId'] ?? "";
+    s.lastIncrementalSyncRowId.value = map['lastIncrementalSyncRowId'] ?? 0;
     s.refreshRate.value = map['refreshRate'] ?? 0;
     s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
