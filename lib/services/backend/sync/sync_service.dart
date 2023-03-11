@@ -115,7 +115,9 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     }
 
     int syncStart = ss.settings.lastIncrementalSync.value;
-    final incrementalSyncManager = IncrementalSyncManager(syncStart);
+    int startRowId = ss.settings.lastIncrementalSyncRowId.value;
+    final incrementalSyncManager = IncrementalSyncManager(
+      startTimestamp: syncStart, startRowId: startRowId, saveMarker: true);
     await incrementalSyncManager.start();
     chats.sort();
   } catch (ex, s) {

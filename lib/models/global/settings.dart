@@ -22,6 +22,7 @@ class Settings {
   final RxBool showIncrementalSync = false.obs;
   final RxBool highPerfMode = false.obs;
   final RxInt lastIncrementalSync = 0.obs;
+  final RxInt lastIncrementalSyncRowId = 0.obs;
   final RxInt refreshRate = 0.obs;
   final RxBool colorfulAvatars = false.obs;
   final RxBool colorfulBubbles = false.obs;
@@ -184,6 +185,7 @@ class Settings {
       'showIncrementalSync': showIncrementalSync.value,
       'highPerfMode': highPerfMode.value,
       'lastIncrementalSync': lastIncrementalSync.value,
+      'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
       'refreshRate': refreshRate.value,
       'colorfulAvatars': colorfulAvatars.value,
       'colorfulBubbles': colorfulBubbles.value,
@@ -403,6 +405,7 @@ class Settings {
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
     s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
+    s.lastIncrementalSyncRowId.value = map['lastIncrementalSyncRowId'] ?? "";
     s.refreshRate.value = map['refreshRate'] ?? 0;
     s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;

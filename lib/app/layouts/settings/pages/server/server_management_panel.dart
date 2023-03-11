@@ -502,7 +502,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           final date = await showTimeframePicker("How Far Back?", context, showHourPicker: false);
                           if (date == null) return;
                           try {
-                            manager = IncrementalSyncManager(date.millisecondsSinceEpoch);
+                            manager = IncrementalSyncManager(startTimestamp: date.millisecondsSinceEpoch);
                             showDialog(
                               context: context,
                               builder: (context) => SyncDialog(manager: manager!),
