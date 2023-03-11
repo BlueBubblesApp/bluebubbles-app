@@ -30,6 +30,7 @@ class MessagesService extends GetxController {
 
   int currentCount = 0;
   bool isFetching = false;
+  bool _init = false;
   String? method;
 
   Message? get mostRecentSent => (struct.messages.where((e) => e.isFromMe!).toList()
@@ -47,34 +48,38 @@ class MessagesService extends GetxController {
     newFunc = onNewMessage;
 
     // watch for new messages
-    if (chat.id != null) {
-      final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
-        ..link(Message_.chat, Chat_.id.equals(chat.id!))
-        ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
-      countSub = countQuery.listen((event) async {
-        if (!ss.settings.finishedSetup.value) return;
-        final newCount = event.count();
-        if (!isFetching && newCount > currentCount && currentCount != 0) {
-          event.limit = newCount - currentCount;
-          final messages = event.find();
-          event.limit = 0;
-          for (Message message in messages) {
-            await _handleNewMessage(message);
+    if (!_init) {
+      if (chat.id != null) {
+        final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
+          ..link(Message_.chat, Chat_.id.equals(chat.id!))
+          ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
+        countSub = countQuery.listen((event) async {
+          if (!ss.settings.finishedSetup.value) return;
+          final newCount = event.count();
+          if (!isFetching && newCount > currentCount && currentCount != 0) {
+            event.limit = newCount - currentCount;
+            final messages = event.find();
+            event.limit = 0;
+            for (Message message in messages) {
+              await _handleNewMessage(message);
+            }
           }
-        }
-        currentCount = newCount;
-      });
-    } else if (kIsWeb) {
-      countSub = WebListeners.newMessage.listen((tuple) {
-        if (tuple.item2?.guid == chat.guid) {
-          _handleNewMessage(tuple.item1);
-        }
-      });
+          currentCount = newCount;
+        });
+      } else if (kIsWeb) {
+        countSub = WebListeners.newMessage.listen((tuple) {
+          if (tuple.item2?.guid == chat.guid) {
+            _handleNewMessage(tuple.item1);
+          }
+        });
+      }
     }
+    _init = true;
   }
 
   @override
   void onClose() {
+    _init = false;
     countSub.cancel();
     super.onClose();
   }
