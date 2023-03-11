@@ -92,9 +92,7 @@ class MessagesService extends GetxController {
   }
 
   Future<void> _handleNewMessage(Message message) async {
-    if (!kIsWeb) {
-      message.handle = message.getHandle();
-    }
+    message.handle = message.getHandle();
     if (message.hasAttachments && !kIsWeb) {
       message.attachments = List<Attachment>.from(message.dbAttachments);
       // we may need an artificial delay in some cases since the attachment
