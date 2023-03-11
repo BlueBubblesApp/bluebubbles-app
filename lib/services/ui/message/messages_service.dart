@@ -146,6 +146,11 @@ class MessagesService extends GetxController {
           // re-fetch from the DB because it will find handles / associated messages for us
           _messages = await Chat.getMessagesAsync(chat, offset: offset);
         } else {
+          final reactions = temp.where((e) => e.associatedMessageGuid != null);
+          for (Message m in reactions) {
+            final associatedMessage = temp.firstWhereOrNull((element) => element.guid == m.associatedMessageGuid);
+            associatedMessage?.associatedMessages.add(m);
+          }
           _messages = temp;
         }
       }
