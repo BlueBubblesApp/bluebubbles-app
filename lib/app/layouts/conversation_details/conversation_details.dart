@@ -39,7 +39,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   List<Message> links = [];
   bool showMoreParticipants = false;
   late Chat chat = widget.chat;
-  late StreamSubscription<Query<Chat>> sub;
+  late StreamSubscription sub;
   final RxList<String> selected = <String>[].obs;
 
   bool get shouldShowMore => chat.participants.length > 5;
@@ -65,6 +65,14 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
           }
         }
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((_chat) {
+        final update = _chat.getTitle() != chat.title || _chat.participants.length != chat.participants.length;
+        chat = _chat.merge(chat);
+        if (update) {
+          setState(() {});
+        }
+      });
     }
 
     if (!kIsWeb) {
@@ -77,7 +85,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 

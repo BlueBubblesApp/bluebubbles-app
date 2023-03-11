@@ -174,7 +174,7 @@ class ChatTitle extends CustomStateful<ConversationTileController> {
 
 class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileController> {
   String title = "Unknown";
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -235,6 +235,23 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
               });
             }
           }
+        }
+      });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.participants.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
+          }
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.participants;
         }
       });
     }

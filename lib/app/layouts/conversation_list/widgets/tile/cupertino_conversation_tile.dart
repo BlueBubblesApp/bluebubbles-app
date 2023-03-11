@@ -252,7 +252,7 @@ class UnreadIcon extends CustomStateful<ConversationTileController> {
 
 class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
   bool unread = false;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -278,12 +278,22 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 

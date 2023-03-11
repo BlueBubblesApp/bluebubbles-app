@@ -36,7 +36,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   String? cachedLatestMessageGuid = "";
   DateTime? cachedDateCreated;
   late bool unread = chat.hasUnreadMessage ?? false;
-  late final StreamSubscription<Query<Chat>> sub2;
+  late final StreamSubscription sub2;
 
   Chat get chat => widget.chat;
   double get size => widget.size;
@@ -116,15 +116,23 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
           cachedLatestMessageGuid = message.guid;
         }
       });
+      sub2 = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          final newUnread = chat.hasUnreadMessage ?? false;
+          if (unread != newUnread) {
+            setState(() {
+              unread = newUnread;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
     sub.cancel();
-    if (!kIsWeb) {
-      sub2.cancel();
-    }
+    sub2.cancel();
     super.dispose();
   }
 

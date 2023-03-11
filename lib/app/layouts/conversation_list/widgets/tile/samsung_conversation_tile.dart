@@ -97,7 +97,7 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
   bool unread = false;
   String muteType = "";
   late final StreamSubscription sub;
-  late final StreamSubscription<Query<Chat>> sub2;
+  late final StreamSubscription sub2;
   String? cachedLatestMessageGuid = "";
   Message? cachedLatestMessage;
 
@@ -170,15 +170,28 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
           cachedLatestMessageGuid = tuple.item1.guid;
         }
       });
+      sub2 = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          final newUnread = chat.hasUnreadMessage ?? false;
+          final newMute = chat.muteType ?? "";
+          if (unread != newUnread) {
+            setState(() {
+              unread = newUnread;
+            });
+          } else if (muteType != newMute) {
+            setState(() {
+              muteType = newMute;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) {
-      sub.cancel();
-      sub2.cancel();
-    }
+    sub.cancel();
+    sub2.cancel();
     super.dispose();
   }
 
@@ -247,7 +260,7 @@ class UnreadIcon extends CustomStateful<ConversationTileController> {
 
 class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
   bool unread = false;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -273,12 +286,22 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 

@@ -8,7 +8,8 @@ import 'package:flutter/foundation.dart';
 
 class ChatLifecycleManager {
   late Chat chat;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
+  late final StreamSubscription sub2;
 
   bool isActive = false;
   bool isAlive = false;
@@ -41,6 +42,21 @@ class ChatLifecycleManager {
             }
           }
           chats.updateChat(chat, override: true);
+        }
+      });
+    } else {
+      sub = WebListeners.chatUpdate.listen((_chat) {
+        chats.updateChat(_chat, shouldSort: false);
+        chat = _chat.merge(chat);
+      });
+      sub2 = WebListeners.newMessage.listen((tuple) {
+        final message = tuple.item1;
+        final _chat = tuple.item2;
+        if (_chat?.guid == chat.guid &&
+            (chat.latestMessage.dateCreated!.millisecondsSinceEpoch == 0 || message.dateCreated!.isAfter(chat.latestMessage.dateCreated!))) {
+          chats.updateChat(_chat!, shouldSort: true);
+          chat = _chat.merge(chat);
+          chat.latestMessage = message;
         }
       });
     }
