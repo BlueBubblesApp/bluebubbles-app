@@ -99,6 +99,13 @@ class NotificationsService extends GetxService {
         }
         currentCount = newCount;
       });
+    } else {
+      countSub = WebListeners.newMessage.listen((tuple) {
+        final activeChatFetching = cm.activeChat != null ? ms(cm.activeChat!.chat.guid).isFetching : false;
+        if (ls.isAlive && !activeChatFetching && tuple.item2 != null) {
+          MessageHelper.handleNotification(tuple.item1, tuple.item2!, findExisting: false);
+        }
+      });
     }
   }
 

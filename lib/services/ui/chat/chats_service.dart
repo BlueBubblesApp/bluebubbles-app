@@ -47,6 +47,11 @@ class ChatsService extends GetxService {
         }
         currentCount = newCount;
       });
+    } else {
+      countSub = WebListeners.newChat.listen((chat) async {
+        if (!ss.settings.finishedSetup.value) return;
+        addChat(chat);
+      });
     }
   }
 
@@ -112,9 +117,7 @@ class ChatsService extends GetxService {
 
   @override
   void onClose() {
-    if (!kIsWeb) {
-      countSub.cancel();
-    }
+    countSub.cancel();
     super.onClose();
   }
 

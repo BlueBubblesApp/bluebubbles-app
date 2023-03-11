@@ -151,7 +151,7 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
   DateTime? dateCreated;
   bool unread = false;
   String muteType = "";
-  late final StreamSubscription<Query<Message>> sub;
+  late final StreamSubscription sub;
   late final StreamSubscription<Query<Chat>> sub2;
   String? cachedLatestMessageGuid = "";
   Message? cachedLatestMessage;
@@ -216,13 +216,23 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
           }
         });
       });
+    } else {
+      sub = WebListeners.newMessage.listen((tuple) {
+        if (tuple.item2?.guid == controller.chat.guid && (dateCreated == null || tuple.item1.dateCreated!.isAfter(dateCreated!))) {
+          cachedLatestMessage = tuple.item1;
+          setState(() {
+            dateCreated = tuple.item1.dateCreated;
+          });
+          cachedLatestMessageGuid = tuple.item1.guid;
+        }
+      });
     }
   }
 
   @override
   void dispose() {
+    sub.cancel();
     if (!kIsWeb) {
-      sub.cancel();
       sub2.cancel();
     }
     super.dispose();

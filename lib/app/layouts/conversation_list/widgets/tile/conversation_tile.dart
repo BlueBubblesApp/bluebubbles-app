@@ -280,8 +280,9 @@ class ChatSubtitle extends CustomStateful<ConversationTileController> {
 class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTileController> {
   String subtitle = "Unknown";
   String fakeText = faker.lorem.words(1).join(" ");
-  late final StreamSubscription<Query<Message>> sub;
+  late final StreamSubscription sub;
   String? cachedLatestMessageGuid = "";
+  DateTime? cachedDateCreated;
   bool isDelivered = false;
   bool isFromMe = false;
 
@@ -332,12 +333,36 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           cachedLatestMessageGuid = message?.guid;
         });
       });
+    } else {
+      sub = WebListeners.newMessage.listen((tuple) {
+        final message = tuple.item1;
+        if (tuple.item2?.guid == controller.chat.guid && (cachedDateCreated == null || message.dateCreated!.isAfter(cachedDateCreated!))) {
+          isFromMe = message.isFromMe ?? false;
+          isDelivered = controller.chat.isGroup || !isFromMe || message.dateDelivered != null || message.dateRead != null;
+          if (message.guid != cachedLatestMessageGuid) {
+            String newSubtitle = MessageHelper.getNotificationText(message);
+            if (newSubtitle != subtitle) {
+              setState(() {
+                subtitle = newSubtitle;
+                fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
+              });
+            }
+          } else if (!controller.chat.isGroup
+              && message.isFromMe!
+              && (message.dateDelivered != null || message.dateRead != null)) {
+            // update delivered status
+            setState(() {});
+          }
+          cachedDateCreated = message.dateCreated;
+          cachedLatestMessageGuid = message.guid;
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 

@@ -96,7 +96,7 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
   DateTime? dateCreated;
   bool unread = false;
   String muteType = "";
-  late final StreamSubscription<Query<Message>> sub;
+  late final StreamSubscription sub;
   late final StreamSubscription<Query<Chat>> sub2;
   String? cachedLatestMessageGuid = "";
   Message? cachedLatestMessage;
@@ -159,6 +159,16 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
             });
           }
         });
+      });
+    } else {
+      sub = WebListeners.newMessage.listen((tuple) {
+        if (tuple.item2?.guid == controller.chat.guid && (dateCreated == null || tuple.item1.dateCreated!.isAfter(dateCreated!))) {
+          cachedLatestMessage = tuple.item1;
+          setState(() {
+            dateCreated = tuple.item1.dateCreated;
+          });
+          cachedLatestMessageGuid = tuple.item1.guid;
+        }
       });
     }
   }
