@@ -114,7 +114,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     updateObx(() {
       if (widget.initialAttachments.isEmpty && !kIsWeb) {
         final query = (contactBox.query()..order(Contact_.displayName)).build();
-        contacts = query.find();
+        contacts = query.find().toSet().toList();
         filteredContacts = List<Contact>.from(contacts);
       }
       if (chats.loadedAllChats.isCompleted) {

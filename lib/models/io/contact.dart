@@ -110,14 +110,13 @@ class Contact {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Contact &&
+      (other is Contact &&
           runtimeType == other.runtimeType &&
-          id == other.id &&
           displayName == other.displayName &&
-          listEquals(phones, other.phones) &&
-          listEquals(emails, other.emails) &&
-          avatar?.length == other.avatar?.length;
+          listEquals(getUniqueNumbers(phones), getUniqueNumbers(other.phones)) &&
+          listEquals(getUniqueEmails(emails), getUniqueEmails(other.emails)) &&
+          avatar?.length == other.avatar?.length);
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => Object.hashAllUnordered([displayName, avatar?.length, ...getUniqueNumbers(phones), ...getUniqueEmails(emails)]);
 }
