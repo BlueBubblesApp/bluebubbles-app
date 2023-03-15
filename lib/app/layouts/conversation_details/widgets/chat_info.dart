@@ -70,8 +70,10 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
   }
 
   void deletePhoto(bool papi) async {
-    File file = File(chat.customAvatarPath!);
-    file.delete();
+    try {
+      File file = File(chat.customAvatarPath!);
+      file.delete();
+    } catch (_) {}
     chat.customAvatarPath = null;
     chat.save(updateCustomAvatarPath: true);
     if (papi && ss.settings.enablePrivateAPI.value && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
