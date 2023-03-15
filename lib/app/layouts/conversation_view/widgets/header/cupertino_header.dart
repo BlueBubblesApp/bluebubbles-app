@@ -206,6 +206,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
   late final StreamSubscription sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
+  late String cachedGuid;
 
   @override
   void initState() {
@@ -217,6 +218,8 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedDisplayName = controller.chat.displayName;
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
+    cachedGuid = controller.chat.guid;
+
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
@@ -224,8 +227,13 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
             .watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = await runAsync(() {
-            return chatBox.get(controller.chat.id!)!;
+            final cquery = chatBox.query(Chat_.guid.equals(cachedGuid)).build();
+            return cquery.findFirst();
           });
+
+          // If we don't find a chat, return
+          if (chat == null) return;
+
           // check if we really need to update this widget
           if (chat.displayName != cachedDisplayName
               || chat.handles.length != cachedParticipants.length) {

@@ -84,9 +84,9 @@ class MessagesService extends GetxController {
     super.onClose();
   }
 
-  void close() {
+  void close({force = false}) {
     String? lastChat = lastReloadedChat();
-    if (lastChat != tag) {
+    if (force || lastChat != tag) {
       Get.delete<MessagesService>(tag: tag);
     }
   }
