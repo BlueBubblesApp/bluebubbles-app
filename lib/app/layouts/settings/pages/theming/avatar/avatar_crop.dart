@@ -26,26 +26,32 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
   void onCropped(Uint8List croppedData) async {
     String appDocPath = fs.appDocDir.path;
     if (widget.index != null) {
-      File file = File(chats.chats[widget.index!].customAvatarPath ?? "$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (chats.chats[widget.index!].customAvatarPath == null) {
+      File file = File("$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
+      if (!(await file.exists())) {
         await file.create(recursive: true);
       }
+      if (chats.chats[widget.index!].customAvatarPath != null) {
+        await File(chats.chats[widget.index!].customAvatarPath!).delete();
+      }
       await file.writeAsBytes(croppedData);
-      chats.chats[widget.index!].refreshCustomAvatar(file.path);
+      chats.chats[widget.index!].customAvatarPath = file.path;
       chats.chats[widget.index!].save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
       ns.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
-      File file = File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (widget.chat!.customAvatarPath == null) {
+      File file = File("$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
+      if (!(await file.exists())) {
         await file.create(recursive: true);
       }
+      if (widget.chat!.customAvatarPath != null) {
+        await File(widget.chat!.customAvatarPath!).delete();
+      }
       await file.writeAsBytes(croppedData);
-      widget.chat!.refreshCustomAvatar(file.path);
+      widget.chat!.customAvatarPath = file.path;
       widget.chat!.save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
-      ns.backSettings(context, result: croppedData);
+      ns.backSettings(context, result: widget.chat!.customAvatarPath);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
   }

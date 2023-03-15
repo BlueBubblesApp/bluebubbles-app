@@ -28,12 +28,15 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
   Chat get chat => widget.chat;
 
   void updatePhoto(bool papi) async {
-    final Uint8List? data = await Navigator.of(context).push(
+    final String? result = await Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => AvatarCrop(chat: chat),
       ),
     );
-    if (papi && ss.settings.enablePrivateAPI.value && data != null && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
+    if (result != null) {
+      chat.customAvatarPath = result;
+    }
+    if (papi && ss.settings.enablePrivateAPI.value && result != null && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
       showDialog(
           context: context,
           builder: (BuildContext context) {

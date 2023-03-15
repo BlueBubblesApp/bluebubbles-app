@@ -327,10 +327,6 @@ class Chat {
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
-  void refreshCustomAvatar(String s) {
-    _customAvatarPath.value = null;
-    _customAvatarPath.value = s;
-  }
 
   final RxnInt _pinIndex = RxnInt();
   int? get pinIndex => _pinIndex.value;
@@ -982,12 +978,15 @@ class Chat {
       }
     } else {
       Logger.debug("Got chat icon for chat ${c.getTitle()}");
-      File file = File(c.customAvatarPath ?? "${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (c.customAvatarPath == null) {
+      File file = File("${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${response.data.length}.jpg");
+      if (!(await file.exists())) {
         await file.create(recursive: true);
       }
+      if (c.customAvatarPath != null) {
+        await file.delete();
+      }
       await file.writeAsBytes(response.data);
-      c.refreshCustomAvatar(file.path);
+      c.customAvatarPath = file.path;
       c.save(updateCustomAvatarPath: true);
     }
   }
