@@ -691,6 +691,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                 return showSnackbar("Error", "Failed to save chat!");
                               }
                               newChat = saved;
+                              chats.updateChat(saved);
                               createCompleter?.complete();
                               Navigator.of(context).pop();
                               ns.pushAndRemoveUntil(
