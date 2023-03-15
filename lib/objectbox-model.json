@@ -84,7 +84,7 @@
     },
     {
       "id": "3:9017250848141753702",
-      "lastPropertyId": "25:2054740103145852197",
+      "lastPropertyId": "27:5967587520649064381",
       "name": "Chat",
       "properties": [
         {
@@ -184,6 +184,16 @@
           "id": "25:2054740103145852197",
           "name": "style",
           "type": 6
+        },
+        {
+          "id": "26:4203733486781204313",
+          "name": "lockChatName",
+          "type": 1
+        },
+        {
+          "id": "27:5967587520649064381",
+          "name": "lockChatIcon",
+          "type": 1
         }
       ],
       "relations": [

@@ -145,7 +145,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       onTap: () async {
                         gettingIcons.value = true;
                         for (Chat c in chats.chats.where((c) => c.isGroup)) {
-                          await Chat.getIcon(c);
+                          await Chat.getIcon(c, force: true);
                         }
                         gettingIcons.value = false;
                       },

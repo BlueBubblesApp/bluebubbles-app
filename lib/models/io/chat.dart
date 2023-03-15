@@ -323,6 +323,8 @@ class Chat {
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
   int? style;
+  bool lockChatName;
+  bool lockChatIcon;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -357,6 +359,8 @@ class Chat {
     this.textFieldAttachments = const [],
     this.dateDeleted,
     this.style,
+    this.lockChatName = false,
+    this.lockChatIcon = false,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -385,6 +389,8 @@ class Chat {
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
       dateDeleted: parseDate(json["dateDeleted"]),
       style: json["style"],
+      lockChatName: json["lockChatName"] ?? false,
+      lockChatIcon: json["lockChatIcon"] ?? false,
     );
   }
 
@@ -403,6 +409,8 @@ class Chat {
     bool updateTextFieldAttachments = false,
     bool updateDisplayName = false,
     bool updateDateDeleted = false,
+    bool updateLockChatName = false,
+    bool updateLockChatIcon = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -447,6 +455,12 @@ class Chat {
       }
       if (!updateDateDeleted) {
         dateDeleted = existing?.dateDeleted;
+      }
+      if (!updateLockChatName) {
+        lockChatName = existing?.lockChatName ?? false;
+      }
+      if (!updateLockChatIcon) {
+        lockChatIcon = existing?.lockChatIcon ?? false;
       }
 
       /// Save the chat and add the participants
@@ -965,7 +979,8 @@ class Chat {
     return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
-  static Future<void> getIcon(Chat c) async {
+  static Future<void> getIcon(Chat c, {bool force = false}) async {
+    if (!force && c.lockChatIcon) return;
     final response = await http.getChatIcon(c.guid).catchError((err) async {
       Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
       return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
@@ -1008,5 +1023,7 @@ class Chat {
     "autoSendTypingIndicators": autoSendTypingIndicators,
     "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
     "style": style,
+    "lockChatName": lockChatName,
+    "lockChatIcon": lockChatIcon,
   };
 }

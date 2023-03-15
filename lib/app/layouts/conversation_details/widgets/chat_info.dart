@@ -27,7 +27,59 @@ class ChatInfo extends StatefulWidget {
 class _ChatInfoState extends OptimizedState<ChatInfo> {
   Chat get chat => widget.chat;
 
-  void updatePhoto(bool papi) async {
+  Future<bool?> showMethodDialog(String title) async {
+    return await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: context.theme.colorScheme.properSurface,
+            title: Text(
+              title,
+              style: context.theme.textTheme.titleLarge,
+            ),
+            content: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (ss.settings.enablePrivateAPI.value && chat.isIMessage)
+                  Text(
+                      "Local - Changes only apply to this device.\nPrivate API - Changes will apply to everyone's devices.",
+                      style: context.theme.textTheme.bodyLarge
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  child: Text(
+                      "Local",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  }
+              ),
+              TextButton(
+                  child: Text(
+                      "Private API",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  }
+              ),
+            ],
+          );
+        }
+    );
+  }
+
+  void updatePhoto() async {
+    bool? papi = false;
+    if (ss.settings.enablePrivateAPI.value && chat.isIMessage) {
+      papi = await showMethodDialog("Group Icon Update Method");
+    }
+    if (papi == null) return;
     final String? result = await Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => AvatarCrop(chat: chat),
@@ -69,7 +121,12 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
     }
   }
 
-  void deletePhoto(bool papi) async {
+  void deletePhoto() async {
+    bool? papi = false;
+    if (ss.settings.enablePrivateAPI.value && chat.isIMessage) {
+      papi = await showMethodDialog("Group Icon Deletion Method");
+    }
+    if (papi == null) return;
     try {
       File file = File(chat.customAvatarPath!);
       file.delete();
@@ -106,10 +163,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 children: [
                   GestureDetector(
                     onTap: chat.isGroup ? () async {
-                      updatePhoto(true);
-                    } : null,
-                    onLongPress: chat.isGroup ? () async {
-                      updatePhoto(false);
+                      updatePhoto();
                     } : null,
                     child: ContactAvatarGroupWidget(
                       chat: chat,
@@ -123,10 +177,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                     child: DeferPointer(
                       child: InkWell(
                         onTap: () async {
-                          deletePhoto(true);
-                        },
-                        onLongPress: () {
-                          deletePhoto(false);
+                          deletePhoto();
                         },
                         child: Container(
                           width: 30,
@@ -187,15 +238,17 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 color: Colors.transparent,
                 child: ListTile(
                   mouseCursor: MouseCursor.defer,
-                  onTap: () {
-                    if (!ss.settings.enablePrivateAPI.value || !chat.isIMessage) {
+                  onTap: () async {
+                    bool? papi = false;
+                    if (ss.settings.enablePrivateAPI.value && chat.isIMessage) {
+                      papi = await showMethodDialog("Group Name Update Method");
+                    }
+                    if (papi == null) return;
+                    if (!papi) {
                       showChangeName(chat, "local", context);
                     } else {
                       showChangeName(chat, "private-api", context);
                     }
-                  },
-                  onLongPress: () {
-                    showChangeName(chat, "local", context);
                   },
                   title: RichText(
                     text: TextSpan(
@@ -218,10 +271,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 child: ListTile(
                   mouseCursor: MouseCursor.defer,
                   onTap: () async {
-                    updatePhoto(true);
-                  },
-                  onLongPress: () {
-                    updatePhoto(false);
+                    updatePhoto();
                   },
                   title: Text("Update group photo", style: context.theme.textTheme.bodyLarge!),
                   trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
@@ -236,10 +286,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 child: ListTile(
                   mouseCursor: MouseCursor.defer,
                   onTap: () async {
-                    deletePhoto(true);
-                  },
-                  onLongPress: () {
-                    deletePhoto(false);
+                    deletePhoto();
                   },
                   title: Text("Remove group photo", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.error)),
                   trailing: Icon(Icons.close, color: context.theme.colorScheme.error),
@@ -255,79 +302,24 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
             ),
           if (chat.isGroup && iOS)
             Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    child: Text(
-                      "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
-                      style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.primaryColor),
-                      textScaleFactor: 1.15,
-                    ),
-                    onPressed: () {
-                      if (!ss.settings.enablePrivateAPI.value || !chat.isIMessage) {
-                        showChangeName(chat, "local", context);
-                      } else {
-                        showChangeName(chat, "private-api", context);
-                      }
-                    },
-                    onLongPress: () {
-                      showChangeName(chat, "local", context);
-                    },
-                  ),
-                  Container(
-                    child: IconButton(
-                      icon: Icon(
-                        iOS ? CupertinoIcons.info : Icons.info_outline,
-                        size: 15,
-                        color: context.theme.colorScheme.primary,
-                      ),
-                      padding: EdgeInsets.zero,
-                      iconSize: 15,
-                      constraints: const BoxConstraints(maxWidth: 20, maxHeight: 20),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              backgroundColor: context.theme.colorScheme.properSurface,
-                              title: Text("Group Naming Info", style: context.theme.textTheme.titleLarge),
-                              content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (!ss.settings.enablePrivateAPI.value || !chat.isIMessage)
-                                    Text(
-                                      "${!chat.isIMessage ? "This chat is SMS" : "You have Private API disabled"}, so changing the name or avatar here will only change it locally for you. You will not see these changes on other devices, and the other members of this chat will not see these changes.",
-                                      style: context.theme.textTheme.bodyLarge
-                                    ),
-                                  if (ss.settings.enablePrivateAPI.value && chat.isIMessage)
-                                    Text(
-                                      "You have Private API enabled, so changing the name or avatar here will change the name or avatar for everyone in this chat. If you only want to change the name locally, you can tap and hold the \"Change Name\" button. If you only want to change the avatar locally, you can tap and hold the avatar icon (or tap and hold the delete icon).",
-                                      style: context.theme.textTheme.bodyLarge
-                                    ),
-                                ],
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: Text(
-                                    "Close",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  }
-                                ),
-                              ]
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  )
-                ],
+              child: TextButton(
+                child: Text(
+                  "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
+                  style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.primaryColor),
+                  textScaleFactor: 1.15,
+                ),
+                onPressed: () async {
+                  bool? papi = false;
+                  if (ss.settings.enablePrivateAPI.value && chat.isIMessage) {
+                    papi = await showMethodDialog("Group Name Update Method");
+                  }
+                  if (papi == null) return;
+                  if (!papi) {
+                    showChangeName(chat, "local", context);
+                  } else {
+                    showChangeName(chat, "private-api", context);
+                  }
+                },
               ),
             ),
           if (!chat.isGroup && iOS)
