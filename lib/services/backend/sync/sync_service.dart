@@ -13,6 +13,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:path/path.dart' show join;
+import 'package:universal_io/io.dart';
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
 
@@ -100,6 +101,7 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
   try {
     if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
+      HttpOverrides.global = BadCertOverride();
       ls.isUiThread = false;
       await ss.init(headless: true);
       await fs.init(headless: true);
