@@ -199,36 +199,6 @@ class ActionHandler extends GetxService {
     return completer.future;
   }
 
-  Future<Chat?> createChat(List<String> addresses, String text) async {
-    Logger.info("Starting chat to $addresses");
-
-    Message message = Message(
-      text: text.trim(),
-      dateCreated: DateTime.now(),
-      isFromMe: true,
-      handleId: 0,
-    );
-    message.generateTempGuid();
-
-    final response = await http.createChat(addresses, text.trim()).catchError((err) {
-      message = handleSendError(err, message);
-      showSnackbar("Error", "Failed to create chat! Error code: ${message.error}");
-      return Response(requestOptions: RequestOptions(path: ''));
-    });
-
-    if (message.error != 0) {
-      return null;
-    }
-
-    message = Message.fromMap(response.data['data']['messages'].first);
-    final chat = Chat.fromMap(response.data['data']);
-
-    // Save the chat and message
-    chat.save();
-    chat.addMessage(message);
-    return chat;
-  }
-
   Future<void> handleNewMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
     // sanity check
     if (checkExisting) {
