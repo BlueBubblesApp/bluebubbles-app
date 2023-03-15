@@ -663,13 +663,14 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             createCompleter = Completer();
                             final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : e.address.numericOnly()).toList();
+                            final method = iMessage ? "iMessage" : "SMS";
                             showDialog(
                                 context: context,
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                     backgroundColor: context.theme.colorScheme.properSurface,
                                     title: Text(
-                                      "Creating a new iMessage chat...",
+                                      "Creating a new $method chat...",
                                       style: context.theme.textTheme.titleLarge,
                                     ),
                                     content: Container(
@@ -683,7 +684,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     ),
                                   );
                                 });
-                            http.createChat(participants, textController.text).then((response) async {
+                            http.createChat(participants, textController.text, method).then((response) async {
                               Chat newChat = Chat.fromMap(response.data["data"]);
                               newChat = newChat.save();
                               final saved = await cm.fetchChat(newChat.guid);

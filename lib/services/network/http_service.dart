@@ -348,12 +348,12 @@ class HttpService extends GetxService {
 
   /// Create a chat with the specified [addresses]. Requires an initial [message]
   /// to send.
-  Future<Response> createChat(List<String> addresses, String? message, {CancelToken? cancelToken}) async {
+  Future<Response> createChat(List<String> addresses, String? message, String service, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/chat/new",
           queryParameters: buildQueryParams(),
-          data: {"addresses": addresses, "message": message},
+          data: {"addresses": addresses, "message": message, "service": service},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
