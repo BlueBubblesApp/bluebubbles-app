@@ -180,7 +180,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       return true;
     }));
 
-    if (noMoreMessages) return;
+    if (noMoreMessages) return setState(() {});
+
     final oldLength = _messages.length;
     _messages = messageService.struct.messages;
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
