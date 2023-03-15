@@ -206,7 +206,6 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
   late final StreamSubscription sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
-  int? cachedId;
   late String cachedGuid;
 
   @override
@@ -219,7 +218,6 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     cachedDisplayName = controller.chat.displayName;
     cachedParticipants = controller.chat.handles;
     title = controller.chat.getTitle();
-    cachedId = controller.chat.id;
     cachedGuid = controller.chat.guid;
 
     // run query after render has completed
@@ -229,18 +227,8 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
             .watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = await runAsync(() {
-            // If we don't have a cached ID, find the chat by its' GUID.
-            // Otherwise, find the chat by it's ID.
-            if (cachedId == null) {
-              final cquery = chatBox.query(Chat_.guid.equals(cachedGuid)).build();
-              Chat? theChat = cquery.findFirst();
-              if (theChat != null) return theChat;
-            } else {
-              return chatBox.get(cachedId!)!;
-            }
-            
-            // If we don't find a chat, return null
-            return null;
+            final cquery = chatBox.query(Chat_.guid.equals(cachedGuid)).build();
+            return cquery.findFirst();
           });
 
           // If we don't find a chat, return
