@@ -90,6 +90,30 @@ class MethodChannelService extends GetxService {
           }
         }
         return true;
+      case "group-name-change":
+      case "participant-removed":
+      case "participant-added":
+      case "participant-left":
+        await storeStartup.future;
+        Logger.info("Received ${call.method} from FCM");
+        Map<String, dynamic>? data = jsonDecode(call.arguments);
+        if (!isNullOrEmpty(data)!) {
+          final item = IncomingItem.fromMap(QueueType.updatedMessage, data!);
+          ah.handleNewOrUpdatedChat(item.chat);
+        }
+        return true;
+      case "group-icon-changed":
+        await storeStartup.future;
+        Logger.info("Received group icon change from FCM");
+        Map<String, dynamic>? data = jsonDecode(call.arguments);
+        if (!isNullOrEmpty(data)!) {
+          final guid = data!["chats"].first["guid"];
+          final chat = Chat.findOne(guid: guid);
+          if (chat != null) {
+            Chat.getIcon(chat);
+          }
+        }
+        return true;
       case "scheduled-message-error":
         Logger.info("Received scheduled message error from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments) ?? {};

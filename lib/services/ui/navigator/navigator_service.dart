@@ -168,11 +168,11 @@ class NavigatorService extends GetxService {
     eventDispatcher.emit("update-highlight", null);
   }
 
-  void backSettings(BuildContext context, {bool closeOverlays = false}) {
+  void backSettings(BuildContext context, {dynamic result, bool closeOverlays = false}) {
     if (Get.keys.containsKey(3) && isTabletMode(context)) {
-      Get.back(closeOverlays: closeOverlays, id: 3);
+      Get.back(result: result, closeOverlays: closeOverlays, id: 3);
     } else {
-      Get.back(closeOverlays: closeOverlays);
+      Get.back(result: result, closeOverlays: closeOverlays);
     }
   }
 }

@@ -192,9 +192,6 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
         // Update the relational attachments
         message.dbAttachments.addAll(message.attachments.where((element) => element != null).map((e) => e!).toList());
-
-        // Update chat
-        message.chat.target = inputChat;
       }
 
       // 5. Invoke a final put call to sync the relational data

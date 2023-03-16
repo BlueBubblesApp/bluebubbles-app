@@ -114,7 +114,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     updateObx(() {
       if (widget.initialAttachments.isEmpty && !kIsWeb) {
         final query = (contactBox.query()..order(Contact_.displayName)).build();
-        contacts = query.find();
+        contacts = query.find().toSet().toList();
         filteredContacts = List<Contact>.from(contacts);
       }
       if (chats.loadedAllChats.isCompleted) {
@@ -663,13 +663,14 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             createCompleter = Completer();
                             final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : e.address.numericOnly()).toList();
+                            final method = iMessage ? "iMessage" : "SMS";
                             showDialog(
                                 context: context,
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                     backgroundColor: context.theme.colorScheme.properSurface,
                                     title: Text(
-                                      "Creating a new iMessage chat...",
+                                      "Creating a new $method chat...",
                                       style: context.theme.textTheme.titleLarge,
                                     ),
                                     content: Container(
@@ -683,15 +684,38 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     ),
                                   );
                                 });
-                            http.createChat(participants, textController.text).then((response) async {
+                            http.createChat(participants, textController.text, method).then((response) async {
+                              // Load the chat data and save it to the DB
                               Chat newChat = Chat.fromMap(response.data["data"]);
                               newChat = newChat.save();
+
+                              // Fetch the newly saved chat data from the DB
+                              // Throw an error if it wasn't saved correctly.
                               final saved = await cm.fetchChat(newChat.guid);
                               if (saved == null) {
                                 return showSnackbar("Error", "Failed to save chat!");
                               }
+
+                              // Update the chat in the chat list
                               newChat = saved;
+                              chats.updateChat(newChat);
+
+                              // Fetch the last message for the chat and save it.
+                              final messageRes = await http.chatMessages(newChat.guid, limit: 1);
+                              if (messageRes.data["data"].length > 0) {
+                                final messages = (messageRes.data["data"] as List<dynamic>).map((e) => Message.fromMap(e)).toList();
+                                await Chat.bulkSyncMessages(newChat, messages);
+                              }
+
+                              // Force close the message service for the chat so it can be reloaded.
+                              // If this isn't done, new messages will not show.
+                              ms(newChat.guid).close(force: true);
+                              cvc(newChat).close();
+
+                              // Let awaiters know we completed
                               createCompleter?.complete();
+
+                              // Navigate to the new chat
                               Navigator.of(context).pop();
                               ns.pushAndRemoveUntil(
                                 Get.context!,

@@ -1,11 +1,11 @@
-
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/apple_pay.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/embedded_media.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/supported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/unsupported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.legacy.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart' hide PayloadType;
@@ -27,7 +27,7 @@ class InteractiveHolder extends CustomStateful<MessageWidgetController> {
   CustomState createState() => _InteractiveHolderState();
 }
 
-class _InteractiveHolderState extends CustomState<InteractiveHolder, void, MessageWidgetController> {
+class _InteractiveHolderState extends CustomState<InteractiveHolder, void, MessageWidgetController> with AutomaticKeepAliveClientMixin {
   MessagePart get part => widget.message;
   Message get message => controller.message;
   PayloadData? get payloadData => message.payloadData;
@@ -53,7 +53,11 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return ColorFiltered(
       colorFilter: ColorFilter.mode(!selected ? Colors.transparent : context.theme.colorScheme.tertiaryContainer.withOpacity(0.5), BlendMode.srcOver),
       child: Material(
@@ -107,14 +111,21 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                               switch (message.interactiveText) {
                                 case "Handwritten Message":
                                 case "Digital Touch Message":
+                                  if (ss.settings.enablePrivateAPI.value && ss.isMinBigSurSync && ss.serverDetailsSync().item4 >= 226) {
+                                    return EmbeddedMedia(
+                                      message: message,
+                                      parentController: controller,
+                                    );
+                                  } else {
+                                    return UnsupportedInteractive(
+                                      message: message,
+                                      payloadData: null,
+                                    );
+                                  }
+                                default:
                                   return UnsupportedInteractive(
                                     message: message,
                                     payloadData: null,
-                                  );
-                                default:
-                                  return TextBubble(
-                                    parentController: controller,
-                                    message: part,
                                   );
                               }
                             } else if (payloadData?.type == PayloadType.url || message.isLegacyUrlPreview) {
@@ -145,7 +156,10 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                                     message: message,
                                   );
                                 case "Apple Pay":
-                                  // todo
+                                  return ApplePay(
+                                    data: data,
+                                    message: message,
+                                  );
                                 default:
                                   return UnsupportedInteractive(
                                     message: message,

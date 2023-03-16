@@ -140,7 +140,7 @@ class ContactTile extends StatelessWidget {
                     ),
                     content: Container(
                       height: 70,
-                      child: buildProgressIndicator(context),
+                      child: Center(child: buildProgressIndicator(context)),
                     ),
                   );
                 }

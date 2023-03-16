@@ -265,6 +265,8 @@ class Message {
   List<MessageSummaryInfo> messageSummaryInfo;
   PayloadData? payloadData;
   bool hasApplePayloadData;
+  bool wasDeliveredQuietly;
+  bool didNotifyRecipient;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -343,6 +345,8 @@ class Message {
     this.payloadData,
     this.hasApplePayloadData = false,
     DateTime? dateEdited,
+    this.wasDeliveredQuietly = false,
+    this.didNotifyRecipient = false,
   }) {
       if (error != null) _error.value = error;
       if (dateRead != null) _dateRead.value = dateRead;
@@ -431,6 +435,8 @@ class Message {
       payloadData: payloadData,
       hasApplePayloadData: json['hasApplePayloadData'] == true || payloadData != null,
       dateEdited: parseDate(json["dateEdited"]),
+      wasDeliveredQuietly: json['wasDeliveredQuietly'] ?? false,
+      didNotifyRecipient: json['didNotifyRecipient'] ?? false,
     );
   }
 
@@ -555,6 +561,8 @@ class Message {
     existing.attributedBody = newMessage.attributedBody.isNotEmpty ? newMessage.attributedBody : existing.attributedBody;
     existing.messageSummaryInfo = newMessage.messageSummaryInfo.isNotEmpty ? newMessage.messageSummaryInfo : existing.messageSummaryInfo;
     existing.payloadData = newMessage.payloadData ?? existing.payloadData;
+    existing.wasDeliveredQuietly = newMessage.wasDeliveredQuietly ? newMessage.wasDeliveredQuietly : existing.wasDeliveredQuietly;
+    existing.didNotifyRecipient = newMessage.didNotifyRecipient ? newMessage.didNotifyRecipient : existing.didNotifyRecipient;
     existing._error.value = newMessage._error.value;
 
     try {
@@ -688,6 +696,11 @@ class Message {
     return text;
   }
 
+  String? get interactiveMediaPath {
+    final extension = balloonBundleId!.contains("com.apple.Digital") ? ".mov" : balloonBundleId!.contains("com.apple.Handwriting") ? ".png" : null;
+    return "${fs.appDocDir.path}/messages/$guid/embedded-media/$balloonBundleId$extension";
+  }
+
   bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
 
   String get groupEventText {
@@ -810,11 +823,11 @@ class Message {
     final olderPartCount = getActiveMwc(olderMessage.guid!)?.parts.length ?? 1;
     // make sure the older message is none of the following:
     // 1) thread originator
-    // 2) part of the thread
+    // 2) part of the thread with the same thread partIndex
     // OR
     // 1) It is the thread originator but the part is not the last part of the older message
     // 2) It is part of the thread but has multiple parts
-    return (olderMessage.guid != threadOriginatorGuid && olderMessage.threadOriginatorGuid != threadOriginatorGuid)
+    return (olderMessage.guid != threadOriginatorGuid && (olderMessage.threadOriginatorGuid != threadOriginatorGuid || olderMessage.normalizedThreadPart != normalizedThreadPart))
         || (olderMessage.guid == threadOriginatorGuid && normalizedThreadPart != olderPartCount - 1)
         || (olderMessage.threadOriginatorGuid == threadOriginatorGuid && olderPartCount > 1);
   }
@@ -1017,6 +1030,14 @@ class Message {
       existing.payloadData = newMessage.payloadData;
     }
 
+    if (!existing.wasDeliveredQuietly && newMessage.wasDeliveredQuietly) {
+      existing.wasDeliveredQuietly = newMessage.wasDeliveredQuietly;
+    }
+
+    if (!existing.didNotifyRecipient && newMessage.didNotifyRecipient) {
+      existing.didNotifyRecipient = newMessage.didNotifyRecipient;
+    }
+
     return existing;
   }
 
@@ -1054,6 +1075,8 @@ class Message {
       "threadOriginatorPart": threadOriginatorPart,
       "hasApplePayloadData": hasApplePayloadData,
       "dateEdited": dateEdited?.millisecondsSinceEpoch,
+      "wasDeliveredQuietly": wasDeliveredQuietly,
+      "didNotifyRecipient": didNotifyRecipient,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();

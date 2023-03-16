@@ -86,6 +86,8 @@ class ToOne<EntityT> {
   /// Set relation target object. Note: this does not store the change yet, use
   /// [Box.put()] on the containing (relation source) object.
   set target(EntityT? object) {}
+
+  int get targetId => 0;
 }
 
 class Store {
@@ -187,6 +189,8 @@ class Contact_ {
 
 class Handle_ {
   static final address = Temp();
+
+  static final uniqueAddressAndService = Temp();
 }
 
 class Message_ {
