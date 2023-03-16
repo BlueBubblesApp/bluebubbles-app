@@ -124,7 +124,7 @@ class CupertinoTrailing extends CustomStateful<ConversationTileController> {
 
 class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, ConversationTileController> {
   DateTime? dateCreated;
-  late final StreamSubscription<Query<Message>> sub;
+  late final StreamSubscription sub;
   String? cachedLatestMessageGuid = "";
   Message? cachedLatestMessage;
 
@@ -162,12 +162,22 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
           cachedLatestMessageGuid = message?.guid;
         });
       });
+    } else {
+      sub = WebListeners.newMessage.listen((tuple) {
+        if (tuple.item2?.guid == controller.chat.guid && (dateCreated == null || tuple.item1.dateCreated!.isAfter(dateCreated!))) {
+          cachedLatestMessage = tuple.item1;
+          setState(() {
+            dateCreated = tuple.item1.dateCreated;
+          });
+          cachedLatestMessageGuid = tuple.item1.guid;
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 
@@ -242,7 +252,7 @@ class UnreadIcon extends CustomStateful<ConversationTileController> {
 
 class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
   bool unread = false;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -268,12 +278,22 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 

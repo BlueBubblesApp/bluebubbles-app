@@ -22,7 +22,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
   bool get hoverHighlight => controller.hoverHighlight.value;
 
   late bool unread = controller.chat.hasUnreadMessage ?? false;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -49,12 +49,22 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 
@@ -151,8 +161,8 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
   DateTime? dateCreated;
   bool unread = false;
   String muteType = "";
-  late final StreamSubscription<Query<Message>> sub;
-  late final StreamSubscription<Query<Chat>> sub2;
+  late final StreamSubscription sub;
+  late final StreamSubscription sub2;
   String? cachedLatestMessageGuid = "";
   Message? cachedLatestMessage;
 
@@ -216,15 +226,38 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
           }
         });
       });
+    } else {
+      sub = WebListeners.newMessage.listen((tuple) {
+        if (tuple.item2?.guid == controller.chat.guid && (dateCreated == null || tuple.item1.dateCreated!.isAfter(dateCreated!))) {
+          cachedLatestMessage = tuple.item1;
+          setState(() {
+            dateCreated = tuple.item1.dateCreated;
+          });
+          cachedLatestMessageGuid = tuple.item1.guid;
+        }
+      });
+      sub2 = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          final newUnread = chat.hasUnreadMessage ?? false;
+          final newMute = chat.muteType ?? "";
+          if (unread != newUnread) {
+            setState(() {
+              unread = newUnread;
+            });
+          } else if (muteType != newMute) {
+            setState(() {
+              muteType = newMute;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) {
-      sub.cancel();
-      sub2.cancel();
-    }
+    sub.cancel();
+    sub2.cancel();
     super.dispose();
   }
 
@@ -317,7 +350,7 @@ class UnreadIcon extends CustomStateful<ConversationTileController> {
 
 class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
   bool unread = false;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -344,12 +377,22 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 

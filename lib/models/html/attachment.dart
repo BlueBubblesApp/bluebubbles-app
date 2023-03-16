@@ -98,6 +98,9 @@ class Attachment {
     return [];
   }
 
+  /// Delete an attachment and remove all instances of that attachment in the DB
+  static void delete(String guid) {}
+
   String getFriendlySize({decimals = 2}) {
     return (totalBytes ?? 0.0).toDouble().getFriendlySize();
   }

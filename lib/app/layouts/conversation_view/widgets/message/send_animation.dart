@@ -25,6 +25,8 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
   Control control = Control.stop;
   double textFieldSize = 0;
 
+  double get focusInfoSize => (controller.focusInfoKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
+
   @override
   void initState() {
     super.initState();
@@ -43,7 +45,9 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     final replyGuid = tuple.item4;
     final part = tuple.item5;
     final effectId = tuple.item6;
-    await controller.scrollToBottom();
+    if (ss.settings.scrollToBottomOnSend.value) {
+      await controller.scrollToBottom();
+    }
     if (ss.settings.sendSoundPath.value != null) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(
@@ -118,7 +122,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
     return AnimatedPositioned(
       duration: Duration(milliseconds: message != null ? 400 : 0),
-      bottom: message != null ? textFieldSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) + (!iOS ? 15 : 0) : 0,
+      bottom: message != null ? textFieldSize + focusInfoSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) + (!iOS ? 15 : 0) : 0,
       right: samsung ? -37.5 : 5,
       curve: Curves.easeInOutCubic,
       onEnd: () async {

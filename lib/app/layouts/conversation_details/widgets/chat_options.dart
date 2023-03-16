@@ -223,7 +223,31 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     setState(() {});
                   },
                 ),
-              if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
+              if ((!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value) || chat.isGroup)
+                const SettingsDivider(),
+              if (chat.isGroup)
+                SettingsSwitch(
+                  title: "Lock Chat Name",
+                  subtitle: "Keep the current chat name on this device, even if someone else in the chat changes it",
+                  initialVal: chat.lockChatName,
+                  onChanged: (value) {
+                    chat.lockChatName = value;
+                    chat.save(updateLockChatName: true);
+                    setState(() {});
+                  },
+                ),
+              if (chat.isGroup)
+                SettingsSwitch(
+                  title: "Lock Chat Icon",
+                  subtitle: "Keep the current chat icon on this device, even if someone else in the chat changes it",
+                  initialVal: chat.lockChatIcon,
+                  onChanged: (value) {
+                    chat.lockChatIcon = value;
+                    chat.save(updateLockChatIcon: true);
+                    setState(() {});
+                  },
+                ),
+              if (chat.isGroup)
                 const SettingsDivider(),
               if (!kIsWeb)
                 SettingsSwitch(

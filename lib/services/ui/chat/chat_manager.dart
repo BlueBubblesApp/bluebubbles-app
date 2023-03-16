@@ -110,8 +110,10 @@ class ChatManager extends GetxService {
         chat.handles.add(handle);
         chat.handles.applyToDb();
       }
-      chat.displayName = updatedChat.displayName;
-      chat = chat.save(updateDisplayName: true);
+      if (!chat.lockChatName) {
+        chat.displayName = updatedChat.displayName;
+      }
+      chat = chat.save(updateDisplayName: !chat.lockChatName);
       return chat;
     }
 

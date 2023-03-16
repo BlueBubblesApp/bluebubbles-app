@@ -26,9 +26,12 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
   void onCropped(Uint8List croppedData) async {
     String appDocPath = fs.appDocDir.path;
     if (widget.index != null) {
-      File file = File(chats.chats[widget.index!].customAvatarPath ?? "$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (chats.chats[widget.index!].customAvatarPath == null) {
+      File file = File("$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
+      if (!(await file.exists())) {
         await file.create(recursive: true);
+      }
+      if (chats.chats[widget.index!].customAvatarPath != null) {
+        await File(chats.chats[widget.index!].customAvatarPath!).delete();
       }
       await file.writeAsBytes(croppedData);
       chats.chats[widget.index!].customAvatarPath = file.path;
@@ -37,15 +40,18 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       ns.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
-      File file = File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (widget.chat!.customAvatarPath == null) {
+      File file = File("$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
+      if (!(await file.exists())) {
         await file.create(recursive: true);
+      }
+      if (widget.chat!.customAvatarPath != null) {
+        await File(widget.chat!.customAvatarPath!).delete();
       }
       await file.writeAsBytes(croppedData);
       widget.chat!.customAvatarPath = file.path;
       widget.chat!.save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
-      ns.backSettings(context);
+      ns.backSettings(context, result: widget.chat!.customAvatarPath);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
   }
@@ -146,9 +152,11 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: Text("Saving avatar...", style: context.theme.textTheme.titleLarge),
-                          content: Padding(
-                            padding: const EdgeInsets.only(top: 15.0),
-                            child: buildProgressIndicator(context),
+                          content: Container(
+                            height: 70,
+                            child: Center(
+                              child: buildProgressIndicator(context),
+                            ),
                           ),
                           backgroundColor: context.theme.colorScheme.properSurface,
                         ),
@@ -178,9 +186,11 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Saving avatar...", style: context.theme.textTheme.titleLarge),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 15.0),
-          child: buildProgressIndicator(context),
+        content: Container(
+          height: 70,
+          child: Center(
+            child: buildProgressIndicator(context),
+          ),
         ),
         backgroundColor: context.theme.colorScheme.properSurface,
       ),

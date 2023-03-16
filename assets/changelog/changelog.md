@@ -2,6 +2,64 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## 1.11.5
+
+### The Big Stuff
+
+- New Private API features!
+   - Leave group chat
+   - Change / remove group chat icon (Big Sur+)
+   - View and save digital touch or handwritten messages (Big Sur+)
+   - View recipient focus mode (Monterey+)
+   - Forcefully notify your message (break other user's focus mode) (Monterey+)
+- Auto-update group chat icon changes
+- Display Apple Pay transaction amounts
+
+### The Nitty Gritty
+
+#### New Features
+
+- New Private API features!
+   - Leave group chat
+   - Change / remove group chat icon (Big Sur+)
+   - View and save digital touch or handwritten messages (Big Sur+)
+   - View recipient focus mode (Monterey+)
+   - Forcefully notify your message (break other user's focus mode) (Monterey+)
+- Auto-update group chat icon changes
+- Display Apple Pay transaction amounts
+- Better replies rendering with extremely complex threads
+- Toggle to disable scroll to bottom when sending a new message
+- Support creating chats with specific service (SMS Forwarding vs iMessage)
+- New setting to lock the current group chat name / icon
+- Added indicator in connection settings informing that server URL has bad certificate
+
+#### Bug Fixes
+
+- Fixed issues with attachments occassionally not showing up until a restart of the app
+- Fixed crash when sharing images from Google Messages
+- Fixed send sound playing even if the chat was not active
+- Fixed broken chat list if unknown senders enabled and chat has empty participants
+- Fixed material progress indicator shapes in a few places
+- Fixed app would allow sending images as a reply even if Private API attachment send was not enabled
+- Fixed popup rendering error if text is null
+- Fixed interactive message with no payload data rendering incorrectly
+- Fixed app incorrectly handling participant and group events sent by the server
+- Fixed app not getting mark read/unread from socket properly
+- Fixed new chat not showing up in chat list until close and reopen
+- Fixed "loading more messages" not going away
+- Fixed new messages not showing for newly created chats
+- Fixed contacts sometimes getting duplicated in chat creator
+
+#### Improvements
+
+- Improved rendering of very thin media
+- Display empty text on messages with subject and empty text to be more consistent with Apple
+- Added failsafe to fetch chat details automatically (should hopefully prevent the issues with new chats not showing up or having the rendering issues)
+- Reduced the number of places from which a chat is marked read via Private API to vastly reduce unnecessary duplicate calls to perform the same action
+- Incremental sync refactor for better reliability
+- Bad certificate override now applies to all isolates
+
+
 ## 1.11.4
 
 ### Changes

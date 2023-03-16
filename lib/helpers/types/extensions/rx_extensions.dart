@@ -1,5 +1,6 @@
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 
 /// this extensions allows us to update an RxMap without re-rendering UI
@@ -36,9 +37,9 @@ extension ChatListHelpers on RxList<Chat> {
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!ss.settings.filterUnknownSenders.value) return this;
     if (unknown) {
-      return where((e) => !e.isGroup && e.participants.first.contact == null).toList().obs;
+      return where((e) => !e.isGroup && e.participants.firstOrNull?.contact == null).toList().obs;
     } else {
-      return where((e) => e.isGroup || (!e.isGroup && e.participants.first.contact != null)).toList().obs;
+      return where((e) => e.isGroup || (!e.isGroup && e.participants.firstOrNull?.contact != null)).toList().obs;
     }
   }
 }

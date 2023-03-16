@@ -176,7 +176,7 @@ class UnreadIcon extends CustomStateful<ConversationTileController> {
 
 class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
   bool unread = false;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -203,12 +203,22 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 
@@ -244,7 +254,7 @@ class MuteIcon extends CustomStateful<ConversationTileController> {
 class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileController> {
   bool unread = false;
   String muteType = "";
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -282,12 +292,28 @@ class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileControl
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          final newUnread = chat.hasUnreadMessage ?? false;
+          final newMute = chat.muteType ?? "";
+          if (unread != newUnread) {
+            setState(() {
+              unread = newUnread;
+            });
+          } else if (muteType != newMute) {
+            setState(() {
+              muteType = newMute;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 
@@ -326,7 +352,7 @@ class ChatTitle extends CustomStateful<ConversationTileController> {
 
 class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileController> {
   String title = "Unknown";
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -364,12 +390,29 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
           cachedParticipants = chat.handles;
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          // check if we really need to update this widget
+          if (chat.displayName != cachedDisplayName
+              || chat.participants.length != cachedParticipants.length) {
+            final newTitle = chat.getTitle();
+            if (newTitle != title) {
+              setState(() {
+                title = newTitle;
+              });
+            }
+          }
+          cachedDisplayName = chat.displayName;
+          cachedParticipants = chat.participants;
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 
@@ -486,7 +529,7 @@ class ReactionIcon extends CustomStateful<ConversationTileController> {
 
 class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTileController> {
   bool unread = false;
-  late final StreamSubscription<Query<Chat>> sub;
+  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -513,12 +556,22 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
           }
         });
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          if (chat.hasUnreadMessage != unread) {
+            setState(() {
+              unread = chat.hasUnreadMessage!;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 

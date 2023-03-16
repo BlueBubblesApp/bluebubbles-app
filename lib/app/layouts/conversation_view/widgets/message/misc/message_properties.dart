@@ -26,7 +26,7 @@ class MessageProperties extends CustomStateful<MessageWidgetController> {
 
 class _MessagePropertiesState extends CustomState<MessageProperties, void, MessageWidgetController> {
   Message get message => controller.message;
-  MessagesService get service => ms(controller.cvController!.chat.guid);
+  MessagesService get service => ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid);
 
   @override
   void initState() {
@@ -36,7 +36,7 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
 
   List<TextSpan> getProperties() {
     final properties = <TextSpan>[];
-    final replyList = service.struct.threads(message.guid!).where((e) => e.threadOriginatorPart?.startsWith(widget.part.part.toString()) ?? false);
+    final replyList = service.struct.threads(message.guid!, widget.part.part, returnOriginator: false);
     if (message.expressiveSendStyleId != null) {
       final effect = effectMap.entries.firstWhereOrNull((element) => element.value == message.expressiveSendStyleId)?.key ?? "unknown";
       properties.add(TextSpan(

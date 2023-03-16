@@ -311,15 +311,17 @@ class AttachmentsService extends GetxService {
       if (await File("$filePath.jpg").exists()) {
         originalFile = File("$filePath.jpg");
       } else {
-        final file = await FlutterNativeImage.compressImage(
-          filePath,
-          percentage: 100,
-          quality: 100,
-        );
-        if (onlyFetchData) return await file.readAsBytes();
-        final cacheFile = File("$filePath.jpg");
-        final bytes = await file.readAsBytes();
-        originalFile = await cacheFile.writeAsBytes(bytes);
+        try {
+          final file = await FlutterNativeImage.compressImage(
+            filePath,
+            percentage: 100,
+            quality: 100,
+          );
+          if (onlyFetchData) return await file.readAsBytes();
+          final cacheFile = File("$filePath.jpg");
+          final bytes = await file.readAsBytes();
+          originalFile = await cacheFile.writeAsBytes(bytes);
+        } catch (_) {}
       }
     }
     if (attachment.mimeType!.contains('image/tif')) {

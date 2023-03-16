@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -169,6 +170,10 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                         }
                                       }),
                                     const TextSpan(text: "\n\n"),
+                                    if (hasBadCert)
+                                      TextSpan(text: "Server URL has a bad certificate!", style: TextStyle(color: getIndicatorColor(SocketState.disconnected))),
+                                    if (hasBadCert)
+                                      const TextSpan(text: "\n\n"),
                                     TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
                                     const TextSpan(text: "\n\n"),
                                     TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
@@ -502,7 +507,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           final date = await showTimeframePicker("How Far Back?", context, showHourPicker: false);
                           if (date == null) return;
                           try {
-                            manager = IncrementalSyncManager(date.millisecondsSinceEpoch);
+                            manager = IncrementalSyncManager(startTimestamp: date.millisecondsSinceEpoch);
                             showDialog(
                               context: context,
                               builder: (context) => SyncDialog(manager: manager!),
