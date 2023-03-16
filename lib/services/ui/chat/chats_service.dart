@@ -47,10 +47,15 @@ class ChatsService extends GetxService {
         }
         currentCount = newCount;
       });
+    } else {
+      countSub = WebListeners.newChat.listen((chat) async {
+        if (!ss.settings.finishedSetup.value) return;
+        addChat(chat);
+      });
     }
   }
 
-  Future<void> init({bool force = true}) async {
+  Future<void> init({bool force = false}) async {
     if (!force && !ss.settings.finishedSetup.value) return;
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
@@ -112,9 +117,7 @@ class ChatsService extends GetxService {
 
   @override
   void onClose() {
-    if (!kIsWeb) {
-      countSub.cancel();
-    }
+    countSub.cancel();
     super.onClose();
   }
 

@@ -28,7 +28,6 @@ import 'package:giphy_get/giphy_get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
@@ -46,7 +45,7 @@ class ConversationTextField extends CustomStateful<ConversationViewController> {
 }
 
 class ConversationTextFieldState extends CustomState<ConversationTextField, void, ConversationViewController> with TickerProviderStateMixin {
-  final recorderController = RecorderController();
+  final recorderController = kIsWeb ? null : RecorderController();
 
   // emoji
   final Map<String, Emoji> emojiNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.shortName, e)));
@@ -222,7 +221,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.subjectFocusNode.dispose();
     controller.textController.dispose();
     controller.subjectTextController.dispose();
-    recorderController.dispose();
+    recorderController?.dispose();
     if (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value) {
       socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
     }
@@ -265,6 +264,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         showSnackbar("Error", "Something went wrong!");
       }
     } else {
+      if (controller.textController.text.isEmpty && controller.subjectTextController.text.isEmpty && !ss.settings.privateAPIAttachmentSend.value) {
+        if (controller.replyToMessage != null) {
+          return showSnackbar("Error", "Turn on Private API Attachment Send to send replies with media!");
+        } else if (effect != null) {
+          return showSnackbar("Error", "Turn on Private API Attachment Send to send effects with media!");
+        }
+      }
       await controller.send(
         controller.pickedAttachments,
         controller.textController.text,
@@ -326,7 +332,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              if (iOS && Platform.isAndroid)
+              if (!kIsWeb && iOS && Platform.isAndroid)
                 GestureDetector(
                   onLongPress: () {
                     openFullCamera(type: 'video');
@@ -421,7 +427,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                   }
                 },
               ),
-              if (!Platform.isAndroid)
+              if (!kIsWeb && !Platform.isAndroid)
                 IconButton(
                     icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
                     onPressed: () async {
@@ -466,40 +472,41 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                       recorderController: recorderController,
                       sendMessage: sendMessage,
                     ),
-                    Positioned(
-                        top: 0,
-                        bottom: 0,
-                        child: Obx(() => AnimatedSize(
-                              duration: const Duration(milliseconds: 500),
-                              curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
-                              child: !controller.showRecording.value
-                                  ? const SizedBox.shrink()
-                                  : Builder(builder: (context) {
-                                      final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
-                                      final textFieldSize = box?.size ?? const Size(250, 35);
-                                      return AudioWaveforms(
-                                        size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
-                                        recorderController: recorderController,
-                                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                                        waveStyle: const WaveStyle(
-                                          waveColor: Colors.white,
-                                          waveCap: StrokeCap.square,
-                                          spacing: 4.0,
-                                          showBottom: true,
-                                          extendWaveform: true,
-                                          showMiddleLine: false,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          border: Border.fromBorderSide(BorderSide(
-                                            color: context.theme.colorScheme.outline,
-                                            width: 1,
-                                          )),
-                                          borderRadius: BorderRadius.circular(20),
-                                          color: context.theme.colorScheme.properSurface,
-                                        ),
-                                      );
-                                    }),
-                            ))),
+                    if (!kIsWeb)
+                      Positioned(
+                          top: 0,
+                          bottom: 0,
+                          child: Obx(() => AnimatedSize(
+                                duration: const Duration(milliseconds: 500),
+                                curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
+                                child: !controller.showRecording.value
+                                    ? const SizedBox.shrink()
+                                    : Builder(builder: (context) {
+                                        final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+                                        final textFieldSize = box?.size ?? const Size(250, 35);
+                                        return AudioWaveforms(
+                                          size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
+                                          recorderController: recorderController!,
+                                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                                          waveStyle: const WaveStyle(
+                                            waveColor: Colors.white,
+                                            waveCap: StrokeCap.square,
+                                            spacing: 4.0,
+                                            showBottom: true,
+                                            extendWaveform: true,
+                                            showMiddleLine: false,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border.fromBorderSide(BorderSide(
+                                              color: context.theme.colorScheme.outline,
+                                              width: 1,
+                                            )),
+                                            borderRadius: BorderRadius.circular(20),
+                                            color: context.theme.colorScheme.properSurface,
+                                          ),
+                                        );
+                                      }),
+                              ))),
                     SendAnimation(parentController: controller),
                   ],
                 ),
@@ -548,7 +555,7 @@ class TextFieldComponent extends StatelessWidget {
   final TextEditingController subjectTextController;
   final TextEditingController textController;
   final ConversationViewController? controller;
-  final RecorderController recorderController;
+  final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
   final FocusNode? focusNode;
 
@@ -896,20 +903,13 @@ class TextFieldComponent extends StatelessWidget {
 
     if (webData != null) {
       if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        getPastedImageWeb().then((value) {
-          if (value != null) {
-            var r = html.FileReader();
-            r.readAsArrayBuffer(value);
-            r.onLoadEnd.listen((e) {
-              if (r.result != null && r.result is Uint8List) {
-                Uint8List data = r.result as Uint8List;
-                controller!.pickedAttachments.add(PlatformFile(
-                  name: "${randomString(8)}.png",
-                  bytes: data,
-                  size: data.length,
-                ));
-              }
-            });
+        Pasteboard.image.then((image) {
+          if (image != null) {
+            controller!.pickedAttachments.add(PlatformFile(
+              name: "${randomString(8)}.png",
+              bytes: image,
+              size: image.length,
+            ));
           }
         });
       }

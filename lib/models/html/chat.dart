@@ -89,10 +89,15 @@ class Chat {
   set latestMessage(Message m) => _latestMessage = m;
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
+  int? style;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
+  void refreshCustomAvatar(String s) {
+    _customAvatarPath.value = null;
+    _customAvatarPath.value = s;
+  }
 
   final RxnInt _pinIndex = RxnInt();
   int? get pinIndex => _pinIndex.value;
@@ -119,6 +124,7 @@ class Chat {
     this.textFieldText,
     this.textFieldAttachments = const [],
     this.dateDeleted,
+    this.style,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -146,6 +152,7 @@ class Chat {
       autoSendReadReceipts: json["autoSendReadReceipts"],
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
       dateDeleted: parseDate(json["dateDeleted"]),
+      style: json["style"],
     );
   }
 
@@ -161,7 +168,11 @@ class Chat {
     bool updateCustomAvatarPath = false,
     bool updateTextFieldText = false,
     bool updateTextFieldAttachments = false,
+    bool updateDisplayName = false,
+    bool updateDateDeleted = false,
   }) {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    WebListeners.notifyChat(this);
     return this;
   }
 
@@ -270,7 +281,7 @@ class Chat {
     return this;
   }
 
-  Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
+  Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true, bool clearNotificationsIfFromMe = true}) async {
     // Save the message
     Message? latest = latestMessage;
     Message? newMessage;
@@ -314,7 +325,7 @@ class Chat {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
-        toggleHasUnread(false);
+        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe, force: cm.isChatActive(guid));
       } else if (!cm.isChatActive(guid)) {
         toggleHasUnread(true);
       }
@@ -415,21 +426,21 @@ class Chat {
     return this;
   }
 
-  Chat toggleAutoRead(bool autoSendReadReceipts) {
+  Chat toggleAutoRead(bool? autoSendReadReceipts) {
     if (id == null) return this;
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
-    if (autoSendReadReceipts) {
+    if (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value) {
       http.markChatRead(guid);
     }
     return this;
   }
 
-  Chat toggleAutoType(bool autoSendTypingIndicators) {
+  Chat toggleAutoType(bool? autoSendTypingIndicators) {
     if (id == null) return this;
     this.autoSendTypingIndicators = autoSendTypingIndicators;
     save(updateAutoSendTypingIndicators: true);
-    if (!autoSendTypingIndicators) {
+    if (!(autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
       socket.sendMessage("stopped-typing", {"chatGuid": guid});
     }
     return this;
@@ -474,7 +485,7 @@ class Chat {
 
   bool get isIMessage => !isTextForwarding && !isSMS;
 
-  bool get isGroup => participants.length > 1;
+  bool get isGroup => participants.length > 1 || style == 43;
 
   Chat merge(Chat other) {
     id ??= other.id;
@@ -498,6 +509,7 @@ class Chat {
     muteArgs ??= other.muteArgs;
     title ??= other.title;
     dateDeleted ??= other.dateDeleted;
+    style ??= other.style;
     return this;
   }
 
@@ -520,6 +532,8 @@ class Chat {
     return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
+  static Future<void> getIcon(Chat c) async {}
+
   Map<String, dynamic> toMap() => {
     "ROWID": id,
     "guid": guid,
@@ -536,5 +550,6 @@ class Chat {
     "autoSendReadReceipts": autoSendReadReceipts!,
     "autoSendTypingIndicators": autoSendTypingIndicators!,
     "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
+    "style": style,
   };
 }

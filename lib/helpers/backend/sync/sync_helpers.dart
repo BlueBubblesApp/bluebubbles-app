@@ -173,13 +173,17 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
   final query2 = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
   List<Message> syncedMessages = query2.find().toList();
 
-  // Insert the real ID
+  // Insert the real ID & chat
   for (var i = 0; i < messages.length; i++) {
     Message? synced = syncedMessages.firstWhereOrNull((e) => e.guid == messages[i].guid);
     if (synced == null) continue;
 
     messages[i] = Message.merge(messages[i], synced);
+    messages[i].chat.target = c;
   }
+
+  // Apply the chats
+  messageBox.putMany(messages, mode: PutMode.update);
 
   return messages;
 }

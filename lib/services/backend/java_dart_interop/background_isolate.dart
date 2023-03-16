@@ -19,6 +19,7 @@ backgroundIsolateEntrypoint() async {
   // can't use logger here
   debugPrint("(ISOLATE) Starting up...");
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = BadCertOverride();
   ls.isUiThread = false;
   await ss.init(headless: true);
   await fs.init(headless: true);

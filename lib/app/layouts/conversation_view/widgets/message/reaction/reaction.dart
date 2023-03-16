@@ -33,7 +33,7 @@ class ReactionWidget extends StatefulWidget {
 
 class ReactionWidgetState extends OptimizedState<ReactionWidget> {
   late Message reaction = widget.reaction;
-  late final StreamSubscription<Query<Message>> sub;
+  late final StreamSubscription sub;
   bool hasStream = false;
 
   List<Message>? get reactions => widget.reactions;
@@ -61,13 +61,22 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
             } else {
               reaction = _message;
             }
-            if (widget.message != null) {
-              getActiveMwc(widget.message!.guid!)?.updateAssociatedMessage(reaction, updateHolder: false);
-            }
+            getActiveMwc(widget.message!.guid!)?.updateAssociatedMessage(reaction, updateHolder: false);
           }
         });
 
         hasStream = true;
+      } else if (kIsWeb && widget.message != null) {
+        sub = WebListeners.messageUpdate.listen((tuple) {
+          final _message = tuple.item1;
+          final tempGuid = tuple.item2;
+          if (tempGuid == reaction.guid || _message.guid == reaction.guid) {
+            setState(() {
+              reaction = _message;
+            });
+            getActiveMwc(widget.message!.guid!)?.updateAssociatedMessage(reaction, updateHolder: false);
+          }
+        });
       }
     });
   }

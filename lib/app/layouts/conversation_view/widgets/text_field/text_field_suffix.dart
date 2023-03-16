@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
@@ -27,7 +28,7 @@ class TextFieldSuffix extends StatefulWidget {
   final TextEditingController subjectTextController;
   final TextEditingController textController;
   final ConversationViewController? controller;
-  final RecorderController recorderController;
+  final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
 
   @override
@@ -51,7 +52,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
           bool canSend = widget.textController.text.isNotEmpty ||
               widget.subjectTextController.text.isNotEmpty ||
               (widget.controller?.pickedAttachments.isNotEmpty ?? false.obs.value);
-          bool showRecording = widget.controller?.showRecording.value ?? false.obs.value;
+          bool showRecording = (widget.controller?.showRecording.value ?? false.obs.value) && widget.recorderController != null;
           return Padding(
             padding: const EdgeInsets.all(3.0),
             child: AnimatedCrossFade(
@@ -59,7 +60,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 150),
-              firstChild: kIsDesktop ? const SizedBox(height: 32, width: 32) : TextButton(
+              firstChild: kIsDesktop || kIsWeb ? const SizedBox(height: 32, width: 32) : TextButton(
                 style: TextButton.styleFrom(
                   backgroundColor: !iOS || (iOS && !isChatCreator && !showRecording)
                       ? null
@@ -86,12 +87,12 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   if (widget.controller == null) return;
                   widget.controller!.showRecording.toggle();
                   if (widget.controller!.showRecording.value) {
-                    await widget.recorderController.record(
+                    await widget.recorderController!.record(
                       sampleRate: 44100,
                       bitRate: 320000,
                     );
                   } else {
-                    final path = await widget.recorderController.stop();
+                    final path = await widget.recorderController!.stop();
                     if (path == null) return;
                     final _file = File(path);
                     final file = PlatformFile(

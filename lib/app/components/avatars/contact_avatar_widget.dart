@@ -145,7 +145,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           || !ss.settings.colorfulAvatars.value
           || widget.handle == null ? MouseCursor.defer : SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: onAvatarTap,
+        onTap: !widget.editable && widget.onTap == null ? null : onAvatarTap,
         child: Container(
           key: Key("$keyPrefix-avatar-container"),
           width: size,

@@ -145,19 +145,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       onTap: () async {
                         gettingIcons.value = true;
                         for (Chat c in chats.chats.where((c) => c.isGroup)) {
-                          final response = await http.getChatIcon(c.guid).catchError((err) async {
-                            Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
-                            return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
-                          });
-                          if (response.statusCode != 200 || isNullOrEmpty(response.data)!) continue;
-                          Logger.debug("Got chat icon for chat ${c.getTitle()}");
-                          File file = File(c.customAvatarPath ?? "${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-                          if (c.customAvatarPath == null) {
-                            await file.create(recursive: true);
-                          }
-                          await file.writeAsBytes(response.data);
-                          c.customAvatarPath = file.path;
-                          c.save(updateCustomAvatarPath: true);
+                          await Chat.getIcon(c, force: true);
                         }
                         gettingIcons.value = false;
                       },
@@ -379,6 +367,23 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       title: "Send Message with Enter",
                       backgroundColor: tileColor,
                     )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      ss.settings.scrollToBottomOnSend.value = val;
+                      saveSettings();
+                    },
+                    initialVal: ss.settings.scrollToBottomOnSend.value,
+                    title: "Scroll To Bottom When Sending Messages",
+                    subtitle: "Scroll to the most recent messages in the chat when sending a new text",
+                    backgroundColor: tileColor,
+                  )),
                 ],
               ),
             ],

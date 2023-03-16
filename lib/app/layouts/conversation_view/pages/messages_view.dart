@@ -50,6 +50,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   final smartReply = GoogleMlKit.nlp.smartReply();
   final listKey = GlobalKey<SliverAnimatedListState>();
   final RxBool dragging = false.obs;
+  final RxBool latestMessageDeliveredState = false.obs;
 
   ConversationViewController get controller => widget.controller;
   AutoScrollController get scrollController => controller.scrollController;
@@ -80,6 +81,9 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     });
 
     updateObx(() async {
+      if (chat.isIMessage && !chat.isGroup && ss.serverDetailsSync().item4 >= 226) {
+        getFocusState();
+      }
       final searchMessage = (messageService.method == null) ? null : messageService.struct.messages.firstOrNull;
       if (messageService.method != null) {
         await messageService.loadSearchChunk(
@@ -117,6 +121,18 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       getActiveMwc(m.guid!)?.close();
     }
     super.dispose();
+  }
+
+  void getFocusState() {
+    final recipient = chat.participants.firstOrNull;
+    if (recipient != null) {
+      http.handleFocusState(recipient.address).then((response) {
+        final status = response.data['data']['status'];
+        controller.recipientNotifsSilenced.value = status != "none";
+      }).catchError((error) async {
+        Logger.error('Failed to get focus state! Error: ${error.toString()}');
+      });
+    }
   }
 
   void updateReplies({bool updateConversation = true}) async {
@@ -164,7 +180,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       return true;
     }));
 
-    if (noMoreMessages) return;
+    if (noMoreMessages) return setState(() {});
+
     final oldLength = _messages.length;
     _messages = messageService.struct.messages;
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
@@ -202,7 +219,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       }
     }
 
-    if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null) {
+    if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null && cm.isChatActive(chat.guid)) {
       PlayerController controller = PlayerController();
       controller.preparePlayer(
         path: ss.settings.receiveSoundPath.value!, volume: 1.0
@@ -216,6 +233,9 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     final index = _messages.indexWhere((e) => e.guid == (oldGuid ?? message.guid));
     if (index != -1) {
       _messages[index] = message;
+    }
+    if (message.wasDeliveredQuietly != latestMessageDeliveredState.value) {
+      latestMessageDeliveredState.value = message.wasDeliveredQuietly;
     }
   }
 
@@ -270,6 +290,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
   @override
   Widget build(BuildContext context) {
+    const moonIcon = CupertinoIcons.moon_fill;
     return DropTarget(
       onDragEntered: (details) {
         dragging.value = true;
@@ -336,6 +357,55 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                           ),
                         ) : const SizedBox.shrink())
                       ),
+                    ),
+                  if (!chat.isGroup && chat.isIMessage)
+                    SliverToBoxAdapter(
+                      child: AnimatedSize(
+                        key: controller.focusInfoKey,
+                        duration: const Duration(milliseconds: 250),
+                        child: Obx(() => controller.recipientNotifsSilenced.value ? Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    String.fromCharCode(moonIcon.codePoint),
+                                    style: TextStyle(
+                                      fontFamily: moonIcon.fontFamily,
+                                      package: moonIcon.fontPackage,
+                                      fontSize: context.theme.textTheme.bodyMedium!.fontSize,
+                                      color: context.theme.colorScheme.tertiaryContainer,
+                                    ),
+                                  ),
+                                  Text(
+                                    " ${chat.title ?? "Recipient"} has notifications silenced",
+                                    style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.tertiaryContainer),
+                                  ),
+                                ],
+                              ),
+                              Obx(() {
+                                // DO NOT REMOVE, used to update Obx widget
+                                final dummy = latestMessageDeliveredState.value;
+                                if (_messages.firstOrNull?.isFromMe == true
+                                    && _messages.firstOrNull?.dateRead == null
+                                    && _messages.firstOrNull?.wasDeliveredQuietly == true
+                                    && _messages.firstOrNull?.didNotifyRecipient == false) {
+                                  return TextButton(
+                                    child: Text("Notify Anyway", style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.tertiaryContainer)),
+                                    onPressed: () async {
+                                      await http.notify(_messages.first.guid!);
+                                    },
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }),
+                            ],
+                          ),
+                        ) : const SizedBox.shrink()),
+                      )
                     ),
                   SliverToBoxAdapter(
                     child: Obx(() => Row(

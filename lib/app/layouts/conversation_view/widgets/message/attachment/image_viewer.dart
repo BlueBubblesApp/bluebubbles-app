@@ -88,7 +88,13 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
           crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
           alignment: Alignment.center,
           duration: const Duration(milliseconds: 150),
-          secondChild: widget,
+          secondChild: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: 40,
+              minWidth: 100,
+            ),
+            child: widget,
+          ),
           firstChild: SizedBox(
             width: min((attachment.width?.toDouble() ?? ns.width(context) * 0.5), ns.width(context) * 0.5),
             height: min((attachment.height?.toDouble() ?? ns.width(context) * 0.5 / attachment.aspectRatio), ns.width(context) * 0.5 / attachment.aspectRatio),

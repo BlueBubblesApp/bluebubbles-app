@@ -32,7 +32,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   bool get shouldShow {
     if (widget.forceShow || message.guid!.contains("temp")) return true;
     if ((!message.isFromMe! && iOS) || (controller.parts.lastOrNull?.isUnsent ?? false)) return false;
-    final messages = ms(controller.cvController!.chat.guid).struct.messages
+    final messages = ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.messages
         .where((e) => (!iOS ? !e.isFromMe! : false) || (e.isFromMe! && (e.dateDelivered != null || e.dateRead != null)))
         .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final index = messages.indexWhere((e) => e.guid == message.guid);
@@ -56,7 +56,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     } else if (message.dateRead != null) {
       text = "Read ${buildDate(message.dateRead)}";
     } else if (message.dateDelivered != null) {
-      text = "Delivered${ss.settings.showDeliveryTimestamps.value || !iOS ? " ${buildDate(message.dateDelivered)}" : ""}";
+      text = "Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}${ss.settings.showDeliveryTimestamps.value || !iOS ? " ${buildDate(message.dateDelivered)}" : ""}";
     } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
       text = "Sending...";
     } else if (!iOS && widget.forceShow) {

@@ -7,12 +7,15 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:metadata_fetch/metadata_fetch.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
+import 'package:universal_io/io.dart';
 
 /// Async method to get attachments from objectbox
 class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
@@ -320,6 +323,8 @@ class Chat {
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
   int? style;
+  bool lockChatName;
+  bool lockChatIcon;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -354,6 +359,8 @@ class Chat {
     this.textFieldAttachments = const [],
     this.dateDeleted,
     this.style,
+    this.lockChatName = false,
+    this.lockChatIcon = false,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -382,6 +389,8 @@ class Chat {
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
       dateDeleted: parseDate(json["dateDeleted"]),
       style: json["style"],
+      lockChatName: json["lockChatName"] ?? false,
+      lockChatIcon: json["lockChatIcon"] ?? false,
     );
   }
 
@@ -400,6 +409,8 @@ class Chat {
     bool updateTextFieldAttachments = false,
     bool updateDisplayName = false,
     bool updateDateDeleted = false,
+    bool updateLockChatName = false,
+    bool updateLockChatIcon = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -445,6 +456,12 @@ class Chat {
       if (!updateDateDeleted) {
         dateDeleted = existing?.dateDeleted;
       }
+      if (!updateLockChatName) {
+        lockChatName = existing?.lockChatName ?? false;
+      }
+      if (!updateLockChatIcon) {
+        lockChatIcon = existing?.lockChatIcon ?? false;
+      }
 
       /// Save the chat and add the participants
       for (int i = 0; i < participants.length; i++) {
@@ -460,6 +477,8 @@ class Chat {
           toSave!.handles.clear();
           toSave.handles.addAll(participants);
           toSave.handles.applyToDb();
+        } else if (existing == null && participants.isEmpty) {
+          cm.fetchChat(guid);
         }
       } on UniqueViolationException catch (_) {}
     });
@@ -683,9 +702,15 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe! || cm.isChatActive(guid)) {
         // force if the chat is active to ensure private api mark read
-        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe, force: cm.isChatActive(guid));
+        toggleHasUnread(
+          false,
+          clearLocalNotifications: clearNotificationsIfFromMe,
+          force: cm.isChatActive(guid),
+          // only private mark if the chat is active
+          privateMark: cm.isChatActive(guid)
+        );
       } else if (!cm.isChatActive(guid)) {
-        toggleHasUnread(true);
+        toggleHasUnread(true, privateMark: false);
       }
     }
 
@@ -954,6 +979,33 @@ class Chat {
     return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
+  static Future<void> getIcon(Chat c, {bool force = false}) async {
+    if (!force && c.lockChatIcon) return;
+    final response = await http.getChatIcon(c.guid).catchError((err) async {
+      Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
+      return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
+    });
+    if (response.statusCode != 200 || isNullOrEmpty(response.data)!) {
+      if (c.customAvatarPath != null) {
+        await File(c.customAvatarPath!).delete(recursive: true);
+        c.customAvatarPath = null;
+        c.save(updateCustomAvatarPath: true);
+      }
+    } else {
+      Logger.debug("Got chat icon for chat ${c.getTitle()}");
+      File file = File("${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${response.data.length}.jpg");
+      if (!(await file.exists())) {
+        await file.create(recursive: true);
+      }
+      if (c.customAvatarPath != null) {
+        await file.delete();
+      }
+      await file.writeAsBytes(response.data);
+      c.customAvatarPath = file.path;
+      c.save(updateCustomAvatarPath: true);
+    }
+  }
+
   Map<String, dynamic> toMap() => {
     "ROWID": id,
     "guid": guid,
@@ -971,5 +1023,7 @@ class Chat {
     "autoSendTypingIndicators": autoSendTypingIndicators,
     "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
     "style": style,
+    "lockChatName": lockChatName,
+    "lockChatIcon": lockChatIcon,
   };
 }

@@ -51,6 +51,8 @@ class Message {
   List<MessageSummaryInfo> messageSummaryInfo;
   PayloadData? payloadData;
   bool hasApplePayloadData;
+  bool wasDeliveredQuietly;
+  bool didNotifyRecipient;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -109,6 +111,8 @@ class Message {
     this.payloadData,
     this.hasApplePayloadData = false,
     DateTime? dateEdited,
+    this.wasDeliveredQuietly = false,
+    this.didNotifyRecipient = false,
   }) {
     if (error != null) _error.value = error;
     if (dateRead != null) _dateRead.value = dateRead;
@@ -197,22 +201,36 @@ class Message {
       payloadData: payloadData,
       hasApplePayloadData: json['hasApplePayloadData'] == true || payloadData != null,
       dateEdited: parseDate(json["dateEdited"]),
+      wasDeliveredQuietly: json['wasDeliveredQuietly'] ?? false,
+      didNotifyRecipient: json['didNotifyRecipient'] ?? false,
     );
   }
 
   Message save({Chat? chat}) {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    WebListeners.notifyMessage(this, chat: chat);
     return this;
   }
 
   static Future<List<Message>> bulkSaveNewMessages(Chat chat, List<Message> messages) async {
+    for (Message m in messages) {
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+      WebListeners.notifyMessage(m, chat: chat);
+    }
     return [];
   }
 
   static List<Message> bulkSave(List<Message> messages) {
+    for (Message m in messages) {
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+      WebListeners.notifyMessage(m);
+    }
     return [];
   }
 
   static Future<Message> replaceMessage(String? oldGuid, Message newMessage, {bool awaitNewMessageEvent = true, Chat? chat}) async {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    WebListeners.notifyMessage(newMessage, tempGuid: oldGuid, chat: chat);
     return newMessage;
   }
 
@@ -249,7 +267,8 @@ class Message {
   }
 
   Handle? getHandle() {
-    return null;
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    return chats.webCachedHandles.firstWhereOrNull((element) => element.originalROWID == handleId);
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
@@ -287,6 +306,10 @@ class Message {
       text = temp.toString();
     }
     return text;
+  }
+
+  String? get interactiveMediaPath {
+    return null;
   }
 
   bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
@@ -550,6 +573,14 @@ class Message {
       existing.payloadData = newMessage.payloadData;
     }
 
+    if (!existing.wasDeliveredQuietly && newMessage.wasDeliveredQuietly) {
+      existing.wasDeliveredQuietly = newMessage.wasDeliveredQuietly;
+    }
+
+    if (!existing.didNotifyRecipient && newMessage.didNotifyRecipient) {
+      existing.didNotifyRecipient = newMessage.didNotifyRecipient;
+    }
+
     return existing;
   }
 
@@ -587,6 +618,8 @@ class Message {
       "threadOriginatorPart": threadOriginatorPart,
       "hasApplePayloadData": hasApplePayloadData,
       "dateEdited": dateEdited,
+      "wasDeliveredQuietly": wasDeliveredQuietly,
+      "didNotifyRecipient": didNotifyRecipient,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();

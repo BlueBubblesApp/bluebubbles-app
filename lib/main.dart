@@ -63,6 +63,7 @@ late final Box<ThemeObject> themeObjectBox;
 final Completer<void> storeStartup = Completer();
 final Completer<void> uiStartup = Completer();
 bool isAuthing = false;
+bool hasBadCert = false;
 
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
@@ -408,7 +409,8 @@ class BadCertOverride extends HttpOverrides {
     // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
-        return serverUrl.contains(host);
+        hasBadCert = serverUrl.contains(host);
+        return hasBadCert;
       };
   }
 }
