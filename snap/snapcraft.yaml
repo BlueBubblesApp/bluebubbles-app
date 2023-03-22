@@ -15,6 +15,7 @@ apps:
     slots: [dbus-bluebubbles]
     plugs:
       - network
+      - network-manager
       - camera
       - desktop
       - desktop-legacy
@@ -57,7 +58,7 @@ parts:
       flutter config --enable-linux-desktop
       flutter doctor
       flutter pub get
-      find build -type f -name 'CMakeCache.txt' -delete
+      rm -rf build
       flutter build linux --release -v
       tmp=$(mktemp)
       jq '.version = "1.10.100.0"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
