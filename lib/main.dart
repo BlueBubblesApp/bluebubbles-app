@@ -639,9 +639,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         }
 
         /* ----- WINDOWS NOTIFICATIONS INITIALIZATION ----- */
-        if (Platform.isWindows) {
-          await localNotifier.setup(appName: "BlueBubbles");
-        }
+        await localNotifier.setup(appName: "BlueBubbles");
 
         /* ----- WINDOW EFFECT INITIALIZATION ----- */
         if (Platform.isWindows) {
