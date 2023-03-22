@@ -322,15 +322,15 @@ class NotificationsService extends GetxService {
             Chat? chat = Chat.findOne(guid: guid);
             if (chat == null) return;
 
-            await windowManager.focus();
-
             if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
-              ns.pushAndRemoveUntil(
+              await ns.pushAndRemoveUntil(
                 Get.context!,
                 ConversationView(chat: chat),
                 (route) => route.isFirst,
               );
             }
+
+            await windowManager.focus();
           };
 
           toast.onClickAction = (index) async {
@@ -369,6 +369,7 @@ class NotificationsService extends GetxService {
           };
 
           toast.onClose = (reason) async {
+            print("REASON $reason");
             notifications[guid]!.remove(toast);
             if (reason != LocalNotificationCloseReason.unknown) {
               notificationCounts[guid] = 0;
@@ -406,15 +407,15 @@ class NotificationsService extends GetxService {
             Chat? chat = Chat.findOne(guid: guid);
             if (chat == null) return;
 
-            await windowManager.focus();
-
             if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
-              ns.pushAndRemoveUntil(
+              await ns.pushAndRemoveUntil(
                 Get.context!,
                 ConversationView(chat: chat),
                 (route) => route.isFirst,
               );
             }
+
+            await windowManager.focus();
 
             if (await File(path).exists()) {
               await File(path).delete();
@@ -439,6 +440,7 @@ class NotificationsService extends GetxService {
           };
 
           toast.onClose = (reason) async {
+            print("REASON $reason");
             notifications[guid]!.remove(toast);
             if (reason != LocalNotificationCloseReason.unknown) {
               notificationCounts[guid] = 0;
