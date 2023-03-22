@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/embedded_media.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/custom/custom_cupertino_alert_dialog.dart';
@@ -40,7 +41,7 @@ class MessagePopup extends StatefulWidget {
   final ConversationViewController cvController;
   final Tuple3<bool, bool, bool> serverDetails;
   final Function([String? type, int? part]) sendTapback;
-  final BuildContext widthContext;
+  final BuildContext? Function() widthContext;
 
   const MessagePopup({
     Key? key,
@@ -93,7 +94,11 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   bool get isSent => !message.guid!.startsWith('temp') && !message.guid!.startsWith('error');
 
   bool get showDownload =>
-      isSent && part.attachments.isNotEmpty && part.attachments.where((element) => as.getContent(element) is PlatformFile).isNotEmpty;
+      (isSent && part.attachments.isNotEmpty && part.attachments.where((element) => as.getContent(element) is PlatformFile).isNotEmpty) || isEmbeddedMedia;
+
+  late bool isEmbeddedMedia = (message.balloonBundleId == "com.apple.Handwriting.HandwritingProvider"
+      || message.balloonBundleId == "com.apple.DigitalTouchBalloonProvider")
+      && File(message.interactiveMediaPath!).existsSync();
 
   bool get minSierra => widget.serverDetails.item1;
 
@@ -101,7 +106,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   bool get supportsOriginalDownload => widget.serverDetails.item3;
 
-  BuildContext get widthContext => widget.widthContext;
+  BuildContext get widthContext => widget.widthContext.call() ?? context;
 
   @override
   void initState() {
@@ -153,7 +158,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
@@ -244,11 +249,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                   onPressed: openDm,
                                 ),
                               ),
-                            if (message.threadOriginatorGuid != null ||
-                                service.struct
-                                    .threads(message.guid!)
-                                    .where((e) => e.threadOriginatorPart?.startsWith(part.part.toString()) ?? false)
-                                    .isNotEmpty)
+                            if (message.threadOriginatorGuid != null || service.struct.threads(message.guid!, part.part, returnOriginator: false).isNotEmpty)
                               Padding(
                                 padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
                                 child: IconButton(
@@ -327,7 +328,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
-                                    if (!ls.isBubble)
+                                    if (!ls.isBubble && !message.isInteractive)
                                       PopupMenuItem(
                                         value: 1,
                                         child: Text(
@@ -619,7 +620,16 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   Future<void> download() async {
     try {
-      dynamic content = as.getContent(part.attachments.first);
+      dynamic content;
+      if (isEmbeddedMedia) {
+        content = PlatformFile(
+          name: message.interactiveMediaPath!.split("/").last,
+          path: message.interactiveMediaPath,
+          size: 0,
+        );
+      } else {
+        content = as.getContent(part.attachments.first);
+      }
       if (content is PlatformFile) {
         popDetails();
         await as.saveToDisk(content);
@@ -805,12 +815,17 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   void redownload() {
-    for (Attachment? element in part.attachments) {
-      widget.cvController.imageData.remove(element!.guid!);
-      as.redownloadAttachment(element);
+    if (isEmbeddedMedia) {
+      popDetails();
+      getActiveMwc(message.guid!)?.updateWidgets<EmbeddedMedia>(null);
+    } else {
+      for (Attachment? element in part.attachments) {
+        widget.cvController.imageData.remove(element!.guid!);
+        as.redownloadAttachment(element);
+      }
+      popDetails();
+      getActiveMwc(message.guid!)?.updateWidgets<AttachmentHolder>(null);
     }
-    popDetails();
-    getActiveMwc(message.guid!)?.updateWidgets<AttachmentHolder>(null);
   }
 
   void share() {
@@ -1046,8 +1061,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (message.threadOriginatorGuid != null ||
-          service.struct.threads(message.guid!).where((e) => e.threadOriginatorPart?.startsWith(part.part.toString()) ?? false).isNotEmpty)
+      if (message.threadOriginatorGuid != null || service.struct.threads(message.guid!, part.part, returnOriginator: false).isNotEmpty)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1087,7 +1101,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (!ls.isBubble)
+      if (!ls.isBubble && !message.isInteractive)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1106,7 +1120,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (!kIsWeb && !kIsDesktop && part.text!.isNotEmpty))
+      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (!kIsWeb && !kIsDesktop && !isNullOrEmpty(part.text)!))
         Material(
           color: Colors.transparent,
           child: InkWell(

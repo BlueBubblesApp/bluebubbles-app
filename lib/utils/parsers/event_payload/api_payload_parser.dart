@@ -1,3 +1,4 @@
+/*
 import 'package:bluebubbles/utils/parsers/event_payload/api_payload.dart';
 import 'package:bluebubbles/services/services.dart';
 
@@ -130,4 +131,4 @@ class ApiPayloadParser {
     // TODO: Implement handle query endpoint
     return [];
   }
-}
+}*/

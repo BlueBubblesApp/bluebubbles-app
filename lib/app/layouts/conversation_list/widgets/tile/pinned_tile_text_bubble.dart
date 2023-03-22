@@ -32,10 +32,11 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   Message? lastMessage;
   String subtitle = "Unknown";
   String fakeText = faker.lorem.words(1).join(" ");
-  late final StreamSubscription<Query<Message>> sub;
+  late final StreamSubscription sub;
   String? cachedLatestMessageGuid = "";
+  DateTime? cachedDateCreated;
   late bool unread = chat.hasUnreadMessage ?? false;
-  late final StreamSubscription<Query<Chat>> sub2;
+  late final StreamSubscription sub2;
 
   Chat get chat => widget.chat;
   double get size => widget.size;
@@ -98,15 +99,40 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
           }
         });
       });
+    } else {
+      sub = WebListeners.newMessage.listen((tuple) {
+        final message = tuple.item1;
+        if (tuple.item2?.guid == controller.chat.guid && (cachedDateCreated == null || message.dateCreated!.isAfter(cachedDateCreated!))) {
+          if (message.guid != cachedLatestMessageGuid) {
+            String newSubtitle = MessageHelper.getNotificationText(message);
+            if (newSubtitle != subtitle) {
+              setState(() {
+                subtitle = newSubtitle;
+                fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
+              });
+            }
+          }
+          cachedDateCreated = message.dateCreated;
+          cachedLatestMessageGuid = message.guid;
+        }
+      });
+      sub2 = WebListeners.chatUpdate.listen((chat) {
+        if (chat.guid == controller.chat.guid) {
+          final newUnread = chat.hasUnreadMessage ?? false;
+          if (unread != newUnread) {
+            setState(() {
+              unread = newUnread;
+            });
+          }
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    if (!kIsWeb) {
-      sub.cancel();
-      sub2.cancel();
-    }
+    sub.cancel();
+    sub2.cancel();
     super.dispose();
   }
 

@@ -189,6 +189,19 @@ class Attachment {
     return query.find();
   }
 
+  /// Delete an attachment and remove all instances of that attachment in the DB
+  static void delete(String guid) {
+    if (kIsWeb) return;
+    store.runInTransaction(TxMode.write, () {
+      final query = attachmentBox.query(Attachment_.guid.equals(guid)).build();
+      final result = query.findFirst();
+      query.close();
+      if (result?.id != null) {
+        attachmentBox.remove(result!.id!);
+      }
+    });
+  }
+
   String getFriendlySize({decimals = 2}) {
     return (totalBytes ?? 0.0).toDouble().getFriendlySize();
   }

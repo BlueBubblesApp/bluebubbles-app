@@ -50,6 +50,11 @@ class ContactsService extends GetxService {
   Future<List<List<int>>> refreshContacts() async {
     if (!(await hasContactAccess)) return [];
 
+    // Check if the user is on v1.5.2 or newer
+    int serverVersion = (await ss.getServerDetails()).item4;
+    // 100(major) + 21(minor) + 1(bug)
+    bool isMin1_5_2 = serverVersion >= 207; // Server: v1.5.2
+
     final startTime = DateTime.now().millisecondsSinceEpoch;
     List<Contact> _contacts = [];
     final changedIds = <List<int>>[<int>[], <int>[]];
@@ -118,7 +123,7 @@ class ContactsService extends GetxService {
       }
     }
     if (!kIsWeb) {
-      Handle.bulkSave(handles);
+      Handle.bulkSave(handles, matchOnOriginalROWID: isMin1_5_2);
     } else {
       contacts = _contacts;
     }
@@ -207,8 +212,10 @@ class ContactsService extends GetxService {
 
       // try to match last 15 - 7 digits
       for (String p in numericPhones) {
+        // remove leading zeros which indicate "same country"
+        final leadingZerosRemoved = int.tryParse(p)?.toString() ?? p;
         final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
-        if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
+        if (matchLengths.contains(leadingZerosRemoved.length) && numericAddress.endsWith(leadingZerosRemoved)) {
           handleMatches.add(h);
           continue;
         }

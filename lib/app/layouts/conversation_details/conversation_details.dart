@@ -39,7 +39,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   List<Message> links = [];
   bool showMoreParticipants = false;
   late Chat chat = widget.chat;
-  late StreamSubscription<Query<Chat>> sub;
+  late StreamSubscription sub;
   final RxList<String> selected = <String>[].obs;
 
   bool get shouldShowMore => chat.participants.length > 5;
@@ -65,6 +65,14 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
           }
         }
       });
+    } else {
+      sub = WebListeners.chatUpdate.listen((_chat) {
+        final update = _chat.getTitle() != chat.title || _chat.participants.length != chat.participants.length;
+        chat = _chat.merge(chat);
+        if (update) {
+          setState(() {});
+        }
+      });
     }
 
     if (!kIsWeb) {
@@ -77,7 +85,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    sub.cancel();
     super.dispose();
   }
 
@@ -125,7 +133,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
@@ -263,6 +271,62 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                         && chat.isIMessage,
                   );
                 }, childCount: clippedParticipants.length + 2),
+              ),
+            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value && ss.serverDetailsSync().item4 >= 226)
+              SliverToBoxAdapter(
+                child: Builder(
+                  builder: (context) {
+                    return ListTile(
+                      mouseCursor: MouseCursor.defer,
+                      title: Text("Leave ${iOS ? "Chat" : "chat"}", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.error)),
+                      leading: Container(
+                        width: 40 * ss.settings.avatarScale.value,
+                        height: 40 * ss.settings.avatarScale.value,
+                        decoration: BoxDecoration(
+                          color: !iOS ? null : context.theme.colorScheme.properSurface,
+                          shape: BoxShape.circle,
+                          border: iOS ? null : Border.all(color: context.theme.colorScheme.error, width: 3)
+                        ),
+                        child: Icon(
+                          Icons.error_outline,
+                          color: context.theme.colorScheme.error,
+                          size: 20
+                        ),
+                      ),
+                      onTap: () async {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              title: Text(
+                                "Leaving chat...",
+                                style: context.theme.textTheme.titleLarge,
+                              ),
+                              content: Container(
+                                height: 70,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    backgroundColor: context.theme.colorScheme.properSurface,
+                                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                        );
+                        final response = await http.leaveChat(chat.guid);
+                        if (response.statusCode == 200) {
+                          Get.back();
+                          showSnackbar("Notice", "Left chat successfully!");
+                        } else {
+                          Get.back();
+                          showSnackbar("Error", "Failed to leave chat!");
+                        }
+                      },
+                    );
+                  }
+                ),
               ),
             const SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 10),

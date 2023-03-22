@@ -63,7 +63,7 @@ class Handle {
 
     initials.removeRange(1, max(initials.length - 1, 1));
 
-    return initials.isEmpty ? null : initials.join("");
+    return initials.join("").isEmpty ? null : initials.join("");
   }
 
   Handle({

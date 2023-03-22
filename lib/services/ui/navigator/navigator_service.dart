@@ -73,9 +73,10 @@ class NavigatorService extends GetxService {
   }
 
   /// Push a new route, popping all previous routes, on the chat list right side navigator
-  Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate, {PageRoute? customRoute}) async {
+  Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
+      {bool closeActiveChat = true, PageRoute? customRoute}) async {
     if (Get.keys.containsKey(2) && isTabletMode(context)) {
-      if (cm.activeChat != null) {
+      if (closeActiveChat && cm.activeChat != null) {
         cvc(cm.activeChat!.chat).close();
       }
       await Get.offUntil(
@@ -167,11 +168,11 @@ class NavigatorService extends GetxService {
     eventDispatcher.emit("update-highlight", null);
   }
 
-  void backSettings(BuildContext context, {bool closeOverlays = false}) {
+  void backSettings(BuildContext context, {dynamic result, bool closeOverlays = false}) {
     if (Get.keys.containsKey(3) && isTabletMode(context)) {
-      Get.back(closeOverlays: closeOverlays, id: 3);
+      Get.back(result: result, closeOverlays: closeOverlays, id: 3);
     } else {
-      Get.back(closeOverlays: closeOverlays);
+      Get.back(result: result, closeOverlays: closeOverlays);
     }
   }
 }

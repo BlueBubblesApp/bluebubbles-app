@@ -320,6 +320,18 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Leave a chat
+  Future<Response> leaveChat(String guid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/chat/$guid/leave",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Update the specified chat (using [guid]). Use [displayName] to specify the
   /// new chat name.
   Future<Response> updateChat(String guid, String displayName, {CancelToken? cancelToken}) async {
@@ -336,12 +348,12 @@ class HttpService extends GetxService {
 
   /// Create a chat with the specified [addresses]. Requires an initial [message]
   /// to send.
-  Future<Response> createChat(List<String> addresses, String? message, {CancelToken? cancelToken}) async {
+  Future<Response> createChat(List<String> addresses, String? message, String service, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/chat/new",
           queryParameters: buildQueryParams(),
-          data: {"addresses": addresses, "message": message},
+          data: {"addresses": addresses, "message": message, "service": service},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -428,6 +440,36 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get a group chat icon by the chat [guid]
+  Future<Response> setChatIcon(String guid, String path, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+    final formData = FormData.fromMap({
+      "icon": await MultipartFile.fromFile(path),
+    });
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$apiRoot/chat/$guid/icon",
+        queryParameters: buildQueryParams(),
+        data: formData,
+        options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+        cancelToken: cancelToken,
+        onSendProgress: onSendProgress,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get a group chat icon by the chat [guid]
+  Future<Response> deleteChatIcon(String guid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+        "$apiRoot/chat/$guid/icon",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Delete a chat by [guid]
   Future<Response> deleteChat(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
@@ -491,25 +533,44 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get embedded media for a single digital touch or handwritten message by [guid].
+  Future<Response> embeddedMedia(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/message/$guid/embedded-media",
+          queryParameters: buildQueryParams(),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+          cancelToken: cancelToken,
+          onReceiveProgress: onReceiveProgress,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Send a message. [chatGuid] specifies the chat, [tempGuid] specifies a
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
   Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
+      Map<String, dynamic> data = {
+        "chatGuid": chatGuid,
+        "tempGuid": tempGuid,
+        "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
+        "method": method,
+      };
+
+      data.addAllIf(ss.settings.enablePrivateAPI.value && ss.settings.privateAPISend.value, {
+        "effectId": effectId,
+        "subject": subject,
+        "selectedMessageGuid": selectedMessageGuid,
+        "partIndex": partIndex,
+      });
+
       final response = await dio.post(
           "$apiRoot/message/text",
           queryParameters: buildQueryParams(),
-          data: {
-            "chatGuid": chatGuid,
-            "tempGuid": tempGuid,
-            "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
-            "method": method,
-            "effectId": effectId,
-            "subject": subject,
-            "selectedMessageGuid": selectedMessageGuid,
-            "partIndex": partIndex,
-          },
+          data: data,
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -527,13 +588,22 @@ class HttpService extends GetxService {
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
-        "method": method,
-        "effectId": effectId,
-        "subject": subject,
-        "selectedMessageGuid": selectedMessageGuid,
-        "partIndex": partIndex,
-        "isAudioMessage": isAudioMessage,
+        "method": method
       });
+
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateAPIAttachmentSend.value) {
+        Map<String, dynamic> papiData = {
+          "effectId": effectId,
+          "subject": subject,
+          "selectedMessageGuid": selectedMessageGuid,
+          "partIndex": partIndex,
+          "isAudioMessage": isAudioMessage,
+        };
+
+        papiData.removeWhere((key, value) => value == null);
+        formData.fields.addAll(papiData.entries.map((entry) => MapEntry(entry.key, entry.value.toString())));
+      }
+
       final response = await dio.post(
           "$apiRoot/message/attachment",
           queryParameters: buildQueryParams(),
@@ -597,6 +667,17 @@ class HttpService extends GetxService {
     });
   }
 
+  Future<Response> notify(String selectedMessageGuid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/message/$selectedMessageGuid/notify",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get the number of handles in the server iMessage DB
   Future<Response> handleCount({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
@@ -631,6 +712,18 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/handle/$guid",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get a single handle's focus state by [address]
+  Future<Response> handleFocusState(String address, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/handle/$address/focus",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );

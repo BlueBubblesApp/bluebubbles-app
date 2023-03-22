@@ -75,41 +75,41 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
         ),
         child: FadeTransition(
           opacity: opacityTitle,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              color: context.theme.colorScheme.properSurface,
+          child: Theme(
+            data: context.theme.copyWith(
+              // in case some components still use legacy theming
+              primaryColor: context.theme.colorScheme.bubble(context, true),
+              colorScheme: context.theme.colorScheme.copyWith(
+                primary: context.theme.colorScheme.bubble(context, true),
+                onPrimary: context.theme.colorScheme.onBubble(context, true),
+                surface: ss.settings.monetTheming.value == Monet.full
+                    ? null
+                    : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                onSurface: ss.settings.monetTheming.value == Monet.full
+                    ? null
+                    : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+              ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  ConfettiWidget(
-                    confettiController: confettiController,
-                    blastDirection: pi / 2,
-                    blastDirectionality: BlastDirectionality.explosive,
-                    emissionFrequency: 0.35,
-                    canvas: Size(context.width - 16, height + 50),
+            child: Builder(
+              builder: (context) {
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    color: context.theme.colorScheme.surface.lightenOrDarken(65),
                   ),
-                  Theme(
-                    data: context.theme.copyWith(
-                      // in case some components still use legacy theming
-                      primaryColor: context.theme.colorScheme.bubble(context, true),
-                      colorScheme: context.theme.colorScheme.copyWith(
-                        primary: context.theme.colorScheme.bubble(context, true),
-                        onPrimary: context.theme.colorScheme.onBubble(context, true),
-                        surface: ss.settings.monetTheming.value == Monet.full
-                            ? null
-                            : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-                        onSurface: ss.settings.monetTheming.value == Monet.full
-                            ? null
-                            : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
-                      ),
-                    ),
-                    child: Builder(
-                      builder: (context) {
-                        return Padding(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        ConfettiWidget(
+                          confettiController: confettiController,
+                          blastDirection: pi / 2,
+                          blastDirectionality: BlastDirectionality.explosive,
+                          emissionFrequency: 0.35,
+                          canvas: Size(context.width - 16, height + 50),
+                        ),
+                        Padding(
                           padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
                           child: Column(
                             children: [
@@ -140,7 +140,7 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
                                             maxHeight: 100,
                                           ),
                                           padding: const EdgeInsets.only(left: 10),
-                                          color: context.theme.colorScheme.secondary.oppositeLightenOrDarken(50),
+                                          color: context.theme.colorScheme.surface,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -157,7 +157,7 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
                                             minHeight: 40,
                                           ),
                                           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(left: 10)),
-                                          color: context.theme.colorScheme.secondary.oppositeLightenOrDarken(50),
+                                          color: context.theme.colorScheme.surface,
                                         ),
                                       ),
                                     ],
@@ -166,53 +166,53 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
                               ),
                               const SizedBox(height: 10),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      ClipPath(
-                                        clipper: TailClipper(
-                                          isFromMe: true,
-                                          showTail: true,
-                                          connectLower: false,
-                                          connectUpper: false,
-                                        ),
-                                        child: Container(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 100,
-                                            minHeight: 40,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
-                                          color: context.theme.colorScheme.primary,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          // todo dart fix confettiController.play();
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 15).add(const EdgeInsets.only(top: 3)),
-                                          child: Text.rich(
-                                            const TextSpan(
-                                              text: "↺ sent with confetti",
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          ClipPath(
+                                            clipper: TailClipper(
+                                              isFromMe: true,
+                                              showTail: true,
+                                              connectLower: false,
+                                              connectUpper: false,
                                             ),
-                                            style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                                            child: Container(
+                                              constraints: const BoxConstraints(
+                                                maxWidth: 100,
+                                                minHeight: 40,
+                                              ),
+                                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
+                                              color: context.theme.colorScheme.primary,
+                                            ),
                                           ),
-                                        ),
-                                      )
-                                    ]
-                                  ),
-                                ]
+                                          GestureDetector(
+                                            onTap: () {
+                                              confettiController.play();
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 15).add(const EdgeInsets.only(top: 3)),
+                                              child: Text.rich(
+                                                const TextSpan(
+                                                  text: "↺ sent with confetti",
+                                                ),
+                                                style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          )
+                                        ]
+                                    ),
+                                  ]
                               ),
                             ],
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                );
+              }
             ),
           ),
         ),

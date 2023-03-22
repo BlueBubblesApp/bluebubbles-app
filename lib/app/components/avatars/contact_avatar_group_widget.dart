@@ -70,7 +70,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
         if (widget.chat.customAvatarPath != null && !hide) {
           dynamic file = File(widget.chat.customAvatarPath!);
           return CircleAvatar(
-            key: Key("${participants.first.address}-avatar"),
+            key: ValueKey(widget.chat.customAvatarPath!),
             radius: avatarSize / 2,
             backgroundImage: FileImage(file),
             backgroundColor: Colors.transparent,

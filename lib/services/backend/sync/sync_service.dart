@@ -6,12 +6,14 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:path/path.dart' show join;
+import 'package:universal_io/io.dart';
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
 
@@ -58,7 +60,7 @@ class SyncService extends GetxService {
 
       FlutterIsolate? isolate;
       try {
-        isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, port.sendPort);
+        isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, [port.sendPort, http.originOverride]);
       } catch (e) {
         Logger.error('Got error when opening isolate: $e');
         port.close();
@@ -93,10 +95,13 @@ class SyncService extends GetxService {
 }
 
 @pragma('vm:entry-point')
-Future<List<List<int>>> incrementalSyncIsolate(SendPort? port) async {
+Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
+  final SendPort? port = items?.firstOrNull;
+  final String? address = items?.lastOrNull;
   try {
     if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
+      HttpOverrides.global = BadCertOverride();
       ls.isUiThread = false;
       await ss.init(headless: true);
       await fs.init(headless: true);
@@ -108,10 +113,13 @@ Future<List<List<int>>> incrementalSyncIsolate(SendPort? port) async {
       handleBox = store.box<Handle>();
       messageBox = store.box<Message>();
       themeBox = store.box<ThemeStruct>();
+      http.originOverride = address;
     }
 
     int syncStart = ss.settings.lastIncrementalSync.value;
-    final incrementalSyncManager = IncrementalSyncManager(syncStart);
+    int startRowId = ss.settings.lastIncrementalSyncRowId.value;
+    final incrementalSyncManager = IncrementalSyncManager(
+      startTimestamp: syncStart, startRowId: startRowId, saveMarker: true);
     await incrementalSyncManager.start();
     chats.sort();
   } catch (ex, s) {

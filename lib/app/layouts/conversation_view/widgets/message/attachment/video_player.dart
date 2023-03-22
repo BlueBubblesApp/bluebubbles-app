@@ -114,7 +114,9 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
         if (attachment.metadata?['thumbnail_status'] != 'error') {
           attachment.metadata ??= {};
           attachment.metadata!['thumbnail_status'] = 'error';
-          attachment.save(null);
+          if (attachment.id != null) {
+            attachment.save(null);
+          }
         }
       }
 
@@ -131,10 +133,12 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
     if (controller != null) {
       return GestureDetector(
         onTap: () async {
+          if (!kIsWeb && attachment.id == null) return;
           if (controller!.value.isPlaying) {
             controller!.pause();
             showPlayPauseOverlay.value = true;
           } else {
+            if (!kIsWeb && attachment.id == null) return;
             await Navigator.of(Get.context!).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => FullscreenMediaHolder(
@@ -166,6 +170,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
     }
     return InkWell(
       onTap: () async {
+        if (!kIsWeb && attachment.id == null) return;
         await Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => FullscreenMediaHolder(

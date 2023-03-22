@@ -110,7 +110,7 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
             });
           }
         } else if (screenSelected == "confetti") {
-          // todo dart fix confettiController.play();
+          confettiController.play();
         }
       }
     });

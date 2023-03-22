@@ -47,7 +47,7 @@ import 'package:windows_taskbar/windows_taskbar.dart';
 // todo list desktop
 /// Show notif badges
 
-const databaseVersion = 2;
+const databaseVersion = 3;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -63,6 +63,7 @@ late final Box<ThemeObject> themeObjectBox;
 final Completer<void> storeStartup = Completer();
 final Completer<void> uiStartup = Completer();
 bool isAuthing = false;
+bool hasBadCert = false;
 
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
@@ -209,7 +210,7 @@ Future<Null> initApp(bool bubble) async {
       migrate() {
         if (version < databaseVersion) {
           switch (databaseVersion) {
-          // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
+            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
             case 2:
               Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
               final messages = messageBox.getAll();
@@ -224,6 +225,28 @@ Future<Null> initApp(bool bubble) async {
                 messageBox.putMany(messages);
               }
               version = 2;
+              migrate.call();
+              return;
+            // Version 3 modifies chat typing indicators and read receipts values to follow global setting initially
+            case 3:
+              final chats = chatBox.getAll();
+              final papi = ss.settings.enablePrivateAPI.value;
+              final typeGlobal = ss.settings.privateSendTypingIndicators.value;
+              final readGlobal = ss.settings.privateMarkChatAsRead.value;
+              for (Chat c in chats) {
+                if (papi && readGlobal && !(c.autoSendReadReceipts ?? true)) {
+                  // dont do anything
+                } else {
+                  c.autoSendReadReceipts = null;
+                }
+                if (papi && typeGlobal && !(c.autoSendTypingIndicators ?? true)) {
+                  // dont do anything
+                } else {
+                  c.autoSendTypingIndicators = null;
+                }
+              }
+              chatBox.putMany(chats);
+              version = 3;
               migrate.call();
               return;
             default:
@@ -386,7 +409,8 @@ class BadCertOverride extends HttpOverrides {
     // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
-        return serverUrl.contains(host);
+        hasBadCert = serverUrl.contains(host);
+        return hasBadCert;
       };
   }
 }
@@ -747,7 +771,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-      systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+      systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       statusBarColor: Colors.transparent, // status bar color
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
@@ -755,7 +779,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),

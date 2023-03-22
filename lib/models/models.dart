@@ -10,8 +10,6 @@ export 'package:bluebubbles/models/io/fcm_data.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/fcm_data.dart';
 export 'package:bluebubbles/models/io/handle.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/handle.dart';
-export 'package:bluebubbles/models/io/js.dart'
-    if (dart.library.html) 'package:bluebubbles/models/html/js.dart';
 export 'package:bluebubbles/models/io/launch_at_startup.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/launch_at_startup.dart';
 export 'package:bluebubbles/models/io/message.dart'
@@ -41,3 +39,4 @@ export 'package:bluebubbles/models/global/message_summary_info.dart';
 export 'package:bluebubbles/models/global/message_part.dart';
 export 'package:bluebubbles/models/global/scheduled_message.dart';
 export 'package:bluebubbles/models/global/findmy.dart';
+export 'package:bluebubbles/models/global/server_payload.dart';
