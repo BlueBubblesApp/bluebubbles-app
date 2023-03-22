@@ -84,6 +84,7 @@ class OverflowMenu extends StatelessWidget {
         } else if (value == 2) {
           final currentChat = cm.activeChat?.chat;
           ns.closeAllConversationView(context);
+          cm.setAllInactive();
           await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
@@ -92,6 +93,7 @@ class OverflowMenu extends StatelessWidget {
             ),
           );
           if (currentChat != null) {
+            cm.setActiveChat(currentChat);
             if (ss.settings.tabletMode.value) {
               ns.pushAndRemoveUntil(
                 context,
@@ -153,13 +155,30 @@ class OverflowMenu extends StatelessWidget {
             },
           );
         } else if (value == 5) {
-          Navigator.of(Get.context!).push(
+          final currentChat = cm.activeChat?.chat;
+          ns.closeAllConversationView(context);
+          cm.setAllInactive();
+          await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
                 return const FindMyPage();
               },
             ),
           );
+          if (currentChat != null) {
+            cm.setActiveChat(currentChat);
+            if (ss.settings.tabletMode.value) {
+              ns.pushAndRemoveUntil(
+                context,
+                ConversationView(
+                  chat: currentChat,
+                ),
+                    (route) => route.isFirst,
+              );
+            } else {
+              cvc(currentChat).close();
+            }
+          }
         }
       },
       itemBuilder: (context) {
