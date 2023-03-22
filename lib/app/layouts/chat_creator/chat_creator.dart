@@ -183,7 +183,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               break;
             }
             // match last digits
-            final matchLengths = [11, 10, 9, 8, 7];
+            final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
             final numeric = contact.address.numericOnly();
             if (matchLengths.contains(numeric.length) && participant.address.numericOnly().endsWith(numeric)) {
               matches += 1;
