@@ -69,6 +69,7 @@ class CelebrationController extends FireworkController {
       isPlaying = false;
       requestedToStop = false;
       hasCreatedParticles = false;
+      stopFunc?.call();
     }
     // Notify listeners.
     // The copy of the list and the condition prevent
