@@ -663,6 +663,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         if (kIsDesktop) {
                           String downloadsPath = (await getDownloadsDirectory())!.path;
                           await File(join(downloadsPath, "main.log")).writeAsString(response.data['data']);
+                          controller.fetchStatus.value = null;
                           return showSnackbar('Success', 'Saved logs to $downloadsPath!');
                         }
 
@@ -673,6 +674,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               href: "data:application/octet-stream;charset=utf-16le;base64,$content")
                             ..setAttribute("download", "main.log")
                             ..click();
+                          controller.fetchStatus.value = null;
                           return;
                         }
 
