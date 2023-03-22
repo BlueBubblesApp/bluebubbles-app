@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 void showChangeName(Chat chat, String method, BuildContext context) {
   final controller = TextEditingController(text: chat.displayName);
+  final node = FocusNode();
   showDialog(
     context: context,
     builder: (_) {
@@ -15,6 +16,7 @@ void showChangeName(Chat chat, String method, BuildContext context) {
           TextButton(
             child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
             onPressed: () async {
+              node.unfocus();
               if (method == "private-api") {
                 showDialog(
                   context: context,
@@ -60,6 +62,7 @@ void showChangeName(Chat chat, String method, BuildContext context) {
         ],
         content: TextField(
           controller: controller,
+          focusNode: node,
           decoration: const InputDecoration(
             labelText: "Chat Name",
             border: OutlineInputBorder(),
