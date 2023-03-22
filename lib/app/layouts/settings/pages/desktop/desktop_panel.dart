@@ -152,15 +152,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     )
                 ],
               )),
-              if (Platform.isWindows)
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Notifications"),
-              if (Platform.isWindows)
-                SettingsSection(
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Notifications"),
+              SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     const SettingsTile(
