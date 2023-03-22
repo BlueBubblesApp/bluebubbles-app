@@ -150,7 +150,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     findExistingChat();
   }
 
-  Future<Chat?> findExistingChat({bool update = true}) async {
+  Future<Chat?> findExistingChat({bool checkDeleted = false, bool update = true}) async {
     // no selected items, remove message view
     if (selectedContacts.isEmpty) {
       cm.setAllInactive();
@@ -171,7 +171,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     }
     // match each selected contact to a participant in a chat
     if (existingChat == null) {
-      for (Chat c in filteredChats) {
+      for (Chat c in (checkDeleted ? chatBox.getAll() : filteredChats)) {
         if (c.participants.length != selectedContacts.length) continue;
         int matches = 0;
         for (SelectedContact contact in selectedContacts) {
@@ -207,6 +207,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         cm.setAllInactive();
         fakeController.value = null;
       }
+    }
+    if (checkDeleted && existingChat?.dateDeleted != null) {
+      Chat.unDelete(existingChat!);
+      chats.addChat(existingChat);
     }
     return existingChat;
   }
@@ -629,8 +633,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
-                          if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
-                            final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
+                          final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
+                          if (chat != null) {
                             ns.pushAndRemoveUntil(
                               Get.context!,
                               ConversationView(chat: chat, fromChatCreator: true),
