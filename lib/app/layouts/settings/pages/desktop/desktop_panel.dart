@@ -24,6 +24,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
   final RxList<bool> showButtons = RxList<bool>.filled(ReactionTypes.toList().length + 1, false);
   final RxnBool useCustomPath = RxnBool(ss.prefs.getBool("use-custom-path"));
   final RxnString customPath = RxnString(ss.prefs.getString("custom-path"));
+  final int maxActions = Platform.isWindows ? 5 : ss.settings.actionList.length; // Don't limit actions on Linux
 
   @override
   Widget build(BuildContext context) {
@@ -161,10 +162,10 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
               SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    const SettingsTile(
+                    SettingsTile(
                       title: "Actions",
                       subtitle:
-                          "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                          "Click actions to toggle them. Drag actions to move them. ${Platform.isWindows ? "You can select up to 5 actions." : "The number of actions actually visible varies by distribution."} Tapback actions require Private API to be enabled.",
                       isThreeLine: true,
                     ),
                     Row(
@@ -226,7 +227,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                                   value != "Mark Read");
 
                                               bool hardDisabled = (!selected &&
-                                                  (ss.settings.selectedActionIndices.length == 5));
+                                                  (ss.settings.selectedActionIndices.length == maxActions));
 
                                               Color color = selected
                                                   ? context.theme.colorScheme.primary
@@ -297,7 +298,8 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                             ),
                           ),
                         ),
-                        Obx(
+                        if (Platform.isWindows)
+                          Obx(
                           () {
                             context.width;
                             ns.listener.value;
