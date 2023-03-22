@@ -29,10 +29,9 @@ class _QRCodeScannerState extends OptimizedState<QRCodeScanner> {
         backgroundColor: context.theme.colorScheme.background,
         body: MobileScanner(
           key: qrKey,
-          allowDuplicates: false,
-          onDetect: (barcode, args) {
-            if (!isNullOrEmpty(barcode.rawValue)!) {
-              Navigator.of(context).pop(barcode.rawValue);
+          onDetect: (capture) {
+            if (!isNullOrEmpty(capture.raw)!) {
+              Navigator.of(context).pop(capture.raw);
             }
           },
         ),

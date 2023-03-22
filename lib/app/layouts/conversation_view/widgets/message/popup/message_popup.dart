@@ -518,11 +518,11 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                             child: iOS
                                                                 ? SvgPicture.asset(
                                                                     'assets/reactions/$e-black.svg',
-                                                                    color: e == "love" && currentlySelectedReaction == e
+                                                                    colorFilter: ColorFilter.mode(e == "love" && currentlySelectedReaction == e
                                                                         ? Colors.pink
                                                                         : (currentlySelectedReaction == e
-                                                                            ? context.theme.colorScheme.onPrimary
-                                                                            : context.theme.colorScheme.outline),
+                                                                        ? context.theme.colorScheme.onPrimary
+                                                                        : context.theme.colorScheme.outline), BlendMode.srcIn),
                                                                   )
                                                                 : Center(
                                                                     child: Builder(builder: (context) {
@@ -1414,11 +1414,11 @@ class ReactionDetails extends StatelessWidget {
                         child: ss.settings.skin.value == Skins.iOS
                             ? SvgPicture.asset(
                                 'assets/reactions/${message.associatedMessageType}-black.svg',
-                                color: message.associatedMessageType == "love"
+                                colorFilter: ColorFilter.mode(message.associatedMessageType == "love"
                                     ? Colors.pink
                                     : message.isFromMe!
-                                        ? context.theme.colorScheme.onPrimary
-                                        : context.theme.colorScheme.properOnSurface,
+                                    ? context.theme.colorScheme.onPrimary
+                                    : context.theme.colorScheme.properOnSurface, BlendMode.srcIn),
                               )
                             : Center(
                                 child: Builder(builder: (context) {
