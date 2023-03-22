@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -56,11 +57,13 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   bool showAttachmentPicker = false;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
-  final textController = TextEditingController();
+  final textController = MentionTextEditingController();
   final subjectTextController = TextEditingController();
   final RxBool showRecording = false.obs;
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
+  final RxList<Mentionable> mentionMatches = <Mentionable>[].obs;
+  final RxInt mentionSelectedIndex = 0.obs;
   final ScrollController emojiScrollController = ScrollController();
   final Rxn<DateTime> scheduledDate = Rxn<DateTime>(null);
   final Rxn<Tuple2<Message, int>> _replyToMessage = Rxn<Tuple2<Message, int>>(null);
@@ -73,6 +76,9 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   }
   final focusNode = FocusNode();
   final subjectFocusNode = FocusNode();
+  late final mentionables = chat.participants.map((e) => Mentionable(
+    handle: e,
+  )).toList();
 
   bool keyboardOpen = false;
   double _keyboardOffset = 0;

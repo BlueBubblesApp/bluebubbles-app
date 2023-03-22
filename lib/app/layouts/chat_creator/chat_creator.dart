@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
@@ -48,7 +49,7 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
-  late final TextEditingController textController = TextEditingController(text: widget.initialText);
+  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
