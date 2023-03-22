@@ -121,7 +121,6 @@ dependencies:
     git:
       url: https://github.com/theyakka/qr.flutter
       ref: master
-  quick_notify: ^0.2.1
   receive_intent: ^0.2.3 # mobile only
   reorderables: ^0.6.0
   screen_retriever: ^0.1.5

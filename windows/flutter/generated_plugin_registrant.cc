@@ -21,7 +21,6 @@
 #include <pasteboard/pasteboard_plugin.h>
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
 #include <printing/printing_plugin.h>
-#include <quick_notify/quick_notify_plugin.h>
 #include <screen_retriever/screen_retriever_plugin.h>
 #include <secure_application/secure_application_plugin.h>
 #include <share_plus/share_plus_windows_plugin_c_api.h>
@@ -61,8 +60,6 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
   PrintingPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("PrintingPlugin"));
-  QuickNotifyPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("QuickNotifyPlugin"));
   ScreenRetrieverPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ScreenRetrieverPlugin"));
   SecureApplicationPluginRegisterWithRegistrar(

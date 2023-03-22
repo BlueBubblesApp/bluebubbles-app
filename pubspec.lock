@@ -2010,14 +2010,6 @@ packages:
       url: "https://github.com/theyakka/qr.flutter"
     source: git
     version: "4.0.1"
-  quick_notify:
-    dependency: "direct main"
-    description:
-      name: quick_notify
-      sha256: a4d9867b9652ea392ca09d853f7ebaa95529b9f4ca8d9cc51b0722ad342e8c33
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.1"
   quiver:
     dependency: transitive
     description:
