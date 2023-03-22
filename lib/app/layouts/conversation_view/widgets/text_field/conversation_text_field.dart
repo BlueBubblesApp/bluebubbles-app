@@ -300,16 +300,39 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         showSnackbar("Error", "Something went wrong!");
       }
     } else {
-      if (controller.textController.text.isEmpty && controller.subjectTextController.text.isEmpty && !ss.settings.privateAPIAttachmentSend.value) {
+      final text = controller.textController.text;
+      if (text.isEmpty && controller.subjectTextController.text.isEmpty && !ss.settings.privateAPIAttachmentSend.value) {
         if (controller.replyToMessage != null) {
           return showSnackbar("Error", "Turn on Private API Attachment Send to send replies with media!");
         } else if (effect != null) {
           return showSnackbar("Error", "Turn on Private API Attachment Send to send effects with media!");
         }
       }
+      if (effect == null && ss.settings.enablePrivateAPI.value) {
+        final cleansed = text.replaceAll("!", "").toLowerCase();
+        switch (cleansed) {
+          case "congratulations":
+          case "congrats":
+            effect = effectMap["confetti"];
+            break;
+          case "happy birthday":
+            effect = effectMap["balloons"];
+            break;
+          case "happy new year":
+            effect = effectMap["fireworks"];
+            break;
+          case "happy chinese new year":
+          case "happy lunar new year":
+            effect = effectMap["celebration"];
+            break;
+          case "pew pew":
+            effect = effectMap["lasers"];
+            break;
+        }
+      }
       await controller.send(
         controller.pickedAttachments,
-        controller.textController.text,
+        text,
         controller.subjectTextController.text,
         controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
         controller.replyToMessage?.item2,
