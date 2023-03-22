@@ -39,7 +39,7 @@ dependencies:
   defer_pointer: ^0.0.2
   desktop_drop: ^0.4.0
   device_info_plus: ^8.0.0
-  dio: ^4.0.6
+  dio: ^5.0.3
   disable_battery_optimization: ^1.1.0+1
   # todo linux
   dynamic_color: ^1.5.4

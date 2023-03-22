@@ -237,9 +237,9 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           onChangeEnd: (double val) {
                             saveSettings();
                             http.dio = Dio(BaseOptions(
-                              connectTimeout: 15000,
-                              receiveTimeout: ss.settings.apiTimeout.value,
-                              sendTimeout: ss.settings.apiTimeout.value,
+                              connectTimeout: const Duration(milliseconds: 15000),
+                              receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+                              sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
                             ));
                             http.dio.interceptors.add(ApiInterceptor());
                           },

@@ -63,9 +63,9 @@ class HttpService extends GetxService {
   @override
   void onInit() {
     dio = Dio(BaseOptions(
-      connectTimeout: 15000,
-      receiveTimeout: ss.settings.apiTimeout.value,
-      sendTimeout: ss.settings.apiTimeout.value,
+      connectTimeout: const Duration(milliseconds: 15000),
+      receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+      sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
       headers: ss.settings.customHeaders,
     ));
     dio.interceptors.add(ApiInterceptor());
@@ -239,7 +239,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$apiRoot/attachment/$guid/download",
           queryParameters: buildQueryParams({"original": original}),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -253,7 +253,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
         "$apiRoot/attachment/$guid/blurhash",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
@@ -432,7 +432,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$apiRoot/chat/$guid/icon",
           queryParameters: buildQueryParams(),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -450,7 +450,7 @@ class HttpService extends GetxService {
         "$apiRoot/chat/$guid/icon",
         queryParameters: buildQueryParams(),
         data: formData,
-        options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+        options: Options(sendTimeout: dio.options.sendTimeout! * 12, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
       );
@@ -539,7 +539,7 @@ class HttpService extends GetxService {
       final response = await dio.get(
           "$apiRoot/message/$guid/embedded-media",
           queryParameters: buildQueryParams(),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -610,7 +610,7 @@ class HttpService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+          options: Options(sendTimeout: dio.options.sendTimeout! * 12, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
       );
       return returnSuccessOrError(response);
     });
@@ -765,7 +765,7 @@ class HttpService extends GetxService {
           queryParameters: buildQueryParams(),
           data: contacts,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: dio.options.sendTimeout * 12, receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+          options: Options(sendTimeout: dio.options.sendTimeout! * 12, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -921,7 +921,7 @@ class HttpService extends GetxService {
         "$apiRoot/icloud/findmy/devices/refresh",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
-        options: Options(receiveTimeout: dio.options.receiveTimeout * 12, headers: ss.settings.customHeaders),
+        options: Options(receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
       );
       return returnSuccessOrError(response);
     });
@@ -943,7 +943,7 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           url,
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout* 12, headers: ss.settings.customHeaders),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
           cancelToken: cancelToken,
           onReceiveProgress: progress,
       );
