@@ -895,7 +895,7 @@ class TextFieldComponent extends StatelessWidget {
         androidData = ev.data as RawKeyEventDataAndroid;
       }
 
-      int maxShown = context.height / 3 ~/ 48;
+      int maxShown = context.height / 3 ~/ 40;
       int upMovementIndex = maxShown ~/ 3;
       int downMovementIndex = maxShown * 2 ~/ 3;
 
@@ -904,12 +904,21 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65364 ||
           webData?.code == "ArrowDown" ||
           androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
+        if (controller!.mentionSelectedIndex.value < controller!.mentionMatches.length - 1) {
+          controller!.mentionSelectedIndex.value++;
+          if (controller!.mentionSelectedIndex.value >= downMovementIndex &&
+              controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + downMovementIndex + 1) {
+            controller!.emojiScrollController
+                .jumpTo(max((controller!.mentionSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
+          }
+          return KeyEventResult.handled;
+        }
         if (controller!.emojiSelectedIndex.value < controller!.emojiMatches.length - 1) {
           controller!.emojiSelectedIndex.value++;
           if (controller!.emojiSelectedIndex.value >= downMovementIndex &&
               controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + downMovementIndex + 1) {
             controller!.emojiScrollController
-                .jumpTo(max((controller!.emojiSelectedIndex.value - downMovementIndex) * 48, controller!.emojiScrollController.offset));
+                .jumpTo(max((controller!.emojiSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
           }
           return KeyEventResult.handled;
         }
@@ -920,12 +929,21 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65362 ||
           webData?.code == "ArrowUp" ||
           androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
+        if (controller!.mentionSelectedIndex.value > 0) {
+          controller!.mentionSelectedIndex.value--;
+          if (controller!.mentionSelectedIndex.value >= upMovementIndex &&
+              controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + upMovementIndex + 1) {
+            controller!.emojiScrollController
+                .jumpTo(min((controller!.mentionSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
+          }
+          return KeyEventResult.handled;
+        }
         if (controller!.emojiSelectedIndex.value > 0) {
           controller!.emojiSelectedIndex.value--;
           if (controller!.emojiSelectedIndex.value >= upMovementIndex &&
               controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + upMovementIndex + 1) {
             controller!.emojiScrollController
-                .jumpTo(min((controller!.emojiSelectedIndex.value - upMovementIndex) * 48, controller!.emojiScrollController.offset));
+                .jumpTo(min((controller!.emojiSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
           }
           return KeyEventResult.handled;
         }
