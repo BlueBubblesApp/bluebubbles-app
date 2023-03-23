@@ -54,7 +54,10 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     cm.setActiveToAlive();
     if (cm.activeChat != null) {
       cm.activeChat!.chat.toggleHasUnread(false);
-      cvc(cm.activeChat!.chat).focusNode.requestFocus();
+      ConversationViewController _cvc = cvc(cm.activeChat!.chat);
+      if (!_cvc.focusNode.hasFocus && !_cvc.subjectFocusNode.hasFocus) {
+        cvc(cm.activeChat!.chat).focusNode.requestFocus();
+      }
     }
 
     if (!kIsDesktop && !kIsWeb) {
