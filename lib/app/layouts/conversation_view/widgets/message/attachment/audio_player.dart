@@ -5,7 +5,6 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:universal_io/io.dart';
 
 class AudioPlayer extends StatefulWidget {
   final PlatformFile file;
@@ -53,10 +52,6 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   void initBytes() async {
     if (attachment != null) controller = cvController?.audioPlayers[attachment!.guid];
     if (controller == null) {
-      final uriPath = Uri.parse(file.path!).path;
-      if (!(await File(uriPath).exists())) {
-        await File(file.path!).copy(uriPath);
-      }
       controller = PlayerController()..addListener(() {
         setState(() {});
       });

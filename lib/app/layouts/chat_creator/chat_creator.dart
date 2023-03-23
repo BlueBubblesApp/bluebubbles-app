@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
@@ -48,7 +49,7 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
-  late final TextEditingController textController = TextEditingController(text: widget.initialText);
+  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -149,7 +150,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     findExistingChat();
   }
 
-  Future<Chat?> findExistingChat({bool update = true}) async {
+  Future<Chat?> findExistingChat({bool checkDeleted = false, bool update = true}) async {
     // no selected items, remove message view
     if (selectedContacts.isEmpty) {
       cm.setAllInactive();
@@ -170,7 +171,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     }
     // match each selected contact to a participant in a chat
     if (existingChat == null) {
-      for (Chat c in filteredChats) {
+      for (Chat c in (checkDeleted ? chatBox.getAll() : filteredChats)) {
         if (c.participants.length != selectedContacts.length) continue;
         int matches = 0;
         for (SelectedContact contact in selectedContacts) {
@@ -182,7 +183,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               break;
             }
             // match last digits
-            final matchLengths = [11, 10, 9, 8, 7];
+            final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
             final numeric = contact.address.numericOnly();
             if (matchLengths.contains(numeric.length) && participant.address.numericOnly().endsWith(numeric)) {
               matches += 1;
@@ -206,6 +207,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         cm.setAllInactive();
         fakeController.value = null;
       }
+    }
+    if (checkDeleted && existingChat?.dateDeleted != null) {
+      Chat.unDelete(existingChat!);
+      chats.addChat(existingChat);
     }
     return existingChat;
   }
@@ -628,8 +633,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
-                          if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
-                            final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
+                          final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
+                          if (chat != null) {
                             ns.pushAndRemoveUntil(
                               Get.context!,
                               ConversationView(chat: chat, fromChatCreator: true),

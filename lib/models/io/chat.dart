@@ -614,6 +614,14 @@ class Chat {
     });
   }
 
+  static void unDelete(Chat chat) async {
+    if (kIsWeb) return;
+    store.runInTransaction(TxMode.write, () {
+      chat.dateDeleted = null;
+      chat.save(updateDateDeleted: true);
+    });
+  }
+
   Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
     if (kIsDesktop && !hasUnread) {
       notif.clearDesktopNotificationsForChat(guid);

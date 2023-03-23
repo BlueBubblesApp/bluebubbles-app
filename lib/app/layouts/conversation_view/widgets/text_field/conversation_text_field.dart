@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
@@ -198,6 +199,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         }
         Logger.info("${allMatches.length} matches found for: $emojiName");
       }
+      controller.mentionMatches.value = [];
+      controller.mentionSelectedIndex.value = 0;
       if (allMatches.isNotEmpty) {
         controller.emojiMatches.value = allMatches;
         controller.emojiSelectedIndex.value = 0;
@@ -205,15 +208,47 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         controller.emojiMatches.value = [];
         controller.emojiSelectedIndex.value = 0;
       }
-    } else {
+    } else if (newEmojiText.contains("@")) {
+      oldEmojiText = newEmojiText;
+      final regExp = RegExp(r"(?<=^|[^a-zA-Z\d])@[^@ \n]*(?:(?=[ \n]|$)|@)", multiLine: true);
+      final matches = regExp.allMatches(newEmojiText);
+      List<Mentionable> allMatches = [];
+      String mentionName = "";
+      if (matches.isNotEmpty && matches.first.start < _controller.selection.start) {
+        RegExpMatch match = matches.lastWhere((m) => m.start < _controller.selection.start);
+        final text = newEmojiText.substring(match.start, match.end);
+        if (text.endsWith("@")) {
+          allMatches = controller.mentionables;
+        } else if (newEmojiText[match.end - 1] == "@") {
+          mentionName = newEmojiText.substring(match.start + 1, match.end - 1).toLowerCase();
+          allMatches = controller.mentionables.where((e) => e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName)).toList();
+        } else if (match.end >= _controller.selection.start) {
+          mentionName = newEmojiText.substring(match.start + 1, match.end).toLowerCase();
+          allMatches = controller.mentionables.where((e) => e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName)).toList();
+        }
+        Logger.info("${allMatches.length} matches found for: $mentionName");
+      }
       controller.emojiMatches.value = [];
       controller.emojiSelectedIndex.value = 0;
+      if (allMatches.isNotEmpty) {
+        controller.mentionMatches.value = allMatches;
+        controller.mentionSelectedIndex.value = 0;
+      } else {
+        controller.mentionMatches.value = [];
+        controller.mentionSelectedIndex.value = 0;
+      }
+    } else {
+      oldEmojiText = newEmojiText;
+      controller.emojiMatches.value = [];
+      controller.emojiSelectedIndex.value = 0;
+      controller.mentionMatches.value = [];
+      controller.mentionSelectedIndex.value = 0;
     }
   }
 
   @override
   void dispose() {
-    chat.textFieldText = controller.textController.text;
+    chat.textFieldText = controller.textController.cleansedText;
     chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
 
@@ -233,6 +268,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
       if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
+      if (controller.textController.text.contains(MentionTextEditingController.escapingChar)) return showSnackbar("Error", "Mentions are not allowed in scheduled messages!");
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -264,16 +300,39 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         showSnackbar("Error", "Something went wrong!");
       }
     } else {
-      if (controller.textController.text.isEmpty && controller.subjectTextController.text.isEmpty && !ss.settings.privateAPIAttachmentSend.value) {
+      final text = controller.textController.text;
+      if (text.isEmpty && controller.subjectTextController.text.isEmpty && !ss.settings.privateAPIAttachmentSend.value) {
         if (controller.replyToMessage != null) {
           return showSnackbar("Error", "Turn on Private API Attachment Send to send replies with media!");
         } else if (effect != null) {
           return showSnackbar("Error", "Turn on Private API Attachment Send to send effects with media!");
         }
       }
+      if (effect == null && ss.settings.enablePrivateAPI.value) {
+        final cleansed = text.replaceAll("!", "").toLowerCase();
+        switch (cleansed) {
+          case "congratulations":
+          case "congrats":
+            effect = effectMap["confetti"];
+            break;
+          case "happy birthday":
+            effect = effectMap["balloons"];
+            break;
+          case "happy new year":
+            effect = effectMap["fireworks"];
+            break;
+          case "happy chinese new year":
+          case "happy lunar new year":
+            effect = effectMap["celebration"];
+            break;
+          case "pew pew":
+            effect = effectMap["lasers"];
+            break;
+        }
+      }
       await controller.send(
         controller.pickedAttachments,
-        controller.textController.text,
+        text,
         controller.subjectTextController.text,
         controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
         controller.replyToMessage?.item2,
@@ -553,7 +612,7 @@ class TextFieldComponent extends StatelessWidget {
   }) : super(key: key);
 
   final TextEditingController subjectTextController;
-  final TextEditingController textController;
+  final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
@@ -672,7 +731,6 @@ class TextFieldComponent extends StatelessWidget {
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                   autofocus: (kIsWeb || kIsDesktop) && !isChatCreator,
                   enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                   textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop ? TextInputAction.send : TextInputAction.newline,
@@ -708,6 +766,79 @@ class TextFieldComponent extends StatelessWidget {
                             ),
                           ),
                   ),
+                  contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
+                    final start = editableTextState.textEditingValue.selection.start;
+                    final end = editableTextState.textEditingValue.selection.end;
+                    final selected = editableTextState.textEditingValue.text.substring(start, end);
+                    return AdaptiveTextSelectionToolbar.editableText(
+                      editableTextState: editableTextState,
+                    )..buttonItems?.addAllIf(
+                      selected == MentionTextEditingController.escapingChar,
+                      [
+                        ContextMenuButtonItem(
+                          onPressed: () {
+                            final TextSelection selection = editableTextState.textEditingValue.selection;
+                            if (selection.isCollapsed) {
+                              return;
+                            }
+                            controller?.textController.text = editableTextState.textEditingValue.text.replaceRange(start, end, "");
+                            editableTextState.hideToolbar();
+                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                          },
+                          label: "Remove Mention",
+                        ),
+                        ContextMenuButtonItem(
+                          onPressed: () async {
+                            final textPart = editableTextState.textEditingValue.text.substring(0, end);
+                            final mentionIndex = MentionTextEditingController.escapingChar.allMatches(textPart).length;
+                            final mention = controller?.textController.mentions[mentionIndex - 1];
+                            final TextEditingController mentionController = TextEditingController(text: mention?.displayName);
+                            String? changed;
+                            await showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  actions: [
+                                    TextButton(
+                                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                      onPressed: () => Get.back(),
+                                    ),
+                                    TextButton(
+                                      child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                      onPressed: () {
+                                        changed = mentionController.text;
+                                        Get.back();
+                                      },
+                                    ),
+                                  ],
+                                  content: TextField(
+                                    controller: mentionController,
+                                    textCapitalization: TextCapitalization.sentences,
+                                    autocorrect: true,
+                                    scrollPhysics: const CustomBouncingScrollPhysics(),
+                                    autofocus: true,
+                                    enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
+                                    decoration: const InputDecoration(
+                                      labelText: "Custom Mention",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                  title: Text("Custom Mention", style: context.theme.textTheme.titleLarge),
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                );
+                              }
+                            );
+                            if (!isNullOrEmpty(changed)! && mention != null) {
+                              mention.customDisplayName = changed!;
+                            }
+                            editableTextState.hideToolbar();
+                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end));
+                          },
+                          label: "Custom Mention"
+                        ),
+                      ],
+                    );
+                  },
                   onTap: () {
                     HapticFeedback.selectionClick();
                   },

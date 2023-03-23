@@ -210,9 +210,9 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                   padding: const EdgeInsets.all(6.5).add(EdgeInsets.only(right: reactionType == "emphasize" ? 1 : 0)),
                   child: SvgPicture.asset(
                     'assets/reactions/$reactionType-black.svg',
-                    color: reactionType == "love"
+                    colorFilter: ColorFilter.mode(reactionType == "love"
                         ? Colors.pink
-                        : (reactionIsFromMe ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface),
+                        : (reactionIsFromMe ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface), BlendMode.srcIn),
                   ),
                 )
               ),
