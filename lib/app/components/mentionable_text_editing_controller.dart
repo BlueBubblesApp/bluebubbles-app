@@ -1,5 +1,6 @@
 import "package:bluebubbles/helpers/helpers.dart";
 import "package:bluebubbles/models/io/handle.dart";
+import "package:collection/collection.dart";
 import "package:flutter/material.dart";
 import "package:get/get.dart";
 
@@ -8,7 +9,9 @@ class Mentionable {
 
   final Handle handle;
   String? customDisplayName;
+
   String get displayName => customDisplayName ?? handle.displayName;
+
   String get address => handle.address;
 
   String buildMention() => '<mention>$displayName</mention>';
@@ -16,11 +19,7 @@ class Mentionable {
   bool match(String search) => address.toLowerCase().contains(search.toLowerCase());
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-          other is Mentionable &&
-              runtimeType == other.runtimeType &&
-              address == other.address;
+  bool operator ==(Object other) => identical(this, other) || other is Mentionable && runtimeType == other.runtimeType && address == other.address;
 
   @override
   int get hashCode => address.hashCode;
@@ -65,24 +64,33 @@ class MentionTextEditingController extends TextEditingController {
     int i = 0;
     return TextSpan(
       style: style,
-      children: res.map((e) {
+      children: res.mapIndexed((idx, e) {
         if (e == escapingChar && mentions.isNotEmpty) {
           final mention = mentions[i];
           i++;
           // Mandatory WidgetSpan so that it takes the appropriate char number.
           return WidgetSpan(
-            child: ShaderMask(
-              blendMode: BlendMode.srcIn,
-              shaderCallback: (bounds) => LinearGradient(
-                colors: <Color>[context.theme.colorScheme.primary.darkenPercent(20), context.theme.colorScheme.primary.lightenPercent(20)],
-              ).createShader(
-                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+            child: Listener(
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (PointerDownEvent e) {
+                if (selection.isCollapsed && e.buttons == 2) { // Right click
+                  final start = res.slice(0, idx).join("").length;
+                  selection = TextSelection(baseOffset: start, extentOffset: start + 1);
+                }
+              },
+              child: ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: <Color>[context.theme.colorScheme.primary.darkenPercent(20), context.theme.colorScheme.primary.lightenPercent(20)],
+                ).createShader(
+                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                ),
+                child: Text(
+                  mention.displayName,
+                  style: style!.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
-              child: Text(
-                mention.displayName,
-                style: style!.copyWith(fontWeight: FontWeight.bold),
-              ),
-            )
+            ),
           );
         }
         return TextSpan(text: e, style: style);
