@@ -208,7 +208,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         controller.emojiMatches.value = [];
         controller.emojiSelectedIndex.value = 0;
       }
-    } else if (newEmojiText.contains("@")) {
+    } else if (!subject && newEmojiText.contains("@")) {
       oldEmojiText = newEmojiText;
       final regExp = RegExp(r"(?<=^|[^a-zA-Z\d])@[^@ \n]*(?:(?=[ \n]|$)|@)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
