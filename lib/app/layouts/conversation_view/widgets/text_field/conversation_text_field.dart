@@ -210,7 +210,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       }
     } else if (!subject && newEmojiText.contains("@")) {
       oldEmojiText = newEmojiText;
-      final regExp = RegExp(r"(?<=^|[^a-zA-Z\d])@[^@ \n]*(?:(?=[ \n]|$)|@)", multiLine: true);
+      final regExp = RegExp(r"(?<=^|[^a-zA-Z\d])@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
       List<Mentionable> allMatches = [];
       String mentionName = "";
@@ -940,12 +940,31 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65293 ||
           webData?.code == "Enter" ||
           androidData?.physicalKey == PhysicalKeyboardKey.enter) {
+        if (controller!.focusNode.hasPrimaryFocus && controller!.mentionMatches.length > controller!.mentionSelectedIndex.value) {
+          int index = controller!.mentionSelectedIndex.value;
+          TextEditingController textField =
+          controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
+          String text = textField.text;
+          RegExp regExp = RegExp(r"@(?:[^@ \n]+|$)([ \n]|$)", multiLine: true);
+          Iterable<RegExpMatch> matches = regExp.allMatches(text);
+          if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
+            RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
+            controller!.textController.addMention(text.substring(match.start, match.end), controller!.mentionMatches[index]);
+          } else {
+            // If the user moved the cursor before trying to insert a mention, reset the picker
+            controller!.emojiScrollController.jumpTo(0);
+          }
+          controller!.mentionSelectedIndex.value = 0;
+          controller!.mentionMatches.value = <Mentionable>[];
+
+          return KeyEventResult.handled;
+        }
         if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
           int index = controller!.emojiSelectedIndex.value;
           TextEditingController textField =
               controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
           String text = textField.text;
-          RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+          RegExp regExp = RegExp(r":[^: \n]+([ \n:]|$)", multiLine: true);
           Iterable<RegExpMatch> matches = regExp.allMatches(text);
           if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
             RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
