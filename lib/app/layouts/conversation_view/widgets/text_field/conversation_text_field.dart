@@ -1017,6 +1017,14 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65307 ||
           webData?.code == "Escape" ||
           androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+        if (controller!.mentionMatches.isNotEmpty) {
+          controller!.mentionMatches.value = <Mentionable>[];
+          return KeyEventResult.handled;
+        }
+        if (controller!.emojiMatches.isNotEmpty) {
+          controller!.emojiMatches.value = <Emoji>[];
+          return KeyEventResult.handled;
+        }
         if (controller!.replyToMessage != null) {
           controller!.replyToMessage = null;
           return KeyEventResult.handled;
