@@ -814,7 +814,11 @@ class TextFieldComponent extends StatelessWidget {
                                     TextButton(
                                       child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                       onPressed: () {
-                                        changed = mentionController.text;
+                                        if (isNullOrEmptyString(mentionController.text)) {
+                                          changed = mention?.handle.displayName ?? "";
+                                        } else {
+                                          changed = mentionController.text;
+                                        }
                                         Get.back();
                                       },
                                     ),
@@ -826,10 +830,18 @@ class TextFieldComponent extends StatelessWidget {
                                     scrollPhysics: const CustomBouncingScrollPhysics(),
                                     autofocus: true,
                                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: "Custom Mention",
-                                      border: OutlineInputBorder(),
+                                      hintText: mention?.handle.displayName ?? "",
+                                      border: const OutlineInputBorder(),
                                     ),
+                                    onSubmitted: (val) {
+                                      if (isNullOrEmptyString(val)) {
+                                        val = mention?.handle.displayName ?? "";
+                                      }
+                                      changed = val;
+                                      Get.back();
+                                    },
                                   ),
                                   title: Text("Custom Mention", style: context.theme.textTheme.titleLarge),
                                   backgroundColor: context.theme.colorScheme.properSurface,
