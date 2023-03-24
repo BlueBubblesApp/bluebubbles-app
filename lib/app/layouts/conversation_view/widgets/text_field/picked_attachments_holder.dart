@@ -112,7 +112,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               final _controller = widget.controller!.focusNode.hasFocus ? widget.textController : widget.subjectTextController;
                               widget.controller!.emojiSelectedIndex.value = 0;
                               final text = _controller.text;
-                              final regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+                              final regExp = RegExp(r":[^: \n]+([ \n:]|$)", multiLine: true);
                               final matches = regExp.allMatches(text);
                               if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
                                 final match = matches.lastWhere((m) => m.start < _controller.selection.start);
@@ -182,7 +182,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               final _controller = widget.textController;
                               widget.controller!.mentionSelectedIndex.value = 0;
                               final text = _controller.text;
-                              final regExp = RegExp("@[^@ \n]{0,}([ \n@]|\$)", multiLine: true);
+                              final regExp = RegExp(r"@(?:[^@ \n]+|$)([ \n]|$)", multiLine: true);
                               final matches = regExp.allMatches(text);
                               if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
                                 final match = matches.lastWhere((m) => m.start < _controller.selection.start);
