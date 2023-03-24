@@ -53,6 +53,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final RxList<Tuple4<Message, MessagePart, TextEditingController, FocusNode>> editing = <Tuple4<Message, MessagePart, TextEditingController, FocusNode>>[].obs;
   final GlobalKey focusInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
+  final RxBool showingOverlays = false.obs;
+
   // text field items
   bool showAttachmentPicker = false;
   final GlobalKey textFieldKey = GlobalKey();
