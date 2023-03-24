@@ -781,15 +781,23 @@ class TextFieldComponent extends StatelessWidget {
                             if (selection.isCollapsed) {
                               return;
                             }
-                            controller?.textController.text = editableTextState.textEditingValue.text.replaceRange(start, end, "");
+                            final textPart = editableTextState.textEditingValue.text.substring(0, end);
+                            final mentionIndex = MentionTextEditingController.escapingChar.allMatches(textPart).length;
+                            final mention = controller?.textController.mentions[mentionIndex - 1];
+                            final replacement = mention != null ? "@${mention.displayName}" : "";
+                            final text = editableTextState.textEditingValue.text.replaceRange(start, end, replacement);
+                            controller?.textController.text = text;
+                            final checkSpace = end + replacement.length - 1;
+                            final spaceAfter = checkSpace < text.length && text.substring(end + replacement.length - 1, end + replacement.length) == " ";
+                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0)));
                             editableTextState.hideToolbar();
-                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: start));
                           },
                           label: "Remove Mention",
                         ),
                         ContextMenuButtonItem(
                           onPressed: () async {
-                            final textPart = editableTextState.textEditingValue.text.substring(0, end);
+                            final text = editableTextState.textEditingValue.text;
+                            final textPart = text.substring(0, end);
                             final mentionIndex = MentionTextEditingController.escapingChar.allMatches(textPart).length;
                             final mention = controller?.textController.mentions[mentionIndex - 1];
                             final TextEditingController mentionController = TextEditingController(text: mention?.displayName);
@@ -831,8 +839,9 @@ class TextFieldComponent extends StatelessWidget {
                             if (!isNullOrEmpty(changed)! && mention != null) {
                               mention.customDisplayName = changed!;
                             }
+                            final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
+                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
                             editableTextState.hideToolbar();
-                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end));
                           },
                           label: "Custom Mention"
                         ),
