@@ -92,6 +92,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   void onInit() {
     super.onInit();
 
+    textController.mentionables = mentionables;
+
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       keyboardOpen = visible;
       if (scrollController.hasClients) {
