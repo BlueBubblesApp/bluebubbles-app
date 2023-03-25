@@ -55,7 +55,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     if (cm.activeChat != null) {
       cm.activeChat!.chat.toggleHasUnread(false);
       ConversationViewController _cvc = cvc(cm.activeChat!.chat);
-      if (!_cvc.showingOverlays.value && _cvc.editing.isEmpty && !_cvc.focusNode.hasFocus && !_cvc.subjectFocusNode.hasFocus) {
+      if (!_cvc.showingOverlays.value && _cvc.editing.isEmpty &&
+          !_cvc.focusNode.hasFocus &&
+          (!ss.settings.enablePrivateAPI.value || !ss.settings.privateSubjectLine.value || !_cvc.subjectFocusNode.hasFocus)) {
         _cvc.focusNode.requestFocus();
       }
     }

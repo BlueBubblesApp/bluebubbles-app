@@ -141,11 +141,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         controller.showAttachmentPicker = !showAttachmentPicker;
       });
     }
-    // remove emoji picker if no field is focused
-    if (!controller.subjectFocusNode.hasFocus && !controller.focusNode.hasFocus) {
-      controller.emojiMatches.value = [];
-      controller.emojiSelectedIndex.value = 0;
-    }
   }
 
   void textListener(bool subject) {
