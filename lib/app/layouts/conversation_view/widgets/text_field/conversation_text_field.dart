@@ -238,8 +238,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         }
       }
 
-      if (!selection.isCollapsed) {
-        if (oldTextFieldSelection.end != selection.end) {
+      if (!selection.isCollapsed && oldTextFieldSelection.baseOffset == selection.baseOffset) {
+        if (oldTextFieldSelection.extentOffset < selection.extentOffset) {
           // Means we're shift+selecting rightwards
           final behind = text.substring(0, selection.extentOffset);
           final ahead = text.substring(selection.extentOffset);
@@ -250,9 +250,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
             controller.textController.selection = oldTextFieldSelection;
             return;
           }
-        } else if (oldTextFieldSelection.start != selection.start) {
+        } else if (oldTextFieldSelection.extentOffset > selection.extentOffset) {
           // Means we're shift+selecting leftwards
-          final behind = text.substring(0, selection.start);
+          final behind = text.substring(0, selection.extentOffset);
           final behindMatches = MentionTextEditingController.escapingChar.allMatches(behind);
           if (behindMatches.length % 2 != 0) {
             // Assuming the rest of the code works, we're guaranteed to be inside a mention now
