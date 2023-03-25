@@ -53,8 +53,9 @@ class MentionTextEditingController extends TextEditingController {
     final index = mentionables.indexOf(mentionable);
     if (index == -1 || atIndex == -1) return;
     List<String> textParts = [text.substring(0, atIndex), text.substring(atIndex, indexSelection), text.substring(indexSelection)];
-    text = textParts[0] + textParts[1].replaceFirst(candidate, "$escapingChar$index$escapingChar ") + textParts[2];
-    selection = TextSelection.collapsed(offset: indexSelection - candidate.length + 4);
+    final addSpace = !textParts[2].startsWith(" ");
+    text = textParts[0] + textParts[1].replaceFirst(candidate, "$escapingChar$index$escapingChar${addSpace ? " " : ""}") + textParts[2];
+    selection = TextSelection.collapsed(offset: indexSelection - candidate.length + (addSpace ? 4 : 3));
     processMentions();
   }
 
