@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -326,8 +327,8 @@ Future<Null> initApp(bool bubble) async {
         double? width = ss.prefs.getDouble("window-width");
         double? height = ss.prefs.getDouble("window-height");
         if (width != null && height != null) {
-          width = width.clamp(300, primary.size.width);
-          height = height.clamp(300, primary.size.height);
+          width = width.clamp(300, max(300, primary.size.width));
+          height = height.clamp(300, max(300, primary.size.height));
           await windowManager.setSize(Size(width, height));
           ss.prefs.setDouble("window-width", width);
           ss.prefs.setDouble("window-height", height);
@@ -342,8 +343,8 @@ Future<Null> initApp(bool bubble) async {
         double? posX = ss.prefs.getDouble("window-x");
         double? posY = ss.prefs.getDouble("window-y");
         if (posX != null && posY != null) {
-          posX = posX.clamp(0, primary.size.width - width);
-          posY = posY.clamp(0, primary.size.height - height);
+          posX = posX.clamp(0, max(0, primary.size.width - width));
+          posY = posY.clamp(0, max(0, primary.size.height - height));
           await windowManager.setPosition(Offset(posX, posY));
           ss.prefs.setDouble("window-x", posX);
           ss.prefs.setDouble("window-y", posY);
@@ -359,8 +360,8 @@ Future<Null> initApp(bool bubble) async {
         Size size = await windowManager.getSize();
         width = size.width;
         height = size.height;
-        posX = posX.clamp(0, primary.size.width - width);
-        posY = posY.clamp(0, primary.size.height - height);
+        posX = posX.clamp(0, max(0, primary.size.width - width));
+        posY = posY.clamp(0, max(0, primary.size.height - height));
         await windowManager.setPosition(Offset(posX, posY));
         ss.prefs.setDouble("window-x", posX);
         ss.prefs.setDouble("window-y", posY);
