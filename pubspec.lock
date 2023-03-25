@@ -89,6 +89,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.10.0"
+  async_extension:
+    dependency: transitive
+    description:
+      name: async_extension
+      sha256: "891a2ea770693a70cdf5155f5a0b5e81b0e3a2d3d631d112cffbca4807186468"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  async_task:
+    dependency: "direct main"
+    description:
+      name: async_task
+      sha256: "4c3b1b4f4ccce1555d10d31a74136e099e7db7a0c1c4852fc53116cb00970508"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.20"
   audio_video_progress_bar:
     dependency: transitive
     description:
