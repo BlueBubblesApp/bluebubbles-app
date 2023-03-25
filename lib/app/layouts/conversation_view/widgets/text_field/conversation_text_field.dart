@@ -238,6 +238,31 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         }
       }
 
+      if (!selection.isCollapsed) {
+        if (oldTextFieldSelection.end != selection.end) {
+          // Means we're shift+selecting rightwards
+          final behind = text.substring(0, selection.extentOffset);
+          final ahead = text.substring(selection.extentOffset);
+          final aheadMatches = MentionTextEditingController.escapingChar.allMatches(ahead);
+          if (aheadMatches.length % 2 != 0) {
+            // Assuming the rest of the code works, we're guaranteed to be inside a mention now
+            oldTextFieldSelection = TextSelection(baseOffset: selection.baseOffset, extentOffset: behind.length + aheadMatches.first.end);
+            controller.textController.selection = oldTextFieldSelection;
+            return;
+          }
+        } else if (oldTextFieldSelection.start != selection.start) {
+          // Means we're shift+selecting leftwards
+          final behind = text.substring(0, selection.start);
+          final behindMatches = MentionTextEditingController.escapingChar.allMatches(behind);
+          if (behindMatches.length % 2 != 0) {
+            // Assuming the rest of the code works, we're guaranteed to be inside a mention now
+            oldTextFieldSelection = TextSelection(baseOffset: selection.baseOffset, extentOffset: behindMatches.last.start);
+            controller.textController.selection = oldTextFieldSelection;
+            return;
+          }
+        }
+      }
+
       oldTextFieldText = controller.textController.text;
       oldTextFieldSelection = controller.textController.selection;
     }
