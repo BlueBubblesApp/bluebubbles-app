@@ -1130,7 +1130,7 @@ class TextFieldComponent extends StatelessWidget {
           TextEditingController textField =
           controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
           String text = textField.text;
-          RegExp regExp = RegExp(r"@(?:[^@ \n]+|$)([ \n]|$)", multiLine: true);
+          RegExp regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
           Iterable<RegExpMatch> matches = regExp.allMatches(text);
           if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
             RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);

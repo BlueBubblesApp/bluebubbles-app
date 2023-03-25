@@ -183,7 +183,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               final _controller = widget.textController;
                               widget.controller!.mentionSelectedIndex.value = 0;
                               final text = _controller.text;
-                              final regExp = RegExp(r"@(?:[^@ \n]+|$)([ \n]|$)", multiLine: true);
+                              final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
                               final matches = regExp.allMatches(text);
                               if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
                                 final match = matches.lastWhere((m) => m.start < _controller.selection.start);
