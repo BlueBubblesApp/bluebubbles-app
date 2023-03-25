@@ -58,6 +58,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     final result = await Navigator.push(
       Get.context!,
       PageRouteBuilder(
+        settings: const RouteSettings(arguments: {"isPopup": true}),
         transitionDuration: const Duration(milliseconds: 150),
         pageBuilder: (ctx, animation, secondaryAnimation) {
           return FadeTransition(

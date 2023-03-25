@@ -152,7 +152,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
                     child: child
                   );
                 },
-                child: RichText(
+                child: ModalRoute.of(context)?.barrierDismissible == true ? SelectableText.rich(TextSpan(children: snapshot.data!)) : RichText(
                   text: TextSpan(
                     children: snapshot.data!,
                   ),
@@ -163,7 +163,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
               widthFactor: 1,
               child: Padding(
                 padding: message.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
-                child: RichText(
+                child: ModalRoute.of(context)?.barrierDismissible == true ? SelectableText.rich(TextSpan(children: snapshot.data!)) : RichText(
                   text: TextSpan(
                     children: snapshot.data!,
                   ),

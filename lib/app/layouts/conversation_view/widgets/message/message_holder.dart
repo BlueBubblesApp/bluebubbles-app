@@ -419,6 +419,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                           child: GestureDetector(
                                                             behavior: HitTestBehavior.deferToChild,
                                                             onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                                              if ((Get.rawRoute?.settings.arguments as Map?)?["isPopup"] == true) return;
                                                               final offset = replyOffsets[index];
                                                               offset.value += details.delta.dx * 0.5;
                                                               if (message.isFromMe!) {
@@ -434,6 +435,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                               }
                                                             },
                                                             onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                                              if ((Get.rawRoute?.settings.arguments as Map?)?["isPopup"] == true) return;
                                                               final offset = replyOffsets[index];
                                                               if (offset.value.abs() >= SlideToReply.replyThreshold) {
                                                                 widget.cvController.replyToMessage = Tuple2(message, index);
@@ -441,6 +443,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                               offset.value = 0;
                                                             },
                                                             onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                                              if ((Get.rawRoute?.settings.arguments as Map?)?["isPopup"] == true) return;
                                                               replyOffsets[index].value = 0;
                                                             },
                                                             child: ClipPath(
