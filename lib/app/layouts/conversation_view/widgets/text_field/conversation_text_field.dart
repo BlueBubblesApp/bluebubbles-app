@@ -617,7 +617,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                     icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
                     onPressed: () async {
                       if (kIsDesktop || kIsWeb) {
-                        controller.showingOverlays.value = true;
+                        controller.showingOverlays = true;
                       }
                       GiphyGif? gif = await GiphyGet.getGif(
                         context: context,
@@ -625,7 +625,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         tabColor: context.theme.primaryColor,
                       );
                       if (kIsDesktop || kIsWeb) {
-                        controller.showingOverlays.value = false;
+                        controller.showingOverlays = false;
                       }
                       if (gif?.images?.original != null) {
                         final response = await http.downloadFromUrl(gif!.images!.original!.url);
@@ -943,7 +943,7 @@ class TextFieldComponent extends StatelessWidget {
                             final TextEditingController mentionController = TextEditingController(text: mention?.displayName);
                             String? changed;
                             if (kIsDesktop || kIsWeb) {
-                              controller?.showingOverlays.value = true;
+                              controller?.showingOverlays = true;
                             }
                             await showDialog(
                               context: context,
@@ -992,7 +992,7 @@ class TextFieldComponent extends StatelessWidget {
                               }
                             );
                             if (kIsDesktop || kIsWeb) {
-                              controller?.showingOverlays.value = false;
+                              controller?.showingOverlays = false;
                             }
                             if (!isNullOrEmpty(changed)! && mention != null) {
                               mention.customDisplayName = changed!;

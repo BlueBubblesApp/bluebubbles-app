@@ -91,7 +91,7 @@ class Share {
     final title = meta?.title;
 
     if (kIsDesktop || kIsWeb) {
-      cvc(chat).showingOverlays.value = true;
+      cvc(chat).showingOverlays = true;
     }
     await showDialog(
       context: Get.context!,
@@ -143,7 +143,7 @@ class Share {
       )
     );
     if (kIsDesktop || kIsWeb) {
-      cvc(chat).showingOverlays.value = false;
+      cvc(chat).showingOverlays = false;
     }
 
     if (!send) return;
