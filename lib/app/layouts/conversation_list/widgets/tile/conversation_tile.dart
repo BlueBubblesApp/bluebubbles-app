@@ -46,7 +46,7 @@ class ConversationTileController extends StatefulController {
   void onTap(BuildContext context) {
     if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
       onLongPress();
-    } else {
+    } else if (cm.activeChat?.chat.guid != chat.guid) {
       ns.pushAndRemoveUntil(
         context,
         ConversationView(
@@ -54,6 +54,8 @@ class ConversationTileController extends StatefulController {
         ),
         (route) => route.isFirst,
       );
+    } else {
+      cvc(chat).lastFocusedNode.requestFocus();
     }
   }
 
