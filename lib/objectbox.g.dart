@@ -4,7 +4,7 @@
 // With a Dart package, run `dart run build_runner build`.
 // See also https://docs.objectbox.io/getting-started#generate-objectbox-code
 
-// ignore_for_file: camel_case_types
+// ignore_for_file: camel_case_types, depend_on_referenced_packages
 // coverage:ignore-file
 
 import 'dart:typed_data';
@@ -1039,14 +1039,13 @@ ModelDefinition getObjectBoxModel() {
             ..customAvatarPath = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 38)
             ..pinIndex = const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 40);
-          InternalToManyAccess.setRelInfo(object.handles, store,
-              RelInfo<Chat>.toMany(1, object.id!), store.box<Chat>());
-          InternalToManyAccess.setRelInfo(
+          InternalToManyAccess.setRelInfo<Chat>(
+              object.handles, store, RelInfo<Chat>.toMany(1, object.id!));
+          InternalToManyAccess.setRelInfo<Chat>(
               object.messages,
               store,
               RelInfo<Message>.toOneBacklink(
-                  39, object.id!, (Message srcObject) => srcObject.chat),
-              store.box<Chat>());
+                  39, object.id!, (Message srcObject) => srcObject.chat));
           return object;
         }),
     FCMData: EntityDefinition<FCMData>(
@@ -1398,12 +1397,11 @@ ModelDefinition getObjectBoxModel() {
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
           object.chat.attach(store);
-          InternalToManyAccess.setRelInfo(
+          InternalToManyAccess.setRelInfo<Message>(
               object.dbAttachments,
               store,
               RelInfo<Attachment>.toOneBacklink(
-                  17, object.id!, (Attachment srcObject) => srcObject.message),
-              store.box<Message>());
+                  17, object.id!, (Attachment srcObject) => srcObject.message));
           return object;
         }),
     ThemeObject: EntityDefinition<ThemeObject>(
@@ -1451,12 +1449,11 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 14, false),
               previousDarkTheme: const fb.BoolReader()
                   .vTableGet(buffer, rootOffset, 16, false));
-          InternalToManyAccess.setRelInfo(
+          InternalToManyAccess.setRelInfo<ThemeObject>(
               object.themeEntries,
               store,
               RelInfo<ThemeEntry>.toOneBacklink(8, object.id!,
-                  (ThemeEntry srcObject) => srcObject.themeObject),
-              store.box<ThemeObject>());
+                  (ThemeEntry srcObject) => srcObject.themeObject));
           return object;
         }),
     ThemeStruct: EntityDefinition<ThemeStruct>(

@@ -89,22 +89,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.10.0"
-  async_extension:
-    dependency: transitive
-    description:
-      name: async_extension
-      sha256: "891a2ea770693a70cdf5155f5a0b5e81b0e3a2d3d631d112cffbca4807186468"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
-  async_task:
-    dependency: "direct main"
-    description:
-      name: async_task
-      sha256: "4c3b1b4f4ccce1555d10d31a74136e099e7db7a0c1c4852fc53116cb00970508"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.20"
   audio_video_progress_bar:
     dependency: transitive
     description:
@@ -1677,26 +1661,26 @@ packages:
     dependency: "direct main"
     description:
       name: objectbox
-      sha256: c18d41f4e81e5a30fc0e2200e9e8306f5ccc8a9b61fe3746426359690c33dc7b
+      sha256: a8a3052e430a1e6f91496dc4ffe7c2accab12d24ddfd09412f19541e9f2fe124
       url: "https://pub.dev"
     source: hosted
-    version: "1.7.2"
+    version: "2.0.0"
   objectbox_flutter_libs:
     dependency: "direct main"
     description:
       name: objectbox_flutter_libs
-      sha256: "179a2edfca5eb80abee6e829ebff69872ad20c9f07c2527fe9d098f4bf5a5b83"
+      sha256: "03801ed3b35d73dacef612880f0a84ed0cce6b3b2efee2c93d47356584e8c942"
       url: "https://pub.dev"
     source: hosted
-    version: "1.7.2"
+    version: "2.0.0"
   objectbox_generator:
     dependency: "direct dev"
     description:
       name: objectbox_generator
-      sha256: "728a9ccf4d6a2ac44a016f6cb9798e4a31ee92b79828526181e0de97a3506c28"
+      sha256: "078796e874f33520df8ae7690f334fdcd3cd1d3cfe7aa2887e8ecf9182343c68"
       url: "https://pub.dev"
     source: hosted
-    version: "1.7.2"
+    version: "2.0.0"
   open_filex:
     dependency: "direct main"
     description:
