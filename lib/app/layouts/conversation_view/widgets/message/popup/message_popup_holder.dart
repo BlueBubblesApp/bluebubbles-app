@@ -51,9 +51,14 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     if (!iOS) {
       widget.cvController.selected.add(message);
     }
+
+    if (kIsDesktop || kIsWeb) {
+      widget.cvController.showingOverlays.value = true;
+    }
     final result = await Navigator.push(
       Get.context!,
       PageRouteBuilder(
+        settings: const RouteSettings(arguments: {"isPopup": true}),
         transitionDuration: const Duration(milliseconds: 150),
         pageBuilder: (ctx, animation, secondaryAnimation) {
           return FadeTransition(
@@ -92,7 +97,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       widget.cvController.selected.clear();
     }
     if (kIsDesktop || kIsWeb) {
-      widget.cvController.focusNode.requestFocus();
+      widget.cvController.showingOverlays.value = false;
+      if (widget.cvController.editing.isEmpty) {
+        widget.cvController.focusNode.requestFocus();
+      }
     }
   }
 

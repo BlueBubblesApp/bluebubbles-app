@@ -109,10 +109,9 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               widget.controller!.emojiSelectedIndex.value = index;
                             },
                             onTap: () {
-                              final _controller = widget.controller!.focusNode.hasFocus ? widget.textController : widget.subjectTextController;
-                              widget.controller!.emojiSelectedIndex.value = 0;
+                              final _controller = widget.controller!.lastFocusedTextController;
                               final text = _controller.text;
-                              final regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+                              final regExp = RegExp(r":[^: \n]+([ \n]|$)", multiLine: true);
                               final matches = regExp.allMatches(text);
                               if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
                                 final match = matches.lastWhere((m) => m.start < _controller.selection.start);
@@ -120,7 +119,9 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                                 _controller.text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
                                 _controller.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
                               }
+                              widget.controller!.emojiSelectedIndex.value = 0;
                               widget.controller!.emojiMatches.clear();
+                              widget.controller!.lastFocusedNode.requestFocus();
                             },
                             child: Obx(() => ListTile(
                                 mouseCursor: MouseCursor.defer,
@@ -182,13 +183,14 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               final _controller = widget.textController;
                               widget.controller!.mentionSelectedIndex.value = 0;
                               final text = _controller.text;
-                              final regExp = RegExp("@[^@ \n]{0,}([ \n@]|\$)", multiLine: true);
+                              final regExp = RegExp(r"@(?:[^@ \n]+|$)([ \n]|$)", multiLine: true);
                               final matches = regExp.allMatches(text);
                               if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
                                 final match = matches.lastWhere((m) => m.start < _controller.selection.start);
                                 _controller.addMention(text.substring(match.start, match.end), widget.controller!.mentionMatches[index]);
                               }
                               widget.controller!.mentionMatches.clear();
+                              widget.controller!.focusNode.requestFocus();
                             },
                             child: Obx(() => ListTile(
                                 mouseCursor: MouseCursor.defer,

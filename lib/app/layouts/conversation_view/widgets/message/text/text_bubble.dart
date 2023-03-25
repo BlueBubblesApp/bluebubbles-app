@@ -152,22 +152,22 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
                     child: child
                   );
                 },
-                child: RichText(
-                  text: TextSpan(
-                    children: snapshot.data!,
-                  ),
-                ),
+                child: AbsorbPointer(
+                  absorbing: ModalRoute.of(context)?.barrierDismissible != true,
+                  child: SelectableText.rich(
+                    TextSpan(children: snapshot.data!),
+                  ),)
               );
             }
             return Center(
               widthFactor: 1,
               child: Padding(
                 padding: message.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
-                child: RichText(
-                  text: TextSpan(
-                    children: snapshot.data!,
-                  ),
-                )
+                child: AbsorbPointer(
+                  absorbing: ModalRoute.of(context)?.barrierDismissible != true,
+                  child: SelectableText.rich(
+                    TextSpan(children: snapshot.data!),
+                ),)
               ),
             );
           }

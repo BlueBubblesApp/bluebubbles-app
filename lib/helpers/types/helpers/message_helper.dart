@@ -7,6 +7,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(Chat? chat, List<dynamic> messages,
@@ -96,7 +97,7 @@ class MessageHelper {
     // if the chat is active
     if (ls.isAlive && cm.isChatActive(chat.guid)) return;
     // if app is alive, on chat list, but notifying on chat list is disabled
-    if (ls.isAlive && cm.activeChat == null && !ss.settings.notifyOnChatList.value) return;
+    if (ls.isAlive && cm.activeChat == null && Get.rawRoute?.settings.name == "/" && !ss.settings.notifyOnChatList.value) return;
     await notif.createNotification(chat, message);
   }
 

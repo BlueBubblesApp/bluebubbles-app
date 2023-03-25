@@ -76,7 +76,7 @@ class ThemeStruct {
 
   static ThemeStruct getLightTheme() {
     final name = ss.prefs.getString("selected-light");
-    final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
+    final query = themeBox.query(ThemeStruct_.name.equals(name ?? "Bright White")).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
@@ -87,7 +87,7 @@ class ThemeStruct {
 
   static ThemeStruct getDarkTheme() {
     final name = ss.prefs.getString("selected-dark");
-    final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
+    final query = themeBox.query(ThemeStruct_.name.equals(name ?? "OLED Dark")).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {

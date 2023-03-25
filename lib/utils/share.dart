@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -89,6 +90,9 @@ class Share {
     final url = meta?.image;
     final title = meta?.title;
 
+    if (kIsDesktop || kIsWeb) {
+      cvc(chat).showingOverlays.value = true;
+    }
     await showDialog(
       context: Get.context!,
       builder: (context) => AlertDialog(
@@ -138,6 +142,10 @@ class Share {
         ],
       )
     );
+    if (kIsDesktop || kIsWeb) {
+      cvc(chat).showingOverlays.value = false;
+    }
+
     if (!send) return;
 
     final message = Message(

@@ -16,6 +16,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:chunked_stream/chunked_stream.dart';
+import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
@@ -59,6 +60,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   // emoji
   String oldEmojiText = "";
 
+  // previous text state
+  String oldTextFieldText = "";
+  TextSelection oldTextFieldSelection = const TextSelection.collapsed(offset: 0);
+
   Chat get chat => controller.chat;
 
   String get chatGuid => chat.guid;
@@ -72,6 +77,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
     // Load the initial chat drafts
     getDrafts();
+
+    controller.textController.processMentions();
+
+    // Save state
+    oldTextFieldText = controller.textController.text;
+    oldTextFieldSelection = controller.textController.selection;
+
     if (controller.fromChatCreator) {
       controller.focusNode.requestFocus();
     } else if (ss.settings.autoOpenKeyboard.value) {
@@ -129,17 +141,132 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         controller.showAttachmentPicker = !showAttachmentPicker;
       });
     }
-    // remove emoji picker if no field is focused
-    if (!controller.subjectFocusNode.hasFocus && !controller.focusNode.hasFocus) {
-      controller.emojiMatches.value = [];
-      controller.emojiSelectedIndex.value = 0;
-    }
   }
 
   void textListener(bool subject) {
     if (!subject) {
       chat.textFieldText = controller.textController.text;
     }
+
+    // Clean mentions
+    if (!subject) {
+      // After each edit, the worst that can happen is a chunk gets removed,
+      // so we can figure out exactly what changed by searching for where the chunk could be removed from
+      // along with the old selection data
+
+      String nText = controller.textController.text;
+      String oText = oldTextFieldText;
+
+      // Need fewer chars for anything bad to happen
+      if (nText.length < oText.length) {
+        // Search for the new state in the old state starting from the old selection's end
+        String textSearchPart = oText.substring(oldTextFieldSelection.end);
+        int indexInNew = textSearchPart == "" ? nText.length : nText.indexOf(textSearchPart, controller.textController.selection.end);
+        if (indexInNew == -1) {
+          // This means that the cursor was behind the deleted portion (user used delete key probably)
+          textSearchPart = oText.substring(0, oldTextFieldSelection.start);
+          indexInNew = textSearchPart == "" ? 0 : nText.indexOf(textSearchPart);
+          indexInNew += textSearchPart.length;
+        }
+
+        if (indexInNew != -1) { // Just in case
+          bool deletingBadMention = false;
+
+          String textPart1 = nText.substring(0, indexInNew);
+          String textPart2 = nText.substring(indexInNew);
+
+          if (MentionTextEditingController.escapingChar.allMatches(textPart1).length % 2 != 0) {
+            final badMentionIndex = textPart1.lastIndexOf(MentionTextEditingController.escapingChar);
+            textPart1 = textPart1.substring(0, badMentionIndex);
+            deletingBadMention = true;
+          }
+          if (MentionTextEditingController.escapingChar.allMatches(textPart2).length % 2 != 0) {
+            final badMentionIndex = textPart2.indexOf(MentionTextEditingController.escapingChar);
+            textPart2 = textPart2.substring(badMentionIndex + 1);
+            deletingBadMention = true;
+          }
+
+          if (deletingBadMention) {
+            oldTextFieldText = textPart1 + textPart2;
+            oldTextFieldSelection = TextSelection.collapsed(offset: textPart1.length);
+            controller.textController.value = TextEditingValue(text: textPart1 + textPart2, selection: TextSelection.collapsed(offset: textPart1.length));
+            controller.textController.processMentions();
+            return;
+          }
+        }
+      }
+
+      // Also handle people arrow-keying or clicking into mentions
+      String text = controller.textController.text;
+      TextSelection selection = controller.textController.selection;
+      if (selection.isCollapsed && selection.start != -1) {
+        final behind = text.substring(0, selection.baseOffset);
+        final behindMatches = MentionTextEditingController.escapingChar.allMatches(behind);
+        if (behindMatches.length % 2 != 0) {
+          // Assuming the rest of the code works, we're guaranteed to be inside a mention now
+          final ahead = text.substring(selection.baseOffset);
+          final aheadMatches = MentionTextEditingController.escapingChar.allMatches(ahead);
+
+          // Now we determine which side of the mention to put the cursor on.
+          // We can use the old selection to figure out if the user is moving left/right
+          if (oldTextFieldSelection.isCollapsed) {
+            if (oldTextFieldSelection.baseOffset > selection.baseOffset) {
+              // moving left
+              oldTextFieldSelection = TextSelection.collapsed(offset: behindMatches.last.start);
+              controller.textController.selection = oldTextFieldSelection;
+              return;
+            } else if (oldTextFieldSelection.baseOffset < selection.baseOffset) {
+              // moving right
+              oldTextFieldSelection = TextSelection.collapsed(offset: behind.length + aheadMatches.first.end);
+              controller.textController.selection = oldTextFieldSelection;
+              return;
+            }
+          }
+
+          // If we get here then we need to pick the closest side
+          if (selection.baseOffset - behindMatches.last.end < aheadMatches.first.start - selection.baseOffset) {
+            // moving left
+            oldTextFieldSelection = TextSelection.collapsed(offset: behindMatches.last.start);
+            controller.textController.selection = oldTextFieldSelection;
+            return;
+          } else {
+            // Closer to right
+            oldTextFieldSelection = TextSelection.collapsed(offset: behind.length + aheadMatches.first.end);
+            controller.textController.selection = oldTextFieldSelection;
+            return;
+          }
+        }
+      }
+
+      if (!selection.isCollapsed && oldTextFieldSelection.baseOffset == selection.baseOffset) {
+        if (oldTextFieldSelection.extentOffset < selection.extentOffset) {
+          // Means we're shift+selecting rightwards
+          final behind = text.substring(0, selection.extentOffset);
+          final ahead = text.substring(selection.extentOffset);
+          final aheadMatches = MentionTextEditingController.escapingChar.allMatches(ahead);
+          if (aheadMatches.length % 2 != 0) {
+            // Assuming the rest of the code works, we're guaranteed to be inside a mention now
+            oldTextFieldSelection = TextSelection(baseOffset: selection.baseOffset, extentOffset: behind.length + aheadMatches.first.end);
+            controller.textController.selection = oldTextFieldSelection;
+            return;
+          }
+        } else if (oldTextFieldSelection.extentOffset > selection.extentOffset) {
+          // Means we're shift+selecting leftwards
+          final behind = text.substring(0, selection.extentOffset);
+          final behindMatches = MentionTextEditingController.escapingChar.allMatches(behind);
+          if (behindMatches.length % 2 != 0) {
+            // Assuming the rest of the code works, we're guaranteed to be inside a mention now
+            oldTextFieldSelection = TextSelection(baseOffset: selection.baseOffset, extentOffset: behindMatches.last.start);
+            controller.textController.selection = oldTextFieldSelection;
+            return;
+          }
+        }
+      }
+
+      oldTextFieldText = controller.textController.text;
+      oldTextFieldSelection = controller.textController.selection;
+    }
+
     // typing indicators
     final newText = "${controller.subjectTextController.text}\n${controller.textController.text}";
     if (newText != oldText) {
@@ -174,8 +301,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
             allMatches = [Emoji.byShortName(emojiName)!];
             // We can replace the :emoji: with the actual emoji here
             String _text = newEmojiText.substring(0, match.start) + allMatches.first.char + newEmojiText.substring(match.end);
-            _controller.text = _text;
-            _controller.selection = TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length));
+            _controller.value = TextEditingValue(text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length)));
             allMatches.clear();
           } else {
             allMatches = Emoji.byKeyword(emojiName).toList();
@@ -208,9 +334,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         controller.emojiMatches.value = [];
         controller.emojiSelectedIndex.value = 0;
       }
-    } else if (newEmojiText.contains("@")) {
+    } else if (!subject && newEmojiText.contains("@")) {
       oldEmojiText = newEmojiText;
-      final regExp = RegExp(r"(?<=^|[^a-zA-Z\d])@[^@ \n]*(?:(?=[ \n]|$)|@)", multiLine: true);
+      final regExp = RegExp(r"(?<=^|[^a-zA-Z\d])@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
       List<Mentionable> allMatches = [];
       String mentionName = "";
@@ -248,7 +374,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
-    chat.textFieldText = controller.textController.cleansedText;
+    chat.textFieldText = controller.textController.text;
     chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
 
@@ -490,11 +616,17 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                 IconButton(
                     icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
                     onPressed: () async {
+                      if (kIsDesktop || kIsWeb) {
+                        controller.showingOverlays.value = true;
+                      }
                       GiphyGif? gif = await GiphyGet.getGif(
                         context: context,
                         apiKey: kIsWeb ? GIPHY_API_KEY : dotenv.get('GIPHY_API_KEY'),
                         tabColor: context.theme.primaryColor,
                       );
+                      if (kIsDesktop || kIsWeb) {
+                        controller.showingOverlays.value = false;
+                      }
                       if (gif?.images?.original != null) {
                         final response = await http.downloadFromUrl(gif!.images!.original!.url);
                         if (response.statusCode == 200) {
@@ -710,7 +842,7 @@ class TextFieldComponent extends StatelessWidget {
                       HapticFeedback.selectionClick();
                     },
                     onSubmitted: (String value) {
-                      controller!.focusNode.requestFocus();
+                      controller!.subjectFocusNode.requestFocus();
                     },
                     contentInsertionConfiguration: ContentInsertionConfiguration(onContentInserted: onContentCommit),
                   ),
@@ -773,7 +905,7 @@ class TextFieldComponent extends StatelessWidget {
                     return AdaptiveTextSelectionToolbar.editableText(
                       editableTextState: editableTextState,
                     )..buttonItems?.addAllIf(
-                      selected == MentionTextEditingController.escapingChar,
+                      MentionTextEditingController.escapingRegex.allMatches(selected).length == 1,
                       [
                         ContextMenuButtonItem(
                           onPressed: () {
@@ -781,19 +913,38 @@ class TextFieldComponent extends StatelessWidget {
                             if (selection.isCollapsed) {
                               return;
                             }
-                            controller?.textController.text = editableTextState.textEditingValue.text.replaceRange(start, end, "");
+                            String text = editableTextState.textEditingValue.text;
+                            final textPart = text.substring(0, end);
+                            final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
+                            if (mentionMatch == null) return; // Shouldn't happen
+                            final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
+                            int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
+                            if (mentionIndex == null) return; // Shouldn't happen
+                            final mention = controller?.mentionables[mentionIndex];
+                            final replacement = mention != null ? "@${mention.displayName}" : "";
+                            text = editableTextState.textEditingValue.text.replaceRange(start, end, replacement);
+                            final checkSpace = end + replacement.length - 1;
+                            final spaceAfter = checkSpace < text.length && text.substring(end + replacement.length - 1, end + replacement.length) == " ";
+                            controller?.textController.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
                             editableTextState.hideToolbar();
-                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: start));
                           },
                           label: "Remove Mention",
                         ),
                         ContextMenuButtonItem(
                           onPressed: () async {
-                            final textPart = editableTextState.textEditingValue.text.substring(0, end);
-                            final mentionIndex = MentionTextEditingController.escapingChar.allMatches(textPart).length;
-                            final mention = controller?.textController.mentions[mentionIndex - 1];
+                            final text = editableTextState.textEditingValue.text;
+                            final textPart = text.substring(0, end);
+                            final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
+                            if (mentionMatch == null) return; // Shouldn't happen
+                            final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
+                            int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
+                            if (mentionIndex == null) return; // Shouldn't happen
+                            final mention = controller?.mentionables[mentionIndex];
                             final TextEditingController mentionController = TextEditingController(text: mention?.displayName);
                             String? changed;
+                            if (kIsDesktop || kIsWeb) {
+                              controller?.showingOverlays.value = true;
+                            }
                             await showDialog(
                               context: context,
                               builder: (context) {
@@ -806,7 +957,11 @@ class TextFieldComponent extends StatelessWidget {
                                     TextButton(
                                       child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                       onPressed: () {
-                                        changed = mentionController.text;
+                                        if (isNullOrEmptyString(mentionController.text)) {
+                                          changed = mention?.handle.displayName ?? "";
+                                        } else {
+                                          changed = mentionController.text;
+                                        }
                                         Get.back();
                                       },
                                     ),
@@ -818,21 +973,33 @@ class TextFieldComponent extends StatelessWidget {
                                     scrollPhysics: const CustomBouncingScrollPhysics(),
                                     autofocus: true,
                                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: "Custom Mention",
-                                      border: OutlineInputBorder(),
+                                      hintText: mention?.handle.displayName ?? "",
+                                      border: const OutlineInputBorder(),
                                     ),
+                                    onSubmitted: (val) {
+                                      if (isNullOrEmptyString(val)) {
+                                        val = mention?.handle.displayName ?? "";
+                                      }
+                                      changed = val;
+                                      Get.back();
+                                    },
                                   ),
                                   title: Text("Custom Mention", style: context.theme.textTheme.titleLarge),
                                   backgroundColor: context.theme.colorScheme.properSurface,
                                 );
                               }
                             );
+                            if (kIsDesktop || kIsWeb) {
+                              controller?.showingOverlays.value = false;
+                            }
                             if (!isNullOrEmpty(changed)! && mention != null) {
                               mention.customDisplayName = changed!;
                             }
+                            final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
+                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
                             editableTextState.hideToolbar();
-                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end));
                           },
                           label: "Custom Mention"
                         ),
@@ -895,7 +1062,7 @@ class TextFieldComponent extends StatelessWidget {
         androidData = ev.data as RawKeyEventDataAndroid;
       }
 
-      int maxShown = context.height / 3 ~/ 48;
+      int maxShown = context.height / 3 ~/ 40;
       int upMovementIndex = maxShown ~/ 3;
       int downMovementIndex = maxShown * 2 ~/ 3;
 
@@ -904,12 +1071,21 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65364 ||
           webData?.code == "ArrowDown" ||
           androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
+        if (controller!.mentionSelectedIndex.value < controller!.mentionMatches.length - 1) {
+          controller!.mentionSelectedIndex.value++;
+          if (controller!.mentionSelectedIndex.value >= downMovementIndex &&
+              controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + downMovementIndex + 1) {
+            controller!.emojiScrollController
+                .jumpTo(max((controller!.mentionSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
+          }
+          return KeyEventResult.handled;
+        }
         if (controller!.emojiSelectedIndex.value < controller!.emojiMatches.length - 1) {
           controller!.emojiSelectedIndex.value++;
           if (controller!.emojiSelectedIndex.value >= downMovementIndex &&
               controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + downMovementIndex + 1) {
             controller!.emojiScrollController
-                .jumpTo(max((controller!.emojiSelectedIndex.value - downMovementIndex) * 48, controller!.emojiScrollController.offset));
+                .jumpTo(max((controller!.emojiSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
           }
           return KeyEventResult.handled;
         }
@@ -920,12 +1096,21 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65362 ||
           webData?.code == "ArrowUp" ||
           androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
+        if (controller!.mentionSelectedIndex.value > 0) {
+          controller!.mentionSelectedIndex.value--;
+          if (controller!.mentionSelectedIndex.value >= upMovementIndex &&
+              controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + upMovementIndex + 1) {
+            controller!.emojiScrollController
+                .jumpTo(min((controller!.mentionSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
+          }
+          return KeyEventResult.handled;
+        }
         if (controller!.emojiSelectedIndex.value > 0) {
           controller!.emojiSelectedIndex.value--;
           if (controller!.emojiSelectedIndex.value >= upMovementIndex &&
               controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + upMovementIndex + 1) {
             controller!.emojiScrollController
-                .jumpTo(min((controller!.emojiSelectedIndex.value - upMovementIndex) * 48, controller!.emojiScrollController.offset));
+                .jumpTo(min((controller!.emojiSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
           }
           return KeyEventResult.handled;
         }
@@ -940,19 +1125,37 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65293 ||
           webData?.code == "Enter" ||
           androidData?.physicalKey == PhysicalKeyboardKey.enter) {
+        if (controller!.focusNode.hasPrimaryFocus && controller!.mentionMatches.length > controller!.mentionSelectedIndex.value) {
+          int index = controller!.mentionSelectedIndex.value;
+          TextEditingController textField =
+          controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
+          String text = textField.text;
+          RegExp regExp = RegExp(r"@(?:[^@ \n]+|$)([ \n]|$)", multiLine: true);
+          Iterable<RegExpMatch> matches = regExp.allMatches(text);
+          if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
+            RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
+            controller!.textController.addMention(text.substring(match.start, match.end), controller!.mentionMatches[index]);
+          } else {
+            // If the user moved the cursor before trying to insert a mention, reset the picker
+            controller!.emojiScrollController.jumpTo(0);
+          }
+          controller!.mentionSelectedIndex.value = 0;
+          controller!.mentionMatches.value = <Mentionable>[];
+
+          return KeyEventResult.handled;
+        }
         if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
           int index = controller!.emojiSelectedIndex.value;
           TextEditingController textField =
               controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
           String text = textField.text;
-          RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+          RegExp regExp = RegExp(r":[^: \n]+([ \n:]|$)", multiLine: true);
           Iterable<RegExpMatch> matches = regExp.allMatches(text);
           if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
             RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
             String char = controller!.emojiMatches[index].char;
             String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
-            textField.text = _text;
-            textField.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
+            textField.value = TextEditingValue(text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1)));
           } else {
             // If the user moved the cursor before trying to insert an emoji, reset the picker
             controller!.emojiScrollController.jumpTo(0);
@@ -963,14 +1166,19 @@ class TextFieldComponent extends StatelessWidget {
           return KeyEventResult.handled;
         }
         if (ss.settings.privateSubjectLine.value) {
-          // Tab to switch between text fields
-          if (!ev.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
-            controller!.focusNode.requestFocus();
-            return KeyEventResult.handled;
-          }
-          if (ev.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
-            controller!.subjectFocusNode.requestFocus();
-            return KeyEventResult.handled;
+          if (windowsData?.keyCode == 9 ||
+              linuxData?.keyCode == 65289 ||
+              webData?.code == "Tab" ||
+              androidData?.physicalKey == PhysicalKeyboardKey.tab) {
+            // Tab to switch between text fields
+            if (!ev.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
+              controller!.focusNode.requestFocus();
+              return KeyEventResult.handled;
+            }
+            if (ev.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
+              controller!.subjectFocusNode.requestFocus();
+              return KeyEventResult.handled;
+            }
           }
         }
       }
@@ -980,6 +1188,14 @@ class TextFieldComponent extends StatelessWidget {
           linuxData?.keyCode == 65307 ||
           webData?.code == "Escape" ||
           androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+        if (controller!.mentionMatches.isNotEmpty) {
+          controller!.mentionMatches.value = <Mentionable>[];
+          return KeyEventResult.handled;
+        }
+        if (controller!.emojiMatches.isNotEmpty) {
+          controller!.emojiMatches.value = <Emoji>[];
+          return KeyEventResult.handled;
+        }
         if (controller!.replyToMessage != null) {
           controller!.replyToMessage = null;
           return KeyEventResult.handled;

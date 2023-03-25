@@ -18,7 +18,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   pasteboard
   permission_handler_windows
   printing
-  quick_notify
   screen_retriever
   secure_application
   share_plus

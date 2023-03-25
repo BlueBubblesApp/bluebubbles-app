@@ -53,6 +53,12 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final RxList<Tuple4<Message, MessagePart, TextEditingController, FocusNode>> editing = <Tuple4<Message, MessagePart, TextEditingController, FocusNode>>[].obs;
   final GlobalKey focusInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
+  final RxBool showingOverlays = false.obs;
+  final RxBool _subjectWasLastFocused = false.obs; // If this is false, then message field was last focused (default)
+
+  FocusNode get lastFocusedNode => _subjectWasLastFocused.value ? subjectFocusNode : focusNode;
+  TextEditingController get lastFocusedTextController => _subjectWasLastFocused.value ? subjectTextController : textController;
+
   // text field items
   bool showAttachmentPicker = false;
   final GlobalKey textFieldKey = GlobalKey();
@@ -90,6 +96,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   void onInit() {
     super.onInit();
 
+    textController.mentionables = mentionables;
+
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       keyboardOpen = visible;
       if (scrollController.hasClients) {
@@ -119,6 +127,19 @@ class ConversationViewController extends StatefulController with SingleGetTicker
         showScrollDown.value = false;
       }
     });
+
+    focusNode.addListener(() {
+      if (focusNode.hasFocus) {
+        _subjectWasLastFocused.value = false;
+      }
+    });
+
+    subjectFocusNode.addListener(() {
+      if (subjectFocusNode.hasFocus) {
+        _subjectWasLastFocused.value = true;
+      }
+    });
+
   }
 
   @override

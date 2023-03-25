@@ -45,7 +45,7 @@ class ChatManager extends GetxService {
     activeChat?.isAlive = true;
   }
 
-  bool isChatActive(String guid) => getChatController(guid)?.isActive ?? false;
+  bool isChatActive(String guid) => (getChatController(guid)?.isActive ?? false) && (getChatController(guid)?.isAlive ?? false);
 
   ChatLifecycleManager createChatController(Chat chat, {active = false}) {
     Logger.debug('Creating chat controller for ${chat.guid} (${chat.displayName})');
