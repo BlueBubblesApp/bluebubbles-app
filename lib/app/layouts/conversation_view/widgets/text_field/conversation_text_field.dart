@@ -901,7 +901,8 @@ class TextFieldComponent extends StatelessWidget {
                   contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
                     final start = editableTextState.textEditingValue.selection.start;
                     final end = editableTextState.textEditingValue.selection.end;
-                    final selected = editableTextState.textEditingValue.text.substring(start, end);
+                    final text = editableTextState.textEditingValue.text;
+                    final selected = editableTextState.textEditingValue.text.substring((start - 1).clamp(0, text.length), (end + 1).clamp(1, text.length));
                     return AdaptiveTextSelectionToolbar.editableText(
                       editableTextState: editableTextState,
                     )..buttonItems?.addAllIf(
@@ -914,7 +915,7 @@ class TextFieldComponent extends StatelessWidget {
                               return;
                             }
                             String text = editableTextState.textEditingValue.text;
-                            final textPart = text.substring(0, end);
+                            final textPart = text.substring(0, (end + 1).clamp(1, text.length));
                             final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
                             if (mentionMatch == null) return; // Shouldn't happen
                             final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
@@ -933,7 +934,7 @@ class TextFieldComponent extends StatelessWidget {
                         ContextMenuButtonItem(
                           onPressed: () async {
                             final text = editableTextState.textEditingValue.text;
-                            final textPart = text.substring(0, end);
+                            final textPart = text.substring(0, end + 1);
                             final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
                             if (mentionMatch == null) return; // Shouldn't happen
                             final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
