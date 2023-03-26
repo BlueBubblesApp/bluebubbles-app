@@ -56,8 +56,10 @@ class MentionTextEditingController extends TextEditingController {
     final index = mentionables.indexOf(mentionable);
     if (index == -1 || atIndex == -1) return;
     List<String> textParts = [text.substring(0, atIndex), text.substring(atIndex, indexSelection), text.substring(indexSelection)];
-    text = textParts[0] + textParts[1].replaceFirst(candidate, "$escapingChar$index$escapingChar ") + textParts[2];
-    selection = TextSelection.collapsed(offset: indexSelection - candidate.length + 4);
+    final addSpace = !textParts[2].startsWith(" ");
+    final replacement = "$escapingChar$index$escapingChar${addSpace ? " " : ""}";
+    text = textParts[0] + textParts[1].replaceFirst(candidate, replacement) + textParts[2];
+    selection = TextSelection.collapsed(offset: indexSelection - candidate.length + replacement.length);
     processMentions();
   }
 
@@ -127,6 +129,7 @@ class MentionTextEditingController extends TextEditingController {
   }) {
     final textSplit = splitText(text);
     bool flag = false;
+    int mentionIndexLength = 0;
     return TextSpan(
       style: style,
       children: textSplit.mapIndexed((idx, word) {
@@ -134,6 +137,7 @@ class MentionTextEditingController extends TextEditingController {
         int? index = flag ? int.tryParse(word) : null;
         if (index != null) {
           final mention = mentionables[index];
+          mentionIndexLength = "$index".length;
           // Mandatory WidgetSpan so that it takes the appropriate char number.
           return WidgetSpan(
             child: Listener(
@@ -159,7 +163,12 @@ class MentionTextEditingController extends TextEditingController {
           );
         }
         if (word == escapingChar) {
-          return TextSpan(text: zeroWidthSpace, style: style);
+          String text = zeroWidthSpace;
+          if (mentionIndexLength > 1) {
+            text = List.filled(mentionIndexLength, zeroWidthSpace).join();
+            mentionIndexLength = 0;
+          }
+          return TextSpan(text: text, style: style);
         }
         return TextSpan(text: word.replaceAll(escapingChar, zeroWidthSpace), style: style);
       }).toList(),
