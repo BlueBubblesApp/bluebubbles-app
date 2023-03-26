@@ -616,6 +616,32 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Send a message. [chatGuid] specifies the chat, [tempGuid] specifies a
+  /// temporary guid to avoid duplicate messages being sent, [message] is the
+  /// body of the message. Optionally provide [method] to send via private API,
+  /// [effectId] to send with an effect, or [subject] to send with a subject.
+  Future<Response> sendMultipart(String chatGuid, String tempGuid, List<Map<String, dynamic>> parts, {String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      Map<String, dynamic> data = {
+        "chatGuid": chatGuid,
+        "tempGuid": tempGuid,
+        "effectId": effectId,
+        "subject": subject,
+        "selectedMessageGuid": selectedMessageGuid,
+        "partIndex": partIndex,
+        "parts": parts
+      };
+
+      final response = await dio.post(
+          "$apiRoot/message/multipart",
+          queryParameters: buildQueryParams(),
+          data: data,
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Send a reaction. [chatGuid] specifies the chat, [selectedMessageText]
   /// specifies the text of the message being reacted on, [selectedMessageGuid]
   /// is the guid of the message, and [reaction] is the reaction type.

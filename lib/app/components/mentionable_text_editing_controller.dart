@@ -23,6 +23,9 @@ class Mentionable {
 
   @override
   int get hashCode => address.hashCode;
+
+  @override
+  String toString() => displayName;
 }
 
 
@@ -93,12 +96,7 @@ class MentionTextEditingController extends TextEditingController {
     }).join();
   }
 
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
+  static List<String> splitText(String text) {
     final res = escapingRegex.allMatches(text);
     List<String> textSplit = <String>[];
     int start = 0;
@@ -118,6 +116,16 @@ class MentionTextEditingController extends TextEditingController {
     if (start < text.length) {
       textSplit.add(text.substring(start));
     }
+    return textSplit;
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final textSplit = splitText(text);
     bool flag = false;
     return TextSpan(
       style: style,

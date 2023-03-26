@@ -128,6 +128,45 @@ class ActionHandler extends GetxService {
 
     return completer.future;
   }
+
+  Future<void> sendMultipart(Chat c, Message m, Message? selected, String? r) async {
+    final completer = Completer<void>();
+    http.sendMultipart(
+      c.guid,
+      m.guid!,
+      m.attributedBody.first.runs.map((e) => {
+        "text": m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last),
+        "mention": e.attributes!.mention,
+        "partIndex": e.attributes!.messagePart,
+      }).toList(),
+      subject: m.subject,
+      selectedMessageGuid: m.threadOriginatorGuid,
+      effectId: m.expressiveSendStyleId,
+      partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
+    ).then((response) async {
+      final newMessage = Message.fromMap(response.data['data']);
+      try {
+        await Message.replaceMessage(m.guid, newMessage);
+        Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+      } catch (_) {
+        Logger.info("Message match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+      }
+      completer.complete();
+    }).catchError((error) async {
+      Logger.error('Failed to send message! Error: ${error.toString()}');
+
+      final tempGuid = m.guid;
+      m = handleSendError(error, m);
+
+      if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
+        await notif.createFailedToSend(c);
+      }
+      await Message.replaceMessage(tempGuid, m);
+      completer.completeError(error);
+    });
+
+    return completer.future;
+  }
   
   Future<void> prepAttachment(Chat c, Message m) async {
     final attachment = m.attachments.first!;

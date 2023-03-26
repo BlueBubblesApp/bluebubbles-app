@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -40,7 +41,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
   Future<void> send(Tuple6<List<PlatformFile>, String, String, String?, int?, String?> tuple, bool isAudioMessage) async {
     // do not add anything above this line, the attachments must be extracted first
     final attachments = List<PlatformFile>.from(tuple.item1);
-    final text = tuple.item2;
+    String text = tuple.item2;
     final subject = tuple.item3;
     final replyGuid = tuple.item4;
     final part = tuple.item5;
@@ -86,6 +87,26 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     }
 
     if (text.isNotEmpty || subject.isNotEmpty) {
+      final textSplit = MentionTextEditingController.splitText(text);
+      bool flag = false;
+      final newText = [];
+      if (textSplit.length > 1) {
+        for (String word in textSplit) {
+          if (word == MentionTextEditingController.escapingChar) flag = !flag;
+          int? index = flag ? int.tryParse(word) : null;
+          if (index != null) {
+            final mention = controller.textController.mentionables[index];
+            newText.add(mention);
+            continue;
+          }
+          if (word == MentionTextEditingController.escapingChar) {
+            continue;
+          }
+          newText.add(word.replaceAll(MentionTextEditingController.escapingChar, ""));
+        }
+        text = newText.join("");
+      }
+      int currentPos = 0;
       final _message = Message(
         text: text.isEmpty && subject.isNotEmpty ? subject : text,
         subject: text.isEmpty && subject.isNotEmpty ? null : subject,
@@ -97,6 +118,34 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         isFromMe: true,
         handleId: 0,
         hasDdResults: true,
+        attributedBody: [
+          if (textSplit.length > 1)
+            AttributedBody(
+              string: text,
+              runs: newText.whereType<Mentionable>().isEmpty ? [] : newText.map((e) {
+                if (e is Mentionable) {
+                  final run = Run(
+                    range: [currentPos, e.toString().length],
+                    attributes: Attributes(
+                      mention: e.address,
+                      messagePart: 0,
+                    )
+                  );
+                  currentPos += e.toString().length;
+                  return run;
+                } else {
+                  final run = Run(
+                    range: [currentPos, e.length],
+                    attributes: Attributes(
+                      messagePart: 0,
+                    ),
+                  );
+                  currentPos += e.toString().length;
+                  return run;
+                }
+              }).toList(),
+            ),
+        ],
       );
       _message.generateTempGuid();
       outq.queue(OutgoingItem(
