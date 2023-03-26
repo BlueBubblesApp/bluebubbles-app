@@ -84,7 +84,7 @@ class Attachment {
       height: json["height"] ?? 0,
       width: json["width"] ?? 0,
       metadata: metadata is String ? null : metadata,
-      hasLivePhoto: json["hasLivePhoto"],
+      hasLivePhoto: json["hasLivePhoto"] ?? false,
     );
   }
 
