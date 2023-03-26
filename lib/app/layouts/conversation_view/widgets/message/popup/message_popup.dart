@@ -318,6 +318,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                     edit();
                                   } else if (value == 8) {
                                     downloadLivePhoto();
+                                  } else if (value == 9) {
+                                    toggleBookmark();
                                   }
                                 },
                                 itemBuilder: (context) {
@@ -373,6 +375,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                       value: 2,
                                       child: Text(
                                         'Select Multiple',
+                                        style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 9,
+                                      child: Text(
+                                        message.isBookmarked ? 'Remove Bookmark' : 'Add Bookmark',
                                         style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                       ),
                                     ),
@@ -972,6 +981,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     popDetails(returnVal: false);
   }
 
+  void toggleBookmark() {
+    message.isBookmarked = !message.isBookmarked;
+    message.save(updateIsBookmarked: true);
+    popDetails();
+  }
+
   void messageInfo() {
     const encoder = JsonEncoder.withIndent("     ");
     final str = encoder.convert(message.toMap(includeObjects: true));
@@ -1359,6 +1374,24 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
             trailing: Icon(
               ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              color: context.theme.colorScheme.properOnSurface,
+            ),
+          ),
+        ),
+      ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: toggleBookmark,
+          child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
+            dense: !kIsDesktop && !kIsWeb,
+            title: Text(
+              message.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+            ),
+            trailing: Icon(
+              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.bookmark : Icons.bookmark_outlined,
               color: context.theme.colorScheme.properOnSurface,
             ),
           ),

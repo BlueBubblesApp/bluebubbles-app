@@ -396,7 +396,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(48, 8353240741127563871),
+      lastPropertyId: const IdUid(49, 4357660909480898880),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -590,6 +590,11 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(48, 8353240741127563871),
             name: 'didNotifyRecipient',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(49, 4357660909480898880),
+            name: 'isBookmarked',
             type: 1,
             flags: 0)
       ],
@@ -1290,7 +1295,7 @@ ModelDefinition getObjectBoxModel() {
           final dbMetadataOffset = object.dbMetadata == null
               ? null
               : fbb.writeString(object.dbMetadata!);
-          fbb.startTable(49);
+          fbb.startTable(50);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1329,6 +1334,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(45, dbMetadataOffset);
           fbb.addBool(46, object.wasDeliveredQuietly);
           fbb.addBool(47, object.didNotifyRecipient);
+          fbb.addBool(48, object.isBookmarked);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1390,7 +1396,8 @@ ModelDefinition getObjectBoxModel() {
               hasApplePayloadData: const fb.BoolReader().vTableGet(buffer, rootOffset, 86, false),
               dateEdited: dateEditedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateEditedValue),
               wasDeliveredQuietly: const fb.BoolReader().vTableGet(buffer, rootOffset, 96, false),
-              didNotifyRecipient: const fb.BoolReader().vTableGet(buffer, rootOffset, 98, false))
+              didNotifyRecipient: const fb.BoolReader().vTableGet(buffer, rootOffset, 98, false),
+              isBookmarked: const fb.BoolReader().vTableGet(buffer, rootOffset, 100, false))
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
             ..dbAttributedBody = const fb.StringReader(asciiOptimization: true)
@@ -1966,6 +1973,10 @@ class Message_ {
   /// see [Message.didNotifyRecipient]
   static final didNotifyRecipient =
       QueryBooleanProperty<Message>(_entities[5].properties[37]);
+
+  /// see [Message.isBookmarked]
+  static final isBookmarked =
+      QueryBooleanProperty<Message>(_entities[5].properties[38]);
 }
 
 /// [ThemeObject] entity fields to define ObjectBox queries.

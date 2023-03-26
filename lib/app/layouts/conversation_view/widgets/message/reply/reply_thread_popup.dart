@@ -1,9 +1,8 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -14,10 +13,24 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 
-void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service, ConversationViewController? cvController) {
+void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service, ConversationViewController cvController) {
   final originatorPart = message.threadOriginatorGuid != null ? message.normalizedThreadPart : part.part;
   final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!, originatorPart);
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+  _buildThreadView(_messages, originatorPart, cvController);
+}
+
+void showBookmarksThread(ConversationViewController cvController) async {
+  final _messages = (messageBox.query(Message_.isBookmarked.equals(true))
+    ..link(Message_.chat, Chat_.guid.equals(cvController.chat.guid))
+    ..order(Message_.dateCreated, flags: Order.descending)).build().find();
+  if (_messages.isEmpty) {
+    return showSnackbar("Error", "There are no bookmarked messages in this chat!");
+  }
+  _buildThreadView(_messages, null, cvController);
+}
+
+void _buildThreadView(List<Message> _messages, int? originatorPart, ConversationViewController cvController) {
   final controller = ScrollController();
   Navigator.push(
     Get.context!,
@@ -81,20 +94,19 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
                                       child: Column(
                                         children: _messages
                                             .mapIndexed((index, e) => AbsorbPointer(
-                                                  absorbing: true,
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                                                    child: MessageHolder(
-                                                      cvController: cvc(service.chat, tag: service.chat.guid),
-                                                      message: _messages[index],
-                                                      oldMessageGuid: index > 0 ? _messages[index - 1].guid : null,
-                                                      newMessageGuid: index < _messages.length - 1 ? _messages[index + 1].guid : null,
-                                                      isReplyThread: true,
-                                                      replyPart: index == 0 ? originatorPart : null,
-                                                    ),
-                                                  ),
-                                                ))
-                                            .toList(),
+                                          absorbing: true,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                                            child: MessageHolder(
+                                              cvController: cvController,
+                                              message: _messages[index],
+                                              oldMessageGuid: index > 0 ? _messages[index - 1].guid : null,
+                                              newMessageGuid: index < _messages.length - 1 ? _messages[index + 1].guid : null,
+                                              isReplyThread: true,
+                                              replyPart: index == 0 ? originatorPart : null,
+                                            ),
+                                          ),
+                                        )).toList(),
                                       )),
                                 ),
                               ),
@@ -113,7 +125,7 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
     ),
   ).then((_) {
     if (kIsDesktop || kIsWeb) {
-      cvController?.focusNode.requestFocus();
+      cvController.focusNode.requestFocus();
     }
   });
 }

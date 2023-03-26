@@ -376,7 +376,7 @@
     },
     {
       "id": "13:4148278195232901830",
-      "lastPropertyId": "48:8353240741127563871",
+      "lastPropertyId": "49:4357660909480898880",
       "name": "Message",
       "properties": [
         {
@@ -573,6 +573,11 @@
         {
           "id": "48:8353240741127563871",
           "name": "didNotifyRecipient",
+          "type": 1
+        },
+        {
+          "id": "49:4357660909480898880",
+          "name": "isBookmarked",
           "type": 1
         }
       ],

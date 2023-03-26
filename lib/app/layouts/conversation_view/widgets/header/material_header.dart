@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -156,6 +157,8 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   );
                 },
               );
+            } else if (value == 3) {
+              showBookmarksThread(controller);
             }
           },
           itemBuilder: (context) {
@@ -183,6 +186,13 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                     style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                 ),
+              PopupMenuItem(
+                value: 3,
+                child: Text(
+                  'Bookmarks',
+                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                ),
+              ),
             ];
           },
           icon: Icon(

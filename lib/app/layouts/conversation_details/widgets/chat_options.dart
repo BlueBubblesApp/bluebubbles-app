@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/chat_sync_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -121,6 +122,19 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       Get.to(() => AvatarCrop(chat: chat));
                     }
                   },
+                ),
+              if (iOS)
+                SettingsTile(
+                    title: "View Bookmarks",
+                    subtitle: "See your bookmarked messages",
+                    backgroundColor: tileColor,
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 15.0),
+                      child: Icon(iOS ? CupertinoIcons.bookmark : Icons.bookmark),
+                    ),
+                    onTap: () async {
+                      showBookmarksThread(cvc(widget.chat));
+                    }
                 ),
               SettingsTile(
                 title: "Fetch Chat Details",
