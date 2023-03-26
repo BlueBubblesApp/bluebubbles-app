@@ -247,6 +247,20 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get the attachment data for the specified [guid]
+  Future<Response> downloadLivePhoto(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$apiRoot/attachment/$guid/live",
+        queryParameters: buildQueryParams(),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: ss.settings.customHeaders),
+        cancelToken: cancelToken,
+        onReceiveProgress: onReceiveProgress,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get the attachment blurhash for the specified [guid]
   Future<Response> attachmentBlurhash(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {

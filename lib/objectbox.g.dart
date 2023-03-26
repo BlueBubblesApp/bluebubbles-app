@@ -30,7 +30,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(1, 2065429213543838585),
       name: 'Attachment',
-      lastPropertyId: const IdUid(18, 4627777114429677812),
+      lastPropertyId: const IdUid(19, 2980761301143366690),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -100,6 +100,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(18, 4627777114429677812),
             name: 'dbMetadata',
             type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(19, 2980761301143366690),
+            name: 'hasLivePhoto',
+            type: 1,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -883,7 +888,7 @@ ModelDefinition getObjectBoxModel() {
           final dbMetadataOffset = object.dbMetadata == null
               ? null
               : fbb.writeString(object.dbMetadata!);
-          fbb.startTable(19);
+          fbb.startTable(20);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -897,6 +902,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(15, webUrlOffset);
           fbb.addInt64(16, object.message.targetId);
           fbb.addOffset(17, dbMetadataOffset);
+          fbb.addBool(18, object.hasLivePhoto);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -924,7 +930,8 @@ ModelDefinition getObjectBoxModel() {
               height:
                   const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
               width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
-              webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34))
+              webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
+              hasLivePhoto: const fb.BoolReader().vTableGet(buffer, rootOffset, 40, false))
             ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 38);
           object.message.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 36, 0);
@@ -1608,6 +1615,10 @@ class Attachment_ {
   /// see [Attachment.dbMetadata]
   static final dbMetadata =
       QueryStringProperty<Attachment>(_entities[0].properties[12]);
+
+  /// see [Attachment.hasLivePhoto]
+  static final hasLivePhoto =
+      QueryBooleanProperty<Attachment>(_entities[0].properties[13]);
 }
 
 /// [Chat] entity fields to define ObjectBox queries.

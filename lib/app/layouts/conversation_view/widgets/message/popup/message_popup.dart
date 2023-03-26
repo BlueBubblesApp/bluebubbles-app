@@ -316,6 +316,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                     unsend();
                                   } else if (value == 7) {
                                     edit();
+                                  } else if (value == 8) {
+                                    downloadLivePhoto();
                                   }
                                 },
                                 itemBuilder: (context) {
@@ -394,7 +396,15 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                       PopupMenuItem(
                                         value: 4,
                                         child: Text(
-                                          'Download Original',
+                                          'Save Original',
+                                          style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                                        ),
+                                      ),
+                                    if (showDownload && part.attachments.where((e) => e.hasLivePhoto).isNotEmpty)
+                                      PopupMenuItem(
+                                        value: 8,
+                                        child: Text(
+                                          'Save Live Photo',
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
@@ -699,7 +709,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           Obx(() => Text(
                 progress.value == 1
                     ? "Download Complete!"
-                    : "You can close this dialog. The attachments will continue to download in the background.",
+                    : "You can close this dialog. The attachment(s) will continue to download in the background.",
                 maxLines: 2,
                 textAlign: TextAlign.center,
                 style: context.theme.textTheme.bodyLarge,
@@ -730,7 +740,86 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             original: true, onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
         final file = PlatformFile(
           name: element.transferName!,
-          path: kIsWeb ? null : element.path,
+          size: response.data.length,
+          bytes: response.data,
+        );
+        await as.saveToDisk(file);
+      }
+      progress.value = 1;
+      downloadingAttachments.value = false;
+    } catch (ex, trace) {
+      Logger.error(trace.toString());
+      showSnackbar("Download Error", ex.toString());
+    }
+  }
+
+  Future<void> downloadLivePhoto() async {
+    final RxBool downloadingAttachments = true.obs;
+    final RxnDouble progress = RxnDouble();
+    final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
+    final toDownload = part.attachments.where((element) => element.hasLivePhoto);
+    final length = toDownload.length;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: context.theme.colorScheme.properSurface,
+        title: Text("Downloading live photo${length > 1 ? "s" : ""}...", style: context.theme.textTheme.titleLarge),
+        content: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: <Widget>[
+          Obx(
+                () => Text(
+                '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
+                style: context.theme.textTheme.bodyLarge),
+          ),
+          const SizedBox(height: 10.0),
+          Obx(
+                () => ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                backgroundColor: context.theme.colorScheme.outline,
+                valueColor: AlwaysStoppedAnimation<Color>(Get.context!.theme.colorScheme.primary),
+                value: progress.value,
+                minHeight: 5,
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 15.0,
+          ),
+          Obx(() => Text(
+            progress.value == 1
+                ? "Download Complete!"
+                : "You can close this dialog. The live photo(s) will continue to download in the background.",
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            style: context.theme.textTheme.bodyLarge,
+          )),
+        ]),
+        actions: [
+          Obx(
+                () => downloadingAttachments.value
+                ? Container(height: 0, width: 0)
+                : TextButton(
+              child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+              onPressed: () async {
+                if (Get.isSnackbarOpen ?? false) {
+                  Get.close(1);
+                }
+                Navigator.of(context).pop();
+                popDetails();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+    try {
+      for (Attachment? element in toDownload) {
+        attachmentObs.value = element;
+        final response = await http.downloadLivePhoto(element!.guid!,
+            onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+        final nameSplit = element.transferName!.split(".");
+        final file = PlatformFile(
+          name: "${nameSplit.take(nameSplit.length - 1).join(".")}.mov",
           size: response.data.length,
           bytes: response.data,
         );
@@ -1037,6 +1126,25 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               ),
               trailing: Icon(
                 ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.cloud_download : Icons.file_download,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload && part.attachments.where((e) => e.hasLivePhoto).isNotEmpty)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: downloadLivePhoto,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Save Live Photo",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.photo : Icons.motion_photos_on_outlined,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),

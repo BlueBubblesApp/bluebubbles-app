@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2065429213543838585",
-      "lastPropertyId": "18:4627777114429677812",
+      "lastPropertyId": "19:2980761301143366690",
       "name": "Attachment",
       "properties": [
         {
@@ -78,6 +78,11 @@
           "id": "18:4627777114429677812",
           "name": "dbMetadata",
           "type": 9
+        },
+        {
+          "id": "19:2980761301143366690",
+          "name": "hasLivePhoto",
+          "type": 1
         }
       ],
       "relations": []

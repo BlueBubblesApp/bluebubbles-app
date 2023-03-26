@@ -29,6 +29,7 @@ class Attachment {
   @Transient()
   Uint8List? bytes;
   String? webUrl;
+  bool hasLivePhoto;
 
   final message = ToOne<Message>();
 
@@ -53,6 +54,7 @@ class Attachment {
     this.metadata,
     this.bytes,
     this.webUrl,
+    this.hasLivePhoto = false,
   });
 
   /// Convert JSON to [Attachment]
@@ -82,6 +84,7 @@ class Attachment {
       height: json["height"] ?? 0,
       width: json["width"] ?? 0,
       metadata: metadata is String ? null : metadata,
+      hasLivePhoto: json["hasLivePhoto"],
     );
   }
 
@@ -158,6 +161,7 @@ class Attachment {
     existing.totalBytes = newAttachment.totalBytes;
     existing.bytes = newAttachment.bytes;
     existing.webUrl = newAttachment.webUrl;
+    existing.hasLivePhoto = newAttachment.hasLivePhoto;
     existing.save(null);
     // change the directory path
     String appDocPath = fs.appDocDir.path;
@@ -239,6 +243,9 @@ class Attachment {
     attachment1.uti ??= attachment2.uti;
     attachment1.webUrl ??= attachment2.webUrl;
     attachment1.metadata = mergeTopLevelDicts(attachment1.metadata, attachment2.metadata);
+    if (attachment2.hasLivePhoto) {
+      attachment1.hasLivePhoto = attachment2.hasLivePhoto;
+    }
     if (!attachment1.message.hasValue) {
       attachment1.message.target = attachment2.message.target;
     }
@@ -257,6 +264,7 @@ class Attachment {
     "height": height,
     "width": width,
     "metadata": jsonEncode(metadata),
+    "hasLivePhoto": hasLivePhoto,
   };
 
   bool  get _isPortrait {
