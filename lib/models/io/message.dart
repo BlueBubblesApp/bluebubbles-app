@@ -439,7 +439,7 @@ class Message {
       dateEdited: parseDate(json["dateEdited"]),
       wasDeliveredQuietly: json['wasDeliveredQuietly'] ?? false,
       didNotifyRecipient: json['didNotifyRecipient'] ?? false,
-      isBookmarked: json['isBookmarked'],
+      isBookmarked: json['isBookmarked'] ?? false,
     );
   }
 
