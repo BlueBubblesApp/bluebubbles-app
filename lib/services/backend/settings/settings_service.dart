@@ -119,6 +119,15 @@ class SettingsService extends GetxService {
     return val.item1 >= 11;
   }
 
+  Future<bool> get isMinMonterey async {
+    final val = await getServerDetails();
+    return val.item1 >= 12;
+  }
+
+  bool get isMinMontereySync {
+    return (prefs.getInt("macos-version") ?? 11) >= 12;
+  }
+
   bool get isMinBigSurSync {
     return (prefs.getInt("macos-version") ?? 11) >= 11;
   }
