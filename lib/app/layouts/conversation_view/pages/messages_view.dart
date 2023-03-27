@@ -81,7 +81,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     });
 
     updateObx(() async {
-      if (chat.isIMessage && !chat.isGroup && ss.serverDetailsSync().item4 >= 226) {
+      if (chat.isIMessage && !chat.isGroup) {
         getFocusState();
       }
       final searchMessage = (messageService.method == null) ? null : messageService.struct.messages.firstOrNull;
@@ -124,6 +124,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   }
 
   void getFocusState() {
+    if (!ss.isMinMontereySync) return;
     final recipient = chat.participants.firstOrNull;
     if (recipient != null) {
       http.handleFocusState(recipient.address).then((response) {

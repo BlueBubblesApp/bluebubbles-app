@@ -128,9 +128,9 @@ class FullSyncManager extends SyncManager {
               // If we're supposed to be stopping, break out
               if (status.value == SyncStatus.STOPPING) break;
             }
-          } catch (ex) {
+          } catch (ex, stack) {
             addToOutput('Failed to sync chat messages! Error: ${ex.toString()}', level: LogLevel.ERROR);
-            Logger.warn('Failed to sync messages for chat: ${chat.guid}!', tag: tag);
+            Logger.debug("StackTrace: $stack", tag: tag);
             Logger.debug('Error: ${ex.toString()}', tag: tag);
           }
 
