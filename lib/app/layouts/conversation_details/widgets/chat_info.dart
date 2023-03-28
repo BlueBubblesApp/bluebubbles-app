@@ -168,7 +168,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                     child: ContactAvatarGroupWidget(
                       chat: chat,
                       size: 100,
-                      editable: false,
+                      editable: !chat.isGroup,
                     ),
                   ),
                   Obx(() => chat.customAvatarPath != null ? Positioned(
