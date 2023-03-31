@@ -30,6 +30,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   }
 
   bool get shouldShow {
+    if (controller.audioWasKept.value != null) return true;
     if (widget.forceShow || message.guid!.contains("temp")) return true;
     if ((!message.isFromMe! && iOS) || (controller.parts.lastOrNull?.isUnsent ?? false)) return false;
     final messages = ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.messages
@@ -51,7 +52,9 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
 
   String getText() {
     String text = "";
-    if (!(message.isFromMe ?? false)) {
+    if (controller.audioWasKept.value != null) {
+      text = "Kept ${buildDate(controller.audioWasKept.value!)}";
+    } else if (!(message.isFromMe ?? false)) {
       text = "Received ${buildDate(message.dateCreated)}";
     } else if (message.dateRead != null) {
       text = "Read ${buildDate(message.dateRead)}";
@@ -72,7 +75,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       curve: Curves.easeInOut,
       alignment: Alignment.bottomCenter,
       duration: const Duration(milliseconds: 250),
-      child: shouldShow && getText().isNotEmpty ? Padding(
+      child: Obx(() => shouldShow && getText().isNotEmpty ? Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15).add(EdgeInsets.only(
           top: 3,
           left: showAvatar || ss.settings.alwaysShowAvatars.value ? 35 : 0)
@@ -81,7 +84,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
           getText(),
           style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
         ),
-      ) : const SizedBox.shrink(),
+      ) : const SizedBox.shrink()),
     );
   }
 }

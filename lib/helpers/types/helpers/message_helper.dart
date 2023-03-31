@@ -90,6 +90,8 @@ class MessageHelper {
   static Future<void> handleNotification(Message message, Chat chat, {bool findExisting = true}) async {
     // if from me
     if (message.isFromMe! || message.handle == null) return;
+    // if it is a "kept audio" message
+    if (message.itemType == 5 && message.subject != null) return;
     // See if there is an existing message for the given GUID
     if (findExisting && Message.findOne(guid: message.guid) != null) return;
     // if needing to mute

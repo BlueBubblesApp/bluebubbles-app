@@ -707,7 +707,7 @@ class Message {
     return "${fs.appDocDir.path}/messages/$guid/embedded-media/$balloonBundleId$extension";
   }
 
-  bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
+  bool get isGroupEvent => (groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0) && itemType != 5;
 
   String get groupEventText {
     String text = "Unknown group event";

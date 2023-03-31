@@ -185,6 +185,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
     ///                                                   |-> stack: stickers & reactions
     ///                                             - message properties
     ///                                          - delivered indicator
+    // Item Type 5 indicates a kept audio message, we don't need to show this
+    if (message.itemType == 5 && message.subject != null) {
+      return const SizedBox.shrink();
+    }
     return AnimatedPadding(
       duration: const Duration(milliseconds: 100),
       padding: message.guid!.contains("temp") ? EdgeInsets.zero : EdgeInsets.only(

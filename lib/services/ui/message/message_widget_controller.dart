@@ -21,6 +21,7 @@ MessageWidgetController? getActiveMwc(String guid) => Get.isRegistered<MessageWi
 
 class MessageWidgetController extends StatefulController with SingleGetTickerProviderMixin {
   final RxBool showEdits = false.obs;
+  final Rxn<DateTime> audioWasKept = Rxn<DateTime>(null);
 
   List<MessagePart> parts = [];
   Message message;
