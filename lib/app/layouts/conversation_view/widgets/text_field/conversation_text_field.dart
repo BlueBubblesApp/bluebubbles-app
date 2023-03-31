@@ -902,7 +902,7 @@ class TextFieldComponent extends StatelessWidget {
                     final start = editableTextState.textEditingValue.selection.start;
                     final end = editableTextState.textEditingValue.selection.end;
                     final text = editableTextState.textEditingValue.text;
-                    final selected = editableTextState.textEditingValue.text.substring((start - 1).clamp(0, text.length), (end + 1).clamp(1, text.length));
+                    final selected = editableTextState.textEditingValue.text.substring((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length));
                     return AdaptiveTextSelectionToolbar.editableText(
                       editableTextState: editableTextState,
                     )..buttonItems?.addAllIf(
