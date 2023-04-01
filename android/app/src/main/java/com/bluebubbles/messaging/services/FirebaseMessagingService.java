@@ -10,15 +10,12 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.bluebubbles.messaging.helpers.NotifyRunnable;
-import com.bluebubbles.messaging.workers.FCMWorker;
 import com.google.firebase.messaging.RemoteMessage;
 
 import io.flutter.plugin.common.MethodChannel;
 
 import static com.bluebubbles.messaging.MainActivity.CHANNEL;
 import static com.bluebubbles.messaging.MainActivity.engine;
-import static com.bluebubbles.messaging.workers.FCMWorker.backgroundChannel;
-import static com.bluebubbles.messaging.workers.FCMWorker.handler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import java.util.concurrent.CountDownLatch;
 

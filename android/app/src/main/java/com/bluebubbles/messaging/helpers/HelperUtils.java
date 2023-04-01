@@ -28,33 +28,6 @@ import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotifica
 public class HelperUtils {
     public static String TAG = "HelperUtils";
 
-    public static Object parseField(Map<String, Object> json, String field, String intendedType) {
-        // Handle cases where we want to return null
-        if (!json.containsKey(field) || json.get(field) == null) {
-            if (intendedType.equals("boolean")) return false;  // If null, let's assume false
-            return null;
-        }
-
-        String stringVal = String.valueOf(json.get(field));
-        if (stringVal.equals("null")) {
-            if (intendedType.equals("boolean")) return false;  // If null, let's assume false
-            return null;
-        }
-
-        switch (intendedType) {
-            case "integer":
-                return Integer.valueOf(stringVal);
-            case "long":
-                return Long.valueOf(stringVal);
-            case "boolean":
-                return Boolean.valueOf(stringVal);
-            case "timestamp":
-                return new Timestamp(Long.valueOf(stringVal));
-            default:
-                return stringVal;
-        }
-    }
-
     public static Bitmap getCircleBitmap(Bitmap bitmap) {
         final int size = Math.round(108 * Resources.getSystem().getDisplayMetrics().density);
         final Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);

@@ -16,26 +16,16 @@ import androidx.annotation.RequiresApi;
 
 import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.helpers.FileDirectory;
-import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
-import com.bluebubbles.messaging.method_call_handler.handlers.ClearFailedToSend;
-import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
 import com.bluebubbles.messaging.method_call_handler.handlers.DownloadHandler;
-import com.bluebubbles.messaging.method_call_handler.handlers.FailedToSend;
-import com.bluebubbles.messaging.method_call_handler.handlers.FetchMessagesHandler;
 import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
-import com.bluebubbles.messaging.method_call_handler.handlers.GetLastLocation;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle;
 import com.bluebubbles.messaging.method_call_handler.handlers.MediaSessionListener;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
-import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
-import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
-import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
-import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.method_call_handler.handlers.SetNextRestart;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenContactForm;
 import com.bluebubbles.messaging.method_call_handler.handlers.ViewContactForm;
@@ -59,45 +49,20 @@ public class MethodCallHandler {
                 worker.destroyHeadlessThread();
             }
             result.success("");
-        } else if(call.method.equals(FetchMessagesHandler.TAG)) {
-            new FetchMessagesHandler(context, call, result).Handle();
         } else if (call.method.equals(CreateNotificationChannel.TAG)) {
             new CreateNotificationChannel(context, call, result).Handle();
         } else if (call.method.equals(NewMessageNotification.TAG)) {
             new NewMessageNotification(context, call, result).Handle();
-        } else if (call.method.equals(SocketIssueWarning.TAG)) {
-            new SocketIssueWarning(context, call, result).Handle();
-        } else if (call.method.equals(ClearSocketIssue.TAG)) {
-            new ClearSocketIssue(context, call, result).Handle();
-        } else if (call.method.equals(OpenFile.TAG)) {
-            new OpenFile(context, call, result).Handle();
         } else if (call.method.equals(OpenLink.TAG)) {
             new OpenLink(context, call, result).Handle();
         } else if (call.method.equals(ClearChatNotifs.TAG)) {
             new ClearChatNotifs(context, call, result).Handle();
-        } else if (call.method.equals(GetLastLocation.TAG)) {
-            new GetLastLocation(context, call, result).Handle();
-        } else if (call.method.equals(SaveToFile.TAG)) {
-            new SaveToFile(context, call, result).Handle();
         } else if(call.method.equals(PushShareTargets.TAG)) {
             new PushShareTargets(context, call, result).Handle();
-        } else if (call.method.equals("get-starting-intent")) {
-            String intent = ((Activity) context).getIntent().getStringExtra("chatGuid");
-            String bubble = ((Activity) context).getIntent().getStringExtra("bubble");
-            ((Activity) context).getIntent().putExtra("chatGuid", (String) null);
-            ((Activity) context).getIntent().putExtra("bubble", (String) null);
-            HashMap<String, Object> args = new HashMap<>();
-            args.put("guid", intent);
-            args.put("bubble", bubble);
-            result.success(args);
         } else if (call.method.equals(InitializeBackgroundHandle.TAG)) {
             new InitializeBackgroundHandle(context, call, result).Handle();
         } else if (call.method.equals(GetServerUrl.TAG)) {
             new GetServerUrl(context, call, result).Handle();
-        } else if (call.method.equals(PickFile.TAG)) {
-            new PickFile(context, call, result).Handle();
-        } else if (call.method.equals(AlarmScheduler.TAG)) {
-            new AlarmScheduler(context, call, result).Handle();
         } else if (call.method.equals(SetNextRestart.TAG)) {
             new SetNextRestart(context, call, result).Handle();
         } else if (call.method.equals(DownloadHandler.TAG)) {
@@ -106,10 +71,6 @@ public class MethodCallHandler {
             new OpenContactForm(context, call, result).Handle();
         } else if (call.method.equals(ViewContactForm.TAG)) {
             new ViewContactForm(context, call, result).Handle();
-        } else if (call.method.equals(FailedToSend.TAG)) {
-            new FailedToSend(context, call, result).Handle();
-        } else if (call.method.equals(ClearFailedToSend.TAG)) {
-            new ClearFailedToSend(context, call, result).Handle();
         } else if (call.method.equals("start-notif-listener")) {
             if (Settings.Secure.getString(context.getContentResolver(),"enabled_notification_listeners").contains(context.getPackageName()) && engine != null) {
                 new MediaSessionListener(context, call, result).Handle();
@@ -123,7 +84,7 @@ public class MethodCallHandler {
                 MainActivity activity = (MainActivity) context;
                 activity.result = result;
                 Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-                activity.startActivityForResult(intent, 3000);
+                activity.startActivityForResult(intent, MainActivity.NOTIFICATION_SETTINGS);
             }
         } else if (call.method.equals("get-content-path")) {
             final String path = FileDirectory.INSTANCE.getAbsolutePath(context, Uri.parse((String) call.argument("uri")));
