@@ -47,6 +47,9 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
         return newer.dateDelivered == null;
       }
     }
+    if (index > 1 && message.isFromMe!) {
+      return messages.firstWhereOrNull((e) => e.dateRead != null)?.guid == message.guid;
+    }
     return false;
   }
 
