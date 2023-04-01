@@ -545,7 +545,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                   color: context.theme.colorScheme.outline,
                   size: 28,
                 ),
-                visualDensity: VisualDensity.compact,
+                visualDensity: Platform.isAndroid ? VisualDensity.compact : null,
                 onPressed: () async {
                   if (kIsDesktop) {
                     final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
