@@ -563,7 +563,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         bytes: await readByteStream(e.readStream!),
                       ));
                     }
-                    Get.back();
                   } else if (kIsWeb) {
                     showDialog(
                         context: context,
