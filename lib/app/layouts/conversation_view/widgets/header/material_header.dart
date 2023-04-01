@@ -33,10 +33,10 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
       automaticallyImplyLeading: false,
-      toolbarHeight: (kIsDesktop ? 5 : 0) + kToolbarHeight,
+      toolbarHeight: (kIsDesktop ? 25 : 0) + kToolbarHeight,
       leadingWidth: 40,
       leading: Padding(
-        padding: const EdgeInsets.only(left: 10.0),
+        padding: EdgeInsets.only(left: 10.0, top: kIsDesktop ? 20 : 0),
         child: BackButton(
           color: context.theme.colorScheme.onBackground,
           onPressed: () {
@@ -54,33 +54,39 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           },
         ),
       ),
-      title: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: controller.chat.isGroup ? () {
-          Navigator.of(context).push(
-            ThemeSwitcher.buildPageRoute(
-              builder: (context) => ConversationDetails(
-                chat: controller.chat,
+      title: Padding(
+        padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: controller.chat.isGroup ? () {
+            Navigator.of(context).push(
+              ThemeSwitcher.buildPageRoute(
+                builder: (context) => ConversationDetails(
+                  chat: controller.chat,
+                ),
               ),
-            ),
-          );
-        } : () async {
-          final handle = controller.chat.participants.first;
-          final contact = handle.contact;
-          if (contact == null) {
-            await mcs.invokeMethod("open-contact-form",
-                {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
-          } else {
-            await mcs.invokeMethod("view-contact-form", {'id': contact.id});
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(5.0),
-          child: _ChatIconAndTitle(parentController: controller),
+            );
+          } : () async {
+            final handle = controller.chat.participants.first;
+            final contact = handle.contact;
+            if (contact == null) {
+              await mcs.invokeMethod("open-contact-form",
+                  {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+            } else {
+              await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: _ChatIconAndTitle(parentController: controller),
+          ),
         ),
       ),
       actions: [
-        ManualMark(controller: controller),
+        Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          child: ManualMark(controller: controller),
+        ),
         if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isPhoneNumber)
           IconButton(
             icon: Icon(Icons.call_outlined, color: context.theme.colorScheme.onBackground),
@@ -95,109 +101,112 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
               launchUrl(Uri(scheme: "mailto", path: controller.chat.participants.first.address));
             },
           ),
-        PopupMenuButton<int>(
-          color: context.theme.colorScheme.properSurface,
-          shape: ss.settings.skin.value != Skins.Material ? const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(
-              Radius.circular(20.0),
-            ),
-          ) : null,
-          onSelected: (int value) {
-            if (value == 0) {
-              Navigator.of(context).push(
-                ThemeSwitcher.buildPageRoute(
-                  builder: (context) => ConversationDetails(
-                    chat: controller.chat,
+        Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          child: PopupMenuButton<int>(
+            color: context.theme.colorScheme.properSurface,
+            shape: ss.settings.skin.value != Skins.Material ? const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(20.0),
+              ),
+            ) : null,
+            onSelected: (int value) {
+              if (value == 0) {
+                Navigator.of(context).push(
+                  ThemeSwitcher.buildPageRoute(
+                    builder: (context) => ConversationDetails(
+                      chat: controller.chat,
+                    ),
                   ),
-                ),
-              );
-            } else if (value == 1) {
-              controller.chat.toggleArchived(!controller.chat.isArchived!);
-              while (Get.isOverlaysOpen) {
-                Get.back();
+                );
+              } else if (value == 1) {
+                controller.chat.toggleArchived(!controller.chat.isArchived!);
+                while (Get.isOverlaysOpen) {
+                  Get.back();
+                }
+                Navigator.of(context).pop();
+              } else if (value == 2) {
+                showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(
+                        "Are you sure?",
+                        style: context.theme.textTheme.titleLarge,
+                      ),
+                      content: Text(
+                        "This chat will be deleted from this device only",
+                        style: context.theme.textTheme.bodyLarge
+                      ),
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            while (Get.isOverlaysOpen) {
+                              Get.back();
+                            }
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        TextButton(
+                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () async {
+                            chats.removeChat(controller.chat);
+                            Chat.softDelete(controller.chat);
+                            while (Get.isOverlaysOpen) {
+                              Get.back();
+                            }
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } else if (value == 3) {
+                showBookmarksThread(controller);
               }
-              Navigator.of(context).pop();
-            } else if (value == 2) {
-              showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text(
-                      "Are you sure?",
-                      style: context.theme.textTheme.titleLarge,
-                    ),
-                    content: Text(
-                      "This chat will be deleted from this device only",
-                      style: context.theme.textTheme.bodyLarge
-                    ),
-                    backgroundColor: context.theme.colorScheme.properSurface,
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                        onPressed: () {
-                          while (Get.isOverlaysOpen) {
-                            Get.back();
-                          }
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                        onPressed: () async {
-                          chats.removeChat(controller.chat);
-                          Chat.softDelete(controller.chat);
-                          while (Get.isOverlaysOpen) {
-                            Get.back();
-                          }
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            } else if (value == 3) {
-              showBookmarksThread(controller);
-            }
-          },
-          itemBuilder: (context) {
-            return <PopupMenuItem<int>>[
-              PopupMenuItem(
-                value: 0,
-                child: Text(
-                  'Details',
-                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                ),
-              ),
-              if (!ls.isBubble)
+            },
+            itemBuilder: (context) {
+              return <PopupMenuItem<int>>[
                 PopupMenuItem(
-                  value: 1,
+                  value: 0,
                   child: Text(
-                    controller.chat.isArchived! ? 'Unarchive' : 'Archive',
+                    'Details',
                     style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                 ),
-              if (!ls.isBubble)
+                if (!ls.isBubble)
+                  PopupMenuItem(
+                    value: 1,
+                    child: Text(
+                      controller.chat.isArchived! ? 'Unarchive' : 'Archive',
+                      style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                    ),
+                  ),
+                if (!ls.isBubble)
+                  PopupMenuItem(
+                    value: 2,
+                    child: Text(
+                      'Delete',
+                      style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                    ),
+                  ),
                 PopupMenuItem(
-                  value: 2,
+                  value: 3,
                   child: Text(
-                    'Delete',
+                    'Bookmarks',
                     style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                 ),
-              PopupMenuItem(
-                value: 3,
-                child: Text(
-                  'Bookmarks',
-                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                ),
-              ),
-            ];
-          },
-          icon: Icon(
-            Icons.more_vert,
-            color: context.theme.colorScheme.onBackground,
+              ];
+            },
+            icon: Icon(
+              Icons.more_vert,
+              color: context.theme.colorScheme.onBackground,
+            ),
           ),
         )
       ],
@@ -205,7 +214,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kIsDesktop ? 70 : kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(kIsDesktop ? 90 : kToolbarHeight);
 }
 
 class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
