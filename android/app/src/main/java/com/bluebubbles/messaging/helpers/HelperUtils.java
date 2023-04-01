@@ -22,6 +22,13 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import android.content.SharedPreferences;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
+import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 
@@ -99,5 +106,32 @@ public class HelperUtils {
             Log.d(HelperUtils.TAG, "Failed to cancel notification ID: " + failedId + ". Re-cancelling...");
             manager.cancel(NewMessageNotification.notificationTag, failedId);
         }
+    }
+
+    public static void getServerUrl(Context context, String password, String identifier, MethodChannel.Result onSuccess) {
+        SharedPreferences mPrefs = context.getSharedPreferences("FlutterSharedPreferences", 0);
+        String storedPassword = mPrefs.getString("flutter.guidAuthKey", "");
+        if (!password.equals(storedPassword)) return;
+        HashMap<String, Object> fcmData = new HashMap<>();
+        fcmData.put("project_id", mPrefs.getString("flutter.projectID", ""));
+        fcmData.put("storage_bucket", mPrefs.getString("flutter.storageBucket", ""));
+        fcmData.put("api_key", mPrefs.getString("flutter.apiKey", ""));
+        fcmData.put("firebase_url", mPrefs.getString("flutter.firebaseURL", ""));
+        fcmData.put("client_id", mPrefs.getString("flutter.clientID", ""));
+        fcmData.put("application_id", mPrefs.getString("flutter.applicationID", ""));
+        new FirebaseAuth(context, new MethodCall("auth", fcmData), new MethodChannel.Result() {
+            @Override
+            public void success(Object result) {
+                new GetServerUrl(context, new MethodCall("get-server-url", null), onSuccess).Handle();
+            }
+
+            @Override
+            public void error(String errorCode, String errorMessage, Object errorDetails) {
+            }
+
+            @Override
+            public void notImplemented() {
+            }
+        }).Handle();
     }
 }

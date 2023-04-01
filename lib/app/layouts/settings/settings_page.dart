@@ -1,4 +1,5 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/backup_restore_dialog.dart';
@@ -444,6 +445,32 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     : SocketState.connecting),
                               ),
                             )),
+                            if (Platform.isAndroid)
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 65.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              ),
+                            if (Platform.isAndroid)
+                              SettingsTile(
+                                backgroundColor: tileColor,
+                                title: "Tasker Integration",
+                                subtitle: "Control integrations with Tasker",
+                                trailing: nextIcon,
+                                onTap: () async {
+                                  ns.pushAndRemoveSettingsUntil(
+                                    context,
+                                    TaskerPanel(),
+                                        (route) => route.isFirst,
+                                  );
+                                },
+                                leading: const SettingsLeadingIcon(
+                                  iosIcon: CupertinoIcons.bolt,
+                                  materialIcon: Icons.electric_bolt_outlined,
+                                ),
+                              ),
                           ],
                         ),
                         SettingsHeader(

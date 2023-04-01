@@ -60,6 +60,13 @@
         android:debuggable="false"
         android:usesCleartextTraffic="true">
         <receiver android:name=".services.ReplyReceiver" />
+        <receiver
+            android:name=".services.ExternalIntentReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.bluebubbles.external.GET_SERVER_URL" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"
