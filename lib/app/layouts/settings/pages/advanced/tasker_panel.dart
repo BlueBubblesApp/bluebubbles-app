@@ -43,7 +43,7 @@ class _TaskerPanelState extends OptimizedState<TaskerPanel> {
                       subtitle: "View more details on how to create Tasker integrations with BlueBubbles",
                       isThreeLine: true,
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "docs.bluebubbles.app", path: "client/tasker-integration"), mode: LaunchMode.externalApplication);
+                        await launchUrl(Uri(scheme: "https", host: "docs.bluebubbles.app", path: "client/usage-guides/tasker-integration"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.info_circle,
