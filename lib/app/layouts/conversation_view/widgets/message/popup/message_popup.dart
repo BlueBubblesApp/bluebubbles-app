@@ -236,9 +236,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                             if (!isNullOrEmptyString(part.fullText))
                               Padding(
                                 padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.content_copy, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: copyText,
+                                child: GestureDetector(
+                                  onLongPress: copySelection,
+                                  child: IconButton(
+                                    icon: Icon(Icons.content_copy, color: context.theme.colorScheme.properOnSurface),
+                                    onPressed: copyText,
+                                  ),
                                 ),
                               ),
                             if (chat.isGroup && !message.isFromMe! && dmChat != null && !ls.isBubble)
@@ -678,6 +681,17 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     }
   }
 
+  void copySelection() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: context.theme.colorScheme.properSurface,
+        title: Text("Copy Selection", style: context.theme.textTheme.titleLarge),
+        content: SelectableText(message.fullText, style: context.theme.extension<BubbleText>()!.bubbleText),
+      ),
+    );
+  }
+
   Future<void> downloadOriginal() async {
     final RxBool downloadingAttachments = true.obs;
     final RxnDouble progress = RxnDouble();
@@ -1107,6 +1121,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           color: Colors.transparent,
           child: InkWell(
             onTap: copyText,
+            onLongPress: copySelection,
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
