@@ -64,7 +64,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       if (!isBubble) {
         createFakePort();
       }
-      socket.reconnect();
+      if (!ss.settings.keepAppAlive.value) {
+        socket.reconnect();
+      }
     }
 
     if (kIsDesktop) {
@@ -83,7 +85,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     cm.setActiveToDead();
     if (!kIsDesktop && !kIsWeb) {
       IsolateNameServer.removePortNameMapping('bg_isolate');
-      socket.disconnect();
+      if (!ss.settings.keepAppAlive.value) {
+        socket.disconnect();
+      }
     }
     if (kIsDesktop) {
       windowFocused = false;

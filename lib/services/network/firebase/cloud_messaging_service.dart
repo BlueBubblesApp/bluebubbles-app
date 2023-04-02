@@ -26,7 +26,8 @@ class CloudMessagingService extends GetxService {
   /// Register this device with FCM
   Future<void> registerDevice() async {
     // Make sure setup is complete, and that we aren't currently registering with FCM
-    if (!ss.settings.finishedSetup.value) return;
+    // Users can also choose to disable FCM in settings
+    if (!ss.settings.finishedSetup.value || !ss.settings.keepAppAlive.value) return;
 
     if (completer != null && !completer!.isCompleted) {
       return completer!.future;

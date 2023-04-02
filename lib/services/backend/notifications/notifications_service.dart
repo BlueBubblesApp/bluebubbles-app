@@ -25,6 +25,7 @@ class NotificationsService extends GetxService {
   static const String ERROR_CHANNEL = "com.bluebubbles.errors";
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
   static const String FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
+  static const String FOREGROUND_SERVICE_CHANNEL = "com.bluebubbles.foreground_service";
 
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
   StreamSubscription? countSub;
@@ -75,6 +76,11 @@ class NotificationsService extends GetxService {
         FACETIME_CHANNEL,
         "Incoming FaceTimes",
         "Displays incoming FaceTimes detected by the server",
+      );
+      createNotificationChannel(
+        FOREGROUND_SERVICE_CHANNEL,
+        "Foreground Service",
+        "Allows BlueBubbles to stay open in the background for notifications if FCM is not being used",
       );
     }
 

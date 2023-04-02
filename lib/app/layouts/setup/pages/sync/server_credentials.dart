@@ -443,7 +443,31 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               ss.saveFCMData(fcmData);
             } catch (_) {
               if (Platform.isAndroid) {
-                showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
+                showDialog(
+                  barrierDismissible: false,
+                  context: Get.context!,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(
+                        "No Firebase Detected",
+                        style: context.theme.textTheme.titleLarge,
+                      ),
+                      content: Text(
+                        "We couldn't find a Firebase setup on your server. To receive notifications, please enable the foreground service option from Settings > Misc & Advanced.",
+                        style: context.theme.textTheme.bodyLarge,
+                      ),
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
               }
             }
             socket.restartSocket();

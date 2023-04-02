@@ -57,6 +57,7 @@ dependencies:
   flutter_contacts: ^1.1.6
   flutter_displaymode: ^0.5.0 # android only
   flutter_dotenv: ^5.0.2
+  flutter_foreground_task: ^4.1.0
   flutter_improved_scrolling: ^0.0.3
   flutter_isolate: ^2.0.3
   flutter_keyboard_visibility: ^5.4.0 # no desktop support

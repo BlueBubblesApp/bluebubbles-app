@@ -77,7 +77,7 @@ class SocketService extends GetxService {
 
     // custom events
     // only listen to these events from socket on web/desktop (FCM handles on Android)
-    if (kIsWeb || kIsDesktop) {
+    if (kIsWeb || kIsDesktop || ss.settings.keepAppAlive.value) {
       socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
       socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
       socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
