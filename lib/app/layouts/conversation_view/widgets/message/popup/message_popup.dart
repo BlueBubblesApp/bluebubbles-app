@@ -323,6 +323,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                     downloadLivePhoto();
                                   } else if (value == 9) {
                                     toggleBookmark();
+                                  } else if (value == 10) {
+                                    copySelection();
                                   }
                                 },
                                 itemBuilder: (context) {
@@ -417,6 +419,14 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                         value: 8,
                                         child: Text(
                                           'Save Live Photo',
+                                          style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                                        ),
+                                      ),
+                                    if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
+                                      PopupMenuItem(
+                                        value: 10,
+                                        child: Text(
+                                          'Copy Selection',
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
@@ -687,7 +697,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       builder: (context) => AlertDialog(
         backgroundColor: context.theme.colorScheme.properSurface,
         title: Text("Copy Selection", style: context.theme.textTheme.titleLarge),
-        content: SelectableText(message.fullText, style: context.theme.extension<BubbleText>()!.bubbleText),
+        content: SelectableText(part.fullText, style: context.theme.extension<BubbleText>()!.bubbleText),
       ),
     );
   }
@@ -1128,6 +1138,22 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               title: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               trailing: Icon(
                 ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: copySelection,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text("Copy Selection", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.text_cursor : Icons.content_copy,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
