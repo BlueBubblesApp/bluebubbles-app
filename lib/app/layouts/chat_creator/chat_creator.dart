@@ -50,6 +50,7 @@ class ChatCreator extends StatefulWidget {
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
   late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
+  final TextEditingController subjectController = TextEditingController();
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -624,11 +625,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                       }
                       return KeyEventResult.ignored;
                     },
-                    child: TextFieldComponent(
+                    child: Obx(() => TextFieldComponent(
                         focusNode: messageNode,
-                        subjectTextController: TextEditingController(),
+                        subjectTextController: subjectController,
                         textController: textController,
-                        controller: null,
+                        controller: fakeController.value,
                         recorderController: RecorderController(),
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
@@ -658,12 +659,13 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             await fakeController.value!.send(
                               widget.initialAttachments,
                               textController.text,
-                              "",
-                              null,
-                              null,
-                              null,
+                              subjectController.text,
+                              fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ?? fakeController.value!.replyToMessage?.item1.guid,
+                              fakeController.value!.replyToMessage?.item2,
+                              effect,
                               false,
                             );
+                            fakeController.value!.replyToMessage = null;
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             createCompleter = Completer();
@@ -770,7 +772,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               }
                             });
                           }
-                        }),
+                        })),
                   ),
                 ),
               ),
