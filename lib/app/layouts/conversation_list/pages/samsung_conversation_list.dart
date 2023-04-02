@@ -110,6 +110,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                           ? "You have no messages from unknown senders :)"
                                           : "You have no chats :(",
                                       style: context.theme.textTheme.labelLarge,
+                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                   if (!chats.loadedChatBatch.value)

@@ -158,7 +158,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
       ),
       child: TabletModeWrapper(
         initialRatio: 0.4,
-        minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
+        minRatio: kIsDesktop || kIsWeb ? 0.1 : 0.33,
         maxRatio: 0.5,
         allowResize: true,
         left: !showAltLayout ? child : LayoutBuilder(

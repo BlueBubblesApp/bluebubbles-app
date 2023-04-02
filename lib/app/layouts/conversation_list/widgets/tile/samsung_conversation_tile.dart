@@ -32,56 +32,63 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
 
   @override
   Widget build(BuildContext context) {
-    final child = GestureDetector(
-      onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    final leading = ChatLeading(controller: controller, unreadIcon: UnreadIcon(parentController: controller));
+    final child = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        mouseCursor: MouseCursor.defer,
+        onTap: () => controller.onTap(context),
+        onLongPress: controller.onLongPress,
+        child: Obx(() => ListTile(
           mouseCursor: MouseCursor.defer,
-          onTap: () => controller.onTap(context),
-          onLongPress: controller.onLongPress,
-          child: Obx(() => ListTile(
-            mouseCursor: MouseCursor.defer,
-            dense: ss.settings.denseChatTiles.value,
-            visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
-            minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
-            title: Obx(() => ChatTitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodyMedium!.copyWith(
-                fontWeight: controller.shouldHighlight.value
-                    ? FontWeight.w600
-                    : null,
-              ),
-            )),
-            subtitle: controller.subtitle ?? Obx(() => ChatSubtitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodySmall!.copyWith(
-                color: controller.shouldHighlight.value
-                    ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
-                height: 1.5,
-              ),
-            )),
-            leading: ChatLeading(controller: controller, unreadIcon: UnreadIcon(parentController: controller)),
-            trailing: SamsungTrailing(parentController: controller),
+          dense: ss.settings.denseChatTiles.value,
+          visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+          minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
+          title: Obx(() => ChatTitle(
+            parentController: controller,
+            style: context.theme.textTheme.bodyMedium!.copyWith(
+              fontWeight: controller.shouldHighlight.value
+                  ? FontWeight.w600
+                  : null,
+            ),
           )),
-        ),
+          subtitle: controller.subtitle ?? Obx(() => ChatSubtitle(
+            parentController: controller,
+            style: context.theme.textTheme.bodySmall!.copyWith(
+              color: controller.shouldHighlight.value
+                  ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
+              height: 1.5,
+            ),
+          )),
+          leading: leading,
+          trailing: SamsungTrailing(parentController: controller),
+        )),
       ),
     );
 
-    return Obx(() => AnimatedContainer(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: controller.isSelected
-            ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
-            : shouldPartialHighlight
-            ? context.theme.colorScheme.properSurface
-            : shouldHighlight
-            ? context.theme.colorScheme.primaryContainer
-            : hoverHighlight ? context.theme.colorScheme.properSurface.withOpacity(0.5) : null,
-      ),
-      duration: const Duration(milliseconds: 100),
-      child: child,
-    ));
+    return Obx(() {
+      ns.listener.value;
+      return GestureDetector(
+        onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
+        child: AnimatedContainer(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: controller.isSelected
+                ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
+                : shouldPartialHighlight
+                ? context.theme.colorScheme.properSurface
+                : shouldHighlight
+                ? context.theme.colorScheme.primaryContainer
+                : hoverHighlight ? context.theme.colorScheme.properSurface.withOpacity(0.5) : null,
+          ),
+          duration: const Duration(milliseconds: 100),
+          child: ns.isAvatarOnly(context) ? Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0).add(const EdgeInsets.only(right: 15)),
+            child: Center(child: leading),
+          ) : child,
+        ),
+      );
+    });
   }
 }
 

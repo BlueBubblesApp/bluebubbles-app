@@ -43,10 +43,13 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
   @override
   void initState() {
     super.initState();
-    _ratio = RxDouble(ss.prefs.getDouble('splitRatio') ?? widget.initialRatio);
+    _ratio = RxDouble((ss.prefs.getDouble('splitRatio') ?? widget.initialRatio).clamp(widget.minRatio, widget.maxRatio));
     eventDispatcher.stream.listen((event) {
       if (event.item1 == 'split-refresh') {
         _ratio.value = ss.prefs.getDouble('splitRatio') ?? _ratio.value;
+        setState(() {});
+      } else if (event.item1 == 'override-split') {
+        _ratio.value = event.item2;
         setState(() {});
       }
     });

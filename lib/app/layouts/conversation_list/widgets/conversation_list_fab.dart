@@ -36,6 +36,13 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
         });
       }
     });
+    ns.listener.stream.listen((event) {
+      if (ns.isAvatarOnly(context) && controller.showMaterialFABText) {
+        setState(() {
+          controller.showMaterialFABText = false;
+        });
+      }
+    });
   }
 
   @override
