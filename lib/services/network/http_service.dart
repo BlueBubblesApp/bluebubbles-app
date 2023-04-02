@@ -837,12 +837,38 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Delete theme backup
+  Future<Response> deleteTheme(String name, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+          "$apiRoot/backup/theme",
+          queryParameters: buildQueryParams(),
+          data: {"name": name},
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get settings backup, if any
   Future<Response> getSettings({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/backup/settings",
           queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Delete settings backup
+  Future<Response> deleteSettings(String name, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+          "$apiRoot/backup/settings",
+          queryParameters: buildQueryParams(),
+          data: {"name": name},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);

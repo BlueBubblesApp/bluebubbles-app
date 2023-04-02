@@ -1,8 +1,8 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/settings/dialogs/backup_restore_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/attachment_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/chat_list_panel.dart';
@@ -513,9 +513,10 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               SettingsTile(
                                 backgroundColor: tileColor,
                                 onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => const BackupRestoreDialog(),
+                                  ns.pushAndRemoveSettingsUntil(
+                                    context,
+                                    BackupRestorePanel(),
+                                        (route) => route.isFirst,
                                   );
                                 },
                                 leading: const SettingsLeadingIcon(
@@ -523,7 +524,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   materialIcon: Icons.backup,
                                 ),
                                 title: "Backup & Restore",
-                                subtitle: "Backup and restore all app settings",
+                                subtitle: "Backup and restore all app settings and custom themes",
                               ),
                               Container(
                                 color: tileColor,
