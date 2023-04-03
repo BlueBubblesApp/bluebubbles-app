@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:maps_launcher/maps_launcher.dart';
@@ -77,7 +78,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   );
   // extract rich content
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
-  final linkIndexMatches = <Tuple2<String, List<int>>>[];
+  final linkIndexMatches = <Tuple3<String, List<int>, List?>>[];
   final controller = cvc(message.chat.target ?? cm.activeChat!.chat);
   if (!isNullOrEmpty(part.text)!) {
     if (!kIsWeb && !kIsDesktop) {
@@ -108,21 +109,30 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
       }
       for (EntityAnnotation element in normalizedEntities) {
         if (element.entities.first is AddressEntity) {
-          linkIndexMatches.add(Tuple2("map", [element.start, element.end]));
+          linkIndexMatches.add(Tuple3("map", [element.start, element.end], null));
         } else if (element.entities.first is PhoneEntity) {
-          linkIndexMatches.add(Tuple2("phone", [element.start, element.end]));
+          linkIndexMatches.add(Tuple3("phone", [element.start, element.end], null));
         } else if (element.entities.first is EmailEntity) {
-          linkIndexMatches.add(Tuple2("email", [element.start, element.end]));
+          linkIndexMatches.add(Tuple3("email", [element.start, element.end], null));
         } else if (element.entities.first is UrlEntity) {
-          linkIndexMatches.add(Tuple2("link", [element.start, element.end]));
+          linkIndexMatches.add(Tuple3("link", [element.start, element.end], null));
+        } else if (element.entities.first is DateTimeEntity) {
+          linkIndexMatches.add(Tuple3("date", [element.start, element.end], [(element.entities.first as DateTimeEntity).timestamp]));
+        } else if (element.entities.first is TrackingNumberEntity) {
+          final ent = (element.entities.first as TrackingNumberEntity);
+          Clipboard.setData(ClipboardData(text: ent.number));
+          linkIndexMatches.add(Tuple3("tracking", [element.start, element.end], [ent.carrier, ent.number]));
+        } else if (element.entities.first is FlightNumberEntity) {
+          final ent = (element.entities.first as FlightNumberEntity);
+          linkIndexMatches.add(Tuple3("flight", [element.start, element.end], [ent.airlineCode, ent.flightNumber]));
         } else if (element.entities.first is MentionEntity) {
-          linkIndexMatches.add(Tuple2("mention-${element.entities.first.rawValue}", [element.start, element.end]));
+          linkIndexMatches.add(Tuple3("mention", [element.start, element.end], [element.entities.first.rawValue]));
         }
       }
     } else {
       List<RegExpMatch> matches = urlRegex.allMatches(part.text!).toList();
       for (RegExpMatch match in matches) {
-        linkIndexMatches.add(Tuple2("link", [match.start, match.end]));
+        linkIndexMatches.add(Tuple3("link", [match.start, match.end], null));
       }
     }
   }
@@ -136,21 +146,21 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   // render rich content if needed
   if (linkIndexMatches.isNotEmpty) {
     linkIndexMatches.forEachIndexed((i, e) {
-      final type = linkIndexMatches[i].item1;
-      final range = linkIndexMatches[i].item2;
+      final type = e.item1;
+      final range = e.item2;
+      final data = e.item3;
       final text = part.displayText!.substring(range.first, range.last);
       textSpans.addAll(MessageHelper.buildEmojiText(
         part.displayText!.substring(i == 0 ? 0 : linkIndexMatches[i - 1].item2.last, range.first),
         textStyle,
       ));
-      if (type.contains("mention")) {
-        final mention = type.split("-").last;
+      if (type == "mention") {
         textSpans.addAll(MessageHelper.buildEmojiText(
           text,
           textStyle.apply(fontWeightDelta: 2),
           recognizer: TapGestureRecognizer()..onTap = () async {
             if (kIsDesktop || kIsWeb) return;
-            final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == mention);
+            final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == data!.first);
             if (handle?.contact == null && handle != null) {
               await mcs.invokeMethod("open-contact-form",
                   {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
@@ -159,7 +169,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
             }
           }
         ));
-      } else if (urlRegex.hasMatch(text) || type == "map" || text.isPhoneNumber || text.isEmail) {
+      } else if (urlRegex.hasMatch(text) || type == "map" || text.isPhoneNumber || text.isEmail || type == "date" || type == "tracking" || type == "flight") {
         textSpans.add(
           TextSpan(
             text: text,
@@ -177,6 +187,16 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
                   await launchUrl(Uri(scheme: "tel", path: text));
                 } else if (type == "email") {
                   await launchUrl(Uri(scheme: "mailto", path: text));
+                } else if (type == "date") {
+                  await mcs.invokeMethod("open-calendar", {"date": data!.first});
+                } else if (type == "tracking") {
+                  final TrackingCarrier c = data!.first;
+                  final String number = data.last;
+                  await launchUrl(Uri.parse("https://www.google.com/search?q=${describeEnum(c)} $number"), mode: LaunchMode.externalApplication);
+                } else if (type == "flight") {
+                  final String c = data!.first;
+                  final String number = data.last;
+                  await launchUrl(Uri.parse("https://www.google.com/search?q=flight $c$number"), mode: LaunchMode.externalApplication);
                 }
               },
             style: textStyle.apply(decoration: TextDecoration.underline),

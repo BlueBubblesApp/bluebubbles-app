@@ -105,6 +105,11 @@ public class MethodCallHandler {
             PackageManager pm = context.getPackageManager();
             Boolean chromeOS = pm.hasSystemFeature("org.chromium.arc") || pm.hasSystemFeature("org.chromium.arc.device_management");
             result.success(chromeOS);
+        } else if (call.method.equals("open-calendar")) {
+            Intent intent = new Intent(Intent.ACTION_EDIT);
+            intent.setType("vnd.android.cursor.item/event");
+            intent.putExtra("beginTime", (long) call.argument("date"));
+            context.startActivity(intent);
         } else {
             result.notImplemented();
         }
