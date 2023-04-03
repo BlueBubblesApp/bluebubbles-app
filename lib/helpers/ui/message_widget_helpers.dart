@@ -120,7 +120,6 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
           linkIndexMatches.add(Tuple3("date", [element.start, element.end], [(element.entities.first as DateTimeEntity).timestamp]));
         } else if (element.entities.first is TrackingNumberEntity) {
           final ent = (element.entities.first as TrackingNumberEntity);
-          Clipboard.setData(ClipboardData(text: ent.number));
           linkIndexMatches.add(Tuple3("tracking", [element.start, element.end], [ent.carrier, ent.number]));
         } else if (element.entities.first is FlightNumberEntity) {
           final ent = (element.entities.first as FlightNumberEntity);
@@ -192,6 +191,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
                 } else if (type == "tracking") {
                   final TrackingCarrier c = data!.first;
                   final String number = data.last;
+                  Clipboard.setData(ClipboardData(text: number));
                   await launchUrl(Uri.parse("https://www.google.com/search?q=${describeEnum(c)} $number"), mode: LaunchMode.externalApplication);
                 } else if (type == "flight") {
                   final String c = data!.first;
