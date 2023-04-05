@@ -117,7 +117,11 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
         } else if (element.entities.first is UrlEntity) {
           linkIndexMatches.add(Tuple3("link", [element.start, element.end], null));
         } else if (element.entities.first is DateTimeEntity) {
-          linkIndexMatches.add(Tuple3("date", [element.start, element.end], [(element.entities.first as DateTimeEntity).timestamp]));
+          final ent = (element.entities.first as DateTimeEntity);
+          if (part.text?.substring(element.start, element.end) == "now") {
+            continue;
+          }
+          linkIndexMatches.add(Tuple3("date", [element.start, element.end], [ent.timestamp]));
         } else if (element.entities.first is TrackingNumberEntity) {
           final ent = (element.entities.first as TrackingNumberEntity);
           linkIndexMatches.add(Tuple3("tracking", [element.start, element.end], [ent.carrier, ent.number]));
