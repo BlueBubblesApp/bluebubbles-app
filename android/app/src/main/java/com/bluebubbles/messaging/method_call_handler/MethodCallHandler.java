@@ -110,6 +110,12 @@ public class MethodCallHandler {
             intent.setType("vnd.android.cursor.item/event");
             intent.putExtra("beginTime", (long) call.argument("date"));
             context.startActivity(intent);
+        } else if (call.method.equals("google-duo")) {
+            Intent intent = new Intent();
+            intent.setPackage("com.google.android.apps.tachyon");
+            intent.setAction("com.google.android.apps.tachyon.action.CALL");
+            intent.setData(Uri.parse("tel:" + (String) call.argument("number")));
+            context.startActivity(intent);
         } else {
             result.notImplemented();
         }
