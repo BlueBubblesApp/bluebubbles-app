@@ -74,6 +74,7 @@ class Settings {
   final RxBool scrollToBottomOnSend = true.obs;
   final RxBool sendEventsToTasker = false.obs;
   final RxBool keepAppAlive = false.obs;
+  final RxBool unarchiveOnNewMessage = false.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -243,6 +244,7 @@ class Settings {
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
       'sendEventsToTasker': sendEventsToTasker.value,
       'keepAppAlive': keepAppAlive.value,
+      'unarchiveOnNewMessage': unarchiveOnNewMessage.value,
       'privateAPISend': privateAPISend.value,
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -353,6 +355,7 @@ class Settings {
     ss.settings.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     ss.settings.sendEventsToTasker.value = map['sendEventsToTasker'] ?? true;
     ss.settings.keepAppAlive.value = map['keepAppAlive'] ?? false;
+    ss.settings.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -468,6 +471,7 @@ class Settings {
     s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
     s.keepAppAlive.value = map['keepAppAlive'] ?? false;
+    s.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;

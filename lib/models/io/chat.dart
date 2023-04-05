@@ -696,6 +696,9 @@ class Chat {
           save(updateDateDeleted: true);
           chats.addChat(this);
         }
+        if (isArchived! && !_latestMessage!.isFromMe! && ss.settings.unarchiveOnNewMessage.value) {
+          toggleArchived(false);
+        }
       }
     }
 
