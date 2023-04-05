@@ -168,10 +168,15 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         },
                         initialVal: ss.settings.keepAppAlive.value,
                         title: "Use Foreground Service For Notifications",
-                        subtitle: "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.\nNote: May cause more battery drain.",
+                        subtitle: "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.",
                         isThreeLine: true,
                         backgroundColor: tileColor,
                       )),
+                    if (!kIsWeb && !kIsDesktop)
+                      const SettingsSubtitle(
+                        subtitle: "Note: Closing the app via the app switcher will disconnect the socket connection, since the Flutter Engine is killed. The app must be permanently kept open in the background. As a result, you may experience higher battery drain.",
+                        unlimitedSpace: true,
+                      ),
                   ],
                 ),
               if (!kIsWeb && !kIsDesktop)
