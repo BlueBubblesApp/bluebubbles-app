@@ -114,6 +114,10 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
           )
         );
       },
+      errorBuilder: (context, object, stacktrace) => Center(
+        heightFactor: 1,
+        child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+      ),
     );
   }
 

@@ -139,9 +139,10 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                         _data.imageMetadata!.url!,
                         gaplessPlayback: true,
                         filterQuality: FilterQuality.none,
-                        errorBuilder: (_, __, ___) {
-                          return const SizedBox.shrink();
-                        },
+                        errorBuilder: (context, object, stacktrace) => Center(
+                          heightFactor: 1,
+                          child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+                        ),
                       ),
                     ),
                   ),
@@ -166,9 +167,10 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                       content.bytes!,
                       gaplessPlayback: true,
                       filterQuality: FilterQuality.none,
-                      errorBuilder: (_, __, ___) {
-                        return const SizedBox.shrink();
-                      },
+                      errorBuilder: (context, object, stacktrace) => Center(
+                        heightFactor: 1,
+                        child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+                      ),
                     ),
                   ),
                 ),
@@ -192,9 +194,10 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                       file,
                       gaplessPlayback: true,
                       filterQuality: FilterQuality.none,
-                      errorBuilder: (_, __, ___) {
-                        return const SizedBox.shrink();
-                      },
+                      errorBuilder: (context, object, stacktrace) => Center(
+                        heightFactor: 1,
+                        child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+                      ),
                     ),
                   ),
                 ),
