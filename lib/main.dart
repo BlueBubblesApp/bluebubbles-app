@@ -49,7 +49,7 @@ import 'package:windows_taskbar/windows_taskbar.dart';
 // todo list desktop
 /// Show notif badges
 
-const databaseVersion = 3;
+const databaseVersion = 4;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -250,6 +250,11 @@ Future<Null> initApp(bool bubble) async {
               chatBox.putMany(chats);
               version = 3;
               migrate.call();
+              return;
+            // Version 4 saves FCM Data to the shared preferences for use in Tasker integration
+            case 4:
+              ss.getFcmData();
+              ss.fcmData.save();
               return;
             default:
               return;

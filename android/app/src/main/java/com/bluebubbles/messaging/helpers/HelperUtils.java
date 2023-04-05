@@ -112,14 +112,15 @@ public class HelperUtils {
         SharedPreferences mPrefs = context.getSharedPreferences("FlutterSharedPreferences", 0);
         String storedPassword = mPrefs.getString("flutter.guidAuthKey", "");
         if (!password.equals(storedPassword)) return;
-        HashMap<String, Object> fcmData = new HashMap<>();
+        HashMap<String, String> fcmData = new HashMap<String, String>();
         fcmData.put("project_id", mPrefs.getString("flutter.projectID", ""));
         fcmData.put("storage_bucket", mPrefs.getString("flutter.storageBucket", ""));
         fcmData.put("api_key", mPrefs.getString("flutter.apiKey", ""));
         fcmData.put("firebase_url", mPrefs.getString("flutter.firebaseURL", ""));
         fcmData.put("client_id", mPrefs.getString("flutter.clientID", ""));
         fcmData.put("application_id", mPrefs.getString("flutter.applicationID", ""));
-        new FirebaseAuth(context, new MethodCall("auth", fcmData), new MethodChannel.Result() {
+        Map<String, String> map = new HashMap<String, String>(fcmData);
+        new FirebaseAuth(context, new MethodCall("auth", map), new MethodChannel.Result() {
             @Override
             public void success(Object result) {
                 new GetServerUrl(context, new MethodCall("get-server-url", null), onSuccess).Handle();

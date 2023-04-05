@@ -41,6 +41,12 @@ class FCMData {
   FCMData save() {
     if (kIsWeb) return this;
     fcmDataBox.put(this);
+    ss.prefs.setString('projectID', projectID!);
+    ss.prefs.setString('storageBucket', storageBucket!);
+    ss.prefs.setString('apiKey', apiKey!);
+    ss.prefs.setString('firebaseURL', firebaseURL!);
+    ss.prefs.setString('clientID', clientID!);
+    ss.prefs.setString('applicationID', applicationID!);
     return this;
   }
 
