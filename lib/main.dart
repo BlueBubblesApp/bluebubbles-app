@@ -668,11 +668,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
         await initSystemTray();
 
-        /* ----- RESET WINDOWS NOTIFICATION BADGE ----- */
-        if (Platform.isWindows) {
-          await WindowsTaskbar.resetOverlayIcon();
-        }
-
         /* ----- WINDOWS NOTIFICATIONS INITIALIZATION ----- */
         await localNotifier.setup(appName: "BlueBubbles");
 
