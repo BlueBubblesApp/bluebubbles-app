@@ -89,7 +89,7 @@
     },
     {
       "id": "3:9017250848141753702",
-      "lastPropertyId": "27:5967587520649064381",
+      "lastPropertyId": "28:3841196368520260614",
       "name": "Chat",
       "properties": [
         {
@@ -199,6 +199,11 @@
           "id": "27:5967587520649064381",
           "name": "lockChatIcon",
           "type": 1
+        },
+        {
+          "id": "28:3841196368520260614",
+          "name": "lastReadMessageGuid",
+          "type": 9
         }
       ],
       "relations": [

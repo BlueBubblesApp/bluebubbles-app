@@ -112,7 +112,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(3, 9017250848141753702),
       name: 'Chat',
-      lastPropertyId: const IdUid(27, 5967587520649064381),
+      lastPropertyId: const IdUid(28, 3841196368520260614),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -220,6 +220,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(27, 5967587520649064381),
             name: 'lockChatIcon',
             type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(28, 3841196368520260614),
+            name: 'lastReadMessageGuid',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[
@@ -982,7 +987,10 @@ ModelDefinition getObjectBoxModel() {
               .textFieldAttachments
               .map(fbb.writeString)
               .toList(growable: false));
-          fbb.startTable(28);
+          final lastReadMessageGuidOffset = object.lastReadMessageGuid == null
+              ? null
+              : fbb.writeString(object.lastReadMessageGuid!);
+          fbb.startTable(29);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(2, guidOffset);
           fbb.addOffset(4, chatIdentifierOffset);
@@ -1005,6 +1013,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(24, object.style);
           fbb.addBool(25, object.lockChatName);
           fbb.addBool(26, object.lockChatIcon);
+          fbb.addOffset(27, lastReadMessageGuidOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1041,7 +1050,8 @@ ModelDefinition getObjectBoxModel() {
               dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
               style: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52),
               lockChatName: const fb.BoolReader().vTableGet(buffer, rootOffset, 54, false),
-              lockChatIcon: const fb.BoolReader().vTableGet(buffer, rootOffset, 56, false))
+              lockChatIcon: const fb.BoolReader().vTableGet(buffer, rootOffset, 56, false),
+              lastReadMessageGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 58))
             ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
                 ? null
                 : DateTime.fromMillisecondsSinceEpoch(
@@ -1707,6 +1717,10 @@ class Chat_ {
   /// see [Chat.lockChatIcon]
   static final lockChatIcon =
       QueryBooleanProperty<Chat>(_entities[1].properties[20]);
+
+  /// see [Chat.lastReadMessageGuid]
+  static final lastReadMessageGuid =
+      QueryStringProperty<Chat>(_entities[1].properties[21]);
 
   /// see [Chat.handles]
   static final handles =

@@ -30,6 +30,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   ConversationViewController? cvController;
   late final String tag;
   late final StreamSubscription sub;
+  bool built = false;
 
   static const maxBubbleSizeFactor = 0.75;
 

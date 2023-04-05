@@ -163,6 +163,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
+    controller.built = true;
     final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
     final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")));
     Iterable<Message> stickersForPart(int part) {

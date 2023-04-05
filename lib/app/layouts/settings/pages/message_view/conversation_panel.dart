@@ -153,6 +153,30 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     const SettingsSubtitle(
                       subtitle: "Note: Overrides any custom avatars set for group chats.",
                     ),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        ss.settings.scrollToLastUnread.value = val;
+                        saveSettings();
+                      },
+                      initialVal: ss.settings.scrollToLastUnread.value,
+                      title: "Store Last Read Message",
+                      subtitle: "Remembers the last opened message and allows automatically scrolling back to it if out of view",
+                      backgroundColor: tileColor,
+                      isThreeLine: true,
+                    )),
+                  if (!kIsWeb)
+                    const SettingsSubtitle(
+                      subtitle: "Note: Can result in degraded performance depending on how many unread messages there are.",
+                    ),
                 ],
               ),
               if (!kIsWeb)

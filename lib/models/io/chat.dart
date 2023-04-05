@@ -325,6 +325,7 @@ class Chat {
   int? style;
   bool lockChatName;
   bool lockChatIcon;
+  String? lastReadMessageGuid;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -361,6 +362,7 @@ class Chat {
     this.style,
     this.lockChatName = false,
     this.lockChatIcon = false,
+    this.lastReadMessageGuid,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -391,6 +393,7 @@ class Chat {
       style: json["style"],
       lockChatName: json["lockChatName"] ?? false,
       lockChatIcon: json["lockChatIcon"] ?? false,
+      lastReadMessageGuid: json["lastReadMessageGuid"],
     );
   }
 
@@ -411,6 +414,7 @@ class Chat {
     bool updateDateDeleted = false,
     bool updateLockChatName = false,
     bool updateLockChatIcon = false,
+    bool updateLastReadMessageGuid = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -461,6 +465,9 @@ class Chat {
       }
       if (!updateLockChatIcon) {
         lockChatIcon = existing?.lockChatIcon ?? false;
+      }
+      if (!updateLastReadMessageGuid) {
+        lastReadMessageGuid = existing?.lastReadMessageGuid ?? lastReadMessageGuid;
       }
 
       /// Save the chat and add the participants
@@ -1036,5 +1043,6 @@ class Chat {
     "style": style,
     "lockChatName": lockChatName,
     "lockChatIcon": lockChatIcon,
+    "lastReadMessageGuid": lastReadMessageGuid,
   };
 }
