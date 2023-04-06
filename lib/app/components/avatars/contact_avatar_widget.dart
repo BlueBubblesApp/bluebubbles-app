@@ -6,6 +6,7 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class ContactAvatarWidget extends StatefulWidget {
   ContactAvatarWidget({
@@ -183,7 +184,15 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             final hide = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
             final iOS = ss.settings.skin.value == Skins.iOS;
             final avatar = contact?.avatar;
-            if (isNullOrEmpty(avatar)! || hide) {
+            if (!hide && widget.handle == null && ss.settings.userAvatarPath.value != null) {
+              dynamic file = File(ss.settings.userAvatarPath.value!);
+              return CircleAvatar(
+                key: ValueKey(ss.settings.userAvatarPath.value!),
+                radius: size / 2,
+                backgroundImage: FileImage(file),
+                backgroundColor: Colors.transparent,
+              );
+            } else if (isNullOrEmpty(avatar)! || hide) {
               String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
               if (!isNullOrEmpty(initials)! && !hide) {
                 return Text(

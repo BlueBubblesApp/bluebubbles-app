@@ -76,6 +76,8 @@ class Settings {
   final RxBool keepAppAlive = false.obs;
   final RxBool unarchiveOnNewMessage = false.obs;
   final RxBool scrollToLastUnread = false.obs;
+  final RxString userName = "You".obs;
+  final RxnString userAvatarPath = RxnString();
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -247,6 +249,8 @@ class Settings {
       'keepAppAlive': keepAppAlive.value,
       'unarchiveOnNewMessage': unarchiveOnNewMessage.value,
       'scrollToLastUnread': scrollToLastUnread.value,
+      'userName': userName.value,
+      'userAvatarPath': userAvatarPath.value,
       'privateAPISend': privateAPISend.value,
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -359,6 +363,8 @@ class Settings {
     ss.settings.keepAppAlive.value = map['keepAppAlive'] ?? false;
     ss.settings.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
     ss.settings.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;
+    ss.settings.userName.value = map['userName'] ?? "You";
+    ss.settings.userAvatarPath.value = map['userAvatarPath'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -476,6 +482,8 @@ class Settings {
     s.keepAppAlive.value = map['keepAppAlive'] ?? false;
     s.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
     s.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;
+    s.userName.value = map['userName'] ?? "You";
+    s.userAvatarPath.value = map['userAvatarPath'];
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;

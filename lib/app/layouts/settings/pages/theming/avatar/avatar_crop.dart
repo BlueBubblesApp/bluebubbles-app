@@ -25,7 +25,21 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
 
   void onCropped(Uint8List croppedData) async {
     String appDocPath = fs.appDocDir.path;
-    if (widget.index != null) {
+    if (widget.index == null && widget.chat == null) {
+      File file = File("$appDocPath/avatars/you/avatar-${croppedData.length}.jpg");
+      if (!(await file.exists())) {
+        await file.create(recursive: true);
+      }
+      if (ss.settings.userAvatarPath.value != null) {
+        await File(ss.settings.userAvatarPath.value!).delete();
+      }
+      await file.writeAsBytes(croppedData);
+      ss.settings.userAvatarPath.value = file.path;
+      ss.settings.save();
+      Navigator.of(context).pop();
+      ns.backSettings(context, result: file.path);
+      showSnackbar("Notice", "User avatar saved successfully");
+    } else if (widget.index != null) {
       File file = File("$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
       if (!(await file.exists())) {
         await file.create(recursive: true);

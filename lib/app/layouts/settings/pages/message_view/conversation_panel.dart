@@ -1,3 +1,6 @@
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -176,6 +179,78 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                   if (!kIsWeb)
                     const SettingsSubtitle(
                       subtitle: "Note: Can result in degraded performance depending on how many unread messages there are.",
+                    ),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    SettingsTile(
+                      title: "User Profile",
+                      onTap: () async {
+                        final nameController = TextEditingController(text: ss.settings.userName.value);
+                        await showDialog(
+                            context: context,
+                            builder: (_) {
+                              return AlertDialog(
+                                actions: [
+                                  TextButton(
+                                    child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                    onPressed: () => Get.back(),
+                                  ),
+                                  TextButton(
+                                    child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                    onPressed: () async {
+                                      if (nameController.text.isEmpty) {
+                                        showSnackbar("Error", "Enter a name!");
+                                        return;
+                                      }
+                                      Get.back();
+                                      ss.settings.userName.value = nameController.text;
+                                      ss.settings.save();
+                                    },
+                                  ),
+                                ],
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          ThemeSwitcher.buildPageRoute(
+                                            builder: (context) => AvatarCrop(),
+                                          ),
+                                        );
+                                      },
+                                      child: ContactAvatarWidget(
+                                        handle: null,
+                                        borderThickness: 0.1,
+                                        editable: false,
+                                        fontSize: 22,
+                                        size: 60,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextField(
+                                      controller: nameController,
+                                      decoration: const InputDecoration(
+                                        labelText: "Name",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                title: Text("User Profile", style: context.theme.textTheme.titleLarge),
+                                backgroundColor: context.theme.colorScheme.properSurface,
+                              );
+                            }
+                        );
+                      },
+                      subtitle: "Set a name and avatar for yourself",
                     ),
                 ],
               ),
