@@ -3,12 +3,16 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' hide Notification;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:get/get.dart';
 import 'package:local_notifier/local_notifier.dart';
@@ -33,6 +37,8 @@ class NotificationsService extends GetxService {
 
   /// For desktop use only
   static LocalNotification? allToast;
+  static LocalNotification? failedToast;
+  static LocalNotification? socketToast;
   static List<String> pushedNotifications = [];
   static Map<String, List<LocalNotification>> notifications = {};
   static Map<String, int> notificationCounts = {};
@@ -484,30 +490,95 @@ class NotificationsService extends GetxService {
 
 
   Future<void> createSocketError() async {
-    await flnp.show(
-      -2,
-      'Could not connect',
-      'Your server may be offline!',
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          ERROR_CHANNEL,
-          'Errors',
-          channelDescription: 'Displays message send failures, connection failures, and more',
-          priority: Priority.max,
-          importance: Importance.max,
-          color: HexColor("4990de"),
-          ongoing: true,
-          onlyAlertOnce: true,
+    const title = 'Could not connect';
+    const subtitle = 'Your server may be offline!';
+    if (kIsDesktop) {
+      if (socketToast != null) return;
+      socketToast = LocalNotification(
+        title: title,
+        body: subtitle,
+        actions: [],
+      );
+
+      socketToast!.onClick = () async {
+        socketToast = null;
+        await windowManager.focus();
+        Navigator.of(Get.context!).push(
+          ThemeSwitcher.buildPageRoute(
+            builder: (BuildContext context) {
+              return ServerManagementPanel();
+            },
+          ),
+        );
+      };
+
+      await socketToast!.show();
+      return;
+    } else {
+      final notifs = await flnp.getActiveNotifications();
+      if (notifs.firstWhereOrNull((element) => element.id == -2) != null) return;
+      await flnp.show(
+        -2,
+        title,
+        subtitle,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            ERROR_CHANNEL,
+            'Errors',
+            channelDescription: 'Displays message send failures, connection failures, and more',
+            priority: Priority.max,
+            importance: Importance.max,
+            color: HexColor("4990de"),
+            ongoing: true,
+            onlyAlertOnce: true,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> createFailedToSend(Chat chat, {bool scheduled = false}) async {
+    final title = 'Failed to send${scheduled ? " scheduled" : ""} message';
+    final subtitle = scheduled ? 'Tap to open scheduled messages list' : 'Tap to see more details or retry';
+    if (kIsDesktop) {
+      failedToast = LocalNotification(
+        title: title,
+        body: subtitle,
+        actions: [],
+      );
+
+      failedToast!.onClick = () async {
+        failedToast = null;
+        await windowManager.focus();
+        if (scheduled) {
+          Navigator.of(Get.context!).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (BuildContext context) {
+                return ScheduledMessagesPanel();
+              },
+            ),
+          );
+        } else {
+          bool chatIsOpen = cm.activeChat?.chat.guid == chat.guid;
+          if (!chatIsOpen) {
+            ns.pushAndRemoveUntil(
+              Get.context!,
+              ConversationView(
+                chat: chat,
+              ),
+              (route) => route.isFirst,
+            );
+          }
+        }
+      };
+
+      await failedToast!.show();
+      return;
+    }
     await flnp.show(
       chat.id! * (scheduled ? -1 : 1),
-      'Failed to send${scheduled ? " scheduled" : ""} message',
-      scheduled ? 'Tap to open scheduled messages list' : 'Tap to see more details or retry',
+      title,
+      subtitle,
       NotificationDetails(
         android: AndroidNotificationDetails(
           ERROR_CHANNEL,
@@ -525,10 +596,26 @@ class NotificationsService extends GetxService {
   Future<void> createFacetimeNotif(Handle handle) async {
     await cs.init();
     final contact = cs.matchHandleToContact(handle);
+    final title = 'Incoming FaceTime from ${contact?.displayName ?? handle.address}';
+    const subtitle = '';
+    if (kIsDesktop) {
+      final toast = LocalNotification(
+        title: title,
+        body: subtitle,
+        actions: [],
+      );
+
+      toast.onClick = () async {
+        await windowManager.focus();
+      };
+
+      await toast.show();
+      return;
+    }
     await flnp.show(
       Random().nextInt(9998) + 1,
-      'Incoming FaceTime from ${contact?.displayName ?? handle.address}',
-      '',
+      title,
+      subtitle,
       NotificationDetails(
         android: AndroidNotificationDetails(
           FACETIME_CHANNEL,
@@ -543,10 +630,18 @@ class NotificationsService extends GetxService {
   }
 
   Future<void> clearSocketError() async {
+    if (kIsDesktop) {
+      await socketToast?.close();
+      socketToast = null;
+      return;
+    }
     await flnp.cancel(-2);
   }
 
   Future<void> clearFailedToSend(int id) async {
+    if (kIsDesktop) {
+      return await failedToast?.close();
+    }
     await flnp.cancel(id);
   }
 
