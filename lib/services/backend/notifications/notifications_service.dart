@@ -448,7 +448,7 @@ class NotificationsService extends GetxService {
     await allToast?.close();
 
     String title = "$count messages";
-    String body = "from ${_chats.length} chat(s)";
+    String body = "from ${_chats.length} chat${_chats.length == 1 ? "" : "s"}";
 
     // Don't create notification for no reason
     if (allToast?.title == title && allToast?.body == body) return;
