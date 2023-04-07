@@ -103,6 +103,36 @@ class MessageHelper {
     await notif.createNotification(chat, message);
   }
 
+  static Future<void> handleSummaryNotification(List<Message> messages, {bool findExisting = true}) async {
+    Set<String> chats = {};
+    for (int i = 0; i < messages.length; i++) {
+      final message = messages[i];
+      if (message.chat.target != null) {
+        chats.add(message.chat.target!.guid);
+      }
+      bool remove = false;
+      // if from me
+      if (message.isFromMe! || message.handle == null) remove = true;
+      // if it is a "kept audio" message
+      if (message.itemType == 5 && message.subject != null) remove = true;
+      // See if there is an existing message for the given GUID
+      if (findExisting && Message.findOne(guid: message.guid) != null) remove = true;
+      // if needing to mute
+      if (message.chat.target?.shouldMuteNotification(message) ?? false) remove = true;
+      if (remove) {
+        messages.remove(message);
+        i--;
+      }
+    }
+    if (messages.isEmpty) return;
+
+    List<int> selectedIndices = ss.settings.selectedActionIndices;
+    List<String> _actions = ss.settings.actionList;
+    List<String> actions = _actions.whereIndexed((i, e) => selectedIndices.contains(i)).toList();
+    bool showMarkRead = actions.contains("Mark Read");
+    await notif.showSummaryNotifDesktop(messages.length, chats, showMarkRead);
+  }
+
   static String getNotificationText(Message message, {bool withSender = false}) {
     if (message.isGroupEvent) return message.groupEventText;
     if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {

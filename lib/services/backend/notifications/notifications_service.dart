@@ -99,7 +99,13 @@ class NotificationsService extends GetxService {
             if (message.chat.target == null) continue;
             message.handle = message.getHandle();
             message.attachments = List<Attachment>.from(message.dbAttachments);
-            MessageHelper.handleNotification(message, message.chat.target!, findExisting: false);
+          }
+          if (kIsDesktop && messages.length > 1) {
+            MessageHelper.handleSummaryNotification(messages, findExisting: false);
+          } else {
+            for (Message message in messages) {
+              MessageHelper.handleNotification(message, message.chat.target!, findExisting: false);
+            }
           }
         }
         currentCount = newCount;
@@ -211,50 +217,7 @@ class NotificationsService extends GetxService {
       Iterable<String> _chats = notifications.keys.toList();
 
       if (_chats.length > maxChatCount) {
-        for (String chat in _chats) {
-          for (LocalNotification _toast in notifications[chat]!) {
-            await _toast.close();
-          }
-          notifications[chat] = [];
-        }
-
-        await allToast?.close();
-
-        String title = "${notificationCounts.values.sum} messages";
-        String body = "from ${_chats.length} chats";
-
-        // Don't create notification for no reason
-        if (allToast?.title == title && allToast?.body == body) return;
-
-        allToast = LocalNotification(
-          title: "${notificationCounts.values.sum} messages",
-          body: "from ${_chats.length} chats",
-          actions: showMarkRead ? [LocalNotificationAction(text: "Mark All Read")] : [],
-        );
-
-        allToast!.onClick = () async {
-          notifications = {};
-          notificationCounts = {};
-          await windowManager.focus();
-        };
-
-        allToast!.onClickAction = (index) async {
-          notifications = {};
-          notificationCounts = {};
-
-          chats.markAllAsRead();
-        };
-
-        allToast!.onClose = (reason) {
-          if (reason != LocalNotificationCloseReason.unknown) {
-            notifications = {};
-            notificationCounts = {};
-          }
-        };
-
-        await allToast!.show();
-
-        return;
+        return await showSummaryNotifDesktop(notificationCounts.values.sum, _chats, showMarkRead);
       }
 
       Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
@@ -473,6 +436,52 @@ class NotificationsService extends GetxService {
       });
     }
   }
+
+  Future<void> showSummaryNotifDesktop(int count, Iterable<String> _chats, bool showMarkRead) async {
+    for (String chat in _chats) {
+      for (LocalNotification _toast in (notifications[chat] ?? [])) {
+        await _toast.close();
+      }
+      notifications[chat] = [];
+    }
+
+    await allToast?.close();
+
+    String title = "$count messages";
+    String body = "from ${_chats.length} chat(s)";
+
+    // Don't create notification for no reason
+    if (allToast?.title == title && allToast?.body == body) return;
+
+    allToast = LocalNotification(
+      title: title,
+      body: body,
+      actions: showMarkRead ? [LocalNotificationAction(text: "Mark All Read")] : [],
+    );
+
+    allToast!.onClick = () async {
+      notifications = {};
+      notificationCounts = {};
+      await windowManager.focus();
+    };
+
+    allToast!.onClickAction = (index) async {
+      notifications = {};
+      notificationCounts = {};
+
+      chats.markAllAsRead();
+    };
+
+    allToast!.onClose = (reason) {
+      if (reason != LocalNotificationCloseReason.unknown) {
+        notifications = {};
+        notificationCounts = {};
+      }
+    };
+
+    await allToast!.show();
+  }
+
 
   Future<void> createSocketError() async {
     await flnp.show(
