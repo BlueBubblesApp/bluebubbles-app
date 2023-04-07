@@ -37,6 +37,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
       }
     });
     ns.listener.stream.listen((event) {
+      if (!mounted) return;
       if (ns.isAvatarOnly(context) && controller.showMaterialFABText) {
         setState(() {
           controller.showMaterialFABText = false;
