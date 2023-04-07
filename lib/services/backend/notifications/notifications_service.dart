@@ -640,7 +640,9 @@ class NotificationsService extends GetxService {
 
   Future<void> clearFailedToSend(int id) async {
     if (kIsDesktop) {
-      return await failedToast?.close();
+      await failedToast?.close();
+      failedToast = null;
+      return;
     }
     await flnp.cancel(id);
   }
