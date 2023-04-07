@@ -137,6 +137,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
       for (RegExpMatch match in matches) {
         linkIndexMatches.add(Tuple3("link", [match.start, match.end], null));
       }
+      linkIndexMatches.addAll(part.mentions.map((e) => Tuple3("mention", [e.range.first, e.range.last], [e.mentionedAddress ?? ""])));
     }
   }
   // render subject
