@@ -532,9 +532,9 @@ class Main extends StatelessWidget {
                       }
                     }
                   }
-                  return SecureGate(
-                    blurr: 0,
-                    opacity: 1.0,
+                  return TitleBarWrapper(child: SecureGate(
+                    blurr: 5,
+                    opacity: 0,
                     lockedBuilder: (context, controller) {
                       final localAuth = LocalAuthentication();
                       if (!isAuthing) {
@@ -587,7 +587,7 @@ class Main extends StatelessWidget {
                       );
                     },
                     child: child ?? Container(),
-                  );
+                  ),);
                 },
               ),
             ),

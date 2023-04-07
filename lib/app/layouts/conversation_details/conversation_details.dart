@@ -51,6 +51,10 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   void initState() {
     super.initState();
 
+    if (kIsDesktop) {
+      cm.setActiveToDead();
+    }
+
     if (!kIsWeb) {
       final chatQuery = chatBox.query(Chat_.guid.equals(chat.guid)).watch();
       sub = chatQuery.listen((Query<Chat> query) async {
@@ -86,6 +90,12 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   @override
   void dispose() {
     sub.cancel();
+    if (kIsDesktop) {
+      if (cm.activeChat != null) {
+        cm.setActiveToAlive();
+        cvc(cm.activeChat!.chat).lastFocusedNode.requestFocus();
+      }
+    }
     super.dispose();
   }
 
