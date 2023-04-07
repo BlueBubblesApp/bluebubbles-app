@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/video_player.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -112,7 +113,7 @@ class _EmbeddedMediaState extends CustomState<EmbeddedMedia, void, MessageWidget
               child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
             ),
           ),
-        if (content is PlatformFile && content.bytes != null && content.name.endsWith(".mov"))
+        if (content is PlatformFile && content.bytes != null && content.name.endsWith(".mov") && !kIsDesktop)
           VideoPlayer(
             file: content,
             attachment: Attachment(
@@ -120,6 +121,13 @@ class _EmbeddedMediaState extends CustomState<EmbeddedMedia, void, MessageWidget
             ),
             controller: controller.cvController,
             isFromMe: message.isFromMe!,
+          ),
+        if (content is PlatformFile && content.bytes != null && content.name.endsWith(".mov") && kIsDesktop)
+          OtherFile(
+            attachment: Attachment(
+              guid: message.guid,
+            ),
+            file: content,
           ),
         if (content is! PlatformFile)
           InkWell(
