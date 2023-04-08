@@ -32,7 +32,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              if (!kIsWeb && !kIsDesktop)
+              if (!kIsWeb && !(kIsDesktop && !Platform.isWindows))
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [

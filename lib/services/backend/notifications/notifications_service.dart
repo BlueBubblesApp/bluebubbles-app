@@ -18,7 +18,7 @@ import 'package:get/get.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart';
 import 'package:timezone/timezone.dart';
-import 'package:universal_html/html.dart' hide File, Platform;
+import 'package:universal_html/html.dart' hide File, Platform, Navigator;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -454,7 +454,7 @@ class NotificationsService extends GetxService {
     await allToast?.close();
 
     String title = "$count messages";
-    String body = "from ${_chats.length} chat(s)";
+    String body = "from ${_chats.length} chat${_chats.length == 1 ? "" : "s"}";
 
     // Don't create notification for no reason
     if (allToast?.title == title && allToast?.body == body) return;

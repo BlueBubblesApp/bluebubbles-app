@@ -934,7 +934,7 @@ class TextFieldComponent extends StatelessWidget {
                         ContextMenuButtonItem(
                           onPressed: () async {
                             final text = editableTextState.textEditingValue.text;
-                            final textPart = text.substring(0, end + 1);
+                            final textPart = text.substring(0, (end + 1).clamp(1, text.length));
                             final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
                             if (mentionMatch == null) return; // Shouldn't happen
                             final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);

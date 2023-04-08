@@ -54,6 +54,9 @@ class ConversationTileController extends StatefulController {
         ),
         (route) => route.isFirst,
       );
+    } else if (ns.isTabletMode(context) && cm.activeChat?.isAlive == false) {
+      // Pops chat details
+      Get.back(id: 2);
     } else {
       cvc(chat).lastFocusedNode.requestFocus();
     }

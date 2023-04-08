@@ -40,7 +40,7 @@ class NavigatorService extends GetxService {
 
   double ratio(BuildContext context) => (_widthChatListLeft ?? context.width) / context.width;
   
-  bool isAvatarOnly(BuildContext context) => ratio(context) < 0.2;
+  bool isAvatarOnly(BuildContext context) => isTabletMode(context) && (_widthChatListLeft ?? context.width) < 300;
 
   /// Push a new route onto the chat list right side navigator
   void push(BuildContext context, Widget widget) {

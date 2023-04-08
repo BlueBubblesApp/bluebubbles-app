@@ -69,6 +69,7 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
     return Obx(() {
       ns.listener.value;
       return GestureDetector(
+        onTap: () => controller.onTap(context),
         onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
         child: AnimatedContainer(
           clipBehavior: Clip.antiAlias,

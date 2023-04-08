@@ -14,6 +14,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:store_checker/store_checker.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';
 
@@ -25,7 +26,7 @@ class SettingsService extends GetxService {
   bool _canAuthenticate = false;
   late final SharedPreferences prefs;
 
-  bool get canAuthenticate => _canAuthenticate && (fs.androidInfo?.version.sdkInt ?? 0) > 28;
+  bool get canAuthenticate => _canAuthenticate && (Platform.isWindows || (fs.androidInfo?.version.sdkInt ?? 0) > 28);
 
   Future<void> init({bool headless = false}) async {
     prefs = await SharedPreferences.getInstance();
@@ -53,6 +54,9 @@ class SettingsService extends GetxService {
     }
     // launch at startup
     if (kIsDesktop) {
+      if (Platform.isWindows) {
+        _canAuthenticate = await LocalAuthentication().isDeviceSupported();
+      }
       LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName); // Can't use fs here because it hasn't been initialized yet
       if (settings.launchAtStartup.value) {
         await LaunchAtStartup.enable();
