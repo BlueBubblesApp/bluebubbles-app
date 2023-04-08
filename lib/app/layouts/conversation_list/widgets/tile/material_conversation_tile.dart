@@ -125,6 +125,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
       child: Obx(() {
         ns.listener.value;
         return GestureDetector(
+          onTap: () => controller.onTap(context),
           onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
           child: AnimatedContainer(
             clipBehavior: Clip.antiAlias,
