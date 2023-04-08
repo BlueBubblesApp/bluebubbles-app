@@ -12,6 +12,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -37,66 +38,89 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
           child: Material(
             color: Colors.transparent,
             child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 20.0,
-                    right: 20,
-                    top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () {
-                            if (controller.inSelectMode.value) {
-                              controller.inSelectMode.value = false;
-                              controller.selected.clear();
-                              return;
-                            }
-                            if (ls.isBubble) {
-                              SystemNavigator.pop();
-                              return;
-                            }
-                            controller.close();
-                            while (Get.isOverlaysOpen) {
-                              Get.back();
-                            }
-                            Navigator.of(context).pop();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: _UnreadIcon(controller: controller),
-                          ),
-                        ),
+              padding: EdgeInsets.only(left: 20.0, right: 20, top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)),
+              child: Stack(alignment: Alignment.center, children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: XGestureDetector(
+                    onTap: (details) {
+                      if (!kIsDesktop) return;
+                      if (controller.inSelectMode.value) {
+                        controller.inSelectMode.value = false;
+                        controller.selected.clear();
+                        return;
+                      }
+                      if (ls.isBubble) {
+                        SystemNavigator.pop();
+                        return;
+                      }
+                      controller.close();
+                      while (Get.isOverlaysOpen) {
+                        Get.back();
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () {
+                        if (kIsDesktop) return;
+                        if (controller.inSelectMode.value) {
+                          controller.inSelectMode.value = false;
+                          controller.selected.clear();
+                          return;
+                        }
+                        if (ls.isBubble) {
+                          SystemNavigator.pop();
+                          return;
+                        }
+                        controller.close();
+                        while (Get.isOverlaysOpen) {
+                          Get.back();
+                        }
+                        Navigator.of(context).pop();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: _UnreadIcon(controller: controller),
                       ),
-                      Align(
-                        alignment: Alignment.center,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              ThemeSwitcher.buildPageRoute(
-                                builder: (context) => ConversationDetails(
-                                  chat: controller.chat,
-                                ),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: _ChatIconAndTitle(parentController: controller),
-                          ),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ManualMark(controller: controller)
-                      ),
-                    ]
+                    ),
                   ),
                 ),
+                Align(
+                  alignment: Alignment.center,
+                  child: XGestureDetector(
+                    onTap: (details) {
+                      if (!kIsDesktop) return;
+                      Navigator.of(context).push(
+                        ThemeSwitcher.buildPageRoute(
+                          builder: (context) => ConversationDetails(
+                            chat: controller.chat,
+                          ),
+                        ),
+                      );
+                    },
+                    child: InkWell(
+                      onTap: () {
+                        if (kIsDesktop) return;
+                        Navigator.of(context).push(
+                          ThemeSwitcher.buildPageRoute(
+                            builder: (context) => ConversationDetails(
+                              chat: controller.chat,
+                            ),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: _ChatIconAndTitle(parentController: controller),
+                      ),
+                    ),
+                  ),
+                ),
+                Align(alignment: Alignment.centerRight, child: ManualMark(controller: controller)),
+              ]),
+            ),
           ),
         ),
       ),
@@ -223,8 +247,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-            .watch();
+        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = await runAsync(() {
             final cquery = chatBox.query(Chat_.guid.equals(cachedGuid)).build();
@@ -235,8 +258,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           if (chat == null) return;
 
           // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName
-              || chat.handles.length != cachedParticipants.length) {
+          if (chat.displayName != cachedDisplayName || chat.handles.length != cachedParticipants.length) {
             final newTitle = chat.getTitle();
             if (newTitle != title) {
               setState(() {
@@ -252,8 +274,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
       sub = WebListeners.chatUpdate.listen((chat) {
         if (chat.guid == controller.chat.guid) {
           // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName
-              || chat.participants.length != cachedParticipants.length) {
+          if (chat.displayName != cachedDisplayName || chat.participants.length != cachedParticipants.length) {
             final newTitle = chat.getTitle();
             if (newTitle != title) {
               setState(() {
@@ -290,34 +311,30 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
         ),
       ),
       const SizedBox(height: 5, width: 5),
-      Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: ns.width(context) / 2.5,
-            ),
-            child: RichText(
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: context.theme.textTheme.bodyMedium,
-                children: MessageHelper.buildEmojiText(
-                  _title,
-                  context.theme.textTheme.bodyMedium!,
-                ),
+      Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: ns.width(context) / 2.5,
+          ),
+          child: RichText(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: context.theme.textTheme.bodyMedium,
+              children: MessageHelper.buildEmojiText(
+                _title,
+                context.theme.textTheme.bodyMedium!,
               ),
             ),
           ),
-          Icon(
-            CupertinoIcons.chevron_right,
-            size: context.theme.textTheme.bodyMedium!.fontSize!,
-            color: context.theme.colorScheme.outline,
-          ),
-        ]
-      ),
+        ),
+        Icon(
+          CupertinoIcons.chevron_right,
+          size: context.theme.textTheme.bodyMedium!.fontSize!,
+          color: context.theme.colorScheme.outline,
+        ),
+      ]),
     ];
 
     if (context.orientation == Orientation.landscape && Platform.isAndroid) {

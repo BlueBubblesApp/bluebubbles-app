@@ -25,6 +25,7 @@ dependencies:
   animated_size_and_fade: ^3.0.1
   animations: ^2.0.7
   async_task: ^1.0.20
+  file_lock: ^1.0.0
   audio_waveforms: ^1.0.3
   auto_size_text: ^3.0.0
   bitsdojo_window: ^0.1.5
@@ -147,6 +148,7 @@ dependencies:
   video_thumbnail: ^0.5.3 # mobile only
   window_manager: ^0.3.1
   windows_taskbar: ^1.1.1
+  gesture_x_detector: ^1.1.1
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions

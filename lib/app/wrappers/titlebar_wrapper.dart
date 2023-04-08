@@ -22,8 +22,7 @@ class TitleBarWrapper extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             child,
-            if (ss.settings.showConnectionIndicator.value)
-              const ConnectionIndicator(),
+            if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
           ],
         ),
       );
@@ -32,8 +31,7 @@ class TitleBarWrapper extends StatelessWidget {
       return Stack(
         children: <Widget>[
           child,
-          if (ss.settings.showConnectionIndicator.value)
-            const ConnectionIndicator(),
+          if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
         ],
       );
     }
