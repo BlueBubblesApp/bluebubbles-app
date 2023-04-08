@@ -1515,8 +1515,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: d1d236e39e9bdf517dea32da36bed927dea18cdf
-      resolved-ref: d1d236e39e9bdf517dea32da36bed927dea18cdf
+      ref: a8fbca6a7805487df725fbd2487e719202fcd209
+      resolved-ref: a8fbca6a7805487df725fbd2487e719202fcd209
       url: "https://github.com/BlueBubblesApp/local_notifier.git"
     source: git
     version: "0.1.5"
@@ -2392,7 +2392,7 @@ packages:
     source: hosted
     version: "2.1.1"
   synchronized:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: synchronized
       sha256: "33b31b6beb98100bf9add464a36a8dd03eb10c7a8cf15aeec535e9b054aaf04b"

@@ -107,9 +107,6 @@ class MessageHelper {
     Set<String> chats = {};
     for (int i = 0; i < messages.length; i++) {
       final message = messages[i];
-      if (message.chat.target != null) {
-        chats.add(message.chat.target!.guid);
-      }
       bool remove = false;
       // if from me
       if (message.isFromMe! || message.handle == null) remove = true;
@@ -122,6 +119,10 @@ class MessageHelper {
       if (remove) {
         messages.remove(message);
         i--;
+      } else {
+        if (message.chat.target != null) {
+          chats.add(message.chat.target!.guid);
+        }
       }
     }
     if (messages.isEmpty) return;

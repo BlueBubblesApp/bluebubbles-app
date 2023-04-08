@@ -93,11 +93,11 @@ dependencies:
   js: ^0.6.7
   launch_at_startup: ^0.2.2
   libphonenumber_plugin: ^0.3.1 # no desktop support, todo desktop
-  local_auth: ^2.1.6 # mobile only, todo windows
+  local_auth: ^2.1.6
   local_notifier:
     git:
       url: https://github.com/BlueBubblesApp/local_notifier.git
-      ref: d1d236e39e9bdf517dea32da36bed927dea18cdf
+      ref: a8fbca6a7805487df725fbd2487e719202fcd209
   maps_launcher: ^2.2.0
   material_color_utilities: ^0.3.0
   metadata_fetch: ^0.4.1
@@ -138,6 +138,7 @@ dependencies:
   socket_io_client: ^2.0.1
   sprung: ^3.0.1
   store_checker: ^1.1.0
+  synchronized: ^3.0.1
   supercharged: ^2.1.1
   system_tray: ^2.0.2
   tuple: ^2.0.1
