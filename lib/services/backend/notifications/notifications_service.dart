@@ -18,7 +18,7 @@ import 'package:get/get.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart';
 import 'package:timezone/timezone.dart';
-import 'package:universal_html/html.dart' hide File, Platform;
+import 'package:universal_html/html.dart' hide File, Platform, Navigator;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
