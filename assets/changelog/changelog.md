@@ -2,6 +2,62 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+
+## 1.12.0
+
+### The Big Stuff
+
+- Send Mentions (Big Sur+) by typing "@" in the text field to initiate the mention picker
+- Download live photos
+- Bookmark messages for later
+- Tasker integration (see settings for more details)
+- Revamped backup and restore page
+- Support FCM-less notifications using always-open socket connection & foreground service
+
+### The Nitty Gritty
+
+#### New Features
+
+- Send Mentions (Big Sur+)
+- Auto apply message effects for some phrases like iMessage
+- Re-added copy text selection (long press copy option)
+- Download live photos
+- Bookmark messages for later
+- Detect when the recipient keeps an audio message
+- Tasker integration
+- Revamped backup and restore page
+- Added avatar-only view for chat list (Desktop / Web)
+- Added shortcut to restore from backup directly after initial sync
+- Support FCM-less notifications using always-open socket connection & foreground service
+- Support extracting flight number / tracking number / dates from messages
+- Toggle to unarchive chat when receiving a new message in it
+- Added ability to scroll to last read message when opening a chat
+- Added ability to initiate Google Duo call from chat details
+- Added ability to set a custom name and avatar for "yourself"
+
+#### Bug Fixes
+
+- Fixed server logs fetch status not resetting on Desktop / Web
+- Fixed keyboard jitter when changing conversation name
+- Fixed playing some screen effects would brick other effects from playing
+- Fixed some issues with emoji picker
+- Fixed issue fetching user focus state in some cases
+- Fixed not being able to set custom avatar color in DM chats
+- Fixed handwrittten message pad would show even if color picker was canceled
+- Fixed typing indicators not sending after sending a message
+
+#### Improvements
+
+- Applied international phone number matching fixes everywhere
+- Un-delete chats when creating a new chat to the same address
+- Improved read receipts to show in more cases
+- Support replying and sending effects to existing chats from the new chat creator
+
+#### For Developers
+
+- Upgraded dependencies, fixing a few critical security vulnerabilities
+
+
 ## 1.11.5
 
 ### The Big Stuff
