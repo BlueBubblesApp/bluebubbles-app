@@ -25,7 +25,6 @@ dependencies:
   animated_size_and_fade: ^3.0.1
   animations: ^2.0.7
   async_task: ^1.0.20
-  file_lock: ^1.0.0
   audio_waveforms: ^1.0.3
   auto_size_text: ^3.0.0
   bitsdojo_window: ^0.1.5
@@ -49,6 +48,7 @@ dependencies:
   exif: ^3.1.2
   faker: ^2.1.0
   fast_contacts: ^3.0.3 # mobile only
+  file_lock: ^1.0.0
   file_picker: ^5.2.6
   firebase_dart: ^1.0.11
   flex_color_picker: ^3.1.0
@@ -77,6 +77,7 @@ dependencies:
       url: https://github.com/BlueBubblesApp/flutter-geolocator.git
       ref: no_windows_streams
       path: geolocator
+  gesture_x_detector: ^1.1.1
   get: 4.3.8 # pinned because of snackbar issue
   giphy_get: ^3.3.0
   github: ^9.11.0
@@ -148,7 +149,6 @@ dependencies:
   video_thumbnail: ^0.5.3 # mobile only
   window_manager: ^0.3.1
   windows_taskbar: ^1.1.1
-  gesture_x_detector: ^1.1.1
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions
