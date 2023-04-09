@@ -67,16 +67,16 @@ parts:
       mv build/linux/*/release/bundle/lib/libobjectbox.so $SNAPCRAFT_PART_INSTALL/usr/lib/
     build-packages:
       - jq
+      - libvlc-dev
     stage-packages:
       - libglu1-mesa
       - freeglut3
       - libnotify-dev
       - vlc
-      - libvlc-dev
       - gir1.2-appindicator3-0.1
       - zenity
       - wmctrl
-      
+
 slots:
   dbus-bluebubbles:
     interface: dbus
