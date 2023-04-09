@@ -35,6 +35,8 @@ class SettingsScaffold extends StatelessWidget {
     this.fab,
   });
 
+  bool get extend => actions.isNotEmpty && kIsDesktop;
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -49,12 +51,12 @@ class SettingsScaffold extends StatelessWidget {
         appBar: ss.settings.skin.value == Skins.Samsung
             ? null
             : PreferredSize(
-          preferredSize: Size(ns.width(context), 50),
+          preferredSize: Size(ns.width(context), extend ? 80 : 50),
           child: AppBar(
             systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark,
-            toolbarHeight: 50,
+            toolbarHeight: extend ? 80 : 50,
             elevation: 0,
             scrolledUnderElevation: 3,
             surfaceTintColor: context.theme.colorScheme.primary,
