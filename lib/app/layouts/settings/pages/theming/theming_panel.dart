@@ -651,7 +651,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                         if (Get.isSnackbarOpen ?? false) {
                                           Get.close(1);
                                         }
-                                        Navigator.of(context).pop();
+                                        Get.back();
                                         Future.delayed(const Duration(milliseconds: 400), ()
                                         {
                                           controller.progress.value = null;
@@ -677,7 +677,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 showSnackbar("Error", "Failed to fetch font");
                                 return Response(requestOptions: RequestOptions(path: ''));
                               });
-                              Navigator.of(context).pop();
+                              Get.back();
                               controller.downloadingFont.value = false;
                               if (response.statusCode == 200) {
                                 try {
