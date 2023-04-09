@@ -156,7 +156,7 @@ class MentionTextEditingController extends TextEditingController {
                 ),
                 child: Text(
                   mention.displayName,
-                  style: style!.copyWith(fontWeight: FontWeight.bold),
+                  style: style!.copyWith(fontWeight: FontWeight.bold).apply(heightFactor: 1.1),
                 ),
               ),
             ),
