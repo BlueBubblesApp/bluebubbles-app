@@ -48,7 +48,6 @@ dependencies:
   exif: ^3.1.2
   faker: ^2.1.0
   fast_contacts: ^3.0.3 # mobile only
-  file_lock: ^1.0.0
   file_picker: ^5.2.6
   firebase_dart: ^1.0.11
   flex_color_picker: ^3.1.0
