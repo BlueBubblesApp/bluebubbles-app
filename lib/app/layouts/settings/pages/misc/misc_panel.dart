@@ -134,7 +134,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           return const SizedBox.shrink();
                         }
                       }),
-                    if (ss.canAuthenticate)
+                    if (ss.canAuthenticate && !kIsDesktop)
                       Container(
                         color: tileColor,
                         child: Padding(
@@ -289,6 +289,13 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       "Note: Attachment uploads will timeout after ${ss.settings.apiTimeout.value ~/ 1000 * 12} seconds",
                       style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                     )),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {

@@ -58,7 +58,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     backgroundColor: tileColor,
                   )),
                   if (Platform.isLinux)
-                    const SettingsDivider(),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                   if (Platform.isLinux)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) async {
@@ -74,7 +80,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     )),
                   Obx(() {
                     if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
-                      return const SettingsDivider();
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      );
                     }
                     return const SizedBox.shrink();
                   }),
@@ -96,7 +108,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                   }),
                   Obx(() {
                     if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
-                      return const SettingsDivider();
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      );
                     }
                     return const SizedBox.shrink();
                   }),

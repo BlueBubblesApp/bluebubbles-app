@@ -348,7 +348,13 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         },
                       )),
                     if (kIsDesktop && Platform.isWindows)
-                      const SettingsDivider(),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
                       Obx(() {
                         if (iOS) {

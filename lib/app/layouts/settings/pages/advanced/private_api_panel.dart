@@ -315,13 +315,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                     title: "Send Subject Lines",
                                     backgroundColor: tileColor,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 15.0),
-                                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),
