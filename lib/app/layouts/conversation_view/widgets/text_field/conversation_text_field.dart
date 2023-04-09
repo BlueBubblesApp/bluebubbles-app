@@ -623,6 +623,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         context: context,
                         apiKey: kIsWeb ? GIPHY_API_KEY : dotenv.get('GIPHY_API_KEY'),
                         tabColor: context.theme.primaryColor,
+                        showEmojis: false,
                       );
                       if (kIsDesktop || kIsWeb) {
                         controller.showingOverlays = false;
