@@ -61,6 +61,7 @@ parts:
       rm -rf build
       flutter build linux --release -v
       tmp=$(mktemp)
+      chmod 644 "$tmp"
       jq '.version = "1.11.100.0"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
       chmod +x build/linux/*/release/bundle/bluebubbles
       cp -r build/linux/*/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
