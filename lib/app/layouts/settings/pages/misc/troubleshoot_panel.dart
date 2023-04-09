@@ -12,8 +12,6 @@ import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../../services/backend/sync/handle_sync_manager.dart';
-
 class TroubleshootPanel extends StatefulWidget {
 
   @override
