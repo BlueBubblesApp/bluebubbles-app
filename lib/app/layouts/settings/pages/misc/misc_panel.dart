@@ -23,7 +23,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
   Widget build(BuildContext context) {
     return SettingsScaffold(
       title: "Miscellaneous & Advanced",
-      initialHeader: !kIsWeb && !kIsDesktop ? "Security" : "Speed & Responsiveness",
+      initialHeader: (!kIsWeb && !kIsDesktop) || ss.canAuthenticate ? "Security" : "Speed & Responsiveness",
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
       tileColor: tileColor,
@@ -58,7 +58,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             },
                             initialVal: ss.settings.shouldSecure.value,
                             title: "Secure App",
-                            subtitle: "Secure app with a fingerprint or pin",
+                            subtitle: "Secure app with ${kIsDesktop ? "Windows Security" : "a fingerprint or pin"}",
                             backgroundColor: tileColor,
                           )),
                     if (ss.canAuthenticate)
@@ -70,22 +70,27 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                                 padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                                 child: RichText(
                                   text: TextSpan(
-                                    children: const [
-                                      TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(
-                                          text:
-                                          "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "There are two different security levels you can choose from:"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      TextSpan(
-                                          text:
-                                          " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
+                                    children: [
+                                      const TextSpan(children: [
+                                        TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
+                                        TextSpan(text: "\n\n"),
+                                        TextSpan(
+                                            text:
+                                                "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
+                                      ]),
+                                      if (!kIsDesktop)
+                                        const TextSpan(children: [
+                                          TextSpan(text: "\n\n"),
+                                          TextSpan(text: "There are two different security levels you can choose from:"),
+                                          TextSpan(text: "\n\n"),
+                                          TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
+                                          TextSpan(text: "\n\n"),
+                                          TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          TextSpan(
+                                              text:
+                                                  " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
+                                        ]),
                                     ],
                                     style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                   ),
@@ -95,7 +100,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           return const SizedBox.shrink();
                         }
                       }),
-                    if (ss.canAuthenticate)
+                    if (ss.canAuthenticate && !kIsDesktop)
                       Obx(() {
                         if (ss.settings.shouldSecure.value) {
                           return SettingsOptions<SecurityLevel>(
@@ -179,7 +184,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       ),
                   ],
                 ),
-              if (!kIsWeb && !kIsDesktop)
+              if (!kIsWeb && !kIsDesktop || ss.canAuthenticate)
                 SettingsHeader(
                     headerColor: headerColor,
                     tileColor: tileColor,

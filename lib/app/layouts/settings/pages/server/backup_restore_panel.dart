@@ -232,7 +232,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                     Material(
                       color: Colors.transparent,
                       child: ListTile(
-                        mouseCursor: MouseCursor.defer,
+                        mouseCursor: SystemMouseCursors.click,
                         title: Text("Create New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         leading: Container(
                           width: 40 * ss.settings.avatarScale.value,
@@ -424,7 +424,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                     Material(
                       color: Colors.transparent,
                       child: ListTile(
-                        mouseCursor: MouseCursor.defer,
+                        mouseCursor: SystemMouseCursors.click,
                         title: Text("Restore Local", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         leading: Container(
                           width: 40 * ss.settings.avatarScale.value,
@@ -608,7 +608,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                     Material(
                       color: Colors.transparent,
                       child: ListTile(
-                        mouseCursor: MouseCursor.defer,
+                        mouseCursor: SystemMouseCursors.click,
                         title: Text("Create New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         leading: Container(
                           width: 40 * ss.settings.avatarScale.value,
@@ -716,7 +716,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                     Material(
                       color: Colors.transparent,
                       child: ListTile(
-                        mouseCursor: MouseCursor.defer,
+                        mouseCursor: SystemMouseCursors.click,
                         title: Text("Restore Local", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         leading: Container(
                           width: 40 * ss.settings.avatarScale.value,

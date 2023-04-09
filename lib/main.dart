@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:isolate';
 import 'dart:math';
 
@@ -86,6 +87,30 @@ Future<Null> initApp(bool bubble) async {
   ls.isUiThread = true;
   await ss.init();
   await fs.init();
+  if (kIsDesktop && Platform.isLinux) {
+    final lockFile = File(join(fs.appDocDir.path, 'bluebubbles.lck'));
+    if (lockFile.existsSync()) {
+      String _pid = lockFile.readAsStringSync();
+      String exists = Process.runSync('ps', ['-p', _pid]).stdout;
+      bool focused = false;
+      if (exists.endsWith('bluebubbles\n')) {
+        List<String?> pidWindows = await (await Process.start('wmctrl', ['-p', '-l'])).stdout.transform(utf8.decoder).transform(const LineSplitter()).map((line) => line.contains(_pid) ? line.split(" ").last : null).where((str) => str != null).toList();
+        if (pidWindows.contains('BlueBubbles')) {
+          focused = true;
+        }
+        for (String? window in pidWindows) {
+          if (window == "BlueBubbles") {
+            Process.runSync('wmctrl', ['-F', '-R', window!]);
+          } else if (window == "bluebubbles_app") {
+            await Future.delayed(const Duration(milliseconds: 200), () => Process.runSync('wmctrl', ['-F', '-c', window!]));
+          }
+        }
+      }
+      if (focused) return;
+    }
+    lockFile.createSync();
+    lockFile.writeAsStringSync("$pid");
+  }
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');

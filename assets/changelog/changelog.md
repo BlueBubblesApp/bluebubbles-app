@@ -34,6 +34,8 @@ Below are the last few BlueBubbles App release changelogs
 - Added ability to scroll to last read message when opening a chat
 - Added ability to initiate Google Duo call from chat details
 - Added ability to set a custom name and avatar for "yourself"
+- Added ability to secure Desktop app with Windows security
+- When refocusing the Desktop app, the last focused chat text field is refocused
 
 #### Bug Fixes
 
@@ -45,6 +47,9 @@ Below are the last few BlueBubbles App release changelogs
 - Fixed not being able to set custom avatar color in DM chats
 - Fixed handwrittten message pad would show even if color picker was canceled
 - Fixed typing indicators not sending after sending a message
+- Fixed clicking on notifications not bringing window to foreground on Desktop
+- Fixed invisible titlebar covering hitboxes for some buttons at the top of the app
+- Fixed notification activation opening additional instance on Linux
 
 #### Improvements
 
