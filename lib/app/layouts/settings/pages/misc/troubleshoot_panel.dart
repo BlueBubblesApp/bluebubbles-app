@@ -335,7 +335,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                       onTap: () async {
                           resyncingHandles.value = true;
                           try {
-                            final handleSyncer = HandleSyncManager(saveLogs: true);
+                            final handleSyncer = HandleSyncManager();
                             await handleSyncer.start();
                             eventDispatcher.emit("refresh-all", null);
 

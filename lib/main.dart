@@ -687,7 +687,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         if (ss.prefs.getBool('1.11.1-warning') == false && !kIsWeb) {
           if (kIsDesktop) {
             try {
-              final handleSyncer = HandleSyncManager(saveLogs: true);
+              final handleSyncer = HandleSyncManager();
               await handleSyncer.start();
               eventDispatcher.emit("refresh-all", null);
               return;
