@@ -215,13 +215,14 @@ class OverflowMenu extends StatelessWidget {
                 style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
               ),
             ),
-          PopupMenuItem(
-            value: 5,
-            child: Text(
-              'FindMy',
-              style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+          if (ss.isMinCatalinaSync)
+            PopupMenuItem(
+              value: 5,
+              child: Text(
+                'FindMy',
+                style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+              ),
             ),
-          ),
           PopupMenuItem(
             value: 2,
             child: Text(

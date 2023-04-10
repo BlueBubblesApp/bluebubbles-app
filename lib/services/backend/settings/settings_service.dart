@@ -140,6 +140,10 @@ class SettingsService extends GetxService {
     return (prefs.getInt("macos-version") ?? 11) >= 13;
   }
 
+  bool get isMinCatalinaSync {
+    return (prefs.getInt("macos-minor-version") ?? 11) >= 15 || isMinBigSurSync;
+  }
+
   Future<void> checkServerUpdate() async {
     final response = await http.checkUpdate();
     if (response.statusCode == 200) {
