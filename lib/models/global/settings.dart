@@ -123,6 +123,7 @@ class Settings {
 
   // Desktop settings
   final RxBool launchAtStartup = false.obs;
+  final RxBool launchAtStartupMinimized = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
@@ -228,6 +229,7 @@ class Settings {
       'immersiveMode': immersiveMode.value,
       'avatarScale': avatarScale.value,
       'launchAtStartup': launchAtStartup.value,
+      'launchAtStartupMinimized': launchAtStartupMinimized.value,
       'closeToTray': closeToTray.value,
       'betterScrolling': betterScrolling.value,
       'betterScrollingMultiplier': betterScrollingMultiplier.value,
@@ -344,6 +346,7 @@ class Settings {
     ss.settings.immersiveMode.value = map['immersiveMode'] ?? false;
     ss.settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     ss.settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    ss.settings.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     ss.settings.closeToTray.value = map['closeToTray'] ?? true;
     ss.settings.betterScrolling.value = map['betterScrolling'] ?? false;
     ss.settings.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
@@ -462,6 +465,7 @@ class Settings {
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
     s.betterScrolling.value = map['betterScrolling'] ?? false;
     s.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();

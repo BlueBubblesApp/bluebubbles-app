@@ -69,18 +69,18 @@ bool hasBadCert = false;
 
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
-Future<Null> main() async {
-  await initApp(false);
+Future<Null> main(List<String> arguments) async {
+  await initApp(false, arguments);
 }
 
 @pragma('vm:entry-point')
 // ignore: prefer_void_to_null
 Future<Null> bubble() async {
-  await initApp(true);
+  await initApp(true, []);
 }
 
 //ignore: prefer_void_to_null
-Future<Null> initApp(bool bubble) async {
+Future<Null> initApp(bool bubble, List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
   ls.isBubble = bubble;
@@ -397,7 +397,11 @@ Future<Null> initApp(bool bubble) async {
         ss.prefs.setDouble("window-y", posY);
 
         await windowManager.setTitle('BlueBubbles');
-        await windowManager.show();
+        if (arguments.firstOrNull == "minimized") {
+          await windowManager.hide();
+        } else {
+          await windowManager.show();
+        }
       });
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */

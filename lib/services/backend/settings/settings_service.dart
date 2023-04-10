@@ -57,12 +57,17 @@ class SettingsService extends GetxService {
       if (Platform.isWindows) {
         _canAuthenticate = await LocalAuthentication().isDeviceSupported();
       }
-      LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName); // Can't use fs here because it hasn't been initialized yet
-      if (settings.launchAtStartup.value) {
-        await LaunchAtStartup.enable();
-      } else {
-        await LaunchAtStartup.disable();
-      }
+      await setupLaunchAtStartup();
+    }
+  }
+
+  Future<void> setupLaunchAtStartup() async {
+    // Can't use fs here because it hasn't been initialized yet
+    LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName, settings.launchAtStartupMinimized.value);
+    if (settings.launchAtStartup.value) {
+      await LaunchAtStartup.enable();
+    } else {
+      await LaunchAtStartup.disable();
     }
   }
 

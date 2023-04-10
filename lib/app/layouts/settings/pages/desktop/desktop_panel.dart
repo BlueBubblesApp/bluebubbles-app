@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -46,16 +47,38 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     onChanged: (bool val) async {
                       ss.settings.launchAtStartup.value = val;
                       saveSettings();
-                      if (val) {
-                        await LaunchAtStartup.enable();
-                      } else {
-                        await LaunchAtStartup.disable();
-                      }
+                      ss.setupLaunchAtStartup();
                     },
                     initialVal: ss.settings.launchAtStartup.value,
                     title: "Launch on Startup",
                     subtitle: "Automatically open the desktop app on startup.",
                     backgroundColor: tileColor,
+                  )),
+                  Obx(() => AnimatedSizeAndFade.showHide(
+                    show: ss.settings.launchAtStartup.value,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 15.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                          ),
+                        ),
+                        SettingsSwitch(
+                          onChanged: (bool val) {
+                            ss.settings.launchAtStartupMinimized.value = val;
+                            saveSettings();
+                            ss.setupLaunchAtStartup();
+                          },
+                          initialVal: ss.settings.launchAtStartupMinimized.value,
+                          title: "Launch on Startup Minimized",
+                          subtitle: "Automatically open the desktop app on startup, but minimized",
+                          backgroundColor: tileColor,
+                        ),
+                      ],
+                    ),
                   )),
                   if (Platform.isLinux)
                     Container(
