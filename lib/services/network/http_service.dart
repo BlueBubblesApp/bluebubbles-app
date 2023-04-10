@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -26,7 +27,7 @@ class HttpService extends GetxService {
     if (params.isEmpty) {
       params = {};
     }
-    params['guid'] = ss.settings.guidAuthKey;
+    params['guid'] = Uri.encodeComponent(ss.settings.guidAuthKey.value);
     return params;
   }
 
