@@ -50,8 +50,8 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       chats.chats[widget.index!].customAvatarPath = file.path;
       chats.chats[widget.index!].save(updateCustomAvatarPath: true);
+      Get.back();
       Navigator.of(context).pop();
-      ns.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
       File file = File("$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
@@ -64,8 +64,8 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       widget.chat!.customAvatarPath = file.path;
       widget.chat!.save(updateCustomAvatarPath: true);
-      Navigator.of(context).pop();
-      ns.backSettings(context, result: widget.chat!.customAvatarPath);
+      Get.back();
+      Navigator.of(context).pop(widget.chat!.customAvatarPath);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
   }
