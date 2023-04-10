@@ -144,7 +144,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     if (!kIsWeb && !kIsDesktop) smartReply.close();
     chat.lastReadMessageGuid = _messages.first.guid;
     chat.save(updateLastReadMessageGuid: true);
-    messageService.close();
+    messageService.close(force: widget.customService != null);
     for (Message m in _messages) {
       getActiveMwc(m.guid!)?.close();
     }
