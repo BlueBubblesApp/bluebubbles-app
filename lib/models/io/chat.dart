@@ -38,10 +38,13 @@ class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
   FutureOr<List<Attachment>> run() {
     /// Pull args from input and create new instances of store and boxes
     int chatId = stuff[0];
+    bool includeDeleted = stuff[1];
     return store.runInTransaction(TxMode.read, () {
       /// Query the [messageBox] for all the message IDs and order by date
       /// descending
-      final query = (messageBox.query()
+      final query = (messageBox.query(includeDeleted
+          ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+          : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
             ..link(Message_.chat, Chat_.id.equals(chatId))
             ..order(Message_.dateCreated, flags: Order.descending))
           .build();
@@ -754,10 +757,10 @@ class Chat {
     return chatBox.count();
   }
 
-  Future<List<Attachment>> getAttachmentsAsync() async {
+  Future<List<Attachment>> getAttachmentsAsync({bool fetchDeleted = false}) async {
     if (kIsWeb || id == null) return [];
 
-    final task = GetChatAttachments([id!]);
+    final task = GetChatAttachments([id!, fetchDeleted]);
     return (await createAsyncTask<List<Attachment>>(task)) ?? [];
   }
 
