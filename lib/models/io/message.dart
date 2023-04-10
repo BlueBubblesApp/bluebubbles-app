@@ -707,7 +707,7 @@ class Message {
     return "${fs.appDocDir.path}/messages/$guid/embedded-media/$balloonBundleId$extension";
   }
 
-  bool get isGroupEvent => (groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0) && itemType != 5;
+  bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
 
   String get groupEventText {
     String text = "Unknown group event";
@@ -740,6 +740,8 @@ class Message {
       }
     } else if (itemType == 4 && groupActionType == 0) {
       text = "$name shared ${name == "You" ? "your" : "their"} location";
+    } else if (itemType == 5) {
+      text = "$name kept an audio message";
     } else if (itemType == 6) {
       text = "$name started a FaceTime call";
     }
