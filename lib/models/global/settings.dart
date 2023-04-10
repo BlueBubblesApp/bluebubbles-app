@@ -250,7 +250,6 @@ class Settings {
       'unarchiveOnNewMessage': unarchiveOnNewMessage.value,
       'scrollToLastUnread': scrollToLastUnread.value,
       'userName': userName.value,
-      'userAvatarPath': userAvatarPath.value,
       'privateAPISend': privateAPISend.value,
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -294,6 +293,7 @@ class Settings {
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
         'monetTheming': monetTheming.value.index,
+        'userAvatarPath': userAvatarPath.value,
       });
     }
     return map;
@@ -364,7 +364,6 @@ class Settings {
     ss.settings.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
     ss.settings.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;
     ss.settings.userName.value = map['userName'] ?? "You";
-    ss.settings.userAvatarPath.value = map['userAvatarPath'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
