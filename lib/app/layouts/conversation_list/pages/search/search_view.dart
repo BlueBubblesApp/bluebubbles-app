@@ -296,6 +296,11 @@ class SearchViewState extends OptimizedState<SearchView> {
                         network = true;
                       });
                     }
+                    setState(() {
+                      isSearching = false;
+                      noResults = false;
+                      currentSearch = null;
+                    });
                   },
                 ),
               ),
