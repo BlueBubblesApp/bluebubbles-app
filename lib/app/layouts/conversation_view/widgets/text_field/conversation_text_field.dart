@@ -924,7 +924,7 @@ class TextFieldComponent extends StatelessWidget {
                             if (mentionIndex == null) return; // Shouldn't happen
                             final mention = controller?.mentionables[mentionIndex];
                             final replacement = mention != null ? "@${mention.displayName}" : "";
-                            text = editableTextState.textEditingValue.text.replaceRange(start, end, replacement);
+                            text = editableTextState.textEditingValue.text.replaceRange((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length), replacement);
                             final checkSpace = end + replacement.length - 1;
                             final spaceAfter = checkSpace < text.length && text.substring(end + replacement.length - 1, end + replacement.length) == " ";
                             controller?.textController.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
