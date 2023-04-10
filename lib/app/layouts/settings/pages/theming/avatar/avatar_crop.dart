@@ -36,8 +36,8 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       ss.settings.userAvatarPath.value = file.path;
       ss.settings.save();
+      Get.back();
       Navigator.of(context).pop();
-      ns.backSettings(context, result: file.path);
       showSnackbar("Notice", "User avatar saved successfully");
     } else if (widget.index != null) {
       File file = File("$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
