@@ -50,6 +50,13 @@ Below are the last few BlueBubbles App release changelogs
 - Fixed clicking on notifications not bringing window to foreground on Desktop
 - Fixed invisible titlebar covering hitboxes for some buttons at the top of the app
 - Fixed notification activation opening additional instance on Linux
+- Fixed mentions not showing on Desktop or Web
+- Fixed page pop bug when in tablet mode and downloading iOS font
+- Fixed some weirdness with settings dividers in a few places
+- Fixed handle is not found for searched for message
+- Fixed search message service would persist when opening the chat from a non-search context
+- Fixed database migration bug for new installs
+- Fixed conversation details fetching attachments for deleted messages
 
 #### Improvements
 
@@ -57,6 +64,9 @@ Below are the last few BlueBubbles App release changelogs
 - Un-delete chats when creating a new chat to the same address
 - Improved read receipts to show in more cases
 - Support replying and sending effects to existing chats from the new chat creator
+- Removed emojis tab from Giphy
+- Clear search results when changing the search type
+- Hide FindMy option for users below Catalina (FindMy doesn't exist before Catalina)
 
 #### For Developers
 
