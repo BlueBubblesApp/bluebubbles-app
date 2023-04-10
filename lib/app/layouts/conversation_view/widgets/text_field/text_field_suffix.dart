@@ -1,5 +1,6 @@
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
@@ -26,7 +27,7 @@ class TextFieldSuffix extends StatefulWidget {
   }) : super(key: key);
 
   final TextEditingController subjectTextController;
-  final TextEditingController textController;
+  final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
@@ -168,6 +169,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     widget.controller!.replyToMessage?.item2,
                     widget.controller!.chat.guid,
                     widget.sendMessage,
+                    widget.textController.mentionables,
                   );
                 },
               ),
