@@ -124,9 +124,9 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   );
 
   Color get _headerColor => ts.inDarkMode(context)
-      ? (kIsDesktop ? Colors.transparent : context.theme.colorScheme.background) : context.theme.colorScheme.properSurface;
+      ? (kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background) : context.theme.colorScheme.properSurface;
   Color get _tileColor => ts.inDarkMode(context)
-      ? context.theme.colorScheme.properSurface : (kIsDesktop ? Colors.transparent : context.theme.colorScheme.background);
+      ? context.theme.colorScheme.properSurface : (kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background);
 
   /// Header / background color on settings pages
   Color get headerColor => reverseMapping ? _tileColor : _headerColor;
