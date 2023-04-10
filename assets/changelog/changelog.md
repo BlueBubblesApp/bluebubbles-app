@@ -57,6 +57,7 @@ Below are the last few BlueBubbles App release changelogs
 - Fixed search message service would persist when opening the chat from a non-search context
 - Fixed database migration bug for new installs
 - Fixed conversation details fetching attachments for deleted messages
+- Fixed cases where passwords with special characters were not encoded correctly
 
 #### Improvements
 
