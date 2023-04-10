@@ -220,7 +220,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                   children: [
                                     GestureDetector(
                                       onTap: () {
-                                        Navigator.of(context).push(
+                                        Navigator.of(Get.context!).push(
                                           ThemeSwitcher.buildPageRoute(
                                             builder: (context) => AvatarCrop(),
                                           ),

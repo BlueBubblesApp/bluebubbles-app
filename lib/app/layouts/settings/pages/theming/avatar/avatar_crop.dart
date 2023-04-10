@@ -82,12 +82,12 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       child: Scaffold(
           backgroundColor: context.theme.colorScheme.background,
           appBar: PreferredSize(
-            preferredSize: Size(ns.width(context), 50),
+            preferredSize: Size(ns.width(context), kIsDesktop ? 80 : 50),
             child: AppBar(
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                   ? SystemUiOverlayStyle.light
                   : SystemUiOverlayStyle.dark,
-              toolbarHeight: 50,
+              toolbarHeight: kIsDesktop ? 80 : 50,
               elevation: 0,
               scrolledUnderElevation: 3,
               surfaceTintColor: context.theme.colorScheme.primary,
