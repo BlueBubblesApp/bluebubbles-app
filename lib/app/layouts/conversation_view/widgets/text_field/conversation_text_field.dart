@@ -348,10 +348,12 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           allMatches = controller.mentionables;
         } else if (newEmojiText[match.end - 1] == "@") {
           mentionName = newEmojiText.substring(match.start + 1, match.end - 1).toLowerCase();
-          allMatches = controller.mentionables.where((e) => e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName)).toList();
+          allMatches = controller.mentionables.where((e) => e.address.toLowerCase().startsWith(mentionName.toLowerCase()) || e.displayName.toLowerCase().startsWith(mentionName.toLowerCase())).toList();
+          allMatches.addAll(controller.mentionables.where((e) => !allMatches.contains(e) && (e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName))).toList());
         } else if (match.end >= _controller.selection.start) {
           mentionName = newEmojiText.substring(match.start + 1, match.end).toLowerCase();
-          allMatches = controller.mentionables.where((e) => e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName)).toList();
+          allMatches = controller.mentionables.where((e) => e.address.toLowerCase().startsWith(mentionName.toLowerCase()) || e.displayName.toLowerCase().startsWith(mentionName.toLowerCase())).toList();
+          allMatches.addAll(controller.mentionables.where((e) => !allMatches.contains(e) && (e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName))).toList());
         }
         Logger.info("${allMatches.length} matches found for: $mentionName");
       }
