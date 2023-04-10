@@ -231,7 +231,7 @@ Future<Null> initApp(bool bubble) async {
         ss.prefs.setString("selected-light", "Bright White");
         themeBox.putMany(ts.defaultThemes);
       }
-      int version = ss.prefs.getInt('dbVersion') ?? 1;
+      int version = ss.prefs.getInt('dbVersion') ?? (ss.settings.finishedSetup.value ? 1 : databaseVersion);
 
       migrate() {
         if (version < databaseVersion) {
