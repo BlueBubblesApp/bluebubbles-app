@@ -1143,22 +1143,6 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: copySelection,
-            child: ListTile(
-              mouseCursor: SystemMouseCursors.click,
-              dense: !kIsDesktop && !kIsWeb,
-              title: Text("Copy Selection", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
-              trailing: Icon(
-                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.text_cursor : Icons.content_copy,
-                color: context.theme.colorScheme.properOnSurface,
-              ),
-            ),
-          ),
-        ),
       if (showDownload &&
           supportsOriginalDownload &&
           part.attachments
@@ -1244,46 +1228,6 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap: newConvo,
-            child: ListTile(
-              mouseCursor: SystemMouseCursors.click,
-              dense: !kIsDesktop && !kIsWeb,
-              title: Text(
-                "Start Conversation",
-                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-              ),
-              trailing: Icon(
-                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
-                color: context.theme.colorScheme.properOnSurface,
-              ),
-            ),
-          ),
-        ),
-      if (!ls.isBubble && !message.isInteractive)
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: forward,
-            child: ListTile(
-              mouseCursor: SystemMouseCursors.click,
-              dense: !kIsDesktop && !kIsWeb,
-              title: Text(
-                "Forward",
-                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-              ),
-              trailing: Icon(
-                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
-                color: context.theme.colorScheme.properOnSurface,
-              ),
-            ),
-          ),
-        ),
       if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (!kIsWeb && !kIsDesktop && !isNullOrEmpty(part.text)!))
         Material(
           color: Colors.transparent,
@@ -1341,7 +1285,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (!message.isFromMe! && message.handle != null && message.handle!.contact == null)
+      if (!kIsWeb && !kIsDesktop && !message.isFromMe! && message.handle != null && message.handle!.contact == null)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1397,6 +1341,62 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               ),
               trailing: Icon(
                 ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.pencil : Icons.edit_outlined,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!ls.isBubble && !message.isInteractive)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: forward,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Forward",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: newConvo,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Start Conversation",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: copySelection,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text("Copy Selection", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.text_cursor : Icons.content_copy,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
