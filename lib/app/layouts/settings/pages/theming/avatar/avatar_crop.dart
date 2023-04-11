@@ -36,8 +36,8 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       ss.settings.userAvatarPath.value = file.path;
       ss.settings.save();
+      Get.back();
       Navigator.of(context).pop();
-      ns.backSettings(context, result: file.path);
       showSnackbar("Notice", "User avatar saved successfully");
     } else if (widget.index != null) {
       File file = File("$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
@@ -50,8 +50,8 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       chats.chats[widget.index!].customAvatarPath = file.path;
       chats.chats[widget.index!].save(updateCustomAvatarPath: true);
+      Get.back();
       Navigator.of(context).pop();
-      ns.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
       File file = File("$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
@@ -64,8 +64,8 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       widget.chat!.customAvatarPath = file.path;
       widget.chat!.save(updateCustomAvatarPath: true);
-      Navigator.of(context).pop();
-      ns.backSettings(context, result: widget.chat!.customAvatarPath);
+      Get.back();
+      Navigator.of(context).pop(widget.chat!.customAvatarPath);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
   }
@@ -82,12 +82,12 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       child: Scaffold(
           backgroundColor: context.theme.colorScheme.background,
           appBar: PreferredSize(
-            preferredSize: Size(ns.width(context), 50),
+            preferredSize: Size(ns.width(context), kIsDesktop ? 80 : 50),
             child: AppBar(
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                   ? SystemUiOverlayStyle.light
                   : SystemUiOverlayStyle.dark,
-              toolbarHeight: 50,
+              toolbarHeight: kIsDesktop ? 80 : 50,
               elevation: 0,
               scrolledUnderElevation: 3,
               surfaceTintColor: context.theme.colorScheme.primary,

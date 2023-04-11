@@ -1,6 +1,9 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -43,6 +46,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
   final RxBool uploadingContacts = false.obs;
   final RxnDouble progress = RxnDouble();
   final RxnInt totalSize = RxnInt();
+  final RxnString iCloudAccount = RxnString("");
 
   @override
   void initState() {
@@ -63,6 +67,12 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
         );
       });
     }
+
+    updateObx(() {
+      http.serverInfo().then((response) {
+        iCloudAccount.value = response.data['data']['detected_icloud'];
+      }).catchError((err) => iCloudAccount.value = null);
+    });
   }
 
   @override
@@ -93,7 +103,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
             allowResize: true,
             left: SettingsScaffold(
                 title: "Settings",
-                initialHeader: "Server & Message Management",
+                initialHeader: kIsWeb ? "Server & Message Management" : "Profile",
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 tileColor: tileColor,
@@ -102,6 +112,145 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                   SliverList(
                     delegate: SliverChildListDelegate(
                       <Widget>[
+                        if (!kIsWeb)
+                          SettingsSection(
+                            backgroundColor: tileColor,
+                            children: [
+                              SettingsTile(
+                                backgroundColor: tileColor,
+                                title: ss.settings.redactedMode.value && ss.settings.hideContactInfo.value
+                                    ? "User Name" : ss.settings.userName.value,
+                                subtitle: ss.settings.redactedMode.value && ss.settings.hideContactInfo.value
+                                    ? "User iCloud"
+                                    : iCloudAccount.value == null
+                                    ? "Failed to fetch iCloud address!"
+                                    : iCloudAccount.isEmpty!
+                                    ? "Loading iCloud address..."
+                                    : iCloudAccount.value!,
+                                onTap: () {
+                                  final nameController = TextEditingController(text: ss.settings.userName.value);
+                                  done() {
+                                    if (nameController.text.isEmpty) {
+                                      showSnackbar("Error", "Enter a name!");
+                                      return;
+                                    }
+                                    Get.back();
+                                    ss.settings.userName.value = nameController.text;
+                                    ss.settings.save();
+                                  }
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) {
+                                      return AlertDialog(
+                                        actions: [
+                                          TextButton(
+                                            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                            onPressed: () => Get.back(),
+                                          ),
+                                          TextButton(
+                                            child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                            onPressed: () async {
+                                              done.call();
+                                            },
+                                          ),
+                                        ],
+                                        content: TextField(
+                                          controller: nameController,
+                                          onSubmitted: (_) => done.call(),
+                                          autofocus: true,
+                                          decoration: const InputDecoration(
+                                            labelText: "Name",
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                        title: Text("User Profile Name", style: context.theme.textTheme.titleLarge),
+                                        backgroundColor: context.theme.colorScheme.properSurface,
+                                      );
+                                    }
+                                  );
+                                },
+                                leading: GestureDetector(
+                                  onTap: () {
+                                    final path = ss.settings.userAvatarPath.value;
+                                    if (path != null) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                              backgroundColor: context.theme.colorScheme.properSurface,
+                                              title: Text(
+                                                  "Profile Avatar",
+                                                  style: context.theme.textTheme.titleLarge
+                                              ),
+                                              content: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "You already have a profile avatar set. What would you like to do?",
+                                                    style: context.theme.textTheme.bodyLarge,
+                                                  ),
+                                                ],
+                                              ),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                TextButton(
+                                                  child: Text("Reset", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                                  onPressed: () {
+                                                    File file = File(path);
+                                                    file.delete();
+                                                    ss.settings.userAvatarPath.value = null;
+                                                    ss.saveSettings();
+                                                    Get.back();
+                                                  },
+                                                ),
+                                                TextButton(
+                                                  child: Text("Set New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    Navigator.of(context).push(
+                                                      ThemeSwitcher.buildPageRoute(
+                                                        builder: (context) => AvatarCrop(),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ]
+                                          );
+                                        },
+                                      );
+                                    } else {
+                                      Navigator.of(context).push(
+                                        ThemeSwitcher.buildPageRoute(
+                                          builder: (context) => AvatarCrop(),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: ContactAvatarWidget(
+                                    handle: null,
+                                    borderThickness: 0.1,
+                                    editable: false,
+                                    fontSize: 22,
+                                    size: 50,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (!kIsWeb)
+                          SettingsHeader(
+                              headerColor: headerColor,
+                              tileColor: tileColor,
+                              iosSubtitle: iosSubtitle,
+                              materialSubtitle: materialSubtitle,
+                              text: "Server & Message Management"),
                         SettingsSection(
                           backgroundColor: tileColor,
                           children: [
@@ -519,6 +668,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         (route) => route.isFirst,
                                   );
                                 },
+                                trailing: nextIcon,
                                 leading: const SettingsLeadingIcon(
                                   iosIcon: CupertinoIcons.cloud_upload,
                                   materialIcon: Icons.backup,

@@ -26,7 +26,7 @@ class HttpService extends GetxService {
     if (params.isEmpty) {
       params = {};
     }
-    params['guid'] = ss.settings.guidAuthKey;
+    params['guid'] = ss.settings.guidAuthKey.value;
     return params;
   }
 

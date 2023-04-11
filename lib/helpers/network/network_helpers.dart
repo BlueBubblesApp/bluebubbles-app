@@ -55,14 +55,3 @@ Future<String> getDeviceName() async {
 
   return deviceName;
 }
-
-String encodeUri(String uri) => Uri.encodeFull(uri)
-    .replaceAll('-', '%2D')
-    .replaceAll('_', '%5F')
-    .replaceAll('.', '%2E')
-    .replaceAll('!', '%21')
-    .replaceAll('~', '%7E')
-    .replaceAll('*', '%2A')
-    .replaceAll('\'', '%27')
-    .replaceAll('(', '%28')
-    .replaceAll(')', '%29');

@@ -52,7 +52,7 @@ class SocketService extends GetxService {
   
   void startSocket() {
     OptionBuilder options = OptionBuilder()
-        .setQuery({"guid": encodeUri(password)})
+        .setQuery({"guid": Uri.encodeComponent(password)})
         .setTransports(['websocket', 'polling'])
         .setExtraHeaders(ss.settings.customHeaders)
         // Disable so that we can create the listeners first

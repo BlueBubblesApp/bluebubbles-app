@@ -123,6 +123,7 @@ class Settings {
 
   // Desktop settings
   final RxBool launchAtStartup = false.obs;
+  final RxBool launchAtStartupMinimized = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
@@ -228,6 +229,7 @@ class Settings {
       'immersiveMode': immersiveMode.value,
       'avatarScale': avatarScale.value,
       'launchAtStartup': launchAtStartup.value,
+      'launchAtStartupMinimized': launchAtStartupMinimized.value,
       'closeToTray': closeToTray.value,
       'betterScrolling': betterScrolling.value,
       'betterScrollingMultiplier': betterScrollingMultiplier.value,
@@ -250,7 +252,6 @@ class Settings {
       'unarchiveOnNewMessage': unarchiveOnNewMessage.value,
       'scrollToLastUnread': scrollToLastUnread.value,
       'userName': userName.value,
-      'userAvatarPath': userAvatarPath.value,
       'privateAPISend': privateAPISend.value,
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -294,6 +295,7 @@ class Settings {
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
         'monetTheming': monetTheming.value.index,
+        'userAvatarPath': userAvatarPath.value,
       });
     }
     return map;
@@ -344,6 +346,7 @@ class Settings {
     ss.settings.immersiveMode.value = map['immersiveMode'] ?? false;
     ss.settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     ss.settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    ss.settings.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     ss.settings.closeToTray.value = map['closeToTray'] ?? true;
     ss.settings.betterScrolling.value = map['betterScrolling'] ?? false;
     ss.settings.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
@@ -364,7 +367,6 @@ class Settings {
     ss.settings.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
     ss.settings.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;
     ss.settings.userName.value = map['userName'] ?? "You";
-    ss.settings.userAvatarPath.value = map['userAvatarPath'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -463,6 +465,7 @@ class Settings {
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
     s.betterScrolling.value = map['betterScrolling'] ?? false;
     s.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
