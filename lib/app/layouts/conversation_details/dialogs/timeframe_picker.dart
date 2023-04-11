@@ -75,10 +75,11 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool 
                       firstDate: DateTime.now().toLocal().subtract(const Duration(days: 365)),
                       lastDate: DateTime.now().toLocal().add(const Duration(days: 365)));
                   if (showHourPicker && finalDate != null) {
-                    final messageTime =
-                    await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                    final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                     if (messageTime != null) {
                       finalDate = DateTime(finalDate!.year, finalDate!.month, finalDate!.day, messageTime.hour, messageTime.minute);
+                    } else {
+                      finalDate = null;
                     }
                   }
                   Navigator.of(context).pop();
