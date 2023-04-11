@@ -59,7 +59,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
       size: iOS ? 18 : 24,
     ) : const SizedBox.shrink());
 
-    return SettingsScaffold(
+    return Obx(
+      () => SettingsScaffold(
         title: "Theming & Styles",
         initialHeader: "Appearance",
         iosSubtitle: iosSubtitle,
@@ -742,7 +743,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
               ],
             ),
           ),
-        ]
+        ],
+      ),
     );
   }
 
