@@ -425,10 +425,10 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         context: context,
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
-                            Navigator.of(context).pop();
+                            Get.back();
                           },
                           onClose: () {
-                            Navigator.of(context).pop();
+                            Get.back();
                           },
                         ),
                       );
@@ -438,10 +438,10 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         context: context,
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
-                            Navigator.of(context).pop();
+                            Get.back();
                           },
                           onClose: () {
-                            Navigator.of(context).pop();
+                            Get.back();
                           },
                         ),
                       );
