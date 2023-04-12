@@ -302,8 +302,10 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
     }
     await notif.init();
     await intents.init();
-    chats.init();
-    socket;
+    if (!kIsDesktop) {
+      chats.init();
+      socket;
+    }
 
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
@@ -398,10 +400,12 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
 
         await windowManager.setTitle('BlueBubbles');
         if (arguments.firstOrNull == "minimized") {
-          await windowManager.hide();
+          await windowManager.minimize();
         } else {
           await windowManager.show();
         }
+        chats.init();
+        socket;
       });
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */
