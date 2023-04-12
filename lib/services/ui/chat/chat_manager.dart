@@ -4,6 +4,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
 
@@ -30,7 +31,9 @@ class ChatManager extends GetxService {
     eventDispatcher.emit("update-highlight", chat.guid);
     Logger.debug('Setting active chat to ${chat.guid} (${chat.displayName})');
 
-    ss.prefs.setString('lastOpenedChat', chat.guid);
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      await ss.prefs.setString('lastOpenedChat', chat.guid);
+    });
     createChatController(chat, active: true);
     if (clearNotifications) {
       chat.toggleHasUnread(false, force: true);
