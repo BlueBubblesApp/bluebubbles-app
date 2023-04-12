@@ -110,14 +110,14 @@ dependencies:
   objectbox: ^2.0.0
   objectbox_flutter_libs: any
   open_filex: ^4.3.2
-  package_info_plus: ^3.0.3
+  package_info_plus: ^3.1.0
   particles_flutter: ^0.1.4
   pasteboard: ^0.2.0
   path: ^1.8.3
   path_provider: ^2.0.14 # no web support
   pdf: ^3.9.0
   permission_handler: ^10.2.0 # mobile only
-  photo_manager: ^2.5.2 # only mobile
+  photo_manager: ^2.6.0 # only mobile
   photo_view: ^0.14.0
   printing: ^5.10.1
   qr_flutter:

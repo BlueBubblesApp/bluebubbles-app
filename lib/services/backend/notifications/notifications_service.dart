@@ -141,11 +141,11 @@ class NotificationsService extends GetxService {
     });
   }
 
-  Future<void> createReminder(Chat chat, Message message, DateTime time) async {
+  Future<void> createReminder(Chat? chat, Message? message, DateTime time, {String? chatTitle, String? messageText}) async {
     await flnp.zonedSchedule(
       Random().nextInt(9998) + 1,
-      'Reminder: ${chat.getTitle()}',
-      hideContent ? "iMessage" : MessageHelper.getNotificationText(message),
+      chatTitle ?? 'Reminder: ${chat!.getTitle()}',
+      messageText ?? (hideContent ? "iMessage" : MessageHelper.getNotificationText(message!)),
       TZDateTime.from(time, local),
       NotificationDetails(
         android: AndroidNotificationDetails(
@@ -157,7 +157,7 @@ class NotificationsService extends GetxService {
           color: HexColor("4990de"),
         ),
       ),
-      payload: MessageHelper.getNotificationText(message),
+      payload: "${time.millisecondsSinceEpoch}",
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );

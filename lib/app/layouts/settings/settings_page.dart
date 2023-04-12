@@ -1,6 +1,7 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -360,6 +361,32 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                 leading: const SettingsLeadingIcon(
                                   iosIcon: CupertinoIcons.calendar_today,
                                   materialIcon: Icons.schedule_send_outlined,
+                                ),
+                              ),
+                            if (Platform.isAndroid)
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 65.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              ),
+                            if (Platform.isAndroid)
+                              SettingsTile(
+                                backgroundColor: tileColor,
+                                title: "Message Reminders",
+                                subtitle: "View and manage your upcoming message reminders",
+                                onTap: () {
+                                  ns.pushAndRemoveSettingsUntil(
+                                    context,
+                                    MessageRemindersPanel(),
+                                        (route) => route.isFirst,
+                                  );
+                                },
+                                trailing: nextIcon,
+                                leading: const SettingsLeadingIcon(
+                                  iosIcon: CupertinoIcons.alarm,
+                                  materialIcon: Icons.alarm,
                                 ),
                               ),
                           ],
