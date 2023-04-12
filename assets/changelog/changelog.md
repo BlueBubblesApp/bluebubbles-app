@@ -36,6 +36,7 @@ Below are the last few BlueBubbles App release changelogs
 - Added ability to set a custom name and avatar for "yourself"
 - Added ability to secure Desktop app with Windows security
 - When refocusing the Desktop app, the last focused chat text field is refocused
+- View and modify message reminders (Android)
 
 #### Bug Fixes
 
@@ -58,6 +59,8 @@ Below are the last few BlueBubbles App release changelogs
 - Fixed database migration bug for new installs
 - Fixed conversation details fetching attachments for deleted messages
 - Fixed cases where passwords with special characters were not encoded correctly
+- Fixed message reminder not getting canceled when canceling the time picker
+- Properly remember when a chat is closed
 
 #### Improvements
 
@@ -68,6 +71,7 @@ Below are the last few BlueBubbles App release changelogs
 - Removed emojis tab from Giphy
 - Clear search results when changing the search type
 - Hide FindMy option for users below Catalina (FindMy doesn't exist before Catalina)
+- Improved API status display in server management
 
 #### For Developers
 
