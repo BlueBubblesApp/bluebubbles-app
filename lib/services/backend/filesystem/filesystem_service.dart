@@ -27,11 +27,6 @@ class FilesystemService extends GetxService {
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
-      bool? useCustomPath = ss.prefs.getBool("use-custom-path");
-      String? customStorePath = ss.prefs.getString("custom-path");
-      if (Platform.isWindows && useCustomPath == true && customStorePath != null) {
-        appDocDir = Directory(customStorePath);
-      }
       if (!headless) {
         final file = await loadAsset("assets/images/no-video-preview.png");
         noVideoPreviewIcon = file.buffer.asUint8List();

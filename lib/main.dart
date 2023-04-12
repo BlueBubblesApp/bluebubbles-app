@@ -197,23 +197,21 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         }
       } else {
         try {
-          await objectBoxDirectory.create(recursive: true);
+          objectBoxDirectory.createSync(recursive: true);
+          if (ss.prefs.getBool('use-custom-path') == true && ss.prefs.getString('custom-path') != null) {
+            Directory oldCustom = Directory(join(ss.prefs.getString('custom-path')!, 'objectbox'));
+            if (oldCustom.existsSync()) {
+              Logger.info("Detected prior use of custom path option. Migrating...");
+              copyDirectory(oldCustom, objectBoxDirectory);
+            }
+            ss.prefs.remove('use-custom-path');
+            ss.prefs.remove('custom-path');
+          }
           Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
           store = await openStore(directory: objectBoxDirectory.path);
         } catch (e, s) {
           Logger.error(e);
           Logger.error(s);
-          if (Platform.isWindows) {
-            Logger.info("Failed to open store from default path. Using custom path");
-            const customStorePath = "C:\\BlueBubbles\\bluebubbles";
-            ss.prefs.setBool("use-custom-path", true);
-            ss.prefs.setString("custom-path", customStorePath);
-            objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-            await objectBoxDirectory.create(recursive: true);
-            Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-            store = await openStore(directory: join(customStorePath, 'objectbox'));
-          }
-          // TODO Linux fallback
         }
       }
       attachmentBox = store.box<Attachment>();
@@ -226,6 +224,19 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       themeEntryBox = store.box<ThemeEntry>();
       // ignore: deprecated_member_use_from_same_package
       themeObjectBox = store.box<ThemeObject>();
+
+      if (!ss.settings.finishedSetup.value) {
+        attachmentBox.removeAll();
+        chatBox.removeAll();
+        contactBox.removeAll();
+        fcmDataBox.removeAll();
+        handleBox.removeAll();
+        messageBox.removeAll();
+        themeBox.removeAll();
+        themeEntryBox.removeAll();
+        themeObjectBox.removeAll();
+      }
+
       if (themeBox.isEmpty()) {
         ss.prefs.setString("selected-dark", "OLED Dark");
         ss.prefs.setString("selected-light", "Bright White");
