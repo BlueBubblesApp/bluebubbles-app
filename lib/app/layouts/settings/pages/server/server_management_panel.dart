@@ -48,7 +48,7 @@ class ServerManagementPanelController extends StatefulController {
   final RxBool isRestartingMessages = false.obs;
   final RxBool isRestartingPrivateAPI = false.obs;
   final RxDouble opacity = 1.0.obs;
-  final RxBool hasCheckedStats = false.obs;
+  final RxnBool hasCheckedStats = RxnBool(false);
 
   @override
   void onReady() {
@@ -91,7 +91,7 @@ class ServerManagementPanelController extends StatefulController {
       });
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
-      hasCheckedStats.value = true;
+      hasCheckedStats.value = null;
     });
   }
 }
@@ -137,7 +137,15 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               TextSpan(
                                   children: [
                                     const TextSpan(text: "API Connection: "),
-                                    TextSpan(text: (controller.hasCheckedStats.value ? (controller.stats.isEmpty ? 'Disconnected' : 'Connected') : 'Connecting').toUpperCase(), style: TextStyle(color: getIndicatorColor(controller.hasCheckedStats.value ? (controller.stats.isEmpty ? SocketState.disconnected : SocketState.connected) : SocketState.connecting))),
+                                    TextSpan(text: (controller.hasCheckedStats.value == null
+                                        ? 'Disconnected'
+                                        : controller.hasCheckedStats.value == true
+                                        ? 'Connected' : 'Connecting').toUpperCase(),
+                                        style: TextStyle(color: getIndicatorColor(controller.hasCheckedStats.value == null
+                                            ? SocketState.disconnected
+                                            : controller.hasCheckedStats.value == true
+                                            ? SocketState.connected : SocketState.connecting))
+                                    ),
                                     const TextSpan(text: "\n\n"),
                                     const TextSpan(text: "Socket Connection: "),
                                     TextSpan(text: describeEnum(socket.state.value).toUpperCase(), style: TextStyle(color: getIndicatorColor(socket.state.value))),
