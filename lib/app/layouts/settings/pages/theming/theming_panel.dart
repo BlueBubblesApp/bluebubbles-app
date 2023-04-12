@@ -153,6 +153,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       initial: ss.settings.skin.value,
                       onChanged: (val) {
                         if (val == null) return;
+                        cm.setAllInactive();
                         ss.settings.skin.value = val;
                         saveSettings();
                         setState(() {});
