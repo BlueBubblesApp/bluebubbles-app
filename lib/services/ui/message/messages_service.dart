@@ -79,8 +79,10 @@ class MessagesService extends GetxController {
 
   @override
   void onClose() {
+    if (_init) {
+      countSub.cancel();
+    }
     _init = false;
-    countSub.cancel();
     super.onClose();
   }
 
