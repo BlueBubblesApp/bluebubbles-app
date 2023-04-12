@@ -14,27 +14,25 @@ class ChatManager extends GetxService {
   ChatLifecycleManager? activeChat;
   final Map<String, ChatLifecycleManager> _chatControllers = {};
 
-  void setAllInactive() {
+  Future<void> setAllInactive() async {
     Logger.debug('Setting all chats to inactive');
 
     activeChat?.controller = null;
     activeChat = null;
 
-    ss.prefs.remove('lastOpenedChat');
+    await ss.prefs.remove('lastOpenedChat');
     _chatControllers.forEach((key, value) {
       value.isActive = false;
       value.isAlive = false;
     });
   }
 
-  void setActiveChat(Chat chat, {clearNotifications = true}) {
+  Future<void> setActiveChat(Chat chat, {clearNotifications = true}) async {
     eventDispatcher.emit("update-highlight", chat.guid);
     Logger.debug('Setting active chat to ${chat.guid} (${chat.displayName})');
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      await ss.prefs.setString('lastOpenedChat', chat.guid);
-    });
-    createChatController(chat, active: true);
+    await createChatController(chat, active: true);
+    await ss.prefs.setString('lastOpenedChat', chat.guid);
     if (clearNotifications) {
       chat.toggleHasUnread(false, force: true);
     }
@@ -52,7 +50,7 @@ class ChatManager extends GetxService {
 
   bool isChatActive(String guid) => (getChatController(guid)?.isActive ?? false) && (getChatController(guid)?.isAlive ?? false);
 
-  ChatLifecycleManager createChatController(Chat chat, {active = false}) {
+  Future<ChatLifecycleManager> createChatController(Chat chat, {active = false}) async {
     Logger.debug('Creating chat controller for ${chat.guid} (${chat.displayName})');
   
     // If a chat is passed, get the chat and set it be active and make sure it's stored
@@ -62,7 +60,7 @@ class ChatManager extends GetxService {
     // If we are setting a new active chat, we need to clear the active statuses on
     // all of the other chat controllers
     if (active) {
-      setAllInactive();
+      await setAllInactive();
       activeChat = controller;
     }
 

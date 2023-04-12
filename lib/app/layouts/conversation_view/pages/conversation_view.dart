@@ -38,8 +38,10 @@ class ConversationViewState extends OptimizedState<ConversationView> {
   void initState() {
     super.initState();
     controller.fromChatCreator = widget.fromChatCreator;
-    cm.setActiveChat(chat);
-    cm.activeChat!.controller = controller;
+    Future.delayed(Duration.zero, () async {
+      await cm.setActiveChat(chat);
+      cm.activeChat!.controller = controller;
+    });
   }
 
   @override

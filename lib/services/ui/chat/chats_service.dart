@@ -43,14 +43,14 @@ class ChatsService extends GetxService {
             // refresh the latest message
             chat.dbLatestMessage;
           }
-          addChat(chat);
+          await addChat(chat);
         }
         currentCount = newCount;
       });
     } else {
       countSub = WebListeners.newChat.listen((chat) async {
         if (!ss.settings.finishedSetup.value) return;
-        addChat(chat);
+        await addChat(chat);
       });
     }
   }
@@ -82,7 +82,7 @@ class ChatsService extends GetxService {
       }
 
       for (Chat c in temp) {
-        cm.createChatController(c);
+        await cm.createChatController(c);
       }
       newChats.addAll(temp);
 
@@ -138,9 +138,9 @@ class ChatsService extends GetxService {
     }
   }
 
-  void addChat(Chat toAdd) {
+  Future<void> addChat(Chat toAdd) async {
     chats.add(toAdd);
-    cm.createChatController(toAdd);
+    await cm.createChatController(toAdd);
     sort();
   }
 

@@ -59,8 +59,8 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
         setState(() {});
       }
     });
-    debounce<double>(_ratio, (val) {
-      ss.prefs.setDouble('splitRatio', val);
+    debounce<double>(_ratio, (val) async {
+      await ss.prefs.setDouble('splitRatio', val);
       eventDispatcher.emit('split-refresh', null);
     });
   }

@@ -76,12 +76,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     addressController.addListener(() {
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 250), () async {
-        final tuple = await SchedulerBinding.instance.scheduleTask(() {
+        final tuple = await SchedulerBinding.instance.scheduleTask(() async {
           if (addressController.text != oldText) {
             oldText = addressController.text;
             // if user has typed stuff, remove the message view and show filtered results
             if (addressController.text.isNotEmpty && fakeController.value != null) {
-              cm.setAllInactive();
+              await cm.setAllInactive();
               oldController = fakeController.value;
               fakeController.value = null;
             }
@@ -154,7 +154,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   Future<Chat?> findExistingChat({bool checkDeleted = false, bool update = true}) async {
     // no selected items, remove message view
     if (selectedContacts.isEmpty) {
-      cm.setAllInactive();
+      await cm.setAllInactive();
       fakeController.value = null;
       return null;
     }
@@ -201,17 +201,17 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     // if match, show message view, otherwise hide it
     if (update) {
       if (existingChat != null) {
-        cm.setActiveChat(existingChat, clearNotifications: false);
+        await cm.setActiveChat(existingChat, clearNotifications: false);
         cm.activeChat!.controller = cvc(existingChat);
         fakeController.value = cm.activeChat!.controller;
       } else {
-        cm.setAllInactive();
+        await cm.setAllInactive();
         fakeController.value = null;
       }
     }
     if (checkDeleted && existingChat?.dateDeleted != null) {
       Chat.unDelete(existingChat!);
-      chats.addChat(existingChat);
+      await chats.addChat(existingChat);
     }
     return existingChat;
   }
@@ -440,7 +440,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   selectedBorderColor: context.theme.colorScheme.bubble(context, iMessage),
                   selectedColor: context.theme.colorScheme.bubble(context, iMessage),
                   isSelected: [iMessage, sms],
-                  onPressed: (index) {
+                  onPressed: (index) async {
                     selectedContacts.clear();
                     addressController.text = "";
                     if (index == 0) {
@@ -449,7 +449,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sms = false;
                         filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
                       });
-                      cm.setAllInactive();
+                      await cm.setAllInactive();
                       fakeController.value = null;
                     } else {
                       setState(() {
@@ -457,7 +457,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sms = true;
                         filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
                       });
-                      cm.setAllInactive();
+                      await cm.setAllInactive();
                       fakeController.value = null;
                     }
                   },
@@ -652,7 +652,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             );
                             await Future.delayed(const Duration(milliseconds: 500));
                             if (fakeController.value == null) {
-                              cm.setActiveChat(chat, clearNotifications: false);
+                              await cm.setActiveChat(chat, clearNotifications: false);
                               cm.activeChat!.controller = cvc(chat);
                               fakeController.value = cm.activeChat!.controller;
                             }

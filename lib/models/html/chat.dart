@@ -306,7 +306,7 @@ class Chat {
         _latestMessage = message;
         dateDeleted = null;
         // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-        chats.addChat(this);
+        await chats.addChat(this);
       }
     }
 

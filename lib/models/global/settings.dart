@@ -151,19 +151,19 @@ class Settings {
 
   Settings save() {
     Map<String, dynamic> map = toMap(includeAll: true);
-    map.forEach((key, value) {
+    map.forEach((key, value) async {
       if (value is bool) {
-        ss.prefs.setBool(key, value);
+        await ss.prefs.setBool(key, value);
       } else if (value is String) {
-        ss.prefs.setString(key, value);
+        await ss.prefs.setString(key, value);
       } else if (value is int) {
-        ss.prefs.setInt(key, value);
+        await ss.prefs.setInt(key, value);
       } else if (value is double) {
-        ss.prefs.setDouble(key, value);
+        await ss.prefs.setDouble(key, value);
       } else if (value is List || value is Map) {
-        ss.prefs.setString(key, jsonEncode(value));
+        await ss.prefs.setString(key, jsonEncode(value));
       } else if (value == null) {
-        ss.prefs.remove(key);
+        await ss.prefs.remove(key);
       }
     });
     return this;

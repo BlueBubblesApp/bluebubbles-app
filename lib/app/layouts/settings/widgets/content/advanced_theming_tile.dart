@@ -46,9 +46,9 @@ class _AdvancedThemingTileState extends OptimizedState<AdvancedThemingTile> {
                     widget.currentTheme.data = ThemeStruct.fromMap(map).data;
                     widget.currentTheme.save();
                     if (widget.currentTheme.name == ss.prefs.getString("selected-dark")) {
-                      ts.changeTheme(_context, dark: widget.currentTheme);
+                      await ts.changeTheme(_context, dark: widget.currentTheme);
                     } else if (widget.currentTheme.name == ss.prefs.getString("selected-light")) {
-                      ts.changeTheme(_context, light: widget.currentTheme);
+                      await ts.changeTheme(_context, light: widget.currentTheme);
                     }
                   }
                 } else {
@@ -69,9 +69,9 @@ class _AdvancedThemingTileState extends OptimizedState<AdvancedThemingTile> {
                     widget.currentTheme.data = ThemeStruct.fromMap(map).data;
                     widget.currentTheme.save();
                     if (widget.currentTheme.name == ss.prefs.getString("selected-dark")) {
-                      ts.changeTheme(_context, dark: widget.currentTheme);
+                      await ts.changeTheme(_context, dark: widget.currentTheme);
                     } else if (widget.currentTheme.name == ss.prefs.getString("selected-light")) {
-                      ts.changeTheme(_context, light: widget.currentTheme);
+                      await ts.changeTheme(_context, light: widget.currentTheme);
                     }
                   }
                 } else {

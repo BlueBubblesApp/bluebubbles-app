@@ -204,8 +204,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
               Logger.info("Detected prior use of custom path option. Migrating...");
               copyDirectory(oldCustom, objectBoxDirectory);
             }
-            ss.prefs.remove('use-custom-path');
-            ss.prefs.remove('custom-path');
+            await ss.prefs.remove('use-custom-path');
+            await ss.prefs.remove('custom-path');
           }
           Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
           store = await openStore(directory: objectBoxDirectory.path);
@@ -238,8 +238,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       }
 
       if (themeBox.isEmpty()) {
-        ss.prefs.setString("selected-dark", "OLED Dark");
-        ss.prefs.setString("selected-light", "Bright White");
+        await ss.prefs.setString("selected-dark", "OLED Dark");
+        await ss.prefs.setString("selected-light", "Bright White");
         themeBox.putMany(ts.defaultThemes);
       }
       int version = ss.prefs.getInt('dbVersion') ?? (ss.settings.finishedSetup.value ? 1 : databaseVersion);
@@ -305,7 +305,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
     }
 
     /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
-    ss.prefs.setInt('dbVersion', databaseVersion);
+    await ss.prefs.setInt('dbVersion', databaseVersion);
     storeStartup.complete();
     ss.getFcmData();
     if (!kIsWeb) {
@@ -373,14 +373,14 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           width = width.clamp(300, max(300, primary.size.width));
           height = height.clamp(300, max(300, primary.size.height));
           await windowManager.setSize(Size(width, height));
-          ss.prefs.setDouble("window-width", width);
-          ss.prefs.setDouble("window-height", height);
+          await ss.prefs.setDouble("window-width", width);
+          await ss.prefs.setDouble("window-height", height);
         } else {
           Size size = await windowManager.getSize();
           width = size.width;
           height = size.height;
-          ss.prefs.setDouble("window-width", width);
-          ss.prefs.setDouble("window-height", height);
+          await ss.prefs.setDouble("window-width", width);
+          await ss.prefs.setDouble("window-height", height);
         }
 
         double? posX = ss.prefs.getDouble("window-x");
@@ -389,15 +389,15 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           posX = posX.clamp(0, max(0, primary.size.width - width));
           posY = posY.clamp(0, max(0, primary.size.height - height));
           await windowManager.setPosition(Offset(posX, posY));
-          ss.prefs.setDouble("window-x", posX);
-          ss.prefs.setDouble("window-y", posY);
+          await ss.prefs.setDouble("window-x", posX);
+          await ss.prefs.setDouble("window-y", posY);
         } else {
           await windowManager.setAlignment(Alignment.center);
           Offset offset = await windowManager.getPosition();
           posX = offset.dx;
           posY = offset.dy;
-          ss.prefs.setDouble("window-x", posX);
-          ss.prefs.setDouble("window-y", posY);
+          await ss.prefs.setDouble("window-x", posX);
+          await ss.prefs.setDouble("window-y", posY);
         }
 
         Size size = await windowManager.getSize();
@@ -406,8 +406,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         posX = posX.clamp(0, max(0, primary.size.width - width));
         posY = posY.clamp(0, max(0, primary.size.height - height));
         await windowManager.setPosition(Offset(posX, posY));
-        ss.prefs.setDouble("window-x", posX);
-        ss.prefs.setDouble("window-y", posY);
+        await ss.prefs.setDouble("window-x", posX);
+        await ss.prefs.setDouble("window-y", posY);
 
         await windowManager.setTitle('BlueBubbles');
         if (arguments.firstOrNull == "minimized") {
@@ -479,15 +479,15 @@ class DesktopWindowListener extends WindowListener {
   @override
   void onWindowResized() async {
     Size size = await windowManager.getSize();
-    ss.prefs.setDouble("window-width", size.width);
-    ss.prefs.setDouble("window-height", size.height);
+    await ss.prefs.setDouble("window-width", size.width);
+    await ss.prefs.setDouble("window-height", size.height);
   }
 
   @override
   void onWindowMoved() async {
     Offset offset = await windowManager.getPosition();
-    ss.prefs.setDouble("window-x", offset.dx);
-    ss.prefs.setDouble("window-y", offset.dy);
+    await ss.prefs.setDouble("window-x", offset.dx);
+    await ss.prefs.setDouble("window-y", offset.dy);
   }
 }
 
@@ -795,7 +795,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       }
 
       if (ss.prefs.getBool('1.11.1-warning') != true) {
-        ss.prefs.setBool('1.11.1-warning', true);
+        await ss.prefs.setBool('1.11.1-warning', true);
       }
 
       if (!ss.settings.finishedSetup.value) {

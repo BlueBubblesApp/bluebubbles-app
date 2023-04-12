@@ -317,7 +317,7 @@ class ThemesService extends GetxService {
     return Platform.isWindows ? _applyWindowsAccent(light, dark) : _applyMonet(light, dark);
   }
 
-  ThemeStruct revertToPreviousDarkTheme() {
+  Future<ThemeStruct> revertToPreviousDarkTheme() async {
     List<ThemeStruct> allThemes = ThemeStruct.getThemes();
     final darkName = ss.prefs.getString("previous-dark");
     ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == darkName);
@@ -325,12 +325,12 @@ class ThemesService extends GetxService {
     previous ??= defaultThemes.firstWhere((element) => element.name == "OLED Dark");
 
     // Remove the previous flags
-    ss.prefs.remove("previous-dark");
+    await ss.prefs.remove("previous-dark");
 
     return previous;
   }
 
-  ThemeStruct revertToPreviousLightTheme() {
+  Future<ThemeStruct> revertToPreviousLightTheme() async {
     List<ThemeStruct> allThemes = ThemeStruct.getThemes();
     final lightName = ss.prefs.getString("previous-light");
     ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == lightName);
@@ -338,16 +338,16 @@ class ThemesService extends GetxService {
     previous ??= defaultThemes.firstWhere((element) => element.name == "Bright White");
 
     // Remove the previous flags
-    ss.prefs.remove("previous-light");
+    await ss.prefs.remove("previous-light");
 
     return previous;
   }
 
-  void changeTheme(BuildContext context, {ThemeStruct? light, ThemeStruct? dark}) {
+  Future<void> changeTheme(BuildContext context, {ThemeStruct? light, ThemeStruct? dark}) async {
     light?.save();
     dark?.save();
-    if (light != null) ss.prefs.setString("selected-light", light.name);
-    if (dark != null) ss.prefs.setString("selected-dark", dark.name);
+    if (light != null) await ss.prefs.setString("selected-light", light.name);
+    if (dark != null) await ss.prefs.setString("selected-dark", dark.name);
 
     _loadTheme(context);
   }

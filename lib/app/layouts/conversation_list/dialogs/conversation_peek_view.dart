@@ -55,8 +55,10 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   @override
   void initState() {
     super.initState();
-    cm.setActiveChat(widget.chat, clearNotifications: false);
-    cm.activeChat!.controller = cvController;
+    Future.delayed(Duration.zero, () async {
+      await cm.setActiveChat(widget.chat, clearNotifications: false);
+      cm.activeChat!.controller = cvController;
+    });
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),

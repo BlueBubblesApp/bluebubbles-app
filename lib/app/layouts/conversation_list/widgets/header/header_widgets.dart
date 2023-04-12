@@ -87,7 +87,7 @@ class OverflowMenu extends StatelessWidget {
         } else if (value == 2) {
           final currentChat = cm.activeChat?.chat;
           ns.closeAllConversationView(context);
-          cm.setAllInactive();
+          await cm.setAllInactive();
           await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
@@ -96,7 +96,7 @@ class OverflowMenu extends StatelessWidget {
             ),
           );
           if (currentChat != null) {
-            cm.setActiveChat(currentChat);
+            await cm.setActiveChat(currentChat);
             if (ss.settings.tabletMode.value) {
               ns.pushAndRemoveUntil(
                 context,
@@ -146,7 +146,7 @@ class OverflowMenu extends StatelessWidget {
                       await ss.prefs.setString("selected-dark", "OLED Dark");
                       await ss.prefs.setString("selected-light", "Bright White");
                       themeBox.putMany(ts.defaultThemes);
-                      ts.changeTheme(context);
+                      await ts.changeTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
                         child: TitleBarWrapper(child: SetupView()),
@@ -160,7 +160,7 @@ class OverflowMenu extends StatelessWidget {
         } else if (value == 5) {
           final currentChat = cm.activeChat?.chat;
           ns.closeAllConversationView(context);
-          cm.setAllInactive();
+          await cm.setAllInactive();
           await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
@@ -169,7 +169,7 @@ class OverflowMenu extends StatelessWidget {
             ),
           );
           if (currentChat != null) {
-            cm.setActiveChat(currentChat);
+            await cm.setActiveChat(currentChat);
             if (ss.settings.tabletMode.value) {
               ns.pushAndRemoveUntil(
                 context,

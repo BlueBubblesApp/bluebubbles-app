@@ -857,7 +857,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                               await ss.prefs.setString("selected-dark", "OLED Dark");
                                               await ss.prefs.setString("selected-light", "Bright White");
                                               themeBox.putMany(ts.defaultThemes);
-                                              ts.changeTheme(context);
+                                              await ts.changeTheme(context);
                                               Get.offAll(() => WillPopScope(
                                                 onWillPop: () async => false,
                                                 child: TitleBarWrapper(child: SetupView()),
