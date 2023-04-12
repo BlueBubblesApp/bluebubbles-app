@@ -30,8 +30,8 @@ class _QRCodeScannerState extends OptimizedState<QRCodeScanner> {
         body: MobileScanner(
           key: qrKey,
           onDetect: (capture) {
-            if (!isNullOrEmpty(capture.raw)!) {
-              Navigator.of(context).pop(capture.raw);
+            if (!isNullOrEmpty(capture.barcodes.first.rawValue)!) {
+              Navigator.of(context).pop(capture.barcodes.first.rawValue);
             }
           },
         ),
