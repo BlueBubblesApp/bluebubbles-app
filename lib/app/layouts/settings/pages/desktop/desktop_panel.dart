@@ -74,7 +74,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                           },
                           initialVal: ss.settings.launchAtStartupMinimized.value,
                           title: "Launch on Startup Minimized",
-                          subtitle: "Automatically open the desktop app on startup, but minimized",
+                          subtitle: "Automatically open the desktop app on startup, but minimized to the system tray",
                           backgroundColor: tileColor,
                         ),
                       ],

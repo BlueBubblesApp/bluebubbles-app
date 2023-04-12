@@ -400,7 +400,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
 
         await windowManager.setTitle('BlueBubbles');
         if (arguments.firstOrNull == "minimized") {
-          await windowManager.minimize();
+          await windowManager.hide();
         } else {
           await windowManager.show();
         }
