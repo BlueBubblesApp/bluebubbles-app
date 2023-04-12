@@ -18,6 +18,8 @@ class ChatManager extends GetxService {
 
     activeChat?.controller = null;
     activeChat = null;
+
+    ss.prefs.remove('lastOpenedChat');
     _chatControllers.forEach((key, value) {
       value.isActive = false;
       value.isAlive = false;
