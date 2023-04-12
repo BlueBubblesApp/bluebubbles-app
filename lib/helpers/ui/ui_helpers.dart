@@ -43,6 +43,7 @@ class BackButton extends StatelessWidget {
             )),
         iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
         onPressed: () {
+          if (kIsDesktop) return;
           final result = onPressed?.call() ?? false;
           if (!result) {
             while (Get.isOverlaysOpen) {
