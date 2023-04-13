@@ -7,6 +7,8 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
+import 'package:collection/collection.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,9 +16,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:intl/intl.dart';
+import 'package:path/path.dart' hide context;
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BackupRestorePanel extends StatefulWidget {
   BackupRestorePanel({
@@ -74,7 +79,27 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
     setState(() {
       themes.removeWhere((element) => element["name"] == name);
     });
-    http.deleteTheme(name);
+    http.deleteTheme("BlueBubbles Custom Theme - $name");
+  }
+
+  Future<String> defaultName() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      return "Android (${androidInfo.model})";
+    } else if (kIsWeb) {
+      WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
+      return "Web (${describeEnum(webInfo.browserName)})";
+    } else if (Platform.isWindows) {
+      WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
+      return "Windows (${windowsInfo.computerName})";
+    } else if (Platform.isLinux) {
+      LinuxDeviceInfo linuxInfo = await deviceInfo.linuxInfo;
+      return "Linux (${linuxInfo.name})";
+    }
+
+    return "Unknown Device";
   }
 
   Future<bool?> showMethodDialog() async {
@@ -174,15 +199,55 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                             final item = settings[index];
                             return ListTile(
                               mouseCursor: SystemMouseCursors.click,
-                              title: Text(item["name"]),
+                              title: RichText(
+                                text: TextSpan(
+                                  style: context.textTheme.titleMedium,
+                                  children: [
+                                    TextSpan(text: item["name"]),
+                                    const TextSpan(text: "\n"),
+                                    TextSpan(
+                                      text: DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(item["timestamp"])),
+                                      style: context.textTheme.titleSmall!.copyWith(color: context.theme.colorScheme.outline),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               subtitle: !isNullOrEmpty(item["description"])! ? Text(item["description"]) : null,
                               trailing: IconButton(
                                 icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
-                                onPressed: () => deleteSettings(item["name"]),
+                                onPressed: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => areYouSure(context,
+                                          content: const Text("This Settings backup will be deleted from the server."),
+                                          onNo: () => Navigator.of(context).pop(),
+                                          onYes: () {
+                                            deleteSettings(item["name"]);
+                                            Navigator.of(context).pop();
+                                          }
+                                      ),
+                                  );
+                                }
                               ),
-                              onTap: () async {
-                                Settings.updateFromMap(item);
-                                showSnackbar("Success", "Settings restored successfully");
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => areYouSure(context,
+                                      content: const Text("Your current Settings will be replaced by this backup."),
+                                      onNo: () => Navigator.of(context).pop(),
+                                      onYes: () {
+                                        Navigator.of(context).pop();
+                                        try {
+                                          Settings.updateFromMap(item);
+                                          showSnackbar("Success", "Settings restored successfully");
+                                        } catch (e, s) {
+                                          Logger.error(e);
+                                          Logger.error(s);
+                                          showSnackbar("Error", "Something went wrong");
+                                        }
+                                      }
+                                  ),
+                                );
                               },
                               onLongPress: () async {
                                 const encoder = JsonEncoder.withIndent("     ");
@@ -224,6 +289,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   ),
                                 );
                               },
+                              isThreeLine: !isNullOrEmpty(item["description"])!,
                             );
                           },
                           itemCount: settings.length,
@@ -251,22 +317,40 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                         onTap: () async {
                           final method = await showMethodDialog();
                           if (method == null) return;
-                          final TextEditingController nameController = TextEditingController(text: await getDeviceName());
+                          final deviceName = await defaultName();
+                          final TextEditingController nameController = TextEditingController(text: deviceName);
                           final TextEditingController descController = TextEditingController();
 
-                          void onDone() async {
-                            final name = nameController.text;
+                          void onDone(_context) async {
+                            String name = nameController.text;
                             final desc = descController.text;
                             if (name.isEmpty) {
                               return showSnackbar("Error", "Provide a name!");
+                            } else if (settings.firstWhereOrNull((s) => s["name"] == name) != null) {
+                              bool yes = false;
+                              await showDialog(context: _context, builder: (__context) =>
+                                  areYouSure(__context,
+                                      content: const Text("This will overwrite your previous Settings backup with the same name!"),
+                                      onNo: () {
+                                    Navigator.of(__context).pop();
+                                    },
+                                      onYes: () {
+                                    Navigator.of(__context).pop();
+                                    Navigator.of(_context).pop();
+                                    yes = true;
+                                    },
+                                  ),
+                              );
+                              if (!yes) return;
                             } else {
-                              Navigator.of(context).pop();
+                              Navigator.of(_context).pop();
                             }
                             Map<String, dynamic> json = ss.settings.toMap();
                             if (desc.isNotEmpty) {
                               json["description"] = desc;
                             }
-                            json["timestamp"] = DateTime.now().millisecondsSinceEpoch;
+                            final timestamp = DateTime.now().millisecondsSinceEpoch;
+                            json["timestamp"] = timestamp;
                             if (method) {
                               var response = await http.setSettings(name, json);
                               if (response.statusCode != 200) {
@@ -312,15 +396,18 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               showSnackbar(
                                 "Success",
                                 "Settings exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
-                                durationMs: 2000,
+                                durationMs: kIsDesktop ? 4000 : 2000,
                                 button: TextButton(
                                   style: TextButton.styleFrom(
                                     backgroundColor: Get.theme.colorScheme.secondary,
                                   ),
                                   onPressed: () {
+                                    if (kIsDesktop) {
+                                      launchUrl(Uri.file(dirname(filePath)));
+                                    }
                                     Share.file("BlueBubbles Settings", filePath);
                                   },
-                                  child: kIsDesktop ? const SizedBox.shrink() : Text("SHARE", style: TextStyle(color: context.theme.primaryColor)),
+                                  child: Text(kIsDesktop ? "OPEN FOLDER": "SHARE", style: TextStyle(color: context.theme.colorScheme.onSecondary)),
                                 ),
                               );
                             }
@@ -386,7 +473,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                         controller: descController,
                                         textInputAction: TextInputAction.next,
                                         onSubmitted: (_) {
-                                          onDone.call();
+                                          onDone.call(context);
                                         },
                                         decoration: InputDecoration(
                                           enabledBorder: OutlineInputBorder(
@@ -395,7 +482,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                           focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(color: context.theme.colorScheme.primary),
                                               borderRadius: BorderRadius.circular(20)),
-                                          labelText: "Description",
+                                          labelText: "Description (Optional)",
                                         ),
                                       ),
                                     ),
@@ -411,7 +498,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   TextButton(
                                     child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () {
-                                      onDone.call();
+                                      onDone.call(context);
                                     },
                                   ),
                                 ],
@@ -441,20 +528,28 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           ),
                         ),
                         onTap: () async {
-                          final res = await FilePicker.platform
-                              .pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
+                          final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
                           if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
-
-                          try {
-                            String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
-                            Map<String, dynamic> json = jsonDecode(jsonString);
-                            Settings.updateFromMap(json);
-                            showSnackbar("Success", "Settings restored successfully");
-                          } catch (e, s) {
-                            Logger.error(e);
-                            Logger.error(s);
-                            showSnackbar("Error", "Something went wrong");
-                          }
+                          showDialog(
+                            context: context,
+                            builder: (context) => areYouSure(context,
+                                content: const Text("Your current Settings will be replaced by this backup."),
+                                onNo: () => Navigator.of(context).pop(),
+                                onYes: () {
+                                  Navigator.of(context).pop();
+                                  try {
+                                    String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
+                                    Map<String, dynamic> json = jsonDecode(jsonString);
+                                    Settings.updateFromMap(json);
+                                    showSnackbar("Success", "Settings restored successfully");
+                                  } catch (e, s) {
+                                    Logger.error(e);
+                                    Logger.error(s);
+                                    showSnackbar("Error", "Something went wrong");
+                                  }
+                                }
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -549,16 +644,44 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               ),
                               trailing: IconButton(
                                 icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
-                                onPressed: () => deleteTheme(item["name"]),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => areYouSure(context,
+                                        content: const Text("This Theme backup will be deleted from the server."),
+                                        onNo: () => Navigator.of(context).pop(),
+                                        onYes: () {
+                                          deleteTheme(item["name"]);
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                  );
+                                },
                               ),
                               onTap: () async {
                                 if (!item.containsKey('data')) {
                                   return showSnackbar("Error", "This theme was created on the old theming engine and cannot be restored");
                                 }
-                                ThemeStruct object = ThemeStruct.fromMap(item);
-                                object.id = null;
-                                object.save();
-                                showSnackbar("Success", "Theme restored successfully");
+                                showDialog(
+                                    context: context,
+                                    builder: (context) => areYouSure(context,
+                                        content: const Text("Your current Theme will be replaced by this backup."),
+                                        onNo: () => Navigator.of(context).pop(),
+                                        onYes: () {
+                                          Navigator.of(context).pop();
+                                          try {
+                                            ThemeStruct object = ThemeStruct.fromMap(item);
+                                            object.id = null;
+                                            object.save();
+                                            showSnackbar("Success", "Theme restored successfully");
+                                          } catch (e, s) {
+                                            Logger.error(e);
+                                            Logger.error(s);
+                                            showSnackbar("Error", "Something went wrong");
+                                          }
+                                        }
+                                    ),
+                                );
                               },
                               onLongPress: () async {
                                 const encoder = JsonEncoder.withIndent("     ");
@@ -692,15 +815,19 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                             showSnackbar(
                               "Success",
                               "Theming exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
-                              durationMs: 2000,
+                              durationMs: kIsDesktop ? 4000 : 2000,
                               button: TextButton(
                                 style: TextButton.styleFrom(
                                   backgroundColor: Get.theme.colorScheme.secondary,
                                 ),
                                 onPressed: () {
+                                  if (kIsDesktop) {
+                                    launchUrl(Uri.file(dirname(filePath)));
+                                    return;
+                                  }
                                   Share.file("BlueBubbles Theming", filePath);
                                 },
-                                child: kIsDesktop ? const SizedBox.shrink() : Text("SHARE", style: TextStyle(color: context.theme.primaryColor)),
+                                child: Text(kIsDesktop ? "OPEN FOLDER" : "SHARE", style: TextStyle(color: context.theme.colorScheme.onSecondary)),
                               ),
                             );
                           }
@@ -737,21 +864,31 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               .pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
                           if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                          try {
-                            String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
-                            List<dynamic> json = jsonDecode(jsonString);
-                            for (var e in json) {
-                              ThemeStruct object = ThemeStruct.fromMap(e);
-                              if (object.isPreset) continue;
-                              object.id = null;
-                              object.save();
-                            }
-                            showSnackbar("Success", "Theming restored successfully");
-                          } catch (e, s) {
-                            Logger.error(e);
-                            Logger.error(s);
-                            showSnackbar("Error", "Something went wrong");
-                          }
+                          showDialog(
+                              context: context,
+                              builder: (context) => areYouSure(context,
+                                  content: const Text("Your current Theme will be replaced by this backup."),
+                                  onNo: () => Navigator.of(context).pop(),
+                                  onYes: () {
+                                    Navigator.of(context).pop();
+                                    try {
+                                      String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
+                                      List<dynamic> json = jsonDecode(jsonString);
+                                      for (var e in json) {
+                                        ThemeStruct object = ThemeStruct.fromMap(e);
+                                        if (object.isPreset) continue;
+                                        object.id = null;
+                                        object.save();
+                                      }
+                                      showSnackbar("Success", "Theming restored successfully");
+                                    } catch (e, s) {
+                                      Logger.error(e);
+                                      Logger.error(s);
+                                      showSnackbar("Error", "Something went wrong");
+                                    }
+                                  }
+                              ),
+                          );
                         },
                       ),
                     ),

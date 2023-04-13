@@ -646,3 +646,28 @@ Future<ui.Image> loadImage(Uint8List data) async {
   });
   return completer.future;
 }
+
+AlertDialog areYouSure(BuildContext context, {Widget? content, required Function onNo, required Function onYes}) {
+  return AlertDialog(
+    title: Text(
+      "Are you sure?",
+      style: context.theme.textTheme.titleLarge,
+    ),
+    content: content,
+    backgroundColor: context.theme.colorScheme.properSurface,
+    actions: <Widget>[
+      TextButton(
+        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+        onPressed: () {
+          onNo.call();
+        },
+      ),
+      TextButton(
+        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+        onPressed: () async {
+          onYes.call();
+        },
+      ),
+    ],
+  );
+}
