@@ -46,7 +46,7 @@ class ConversationTileController extends StatefulController {
   void onTap(BuildContext context) {
     if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
       onLongPress();
-    } else if (cm.activeChat?.chat.guid != chat.guid) {
+    } else if ((!kIsDesktop && !kIsWeb) || cm.activeChat?.chat.guid != chat.guid) {
       ns.pushAndRemoveUntil(
         context,
         ConversationView(
