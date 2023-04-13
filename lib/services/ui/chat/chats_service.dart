@@ -82,7 +82,7 @@ class ChatsService extends GetxService {
       }
 
       for (Chat c in temp) {
-        await cm.createChatController(c);
+        cm.createChatController(c);
       }
       newChats.addAll(temp);
 
@@ -140,7 +140,7 @@ class ChatsService extends GetxService {
 
   Future<void> addChat(Chat toAdd) async {
     chats.add(toAdd);
-    await cm.createChatController(toAdd);
+    cm.createChatController(toAdd);
     sort();
   }
 

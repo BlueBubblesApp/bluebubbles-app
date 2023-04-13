@@ -4,7 +4,6 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
 
@@ -14,27 +13,41 @@ class ChatManager extends GetxService {
   ChatLifecycleManager? activeChat;
   final Map<String, ChatLifecycleManager> _chatControllers = {};
 
-  Future<void> setAllInactive() async {
+  /// Same as setAllInactive but does not save lastOpenedChat
+  void setAllInactiveSync() {
     Logger.debug('Setting all chats to inactive');
 
     activeChat?.controller = null;
     activeChat = null;
 
-    await ss.prefs.remove('lastOpenedChat');
     _chatControllers.forEach((key, value) {
       value.isActive = false;
       value.isAlive = false;
     });
   }
 
+  Future<void> setAllInactive() async {
+    Logger.debug('Setting all chats to inactive');
+    await ss.prefs.remove('lastOpenedChat');
+    setAllInactiveSync();
+  }
+
   Future<void> setActiveChat(Chat chat, {clearNotifications = true}) async {
+    await ss.prefs.setString('lastOpenedChat', chat.guid);
+    setActiveChatSync(chat, clearNotifications: clearNotifications, save: false);
+  }
+
+  /// Same as setActiveChat but saves lastOpenedChat to prefs on next frame
+  void setActiveChatSync(Chat chat, {clearNotifications = true, save = true}) {
     eventDispatcher.emit("update-highlight", chat.guid);
     Logger.debug('Setting active chat to ${chat.guid} (${chat.displayName})');
 
-    await createChatController(chat, active: true);
-    await ss.prefs.setString('lastOpenedChat', chat.guid);
+    createChatController(chat, active: true);
     if (clearNotifications) {
       chat.toggleHasUnread(false, force: true);
+    }
+    if (save) {
+      Future.delayed(Duration.zero, () async => await ss.prefs.setString('lastOpenedChat', chat.guid));
     }
   }
 
@@ -50,7 +63,7 @@ class ChatManager extends GetxService {
 
   bool isChatActive(String guid) => (getChatController(guid)?.isActive ?? false) && (getChatController(guid)?.isAlive ?? false);
 
-  Future<ChatLifecycleManager> createChatController(Chat chat, {active = false}) async {
+  ChatLifecycleManager createChatController(Chat chat, {active = false}) {
     Logger.debug('Creating chat controller for ${chat.guid} (${chat.displayName})');
   
     // If a chat is passed, get the chat and set it be active and make sure it's stored
@@ -60,7 +73,7 @@ class ChatManager extends GetxService {
     // If we are setting a new active chat, we need to clear the active statuses on
     // all of the other chat controllers
     if (active) {
-      await setAllInactive();
+      setAllInactiveSync();
       activeChat = controller;
     }
 
