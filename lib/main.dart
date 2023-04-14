@@ -415,8 +415,10 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         } else {
           await windowManager.show();
         }
-        chats.init();
-        socket;
+        if (!(ss.canAuthenticate && ss.settings.shouldSecure.value)) {
+          chats.init();
+          socket;
+        }
       });
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */
@@ -589,6 +591,13 @@ class Main extends StatelessWidget {
                           isAuthing = false;
                           if (result) {
                             SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
+                            if (kIsDesktop) {
+                              Future.delayed(Duration.zero, ()
+                              {
+                                chats.init();
+                                socket;
+                              });
+                            }
                           }
                         });
                       }
