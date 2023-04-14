@@ -206,29 +206,66 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                     TextSpan(text: item["name"]),
                                     const TextSpan(text: "\n"),
                                     TextSpan(
-                                      text: DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(item["timestamp"])),
+                                      text: (item["timestamp"] is int) ? DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(item["timestamp"])) : null,
                                       style: context.textTheme.titleSmall!.copyWith(color: context.theme.colorScheme.outline),
                                     ),
                                   ],
                                 ),
                               ),
                               subtitle: !isNullOrEmpty(item["description"])! ? Text(item["description"]) : null,
-                              trailing: IconButton(
-                                icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
-                                onPressed: () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (context) => areYouSure(context,
-                                          content: const Text("This Settings backup will be deleted from the server."),
-                                          onNo: () => Navigator.of(context).pop(),
-                                          onYes: () {
-                                            deleteSettings(item["name"]);
-                                            Navigator.of(context).pop();
-                                          }
-                                      ),
-                                  );
-                                }
-                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                IconButton(
+                                    icon: Icon(iOS ? CupertinoIcons.arrow_2_circlepath : Icons.sync),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_context) => areYouSure(_context,
+                                            content: const Text("This Settings backup will be replaced with your current Settings."),
+                                            onNo: () => Navigator.of(_context).pop(),
+                                            onYes: () async {
+                                              Map<String, dynamic> json = ss.settings.toMap();
+                                              json["description"] = item["description"];
+                                              json["timestamp"] = DateTime.now().millisecondsSinceEpoch;
+                                              Response response = await http.setSettings(item["name"], json);
+                                              Navigator.of(_context).pop();
+                                              if (response.statusCode != 200) {
+                                                showSnackbar(
+                                                  "Error",
+                                                  "Somthing went wrong",
+                                                );
+                                              } else {
+                                                showSnackbar(
+                                                  "Success",
+                                                  "Settings exported successfully to server",
+                                                );
+                                              }
+                                              setState(() {
+                                                fetching = true;
+                                                settings.clear();
+                                                themes.clear();
+                                              });
+                                              getBackups();
+                                            },
+                                        ),
+                                      );
+                                    }),
+                                IconButton(
+                                    icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => areYouSure(context,
+                                            content: const Text("This Settings backup will be deleted from the server."),
+                                            onNo: () => Navigator.of(context).pop(),
+                                            onYes: () {
+                                              deleteSettings(item["name"]);
+                                              Navigator.of(context).pop();
+                                            }),
+                                      );
+                                    })
+                              ]),
                               onTap: () {
                                 showDialog(
                                   context: context,
