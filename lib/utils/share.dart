@@ -155,8 +155,9 @@ class Share {
       attachments: [
         Attachment(
           guid: _attachmentGuid,
+          mimeType: "text/x-vlocation",
           isOutgoing: true,
-          uti: "public.jpg",
+          uti: "public.vlocation",
           bytes: bytes,
           transferName: fileName,
           totalBytes: bytes.length,
