@@ -154,12 +154,17 @@ class MessageHelper {
       message.fetchAttachments();
     }
 
+    var attachments = message.realAttachments;
+    if (attachments.isEmpty && message.attachments.isNotEmpty) {
+      attachments = message.attachments.whereNotNull().toList();
+    }
+
     // If there are attachments, return the number of attachments
-    if (message.realAttachments.isNotEmpty) {
-      int aCount = message.realAttachments.length;
+    if (attachments.isNotEmpty) {
+      int aCount = attachments.length;
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
-      return "$output: ${_getAttachmentText(message.realAttachments)}";
+      return "$output: ${_getAttachmentText(attachments)}";
     } else if (!isNullOrEmpty(message.associatedMessageGuid)!) {
       // It's a reaction message, get the sender
       String sender = message.isFromMe! ? ss.settings.userName.value : (message.handle?.displayName ?? "Someone");
