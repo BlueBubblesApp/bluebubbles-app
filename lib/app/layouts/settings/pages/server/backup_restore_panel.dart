@@ -198,7 +198,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           itemBuilder: (context, index) {
                             final item = settings[index];
                             return ListTile(
-                              contentPadding: const EdgeInsets.only(left: 16, right: 10, top: 10),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                               mouseCursor: SystemMouseCursors.click,
                               title: RichText(
                                 text: TextSpan(
