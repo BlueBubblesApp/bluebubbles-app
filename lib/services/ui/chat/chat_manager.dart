@@ -13,8 +13,8 @@ class ChatManager extends GetxService {
   ChatLifecycleManager? activeChat;
   final Map<String, ChatLifecycleManager> _chatControllers = {};
 
-  /// Same as setAllInactive but does not save lastOpenedChat
-  void setAllInactiveSync() {
+  /// Same as setAllInactive but but removes lastOpenedChat from prefs on next frame
+  void setAllInactiveSync({save = true}) {
     Logger.debug('Setting all chats to inactive');
 
     activeChat?.controller = null;
@@ -24,12 +24,15 @@ class ChatManager extends GetxService {
       value.isActive = false;
       value.isAlive = false;
     });
+    if (save) {
+      Future.delayed(Duration.zero, () async => await ss.prefs.remove('lastOpenedChat'));
+    }
   }
 
   Future<void> setAllInactive() async {
     Logger.debug('Setting all chats to inactive');
     await ss.prefs.remove('lastOpenedChat');
-    setAllInactiveSync();
+    setAllInactiveSync(save: false);
   }
 
   Future<void> setActiveChat(Chat chat, {clearNotifications = true}) async {
@@ -73,7 +76,7 @@ class ChatManager extends GetxService {
     // If we are setting a new active chat, we need to clear the active statuses on
     // all of the other chat controllers
     if (active) {
-      setAllInactiveSync();
+      setAllInactiveSync(save: false);
       activeChat = controller;
     }
 
