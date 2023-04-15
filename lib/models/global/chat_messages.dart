@@ -96,4 +96,12 @@ class ChatMessages {
     }
     return null;
   }
+
+  flush() {
+    _messages.clear();
+    _reactions.clear();
+    _attachments.clear();
+    _threads.clear();
+    _edits.clear();
+  }
 }
