@@ -304,7 +304,6 @@ class Settings {
   }
 
   static void updateFromMap(Map<String, dynamic> map) {
-    ss.settings.iCloudAccount.value = map['iCloudAccount'] ?? '';
     ss.settings.autoDownload.value = map['autoDownload'] ?? true;
     ss.settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     ss.settings.autoSave.value = map['autoSave'] ?? false;
