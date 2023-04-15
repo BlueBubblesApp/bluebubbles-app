@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -238,5 +239,11 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     eventDispatcher.emit("update-highlight", null);
     cm.setAllInactiveSync();
     Get.delete<ConversationViewController>(tag: tag);
+
+    // Unset the last opened chat if it matches the current chat.
+    // Only do it for android so we can resume the chat on re-open.
+    if (!kIsWeb && !kIsDesktop && ss.prefs.getString('lastOpenedChat') == chat.guid) {
+      ss.prefs.remove('lastOpenedChat');
+    }
   }
 }
