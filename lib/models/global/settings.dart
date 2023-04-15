@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
 class Settings {
+  final RxString iCloudAccount = "".obs;
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
   final RxMap<String, String> customHeaders = <String, String>{}.obs;
@@ -289,6 +290,7 @@ class Settings {
     };
     if (includeAll) {
       map.addAll({
+        'iCloudAccount': iCloudAccount.value,
         'guidAuthKey': guidAuthKey.value,
         'serverAddress': serverAddress.value,
         'customHeaders': customHeaders,
@@ -302,6 +304,7 @@ class Settings {
   }
 
   static void updateFromMap(Map<String, dynamic> map) {
+    ss.settings.iCloudAccount.value = map['iCloudAccount'] ?? '';
     ss.settings.autoDownload.value = map['autoDownload'] ?? true;
     ss.settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     ss.settings.autoSave.value = map['autoSave'] ?? false;
@@ -414,6 +417,7 @@ class Settings {
 
   static Settings fromMap(Map<String, dynamic> map) {
     Settings s = Settings();
+    s.iCloudAccount.value = map['iCloudAccount'] ?? "";
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
     s.customHeaders.value = map['customHeaders'] is String ? jsonDecode(map['customHeaders']).cast<String, String>() : <String, String>{};

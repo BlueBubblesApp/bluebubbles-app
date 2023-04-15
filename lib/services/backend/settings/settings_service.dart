@@ -97,6 +97,11 @@ class SettingsService extends GetxService {
     if (refresh) {
       final response = await http.serverInfo();
       if (response.statusCode == 200) {
+        if (ss.settings.iCloudAccount.isEmpty) {
+          ss.settings.iCloudAccount.value = response.data['data']['detected_icloud'];
+          ss.settings.save();
+        }
+
         final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
         final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
         final serverVersion = response.data['data']['server_version'];
