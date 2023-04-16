@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -30,6 +31,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   }
 
   bool get shouldShow {
+    if (controller.audioWasKept.value != null) return true;
     if (widget.forceShow || message.guid!.contains("temp")) return true;
     if ((!message.isFromMe! && iOS) || (controller.parts.lastOrNull?.isUnsent ?? false)) return false;
     final messages = ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.messages
@@ -46,12 +48,17 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
         return newer.dateDelivered == null;
       }
     }
+    if (index > 1 && message.isFromMe!) {
+      return messages.firstWhereOrNull((e) => e.dateRead != null)?.guid == message.guid;
+    }
     return false;
   }
 
   String getText() {
     String text = "";
-    if (!(message.isFromMe ?? false)) {
+    if (controller.audioWasKept.value != null) {
+      text = "Kept ${buildDate(controller.audioWasKept.value!)}";
+    } else if (!(message.isFromMe ?? false)) {
       text = "Received ${buildDate(message.dateCreated)}";
     } else if (message.dateRead != null) {
       text = "Read ${buildDate(message.dateRead)}";
@@ -59,7 +66,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       text = "Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}${ss.settings.showDeliveryTimestamps.value || !iOS ? " ${buildDate(message.dateDelivered)}" : ""}";
     } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
       text = "Sending...";
-    } else if (!iOS && widget.forceShow) {
+    } else if ((!iOS || kIsDesktop || kIsWeb) && widget.forceShow) {
       text = "Sent ${buildDate(message.dateCreated)}";
     }
 
@@ -72,7 +79,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       curve: Curves.easeInOut,
       alignment: Alignment.bottomCenter,
       duration: const Duration(milliseconds: 250),
-      child: shouldShow && getText().isNotEmpty ? Padding(
+      child: Obx(() => shouldShow && getText().isNotEmpty ? Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15).add(EdgeInsets.only(
           top: 3,
           left: showAvatar || ss.settings.alwaysShowAvatars.value ? 35 : 0)
@@ -81,7 +88,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
           getText(),
           style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
         ),
-      ) : const SizedBox.shrink(),
+      ) : const SizedBox.shrink()),
     );
   }
 }

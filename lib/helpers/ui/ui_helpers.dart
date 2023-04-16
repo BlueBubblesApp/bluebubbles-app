@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:universal_io/io.dart';
@@ -24,13 +25,9 @@ class BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Obx(() => Icon(
-        ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-        color: color ?? context.theme.colorScheme.primary,
-      )),
-      iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
-      onPressed: () {
+    return XGestureDetector(
+      onTap: (details) {
+        if (!kIsDesktop) return;
         final result = onPressed?.call() ?? false;
         if (!result) {
           while (Get.isOverlaysOpen) {
@@ -39,26 +36,16 @@ class BackButton extends StatelessWidget {
           Navigator.of(context).pop();
         }
       },
-    );
-  }
-}
-
-Widget buildBackButton(BuildContext context,
-    {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
-  return Material(
-    color: Colors.transparent,
-    child: Container(
-      padding: padding,
-      width: 25,
       child: IconButton(
-        iconSize: iconSize ?? (ss.settings.skin.value != Skins.Material ? 30 : 24),
-        icon: skin != null
-            ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
-            : Obx(() => Icon(ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-                color: context.theme.colorScheme.primary)),
+        icon: Obx(() => Icon(
+              ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+              color: color ?? context.theme.colorScheme.primary,
+            )),
+        iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
         onPressed: () {
-          final result = callback?.call() ?? true;
-          if (result) {
+          if (kIsDesktop) return;
+          final result = onPressed?.call() ?? false;
+          if (!result) {
             while (Get.isOverlaysOpen) {
               Get.back();
             }
@@ -66,8 +53,46 @@ Widget buildBackButton(BuildContext context,
           }
         },
       ),
-    )
-  );
+    );
+  }
+}
+
+Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
+  return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: padding,
+        width: 25,
+        child: XGestureDetector(
+          onTap: (details) {
+            if (!kIsDesktop) return;
+            final result = callback?.call() ?? true;
+            if (result) {
+              while (Get.isOverlaysOpen) {
+                Get.back();
+              }
+              Navigator.of(context).pop();
+            }
+          },
+          child: IconButton(
+            iconSize: iconSize ?? (ss.settings.skin.value != Skins.Material ? 30 : 24),
+            icon: skin != null
+                ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
+                : Obx(() => Icon(ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+                    color: context.theme.colorScheme.primary)),
+            onPressed: () {
+              if (kIsDesktop) return;
+              final result = callback?.call() ?? true;
+              if (result) {
+                while (Get.isOverlaysOpen) {
+                  Get.back();
+                }
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+        ),
+      ));
 }
 
 Widget buildProgressIndicator(BuildContext context, {double size = 20, double strokeWidth = 2}) {
@@ -620,4 +645,34 @@ Future<ui.Image> loadImage(Uint8List data) async {
     return completer.complete(image);
   });
   return completer.future;
+}
+
+AlertDialog areYouSure(BuildContext context, {
+  Widget? content,
+  String? title = "Are you sure?",
+  required Function onNo,
+  required Function onYes
+}) {
+  return AlertDialog(
+    title: Text(
+      title ?? "Are you sure?",
+      style: context.theme.textTheme.titleLarge,
+    ),
+    content: content,
+    backgroundColor: context.theme.colorScheme.properSurface,
+    actions: <Widget>[
+      TextButton(
+        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+        onPressed: () {
+          onNo.call();
+        },
+      ),
+      TextButton(
+        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+        onPressed: () async {
+          onYes.call();
+        },
+      ),
+    ],
+  );
 }

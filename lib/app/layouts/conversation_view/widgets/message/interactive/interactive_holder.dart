@@ -88,7 +88,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
               color: iOS ? context.theme.colorScheme.properSurface : null,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: ns.width(context) * 0.6,
+                  maxWidth: ns.width(context) * (ns.isTabletMode(context) ? 0.3 : 0.6),
                   maxHeight: context.height * 0.6,
                   minHeight: 40,
                   minWidth: 40,
@@ -146,6 +146,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                                 case "OpenTable":
                                 case "iMessage Poll":
                                 case "Shazam":
+                                case "Google Maps":
                                   return SupportedInteractive(
                                     data: data,
                                     message: message,

@@ -108,7 +108,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       },
                       leading: SvgPicture.asset(
                         "assets/icon/discord.svg",
-                        color: HexColor("#7289DA"),
+                        colorFilter: ColorFilter.mode(HexColor("#7289DA"), BlendMode.srcIn),
                         alignment: Alignment.centerRight,
                         width: 32,
                       ),

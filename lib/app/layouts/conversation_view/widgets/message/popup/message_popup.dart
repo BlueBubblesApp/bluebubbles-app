@@ -236,9 +236,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                             if (!isNullOrEmptyString(part.fullText))
                               Padding(
                                 padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.content_copy, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: copyText,
+                                child: GestureDetector(
+                                  onLongPress: copySelection,
+                                  child: IconButton(
+                                    icon: Icon(Icons.content_copy, color: context.theme.colorScheme.properOnSurface),
+                                    onPressed: copyText,
+                                  ),
                                 ),
                               ),
                             if (chat.isGroup && !message.isFromMe! && dmChat != null && !ls.isBubble)
@@ -316,6 +319,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                     unsend();
                                   } else if (value == 7) {
                                     edit();
+                                  } else if (value == 8) {
+                                    downloadLivePhoto();
+                                  } else if (value == 9) {
+                                    toggleBookmark();
+                                  } else if (value == 10) {
+                                    copySelection();
                                   }
                                 },
                                 itemBuilder: (context) {
@@ -375,6 +384,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                       ),
                                     ),
                                     PopupMenuItem(
+                                      value: 9,
+                                      child: Text(
+                                        message.isBookmarked ? 'Remove Bookmark' : 'Add Bookmark',
+                                        style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
                                       value: 3,
                                       child: Text(
                                         'Message Info',
@@ -394,7 +410,23 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                       PopupMenuItem(
                                         value: 4,
                                         child: Text(
-                                          'Download Original',
+                                          'Save Original',
+                                          style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                                        ),
+                                      ),
+                                    if (showDownload && part.attachments.where((e) => e.hasLivePhoto).isNotEmpty)
+                                      PopupMenuItem(
+                                        value: 8,
+                                        child: Text(
+                                          'Save Live Photo',
+                                          style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                                        ),
+                                      ),
+                                    if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
+                                      PopupMenuItem(
+                                        value: 10,
+                                        child: Text(
+                                          'Copy Selection',
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
@@ -518,11 +550,11 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                             child: iOS
                                                                 ? SvgPicture.asset(
                                                                     'assets/reactions/$e-black.svg',
-                                                                    color: e == "love" && currentlySelectedReaction == e
+                                                                    colorFilter: ColorFilter.mode(e == "love" && currentlySelectedReaction == e
                                                                         ? Colors.pink
                                                                         : (currentlySelectedReaction == e
-                                                                            ? context.theme.colorScheme.onPrimary
-                                                                            : context.theme.colorScheme.outline),
+                                                                        ? context.theme.colorScheme.onPrimary
+                                                                        : context.theme.colorScheme.outline), BlendMode.srcIn),
                                                                   )
                                                                 : Center(
                                                                     child: Builder(builder: (context) {
@@ -659,6 +691,17 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     }
   }
 
+  void copySelection() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: context.theme.colorScheme.properSurface,
+        title: Text("Copy Selection", style: context.theme.textTheme.titleLarge),
+        content: SelectableText(part.fullText, style: context.theme.extension<BubbleText>()!.bubbleText),
+      ),
+    );
+  }
+
   Future<void> downloadOriginal() async {
     final RxBool downloadingAttachments = true.obs;
     final RxnDouble progress = RxnDouble();
@@ -699,7 +742,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           Obx(() => Text(
                 progress.value == 1
                     ? "Download Complete!"
-                    : "You can close this dialog. The attachments will continue to download in the background.",
+                    : "You can close this dialog. The attachment(s) will continue to download in the background.",
                 maxLines: 2,
                 textAlign: TextAlign.center,
                 style: context.theme.textTheme.bodyLarge,
@@ -730,7 +773,86 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             original: true, onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
         final file = PlatformFile(
           name: element.transferName!,
-          path: kIsWeb ? null : element.path,
+          size: response.data.length,
+          bytes: response.data,
+        );
+        await as.saveToDisk(file);
+      }
+      progress.value = 1;
+      downloadingAttachments.value = false;
+    } catch (ex, trace) {
+      Logger.error(trace.toString());
+      showSnackbar("Download Error", ex.toString());
+    }
+  }
+
+  Future<void> downloadLivePhoto() async {
+    final RxBool downloadingAttachments = true.obs;
+    final RxnDouble progress = RxnDouble();
+    final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
+    final toDownload = part.attachments.where((element) => element.hasLivePhoto);
+    final length = toDownload.length;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: context.theme.colorScheme.properSurface,
+        title: Text("Downloading live photo${length > 1 ? "s" : ""}...", style: context.theme.textTheme.titleLarge),
+        content: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: <Widget>[
+          Obx(
+                () => Text(
+                '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
+                style: context.theme.textTheme.bodyLarge),
+          ),
+          const SizedBox(height: 10.0),
+          Obx(
+                () => ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                backgroundColor: context.theme.colorScheme.outline,
+                valueColor: AlwaysStoppedAnimation<Color>(Get.context!.theme.colorScheme.primary),
+                value: progress.value,
+                minHeight: 5,
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 15.0,
+          ),
+          Obx(() => Text(
+            progress.value == 1
+                ? "Download Complete!"
+                : "You can close this dialog. The live photo(s) will continue to download in the background.",
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            style: context.theme.textTheme.bodyLarge,
+          )),
+        ]),
+        actions: [
+          Obx(
+                () => downloadingAttachments.value
+                ? Container(height: 0, width: 0)
+                : TextButton(
+              child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+              onPressed: () async {
+                if (Get.isSnackbarOpen ?? false) {
+                  Get.close(1);
+                }
+                Navigator.of(context).pop();
+                popDetails();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+    try {
+      for (Attachment? element in toDownload) {
+        attachmentObs.value = element;
+        final response = await http.downloadLivePhoto(element!.guid!,
+            onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+        final nameSplit = element.transferName!.split(".");
+        final file = PlatformFile(
+          name: "${nameSplit.take(nameSplit.length - 1).join(".")}.mov",
           size: response.data.length,
           bytes: response.data,
         );
@@ -883,6 +1005,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     popDetails(returnVal: false);
   }
 
+  void toggleBookmark() {
+    message.isBookmarked = !message.isBookmarked;
+    message.save(updateIsBookmarked: true);
+    popDetails();
+  }
+
   void messageInfo() {
     const encoder = JsonEncoder.withIndent("     ");
     final str = encoder.convert(message.toMap(includeObjects: true));
@@ -1003,6 +1131,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           color: Colors.transparent,
           child: InkWell(
             onTap: copyText,
+            onLongPress: copySelection,
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
@@ -1042,6 +1171,25 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
+      if (showDownload && part.attachments.where((e) => e.hasLivePhoto).isNotEmpty)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: downloadLivePhoto,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Save Live Photo",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.photo : Icons.motion_photos_on_outlined,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
       if (chat.isGroup && !message.isFromMe! && dmChat != null && !ls.isBubble)
         Material(
           color: Colors.transparent,
@@ -1075,46 +1223,6 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               ),
               trailing: Icon(
                 ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.bubble_left_bubble_right : Icons.forum,
-                color: context.theme.colorScheme.properOnSurface,
-              ),
-            ),
-          ),
-        ),
-      if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap: newConvo,
-            child: ListTile(
-              mouseCursor: SystemMouseCursors.click,
-              dense: !kIsDesktop && !kIsWeb,
-              title: Text(
-                "Start Conversation",
-                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-              ),
-              trailing: Icon(
-                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
-                color: context.theme.colorScheme.properOnSurface,
-              ),
-            ),
-          ),
-        ),
-      if (!ls.isBubble && !message.isInteractive)
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: forward,
-            child: ListTile(
-              mouseCursor: SystemMouseCursors.click,
-              dense: !kIsDesktop && !kIsWeb,
-              title: Text(
-                "Forward",
-                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-              ),
-              trailing: Icon(
-                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
@@ -1177,7 +1285,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (!message.isFromMe! && message.handle != null && message.handle!.contact == null)
+      if (!kIsWeb && !kIsDesktop && !message.isFromMe! && message.handle != null && message.handle!.contact == null)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1238,6 +1346,62 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
+      if (!ls.isBubble && !message.isInteractive)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: forward,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Forward",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: newConvo,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Start Conversation",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: copySelection,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text("Copy Selection", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.text_cursor : Icons.content_copy,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
       Material(
         color: Colors.transparent,
         child: InkWell(
@@ -1251,6 +1415,24 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
             trailing: Icon(
               ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              color: context.theme.colorScheme.properOnSurface,
+            ),
+          ),
+        ),
+      ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: toggleBookmark,
+          child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
+            dense: !kIsDesktop && !kIsWeb,
+            title: Text(
+              message.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+            ),
+            trailing: Icon(
+              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.bookmark : Icons.bookmark_outlined,
               color: context.theme.colorScheme.properOnSurface,
             ),
           ),
@@ -1389,7 +1571,7 @@ class ReactionDetails extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: Text(
-                        message.isFromMe! ? "You" : (message.handle?.displayName ?? "Unknown"),
+                        message.isFromMe! ? ss.settings.userName.value : (message.handle?.displayName ?? "Unknown"),
                         style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                       ),
                     ),
@@ -1414,11 +1596,11 @@ class ReactionDetails extends StatelessWidget {
                         child: ss.settings.skin.value == Skins.iOS
                             ? SvgPicture.asset(
                                 'assets/reactions/${message.associatedMessageType}-black.svg',
-                                color: message.associatedMessageType == "love"
+                                colorFilter: ColorFilter.mode(message.associatedMessageType == "love"
                                     ? Colors.pink
                                     : message.isFromMe!
-                                        ? context.theme.colorScheme.onPrimary
-                                        : context.theme.colorScheme.properOnSurface,
+                                    ? context.theme.colorScheme.onPrimary
+                                    : context.theme.colorScheme.properOnSurface, BlendMode.srcIn),
                               )
                             : Center(
                                 child: Builder(builder: (context) {

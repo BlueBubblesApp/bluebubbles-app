@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -8,7 +9,6 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:reorderables/reorderables.dart';
@@ -22,8 +22,7 @@ class DesktopPanel extends StatefulWidget {
 
 class _DesktopPanelState extends OptimizedState<DesktopPanel> {
   final RxList<bool> showButtons = RxList<bool>.filled(ReactionTypes.toList().length + 1, false);
-  final RxnBool useCustomPath = RxnBool(ss.prefs.getBool("use-custom-path"));
-  final RxnString customPath = RxnString(ss.prefs.getString("custom-path"));
+  final int maxActions = Platform.isWindows ? 5 : ss.settings.actionList.length; // Don't limit actions on Linux
 
   @override
   Widget build(BuildContext context) {
@@ -45,19 +44,47 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     onChanged: (bool val) async {
                       ss.settings.launchAtStartup.value = val;
                       saveSettings();
-                      if (val) {
-                        await LaunchAtStartup.enable();
-                      } else {
-                        await LaunchAtStartup.disable();
-                      }
+                      ss.setupLaunchAtStartup();
                     },
                     initialVal: ss.settings.launchAtStartup.value,
                     title: "Launch on Startup",
                     subtitle: "Automatically open the desktop app on startup.",
                     backgroundColor: tileColor,
                   )),
+                  Obx(() => AnimatedSizeAndFade.showHide(
+                    show: ss.settings.launchAtStartup.value,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 15.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                          ),
+                        ),
+                        SettingsSwitch(
+                          onChanged: (bool val) {
+                            ss.settings.launchAtStartupMinimized.value = val;
+                            saveSettings();
+                            ss.setupLaunchAtStartup();
+                          },
+                          initialVal: ss.settings.launchAtStartupMinimized.value,
+                          title: "Launch on Startup Minimized",
+                          subtitle: "Automatically open the desktop app on startup, but minimized to the system tray",
+                          backgroundColor: tileColor,
+                        ),
+                      ],
+                    ),
+                  )),
                   if (Platform.isLinux)
-                    const SettingsDivider(),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                   if (Platform.isLinux)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) async {
@@ -73,7 +100,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     )),
                   Obx(() {
                     if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
-                      return const SettingsDivider();
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      );
                     }
                     return const SizedBox.shrink();
                   }),
@@ -95,7 +128,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                   }),
                   Obx(() {
                     if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
-                      return const SettingsDivider();
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      );
                     }
                     return const SizedBox.shrink();
                   }),
@@ -152,21 +191,19 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     )
                 ],
               )),
-              if (Platform.isWindows)
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Notifications"),
-              if (Platform.isWindows)
-                SettingsSection(
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Notifications"),
+              SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    const SettingsTile(
+                    SettingsTile(
                       title: "Actions",
                       subtitle:
-                          "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                          "Click actions to toggle them. Drag actions to move them. ${Platform.isWindows ? "You can select up to 5 actions." : "The number of actions actually visible varies by distribution."} Tapback actions require Private API to be enabled.",
                       isThreeLine: true,
                     ),
                     Row(
@@ -228,7 +265,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                                                   value != "Mark Read");
 
                                               bool hardDisabled = (!selected &&
-                                                  (ss.settings.selectedActionIndices.length == 5));
+                                                  (ss.settings.selectedActionIndices.length == maxActions));
 
                                               Color color = selected
                                                   ? context.theme.colorScheme.primary
@@ -299,7 +336,8 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                             ),
                           ),
                         ),
-                        Obx(
+                        if (Platform.isWindows)
+                          Obx(
                           () {
                             context.width;
                             ns.listener.value;
@@ -583,128 +621,6 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     ),
                   ],
                 ),
-              SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Advanced"),
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) async {
-                      useCustomPath.value = val;
-                      if ((!val && ss.prefs.getString("custom-path") != customPath.value) ||
-                          ss.prefs.getBool("use-custom-path") == true) {
-                        await showDialog(
-                          barrierDismissible: false,
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text(
-                                "Are you sure?",
-                                style: context.theme.textTheme.titleLarge,
-                              ),
-                              content: Text(
-                                  "All of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge),
-                              backgroundColor: context.theme.colorScheme.properSurface,
-                              actions: <Widget>[
-                                TextButton(
-                                  child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                  onPressed: () {
-                                    useCustomPath.value = true;
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                                TextButton(
-                                  child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                  onPressed: () async {
-                                    fs.deleteDB();
-                                    socket.forgetConnection();
-                                    ss.settings = Settings();
-                                    ss.fcmData = FCMData();
-                                    await ss.prefs.clear();
-                                    await ss.prefs.setString("selected-dark", "OLED Dark");
-                                    await ss.prefs.setString("selected-light", "Bright White");
-                                    await ss.prefs.setBool("use-custom-path", val);
-                                    await windowManager.close();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
-                    },
-                    title: 'Use Custom Database Path',
-                    subtitle: 'You will have to set the app up again from scratch',
-                    initialVal: useCustomPath.value ?? false,
-                  )),
-                  Obx(() => useCustomPath.value == true
-                    ? SettingsTile(
-                        title: "Set Custom Path",
-                        subtitle:
-                            "Custom Path: ${ss.prefs.getBool('use-custom-path') == true ? customPath.value ?? "" : ""}",
-                        trailing: TextButton(
-                          onPressed: () async {
-                            String? path = await FilePicker.platform
-                                .getDirectoryPath(dialogTitle: 'Select a Folder', lockParentWindow: true);
-                            if (path == null) {
-                              showSnackbar("Notice", "You did not select a folder!");
-                              return;
-                            }
-                            if (ss.prefs.getBool("use-custom-path") == true && path == customPath.value) {
-                              return;
-                            }
-                            await showDialog(
-                              barrierDismissible: false,
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text(
-                                    "Are you sure?",
-                                    style: context.theme.textTheme.titleLarge,
-                                  ),
-                                  content: Text(
-                                      "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge,),
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                    TextButton(
-                                      child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () async {
-                                        customPath.value = path;
-                                        fs.deleteDB();
-                                        socket.forgetConnection();
-                                        ss.settings = Settings();
-                                        ss.fcmData = FCMData();
-                                        await ss.prefs.clear();
-                                        await ss.prefs.setString("selected-dark", "OLED Dark");
-                                        await ss.prefs.setString("selected-light", "Bright White");
-                                        await ss.prefs.setBool("use-custom-path", true);
-                                        await ss.prefs.setString("custom-path", path);
-                                        await windowManager.close();
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          child: const Text(
-                            "Click here to select a folder",
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink()),
-                ],
-              ),
             ],
           ),
         ),

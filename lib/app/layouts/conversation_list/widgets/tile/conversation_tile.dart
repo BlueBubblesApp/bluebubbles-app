@@ -46,7 +46,7 @@ class ConversationTileController extends StatefulController {
   void onTap(BuildContext context) {
     if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
       onLongPress();
-    } else {
+    } else if ((!kIsDesktop && !kIsWeb) || cm.activeChat?.chat.guid != chat.guid) {
       ns.pushAndRemoveUntil(
         context,
         ConversationView(
@@ -54,6 +54,11 @@ class ConversationTileController extends StatefulController {
         ),
         (route) => route.isFirst,
       );
+    } else if (ns.isTabletMode(context) && cm.activeChat?.isAlive == false) {
+      // Pops chat details
+      Get.back(id: 2);
+    } else {
+      cvc(chat).lastFocusedNode.requestFocus();
     }
   }
 

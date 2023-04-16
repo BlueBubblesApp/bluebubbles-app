@@ -7,6 +7,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(Chat? chat, List<dynamic> messages,
@@ -89,6 +90,8 @@ class MessageHelper {
   static Future<void> handleNotification(Message message, Chat chat, {bool findExisting = true}) async {
     // if from me
     if (message.isFromMe! || message.handle == null) return;
+    // if it is a "kept audio" message
+    if (message.itemType == 5 && message.subject != null) return;
     // See if there is an existing message for the given GUID
     if (findExisting && Message.findOne(guid: message.guid) != null) return;
     // if needing to mute
@@ -96,8 +99,39 @@ class MessageHelper {
     // if the chat is active
     if (ls.isAlive && cm.isChatActive(chat.guid)) return;
     // if app is alive, on chat list, but notifying on chat list is disabled
-    if (ls.isAlive && cm.activeChat == null && !ss.settings.notifyOnChatList.value) return;
+    if (ls.isAlive && cm.activeChat == null && Get.rawRoute?.settings.name == "/" && !ss.settings.notifyOnChatList.value) return;
     await notif.createNotification(chat, message);
+  }
+
+  static Future<void> handleSummaryNotification(List<Message> messages, {bool findExisting = true}) async {
+    Set<String> chats = {};
+    for (int i = 0; i < messages.length; i++) {
+      final message = messages[i];
+      bool remove = false;
+      // if from me
+      if (message.isFromMe! || message.handle == null) remove = true;
+      // if it is a "kept audio" message
+      if (message.itemType == 5 && message.subject != null) remove = true;
+      // See if there is an existing message for the given GUID
+      if (findExisting && Message.findOne(guid: message.guid) != null) remove = true;
+      // if needing to mute
+      if (message.chat.target?.shouldMuteNotification(message) ?? false) remove = true;
+      if (remove) {
+        messages.remove(message);
+        i--;
+      } else {
+        if (message.chat.target != null) {
+          chats.add(message.chat.target!.guid);
+        }
+      }
+    }
+    if (messages.isEmpty) return;
+
+    List<int> selectedIndices = ss.settings.selectedActionIndices;
+    List<String> _actions = ss.settings.actionList;
+    List<String> actions = _actions.whereIndexed((i, e) => selectedIndices.contains(i)).toList();
+    bool showMarkRead = actions.contains("Mark Read");
+    await notif.showSummaryNotifDesktop(messages.length, chats, showMarkRead);
   }
 
   static String getNotificationText(Message message, {bool withSender = false}) {
@@ -128,7 +162,7 @@ class MessageHelper {
       return "$output: ${_getAttachmentText(message.realAttachments)}";
     } else if (!isNullOrEmpty(message.associatedMessageGuid)!) {
       // It's a reaction message, get the sender
-      String sender = message.isFromMe! ? "You" : (message.handle?.displayName ?? "Someone");
+      String sender = message.isFromMe! ? ss.settings.userName.value : (message.handle?.displayName ?? "Someone");
       // fetch the associated message object
       Message? associatedMessage = Message.findOne(guid: message.associatedMessageGuid);
       if (associatedMessage != null) {

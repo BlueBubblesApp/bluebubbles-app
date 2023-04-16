@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -20,7 +22,7 @@ class PickedAttachmentsHolder extends StatefulWidget {
 
   final ConversationViewController? controller;
   final TextEditingController subjectTextController;
-  final TextEditingController textController;
+  final MentionTextEditingController textController;
   final List<PlatformFile> initialAttachments;
 
   @override
@@ -80,7 +82,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
           Obx(() {
             if (widget.controller!.emojiMatches.isNotEmpty) {
               return ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: min(widget.controller!.emojiMatches.length * 48, 150)),
+                constraints: BoxConstraints(maxHeight: min(widget.controller!.emojiMatches.length * 60, 180)),
                 child: Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: Container(
@@ -107,10 +109,9 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               widget.controller!.emojiSelectedIndex.value = index;
                             },
                             onTap: () {
-                              final _controller = widget.controller!.focusNode.hasFocus ? widget.textController : widget.subjectTextController;
-                              widget.controller!.emojiSelectedIndex.value = 0;
+                              final _controller = widget.controller!.lastFocusedTextController;
                               final text = _controller.text;
-                              final regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+                              final regExp = RegExp(r":[^: \n]+([ \n]|$)", multiLine: true);
                               final matches = regExp.allMatches(text);
                               if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
                                 final match = matches.lastWhere((m) => m.start < _controller.selection.start);
@@ -118,7 +119,9 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                                 _controller.text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
                                 _controller.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
                               }
+                              widget.controller!.emojiSelectedIndex.value = 0;
                               widget.controller!.emojiMatches.clear();
+                              widget.controller!.lastFocusedNode.requestFocus();
                             },
                             child: Obx(() => ListTile(
                                 mouseCursor: MouseCursor.defer,
@@ -143,6 +146,82 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                           ),
                         ),
                         itemCount: widget.controller!.emojiMatches.length,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            } else if (widget.controller!.mentionMatches.isNotEmpty) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: min(widget.controller!.mentionMatches.length * 60, 180)),
+                child: Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: iOS ? null : Border.fromBorderSide(
+                          BorderSide(color: context.theme.colorScheme.background, strokeAlign: BorderSide.strokeAlignOutside)
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      color: context.theme.colorScheme.properSurface,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Scrollbar(
+                      radius: const Radius.circular(4),
+                      controller: widget.controller!.emojiScrollController,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 0),
+                        controller: widget.controller!.emojiScrollController,
+                        physics: ThemeSwitcher.getScrollPhysics(),
+                        shrinkWrap: true,
+                        itemBuilder: (BuildContext context, int index) => Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTapDown: (details) {
+                              widget.controller!.mentionSelectedIndex.value = index;
+                            },
+                            onTap: () {
+                              final _controller = widget.textController;
+                              widget.controller!.mentionSelectedIndex.value = 0;
+                              final text = _controller.text;
+                              final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
+                              final matches = regExp.allMatches(text);
+                              if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
+                                final match = matches.lastWhere((m) => m.start < _controller.selection.start);
+                                _controller.addMention(text.substring(match.start, match.end), widget.controller!.mentionMatches[index]);
+                              }
+                              widget.controller!.mentionMatches.clear();
+                              widget.controller!.focusNode.requestFocus();
+                            },
+                            child: Obx(() => ListTile(
+                                mouseCursor: MouseCursor.defer,
+                                dense: true,
+                                selectedTileColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
+                                selected: widget.controller!.mentionSelectedIndex.value == index,
+                                title: Row(
+                                  children: <Widget>[
+                                    ContactAvatarWidget(
+                                      handle: widget.controller!.mentionMatches[index].handle,
+                                      size: 25,
+                                      fontSize: 15,
+                                      borderThickness: 0,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      widget.controller!.mentionMatches[index].displayName,
+                                      style:
+                                      context.textTheme.labelLarge!,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      widget.controller!.mentionMatches[index].address,
+                                      style: context.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                )),
+                            ),
+                          ),
+                        ),
+                        itemCount: widget.controller!.mentionMatches.length,
                       ),
                     ),
                   ),

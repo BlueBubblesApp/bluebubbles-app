@@ -50,13 +50,13 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
       BuildContext _context = context;
       showDialog(
         context: context,
-        builder: (context) => CreateNewThemeDialog(_context, widget.isDarkMode, currentTheme, (newTheme) {
+        builder: (context) => CreateNewThemeDialog(_context, widget.isDarkMode, currentTheme, (newTheme) async {
           allThemes.add(newTheme);
           currentTheme = newTheme;
           if (widget.isDarkMode) {
-            ts.changeTheme(_context, dark: currentTheme);
+            await ts.changeTheme(_context, dark: currentTheme);
           } else {
-            ts.changeTheme(_context, light: currentTheme);
+            await ts.changeTheme(_context, light: currentTheme);
           }
         })
       );
@@ -192,9 +192,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                       var allThemes = ThemeStruct.getThemes();
                       var currentLight = ThemeStruct.getLightTheme();
                       var currentDark = ThemeStruct.getDarkTheme();
-                      ss.prefs.setString("previous-light", currentLight.name);
-                      ss.prefs.setString("previous-dark", currentDark.name);
-                      ts.changeTheme(
+                      await ss.prefs.setString("previous-light", currentLight.name);
+                      await ss.prefs.setString("previous-dark", currentDark.name);
+                      await ts.changeTheme(
                           context,
                           light: allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
                           dark: allThemes.firstWhere((element) => element.name == "Music Theme 🌙")
@@ -202,16 +202,16 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     } else if (currentTheme.name == "Music Theme ☀" ||
                         currentTheme.name == "Music Theme 🌙") {
                       if (!widget.isDarkMode) {
-                        ThemeStruct previousDark = ts.revertToPreviousDarkTheme();
-                        ts.changeTheme(context, light: value, dark: previousDark);
+                        ThemeStruct previousDark = await ts.revertToPreviousDarkTheme();
+                        await ts.changeTheme(context, light: value, dark: previousDark);
                       } else {
-                        ThemeStruct previousLight = ts.revertToPreviousLightTheme();
-                        ts.changeTheme(context, light: previousLight, dark: value);
+                        ThemeStruct previousLight = await ts.revertToPreviousLightTheme();
+                        await ts.changeTheme(context, light: previousLight, dark: value);
                       }
                     } else if (widget.isDarkMode) {
-                      ts.changeTheme(context, dark: value);
+                      await ts.changeTheme(context, dark: value);
                     } else {
-                      ts.changeTheme(context, light: value);
+                      await ts.changeTheme(context, light: value);
                     }
                     currentTheme = value;
                     editable = !currentTheme.isPreset;
@@ -225,9 +225,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     currentTheme.gradientBg = val;
                     currentTheme.save();
                     if (widget.isDarkMode) {
-                      ts.changeTheme(context, dark: currentTheme);
+                      await ts.changeTheme(context, dark: currentTheme);
                     } else {
-                      ts.changeTheme(context, light: currentTheme);
+                      await ts.changeTheme(context, light: currentTheme);
                     }
                   },
                   initialVal: currentTheme.gradientBg,
@@ -318,9 +318,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     currentTheme.data = ThemeStruct.fromMap(map).data;
                     currentTheme.save();
                     if (currentTheme.name == ss.prefs.getString("selected-dark")) {
-                      ts.changeTheme(context, dark: currentTheme);
+                      await ts.changeTheme(context, dark: currentTheme);
                     } else if (currentTheme.name == ss.prefs.getString("selected-light")) {
-                      ts.changeTheme(context, light: currentTheme);
+                      await ts.changeTheme(context, light: currentTheme);
                     }
                   },
                 ),
@@ -349,7 +349,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                       currentTheme.data = ThemeStruct.fromMap(map).data;
                       setState(() {});
                     },
-                    onChangeEnd: (double val) {
+                    onChangeEnd: (double val) async {
                       master = val;
                       final map = currentTheme.toMap();
                       final keys = currentTheme.textSizes.keys.toList();
@@ -359,9 +359,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                       currentTheme.data = ThemeStruct.fromMap(map).data;
                       currentTheme.save();
                       if (currentTheme.name == ss.prefs.getString("selected-dark")) {
-                        ts.changeTheme(context, dark: currentTheme);
+                        await ts.changeTheme(context, dark: currentTheme);
                       } else if (currentTheme.name == ss.prefs.getString("selected-light")) {
-                        ts.changeTheme(context, light: currentTheme);
+                        await ts.changeTheme(context, light: currentTheme);
                       }
                     },
                     backgroundColor: tileColor,
@@ -382,15 +382,15 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     currentTheme.data = ThemeStruct.fromMap(map).data;
                     setState(() {});
                   },
-                  onChangeEnd: (double val) {
+                  onChangeEnd: (double val) async {
                     final map = currentTheme.toMap();
                     map["data"]["textTheme"][currentTheme.textSizes.keys.toList()[index]]['fontSize'] = ThemeStruct.defaultTextSizes.values.toList()[index] * val;
                     currentTheme.data = ThemeStruct.fromMap(map).data;
                     currentTheme.save();
                     if (currentTheme.name == ss.prefs.getString("selected-dark")) {
-                      ts.changeTheme(context, dark: currentTheme);
+                      await ts.changeTheme(context, dark: currentTheme);
                     } else if (currentTheme.name == ss.prefs.getString("selected-light")) {
-                      ts.changeTheme(context, light: currentTheme);
+                      await ts.changeTheme(context, light: currentTheme);
                     }
                   },
                   backgroundColor: tileColor,
@@ -419,12 +419,12 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     allThemes.removeWhere((element) => element == currentTheme);
                     currentTheme.delete();
                     currentTheme =
-                      widget.isDarkMode ? ts.revertToPreviousDarkTheme() : ts.revertToPreviousLightTheme();
+                      await (widget.isDarkMode ? ts.revertToPreviousDarkTheme() : ts.revertToPreviousLightTheme());
                     allThemes = ThemeStruct.getThemes();
                     if (widget.isDarkMode) {
-                      ts.changeTheme(context, dark: currentTheme);
+                      await ts.changeTheme(context, dark: currentTheme);
                     } else {
-                      ts.changeTheme(context, light: currentTheme);
+                      await ts.changeTheme(context, light: currentTheme);
                     }
                     setState(() {});
                   },

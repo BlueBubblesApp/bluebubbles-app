@@ -278,6 +278,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                     child: ImageViewer(
                                       file: _content,
                                       attachment: attachment,
+                                      isFromMe: message.isFromMe!,
                                       controller: controller.cvController,
                                     ),
                                   );
@@ -290,7 +291,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 controller: controller.cvController,
                                 isFromMe: message.isFromMe!,
                               );
-                            } else if (attachment.mimeStart == "audio") {
+                            } else if (attachment.mimeStart == "audio" && !kIsDesktop) {
                               return Padding(
                                 padding: showTail ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0) : EdgeInsets.zero,
                                 child: AudioPlayer(

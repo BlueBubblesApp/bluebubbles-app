@@ -51,6 +51,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     if (!iOS) {
       widget.cvController.selected.add(message);
     }
+
+    if (kIsDesktop || kIsWeb) {
+      widget.cvController.showingOverlays = true;
+    }
     final result = await Navigator.push(
       Get.context!,
       PageRouteBuilder(
@@ -69,16 +73,18 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
                   onSurface: ss.settings.monetTheming.value == Monet.full ? null : (ctx.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                 ),
               ),
-              child: MessagePopup(
-                childPosition: childPos!,
-                size: size,
-                child: widget.child,
-                part: widget.part,
-                controller: widget.controller,
-                cvController: widget.cvController,
-                serverDetails: Tuple3(minSierra, minBigSur, version > 100),
-                sendTapback: sendTapback,
-                widthContext: () => mounted ? context : null,
+              child: PopupScope(
+                child: MessagePopup(
+                  childPosition: childPos!,
+                  size: size,
+                  child: widget.child,
+                  part: widget.part,
+                  controller: widget.controller,
+                  cvController: widget.cvController,
+                  serverDetails: Tuple3(minSierra, minBigSur, version > 100),
+                  sendTapback: sendTapback,
+                  widthContext: () => mounted ? context : null,
+                ),
               ),
             ),
           );
@@ -92,7 +98,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       widget.cvController.selected.clear();
     }
     if (kIsDesktop || kIsWeb) {
-      widget.cvController.focusNode.requestFocus();
+      widget.cvController.showingOverlays = false;
+      if (widget.cvController.editing.isEmpty) {
+        widget.cvController.focusNode.requestFocus();
+      }
     }
   }
 
@@ -142,4 +151,24 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       child: widget.child,
     );
   }
+}
+
+class PopupScope extends InheritedWidget {
+  const PopupScope({
+    super.key,
+    required super.child,
+  });
+
+  static PopupScope? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<PopupScope>();
+  }
+
+  static PopupScope of(BuildContext context) {
+    final PopupScope? result = maybeOf(context);
+    assert(result != null, 'No ReplyScope found in context');
+    return result!;
+  }
+
+  @override
+  bool updateShouldNotify(PopupScope oldWidget) => true;
 }

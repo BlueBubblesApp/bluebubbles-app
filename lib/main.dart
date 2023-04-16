@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
-import 'package:bluebubbles/services/backend/sync/handle_sync_manager.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -24,6 +25,7 @@ import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
@@ -47,7 +49,7 @@ import 'package:windows_taskbar/windows_taskbar.dart';
 // todo list desktop
 /// Show notif badges
 
-const databaseVersion = 3;
+const databaseVersion = 4;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -67,24 +69,48 @@ bool hasBadCert = false;
 
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
-Future<Null> main() async {
-  await initApp(false);
+Future<Null> main(List<String> arguments) async {
+  await initApp(false, arguments);
 }
 
 @pragma('vm:entry-point')
 // ignore: prefer_void_to_null
 Future<Null> bubble() async {
-  await initApp(true);
+  await initApp(true, []);
 }
 
 //ignore: prefer_void_to_null
-Future<Null> initApp(bool bubble) async {
+Future<Null> initApp(bool bubble, List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
   ls.isBubble = bubble;
   ls.isUiThread = true;
   await ss.init();
   await fs.init();
+  if (kIsDesktop && Platform.isLinux) {
+    final lockFile = File(join(fs.appDocDir.path, 'bluebubbles.lck'));
+    if (lockFile.existsSync()) {
+      String _pid = lockFile.readAsStringSync();
+      String exists = Process.runSync('ps', ['-p', _pid]).stdout;
+      bool focused = false;
+      if (exists.endsWith('bluebubbles\n')) {
+        List<String?> pidWindows = await (await Process.start('wmctrl', ['-p', '-l'])).stdout.transform(utf8.decoder).transform(const LineSplitter()).map((line) => line.contains(_pid) ? line.split(" ").last : null).where((str) => str != null).toList();
+        if (pidWindows.contains('BlueBubbles')) {
+          focused = true;
+        }
+        for (String? window in pidWindows) {
+          if (window == "BlueBubbles") {
+            Process.runSync('wmctrl', ['-F', '-R', window!]);
+          } else if (window == "bluebubbles_app") {
+            await Future.delayed(const Duration(milliseconds: 200), () => Process.runSync('wmctrl', ['-F', '-c', window!]));
+          }
+        }
+      }
+      if (focused) return;
+    }
+    lockFile.createSync();
+    lockFile.writeAsStringSync("$pid");
+  }
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
@@ -171,23 +197,21 @@ Future<Null> initApp(bool bubble) async {
         }
       } else {
         try {
-          await objectBoxDirectory.create(recursive: true);
+          objectBoxDirectory.createSync(recursive: true);
+          if (ss.prefs.getBool('use-custom-path') == true && ss.prefs.getString('custom-path') != null) {
+            Directory oldCustom = Directory(join(ss.prefs.getString('custom-path')!, 'objectbox'));
+            if (oldCustom.existsSync()) {
+              Logger.info("Detected prior use of custom path option. Migrating...");
+              copyDirectory(oldCustom, objectBoxDirectory);
+            }
+            await ss.prefs.remove('use-custom-path');
+            await ss.prefs.remove('custom-path');
+          }
           Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
           store = await openStore(directory: objectBoxDirectory.path);
         } catch (e, s) {
           Logger.error(e);
           Logger.error(s);
-          if (Platform.isWindows) {
-            Logger.info("Failed to open store from default path. Using custom path");
-            const customStorePath = "C:\\BlueBubbles\\bluebubbles";
-            ss.prefs.setBool("use-custom-path", true);
-            ss.prefs.setString("custom-path", customStorePath);
-            objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-            await objectBoxDirectory.create(recursive: true);
-            Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-            store = await openStore(directory: join(customStorePath, 'objectbox'));
-          }
-          // TODO Linux fallback
         }
       }
       attachmentBox = store.box<Attachment>();
@@ -200,12 +224,25 @@ Future<Null> initApp(bool bubble) async {
       themeEntryBox = store.box<ThemeEntry>();
       // ignore: deprecated_member_use_from_same_package
       themeObjectBox = store.box<ThemeObject>();
+
+      if (!ss.settings.finishedSetup.value) {
+        attachmentBox.removeAll();
+        chatBox.removeAll();
+        contactBox.removeAll();
+        fcmDataBox.removeAll();
+        handleBox.removeAll();
+        messageBox.removeAll();
+        themeBox.removeAll();
+        themeEntryBox.removeAll();
+        themeObjectBox.removeAll();
+      }
+
       if (themeBox.isEmpty()) {
-        ss.prefs.setString("selected-dark", "OLED Dark");
-        ss.prefs.setString("selected-light", "Bright White");
+        await ss.prefs.setString("selected-dark", "OLED Dark");
+        await ss.prefs.setString("selected-light", "Bright White");
         themeBox.putMany(ts.defaultThemes);
       }
-      int version = ss.prefs.getInt('dbVersion') ?? 1;
+      int version = ss.prefs.getInt('dbVersion') ?? (ss.settings.finishedSetup.value ? 1 : databaseVersion);
 
       migrate() {
         if (version < databaseVersion) {
@@ -249,6 +286,11 @@ Future<Null> initApp(bool bubble) async {
               version = 3;
               migrate.call();
               return;
+            // Version 4 saves FCM Data to the shared preferences for use in Tasker integration
+            case 4:
+              ss.getFcmData();
+              ss.fcmData.save();
+              return;
             default:
               return;
           }
@@ -263,7 +305,7 @@ Future<Null> initApp(bool bubble) async {
     }
 
     /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
-    ss.prefs.setInt('dbVersion', databaseVersion);
+    await ss.prefs.setInt('dbVersion', databaseVersion);
     storeStartup.complete();
     ss.getFcmData();
     if (!kIsWeb) {
@@ -271,8 +313,10 @@ Future<Null> initApp(bool bubble) async {
     }
     await notif.init();
     await intents.init();
-    chats.init();
-    socket;
+    if (!kIsDesktop) {
+      chats.init();
+      socket;
+    }
 
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
@@ -326,47 +370,55 @@ Future<Null> initApp(bool bubble) async {
         double? width = ss.prefs.getDouble("window-width");
         double? height = ss.prefs.getDouble("window-height");
         if (width != null && height != null) {
-          width = width.clamp(300, primary.size.width);
-          height = height.clamp(300, primary.size.height);
+          width = width.clamp(300, max(300, primary.size.width));
+          height = height.clamp(300, max(300, primary.size.height));
           await windowManager.setSize(Size(width, height));
-          ss.prefs.setDouble("window-width", width);
-          ss.prefs.setDouble("window-height", height);
+          await ss.prefs.setDouble("window-width", width);
+          await ss.prefs.setDouble("window-height", height);
         } else {
           Size size = await windowManager.getSize();
           width = size.width;
           height = size.height;
-          ss.prefs.setDouble("window-width", width);
-          ss.prefs.setDouble("window-height", height);
+          await ss.prefs.setDouble("window-width", width);
+          await ss.prefs.setDouble("window-height", height);
         }
 
         double? posX = ss.prefs.getDouble("window-x");
         double? posY = ss.prefs.getDouble("window-y");
         if (posX != null && posY != null) {
-          posX = posX.clamp(0, primary.size.width - width);
-          posY = posY.clamp(0, primary.size.height - height);
+          posX = posX.clamp(0, max(0, primary.size.width - width));
+          posY = posY.clamp(0, max(0, primary.size.height - height));
           await windowManager.setPosition(Offset(posX, posY));
-          ss.prefs.setDouble("window-x", posX);
-          ss.prefs.setDouble("window-y", posY);
+          await ss.prefs.setDouble("window-x", posX);
+          await ss.prefs.setDouble("window-y", posY);
         } else {
           await windowManager.setAlignment(Alignment.center);
           Offset offset = await windowManager.getPosition();
           posX = offset.dx;
           posY = offset.dy;
-          ss.prefs.setDouble("window-x", posX);
-          ss.prefs.setDouble("window-y", posY);
+          await ss.prefs.setDouble("window-x", posX);
+          await ss.prefs.setDouble("window-y", posY);
         }
 
         Size size = await windowManager.getSize();
         width = size.width;
         height = size.height;
-        posX = posX.clamp(0, primary.size.width - width);
-        posY = posY.clamp(0, primary.size.height - height);
+        posX = posX.clamp(0, max(0, primary.size.width - width));
+        posY = posY.clamp(0, max(0, primary.size.height - height));
         await windowManager.setPosition(Offset(posX, posY));
-        ss.prefs.setDouble("window-x", posX);
-        ss.prefs.setDouble("window-y", posY);
+        await ss.prefs.setDouble("window-x", posX);
+        await ss.prefs.setDouble("window-y", posY);
 
         await windowManager.setTitle('BlueBubbles');
-        await windowManager.show();
+        if (arguments.firstOrNull == "minimized") {
+          await windowManager.hide();
+        } else {
+          await windowManager.show();
+        }
+        if (!(ss.canAuthenticate && ss.settings.shouldSecure.value)) {
+          chats.init();
+          socket;
+        }
       });
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */
@@ -429,15 +481,15 @@ class DesktopWindowListener extends WindowListener {
   @override
   void onWindowResized() async {
     Size size = await windowManager.getSize();
-    ss.prefs.setDouble("window-width", size.width);
-    ss.prefs.setDouble("window-height", size.height);
+    await ss.prefs.setDouble("window-width", size.width);
+    await ss.prefs.setDouble("window-height", size.height);
   }
 
   @override
   void onWindowMoved() async {
     Offset offset = await windowManager.getPosition();
-    ss.prefs.setDouble("window-x", offset.dx);
-    ss.prefs.setDouble("window-y", offset.dy);
+    await ss.prefs.setDouble("window-x", offset.dx);
+    await ss.prefs.setDouble("window-y", offset.dy);
   }
 }
 
@@ -487,74 +539,109 @@ class Main extends StatelessWidget {
         builder: (context, child) => SafeArea(
           top: false,
           bottom: false,
-          child: SecureApplication(
-            child: Builder(
-              builder: (context) {
-                if (ss.canAuthenticate && (!ls.isAlive || !uiStartup.isCompleted)) {
-                  if (ss.settings.shouldSecure.value) {
-                    SecureApplicationProvider.of(context, listen: false)!.lock();
-                    if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                      SecureApplicationProvider.of(context, listen: false)!.secure();
+          child: WillStartForegroundTask(
+            onWillStart: () async {
+              return ss.settings.keepAppAlive.value;
+            },
+            androidNotificationOptions: AndroidNotificationOptions(
+              channelId: 'com.bluebubbles.foreground_service',
+              channelName: 'Foreground Service',
+              channelDescription: 'Allows BlueBubbles to stay open in the background for notifications if FCM is not being used',
+              channelImportance: NotificationChannelImportance.LOW,
+              priority: NotificationPriority.LOW,
+              iconData: const NotificationIconData(
+                resType: ResourceType.mipmap,
+                resPrefix: ResourcePrefix.ic,
+                name: 'stat_icon',
+              ),
+            ),
+            iosNotificationOptions: const IOSNotificationOptions(
+              showNotification: true,
+              playSound: false,
+            ),
+            foregroundTaskOptions: const ForegroundTaskOptions(
+              interval: 5000,
+              autoRunOnBoot: true,
+              allowWifiLock: true,
+            ),
+            notificationTitle: 'BlueBubbles Service',
+            notificationText: 'Using socket connection for notifications',
+            child: SecureApplication(
+              child: Builder(
+                builder: (context) {
+                  if (ss.canAuthenticate && (!ls.isAlive || !uiStartup.isCompleted)) {
+                    if (ss.settings.shouldSecure.value) {
+                      SecureApplicationProvider.of(context, listen: false)!.lock();
+                      if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                        SecureApplicationProvider.of(context, listen: false)!.secure();
+                      }
                     }
                   }
-                }
-                return SecureGate(
-                  blurr: 0,
-                  opacity: 1.0,
-                  lockedBuilder: (context, controller) {
-                    final localAuth = LocalAuthentication();
-                    if (!isAuthing) {
-                      isAuthing = true;
-                      localAuth
-                          .authenticate(
-                          localizedReason: 'Please authenticate to unlock BlueBubbles', options: const AuthenticationOptions(stickyAuth: true))
-                          .then((result) {
-                        isAuthing = false;
-                        if (result) {
-                          SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
-                        }
-                      });
-                    }
-                    return Container(
-                      color: context.theme.colorScheme.background,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: Text(
-                                "BlueBubbles is currently locked. Please unlock to access your messages.",
-                                style: context.theme.textTheme.titleLarge,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Container(height: 20.0),
-                            ClipOval(
-                              child: Material(
-                                color: context.theme.colorScheme.primary, // button color
-                                child: InkWell(
-                                  child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
-                                  onTap: () async {
-                                    final localAuth = LocalAuthentication();
-                                    bool didAuthenticate = await localAuth.authenticate(
-                                        localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                        options: const AuthenticationOptions(stickyAuth: true));
-                                    if (didAuthenticate) {
-                                      controller!.authSuccess(unlock: true);
-                                    }
-                                  },
+                  return TitleBarWrapper(child: SecureGate(
+                    blurr: 5,
+                    opacity: 0,
+                    lockedBuilder: (context, controller) {
+                      final localAuth = LocalAuthentication();
+                      if (!isAuthing) {
+                        isAuthing = true;
+                        localAuth
+                            .authenticate(
+                            localizedReason: 'Please authenticate to unlock BlueBubbles', options: const AuthenticationOptions(stickyAuth: true))
+                            .then((result) {
+                          isAuthing = false;
+                          if (result) {
+                            SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
+                            if (kIsDesktop) {
+                              Future.delayed(Duration.zero, ()
+                              {
+                                chats.init();
+                                socket;
+                              });
+                            }
+                          }
+                        });
+                      }
+                      return Container(
+                        color: context.theme.colorScheme.background,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                                child: Text(
+                                  "BlueBubbles is currently locked. Please unlock to access your messages.",
+                                  style: context.theme.textTheme.titleLarge,
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
-                            ),
-                          ],
+                              Container(height: 20.0),
+                              ClipOval(
+                                child: Material(
+                                  color: context.theme.colorScheme.primary, // button color
+                                  child: InkWell(
+                                    child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                    onTap: () async {
+                                      final localAuth = LocalAuthentication();
+                                      bool didAuthenticate = await localAuth.authenticate(
+                                          localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                          options: const AuthenticationOptions(stickyAuth: true));
+                                      if (didAuthenticate) {
+                                        controller!.authSuccess(unlock: true);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: child ?? Container(),
-                );
-              },
+                      );
+                    },
+                    child: child ?? Container(),
+                  ),);
+                },
+              ),
             ),
           ),
         ),
@@ -633,15 +720,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
         await initSystemTray();
 
-        /* ----- RESET WINDOWS NOTIFICATION BADGE ----- */
-        if (Platform.isWindows) {
-          await WindowsTaskbar.resetOverlayIcon();
-        }
-
         /* ----- WINDOWS NOTIFICATIONS INITIALIZATION ----- */
-        if (Platform.isWindows) {
-          await localNotifier.setup(appName: "BlueBubbles");
-        }
+        await localNotifier.setup(appName: "BlueBubbles");
 
         /* ----- WINDOW EFFECT INITIALIZATION ----- */
         if (Platform.isWindows) {
@@ -660,7 +740,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         if (ss.prefs.getBool('1.11.1-warning') == false && !kIsWeb) {
           if (kIsDesktop) {
             try {
-              final handleSyncer = HandleSyncManager(saveLogs: true);
+              final handleSyncer = HandleSyncManager();
               await handleSyncer.start();
               eventDispatcher.emit("refresh-all", null);
               return;
@@ -724,7 +804,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       }
 
       if (ss.prefs.getBool('1.11.1-warning') != true) {
-        ss.prefs.setBool('1.11.1-warning', true);
+        await ss.prefs.setBool('1.11.1-warning', true);
       }
 
       if (!ss.settings.finishedSetup.value) {

@@ -38,10 +38,13 @@ class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
   FutureOr<List<Attachment>> run() {
     /// Pull args from input and create new instances of store and boxes
     int chatId = stuff[0];
+    bool includeDeleted = stuff[1];
     return store.runInTransaction(TxMode.read, () {
       /// Query the [messageBox] for all the message IDs and order by date
       /// descending
-      final query = (messageBox.query()
+      final query = (messageBox.query(includeDeleted
+          ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+          : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
             ..link(Message_.chat, Chat_.id.equals(chatId))
             ..order(Message_.dateCreated, flags: Order.descending))
           .build();
@@ -325,6 +328,7 @@ class Chat {
   int? style;
   bool lockChatName;
   bool lockChatIcon;
+  String? lastReadMessageGuid;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -361,6 +365,7 @@ class Chat {
     this.style,
     this.lockChatName = false,
     this.lockChatIcon = false,
+    this.lastReadMessageGuid,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -391,6 +396,7 @@ class Chat {
       style: json["style"],
       lockChatName: json["lockChatName"] ?? false,
       lockChatIcon: json["lockChatIcon"] ?? false,
+      lastReadMessageGuid: json["lastReadMessageGuid"],
     );
   }
 
@@ -411,6 +417,7 @@ class Chat {
     bool updateDateDeleted = false,
     bool updateLockChatName = false,
     bool updateLockChatIcon = false,
+    bool updateLastReadMessageGuid = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -461,6 +468,9 @@ class Chat {
       }
       if (!updateLockChatIcon) {
         lockChatIcon = existing?.lockChatIcon ?? false;
+      }
+      if (!updateLastReadMessageGuid) {
+        lastReadMessageGuid = existing?.lastReadMessageGuid ?? lastReadMessageGuid;
       }
 
       /// Save the chat and add the participants
@@ -589,6 +599,7 @@ class Chat {
     // close the convo view page if open and wait for it to be disposed before deleting
     if (cm.activeChat?.chat.guid == chat.guid) {
       ns.closeAllConversationView(Get.context!);
+      await cm.setAllInactive();
       await Future.delayed(const Duration(milliseconds: 500));
     }
     List<Message> messages = Chat.getMessages(chat);
@@ -604,6 +615,7 @@ class Chat {
     // close the convo view page if open and wait for it to be disposed before deleting
     if (cm.activeChat?.chat.guid == chat.guid) {
       ns.closeAllConversationView(Get.context!);
+      await cm.setAllInactive();
       await Future.delayed(const Duration(milliseconds: 500));
     }
     store.runInTransaction(TxMode.write, () {
@@ -614,7 +626,19 @@ class Chat {
     });
   }
 
+  static void unDelete(Chat chat) async {
+    if (kIsWeb) return;
+    store.runInTransaction(TxMode.write, () {
+      chat.dateDeleted = null;
+      chat.save(updateDateDeleted: true);
+    });
+  }
+
   Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
+    if (kIsDesktop && !hasUnread) {
+      notif.clearDesktopNotificationsForChat(guid);
+    }
+
     if (hasUnreadMessage == hasUnread && !force) return this;
     if (!cm.isChatActive(guid) || !hasUnread || force) {
       hasUnreadMessage = hasUnread;
@@ -623,10 +647,6 @@ class Chat {
     if (cm.isChatActive(guid) && hasUnread) {
       hasUnread = false;
       clearLocalNotifications = false;
-    }
-
-    if (kIsDesktop && !hasUnread) {
-      notif.clearDesktopNotificationsForChat(guid);
     }
 
     try {
@@ -686,7 +706,10 @@ class Chat {
         if (dateDeleted != null) {
           dateDeleted = null;
           save(updateDateDeleted: true);
-          chats.addChat(this);
+          await chats.addChat(this);
+        }
+        if (isArchived! && !_latestMessage!.isFromMe! && ss.settings.unarchiveOnNewMessage.value) {
+          toggleArchived(false);
         }
       }
     }
@@ -736,10 +759,10 @@ class Chat {
     return chatBox.count();
   }
 
-  Future<List<Attachment>> getAttachmentsAsync() async {
+  Future<List<Attachment>> getAttachmentsAsync({bool fetchDeleted = false}) async {
     if (kIsWeb || id == null) return [];
 
-    final task = GetChatAttachments([id!]);
+    final task = GetChatAttachments([id!, fetchDeleted]);
     return (await createAsyncTask<List<Attachment>>(task)) ?? [];
   }
 
@@ -1025,5 +1048,6 @@ class Chat {
     "style": style,
     "lockChatName": lockChatName,
     "lockChatIcon": lockChatIcon,
+    "lastReadMessageGuid": lastReadMessageGuid,
   };
 }

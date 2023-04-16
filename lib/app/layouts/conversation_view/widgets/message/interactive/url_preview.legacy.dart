@@ -86,9 +86,10 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
                         metadata!.image!,
                         gaplessPlayback: true,
                         filterQuality: FilterQuality.none,
-                        errorBuilder: (_, __, ___) {
-                          return const SizedBox.shrink();
-                        },
+                        errorBuilder: (context, object, stacktrace) => Center(
+                          heightFactor: 1,
+                          child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+                        ),
                         fit: BoxFit.cover,
                       ),
                     ),

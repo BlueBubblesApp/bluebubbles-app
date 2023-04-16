@@ -53,70 +53,83 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                     borderRadius: BorderRadius.circular(25),
                     child: Padding(
                       padding: const EdgeInsets.only(left: 5.0, top: 5.0, bottom: 5.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                (!showArchived && !showUnknown) ? IconButton(
-                                  onPressed: () async {
-                                    ns.pushLeft(
-                                      context,
-                                      SearchView(),
-                                    );
-                                  },
-                                  icon: Icon(
-                                    Icons.search,
-                                    color: context.theme.colorScheme.properOnSurface,
-                                  ),
-                                ) : IconButton(
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                  },
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(
-                                    Icons.arrow_back,
-                                    color: context.theme.colorScheme.properOnSurface,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Stack(
-                                  alignment: Alignment.centerLeft,
+                      child: Obx(() {
+                        ns.listener.value;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (ns.isAvatarOnly(context))
+                              Material(
+                                color: Colors.transparent,
+                                shape: const CircleBorder(),
+                                clipBehavior: Clip.antiAlias,
+                                child: OverflowMenu(extraItems: true, controller: controller),
+                              ),
+                            if (!ns.isAvatarOnly(context))
+                              Expanded(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    SyncIndicator(),
+                                    (!showArchived && !showUnknown) ? IconButton(
+                                      onPressed: () async {
+                                        ns.pushLeft(
+                                          context,
+                                          SearchView(),
+                                        );
+                                      },
+                                      icon: Icon(
+                                        Icons.search,
+                                        color: context.theme.colorScheme.properOnSurface,
+                                      ),
+                                    ) : IconButton(
+                                      onPressed: () async {
+                                        Navigator.of(context).pop();
+                                      },
+                                      padding: EdgeInsets.zero,
+                                      icon: Icon(
+                                        Icons.arrow_back,
+                                        color: context.theme.colorScheme.properOnSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Stack(
+                                      alignment: Alignment.centerLeft,
+                                      children: [
+                                        SyncIndicator(),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          HeaderText(controller: controller, fontSize: 23),
-                          Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Obx(() => ss.settings.moveChatCreatorToHeader.value
-                                    && !showArchived
-                                    && !showUnknown ? GestureDetector(
-                                  onLongPress: ss.settings.cameraFAB.value
-                                      ? () => controller.openCamera(context) : null,
-                                  child: IconButton(
-                                    onPressed: () => controller.openNewChatCreator(context),
-                                    icon: Icon(
-                                      Icons.create_outlined,
-                                      color: context.theme.colorScheme.properOnSurface,
-                                    ),
-                                  ),
-                                ) : const SizedBox.shrink()),
-                                if (!showArchived && !showUnknown)
-                                  const OverflowMenu(),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
+                              ),
+                            if (!ns.isAvatarOnly(context))
+                              HeaderText(controller: controller, fontSize: 23),
+                            if (!ns.isAvatarOnly(context))
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Obx(() => ss.settings.moveChatCreatorToHeader.value
+                                        && !showArchived
+                                        && !showUnknown ? GestureDetector(
+                                      onLongPress: ss.settings.cameraFAB.value
+                                          ? () => controller.openCamera(context) : null,
+                                      child: IconButton(
+                                        onPressed: () => controller.openNewChatCreator(context),
+                                        icon: Icon(
+                                          Icons.create_outlined,
+                                          color: context.theme.colorScheme.properOnSurface,
+                                        ),
+                                      ),
+                                    ) : const SizedBox.shrink()),
+                                    if (!showArchived && !showUnknown)
+                                      const OverflowMenu(),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        );
+                      })
                     ),
                   ),
                 ),

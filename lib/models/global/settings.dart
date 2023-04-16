@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class Settings {
+  final RxString iCloudAccount = "".obs;
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
   final RxMap<String, String> customHeaders = <String, String>{}.obs;
@@ -71,6 +73,12 @@ class Settings {
   final RxnString receiveSoundPath = RxnString();
   final RxBool syncContactsAutomatically = false.obs;
   final RxBool scrollToBottomOnSend = true.obs;
+  final RxBool sendEventsToTasker = false.obs;
+  final RxBool keepAppAlive = false.obs;
+  final RxBool unarchiveOnNewMessage = false.obs;
+  final RxBool scrollToLastUnread = false.obs;
+  final RxString userName = "You".obs;
+  final RxnString userAvatarPath = RxnString();
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -116,6 +124,7 @@ class Settings {
 
   // Desktop settings
   final RxBool launchAtStartup = false.obs;
+  final RxBool launchAtStartupMinimized = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
@@ -127,7 +136,7 @@ class Settings {
   final RxDouble betterScrollingMultiplier = 7.0.obs;
 
   // Notification actions
-  final RxList<int> selectedActionIndices = [0, 1, 2, 3, 4].obs;
+  final RxList<int> selectedActionIndices = Platform.isWindows ? [0, 1, 2, 3, 4].obs : [0, 1, 2].obs;
   final RxList<String> actionList = RxList.from(["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]);
 
   // Linux settings
@@ -143,19 +152,19 @@ class Settings {
 
   Settings save() {
     Map<String, dynamic> map = toMap(includeAll: true);
-    map.forEach((key, value) {
+    map.forEach((key, value) async {
       if (value is bool) {
-        ss.prefs.setBool(key, value);
+        await ss.prefs.setBool(key, value);
       } else if (value is String) {
-        ss.prefs.setString(key, value);
+        await ss.prefs.setString(key, value);
       } else if (value is int) {
-        ss.prefs.setInt(key, value);
+        await ss.prefs.setInt(key, value);
       } else if (value is double) {
-        ss.prefs.setDouble(key, value);
+        await ss.prefs.setDouble(key, value);
       } else if (value is List || value is Map) {
-        ss.prefs.setString(key, jsonEncode(value));
+        await ss.prefs.setString(key, jsonEncode(value));
       } else if (value == null) {
-        ss.prefs.remove(key);
+        await ss.prefs.remove(key);
       }
     });
     return this;
@@ -221,6 +230,7 @@ class Settings {
       'immersiveMode': immersiveMode.value,
       'avatarScale': avatarScale.value,
       'launchAtStartup': launchAtStartup.value,
+      'launchAtStartupMinimized': launchAtStartupMinimized.value,
       'closeToTray': closeToTray.value,
       'betterScrolling': betterScrolling.value,
       'betterScrollingMultiplier': betterScrollingMultiplier.value,
@@ -238,6 +248,11 @@ class Settings {
       'receiveSoundPath': receiveSoundPath.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
+      'sendEventsToTasker': sendEventsToTasker.value,
+      'keepAppAlive': keepAppAlive.value,
+      'unarchiveOnNewMessage': unarchiveOnNewMessage.value,
+      'scrollToLastUnread': scrollToLastUnread.value,
+      'userName': userName.value,
       'privateAPISend': privateAPISend.value,
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -275,12 +290,14 @@ class Settings {
     };
     if (includeAll) {
       map.addAll({
+        'iCloudAccount': iCloudAccount.value,
         'guidAuthKey': guidAuthKey.value,
         'serverAddress': serverAddress.value,
         'customHeaders': customHeaders,
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
         'monetTheming': monetTheming.value.index,
+        'userAvatarPath': userAvatarPath.value,
       });
     }
     return map;
@@ -331,6 +348,7 @@ class Settings {
     ss.settings.immersiveMode.value = map['immersiveMode'] ?? false;
     ss.settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     ss.settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    ss.settings.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     ss.settings.closeToTray.value = map['closeToTray'] ?? true;
     ss.settings.betterScrolling.value = map['betterScrolling'] ?? false;
     ss.settings.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
@@ -346,6 +364,11 @@ class Settings {
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
     ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     ss.settings.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
+    ss.settings.sendEventsToTasker.value = map['sendEventsToTasker'] ?? true;
+    ss.settings.keepAppAlive.value = map['keepAppAlive'] ?? false;
+    ss.settings.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
+    ss.settings.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;
+    ss.settings.userName.value = map['userName'] ?? "You";
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -382,7 +405,7 @@ class Settings {
     ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>();
+    ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().slice(0, Platform.isWindows ? 5 : 3).toList();
     ss.settings.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
@@ -393,6 +416,7 @@ class Settings {
 
   static Settings fromMap(Map<String, dynamic> map) {
     Settings s = Settings();
+    s.iCloudAccount.value = map['iCloudAccount'] ?? "";
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
     s.customHeaders.value = map['customHeaders'] is String ? jsonDecode(map['customHeaders']).cast<String, String>() : <String, String>{};
@@ -444,6 +468,7 @@ class Settings {
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
     s.betterScrolling.value = map['betterScrolling'] ?? false;
     s.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
@@ -459,6 +484,12 @@ class Settings {
     s.receiveSoundPath.value = map['receiveSoundPath'];
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
+    s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
+    s.keepAppAlive.value = map['keepAppAlive'] ?? false;
+    s.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
+    s.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;
+    s.userName.value = map['userName'] ?? "You";
+    s.userAvatarPath.value = map['userAvatarPath'];
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.privateAPIAttachmentSend.value = map['privateAPIAttachmentSend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -495,7 +526,7 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>();
+    s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().slice(0, Platform.isWindows ? 5 : 3).toList();
     s.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     s.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;

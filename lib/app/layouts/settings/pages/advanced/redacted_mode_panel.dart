@@ -143,6 +143,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                                           child: ImageViewer(
                                             file: as.getContent(message.attachments.first!),
                                             attachment: message.attachments.first!,
+                                            isFromMe: false,
                                           ),
                                         ),
                                       ),

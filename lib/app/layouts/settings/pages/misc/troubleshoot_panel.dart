@@ -12,8 +12,6 @@ import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../../services/backend/sync/handle_sync_manager.dart';
-
 class TroubleshootPanel extends StatefulWidget {
 
   @override
@@ -337,7 +335,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                       onTap: () async {
                           resyncingHandles.value = true;
                           try {
-                            final handleSyncer = HandleSyncManager(saveLogs: true);
+                            final handleSyncer = HandleSyncManager();
                             await handleSyncer.start();
                             eventDispatcher.emit("refresh-all", null);
 

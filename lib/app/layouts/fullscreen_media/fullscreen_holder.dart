@@ -15,6 +15,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
+import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
 
 class FullscreenMediaHolder extends StatefulWidget {
@@ -97,11 +98,18 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
           },
           child: Scaffold(
             appBar: !iOS ? null : AppBar(
-              leading: TextButton(
-                child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                onPressed: () {
+              leading: XGestureDetector(
+                onTap: (details) {
+                  if (!kIsDesktop) return;
                   Navigator.of(context).pop();
                 },
+                child: TextButton(
+                  child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                  onPressed: () {
+                    if (kIsDesktop) return;
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
               leadingWidth: 75,
               title: Text(

@@ -245,7 +245,7 @@ class ContactsService extends GetxService {
         }
         // try to match last 11 - 7 digits
         for (String p in numericPhones) {
-          final matchLengths = [11, 10, 9, 8, 7];
+          final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
           if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
             contact = c;
             break;
@@ -365,6 +365,12 @@ class ContactsService extends GetxService {
             final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             logger?.call("Parsing contact: $displayName");
+
+            // Log when a contact has no saved addresses
+            if (emails.isEmpty && phones.isEmpty) {
+              logger?.call("Contact has no saved addresses: $displayName");
+            }
+            
             networkContacts.add(Contact(
               id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
               displayName: displayName,

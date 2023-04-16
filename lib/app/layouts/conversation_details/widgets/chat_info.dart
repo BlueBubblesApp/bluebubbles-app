@@ -168,7 +168,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                     child: ContactAvatarGroupWidget(
                       chat: chat,
                       size: 100,
-                      editable: false,
+                      editable: !chat.isGroup,
                     ),
                   ),
                   Obx(() => chat.customAvatarPath != null ? Positioned(
@@ -327,47 +327,83 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
               padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
               child: Row(
                 mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
-                children: [
+                children: intersperse(const SizedBox(width: 5), [
                   if (!kIsWeb && !kIsDesktop && !chat.chatIdentifier!.startsWith("urn:biz")
                       && ((chat.participants.first.contact?.phones.isNotEmpty ?? false)
                           || !chat.participants.first.address.contains("@")))
                     Expanded(
-                      child: Material(
-                        borderRadius: BorderRadius.circular(15),
-                        color: tileColor,
-                        child: InkWell(
-                          onTap: () {
-                            final contact = chat.participants.first.contact;
-                            showAddressPicker(contact, chat.participants.first, context);
-                          },
-                          onLongPress: () {
-                            final contact = chat.participants.first.contact;
-                            showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
-                          },
-                          borderRadius: BorderRadius.circular(15),
-                          child: SizedBox(
-                            height: 60,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  iOS ? CupertinoIcons.phone : Icons.call,
-                                  color: context.theme.colorScheme.primary,
-                                  size: 20
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Material(
+                              borderRadius: BorderRadius.circular(15),
+                              color: tileColor,
+                              child: InkWell(
+                                onTap: () {
+                                  final contact = chat.participants.first.contact;
+                                  showAddressPicker(contact, chat.participants.first, context);
+                                },
+                                onLongPress: () {
+                                  final contact = chat.participants.first.contact;
+                                  showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
+                                },
+                                borderRadius: BorderRadius.circular(15),
+                                child: SizedBox(
+                                  height: 60,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        iOS ? CupertinoIcons.phone : Icons.call,
+                                        color: context.theme.colorScheme.primary,
+                                        size: 20
+                                      ),
+                                      const SizedBox(height: 7.5),
+                                      Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 7.5),
-                                Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Material(
+                              borderRadius: BorderRadius.circular(15),
+                              color: tileColor,
+                              child: InkWell(
+                                onTap: () {
+                                  final contact = chat.participants.first.contact;
+                                  showAddressPicker(contact, chat.participants.first, context, video: true);
+                                },
+                                onLongPress: () {
+                                  final contact = chat.participants.first.contact;
+                                  showAddressPicker(contact, chat.participants.first, context, isLongPressed: true, video: true);
+                                },
+                                borderRadius: BorderRadius.circular(15),
+                                child: SizedBox(
+                                  height: 60,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                          iOS ? CupertinoIcons.video_camera : Icons.video_call_outlined,
+                                          color: context.theme.colorScheme.primary,
+                                          size: 25
+                                      ),
+                                      const SizedBox(height: 2.5),
+                                      Text("Video Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  if (!kIsWeb && !kIsDesktop
-                      && ((chat.participants.first.contact?.phones.isNotEmpty ?? false)
-                          || !chat.participants.first.address.contains("@")))
-                    const SizedBox(width: 5),
                   if ((chat.participants.first.contact?.emails.isNotEmpty ?? false) || chat.participants.first.address.contains("@"))
                     Expanded(
                       child: Material(
@@ -402,8 +438,6 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                         ),
                       ),
                     ),
-                  if (!kIsWeb && !kIsDesktop)
-                    const SizedBox(width: 5),
                   if (!kIsWeb && !kIsDesktop)
                     Expanded(
                       child: Material(
@@ -445,7 +479,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                         ),
                       ),
                     ),
-                ],
+                ]).toList(),
               ),
             ),
           if (chat.isGroup)

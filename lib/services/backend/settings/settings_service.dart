@@ -14,6 +14,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:store_checker/store_checker.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';
 
@@ -25,7 +26,7 @@ class SettingsService extends GetxService {
   bool _canAuthenticate = false;
   late final SharedPreferences prefs;
 
-  bool get canAuthenticate => _canAuthenticate && (fs.androidInfo?.version.sdkInt ?? 0) > 28;
+  bool get canAuthenticate => _canAuthenticate && (Platform.isWindows || (fs.androidInfo?.version.sdkInt ?? 0) > 28);
 
   Future<void> init({bool headless = false}) async {
     prefs = await SharedPreferences.getInstance();
@@ -53,12 +54,20 @@ class SettingsService extends GetxService {
     }
     // launch at startup
     if (kIsDesktop) {
-      LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName); // Can't use fs here because it hasn't been initialized yet
-      if (settings.launchAtStartup.value) {
-        await LaunchAtStartup.enable();
-      } else {
-        await LaunchAtStartup.disable();
+      if (Platform.isWindows) {
+        _canAuthenticate = await LocalAuthentication().isDeviceSupported();
       }
+      await setupLaunchAtStartup();
+    }
+  }
+
+  Future<void> setupLaunchAtStartup() async {
+    // Can't use fs here because it hasn't been initialized yet
+    LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName, settings.launchAtStartupMinimized.value);
+    if (settings.launchAtStartup.value) {
+      await LaunchAtStartup.enable();
+    } else {
+      await LaunchAtStartup.disable();
     }
   }
 
@@ -88,6 +97,11 @@ class SettingsService extends GetxService {
     if (refresh) {
       final response = await http.serverInfo();
       if (response.statusCode == 200) {
+        if (ss.settings.iCloudAccount.isEmpty) {
+          ss.settings.iCloudAccount.value = response.data['data']['detected_icloud'];
+          ss.settings.save();
+        }
+
         final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
         final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
         final serverVersion = response.data['data']['server_version'];
@@ -119,12 +133,25 @@ class SettingsService extends GetxService {
     return val.item1 >= 11;
   }
 
+  Future<bool> get isMinMonterey async {
+    final val = await getServerDetails();
+    return val.item1 >= 12;
+  }
+
+  bool get isMinMontereySync {
+    return (prefs.getInt("macos-version") ?? 11) >= 12;
+  }
+
   bool get isMinBigSurSync {
     return (prefs.getInt("macos-version") ?? 11) >= 11;
   }
 
   bool get isMinVenturaSync {
     return (prefs.getInt("macos-version") ?? 11) >= 13;
+  }
+
+  bool get isMinCatalinaSync {
+    return (prefs.getInt("macos-minor-version") ?? 11) >= 15 || isMinBigSurSync;
   }
 
   Future<void> checkServerUpdate() async {

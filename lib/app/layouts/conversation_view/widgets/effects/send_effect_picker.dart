@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/bubble_effects.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -36,6 +37,7 @@ void sendEffectAction(
   int? part,
   String? chatGuid,
   Future<void> Function({String? effect}) sendMessage,
+  List<Mentionable> mentionables,
 ) {
   if (!ss.settings.enablePrivateAPI.value) return;
   String typeSelected = "bubble";
@@ -43,16 +45,66 @@ void sendEffectAction(
   final screenEffects = ["echo", "spotlight", "balloons", "confetti", "love", "lasers", "fireworks", "celebration"];
   String bubbleSelected = "slam";
   String screenSelected = "echo";
-  Message message = Message(
-      text: text,
-      subject: subjectText,
-      dateCreated: DateTime.now(),
-      hasAttachments: false,
-      threadOriginatorGuid: threadOriginatorGuid,
-      threadOriginatorPart: "${part ?? 0}:0:0",
-      isFromMe: true,
-      handleId: 0,
-      expressiveSendStyleId: effectMap["slam"]);
+  final textSplit = MentionTextEditingController.splitText(text);
+  bool flag = false;
+  final newText = [];
+  if (textSplit.length > 1) {
+    for (String word in textSplit) {
+      if (word == MentionTextEditingController.escapingChar) flag = !flag;
+      int? index = flag ? int.tryParse(word) : null;
+      if (index != null) {
+        final mention = mentionables[index];
+        newText.add(mention);
+        continue;
+      }
+      if (word == MentionTextEditingController.escapingChar) {
+        continue;
+      }
+      newText.add(word.replaceAll(MentionTextEditingController.escapingChar, ""));
+    }
+    text = newText.join("");
+  }
+  int currentPos = 0;
+  final message = Message(
+    text: text,
+    subject: subjectText,
+    threadOriginatorGuid: threadOriginatorGuid,
+    threadOriginatorPart: "${part ?? 0}:0:0",
+    expressiveSendStyleId: effectMap["slam"],
+    dateCreated: DateTime.now(),
+    hasAttachments: false,
+    isFromMe: true,
+    handleId: 0,
+    hasDdResults: true,
+    attributedBody: [
+      if (textSplit.length > 1)
+        AttributedBody(
+          string: text,
+          runs: newText.whereType<Mentionable>().isEmpty ? [] : newText.map((e) {
+            if (e is Mentionable) {
+              final run = Run(
+                  range: [currentPos, e.toString().length],
+                  attributes: Attributes(
+                    mention: e.address,
+                    messagePart: 0,
+                  )
+              );
+              currentPos += e.toString().length;
+              return run;
+            } else {
+              final run = Run(
+                range: [currentPos, e.length],
+                attributes: Attributes(
+                  messagePart: 0,
+                ),
+              );
+              currentPos += e.toString().length;
+              return run;
+            }
+          }).toList(),
+        ),
+    ],
+  );
   message.generateTempGuid();
   final GlobalKey key = GlobalKey();
   Control animController = Control.stop;
@@ -361,7 +413,13 @@ void sendEffectAction(
                                                           text: TextSpan(
                                                             children: buildMessageSpans(
                                                               context,
-                                                              MessagePart(part: 0, text: message.text),
+                                                              MessagePart(
+                                                                part: 0,
+                                                                text: message.text,
+                                                                mentions: message.attributedBody.first.runs
+                                                                    .where((element) => element.hasMention)
+                                                                    .map((e) => Mention(mentionedAddress: "", range: [e.range.first, e.range.first + e.range.last])).toList()
+                                                              ),
                                                               message,
                                                             ),
                                                           ),

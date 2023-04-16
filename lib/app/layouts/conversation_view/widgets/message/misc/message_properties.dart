@@ -62,7 +62,8 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
       properties.add(TextSpan(
         text: "${replyList.length} repl${replyList.length > 1 ? "ies" : "y"}",
         recognizer: TapGestureRecognizer()..onTap = () {
-          showReplyThread(context, message, widget.part, service, controller.cvController);
+          if (controller.cvController == null) return;
+          showReplyThread(context, message, widget.part, service, controller.cvController!);
         }
       ));
     }

@@ -118,23 +118,26 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         ? "Unknown"
         : "Messages";
 
-    if (ss.prefs.getString('lastOpenedChat') != null &&
-        showAltLayoutContextless &&
-        cm.activeChat?.chat.guid != ss.prefs.getString('lastOpenedChat') &&
-        !ls.isBubble) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (kIsWeb) {
-          await chats.loadedAllChats.future;
-        }
-        ns.pushAndRemoveUntil(
-          context,
-          ConversationView(
-            chat: kIsWeb
-                ? (await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat')))!
-                : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))!),
-          (route) => route.isFirst,
-        );
-      });
+    // Extra safety check to make sure Android doesn't open the last chat when opening the app
+    if (kIsDesktop || kIsWeb) {
+      if (ss.prefs.getString('lastOpenedChat') != null &&
+          showAltLayoutContextless &&
+          cm.activeChat?.chat.guid != ss.prefs.getString('lastOpenedChat') &&
+          !ls.isBubble) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (kIsWeb) {
+            await chats.loadedAllChats.future;
+          }
+          ns.pushAndRemoveUntil(
+            context,
+            ConversationView(
+              chat: kIsWeb
+                  ? (await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat')))!
+                  : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))!),
+            (route) => route.isFirst,
+          );
+        });
+      }
     }
   }
 
@@ -158,7 +161,8 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
       ),
       child: TabletModeWrapper(
         initialRatio: 0.4,
-        minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
+        minWidthLeft: kIsDesktop || kIsWeb ? 150 : null,
+        minRatio: kIsDesktop || kIsWeb ? 0.1 : 0.33,
         maxRatio: 0.5,
         allowResize: true,
         left: !showAltLayout ? child : LayoutBuilder(

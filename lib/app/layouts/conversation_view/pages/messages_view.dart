@@ -71,7 +71,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
         setState(() {});
       } else if (e.item1 == "add-custom-smartreply") {
-        if (e.item2 != null && internalSmartReplies.isEmpty) {
+        if (e.item2 != null && internalSmartReplies['attach-recent'] == null) {
           internalSmartReplies['attach-recent'] = _buildReply("Attach recent photo", onTap: () async {
             controller.pickedAttachments.add(e.item2);
             internalSmartReplies.clear();
@@ -81,7 +81,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     });
 
     updateObx(() async {
-      if (chat.isIMessage && !chat.isGroup && ss.serverDetailsSync().item4 >= 226) {
+      if (chat.isIMessage && !chat.isGroup) {
         getFocusState();
       }
       final searchMessage = (messageService.method == null) ? null : messageService.struct.messages.firstOrNull;
@@ -110,13 +110,41 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         updateReplies();
       }
       initialized = true;
+      if (ss.settings.scrollToLastUnread.value) {
+        // Give the UI a chance to render
+        Future.delayed(const Duration(milliseconds: 100), () async {
+          if (chat.lastReadMessageGuid != null) {
+            Message? m = _messages.firstWhereOrNull((element) => element.guid == chat.lastReadMessageGuid);
+            if (m == null) {
+              // we need to load messages up to the guid in the background
+              bool stop = false;
+              while (!stop) {
+                await loadNextChunk();
+                m = _messages.firstWhereOrNull((element) => element.guid == chat.lastReadMessageGuid);
+                stop = m != null;
+              }
+            }
+            // make sure the message is not in view
+            if (m != null && !(getActiveMwc(m.guid!)?.built ?? false)) {
+              internalSmartReplies['scroll-last-read'] = _buildReply("Jump to oldest unread", onTap: () async {
+                final index = _messages.indexOf(m!);
+                await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+                scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
+                internalSmartReplies.remove('scroll-last-read');
+              });
+            }
+          }
+        });
+      }
     });
   }
 
   @override
   void dispose() {
     if (!kIsWeb && !kIsDesktop) smartReply.close();
-    messageService.close();
+    chat.lastReadMessageGuid = _messages.first.guid;
+    chat.save(updateLastReadMessageGuid: true);
+    messageService.close(force: widget.customService != null);
     for (Message m in _messages) {
       getActiveMwc(m.guid!)?.close();
     }
@@ -124,6 +152,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   }
 
   void getFocusState() {
+    if (!ss.isMinMontereySync) return;
     final recipient = chat.participants.firstOrNull;
     if (recipient != null) {
       http.handleFocusState(recipient.address).then((response) {
@@ -341,7 +370,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                     ? const NeverScrollableScrollPhysics()
                     : ThemeSwitcher.getScrollPhysics(),
                 slivers: <Widget>[
-                  if (showSmartReplies)
+                  if (showSmartReplies || internalSmartReplies.isNotEmpty)
                     SliverToBoxAdapter(
                       child: Obx(() => AnimatedSize(
                         duration: const Duration(milliseconds: 400),
@@ -388,7 +417,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                               ),
                               Obx(() {
                                 // DO NOT REMOVE, used to update Obx widget
-                                final dummy = latestMessageDeliveredState.value;
+                                latestMessageDeliveredState.value;
                                 if (_messages.firstOrNull?.isFromMe == true
                                     && _messages.firstOrNull?.dateRead == null
                                     && _messages.firstOrNull?.wasDeliveredQuietly == true

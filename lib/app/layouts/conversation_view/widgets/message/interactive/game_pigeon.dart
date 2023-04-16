@@ -58,18 +58,20 @@ class _GamePigeonState extends OptimizedState<GamePigeon> with AutomaticKeepAliv
             content.bytes!,
             gaplessPlayback: true,
             filterQuality: FilterQuality.none,
-            errorBuilder: (_, __, ___) {
-              return const SizedBox.shrink();
-            },
+            errorBuilder: (context, object, stacktrace) => Center(
+              heightFactor: 1,
+              child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+            ),
           ),
         if (content is PlatformFile && content.bytes == null && content.path != null)
           Image.file(
             file,
             gaplessPlayback: true,
             filterQuality: FilterQuality.none,
-            errorBuilder: (_, __, ___) {
-              return const SizedBox.shrink();
-            },
+            errorBuilder: (context, object, stacktrace) => Center(
+              heightFactor: 1,
+              child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+            ),
           ),
         Padding(
           padding: const EdgeInsets.all(10.0),

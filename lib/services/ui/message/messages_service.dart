@@ -79,8 +79,10 @@ class MessagesService extends GetxController {
 
   @override
   void onClose() {
+    if (_init) {
+      countSub.cancel();
+    }
     _init = false;
-    countSub.cancel();
     super.onClose();
   }
 
@@ -89,6 +91,8 @@ class MessagesService extends GetxController {
     if (force || lastChat != tag) {
       Get.delete<MessagesService>(tag: tag);
     }
+
+    struct.flush();
   }
 
   void reload() {
@@ -177,6 +181,15 @@ class MessagesService extends GetxController {
         final c = mwc(threadOriginator);
         c.cvController = controller;
         struct.addThreadOriginator(threadOriginator);
+      }
+    }
+    // this indicates an audio message was kept by the recipient
+    // run this every time more messages are loaded just in case
+    for (Message m in struct.messages.where((e) => e.itemType == 5 && e.subject != null)) {
+      final otherMessage = struct.getMessage(m.subject!);
+      if (otherMessage != null) {
+        final otherMwc = getActiveMwc(m.subject!) ?? mwc(otherMessage);
+        otherMwc.audioWasKept.value = m.dateCreated;
       }
     }
     isFetching = false;

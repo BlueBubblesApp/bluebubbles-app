@@ -38,6 +38,10 @@ class NavigatorService extends GetxService {
     return context.width;
   }
 
+  double ratio(BuildContext context) => (_widthChatListLeft ?? context.width) / context.width;
+  
+  bool isAvatarOnly(BuildContext context) => isTabletMode(context) && (_widthChatListLeft ?? context.width) < 300;
+
   /// Push a new route onto the chat list right side navigator
   void push(BuildContext context, Widget widget) {
     if (Get.keys.containsKey(2) && isTabletMode(context)) {
@@ -50,11 +54,11 @@ class NavigatorService extends GetxService {
   }
 
   /// Push a new route onto the chat list left side navigator
-  void pushLeft(BuildContext context, Widget widget) {
+  Future<void> pushLeft(BuildContext context, Widget widget) async {
     if (Get.keys.containsKey(1) && isTabletMode(context)) {
-      Get.to(() => widget, transition: Transition.leftToRight, id: 1);
+      await Get.to(() => widget, transition: Transition.leftToRight, id: 1);
     } else {
-      Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
+      await Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }
@@ -159,6 +163,7 @@ class NavigatorService extends GetxService {
     }
   }
 
+  /// Remember to call `await cm.setAllInactive()` after calling this function
   void closeAllConversationView(BuildContext context) {
     if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && ns.isTabletMode(context)) {
       Get.until((route) {

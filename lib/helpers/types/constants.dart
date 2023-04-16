@@ -47,6 +47,7 @@ const balloonBundleIdMap = {
     'com.contextoptional.OpenTable.Messages': 'OpenTable',
     'com.apple.PassbookUIService.PeerPaymentMessagesExtension': 'Apple Pay',
     'com.apple.icloud.apps.messages.business.extension': 'Business Interactive Message',
+    'com.google.Maps.MessagesExtension': 'Google Maps',
   }
 };
 
@@ -62,6 +63,7 @@ final balloonBundleIdIconMap = {
     'com.apple.mobileslideshow.PhotosMessagesApp': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.slider_horizontal_below_rectangle : Icons.slideshow,
     'com.contextoptional.OpenTable.Messages': Icons.dinner_dining_outlined,
     'com.apple.PassbookUIService.PeerPaymentMessagesExtension': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.money_dollar : Icons.attach_money,
+    'com.google.Maps.MessagesExtension': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
   }
 };
 

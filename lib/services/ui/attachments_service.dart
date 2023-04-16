@@ -22,6 +22,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<AttachmentsService>() : Get.put(AttachmentsService());
@@ -159,7 +160,20 @@ class AttachmentsService extends GetxService {
                   onPressed: () async {
                     await File(file.path!).copy(savePath);
                     Navigator.of(context).pop();
-                    showSnackbar('Success', 'Saved attachment to $savePath!');
+                    showSnackbar(
+                      'Success',
+                      'Saved attachment to $savePath!',
+                      durationMs: 3000,
+                      button: TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: Get.theme.colorScheme.surfaceVariant,
+                        ),
+                        onPressed: () {
+                          launchUrl(Uri.file(savePath));
+                        },
+                        child: Text("OPEN FILE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -168,7 +182,20 @@ class AttachmentsService extends GetxService {
         );
       } else {
         await File(file.path!).copy(savePath);
-        showSnackbar('Success', 'Saved attachment to $savePath!');
+        showSnackbar(
+          'Success',
+          'Saved attachment to $savePath!',
+          durationMs: 3000,
+          button: TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Get.theme.colorScheme.surfaceVariant,
+            ),
+            onPressed: () {
+              launchUrl(Uri.file(savePath));
+            },
+            child: Text("OPEN FILE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
+          ),
+        );
       }
     } else {
       String? savePath;

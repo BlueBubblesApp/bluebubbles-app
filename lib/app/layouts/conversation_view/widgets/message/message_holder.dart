@@ -163,6 +163,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
+    controller.built = true;
     final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
     final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")));
     Iterable<Message> stickersForPart(int part) {
@@ -185,6 +186,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
     ///                                                   |-> stack: stickers & reactions
     ///                                             - message properties
     ///                                          - delivered indicator
+    // Item Type 5 indicates a kept audio message, we don't need to show this
+    if (message.itemType == 5 && message.subject != null) {
+      return const SizedBox.shrink();
+    }
     return AnimatedPadding(
       duration: const Duration(milliseconds: 100),
       padding: message.guid!.contains("temp") ? EdgeInsets.zero : EdgeInsets.only(
@@ -419,6 +424,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                           child: GestureDetector(
                                                             behavior: HitTestBehavior.deferToChild,
                                                             onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                                              if (ReplyScope.maybeOf(context) != null) return;
                                                               final offset = replyOffsets[index];
                                                               offset.value += details.delta.dx * 0.5;
                                                               if (message.isFromMe!) {
@@ -434,6 +440,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                               }
                                                             },
                                                             onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                                              if (ReplyScope.maybeOf(context) != null) return;
                                                               final offset = replyOffsets[index];
                                                               if (offset.value.abs() >= SlideToReply.replyThreshold) {
                                                                 widget.cvController.replyToMessage = Tuple2(message, index);
@@ -441,6 +448,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                               offset.value = 0;
                                                             },
                                                             onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                                              if (ReplyScope.maybeOf(context) != null) return;
                                                               replyOffsets[index].value = 0;
                                                             },
                                                             child: ClipPath(

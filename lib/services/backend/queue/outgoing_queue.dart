@@ -32,7 +32,11 @@ class OutgoingQueue extends Queue {
 
     switch (item.type) {
       case QueueType.sendMessage:
-        await ah.sendMessage(item.chat, item.message, item.selected, item.reaction);
+        if (item.message.attributedBody.isNotEmpty) {
+          await ah.sendMultipart(item.chat, item.message, item.selected, null);
+        } else {
+          await ah.sendMessage(item.chat, item.message, item.selected, item.reaction);
+        }
         break;
       case QueueType.sendAttachment:
         await ah.sendAttachment(item.chat, item.message, item.customArgs?['audio'] ?? false);

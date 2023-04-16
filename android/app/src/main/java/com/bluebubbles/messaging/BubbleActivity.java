@@ -29,7 +29,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.WorkManager;
 
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
-import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.sharing.ShareShortcutManager;
 
 import java.io.BufferedOutputStream;
@@ -49,20 +48,12 @@ public class BubbleActivity extends FlutterFragmentActivity {
     public static final String CHANNEL = "com.bluebubbles.messaging";
     private static final String TAG = "BubbleActivity";
     public static FlutterEngine engine;
-    private String startingChat;
-
-    public static int PICK_IMAGE = 1000;
-    public static int OPEN_CAMERA = 2000;
-    public static int NOTIFICATION_SETTINGS = 3000;
-    public MethodChannel.Result result = null;
-
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
     }
-
 
     @SuppressLint("RestrictedApi")
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -81,242 +72,10 @@ public class BubbleActivity extends FlutterFragmentActivity {
         return "bubble";
     }
 
-    protected void onNewIntent(Intent intent) {
-        // Get intent, action and MIME type
-        String action = intent.getAction();
-        String type = intent.getType();
-        if (type == null) return;
-
-        if (Intent.ACTION_SEND.equals(action)) {
-            if (type.startsWith("text/")) {
-                handleSendText(intent); // Handle text being sent
-            } else {
-                handleShareFile(intent);
-            }
-        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
-            handleSendMultipleImages(intent);
-        } else {
-            if (type.equals("NotificationOpen") || type.equals("DirectShare")) {
-                Log.d("Notifications", "Tapped on notification with ID: " + intent.getExtras().getInt("id"));
-                startingChat = intent.getStringExtra("chatGuid");
-                // just in case
-                if (engine == null) {
-                    engine = new FlutterEngine(getApplicationContext());
-                }
-                Log.d("Notifications", "Opening Chat with GUID: " + startingChat);
-                HashMap<String, Object> args = new HashMap<>();
-                args.put("guid", intent.getExtras().getString("chatGuid"));
-                args.put("bubble", intent.getExtras().getString("bubble"));
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", args);
-            } else if (type.equals(SocketIssueWarning.TYPE)) {
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("socket-error-open", null);
-            }
-        }
-
-    }
-
-    // Used during the result after file picking
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PICK_IMAGE) {
-            if (resultCode == RESULT_OK) {
-                List<String> images = readPathsFromIntent(data);
-                if (result != null) {
-                    result.success(images);
-                }
-            } else {
-                Log.d("PICK_FILE", "Nothing selected, or something went wrong");
-                result.success(null);
-            }
-            result = null;
-        } else if (requestCode == OPEN_CAMERA) {
-            if (resultCode == RESULT_OK) {
-                result.success(null);
-            } else {
-                Log.d("OPEN_CAMERA", "Something went wrong");
-                result.success(null);
-            }
-        } else if (requestCode == NOTIFICATION_SETTINGS) {
-            result.success(null);
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    List<String> readPathsFromIntent(Intent intent) {
-        // Try to get the initial data
-        Uri fileUri = intent.getData();
-        List<Uri> fileUris = new ArrayList<Uri>();
-        List<String> images = new ArrayList<String>();
-
-        // If the initial data is null, we need to get the clip data
-        if (fileUri == null) {
-            ClipData clipData = intent.getClipData();
-
-            // If we have clip data, pull out all the URIs of the items in it
-            if (clipData != null) {
-                for (int i = 0; i < clipData.getItemCount(); i++) {
-                    fileUris.add(clipData.getItemAt(i).getUri());
-                }
-            }
-        } else {
-            fileUris.add(fileUri);
-        }
-
-        // Create the shared files directory if it doesn't exist
-        File filesDir = new File(getFilesDir().getPath() + "/sharedFiles/");
-        if (!filesDir.exists()) {
-            filesDir.mkdir();
-        }
-
-        // For each of the URIs, write the attachments to the shared directory
-        for (Uri uri : fileUris) {
-            try {
-                File file = new File(getFilesDir().getPath() + "/sharedFiles/" + getFileName(uri));
-                file.createNewFile();
-                images.add(file.getPath());
-                writeBytesFromURI(uri, file);
-            } catch (Exception e) {
-                Log.d("share", "FAILURE");
-                e.printStackTrace();
-            }
-        }
-
-        // Return the new local file paths
-        return images;
-    }
-
-    void handleSendText(Intent intent) {
-        String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
-        if (sharedText != null) {
-            HashMap<String, Object> input = new HashMap<>();
-            input.put("text", sharedText);
-            String id = null;
-            if (intent.hasExtra(Intent.EXTRA_SHORTCUT_ID))
-                id = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID);
-            input.put("id", id);
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareText", input);
-        } else {
-            handleShareFile(intent);
-        }
-    }
-
-    void handleShareFile(Intent intent) {
-        List<String> images = new ArrayList<>();
-        Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
-        if (imageUri != null) {
-            try {
-                File filesDir = new File(getFilesDir().getPath() + "/sharedFiles/");
-                if (!filesDir.exists()) {
-                    filesDir.mkdir();
-                }
-                File file = new File(getFilesDir().getPath() + "/sharedFiles/" + getFileName(imageUri));
-                file.createNewFile();
-                writeBytesFromURI(imageUri, file);
-                images.add(file.getPath());
-                HashMap<String, Object> input = new HashMap<>();
-                input.put("attachments", images);
-
-                String id = null;
-                if (intent.hasExtra(Intent.EXTRA_SHORTCUT_ID))
-                    id = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID);
-                input.put("id", id);
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", input);
-            } catch (Exception e) {
-                Log.d("ShareImage", "FAILURE");
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void writeBytesFromURI(Uri contentUri, File file) {
-        final int buffer_size = 4096;
-        try {
-            InputStream inputStream = getContentResolver().openInputStream(contentUri);
-            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-            byte[] bytes = new byte[buffer_size];
-            for (int count = 0, prog = 0; count != -1; ) {
-                count = inputStream.read(bytes);
-                if (count != -1) {
-                    outputStream.write(bytes, 0, count);
-                    prog = prog + count;
-                }
-            }
-            outputStream.flush();
-            inputStream.close();
-            outputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String getFileName(Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            try {
-                if (cursor != null && cursor.moveToFirst()) {
-                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) {
-                result = result.substring(cut + 1);
-            }
-        }
-        return result;
-    }
-
-    void handleSendMultipleImages(Intent intent) {
-        ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-        List<String> images = new ArrayList<>();
-        File filesDir = new File(getFilesDir().getPath() + "/sharedFiles/");
-        if (!filesDir.exists()) {
-            filesDir.mkdir();
-        }
-        if (imageUris != null) {
-            for (Uri imageUri : imageUris) {
-                try {
-                    File file = new File(getFilesDir().getPath() + "/sharedFiles/" + getFileName(imageUri));
-                    file.createNewFile();
-                    images.add(file.getPath());
-                    writeBytesFromURI(imageUri, file);
-                } catch (Exception e) {
-                    Log.d("share", "FAILURE");
-                    e.printStackTrace();
-                }
-            }
-            Log.d("share", images.toString());
-            HashMap<String, Object> input = new HashMap<>();
-            input.put("attachments", images);
-
-            String id = null;
-            if (intent.hasExtra(Intent.EXTRA_SHORTCUT_ID))
-                id = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID);
-            input.put("id", id);
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", input);
-        }
-    }
-
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("MyData"));
-        WorkManager.getInstance(getApplicationContext()).cancelAllWork();
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onDestroy() {
-        Log.d("BubbleActivity", "Removing Activity from memory");
+        Log.d(TAG, "Removing Activity from memory");
         engine = null;
         super.onDestroy();
     }
@@ -324,17 +83,7 @@ public class BubbleActivity extends FlutterFragmentActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onStop() {
-        Log.d("BubbleActivity", "Stopping Activity (isFinishing: " + isFinishing() + ")");
+        Log.d(TAG, "Stopping Activity (isFinishing: " + isFinishing() + ")");
         super.onStop();
     }
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d("notification", "on receive");
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
-        }
-    };
-
-
 }

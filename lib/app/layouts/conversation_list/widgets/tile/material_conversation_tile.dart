@@ -70,82 +70,88 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
 
   @override
   Widget build(BuildContext context) {
-    final child = GestureDetector(
-      onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
-      child: Material(
-        color: Colors.transparent,
+    final leading = ChatLeading(controller: controller);
+    final child = Material(
+      color: Colors.transparent,
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(25),
+        bottomLeft: Radius.circular(25),
+      ),
+      child: InkWell(
+        mouseCursor: MouseCursor.defer,
+        onTap: () => controller.onTap(context),
+        onLongPress: controller.onLongPress,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(25),
-          bottomLeft: Radius.circular(25),
+          topLeft: Radius.circular(20),
+          bottomLeft: Radius.circular(20),
         ),
-        child: InkWell(
+        child: ListTile(
           mouseCursor: MouseCursor.defer,
-          onTap: () => controller.onTap(context),
-          onLongPress: controller.onLongPress,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
-          ),
-          child: ListTile(
-            mouseCursor: MouseCursor.defer,
-            dense: ss.settings.denseChatTiles.value,
-            visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
-            minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
-            title: Obx(() => ChatTitle(
-                parentController: controller,
-                style: context.theme.textTheme.bodyMedium!
-                    .copyWith(
-                      fontWeight: controller.shouldHighlight.value
-                          ? FontWeight.w600
-                          : unread
-                          ? FontWeight.bold
-                          : null,
-                    )
-                    .apply(fontSizeFactor: 1.1),
-              )),
-            subtitle: controller.subtitle ??
-                Obx(() => ChatSubtitle(
-                    parentController: controller,
-                    style: context.theme.textTheme.bodySmall!
-                        .copyWith(
-                          fontWeight: unread ? FontWeight.bold : null,
-                          color: controller.shouldHighlight.value || unread ? context.textTheme.bodyMedium!.color : context.theme.colorScheme.outline,
-                          height: 1.5,
-                        )
-                        .apply(fontSizeFactor: 1.05),
-                  )),
-            contentPadding: const EdgeInsets.only(left: 6, right: 16),
-            leading: ChatLeading(controller: controller),
-            trailing: MaterialTrailing(parentController: controller),
-          ),
+          dense: ss.settings.denseChatTiles.value,
+          visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+          minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
+          title: Obx(() => ChatTitle(
+              parentController: controller,
+              style: context.theme.textTheme.bodyMedium!
+                  .copyWith(
+                    fontWeight: controller.shouldHighlight.value
+                        ? FontWeight.w600
+                        : unread
+                        ? FontWeight.bold
+                        : null,
+                  )
+                  .apply(fontSizeFactor: 1.1),
+            )),
+          subtitle: controller.subtitle ??
+              Obx(() => ChatSubtitle(
+                  parentController: controller,
+                  style: context.theme.textTheme.bodySmall!
+                      .copyWith(
+                        fontWeight: unread ? FontWeight.bold : null,
+                        color: controller.shouldHighlight.value || unread ? context.textTheme.bodyMedium!.color : context.theme.colorScheme.outline,
+                        height: 1.5,
+                      )
+                      .apply(fontSizeFactor: 1.05),
+                )),
+          contentPadding: const EdgeInsets.only(left: 6, right: 16),
+          leading: leading,
+          trailing: MaterialTrailing(parentController: controller),
         ),
       ),
     );
 
     return Padding(
       padding: const EdgeInsets.only(left: 10),
-      child: Obx(
-        () => AnimatedContainer(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
+      child: Obx(() {
+        ns.listener.value;
+        return GestureDetector(
+          onTap: () => controller.onTap(context),
+          onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
+          child: AnimatedContainer(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                bottomLeft: Radius.circular(20),
+              ),
+              color: controller.isSelected
+                  ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
+                  : shouldPartialHighlight
+                  ? context.theme.colorScheme.properSurface
+                  : shouldHighlight
+                  ? context.theme.colorScheme.primaryContainer
+                  : hoverHighlight
+                  ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                  : null,
             ),
-            color: controller.isSelected
-                ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
-                : shouldPartialHighlight
-                    ? context.theme.colorScheme.properSurface
-                    : shouldHighlight
-                        ? context.theme.colorScheme.primaryContainer
-                        : hoverHighlight
-                            ? context.theme.colorScheme.properSurface.withOpacity(0.5)
-                            : null,
+            duration: const Duration(milliseconds: 100),
+            child: ns.isAvatarOnly(context) ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10.0).add(const EdgeInsets.only(right: 15)),
+              child: Center(child: leading),
+            ) : child,
           ),
-          duration: const Duration(milliseconds: 100),
-          child: child,
-        ),
-      ),
+        );
+      }),
     );
   }
 }

@@ -267,6 +267,7 @@ class Message {
   bool hasApplePayloadData;
   bool wasDeliveredQuietly;
   bool didNotifyRecipient;
+  bool isBookmarked;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -347,6 +348,7 @@ class Message {
     DateTime? dateEdited,
     this.wasDeliveredQuietly = false,
     this.didNotifyRecipient = false,
+    this.isBookmarked = false,
   }) {
       if (error != null) _error.value = error;
       if (dateRead != null) _dateRead.value = dateRead;
@@ -437,12 +439,13 @@ class Message {
       dateEdited: parseDate(json["dateEdited"]),
       wasDeliveredQuietly: json['wasDeliveredQuietly'] ?? false,
       didNotifyRecipient: json['didNotifyRecipient'] ?? false,
+      isBookmarked: json['isBookmarked'] ?? false,
     );
   }
 
   /// Save a single message - prefer [bulkSave] for multiple messages rather
   /// than iterating through them
-  Message save({Chat? chat}) {
+  Message save({Chat? chat, bool updateIsBookmarked = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
       Message? existing = Message.findOne(guid: guid);
@@ -468,6 +471,9 @@ class Message {
         if (reaction != null) {
           hasReactions = true;
         }
+      }
+      if (!updateIsBookmarked) {
+        isBookmarked = existing?.isBookmarked ?? isBookmarked;
       }
 
       try {
@@ -705,7 +711,7 @@ class Message {
 
   String get groupEventText {
     String text = "Unknown group event";
-    String name = handle?.displayName ?? "You";
+    String name = handle?.displayName ?? ss.settings.userName.value;
 
     String? other = "someone";
     if (otherHandle != null && isParticipantEvent) {
@@ -734,6 +740,8 @@ class Message {
       }
     } else if (itemType == 4 && groupActionType == 0) {
       text = "$name shared ${name == "You" ? "your" : "their"} location";
+    } else if (itemType == 5) {
+      text = "$name kept an audio message";
     } else if (itemType == 6) {
       text = "$name started a FaceTime call";
     }
@@ -1038,6 +1046,8 @@ class Message {
       existing.didNotifyRecipient = newMessage.didNotifyRecipient;
     }
 
+    existing.isBookmarked = newMessage.isBookmarked;
+
     return existing;
   }
 
@@ -1077,6 +1087,7 @@ class Message {
       "dateEdited": dateEdited?.millisecondsSinceEpoch,
       "wasDeliveredQuietly": wasDeliveredQuietly,
       "didNotifyRecipient": didNotifyRecipient,
+      "isBookmarked": isBookmarked,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();

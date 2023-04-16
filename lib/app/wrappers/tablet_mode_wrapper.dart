@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
@@ -13,6 +15,8 @@ class TabletModeWrapper extends StatefulWidget {
   final double minRatio;
   final double maxRatio;
   final bool allowResize;
+  final double? minWidthLeft;
+  final double? maxWidthLeft;
 
   const TabletModeWrapper({Key? key,
     required this.left,
@@ -21,7 +25,9 @@ class TabletModeWrapper extends StatefulWidget {
     this.allowResize = true,
     this.dividerWidth = 7.0,
     this.minRatio = 0,
-    this.maxRatio = 0
+    this.maxRatio = 0,
+    this.minWidthLeft,
+    this.maxWidthLeft
   }) : assert(initialRatio >= 0),
         assert(initialRatio <= 1),
         super(key: key);
@@ -36,22 +42,25 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
   double? _maxWidth;
   bool? altLayoutCache;
 
-  get _width1 => _ratio * _maxWidth!;
+  get _width1 => max(min(_ratio * _maxWidth!, widget.maxWidthLeft ?? double.infinity), widget.minWidthLeft ?? double.negativeInfinity);
 
-  get _width2 => (1 - _ratio.value) * _maxWidth!;
+  get _width2 => _maxWidth! - _width1;
 
   @override
   void initState() {
     super.initState();
-    _ratio = RxDouble(ss.prefs.getDouble('splitRatio') ?? widget.initialRatio);
+    _ratio = RxDouble((ss.prefs.getDouble('splitRatio') ?? widget.initialRatio).clamp(widget.minRatio, widget.maxRatio));
     eventDispatcher.stream.listen((event) {
       if (event.item1 == 'split-refresh') {
         _ratio.value = ss.prefs.getDouble('splitRatio') ?? _ratio.value;
         setState(() {});
+      } else if (event.item1 == 'override-split') {
+        _ratio.value = event.item2;
+        setState(() {});
       }
     });
-    debounce<double>(_ratio, (val) {
-      ss.prefs.setDouble('splitRatio', val);
+    debounce<double>(_ratio, (val) async {
+      await ss.prefs.setDouble('splitRatio', val);
       eventDispatcher.emit('split-refresh', null);
     });
   }

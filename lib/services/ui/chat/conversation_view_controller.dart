@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -52,15 +53,23 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final RxList<Tuple4<Message, MessagePart, TextEditingController, FocusNode>> editing = <Tuple4<Message, MessagePart, TextEditingController, FocusNode>>[].obs;
   final GlobalKey focusInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
+  bool showingOverlays = false;
+  bool _subjectWasLastFocused = false; // If this is false, then message field was last focused (default)
+
+  FocusNode get lastFocusedNode => _subjectWasLastFocused ? subjectFocusNode : focusNode;
+  TextEditingController get lastFocusedTextController => _subjectWasLastFocused ? subjectTextController : textController;
+
   // text field items
   bool showAttachmentPicker = false;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
-  final textController = TextEditingController();
+  final textController = MentionTextEditingController();
   final subjectTextController = TextEditingController();
   final RxBool showRecording = false.obs;
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
+  final RxList<Mentionable> mentionMatches = <Mentionable>[].obs;
+  final RxInt mentionSelectedIndex = 0.obs;
   final ScrollController emojiScrollController = ScrollController();
   final Rxn<DateTime> scheduledDate = Rxn<DateTime>(null);
   final Rxn<Tuple2<Message, int>> _replyToMessage = Rxn<Tuple2<Message, int>>(null);
@@ -73,6 +82,9 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   }
   final focusNode = FocusNode();
   final subjectFocusNode = FocusNode();
+  late final mentionables = chat.participants.map((e) => Mentionable(
+    handle: e,
+  )).toList();
 
   bool keyboardOpen = false;
   double _keyboardOffset = 0;
@@ -83,6 +95,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   @override
   void onInit() {
     super.onInit();
+
+    textController.mentionables = mentionables;
 
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       keyboardOpen = visible;
@@ -113,6 +127,19 @@ class ConversationViewController extends StatefulController with SingleGetTicker
         showScrollDown.value = false;
       }
     });
+
+    focusNode.addListener(() {
+      if (focusNode.hasFocus) {
+        _subjectWasLastFocused = false;
+      }
+    });
+
+    subjectFocusNode.addListener(() {
+      if (subjectFocusNode.hasFocus) {
+        _subjectWasLastFocused = true;
+      }
+    });
+
   }
 
   @override
@@ -209,7 +236,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
 
   void close() {
     eventDispatcher.emit("update-highlight", null);
-    cm.setAllInactive();
+    cm.setAllInactiveSync();
     Get.delete<ConversationViewController>(tag: tag);
   }
 }
