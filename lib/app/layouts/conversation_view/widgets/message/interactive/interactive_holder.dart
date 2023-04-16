@@ -146,6 +146,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                                 case "OpenTable":
                                 case "iMessage Poll":
                                 case "Shazam":
+                                case "Google Maps":
                                   return SupportedInteractive(
                                     data: data,
                                     message: message,
