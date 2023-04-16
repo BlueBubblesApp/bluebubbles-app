@@ -33,85 +33,94 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
 
   @override
   Widget build(BuildContext context) {
-    final child = GestureDetector(
-      onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    final leading = ChatLeading(
+      controller: controller,
+      unreadIcon: UnreadIcon(parentController: controller),
+    );
+    final child = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        mouseCursor: MouseCursor.defer,
+        onTap: () => controller.onTap(context),
+        onLongPress: kIsDesktop || kIsWeb ? null : () async {
+          await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+        },
+        onTapDown: (details) {
+          longPressPosition = details.globalPosition;
+        },
+        child: Obx(() => ListTile(
           mouseCursor: MouseCursor.defer,
-          onTap: () => controller.onTap(context),
-          onLongPress: kIsDesktop || kIsWeb ? null : () async {
-            await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
-          },
-          onTapDown: (details) {
-            longPressPosition = details.globalPosition;
-          },
-          child: Obx(() => ListTile(
-            mouseCursor: MouseCursor.defer,
-            enableFeedback: true,
-            dense: ss.settings.denseChatTiles.value,
-            contentPadding: const EdgeInsets.only(left: 0),
-            visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
-            minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
-            horizontalTitleGap: 10,
-            title: Row(
-              children: [
-                Expanded(
-                  child: ChatTitle(
-                    parentController: controller,
-                    style: context.theme.textTheme.bodyLarge!.copyWith(
-                        fontWeight: controller.shouldHighlight.value
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        color: controller.shouldHighlight.value
-                            ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
-                            : null
-                    ),
+          enableFeedback: true,
+          dense: ss.settings.denseChatTiles.value,
+          contentPadding: const EdgeInsets.only(left: 0),
+          visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+          minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
+          horizontalTitleGap: 10,
+          title: Row(
+            children: [
+              Expanded(
+                child: ChatTitle(
+                  parentController: controller,
+                  style: context.theme.textTheme.bodyLarge!.copyWith(
+                      fontWeight: controller.shouldHighlight.value
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: controller.shouldHighlight.value
+                          ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
+                          : null
                   ),
                 ),
-                CupertinoTrailing(parentController: controller),
-              ],
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(right: 20.0),
-              child: controller.subtitle ?? ChatSubtitle(
-                parentController: controller,
-                style: context.theme.textTheme.bodySmall!.copyWith(
-                  color: controller.shouldHighlight.value
-                      ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
-                      : context.theme.colorScheme.outline,
-                  height: 1.5,
-                ),
+              ),
+              CupertinoTrailing(parentController: controller),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(right: 20.0),
+            child: controller.subtitle ?? ChatSubtitle(
+              parentController: controller,
+              style: context.theme.textTheme.bodySmall!.copyWith(
+                color: controller.shouldHighlight.value
+                    ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
+                    : context.theme.colorScheme.outline,
+                height: 1.5,
               ),
             ),
-            leading: ChatLeading(
-              controller: controller,
-              unreadIcon: UnreadIcon(parentController: controller),
-            ),
-          )),
-        ),
+          ),
+          leading: leading
+        )),
       ),
     );
 
-    return kIsDesktop || kIsWeb ? Obx(() => AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
-      decoration: BoxDecoration(
-        color: controller.shouldPartialHighlight.value
-            ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
-            : controller.shouldHighlight.value
-            ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
-            : controller.hoverHighlight.value
-            ? context.theme.colorScheme.properSurface.withOpacity(0.5)
-            : null,
-        borderRadius: BorderRadius.circular(
-            controller.shouldHighlight.value
-                || controller.shouldPartialHighlight.value
-                || controller.hoverHighlight.value
-                ? 8 : 0
-        ),
-      ),
-      child: child,
-    )) : child;
+    return kIsDesktop || kIsWeb
+        ? GestureDetector(
+            onTap: () => controller.onTap(context),
+            onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
+            child: Obx(() {
+              ns.listener.value;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 100),
+                decoration: BoxDecoration(
+                  color: controller.shouldPartialHighlight.value
+                      ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
+                      : controller.shouldHighlight.value
+                          ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
+                          : controller.hoverHighlight.value
+                              ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                              : null,
+                  borderRadius: BorderRadius.circular(
+                      controller.shouldHighlight.value || controller.shouldPartialHighlight.value || controller.hoverHighlight.value ? 8 : 0),
+                ),
+                child: ns.isAvatarOnly(context)
+                    ? Padding(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 10.0, horizontal: (ns.width(context) - 100) / 2).add(const EdgeInsets.only(right: 15)),
+                          child: leading,
+                      )
+                    : child,
+              );
+            }),
+          )
+        : child;
   }
 }
 

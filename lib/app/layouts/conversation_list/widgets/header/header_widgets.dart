@@ -1,4 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_page.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -59,7 +60,9 @@ class SyncIndicator extends StatelessWidget {
 }
 
 class OverflowMenu extends StatelessWidget {
-  const OverflowMenu();
+  final bool extraItems;
+  final ConversationListController? controller;
+  const OverflowMenu({this.extraItems = false, this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +87,7 @@ class OverflowMenu extends StatelessWidget {
         } else if (value == 2) {
           final currentChat = cm.activeChat?.chat;
           ns.closeAllConversationView(context);
+          await cm.setAllInactive();
           await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
@@ -92,6 +96,7 @@ class OverflowMenu extends StatelessWidget {
             ),
           );
           if (currentChat != null) {
+            await cm.setActiveChat(currentChat);
             if (ss.settings.tabletMode.value) {
               ns.pushAndRemoveUntil(
                 context,
@@ -141,7 +146,7 @@ class OverflowMenu extends StatelessWidget {
                       await ss.prefs.setString("selected-dark", "OLED Dark");
                       await ss.prefs.setString("selected-light", "Bright White");
                       themeBox.putMany(ts.defaultThemes);
-                      ts.changeTheme(context);
+                      await ts.changeTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
                         child: TitleBarWrapper(child: SetupView()),
@@ -153,13 +158,37 @@ class OverflowMenu extends StatelessWidget {
             },
           );
         } else if (value == 5) {
-          Navigator.of(Get.context!).push(
+          final currentChat = cm.activeChat?.chat;
+          ns.closeAllConversationView(context);
+          await cm.setAllInactive();
+          await Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (BuildContext context) {
                 return const FindMyPage();
               },
             ),
           );
+          if (currentChat != null) {
+            await cm.setActiveChat(currentChat);
+            if (ss.settings.tabletMode.value) {
+              ns.pushAndRemoveUntil(
+                context,
+                ConversationView(
+                  chat: currentChat,
+                ),
+                    (route) => route.isFirst,
+              );
+            } else {
+              cvc(currentChat).close();
+            }
+          }
+        } else if (value == 6) {
+          final current = ns.ratio(context);
+          eventDispatcher.emit("override-split", 0.3);
+          await ns.pushLeft(context, SearchView());
+          eventDispatcher.emit("override-split", current);
+        } else if (value == 7) {
+          controller?.openNewChatCreator(context);
         }
       },
       itemBuilder: (context) {
@@ -186,13 +215,14 @@ class OverflowMenu extends StatelessWidget {
                 style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
               ),
             ),
-          PopupMenuItem(
-            value: 5,
-            child: Text(
-              'FindMy',
-              style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+          if (ss.isMinCatalinaSync)
+            PopupMenuItem(
+              value: 5,
+              child: Text(
+                'FindMy',
+                style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+              ),
             ),
-          ),
           PopupMenuItem(
             value: 2,
             child: Text(
@@ -202,11 +232,28 @@ class OverflowMenu extends StatelessWidget {
           ),
           if (kIsWeb)
             PopupMenuItem(
-                value: 4,
-                child: Text(
-                  'Logout',
-                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                ))
+              value: 4,
+              child: Text(
+                'Logout',
+                style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+              ),
+            ),
+          if (extraItems)
+            PopupMenuItem(
+              value: 6,
+              child: Text(
+                'Search',
+                style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+              ),
+            ),
+          if (extraItems && ss.settings.moveChatCreatorToHeader.value)
+            PopupMenuItem(
+              value: 7,
+              child: Text(
+                'New Chat',
+                style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+              ),
+            ),
         ];
       },
       icon: ss.settings.skin.value == Skins.Material ? Icon(

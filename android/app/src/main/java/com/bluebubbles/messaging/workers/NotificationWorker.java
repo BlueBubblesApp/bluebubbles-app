@@ -45,10 +45,10 @@ import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeB
 import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle.BACKGROUND_SERVICE_SHARED_PREF;
 
 public class NotificationWorker extends Worker implements DartWorker {
-
     private FlutterEngine backgroundEngine;
     private MethodChannel backgroundChannel;
     private Context context;
+    private static final String TAG = "NotificationWorker";
 
 
     public NotificationWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -186,8 +186,8 @@ public class NotificationWorker extends Worker implements DartWorker {
                                 .putAll(data)
                                 .build()
                 )
-                .addTag(FCMWorker.TAG)
+                .addTag(TAG)
                 .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(FCMWorker.TAG, ExistingWorkPolicy.APPEND_OR_REPLACE, notificationWork);
+        WorkManager.getInstance(context).enqueueUniqueWork(TAG, ExistingWorkPolicy.APPEND_OR_REPLACE, notificationWork);
     }
 }

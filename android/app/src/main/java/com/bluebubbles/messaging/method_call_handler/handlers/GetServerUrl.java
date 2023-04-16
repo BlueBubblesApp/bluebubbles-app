@@ -6,14 +6,15 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
 import static com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth.app;
 
-public class GetServerUrl implements Handler{
+public class GetServerUrl implements Handler {
 
     public static String TAG = "get-server-url";
 
@@ -42,32 +43,15 @@ public class GetServerUrl implements Handler{
             return;
         }
 
-        // Pull the config DB ref
-        DatabaseReference config = database.getReference("config");
-    
-        // Create the listener
-        ValueEventListener listener = new ValueEventListener() {
+        database.getReference("config").child("serverUrl").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot == null) {
+            public void onComplete(Task<DataSnapshot> task) {
+                if (!task.isSuccessful()) {
                     result.success(null);
                 } else {
-                    try {
-                        String url = (String) dataSnapshot.child("serverUrl").getValue();
-                        result.success(url);
-                    } catch (Exception ex) {
-                        result.success(null);
-                    }
+                    result.success(String.valueOf(task.getResult().getValue()));
                 }
             }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                result.success(null);
-            }
-        };
-
-        // Add the listener
-        config.addListenerForSingleValueEvent(listener);
+        });
     }
 }

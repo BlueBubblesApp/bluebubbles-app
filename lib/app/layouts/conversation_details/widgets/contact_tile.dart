@@ -113,6 +113,27 @@ class ContactTile extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (((contact == null && !isEmail) || (contact?.phones.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
+                ButtonTheme(
+                  minWidth: 1,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      shape: const CircleBorder(),
+                      backgroundColor: ss.settings.skin.value != Skins.iOS ? null : context.theme.colorScheme.secondary,
+                    ),
+                    onLongPress: () => showAddressPicker(contact, handle, context, isLongPressed: true, video: true),
+                    onPressed: () => showAddressPicker(contact, handle, context, video: true),
+                    child: Icon(
+                        ss.settings.skin.value == Skins.iOS
+                            ? CupertinoIcons.video_camera
+                            : Icons.video_call_outlined,
+                        color: ss.settings.skin.value != Skins.iOS
+                            ? context.theme.colorScheme.onBackground
+                            : context.theme.colorScheme.onSecondary,
+                        size: ss.settings.skin.value != Skins.iOS ? 25 : 20
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

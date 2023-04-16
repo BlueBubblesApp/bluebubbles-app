@@ -317,7 +317,7 @@ class ThemesService extends GetxService {
     return Platform.isWindows ? _applyWindowsAccent(light, dark) : _applyMonet(light, dark);
   }
 
-  ThemeStruct revertToPreviousDarkTheme() {
+  Future<ThemeStruct> revertToPreviousDarkTheme() async {
     List<ThemeStruct> allThemes = ThemeStruct.getThemes();
     final darkName = ss.prefs.getString("previous-dark");
     ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == darkName);
@@ -325,12 +325,12 @@ class ThemesService extends GetxService {
     previous ??= defaultThemes.firstWhere((element) => element.name == "OLED Dark");
 
     // Remove the previous flags
-    ss.prefs.remove("previous-dark");
+    await ss.prefs.remove("previous-dark");
 
     return previous;
   }
 
-  ThemeStruct revertToPreviousLightTheme() {
+  Future<ThemeStruct> revertToPreviousLightTheme() async {
     List<ThemeStruct> allThemes = ThemeStruct.getThemes();
     final lightName = ss.prefs.getString("previous-light");
     ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == lightName);
@@ -338,16 +338,16 @@ class ThemesService extends GetxService {
     previous ??= defaultThemes.firstWhere((element) => element.name == "Bright White");
 
     // Remove the previous flags
-    ss.prefs.remove("previous-light");
+    await ss.prefs.remove("previous-light");
 
     return previous;
   }
 
-  void changeTheme(BuildContext context, {ThemeStruct? light, ThemeStruct? dark}) {
+  Future<void> changeTheme(BuildContext context, {ThemeStruct? light, ThemeStruct? dark}) async {
     light?.save();
     dark?.save();
-    if (light != null) ss.prefs.setString("selected-light", light.name);
-    if (dark != null) ss.prefs.setString("selected-dark", dark.name);
+    if (light != null) await ss.prefs.setString("selected-light", light.name);
+    if (dark != null) await ss.prefs.setString("selected-dark", dark.name);
 
     _loadTheme(context);
   }
@@ -379,10 +379,12 @@ class ThemesService extends GetxService {
           surfaceVariant: light.colorScheme.surfaceVariant.harmonizeWith(Color(monetPalette!.neutralVariant.get(90))),
           onSurfaceVariant: light.colorScheme.onSurfaceVariant.harmonizeWith(Color(monetPalette!.neutralVariant.get(30))),
           outline: light.colorScheme.outline.harmonizeWith(Color(monetPalette!.neutralVariant.get(50))),
+          outlineVariant: light.colorScheme.outlineVariant.harmonizeWith(Color(monetPalette!.neutralVariant.get(80))),
           shadow: light.colorScheme.shadow.harmonizeWith(Color(monetPalette!.neutral.get(0))),
           inverseSurface: light.colorScheme.inverseSurface.harmonizeWith(Color(monetPalette!.neutral.get(20))),
           onInverseSurface: light.colorScheme.onInverseSurface.harmonizeWith(Color(monetPalette!.neutral.get(95))),
           inversePrimary: light.colorScheme.inversePrimary.harmonizeWith(Color(monetPalette!.primary.get(80))),
+          scrim: light.colorScheme.outlineVariant.harmonizeWith(Color(monetPalette!.neutral.get(0))),
         ),
       );
       dark = dark.copyWith(
@@ -410,10 +412,12 @@ class ThemesService extends GetxService {
           surfaceVariant: dark.colorScheme.surfaceVariant.harmonizeWith(Color(monetPalette!.neutralVariant.get(30))),
           onSurfaceVariant: dark.colorScheme.onSurfaceVariant.harmonizeWith(Color(monetPalette!.neutralVariant.get(80))),
           outline: dark.colorScheme.outline.harmonizeWith(Color(monetPalette!.neutralVariant.get(60))),
+          outlineVariant: dark.colorScheme.outlineVariant.harmonizeWith(Color(monetPalette!.neutralVariant.get(30))),
           shadow: dark.colorScheme.shadow.harmonizeWith(Color(monetPalette!.neutral.get(0))),
           inverseSurface: dark.colorScheme.inverseSurface.harmonizeWith(Color(monetPalette!.neutral.get(90))),
           onInverseSurface: dark.colorScheme.onInverseSurface.harmonizeWith(Color(monetPalette!.neutral.get(20))),
           inversePrimary: dark.colorScheme.inversePrimary.harmonizeWith(Color(monetPalette!.primary.get(40))),
+          scrim: dark.colorScheme.outlineVariant.harmonizeWith(Color(monetPalette!.neutral.get(0))),
         ),
       );
     } else if (isFullMonet && monetPalette != null) {
@@ -442,10 +446,12 @@ class ThemesService extends GetxService {
           surfaceVariant: Color(monetPalette!.neutralVariant.get(90)),
           onSurfaceVariant: Color(monetPalette!.neutralVariant.get(30)),
           outline: Color(monetPalette!.neutralVariant.get(50)),
+          outlineVariant: Color(monetPalette!.neutralVariant.get(80)),
           shadow: Color(monetPalette!.neutral.get(0)),
           inverseSurface: Color(monetPalette!.neutral.get(20)),
           onInverseSurface: Color(monetPalette!.neutral.get(95)),
           inversePrimary: Color(monetPalette!.primary.get(80)),
+          scrim: Color(monetPalette!.neutral.get(0)),
         ),
       );
       dark = dark.copyWith(
@@ -473,10 +479,12 @@ class ThemesService extends GetxService {
           surfaceVariant: Color(monetPalette!.neutralVariant.get(30)),
           onSurfaceVariant: Color(monetPalette!.neutralVariant.get(80)),
           outline: Color(monetPalette!.neutralVariant.get(60)),
+          outlineVariant: Color(monetPalette!.neutralVariant.get(30)),
           shadow: Color(monetPalette!.neutral.get(0)),
           inverseSurface: Color(monetPalette!.neutral.get(90)),
           onInverseSurface: Color(monetPalette!.neutral.get(20)),
           inversePrimary: Color(monetPalette!.primary.get(40)),
+          scrim: Color(monetPalette!.neutral.get(0)),
         ),
       );
     }
@@ -515,10 +523,12 @@ class ThemesService extends GetxService {
         surfaceVariant: light.colorScheme.surfaceVariant.harmonizeWith(Color(palette.neutralVariant.get(90))),
         onSurfaceVariant: light.colorScheme.onSurfaceVariant.harmonizeWith(Color(palette.neutralVariant.get(30))),
         outline: light.colorScheme.outline.harmonizeWith(Color(palette.neutralVariant.get(50))),
+        outlineVariant: light.colorScheme.outlineVariant.harmonizeWith(Color(palette.neutralVariant.get(80))),
         shadow: light.colorScheme.shadow.harmonizeWith(Color(palette.neutral.get(0))),
         inverseSurface: light.colorScheme.inverseSurface.harmonizeWith(Color(palette.neutral.get(20))),
         onInverseSurface: light.colorScheme.onInverseSurface.harmonizeWith(Color(palette.neutral.get(95))),
         inversePrimary: light.colorScheme.inversePrimary.harmonizeWith(Color(palette.primary.get(80))),
+        scrim: light.colorScheme.outlineVariant.harmonizeWith(Color(palette.neutral.get(0))),
       ),
     );
     dark = dark.copyWith(
@@ -546,10 +556,12 @@ class ThemesService extends GetxService {
         surfaceVariant: dark.colorScheme.surfaceVariant.harmonizeWith(Color(palette.neutralVariant.get(30))),
         onSurfaceVariant: dark.colorScheme.onSurfaceVariant.harmonizeWith(Color(palette.neutralVariant.get(80))),
         outline: dark.colorScheme.outline.harmonizeWith(Color(palette.neutralVariant.get(60))),
+        outlineVariant: dark.colorScheme.outlineVariant.harmonizeWith(Color(palette.neutralVariant.get(30))),
         shadow: dark.colorScheme.shadow.harmonizeWith(Color(palette.neutral.get(0))),
         inverseSurface: dark.colorScheme.inverseSurface.harmonizeWith(Color(palette.neutral.get(90))),
         onInverseSurface: dark.colorScheme.onInverseSurface.harmonizeWith(Color(palette.neutral.get(20))),
         inversePrimary: dark.colorScheme.inversePrimary.harmonizeWith(Color(palette.primary.get(40))),
+        scrim: dark.colorScheme.outlineVariant.harmonizeWith(Color(palette.neutral.get(0))),
       ),
     );
     return Tuple2(light, dark);

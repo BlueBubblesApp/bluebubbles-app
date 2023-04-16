@@ -52,7 +52,7 @@ class SocketService extends GetxService {
   
   void startSocket() {
     OptionBuilder options = OptionBuilder()
-        .setQuery({"guid": encodeUri(password)})
+        .setQuery({"guid": password})
         .setTransports(['websocket', 'polling'])
         .setExtraHeaders(ss.settings.customHeaders)
         // Disable so that we can create the listeners first
@@ -77,7 +77,7 @@ class SocketService extends GetxService {
 
     // custom events
     // only listen to these events from socket on web/desktop (FCM handles on Android)
-    if (kIsWeb || kIsDesktop) {
+    if (kIsWeb || kIsDesktop || ss.settings.keepAppAlive.value) {
       socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
       socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
       socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
@@ -147,6 +147,7 @@ class SocketService extends GetxService {
         _reconnectTimer?.cancel();
         _reconnectTimer = null;
         NetworkTasks.onConnect();
+        notif.clearSocketError();
         return;
       case SocketState.disconnected:
         Logger.info("Disconnected from socket...");
@@ -162,6 +163,8 @@ class SocketService extends GetxService {
         if (data is SocketException) {
           handleSocketException(data);
         }
+
+        notif.createSocketError();
 
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection

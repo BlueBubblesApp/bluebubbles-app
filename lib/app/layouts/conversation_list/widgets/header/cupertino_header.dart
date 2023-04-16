@@ -35,14 +35,25 @@ class CupertinoHeader extends StatelessWidget {
             right: 20,
             bottom: 5,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Expanded(
-                child: HeaderText(controller: controller),
-              ),
-              Obx(() => Row(
-                    mainAxisSize: MainAxisSize.min,
+          child: Obx(() {
+            ns.listener.value;
+            return Row(
+              mainAxisAlignment: ns.isAvatarOnly(context) ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                if (!ns.isAvatarOnly(context))
+                  Expanded(
+                    child: HeaderText(controller: controller),
+                  ),
+                if (ns.isAvatarOnly(context))
+                  Material(
+                    color: Colors.transparent,
+                    shape: const CircleBorder(),
+                    clipBehavior: Clip.antiAlias,
+                    child: OverflowMenu(extraItems: true, controller: controller),
+                  ),
+                if (!ns.isAvatarOnly(context))
+                  Row(
+                    mainAxisSize: MainAxisSize.max,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -104,9 +115,10 @@ class CupertinoHeader extends StatelessWidget {
                         child: OverflowMenu(),
                       ),
                     ],
-                  ))
-            ],
-          ),
+                  ),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -133,23 +145,26 @@ class CupertinoMiniHeader extends StatelessWidget {
         child: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              width: ns.width(context),
-              height: (topMargin - 20).clamp(kIsDesktop ? 65 : 40, double.infinity),
-              color: context.theme.colorScheme.properSurface.withOpacity(0.5),
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: kIsDesktop ? 10 : 5),
-                child: Text(
-                  controller.showArchivedChats
-                      ? "Archive"
-                      : controller.showUnknownSenders
-                          ? "Unknown Senders"
-                          : "Messages",
-                  style: context.textTheme.titleMedium!.copyWith(color: context.theme.colorScheme.properOnSurface),
+            child: Obx(() {
+              ns.listener.value;
+              return Container(
+                width: ns.width(context),
+                height: (topMargin - 20).clamp(kIsDesktop ? 65 : 40, double.infinity),
+                color: context.theme.colorScheme.properSurface.withOpacity(0.5),
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: kIsDesktop ? 10 : 5),
+                  child: Text(
+                    controller.showArchivedChats
+                        ? "Archive"
+                        : controller.showUnknownSenders
+                        ? "Unknown Senders"
+                        : "Messages",
+                    style: context.textTheme.titleMedium!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                  ),
                 ),
-              ),
-            ),
+              );
+            })
           ),
         ),
       ),

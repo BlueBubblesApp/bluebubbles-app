@@ -17,6 +17,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   bool isBubble = false;
   bool isUiThread = true;
   bool windowFocused = true;
+  bool? wasActiveAliveBefore;
   bool get isAlive => kIsWeb ? !(window.document.hidden ?? false)
       : kIsDesktop ? windowFocused : (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed
         || IsolateNameServer.lookupPortByName('bg_isolate') != null);
@@ -51,16 +52,24 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void open() {
-    cm.setActiveToAlive();
+    if (!kIsDesktop || wasActiveAliveBefore != false) {
+      cm.setActiveToAlive();
+    }
     if (cm.activeChat != null) {
       cm.activeChat!.chat.toggleHasUnread(false);
+      ConversationViewController _cvc = cvc(cm.activeChat!.chat);
+      if (!_cvc.showingOverlays && _cvc.editing.isEmpty) {
+        _cvc.lastFocusedNode.requestFocus();
+      }
     }
 
     if (!kIsDesktop && !kIsWeb) {
       if (!isBubble) {
         createFakePort();
       }
-      socket.reconnect();
+      if (!ss.settings.keepAppAlive.value) {
+        socket.reconnect();
+      }
     }
 
     if (kIsDesktop) {
@@ -76,10 +85,17 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void close() {
-    cm.setActiveToDead();
+    if (kIsDesktop) {
+      wasActiveAliveBefore = cm.activeChat?.isAlive;
+    }
+    if (!kIsDesktop || wasActiveAliveBefore != false) {
+      cm.setActiveToDead();
+    }
     if (!kIsDesktop && !kIsWeb) {
       IsolateNameServer.removePortNameMapping('bg_isolate');
-      socket.disconnect();
+      if (!ss.settings.keepAppAlive.value) {
+        socket.disconnect();
+      }
     }
     if (kIsDesktop) {
       windowFocused = false;

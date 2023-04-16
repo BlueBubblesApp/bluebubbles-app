@@ -1,29 +1,34 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void launchIntent(String address) async {
+void launchIntent(bool video, String address) async {
   if (address.contains("@")) {
     launchUrl(Uri(scheme: "mailto", path: address));
   } else if (await Permission.phone.request().isGranted) {
-    launchUrl(Uri(scheme: "tel", path: address));
+    if (video) {
+      await mcs.invokeMethod("google-duo", {"number": address});
+    } else {
+      launchUrl(Uri(scheme: "tel", path: address));
+    }
   }
 }
 
-void showAddressPicker(Contact? contact, Handle handle, BuildContext context, {bool isEmail = false, bool isLongPressed = false}) async {
+void showAddressPicker(Contact? contact, Handle handle, BuildContext context, {bool isEmail = false, bool video = false, bool isLongPressed = false}) async {
   if (contact == null) {
-    launchIntent(handle.address);
+    launchIntent(video, handle.address);
   } else {
     List<String> items = isEmail ? getUniqueEmails(contact.emails) : getUniqueNumbers(contact.phones);
     if (items.length == 1) {
-      launchIntent(items.first);
+      launchIntent(video, items.first);
     } else if (!isEmail && handle.defaultPhone != null && !isLongPressed) {
-      launchIntent(handle.defaultPhone!);
+      launchIntent(video, handle.defaultPhone!);
     } else if (isEmail && handle.defaultEmail != null && !isLongPressed) {
-      launchIntent(handle.defaultEmail!);
+      launchIntent(video, handle.defaultEmail!);
     } else {
       showDialog(
         context: context,
@@ -54,7 +59,7 @@ void showAddressPicker(Contact? contact, Handle handle, BuildContext context, {b
                           handle.updateDefaultPhone(items[i]);
                         }
                       }
-                      launchIntent(items[i]);
+                      launchIntent(video, items[i]);
                       Navigator.of(context).pop();
                     },
                   ),

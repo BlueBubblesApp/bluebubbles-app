@@ -4,9 +4,11 @@ import android.app.Notification;
 import android.app.Person;
 import android.app.NotificationManager;
 import android.app.RemoteInput;
+import android.graphics.drawable.Icon;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
@@ -20,7 +22,13 @@ import com.bluebubbles.messaging.workers.NotificationWorker;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.io.File;
+import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.DataInputStream;
+import java.io.BufferedInputStream;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import io.flutter.plugin.common.MethodChannel;
 
 import com.bluebubbles.messaging.helpers.HelperUtils;
@@ -69,9 +77,25 @@ public class ReplyReceiver extends BroadcastReceiver {
                         NotificationCompat.MessagingStyle temp = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notif);
                         style = new Notification.MessagingStyle(temp.getUser().getName());
                     }
+                    SharedPreferences mPrefs = context.getSharedPreferences("FlutterSharedPreferences", 0);
                     Person.Builder sender = new Person.Builder()
-                        .setName("You")
+                        .setName(mPrefs.getString("flutter.userName", "You"))
                         .setImportant(true);
+                    String avatarPath = mPrefs.getString("flutter.userAvatarPath", "");
+                    if (avatarPath != "") {
+                        File file = new File(avatarPath);
+                        byte bytes[] = new byte[(int) file.length()];
+                        try {
+                            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                            DataInputStream dis = new DataInputStream(bis);
+                            dis.readFully(bytes);
+                            Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                            Icon senderIcon = Icon.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
+                            sender.setIcon(senderIcon);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, sender.build()));
                     builder.setStyle(style);
                     builder.setOnlyAlertOnce(true);

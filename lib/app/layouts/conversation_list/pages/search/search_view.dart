@@ -109,7 +109,7 @@ class SearchViewState extends OptimizedState<SearchView> {
         // grab attachments, associated messages, and handle
         e.realAttachments;
         e.fetchAssociatedMessages();
-        e.getHandle();
+        e.handle = e.getHandle();
         return e;
       }).toList();
       chats = results.map((e) => e.chat.target!).toList();
@@ -296,6 +296,11 @@ class SearchViewState extends OptimizedState<SearchView> {
                         network = true;
                       });
                     }
+                    setState(() {
+                      isSearching = false;
+                      noResults = false;
+                      currentSearch = null;
+                    });
                   },
                 ),
               ),

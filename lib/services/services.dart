@@ -9,6 +9,7 @@ export 'backend/queue/outgoing_queue.dart';
 export 'backend/settings/settings_service.dart';
 export 'backend/setup/setup_service.dart';
 export 'backend/sync/full_sync_manager.dart';
+export 'backend/sync/handle_sync_manager.dart';
 export 'backend/sync/incremental_sync_manager.dart';
 export 'backend/sync/sync_manager_impl.dart' show SyncStatus;
 export 'backend/sync/sync_service.dart';

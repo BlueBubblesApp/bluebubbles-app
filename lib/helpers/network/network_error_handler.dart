@@ -8,7 +8,7 @@ Message handleSendError(dynamic error, Message m) {
     m.error = error.statusCode ?? MessageError.BAD_REQUEST.code;
   } else if (error is DioError) {
     String _error;
-    if (error.type == DioErrorType.connectTimeout) {
+    if (error.type == DioErrorType.connectionTimeout) {
       _error = "Connect timeout occured! Check your connection.";
     } else if (error.type == DioErrorType.sendTimeout) {
       _error = "Send timeout occured!";

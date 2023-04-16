@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,11 +14,13 @@ import 'package:tuple/tuple.dart';
 class ImageViewer extends StatefulWidget {
   final PlatformFile file;
   final Attachment attachment;
+  final bool isFromMe;
 
   ImageViewer({
     Key? key,
     required this.file,
     required this.attachment,
+    required this.isFromMe,
     this.controller,
   }) : super(key: key);
 
@@ -83,7 +86,7 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
       cacheWidth: (min((attachment.width ?? 0), ns.width(context) * 0.5) * Get.pixelRatio / 2).round().abs().nonZero,
       cacheHeight: (min((attachment.height ?? 0), ns.width(context) * 0.5 / attachment.aspectRatio) * Get.pixelRatio / 2).round().abs().nonZero,
       fit: BoxFit.cover,
-      frameBuilder: (context, widget, frame, wasSyncLoaded) {
+      frameBuilder: (context, w, frame, wasSyncLoaded) {
         return AnimatedCrossFade(
           crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
           alignment: Alignment.center,
@@ -93,7 +96,17 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
               minHeight: 40,
               minWidth: 100,
             ),
-            child: widget,
+            child: Stack(
+              alignment: !widget.isFromMe ? Alignment.topRight : Alignment.topLeft,
+              children: [
+                w,
+                if (attachment.hasLivePhoto)
+                  const Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: Icon(CupertinoIcons.smallcircle_circle, color: Colors.white, size: 20),
+                  ),
+              ],
+            ),
           ),
           firstChild: SizedBox(
             width: min((attachment.width?.toDouble() ?? ns.width(context) * 0.5), ns.width(context) * 0.5),
@@ -101,6 +114,10 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
           )
         );
       },
+      errorBuilder: (context, object, stacktrace) => Center(
+        heightFactor: 1,
+        child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+      ),
     );
   }
 

@@ -35,22 +35,24 @@ class FCMData {
 
   FCMData save() {
     if (isNull) return this;
-    ss.prefs.setString('projectID', projectID!);
-    ss.prefs.setString('storageBucket', storageBucket!);
-    ss.prefs.setString('apiKey', apiKey!);
-    ss.prefs.setString('firebaseURL', firebaseURL!);
-    ss.prefs.setString('clientID', clientID!);
-    ss.prefs.setString('applicationID', applicationID!);
+    Future.delayed(Duration.zero, () async {
+      await ss.prefs.setString('projectID', projectID!);
+      await ss.prefs.setString('storageBucket', storageBucket!);
+      await ss.prefs.setString('apiKey', apiKey!);
+      await ss.prefs.setString('firebaseURL', firebaseURL!);
+      await ss.prefs.setString('clientID', clientID!);
+      await ss.prefs.setString('applicationID', applicationID!);
+    });
     return this;
   }
 
-  static void deleteFcmData() {
-    ss.prefs.remove('projectID');
-    ss.prefs.remove('storageBucket');
-    ss.prefs.remove('apiKey');
-    ss.prefs.remove('firebaseURL');
-    ss.prefs.remove('clientID');
-    ss.prefs.remove('applicationID');
+  static void deleteFcmData() async {
+    await ss.prefs.remove('projectID');
+    await ss.prefs.remove('storageBucket');
+    await ss.prefs.remove('apiKey');
+    await ss.prefs.remove('firebaseURL');
+    await ss.prefs.remove('clientID');
+    await ss.prefs.remove('applicationID');
   }
 
   static FCMData getFCM() {

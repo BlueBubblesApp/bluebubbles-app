@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
@@ -22,7 +23,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
   Widget build(BuildContext context) {
     return SettingsScaffold(
       title: "Miscellaneous & Advanced",
-      initialHeader: ss.canAuthenticate ? "Security" : "Speed & Responsiveness",
+      initialHeader: (!kIsWeb && !kIsDesktop) || ss.canAuthenticate ? "Security" : "Speed & Responsiveness",
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
       tileColor: tileColor,
@@ -31,68 +32,75 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              if (ss.canAuthenticate)
+              if (!kIsWeb && !(kIsDesktop && !Platform.isWindows))
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    Obx(() =>
-                        SettingsSwitch(
-                          onChanged: (bool val) async {
-                            var localAuth = LocalAuthentication();
-                            bool didAuthenticate = await localAuth.authenticate(
-                                localizedReason:
-                                'Please authenticate to ${val == true ? "enable" : "disable"} security',
-                                options: const AuthenticationOptions(stickyAuth: true));
-                            if (didAuthenticate) {
-                              ss.settings.shouldSecure.value = val;
-                              if (val == false) {
-                                SecureApplicationProvider.of(context, listen: false)!.open();
-                              } else if (ss.settings.securityLevel.value ==
-                                  SecurityLevel.locked_and_secured) {
-                                SecureApplicationProvider.of(context, listen: false)!.secure();
-                              }
-                              saveSettings();
-                            }
-                          },
-                          initialVal: ss.settings.shouldSecure.value,
-                          title: "Secure App",
-                          subtitle: "Secure app with a fingerprint or pin",
-                          backgroundColor: tileColor,
-                        )),
-                    Obx(() {
-                      if (ss.settings.shouldSecure.value) {
-                        return Container(
-                            color: tileColor,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                              child: RichText(
-                                text: TextSpan(
-                                  children: const [
-                                    TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(
-                                        text:
-                                        "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "There are two different security levels you can choose from:"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
-                                    TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
-                                    TextSpan(
-                                        text:
-                                        " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
-                                  ],
-                                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                                ),
-                              ),
-                            ));
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    }),
                     if (ss.canAuthenticate)
+                      Obx(() =>
+                          SettingsSwitch(
+                            onChanged: (bool val) async {
+                              var localAuth = LocalAuthentication();
+                              bool didAuthenticate = await localAuth.authenticate(
+                                  localizedReason:
+                                  'Please authenticate to ${val == true ? "enable" : "disable"} security',
+                                  options: const AuthenticationOptions(stickyAuth: true));
+                              if (didAuthenticate) {
+                                ss.settings.shouldSecure.value = val;
+                                if (val == false) {
+                                  SecureApplicationProvider.of(context, listen: false)!.open();
+                                } else if (ss.settings.securityLevel.value ==
+                                    SecurityLevel.locked_and_secured) {
+                                  SecureApplicationProvider.of(context, listen: false)!.secure();
+                                }
+                                saveSettings();
+                              }
+                            },
+                            initialVal: ss.settings.shouldSecure.value,
+                            title: "Secure App",
+                            subtitle: "Secure app with ${kIsDesktop ? "Windows Security" : "a fingerprint or pin"}",
+                            backgroundColor: tileColor,
+                          )),
+                    if (ss.canAuthenticate)
+                      Obx(() {
+                        if (ss.settings.shouldSecure.value) {
+                          return Container(
+                              color: tileColor,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                                child: RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      const TextSpan(children: [
+                                        TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
+                                        TextSpan(text: "\n\n"),
+                                        TextSpan(
+                                            text:
+                                                "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
+                                      ]),
+                                      if (!kIsDesktop)
+                                        const TextSpan(children: [
+                                          TextSpan(text: "\n\n"),
+                                          TextSpan(text: "There are two different security levels you can choose from:"),
+                                          TextSpan(text: "\n\n"),
+                                          TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
+                                          TextSpan(text: "\n\n"),
+                                          TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          TextSpan(
+                                              text:
+                                                  " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
+                                        ]),
+                                    ],
+                                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                  ),
+                                ),
+                              ));
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      }),
+                    if (ss.canAuthenticate && !kIsDesktop)
                       Obx(() {
                         if (ss.settings.shouldSecure.value) {
                           return SettingsOptions<SecurityLevel>(
@@ -126,7 +134,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           return const SizedBox.shrink();
                         }
                       }),
-                    if (ss.canAuthenticate)
+                    if (ss.canAuthenticate && !kIsDesktop)
                       Container(
                         color: tileColor,
                         child: Padding(
@@ -146,9 +154,37 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         isThreeLine: true,
                         backgroundColor: tileColor,
                       )),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) async {
+                          ss.settings.keepAppAlive.value = val;
+                          saveSettings();
+                          if (!val) {
+                            FlutterForegroundTask.stopService();
+                          }
+                        },
+                        initialVal: ss.settings.keepAppAlive.value,
+                        title: "Use Foreground Service For Notifications",
+                        subtitle: "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.",
+                        isThreeLine: true,
+                        backgroundColor: tileColor,
+                      )),
+                    if (!kIsWeb && !kIsDesktop)
+                      const SettingsSubtitle(
+                        subtitle: "Note: Closing the app via the app switcher will disconnect the socket connection, since the Flutter Engine is killed. The app must be permanently kept open in the background. As a result, you may experience higher battery drain.",
+                        unlimitedSpace: true,
+                      ),
                   ],
                 ),
-              if (ss.canAuthenticate)
+              if (!kIsWeb && !kIsDesktop || ss.canAuthenticate)
                 SettingsHeader(
                     headerColor: headerColor,
                     tileColor: tileColor,
@@ -237,9 +273,9 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           onChangeEnd: (double val) {
                             saveSettings();
                             http.dio = Dio(BaseOptions(
-                              connectTimeout: 15000,
-                              receiveTimeout: ss.settings.apiTimeout.value,
-                              sendTimeout: ss.settings.apiTimeout.value,
+                              connectTimeout: const Duration(milliseconds: 15000),
+                              receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+                              sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
                             ));
                             http.dio.interceptors.add(ApiInterceptor());
                           },
@@ -253,6 +289,13 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       "Note: Attachment uploads will timeout after ${ss.settings.apiTimeout.value ~/ 1000 * 12} seconds",
                       style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                     )),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {

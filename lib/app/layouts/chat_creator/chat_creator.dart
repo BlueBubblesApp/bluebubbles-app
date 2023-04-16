@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
@@ -48,7 +49,8 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
-  late final TextEditingController textController = TextEditingController(text: widget.initialText);
+  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
+  final TextEditingController subjectController = TextEditingController();
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -74,12 +76,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     addressController.addListener(() {
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 250), () async {
-        final tuple = await SchedulerBinding.instance.scheduleTask(() {
+        final tuple = await SchedulerBinding.instance.scheduleTask(() async {
           if (addressController.text != oldText) {
             oldText = addressController.text;
             // if user has typed stuff, remove the message view and show filtered results
             if (addressController.text.isNotEmpty && fakeController.value != null) {
-              cm.setAllInactive();
+              await cm.setAllInactive();
               oldController = fakeController.value;
               fakeController.value = null;
             }
@@ -149,10 +151,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     findExistingChat();
   }
 
-  Future<Chat?> findExistingChat({bool update = true}) async {
+  Future<Chat?> findExistingChat({bool checkDeleted = false, bool update = true}) async {
     // no selected items, remove message view
     if (selectedContacts.isEmpty) {
-      cm.setAllInactive();
+      await cm.setAllInactive();
       fakeController.value = null;
       return null;
     }
@@ -170,7 +172,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     }
     // match each selected contact to a participant in a chat
     if (existingChat == null) {
-      for (Chat c in filteredChats) {
+      for (Chat c in (checkDeleted ? chatBox.getAll() : filteredChats)) {
         if (c.participants.length != selectedContacts.length) continue;
         int matches = 0;
         for (SelectedContact contact in selectedContacts) {
@@ -182,7 +184,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               break;
             }
             // match last digits
-            final matchLengths = [11, 10, 9, 8, 7];
+            final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
             final numeric = contact.address.numericOnly();
             if (matchLengths.contains(numeric.length) && participant.address.numericOnly().endsWith(numeric)) {
               matches += 1;
@@ -199,13 +201,17 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     // if match, show message view, otherwise hide it
     if (update) {
       if (existingChat != null) {
-        cm.setActiveChat(existingChat, clearNotifications: false);
+        await cm.setActiveChat(existingChat, clearNotifications: false);
         cm.activeChat!.controller = cvc(existingChat);
         fakeController.value = cm.activeChat!.controller;
       } else {
-        cm.setAllInactive();
+        await cm.setAllInactive();
         fakeController.value = null;
       }
+    }
+    if (checkDeleted && existingChat?.dateDeleted != null) {
+      Chat.unDelete(existingChat!);
+      await chats.addChat(existingChat);
     }
     return existingChat;
   }
@@ -434,7 +440,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   selectedBorderColor: context.theme.colorScheme.bubble(context, iMessage),
                   selectedColor: context.theme.colorScheme.bubble(context, iMessage),
                   isSelected: [iMessage, sms],
-                  onPressed: (index) {
+                  onPressed: (index) async {
                     selectedContacts.clear();
                     addressController.text = "";
                     if (index == 0) {
@@ -443,7 +449,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sms = false;
                         filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
                       });
-                      cm.setAllInactive();
+                      await cm.setAllInactive();
                       fakeController.value = null;
                     } else {
                       setState(() {
@@ -451,7 +457,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sms = true;
                         filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
                       });
-                      cm.setAllInactive();
+                      await cm.setAllInactive();
                       fakeController.value = null;
                     }
                   },
@@ -619,17 +625,17 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                       }
                       return KeyEventResult.ignored;
                     },
-                    child: TextFieldComponent(
+                    child: Obx(() => TextFieldComponent(
                         focusNode: messageNode,
-                        subjectTextController: TextEditingController(),
+                        subjectTextController: subjectController,
                         textController: textController,
-                        controller: null,
+                        controller: fakeController.value,
                         recorderController: RecorderController(),
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
-                          if (fakeController.value?.chat != null || (await findExistingChat(update: false)) != null) {
-                            final chat = (fakeController.value?.chat ?? await findExistingChat(update: false))!;
+                          final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
+                          if (chat != null) {
                             ns.pushAndRemoveUntil(
                               Get.context!,
                               ConversationView(chat: chat, fromChatCreator: true),
@@ -646,19 +652,20 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             );
                             await Future.delayed(const Duration(milliseconds: 500));
                             if (fakeController.value == null) {
-                              cm.setActiveChat(chat, clearNotifications: false);
+                              await cm.setActiveChat(chat, clearNotifications: false);
                               cm.activeChat!.controller = cvc(chat);
                               fakeController.value = cm.activeChat!.controller;
                             }
                             await fakeController.value!.send(
                               widget.initialAttachments,
                               textController.text,
-                              "",
-                              null,
-                              null,
-                              null,
+                              subjectController.text,
+                              fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ?? fakeController.value!.replyToMessage?.item1.guid,
+                              fakeController.value!.replyToMessage?.item2,
+                              effect,
                               false,
                             );
+                            fakeController.value!.replyToMessage = null;
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             createCompleter = Completer();
@@ -765,7 +772,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               }
                             });
                           }
-                        }),
+                        })),
                   ),
                 ),
               ),

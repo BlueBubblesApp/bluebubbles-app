@@ -21,6 +21,7 @@ MessageWidgetController? getActiveMwc(String guid) => Get.isRegistered<MessageWi
 
 class MessageWidgetController extends StatefulController with SingleGetTickerProviderMixin {
   final RxBool showEdits = false.obs;
+  final Rxn<DateTime> audioWasKept = Rxn<DateTime>(null);
 
   List<MessagePart> parts = [];
   Message message;
@@ -29,6 +30,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   ConversationViewController? cvController;
   late final String tag;
   late final StreamSubscription sub;
+  bool built = false;
 
   static const maxBubbleSizeFactor = 0.75;
 

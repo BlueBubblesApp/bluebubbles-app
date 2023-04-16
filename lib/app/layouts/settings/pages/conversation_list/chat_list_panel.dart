@@ -123,6 +123,27 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
+                    if (!kIsWeb)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) {
+                          ss.settings.unarchiveOnNewMessage.value = val;
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.unarchiveOnNewMessage.value,
+                        title: "Unarchive Chats On New Message",
+                        subtitle:
+                        "Automatically unarchive chats when a new message is received",
+                        backgroundColor: tileColor,
+                        isThreeLine: true,
+                      )),
                   ],
                 ),
                 SettingsHeader(

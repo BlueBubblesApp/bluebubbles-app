@@ -266,9 +266,12 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                                 }
                                 return;
                               case 5:
-                                final Color color = await showColorPickerDialog(
-                                  context,
-                                  context.theme.colorScheme.bubble(context, controller.chat.isIMessage),
+                                Color selectedColor = context.theme.colorScheme.bubble(context, controller.chat.isIMessage);
+                                final result = (await ColorPicker(
+                                  color: selectedColor,
+                                  onColorChanged: (Color newColor) {
+                                    selectedColor = newColor;
+                                  },
                                   title: Text(
                                     "Select Color",
                                     style: context.theme.textTheme.titleLarge,
@@ -291,59 +294,64 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                                   actionButtons: const ColorPickerActionButtons(
                                     dialogActionButtons: true,
                                   ),
+                                ).showPickerDialog(
+                                  context,
+                                  barrierDismissible: false,
                                   constraints: BoxConstraints(
                                       minHeight: 480, minWidth: ns.width(context) - 70, maxWidth: ns.width(context) - 70),
-                                );
-                                final control = HandSignatureControl();
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text(
-                                        "Draw Handwritten Message",
-                                        style: context.theme.textTheme.titleLarge,
-                                      ),
-                                      content: AspectRatio(
-                                        aspectRatio: 1,
-                                        child: Container(
-                                          constraints: const BoxConstraints.expand(),
-                                          child: HandSignature(
-                                            control: control,
-                                            color: color,
-                                            width: 1.0,
-                                            maxWidth: 10.0,
-                                            type: SignatureDrawType.shape,
+                                ));
+                                if (result) {
+                                  final control = HandSignatureControl();
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                          "Draw Handwritten Message",
+                                          style: context.theme.textTheme.titleLarge,
+                                        ),
+                                        content: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: Container(
+                                            constraints: const BoxConstraints.expand(),
+                                            child: HandSignature(
+                                              control: control,
+                                              color: selectedColor,
+                                              width: 1.0,
+                                              maxWidth: 10.0,
+                                              type: SignatureDrawType.shape,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                                          onPressed: () async {
-                                            Navigator.of(context).pop();
-                                            final bytes = await control.toImage(height: 512, fit: false);
-                                            if (bytes != null) {
-                                              final uint8 = bytes.buffer.asUint8List();
-                                              controller.pickedAttachments.add(PlatformFile(
-                                                path: null,
-                                                name: "handwritten-${randomString(3)}.png",
-                                                bytes: uint8,
-                                                size: uint8.lengthInBytes,
-                                              ));
-                                            }
-                                          },
-                                        ),
-                                      ],
-                                      backgroundColor: context.theme.colorScheme.properSurface,
-                                    );
-                                  },
-                                );
+                                        actions: [
+                                          TextButton(
+                                            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                                            onPressed: () async {
+                                              Navigator.of(context).pop();
+                                              final bytes = await control.toImage(height: 512, fit: false);
+                                              if (bytes != null) {
+                                                final uint8 = bytes.buffer.asUint8List();
+                                                controller.pickedAttachments.add(PlatformFile(
+                                                  path: null,
+                                                  name: "handwritten-${randomString(3)}.png",
+                                                  bytes: uint8,
+                                                  size: uint8.lengthInBytes,
+                                                ));
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                        backgroundColor: context.theme.colorScheme.properSurface,
+                                      );
+                                    },
+                                  );
+                                }
                                 return;
                             }
                           },

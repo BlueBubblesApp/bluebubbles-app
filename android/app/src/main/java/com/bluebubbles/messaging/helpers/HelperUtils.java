@@ -22,38 +22,18 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import android.content.SharedPreferences;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
+import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 
 public class HelperUtils {
     public static String TAG = "HelperUtils";
-
-    public static Object parseField(Map<String, Object> json, String field, String intendedType) {
-        // Handle cases where we want to return null
-        if (!json.containsKey(field) || json.get(field) == null) {
-            if (intendedType.equals("boolean")) return false;  // If null, let's assume false
-            return null;
-        }
-
-        String stringVal = String.valueOf(json.get(field));
-        if (stringVal.equals("null")) {
-            if (intendedType.equals("boolean")) return false;  // If null, let's assume false
-            return null;
-        }
-
-        switch (intendedType) {
-            case "integer":
-                return Integer.valueOf(stringVal);
-            case "long":
-                return Long.valueOf(stringVal);
-            case "boolean":
-                return Boolean.valueOf(stringVal);
-            case "timestamp":
-                return new Timestamp(Long.valueOf(stringVal));
-            default:
-                return stringVal;
-        }
-    }
 
     public static Bitmap getCircleBitmap(Bitmap bitmap) {
         final int size = Math.round(108 * Resources.getSystem().getDisplayMetrics().density);
@@ -126,5 +106,33 @@ public class HelperUtils {
             Log.d(HelperUtils.TAG, "Failed to cancel notification ID: " + failedId + ". Re-cancelling...");
             manager.cancel(NewMessageNotification.notificationTag, failedId);
         }
+    }
+
+    public static void getServerUrl(Context context, String password, String identifier, MethodChannel.Result onSuccess) {
+        SharedPreferences mPrefs = context.getSharedPreferences("FlutterSharedPreferences", 0);
+        String storedPassword = mPrefs.getString("flutter.guidAuthKey", "");
+        if (!password.equals(storedPassword)) return;
+        HashMap<String, String> fcmData = new HashMap<String, String>();
+        fcmData.put("project_id", mPrefs.getString("flutter.projectID", ""));
+        fcmData.put("storage_bucket", mPrefs.getString("flutter.storageBucket", ""));
+        fcmData.put("api_key", mPrefs.getString("flutter.apiKey", ""));
+        fcmData.put("firebase_url", mPrefs.getString("flutter.firebaseURL", ""));
+        fcmData.put("client_id", mPrefs.getString("flutter.clientID", ""));
+        fcmData.put("application_id", mPrefs.getString("flutter.applicationID", ""));
+        Map<String, String> map = new HashMap<String, String>(fcmData);
+        new FirebaseAuth(context, new MethodCall("auth", map), new MethodChannel.Result() {
+            @Override
+            public void success(Object result) {
+                new GetServerUrl(context, new MethodCall("get-server-url", null), onSuccess).Handle();
+            }
+
+            @Override
+            public void error(String errorCode, String errorMessage, Object errorDetails) {
+            }
+
+            @Override
+            public void notImplemented() {
+            }
+        }).Handle();
     }
 }

@@ -59,7 +59,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
       size: iOS ? 18 : 24,
     ) : const SizedBox.shrink());
 
-    return SettingsScaffold(
+    return Obx(
+      () => SettingsScaffold(
         title: "Theming & Styles",
         initialHeader: "Appearance",
         iosSubtitle: iosSubtitle,
@@ -150,8 +151,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                   children: [
                     Obx(() => SettingsOptions<Skins>(
                       initial: ss.settings.skin.value,
-                      onChanged: (val) {
+                      onChanged: (val) async {
                         if (val == null) return;
+                        await cm.setAllInactive();
                         ss.settings.skin.value = val;
                         saveSettings();
                         setState(() {});
@@ -245,7 +247,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             if (defaultOpacityDark) {
                               ss.settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
                             }
-                            ss.prefs.setString('window-effect', effect.toString());
+                            await ss.prefs.setString('window-effect', effect.toString());
                             await WindowEffects.setEffect(color: context.theme.colorScheme.background);
                             saveSettings();
                           },
@@ -348,7 +350,13 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         },
                       )),
                     if (kIsDesktop && Platform.isWindows)
-                      const SettingsDivider(),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
                       Obx(() {
                         if (iOS) {
@@ -379,9 +387,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 currentTheme.name == "Music Theme 🌙") {
                               ss.settings.colorsFromMedia.value = false;
                               ss.saveSettings(ss.settings);
-                              ThemeStruct previousDark = ts.revertToPreviousDarkTheme();
-                              ThemeStruct previousLight = ts.revertToPreviousLightTheme();
-                              ts.changeTheme(context, light: previousLight, dark: previousDark);
+                              ThemeStruct previousDark = await ts.revertToPreviousDarkTheme();
+                              ThemeStruct previousLight = await ts.revertToPreviousLightTheme();
+                              await ts.changeTheme(context, light: previousLight, dark: previousDark);
                             }
                             ss.settings.monetTheming.value = val ?? Monet.none;
                             saveSettings();
@@ -418,9 +426,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 var allThemes = ThemeStruct.getThemes();
                                 var currentLight = ThemeStruct.getLightTheme();
                                 var currentDark = ThemeStruct.getDarkTheme();
-                                ss.prefs.setString("previous-light", currentLight.name);
-                                ss.prefs.setString("previous-dark", currentDark.name);
-                                ts.changeTheme(
+                                await ss.prefs.setString("previous-light", currentLight.name);
+                                await ss.prefs.setString("previous-dark", currentDark.name);
+                                await ts.changeTheme(
                                     context,
                                     light: allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
                                     dark: allThemes.firstWhere((element) => element.name == "Music Theme 🌙")
@@ -437,9 +445,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               final darkName = ss.prefs.getString("previous-dark");
                               var previousLight = allThemes.firstWhere((e) => e.name == lightName);
                               var previousDark = allThemes.firstWhere((e) => e.name == darkName);
-                              ss.prefs.remove("previous-light");
-                              ss.prefs.remove("previous-dark");
-                              ts.changeTheme(context, light: previousLight, dark: previousDark);
+                              await ss.prefs.remove("previous-light");
+                              await ss.prefs.remove("previous-dark");
+                              await ts.changeTheme(context, light: previousLight, dark: previousDark);
                               ss.settings.colorsFromMedia.value = val;
                               saveSettings();
                             }
@@ -651,7 +659,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                         if (Get.isSnackbarOpen ?? false) {
                                           Get.close(1);
                                         }
-                                        Navigator.of(context).pop();
+                                        Get.back();
                                         Future.delayed(const Duration(milliseconds: 400), ()
                                         {
                                           controller.progress.value = null;
@@ -677,7 +685,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 showSnackbar("Error", "Failed to fetch font");
                                 return Response(requestOptions: RequestOptions(path: ''));
                               });
-                              Navigator.of(context).pop();
+                              Get.back();
                               controller.downloadingFont.value = false;
                               if (response.statusCode == 200) {
                                 try {
@@ -736,7 +744,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
               ],
             ),
           ),
-        ]
+        ],
+      ),
     );
   }
 

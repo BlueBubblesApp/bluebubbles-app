@@ -41,7 +41,7 @@ public class FirebaseAuth implements Handler {
         if (!isNetworkAvailable(context))
             result.error("no_internet", "No internet, retry in 10 seconds", "");
         if (app == null) {
-            Log.d("firebase_auth", "client_id: " + call.argument("client_id"));
+            Log.d(TAG, "client_id: " + call.argument("client_id"));
             app = FirebaseApp.initializeApp(context, new FirebaseOptions.Builder()
                     .setProjectId(call.argument("project_id"))
                     .setStorageBucket(call.argument("storage_bucket"))
@@ -59,7 +59,7 @@ public class FirebaseAuth implements Handler {
                     @Override
                     public void onComplete(@NonNull Task<String> task) {
                         if (task.getResult() == null || !task.isSuccessful()) {
-                            Log.d("FCM", "getInstanceId failed", task.getException());
+                            Log.d(TAG, "getInstanceId failed", task.getException());
                             try {
 
                                 result.error("Failed to authenticate", "getInstanceId failed", task.getException());

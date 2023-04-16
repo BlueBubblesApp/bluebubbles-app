@@ -101,7 +101,37 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                             double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
                             TextStyle style = context.theme.textTheme.bodyMedium!;
                             double height = usedRowCount * (maxWidth * 1.15 + 10 + style.height! * style.fontSize! * 2);
-
+                            // avatar only
+                            if (ns.isAvatarOnly(context)) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: _chats.length,
+                                    itemBuilder: (context, index) {
+                                      final chat = _chats[index];
+                                      return Center(
+                                        heightFactor: 1,
+                                        child: ConversationTile(
+                                          key: Key(chat.guid.toString()),
+                                          chat: chat,
+                                          controller: controller,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    child: Divider(
+                                      color: context.theme.colorScheme.outline.withOpacity(0.5),
+                                      thickness: 2,
+                                      height: 2,
+                                    ),
+                                  )
+                                ],
+                              );
+                            }
                             return Column(
                               children: <Widget>[
                                 SizedBox(
@@ -186,6 +216,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                                   ? "You have no messages from unknown senders :)"
                                                   : "You have no chats :(",
                                       style: context.textTheme.labelLarge,
+                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                   if (!chats.loadedChatBatch.value) buildProgressIndicator(context, size: 15),

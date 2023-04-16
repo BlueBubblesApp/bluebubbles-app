@@ -79,13 +79,21 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
           balloonController.windowSize = Size(ns.width(context), context.height);
           balloonController.start();
           await Future.delayed(const Duration(seconds: 1));
-          balloonController.stop();
+          balloonController.stop(onStop: () {
+            setState(() {
+              screenSelected = "";
+            });
+          });
         } else if (screenSelected == "love" && !loveController.isPlaying) {
           if (rect != null) {
             loveController.windowSize = Size(ns.width(context), context.height);
             loveController.start(Point((rect!.left + rect!.right) / 2, (rect!.top + rect!.bottom) / 2));
             await Future.delayed(const Duration(seconds: 1));
-            loveController.stop();
+            loveController.stop(onStop: () {
+              setState(() {
+                screenSelected = "";
+              });
+            });
           }
         } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
           if (rect != null) {
@@ -111,6 +119,8 @@ class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with
           }
         } else if (screenSelected == "confetti") {
           confettiController.play();
+          await Future.delayed(const Duration(seconds: 1));
+          screenSelected = "";
         }
       }
     });

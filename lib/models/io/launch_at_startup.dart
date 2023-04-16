@@ -6,8 +6,9 @@ class LaunchAtStartup {
 
   static Future<void> disable() async => await las.LaunchAtStartup.instance.disable();
 
-  static setup(String appName) => las.LaunchAtStartup.instance.setup(
+  static setup(String appName, bool minimized) => las.LaunchAtStartup.instance.setup(
     appName: appName,
     appPath: Platform.resolvedExecutable,
+    args: minimized ? ["minimized"] : [],
   );
 }

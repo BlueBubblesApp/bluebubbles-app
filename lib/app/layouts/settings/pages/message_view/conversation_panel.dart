@@ -3,8 +3,6 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart' hide PlatformFile;
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -154,6 +152,30 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                   if (!kIsWeb)
                     const SettingsSubtitle(
                       subtitle: "Note: Overrides any custom avatars set for group chats.",
+                    ),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        ss.settings.scrollToLastUnread.value = val;
+                        saveSettings();
+                      },
+                      initialVal: ss.settings.scrollToLastUnread.value,
+                      title: "Store Last Read Message",
+                      subtitle: "Remembers the last opened message and allows automatically scrolling back to it if out of view",
+                      backgroundColor: tileColor,
+                      isThreeLine: true,
+                    )),
+                  if (!kIsWeb)
+                    const SettingsSubtitle(
+                      subtitle: "Note: Can result in degraded performance depending on how many unread messages there are.",
                     ),
                 ],
               ),

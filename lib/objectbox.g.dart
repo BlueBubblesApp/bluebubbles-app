@@ -4,7 +4,7 @@
 // With a Dart package, run `dart run build_runner build`.
 // See also https://docs.objectbox.io/getting-started#generate-objectbox-code
 
-// ignore_for_file: camel_case_types
+// ignore_for_file: camel_case_types, depend_on_referenced_packages
 // coverage:ignore-file
 
 import 'dart:typed_data';
@@ -30,7 +30,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(1, 2065429213543838585),
       name: 'Attachment',
-      lastPropertyId: const IdUid(18, 4627777114429677812),
+      lastPropertyId: const IdUid(19, 2980761301143366690),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -100,6 +100,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(18, 4627777114429677812),
             name: 'dbMetadata',
             type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(19, 2980761301143366690),
+            name: 'hasLivePhoto',
+            type: 1,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -107,7 +112,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(3, 9017250848141753702),
       name: 'Chat',
-      lastPropertyId: const IdUid(27, 5967587520649064381),
+      lastPropertyId: const IdUid(28, 3841196368520260614),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -215,6 +220,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(27, 5967587520649064381),
             name: 'lockChatIcon',
             type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(28, 3841196368520260614),
+            name: 'lastReadMessageGuid',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[
@@ -391,7 +401,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(48, 8353240741127563871),
+      lastPropertyId: const IdUid(49, 4357660909480898880),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -585,6 +595,11 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(48, 8353240741127563871),
             name: 'didNotifyRecipient',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(49, 4357660909480898880),
+            name: 'isBookmarked',
             type: 1,
             flags: 0)
       ],
@@ -883,7 +898,7 @@ ModelDefinition getObjectBoxModel() {
           final dbMetadataOffset = object.dbMetadata == null
               ? null
               : fbb.writeString(object.dbMetadata!);
-          fbb.startTable(19);
+          fbb.startTable(20);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -897,6 +912,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(15, webUrlOffset);
           fbb.addInt64(16, object.message.targetId);
           fbb.addOffset(17, dbMetadataOffset);
+          fbb.addBool(18, object.hasLivePhoto);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -924,7 +940,8 @@ ModelDefinition getObjectBoxModel() {
               height:
                   const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
               width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
-              webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34))
+              webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
+              hasLivePhoto: const fb.BoolReader().vTableGet(buffer, rootOffset, 40, false))
             ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 38);
           object.message.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 36, 0);
@@ -970,7 +987,10 @@ ModelDefinition getObjectBoxModel() {
               .textFieldAttachments
               .map(fbb.writeString)
               .toList(growable: false));
-          fbb.startTable(28);
+          final lastReadMessageGuidOffset = object.lastReadMessageGuid == null
+              ? null
+              : fbb.writeString(object.lastReadMessageGuid!);
+          fbb.startTable(29);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(2, guidOffset);
           fbb.addOffset(4, chatIdentifierOffset);
@@ -993,6 +1013,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(24, object.style);
           fbb.addBool(25, object.lockChatName);
           fbb.addBool(26, object.lockChatIcon);
+          fbb.addOffset(27, lastReadMessageGuidOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1029,7 +1050,8 @@ ModelDefinition getObjectBoxModel() {
               dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
               style: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52),
               lockChatName: const fb.BoolReader().vTableGet(buffer, rootOffset, 54, false),
-              lockChatIcon: const fb.BoolReader().vTableGet(buffer, rootOffset, 56, false))
+              lockChatIcon: const fb.BoolReader().vTableGet(buffer, rootOffset, 56, false),
+              lastReadMessageGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 58))
             ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
                 ? null
                 : DateTime.fromMillisecondsSinceEpoch(
@@ -1039,14 +1061,13 @@ ModelDefinition getObjectBoxModel() {
             ..customAvatarPath = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 38)
             ..pinIndex = const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 40);
-          InternalToManyAccess.setRelInfo(object.handles, store,
-              RelInfo<Chat>.toMany(1, object.id!), store.box<Chat>());
-          InternalToManyAccess.setRelInfo(
+          InternalToManyAccess.setRelInfo<Chat>(
+              object.handles, store, RelInfo<Chat>.toMany(1, object.id!));
+          InternalToManyAccess.setRelInfo<Chat>(
               object.messages,
               store,
               RelInfo<Message>.toOneBacklink(
-                  39, object.id!, (Message srcObject) => srcObject.chat),
-              store.box<Chat>());
+                  39, object.id!, (Message srcObject) => srcObject.chat));
           return object;
         }),
     FCMData: EntityDefinition<FCMData>(
@@ -1284,7 +1305,7 @@ ModelDefinition getObjectBoxModel() {
           final dbMetadataOffset = object.dbMetadata == null
               ? null
               : fbb.writeString(object.dbMetadata!);
-          fbb.startTable(49);
+          fbb.startTable(50);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1323,6 +1344,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(45, dbMetadataOffset);
           fbb.addBool(46, object.wasDeliveredQuietly);
           fbb.addBool(47, object.didNotifyRecipient);
+          fbb.addBool(48, object.isBookmarked);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1384,7 +1406,8 @@ ModelDefinition getObjectBoxModel() {
               hasApplePayloadData: const fb.BoolReader().vTableGet(buffer, rootOffset, 86, false),
               dateEdited: dateEditedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateEditedValue),
               wasDeliveredQuietly: const fb.BoolReader().vTableGet(buffer, rootOffset, 96, false),
-              didNotifyRecipient: const fb.BoolReader().vTableGet(buffer, rootOffset, 98, false))
+              didNotifyRecipient: const fb.BoolReader().vTableGet(buffer, rootOffset, 98, false),
+              isBookmarked: const fb.BoolReader().vTableGet(buffer, rootOffset, 100, false))
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
             ..dbAttributedBody = const fb.StringReader(asciiOptimization: true)
@@ -1398,12 +1421,11 @@ ModelDefinition getObjectBoxModel() {
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
           object.chat.attach(store);
-          InternalToManyAccess.setRelInfo(
+          InternalToManyAccess.setRelInfo<Message>(
               object.dbAttachments,
               store,
               RelInfo<Attachment>.toOneBacklink(
-                  17, object.id!, (Attachment srcObject) => srcObject.message),
-              store.box<Message>());
+                  17, object.id!, (Attachment srcObject) => srcObject.message));
           return object;
         }),
     ThemeObject: EntityDefinition<ThemeObject>(
@@ -1451,12 +1473,11 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 14, false),
               previousDarkTheme: const fb.BoolReader()
                   .vTableGet(buffer, rootOffset, 16, false));
-          InternalToManyAccess.setRelInfo(
+          InternalToManyAccess.setRelInfo<ThemeObject>(
               object.themeEntries,
               store,
               RelInfo<ThemeEntry>.toOneBacklink(8, object.id!,
-                  (ThemeEntry srcObject) => srcObject.themeObject),
-              store.box<ThemeObject>());
+                  (ThemeEntry srcObject) => srcObject.themeObject));
           return object;
         }),
     ThemeStruct: EntityDefinition<ThemeStruct>(
@@ -1611,6 +1632,10 @@ class Attachment_ {
   /// see [Attachment.dbMetadata]
   static final dbMetadata =
       QueryStringProperty<Attachment>(_entities[0].properties[12]);
+
+  /// see [Attachment.hasLivePhoto]
+  static final hasLivePhoto =
+      QueryBooleanProperty<Attachment>(_entities[0].properties[13]);
 }
 
 /// [Chat] entity fields to define ObjectBox queries.
@@ -1692,6 +1717,10 @@ class Chat_ {
   /// see [Chat.lockChatIcon]
   static final lockChatIcon =
       QueryBooleanProperty<Chat>(_entities[1].properties[20]);
+
+  /// see [Chat.lastReadMessageGuid]
+  static final lastReadMessageGuid =
+      QueryStringProperty<Chat>(_entities[1].properties[21]);
 
   /// see [Chat.handles]
   static final handles =
@@ -1958,6 +1987,10 @@ class Message_ {
   /// see [Message.didNotifyRecipient]
   static final didNotifyRecipient =
       QueryBooleanProperty<Message>(_entities[5].properties[37]);
+
+  /// see [Message.isBookmarked]
+  static final isBookmarked =
+      QueryBooleanProperty<Message>(_entities[5].properties[38]);
 }
 
 /// [ThemeObject] entity fields to define ObjectBox queries.
