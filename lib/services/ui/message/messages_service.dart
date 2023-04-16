@@ -91,6 +91,8 @@ class MessagesService extends GetxController {
     if (force || lastChat != tag) {
       Get.delete<MessagesService>(tag: tag);
     }
+
+    struct.flush();
   }
 
   void reload() {

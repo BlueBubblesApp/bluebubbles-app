@@ -647,10 +647,15 @@ Future<ui.Image> loadImage(Uint8List data) async {
   return completer.future;
 }
 
-AlertDialog areYouSure(BuildContext context, {Widget? content, required Function onNo, required Function onYes}) {
+AlertDialog areYouSure(BuildContext context, {
+  Widget? content,
+  String? title = "Are you sure?",
+  required Function onNo,
+  required Function onYes
+}) {
   return AlertDialog(
     title: Text(
-      "Are you sure?",
+      title ?? "Are you sure?",
       style: context.theme.textTheme.titleLarge,
     ),
     content: content,

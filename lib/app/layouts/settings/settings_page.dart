@@ -47,7 +47,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
   final RxBool uploadingContacts = false.obs;
   final RxnDouble progress = RxnDouble();
   final RxnInt totalSize = RxnInt();
-  final RxnString iCloudAccount = RxnString("");
 
   @override
   void initState() {
@@ -68,12 +67,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
         );
       });
     }
-
-    updateObx(() {
-      http.serverInfo().then((response) {
-        iCloudAccount.value = response.data['data']['detected_icloud'];
-      }).catchError((err) => iCloudAccount.value = null);
-    });
   }
 
   @override
@@ -123,11 +116,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ? "User Name" : ss.settings.userName.value,
                                 subtitle: ss.settings.redactedMode.value && ss.settings.hideContactInfo.value
                                     ? "User iCloud"
-                                    : iCloudAccount.value == null
-                                    ? "Failed to fetch iCloud address!"
-                                    : iCloudAccount.isEmpty!
+                                    : ss.settings.iCloudAccount.isEmpty
                                     ? "Loading iCloud address..."
-                                    : iCloudAccount.value!,
+                                    : ss.settings.iCloudAccount.value,
                                 onTap: () {
                                   final nameController = TextEditingController(text: ss.settings.userName.value);
                                   done() {

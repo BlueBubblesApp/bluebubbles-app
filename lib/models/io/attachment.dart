@@ -146,11 +146,14 @@ class Attachment {
       return Future.error("Old GUID does not exist!");
     }
     // update current chat image data to prevent the image or video thumbnail from reloading
-    final data = cvc(cm.activeChat!.chat).imageData[oldGuid];
-    if (data != null) {
-      cvc(cm.activeChat!.chat).imageData.remove(oldGuid);
-      cvc(cm.activeChat!.chat).imageData[newAttachment.guid!] = data;
+    if (cm.activeChat != null) {
+      final data = cvc(cm.activeChat!.chat).imageData[oldGuid];
+      if (data != null) {
+        cvc(cm.activeChat!.chat).imageData.remove(oldGuid);
+        cvc(cm.activeChat!.chat).imageData[newAttachment.guid!] = data;
+      }
     }
+
     // update values and save
     existing.guid = newAttachment.guid;
     existing.originalROWID = newAttachment.originalROWID;

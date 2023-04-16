@@ -10,6 +10,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 
@@ -64,6 +65,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         attachments: [
           Attachment(
             isOutgoing: true,
+            mimeType: mime(file.path),
             uti: "public.jpg",
             bytes: file.bytes,
             transferName: file.name,

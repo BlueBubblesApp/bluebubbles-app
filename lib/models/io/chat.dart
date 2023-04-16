@@ -599,6 +599,7 @@ class Chat {
     // close the convo view page if open and wait for it to be disposed before deleting
     if (cm.activeChat?.chat.guid == chat.guid) {
       ns.closeAllConversationView(Get.context!);
+      await cm.setAllInactive();
       await Future.delayed(const Duration(milliseconds: 500));
     }
     List<Message> messages = Chat.getMessages(chat);
@@ -614,6 +615,7 @@ class Chat {
     // close the convo view page if open and wait for it to be disposed before deleting
     if (cm.activeChat?.chat.guid == chat.guid) {
       ns.closeAllConversationView(Get.context!);
+      await cm.setAllInactive();
       await Future.delayed(const Duration(milliseconds: 500));
     }
     store.runInTransaction(TxMode.write, () {

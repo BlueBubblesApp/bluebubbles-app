@@ -198,6 +198,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           itemBuilder: (context, index) {
                             final item = settings[index];
                             return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                               mouseCursor: SystemMouseCursors.click,
                               title: RichText(
                                 text: TextSpan(
@@ -222,7 +223,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                       showDialog(
                                         context: context,
                                         builder: (_context) => areYouSure(_context,
-                                            content: const Text("This Settings backup will be replaced with your current Settings."),
+                                            title: "Overwrite Backup?",
+                                            content: const Text("Are you sure you want to replace this backup with your current Settings?"),
                                             onNo: () => Navigator.of(_context).pop(),
                                             onYes: () async {
                                               Map<String, dynamic> json = ss.settings.toMap();
@@ -257,7 +259,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                       showDialog(
                                         context: context,
                                         builder: (context) => areYouSure(context,
-                                            content: const Text("This Settings backup will be deleted from the server."),
+                                            title: "Delete Backup?",
+                                            content: const Text("Are you sure you want to delete this settings backup?"),
                                             onNo: () => Navigator.of(context).pop(),
                                             onYes: () {
                                               deleteSettings(item["name"]);
@@ -270,7 +273,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                 showDialog(
                                   context: context,
                                   builder: (context) => areYouSure(context,
-                                      content: const Text("Your current Settings will be replaced by this backup."),
+                                      title: "Restore Backup?",
+                                      content: const Text("Are you sure you want to restore this backup, overwriting your current Settings?"),
                                       onNo: () => Navigator.of(context).pop(),
                                       onYes: () {
                                         Navigator.of(context).pop();
@@ -367,7 +371,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               bool yes = false;
                               await showDialog(context: _context, builder: (__context) =>
                                   areYouSure(__context,
-                                      content: const Text("This will overwrite your previous Settings backup with the same name!"),
+                                      title: "Overwrite Backup?",
+                                      content: const Text("Are you sure you want to replace this backup with your current Settings?"),
                                       onNo: () {
                                     Navigator.of(__context).pop();
                                     },
@@ -570,7 +575,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           showDialog(
                             context: context,
                             builder: (context) => areYouSure(context,
-                                content: const Text("Your current Settings will be replaced by this backup."),
+                                title: "Restore Settings?",
+                                content: const Text("Are you sure you want to restore this backup, overwriting your current Settings?"),
                                 onNo: () => Navigator.of(context).pop(),
                                 onYes: () {
                                   Navigator.of(context).pop();
@@ -685,7 +691,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   showDialog(
                                     context: context,
                                     builder: (context) => areYouSure(context,
-                                        content: const Text("This Theme backup will be deleted from the server."),
+                                        title: "Delete Backup?",
+                                        content: const Text("Are you sure you want to delete this theme backup?"),
                                         onNo: () => Navigator.of(context).pop(),
                                         onYes: () {
                                           deleteTheme(item["name"]);
@@ -702,7 +709,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                 showDialog(
                                     context: context,
                                     builder: (context) => areYouSure(context,
-                                        content: const Text("Your current Theme will be replaced by this backup."),
+                                        title: "Restore Backup?",
+                                        content: const Text("Are you sure you want to restore this backup, overwriting your current theme?"),
                                         onNo: () => Navigator.of(context).pop(),
                                         onYes: () {
                                           Navigator.of(context).pop();
@@ -904,7 +912,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           showDialog(
                               context: context,
                               builder: (context) => areYouSure(context,
-                                  content: const Text("Your current Theme will be replaced by this backup."),
+                                  title: "Restore Backup?",
+                                  content: const Text("Are you sure you want to restore this backup, overwriting your current theme?"),
                                   onNo: () => Navigator.of(context).pop(),
                                   onYes: () {
                                     Navigator.of(context).pop();
