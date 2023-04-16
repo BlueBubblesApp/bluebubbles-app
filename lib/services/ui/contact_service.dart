@@ -365,6 +365,12 @@ class ContactsService extends GetxService {
             final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             logger?.call("Parsing contact: $displayName");
+
+            // Log when a contact has no saved addresses
+            if (emails.isEmpty && phones.isEmpty) {
+              logger?.call("Contact has no saved addresses: $displayName");
+            }
+            
             networkContacts.add(Contact(
               id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
               displayName: displayName,
