@@ -117,7 +117,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                 subtitle: ss.settings.redactedMode.value && ss.settings.hideContactInfo.value
                                     ? "User iCloud"
                                     : ss.settings.iCloudAccount.isEmpty
-                                    ? "Loading iCloud address..."
+                                    ? "Unknown iCloud account"
                                     : ss.settings.iCloudAccount.value,
                                 onTap: () {
                                   final nameController = TextEditingController(text: ss.settings.userName.value);
