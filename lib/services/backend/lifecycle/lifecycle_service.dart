@@ -9,7 +9,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:universal_html/html.dart';
+import 'package:universal_html/html.dart' hide Platform;
+import 'package:universal_io/io.dart';
 
 LifecycleService ls = Get.isRegistered<LifecycleService>() ? Get.find<LifecycleService>() : Get.put(LifecycleService());
 
@@ -60,6 +61,11 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       ConversationViewController _cvc = cvc(cm.activeChat!.chat);
       if (!_cvc.showingOverlays && _cvc.editing.isEmpty) {
         _cvc.lastFocusedNode.requestFocus();
+        if (Platform.isAndroid) {
+          SystemChannels.textInput.invokeMethod('TextInput.show').catchError((e) {
+            Logger.error("Error caught while showing keyboard: ${e.toString()}");
+          });
+        }
       }
     }
 
