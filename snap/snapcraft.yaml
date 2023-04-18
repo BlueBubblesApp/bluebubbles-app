@@ -1,6 +1,6 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.12.0.1
+version: 1.12.1.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
@@ -62,7 +62,7 @@ parts:
       flutter build linux --release -v
       tmp=$(mktemp)
       chmod 644 "$tmp"
-      jq '.version = "1.12.0.1"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
+      jq '.version = "1.12.1.0"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
       chmod +x build/linux/*/release/bundle/bluebubbles
       cp -r build/linux/*/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
       mv build/linux/*/release/bundle/lib/libobjectbox.so $SNAPCRAFT_PART_INSTALL/usr/lib/
