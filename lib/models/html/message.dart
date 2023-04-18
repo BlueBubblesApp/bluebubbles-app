@@ -316,7 +316,7 @@ class Message {
 
   String get groupEventText {
     String text = "Unknown group event";
-    String name = handle?.displayName ?? ss.settings.userName.value;
+    String name = handle?.displayName ?? 'You';
 
     String? other = "someone";
     if (otherHandle != null && isParticipantEvent) {

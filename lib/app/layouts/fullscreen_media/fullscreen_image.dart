@@ -280,7 +280,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      (message?.isFromMe ?? false) ? ss.settings.userName.value : message?.handle?.displayName ?? "Unknown",
+                                      (message?.isFromMe ?? false) ? 'You' : message?.handle?.displayName ?? "Unknown",
                                       style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white)
                                     ),
                                     if (message?.dateCreated != null)

@@ -52,7 +52,7 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
                       const TextSpan(text: "Replying to "),
                     if (reply != null)
                       TextSpan(
-                        text: message!.handle?.displayName ?? ss.settings.userName.value,
+                        text: message!.handle?.displayName ?? 'You',
                         style: context.textTheme.bodyMedium!.copyWith(fontWeight: iOS ? FontWeight.bold : FontWeight.w400),
                       ),
                     if (date != null)
