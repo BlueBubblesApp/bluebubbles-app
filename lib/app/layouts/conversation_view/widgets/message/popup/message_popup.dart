@@ -980,9 +980,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     }
   }
 
-  void unsend() {
-    http.unsend(message.guid!, partIndex: part.part);
+  void unsend() async {
     popDetails();
+    final response = await http.unsend(message.guid!, partIndex: part.part);
+    if (response.statusCode == 200) {
+      final updatedMessage = Message.fromMap(response.data['data']);
+      ah.handleUpdatedMessage(chat, updatedMessage, null);
+    }
   }
 
   void edit() async {
