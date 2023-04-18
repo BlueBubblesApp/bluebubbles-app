@@ -405,7 +405,7 @@ class Settings {
     ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().slice(0, Platform.isWindows ? 5 : 3).toList();
+    ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
     ss.settings.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
@@ -526,7 +526,7 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().slice(0, Platform.isWindows ? 5 : 3).toList();
+    s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
     s.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     s.windowEffect.value = (kIsDesktop && Platform.isWindows) ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled : WindowEffect.disabled;
     s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
