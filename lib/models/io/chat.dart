@@ -644,7 +644,7 @@ class Chat {
       hasUnreadMessage = hasUnread;
       save(updateHasUnreadMessage: true);
     }
-    if (cm.isChatActive(guid) && hasUnread) {
+    if (cm.isChatActive(guid) && hasUnread && !force) {
       hasUnread = false;
       clearLocalNotifications = false;
     }
