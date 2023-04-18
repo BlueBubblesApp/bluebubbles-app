@@ -244,17 +244,17 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
               opacity: showOverlay ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 125),
               child: Container(
-                height: kIsDesktop ? 50 : 100.0,
+                height: kIsDesktop ? 80 : 100.0,
                 width: ns.width(context),
                 color: context.theme.colorScheme.shadow.withOpacity(samsung ? 1 : 0.65),
                 child: SafeArea(
                   left: false,
                   right: false,
                   bottom: false,
-                  child: Container(
-                    height: 50,
+                  child: SizedBox(
+                    height: kIsDesktop ? 80 : 50,
                     child: Row(
-                      mainAxisAlignment: kIsDesktop ? MainAxisAlignment.end : MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -264,7 +264,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
                               child: CupertinoButton(
                                 padding: const EdgeInsets.symmetric(horizontal: 5),
                                 onPressed: () async {
-                                  Navigator.pop(context);
+                                  Navigator.of(context).pop();
                                 },
                                 child: const Icon(
                                   Icons.close,
@@ -280,7 +280,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      (message?.isFromMe ?? false) ? ss.settings.userName.value : message?.handle?.displayName ?? "Unknown",
+                                      (message?.isFromMe ?? false) ? 'You' : message?.handle?.displayName ?? "Unknown",
                                       style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white)
                                     ),
                                     if (message?.dateCreated != null)
