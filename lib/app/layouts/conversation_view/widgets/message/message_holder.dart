@@ -152,7 +152,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
           );
         }
       );
-      await http.edit(message.guid!, newEdit, "Edited to: “$newEdit”", partIndex: part);
+      final response = await http.edit(message.guid!, newEdit, "Edited to: “$newEdit”", partIndex: part);
+      if (response.statusCode == 200) {
+        final updatedMessage = Message.fromMap(response.data['data']);
+        ah.handleUpdatedMessage(chat, updatedMessage, null);
+      }
       if (kIsDesktop) {
         Get.close(1);
       } else {

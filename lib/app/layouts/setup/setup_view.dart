@@ -12,6 +12,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -84,7 +85,7 @@ class _SetupViewState extends OptimizedState<SetupView> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: kIsDesktop ? Colors.transparent : context.theme.colorScheme.background,
+        backgroundColor: ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background,
         body: SafeArea(
           child: Column(
             children: <Widget>[

@@ -73,7 +73,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
               child: Text.rich(
                 TextSpan(children: [
                   TextSpan(
-                    text: message.handle?.displayName ?? ss.settings.userName.value,
+                    text: message.handle?.displayName ?? 'You',
                     style: context.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.w400, color: context.theme.colorScheme.outline),
                   ),
                   const TextSpan(text: "\n"),
