@@ -204,6 +204,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       if (existingChat != null) {
         await cm.setActiveChat(existingChat, clearNotifications: false);
         cm.activeChat!.controller = cvc(existingChat);
+        cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
         fakeController.value = cm.activeChat!.controller;
       } else {
         await cm.setAllInactive();
@@ -655,10 +656,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             if (fakeController.value == null) {
                               await cm.setActiveChat(chat, clearNotifications: false);
                               cm.activeChat!.controller = cvc(chat);
+                              cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
                               fakeController.value = cm.activeChat!.controller;
                             }
                             await fakeController.value!.send(
-                              widget.initialAttachments,
+                              fakeController.value!.pickedAttachments,
                               textController.text,
                               subjectController.text,
                               fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ?? fakeController.value!.replyToMessage?.item1.guid,

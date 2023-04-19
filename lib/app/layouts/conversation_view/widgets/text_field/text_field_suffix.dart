@@ -24,6 +24,7 @@ class TextFieldSuffix extends StatefulWidget {
     required this.controller,
     required this.recorderController,
     required this.sendMessage,
+    this.isChatCreator = false,
   }) : super(key: key);
 
   final TextEditingController subjectTextController;
@@ -31,6 +32,7 @@ class TextFieldSuffix extends StatefulWidget {
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
+  final bool isChatCreator;
 
   @override
   OptimizedState createState() => _TextFieldSuffixState();
@@ -38,7 +40,7 @@ class TextFieldSuffix extends StatefulWidget {
 
 class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
 
-  bool get isChatCreator => widget.controller == null;
+  bool get isChatCreator => widget.isChatCreator;
 
   void deleteAudioRecording(String path) {
     File(path).delete();

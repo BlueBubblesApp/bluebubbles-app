@@ -761,7 +761,7 @@ class TextFieldComponent extends StatelessWidget {
 
   Chat? get chat => controller?.chat;
 
-  bool get isChatCreator => controller == null;
+  bool get isChatCreator => focusNode != null;
 
   @override
   Widget build(BuildContext context) {
@@ -898,6 +898,7 @@ class TextFieldComponent extends StatelessWidget {
                               controller: controller,
                               recorderController: recorderController,
                               sendMessage: sendMessage,
+                              isChatCreator: isChatCreator,
                             ),
                           ),
                   ),
