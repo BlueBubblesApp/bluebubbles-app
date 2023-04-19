@@ -97,7 +97,7 @@ class SettingsService extends GetxService {
     if (refresh) {
       final response = await http.serverInfo();
       if (response.statusCode == 200) {
-        if (ss.settings.iCloudAccount.isEmpty) {
+        if (ss.settings.iCloudAccount.isEmpty && response.data['data']['detected_icloud'] is String) {
           ss.settings.iCloudAccount.value = response.data['data']['detected_icloud'];
           ss.settings.save();
         }
@@ -107,10 +107,10 @@ class SettingsService extends GetxService {
         final serverVersion = response.data['data']['server_version'];
         final code = Version.parse(serverVersion ?? "0.0.0");
         final versionCode = code.major * 100 + code.minor * 21 + code.patch;
-        if (version != null) prefs.setInt("macos-version", version);
-        if (minorVersion != null) prefs.setInt("macos-minor-version", minorVersion);
-        if (serverVersion != null) prefs.setString("server-version", serverVersion);
-        prefs.setInt("server-version-code", versionCode);
+        if (version != null) await prefs.setInt("macos-version", version);
+        if (minorVersion != null) await prefs.setInt("macos-minor-version", minorVersion);
+        if (serverVersion != null) await prefs.setString("server-version", serverVersion);
+        await prefs.setInt("server-version-code", versionCode);
         return Tuple4(version ?? 11, minorVersion ?? 0, serverVersion, versionCode);
       } else {
         return const Tuple4(11, 0, "0.0.0", 0);
@@ -183,8 +183,8 @@ class SettingsService extends GetxService {
           actions: [
             TextButton(
               child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-              onPressed: () {
-                prefs.setString("server-update-check", metadata['version']);
+              onPressed: () async {
+                await prefs.setString("server-update-check", metadata['version']);
                 Navigator.of(context).pop();
               },
             ),
@@ -233,8 +233,8 @@ class SettingsService extends GetxService {
             ),
           TextButton(
             child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-            onPressed: () {
-              prefs.setString("client-update-check", code);
+            onPressed: () async {
+              await prefs.setString("client-update-check", code);
               Navigator.of(context).pop();
             },
           ),
