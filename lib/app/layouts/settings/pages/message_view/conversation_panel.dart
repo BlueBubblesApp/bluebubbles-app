@@ -94,8 +94,8 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         saveSettings();
                       },
                       initialVal: ss.settings.smartReply.value,
-                      title: "Show Smart Replies",
-                      subtitle: "Shows smart reply suggestions above the message text field",
+                      title: "Smart Suggestions",
+                      subtitle: "Shows smart reply suggestions above the message text field and detects various interactive content in message text",
                       backgroundColor: tileColor,
                       isThreeLine: true,
                     )),
