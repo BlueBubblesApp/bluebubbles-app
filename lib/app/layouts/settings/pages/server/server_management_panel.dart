@@ -515,6 +515,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           final date = await showTimeframePicker("How Far Back?", context, showHourPicker: false);
                           if (date == null) return;
                           try {
+                            sync.isIncrementalSyncing.value = true;
                             manager = IncrementalSyncManager(startTimestamp: date.millisecondsSinceEpoch);
                             showDialog(
                               context: context,
@@ -524,6 +525,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           } catch (_) {}
                           Get.back();
                           manager = null;
+                          sync.isIncrementalSyncing.value = false;
                         }
                       }),
                     ),
