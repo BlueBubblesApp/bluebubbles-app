@@ -160,6 +160,11 @@ dependency_overrides:
       url: https://github.com/BlueBubblesApp/flutter-geolocator.git
       ref: no_windows_streams
       path: geolocator_windows
+  geolocator_linux:
+    git:
+      url: https://github.com/BlueBubblesApp/flutter-geolocator.git
+      path: geolocator_linux
+      ref: no_windows_streams
   permission_handler_windows:
     git:
       url: https://github.com/BlueBubblesApp/flutter-permission-handler.git
