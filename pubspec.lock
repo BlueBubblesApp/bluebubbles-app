@@ -968,10 +968,11 @@ packages:
   geolocator:
     dependency: "direct main"
     description:
-      name: geolocator
-      sha256: "5c23f3613f50586c0bbb2b8f970240ae66b3bd992088cf60dd5ee2e6f7dde3a8"
-      url: "https://pub.dev"
-    source: hosted
+      path: geolocator
+      ref: no_windows_streams
+      resolved-ref: "223195b3746686790ca188deac6260d901d30c51"
+      url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
+    source: git
     version: "9.0.2"
   geolocator_android:
     dependency: transitive
@@ -990,7 +991,7 @@ packages:
     source: hosted
     version: "2.2.5"
   geolocator_linux:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       path: geolocator_linux
       ref: no_windows_streams
@@ -1015,7 +1016,7 @@ packages:
     source: hosted
     version: "2.1.6"
   geolocator_windows:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       path: geolocator_windows
       ref: no_windows_streams
