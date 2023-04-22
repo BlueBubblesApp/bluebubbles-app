@@ -646,7 +646,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         }
                       }
                     }),
-              if (kIsDesktop && Platform.isWindows)
+              if (kIsDesktop)
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
                   onPressed: () async {
