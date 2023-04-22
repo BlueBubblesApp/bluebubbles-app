@@ -957,6 +957,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.0"
+  geoclue:
+    dependency: transitive
+    description:
+      name: geoclue
+      sha256: c2a998c77474fc57aa00c6baa2928e58f4b267649057a1c76738656e9dbd2a7f
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   geolocator:
     dependency: "direct main"
     description:
@@ -981,6 +989,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.5"
+  geolocator_linux:
+    dependency: "direct overridden"
+    description:
+      path: geolocator_linux
+      ref: no_windows_streams
+      resolved-ref: "223195b3746686790ca188deac6260d901d30c51"
+      url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
+    source: git
+    version: "0.1.2"
   geolocator_platform_interface:
     dependency: transitive
     description:
@@ -1206,6 +1223,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  gsettings:
+    dependency: transitive
+    description:
+      name: gsettings
+      sha256: fe90d719e09a6f36607021047e642068a0c98839d9633db00b91633420ae8b0d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.7"
   hand_signature:
     dependency: "direct main"
     description:
