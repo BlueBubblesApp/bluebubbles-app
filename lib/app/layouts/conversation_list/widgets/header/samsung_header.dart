@@ -34,7 +34,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
       if (ns.isAvatarOnly(context)) {
         return SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(10.0).add(const EdgeInsets.only(top: 30)),
             child: Material(
               color: Colors.transparent,
               shape: const CircleBorder(),

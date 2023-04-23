@@ -84,7 +84,7 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
           ),
           duration: const Duration(milliseconds: 100),
           child: ns.isAvatarOnly(context) ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0).add(const EdgeInsets.only(right: 15)),
+            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
             child: Center(child: leading),
           ) : child,
         ),

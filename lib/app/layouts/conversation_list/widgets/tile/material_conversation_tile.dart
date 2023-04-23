@@ -18,7 +18,9 @@ class MaterialConversationTile extends CustomStateful<ConversationTileController
 
 class _MaterialConversationTileState extends CustomState<MaterialConversationTile, void, ConversationTileController> {
   bool get shouldPartialHighlight => controller.shouldPartialHighlight.value;
+
   bool get shouldHighlight => controller.shouldHighlight.value;
+
   bool get hoverHighlight => controller.hoverHighlight.value;
 
   late bool unread = controller.chat.hasUnreadMessage ?? false;
@@ -91,28 +93,28 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
           visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
           minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
           title: Obx(() => ChatTitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodyMedium!
-                  .copyWith(
-                    fontWeight: controller.shouldHighlight.value
-                        ? FontWeight.w600
-                        : unread
-                        ? FontWeight.bold
-                        : null,
-                  )
-                  .apply(fontSizeFactor: 1.1),
-            )),
+                parentController: controller,
+                style: context.theme.textTheme.bodyMedium!
+                    .copyWith(
+                      fontWeight: controller.shouldHighlight.value
+                          ? FontWeight.w600
+                          : unread
+                              ? FontWeight.bold
+                              : null,
+                    )
+                    .apply(fontSizeFactor: 1.1),
+              )),
           subtitle: controller.subtitle ??
               Obx(() => ChatSubtitle(
-                  parentController: controller,
-                  style: context.theme.textTheme.bodySmall!
-                      .copyWith(
-                        fontWeight: unread ? FontWeight.bold : null,
-                        color: controller.shouldHighlight.value || unread ? context.textTheme.bodyMedium!.color : context.theme.colorScheme.outline,
-                        height: 1.5,
-                      )
-                      .apply(fontSizeFactor: 1.05),
-                )),
+                    parentController: controller,
+                    style: context.theme.textTheme.bodySmall!
+                        .copyWith(
+                          fontWeight: unread ? FontWeight.bold : null,
+                          color: controller.shouldHighlight.value || unread ? context.textTheme.bodyMedium!.color : context.theme.colorScheme.outline,
+                          height: 1.5,
+                        )
+                        .apply(fontSizeFactor: 1.05),
+                  )),
           contentPadding: const EdgeInsets.only(left: 6, right: 16),
           leading: leading,
           trailing: MaterialTrailing(parentController: controller),
@@ -120,36 +122,36 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
       ),
     );
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 10),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => controller.onTap(context),
+      onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
       child: Obx(() {
         ns.listener.value;
-        return GestureDetector(
-          onTap: () => controller.onTap(context),
-          onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
-          child: AnimatedContainer(
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                bottomLeft: Radius.circular(20),
-              ),
-              color: controller.isSelected
-                  ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
-                  : shouldPartialHighlight
-                  ? context.theme.colorScheme.properSurface
-                  : shouldHighlight
-                  ? context.theme.colorScheme.primaryContainer
-                  : hoverHighlight
-                  ? context.theme.colorScheme.properSurface.withOpacity(0.5)
-                  : null,
+        return AnimatedContainer(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              bottomLeft: Radius.circular(20),
             ),
-            duration: const Duration(milliseconds: 100),
-            child: ns.isAvatarOnly(context) ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0).add(const EdgeInsets.only(right: 15)),
-              child: Center(child: leading),
-            ) : child,
+            color: controller.isSelected
+                ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
+                : shouldPartialHighlight
+                    ? context.theme.colorScheme.properSurface
+                    : shouldHighlight
+                        ? context.theme.colorScheme.primaryContainer
+                        : hoverHighlight
+                            ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                            : null,
           ),
+          duration: const Duration(milliseconds: 100),
+          child: ns.isAvatarOnly(context)
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                  child: Center(child: leading),
+                )
+              : child,
         );
       }),
     );
@@ -335,10 +337,10 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
               const SizedBox(width: 5),
               if (muteType == "mute")
                 Obx(() => Icon(
-                  Icons.notifications_off_outlined,
-                  color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.primary : context.theme.colorScheme.outline,
-                  size: 15,
-                )),
+                      Icons.notifications_off_outlined,
+                      color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.primary : context.theme.colorScheme.outline,
+                      size: 15,
+                    )),
             ],
           ),
         ],
