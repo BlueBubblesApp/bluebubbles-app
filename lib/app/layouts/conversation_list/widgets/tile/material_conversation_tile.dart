@@ -129,6 +129,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
       child: Obx(() {
         ns.listener.value;
         return AnimatedContainer(
+          padding: const EdgeInsets.only(left: 10),
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.only(
