@@ -95,13 +95,13 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       doWhenWindowReady(() async {
         await windowManager.show();
         Tuple2<String, String>? widAndName = (await (await Process.start('wmctrl', ['-pl']))
-            .stdout
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())
-            .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
-            .map((split) => split[2] == "$pid" ? Tuple2(split.first, split.last) : null)
-            .where((tuple) => tuple != null)
-            .toList())
+                .stdout
+                .transform(utf8.decoder)
+                .transform(const LineSplitter())
+                .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
+                .map((split) => split[2] == "$pid" ? Tuple2(split.first, split.last) : null)
+                .where((tuple) => tuple != null)
+                .toList())
             .lastOrNull;
         if (widAndName != null) {
           debugPrint("Bringing Window ${widAndName.item1} to foreground");
@@ -498,8 +498,8 @@ class BadCertOverride extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-    // If there is a bad certificate callback, override it if the host is part of
-    // your server URL
+      // If there is a bad certificate callback, override it if the host is part of
+      // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
         hasBadCert = serverUrl.contains(host);
@@ -628,8 +628,8 @@ class Main extends StatelessWidget {
                           isAuthing = true;
                           localAuth
                               .authenticate(
-                              localizedReason: 'Please authenticate to unlock BlueBubbles',
-                              options: const AuthenticationOptions(stickyAuth: true))
+                                  localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                  options: const AuthenticationOptions(stickyAuth: true))
                               .then((result) {
                             isAuthing = false;
                             if (result) {
@@ -663,7 +663,7 @@ class Main extends StatelessWidget {
                                     color: context.theme.colorScheme.primary, // button color
                                     child: InkWell(
                                       child:
-                                      SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                          SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
                                       onTap: () async {
                                         final localAuth = LocalAuthentication();
                                         bool didAuthenticate = await localAuth.authenticate(
@@ -757,8 +757,23 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           /* ----- CONTACT IMAGE CACHE DELETION ----- */
           Directory temp = Directory(join(fs.appDocDir.path, "temp"));
           if (await temp.exists()) await temp.delete(recursive: true);
-          /* ----- BADGE ICON DELETION ----- */
+          /* ----- BADGE ICON LISTENER ----- */
           await WindowsTaskbar.resetOverlayIcon();
+          int count = 0;
+          final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
+          unreadQuery.listen((Query<Chat> query) async {
+            int c = query.count();
+            if (count != c) {
+              count = c;
+              if (count == 0) {
+                await WindowsTaskbar.resetOverlayIcon();
+              } else if (count <= 9) {
+                await WindowsTaskbar.setOverlayIcon(ThumbnailToolbarAssetIcon('assets/badges/badge-$count.ico'));
+              } else {
+                await WindowsTaskbar.setOverlayIcon(ThumbnailToolbarAssetIcon('assets/badges/badge-10.ico'));
+              }
+            }
+          });
         }
 
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
@@ -918,30 +933,30 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           GoBackIntent: GoBackAction(context),
         },
         child: Obx(() => Scaffold(
-          backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
-          body: Builder(
-            builder: (BuildContext context) {
-              if (ss.settings.finishedSetup.value) {
-                Logger.startup.value = false;
-                if (!serverCompatible && kIsWeb) {
-                  return const FailureToStart(
-                    otherTitle: "Server version too low, please upgrade!",
-                    e: "Required Server Version: v0.2.0",
-                  );
-                }
-                return ConversationList(
-                  showArchivedChats: false,
-                  showUnknownSenders: false,
-                );
-              } else {
-                return WillPopScope(
-                  onWillPop: () async => false,
-                  child: TitleBarWrapper(child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
-                );
-              }
-            },
-          ),
-        )),
+              backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
+              body: Builder(
+                builder: (BuildContext context) {
+                  if (ss.settings.finishedSetup.value) {
+                    Logger.startup.value = false;
+                    if (!serverCompatible && kIsWeb) {
+                      return const FailureToStart(
+                        otherTitle: "Server version too low, please upgrade!",
+                        e: "Required Server Version: v0.2.0",
+                      );
+                    }
+                    return ConversationList(
+                      showArchivedChats: false,
+                      showUnknownSenders: false,
+                    );
+                  } else {
+                    return WillPopScope(
+                      onWillPop: () async => false,
+                      child: TitleBarWrapper(child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
+                    );
+                  }
+                },
+              ),
+            )),
       ),
     );
   }
@@ -1003,14 +1018,14 @@ Future<void> initSystemTray() async {
 }
 
 void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) async {
-  if (element is Directory) {
-    Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-    newDirectory.createSync();
-    Logger.info("Created new directory ${basename(element.path)}");
+      if (element is Directory) {
+        Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
+        newDirectory.createSync();
+        Logger.info("Created new directory ${basename(element.path)}");
 
-    copyDirectory(element.absolute, newDirectory);
-  } else if (element is File) {
-    element.copySync(join(destination.path, basename(element.path)));
-    Logger.info("Created file ${basename(element.path)}");
-  }
-});
+        copyDirectory(element.absolute, newDirectory);
+      } else if (element is File) {
+        element.copySync(join(destination.path, basename(element.path)));
+        Logger.info("Created file ${basename(element.path)}");
+      }
+    });
