@@ -132,6 +132,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         });
       }
       setState(() {});
+      if (widget.initialSelected.isNotEmpty) {
+        findExistingChat();
+      }
     });
   }
 
