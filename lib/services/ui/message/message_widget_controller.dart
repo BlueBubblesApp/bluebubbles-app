@@ -56,6 +56,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
           if (_message.hasAttachments) {
             _message.attachments = List<Attachment>.from(_message.dbAttachments);
           }
+          _message.associatedMessages = message.associatedMessages;
           _message.handle = _message.getHandle();
           updateMessage(_message);
         }
