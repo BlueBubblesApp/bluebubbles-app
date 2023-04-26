@@ -59,18 +59,8 @@ IDI_APP_ICON            ICON                    "resources\\app_icon.ico"
 //
 // Version
 //
-
-#ifdef FLUTTER_BUILD_NUMBER
-#define VERSION_AS_NUMBER FLUTTER_BUILD_NUMBER
-#else
 #define VERSION_AS_NUMBER 1,12,2,0
-#endif
-
-#ifdef FLUTTER_BUILD_NAME
-#define VERSION_AS_STRING #FLUTTER_BUILD_NAME
-#else
 #define VERSION_AS_STRING "1.12.2.0"
-#endif
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION VERSION_AS_NUMBER
@@ -93,7 +83,7 @@ BEGIN
             VALUE "FileDescription", "BlueBubbles" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "bluebubbles" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2022 BlueBubbles. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 BlueBubbles. All rights reserved." "\0"
             VALUE "OriginalFilename", "bluebubbles.exe" "\0"
             VALUE "ProductName", "bluebubbles" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

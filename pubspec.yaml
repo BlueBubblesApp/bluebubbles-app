@@ -24,6 +24,7 @@ dependencies:
   adaptive_theme: ^3.2.0
   animated_size_and_fade: ^3.0.1
   animations: ^2.0.7
+  app_links: ^3.4.2
   async_task: ^1.0.20
   audio_waveforms: ^1.0.3
   auto_size_text: ^3.0.0
@@ -284,3 +285,4 @@ msix_config:
   languages: en-us
   architecture: x64
   capabilities: internetClient, location, microphone, webcam
+  protocol_activation: imessage
