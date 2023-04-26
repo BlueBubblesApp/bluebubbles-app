@@ -99,14 +99,12 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
           child: Scaffold(
             appBar: !iOS ? null : AppBar(
               leading: XGestureDetector(
-                onTap: (details) {
-                  if (!kIsDesktop) return;
+                onTap: !kIsDesktop ? null : (details) {
                   Navigator.of(context).pop();
                 },
                 child: TextButton(
                   child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                  onPressed: () {
-                    if (kIsDesktop) return;
+                  onPressed: kIsDesktop ? null : () {
                     Navigator.of(context).pop();
                   },
                 ),
