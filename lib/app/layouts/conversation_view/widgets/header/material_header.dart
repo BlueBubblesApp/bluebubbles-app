@@ -166,7 +166,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   },
                 );
               } else if (value == 3) {
-                showBookmarksThread(controller);
+                showBookmarksThread(controller, context);
               }
             },
             itemBuilder: (context) {
