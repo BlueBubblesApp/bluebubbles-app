@@ -798,19 +798,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
       // only show these dialogs if setup is finished
       if (ss.settings.finishedSetup.value) {
-        if (ss.prefs.getBool('1.11.1-warning') == false && !kIsWeb) {
-          if (kIsDesktop) {
-            try {
-              final handleSyncer = HandleSyncManager();
-              await handleSyncer.start();
-              eventDispatcher.emit("refresh-all", null);
-              return;
-            } catch (ex, stacktrace) {
-              Logger.error("Failed to reset contacts!");
-              Logger.error(ex.toString());
-              Logger.error(stacktrace.toString());
-            }
-          }
+        if (ss.prefs.getBool('1.12.3-warning') != true && !kIsWeb) {
           bool needsMigration = false;
 
           try {
@@ -864,8 +852,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         }
       }
 
-      if (ss.prefs.getBool('1.11.1-warning') != true) {
-        await ss.prefs.setBool('1.11.1-warning', true);
+      if (ss.prefs.getBool('1.12.3-warning') != true) {
+        await ss.prefs.setBool('1.12.3-warning', true);
       }
 
       if (!ss.settings.finishedSetup.value) {
