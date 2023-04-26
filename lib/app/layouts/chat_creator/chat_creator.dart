@@ -136,6 +136,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         findExistingChat();
       }
     });
+
+    if (widget.initialSelected.isNotEmpty) messageNode.requestFocus();
   }
 
   void addSelected(SelectedContact c) {
@@ -259,7 +261,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             scrolledUnderElevation: 3,
             surfaceTintColor: context.theme.colorScheme.primary,
             leading: buildBackButton(context),
-            backgroundColor: context.theme.colorScheme.background,
+            backgroundColor: Colors.transparent,
             centerTitle: ss.settings.skin.value == Skins.iOS,
             title: Text(
               "New Conversation",
@@ -484,9 +486,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                           : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      CustomScrollView(
+                  child: Obx(() {
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 150),
+                      child: fakeController.value == null
+                          ? CustomScrollView(
                         shrinkWrap: true,
                         physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                             ? const NeverScrollableScrollPhysics()
@@ -522,9 +526,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     addSelectedList(chat.participants
                                         .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
                                         .map((e) => SelectedContact(
-                                              displayName: e.displayName,
-                                              address: e.address,
-                                            )));
+                                      displayName: e.displayName,
+                                      address: e.address,
+                                    )));
                                   },
                                   child: ChatCreatorTile(
                                     key: ValueKey(chat.guid),
@@ -587,22 +591,15 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             ),
                           ),
                         ],
-                      ),
-                      Obx(() {
-                        return AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 150),
-                          child: fakeController.value == null
-                              ? const SizedBox.shrink()
-                              : Container(
-                                  color: context.theme.colorScheme.background,
-                                  child: MessagesView(
-                                    controller: fakeController.value!,
-                                  ),
-                                ),
-                        );
-                      }),
-                    ],
-                  ),
+                      )
+                          : Container(
+                              color: Colors.transparent,
+                              child: MessagesView(
+                                controller: fakeController.value!,
+                              ),
+                            ),
+                    );
+                  }),
                 ),
               ),
               Padding(
@@ -787,5 +784,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    cm.setAllInactiveSync();
   }
 }

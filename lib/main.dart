@@ -760,6 +760,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           /* ----- CONTACT IMAGE CACHE DELETION ----- */
           Directory temp = Directory(join(fs.appDocDir.path, "temp"));
           if (await temp.exists()) await temp.delete(recursive: true);
+
           /* ----- BADGE ICON LISTENER ----- */
           await WindowsTaskbar.resetOverlayIcon();
           int count = 0;
@@ -777,16 +778,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
               }
             }
           });
-        }
 
-        /* ----- SYSTEM TRAY INITIALIZATION ----- */
-        await initSystemTray();
-
-        /* ----- WINDOWS NOTIFICATIONS INITIALIZATION ----- */
-        await localNotifier.setup(appName: "BlueBubbles");
-
-        /* ----- WINDOW EFFECT INITIALIZATION ----- */
-        if (Platform.isWindows) {
+          /* ----- WINDOW EFFECT INITIALIZATION ----- */
           await WindowEffects.setEffect(color: context.theme.colorScheme.background);
 
           eventDispatcher.stream.listen((event) async {
@@ -795,6 +788,12 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
             }
           });
         }
+
+        /* ----- SYSTEM TRAY INITIALIZATION ----- */
+        await initSystemTray();
+
+        /* ----- NOTIFICATIONS INITIALIZATION ----- */
+        await localNotifier.setup(appName: "BlueBubbles");
       }
 
       // only show these dialogs if setup is finished
