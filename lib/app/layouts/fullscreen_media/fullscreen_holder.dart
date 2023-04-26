@@ -104,7 +104,8 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                 },
                 child: TextButton(
                   child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                  onPressed: kIsDesktop ? null : () {
+                  onPressed: () {
+                    if (kIsDesktop) return;
                     Navigator.of(context).pop();
                   },
                 ),
