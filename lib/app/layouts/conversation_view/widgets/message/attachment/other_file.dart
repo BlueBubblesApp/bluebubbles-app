@@ -31,7 +31,7 @@ class OtherFile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () async {
-        if (attachment.mimeStart == "image" || (attachment.mimeStart == "video" && !kIsDesktop)) {
+        if (attachment.mimeStart == "image" || attachment.mimeStart == "video") {
           Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (context) => FullscreenMediaHolder(

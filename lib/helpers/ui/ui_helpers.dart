@@ -673,3 +673,12 @@ AlertDialog areYouSure(BuildContext context, {
     ],
   );
 }
+
+extension VideoAspectRatio on VideoController {
+  double get aspectRatio {
+    Rect? _rect = rect.value;
+    if (_rect == null || _rect.height == 0 || _rect.width == 0) return 1;
+
+    return _rect.width / _rect.height;
+  }
+}
