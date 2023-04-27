@@ -414,7 +414,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                 final content = base64.encode(bytes);
                                 html.AnchorElement(
                                     href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-                                  ..setAttribute("download", filePath.split("/").last)
+                                  ..setAttribute("download", basename(filePath))
                                   ..click();
                                 return;
                               }
@@ -836,7 +836,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               final content = base64.encode(bytes);
                               html.AnchorElement(
                                   href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-                                ..setAttribute("download", filePath.split("/").last)
+                                ..setAttribute("download", basename(filePath))
                                 ..click();
                               return;
                             }

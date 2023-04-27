@@ -27,6 +27,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' hide context;
 import 'package:sprung/sprung.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -655,7 +656,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       dynamic content;
       if (isEmbeddedMedia) {
         content = PlatformFile(
-          name: message.interactiveMediaPath!.split("/").last,
+          name: basename(message.interactiveMediaPath!),
           path: message.interactiveMediaPath,
           size: 0,
         );

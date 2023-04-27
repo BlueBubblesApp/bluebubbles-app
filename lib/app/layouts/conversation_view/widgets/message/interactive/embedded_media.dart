@@ -8,6 +8,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
@@ -42,7 +43,7 @@ class _EmbeddedMediaState extends CustomState<EmbeddedMedia, void, MessageWidget
     if (await File(path).exists()) {
       final bytes = await File(path).readAsBytes();
       content = PlatformFile(
-        name: path.split("/").last,
+        name: basename(path),
         path: path,
         size: bytes.length,
         bytes: bytes,
@@ -59,7 +60,7 @@ class _EmbeddedMediaState extends CustomState<EmbeddedMedia, void, MessageWidget
         await File(path).create(recursive: true);
         await File(path).writeAsBytes(response.data);
         content = PlatformFile(
-          name: path.split("/").last,
+          name: basename(path),
           path: path,
           size: response.data.length,
           bytes: response.data,

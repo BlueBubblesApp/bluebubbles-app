@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
@@ -29,6 +30,7 @@ import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
+import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
@@ -125,7 +127,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       if (!currentPicked.contains(s) && await file.exists()) {
         final bytes = await file.readAsBytes();
         controller.pickedAttachments.add(PlatformFile(
-          name: file.path.split("/").last,
+          name: basename(file.path),
           bytes: bytes,
           size: bytes.length,
           path: s,
