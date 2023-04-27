@@ -492,9 +492,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                       child: fakeController.value == null
                           ? CustomScrollView(
                         shrinkWrap: true,
-                        physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                            ? const NeverScrollableScrollPhysics()
-                            : ThemeSwitcher.getScrollPhysics(),
+                        physics: ThemeSwitcher.getScrollPhysics(),
                         slivers: <Widget>[
                           SliverList(
                             delegate: SliverChildBuilderDelegate((context, index) {
