@@ -39,9 +39,9 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final Map<String, Map<String, Uint8List>> stickerData = {};
   final Map<String, Metadata> legacyUrlPreviews = {};
   final Map<String, VideoPlayerController> videoPlayers = {};
-  final Map<String, Player> videoPlayersDesktop = {};
+  final Map<String, VideoController> videoPlayersDesktop = {};
   final Map<String, PlayerController> audioPlayers = {};
-  final Map<String, Tuple2<Player, Player>> audioPlayersDesktop = {};
+  final Map<String, Player> audioPlayersDesktop = {};
   final Map<String, List<EntityAnnotation>> mlKitParsedText = {};
 
   // message view items
@@ -147,16 +147,15 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     for (VideoPlayerController v in videoPlayers.values) {
       v.dispose();
     }
-    for (Player v in videoPlayersDesktop.values) {
+    for (VideoController v in videoPlayersDesktop.values) {
       v.dispose();
     }
     for (PlayerController a in audioPlayers.values) {
       a.pausePlayer();
       a.dispose();
     }
-    for (Tuple2<Player, Player> a in audioPlayersDesktop.values) {
-      a.item1.dispose();
-      a.item2.dispose();
+    for (Player a in audioPlayersDesktop.values) {
+      a.dispose();
     }
     scrollController.dispose();
     super.onClose();

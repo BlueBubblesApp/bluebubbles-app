@@ -1,6 +1,8 @@
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
@@ -61,6 +63,20 @@ PlayerStatus getControllerStatus(VideoPlayerController controller) {
   return PlayerStatus.NONE;
 }
 
+PlayerStatus getDesktopControllerStatus(Player controller) {
+  Duration currentPos = controller.state.position;
+  if (controller.state.completed) {
+    return PlayerStatus.ENDED;
+  }
+  if (!controller.state.playing && currentPos.inMilliseconds == 0) {
+    return PlayerStatus.STOPPED;
+  }
+  if (!controller.state.playing) {
+    return PlayerStatus.PAUSED;
+  }
+  return PlayerStatus.PLAYING;
+}
+
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
 
 bool chromeOS = false;
@@ -74,5 +90,36 @@ Iterable<T> intersperse<T>(T element, Iterable<T> iterable) sync* {
       yield element;
       yield iterator.current;
     }
+  }
+}
+
+String prettyDuration(Duration duration) {
+  var components = <String>[];
+
+  var days = duration.inDays;
+  if (days != 0) {
+    components.add('$days:');
+  }
+  var hours = duration.inHours % 24;
+  if (hours != 0) {
+    components.add('${hours < 10 ? '0' : ''}$hours:');
+  }
+  var minutes = duration.inMinutes % 60;
+  if (minutes != 0) {
+    components.add('${minutes < 10 ? '0' : ''}$minutes:');
+  }
+
+  var seconds = duration.inSeconds % 60;
+  if (components.isEmpty || seconds != 0) {
+    if (components.isEmpty) {
+      components.add('00:');
+    }
+    components.add('${seconds < 10 ? '0' : ''}$seconds');
+  }
+  var joined = components.join();
+  if (joined.characters.first == '0') {
+    return joined.substring(1);
+  } else {
+    return joined;
   }
 }

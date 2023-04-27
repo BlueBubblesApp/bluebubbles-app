@@ -9,7 +9,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_a
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
-import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -32,6 +31,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supercharged/supercharged.dart';
 import 'package:universal_io/io.dart';
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
@@ -680,27 +680,50 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                     : Builder(builder: (context) {
                                         final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
                                         final textFieldSize = box?.size ?? const Size(250, 35);
-                                        return AudioWaveforms(
-                                          size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
-                                          recorderController: recorderController!,
-                                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                                          waveStyle: const WaveStyle(
-                                            waveColor: Colors.white,
-                                            waveCap: StrokeCap.square,
-                                            spacing: 4.0,
-                                            showBottom: true,
-                                            extendWaveform: true,
-                                            showMiddleLine: false,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            border: Border.fromBorderSide(BorderSide(
-                                              color: context.theme.colorScheme.outline,
-                                              width: 1,
-                                            )),
-                                            borderRadius: BorderRadius.circular(20),
-                                            color: context.theme.colorScheme.properSurface,
-                                          ),
-                                        );
+                                        Duration start = DateTime.now().duration();
+                                        return kIsDesktop
+                                            ? StreamBuilder(
+                                                stream: Stream.periodic(const Duration(milliseconds: 100)),
+                                                builder: (context, snapshot) {
+                                                  Duration elapsed = DateTime.now().duration() - start;
+                                                  return Container(
+                                                    width: textFieldSize.width - (samsung ? 0 : 80),
+                                                    height: textFieldSize.height - 15,
+                                                    child: Center(child: AnimatedOpacity(
+                                                      duration: const Duration(seconds: 1),
+                                                      opacity: (elapsed.inMilliseconds ~/ 1200 % 2 + 0.5).clamp(0, 1),
+                                                      child: Text("Recording... (${prettyDuration(elapsed)})", style: context.textTheme.titleMedium),),),
+                                                    decoration: BoxDecoration(
+                                                      border: Border.fromBorderSide(BorderSide(
+                                                        color: context.theme.colorScheme.outline,
+                                                        width: 1,
+                                                      )),
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      color: context.theme.colorScheme.properSurface,
+                                                    ),
+                                                  );
+                                                })
+                                            : AudioWaveforms(
+                                                size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
+                                                recorderController: recorderController!,
+                                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                                                waveStyle: const WaveStyle(
+                                                  waveColor: Colors.white,
+                                                  waveCap: StrokeCap.square,
+                                                  spacing: 4.0,
+                                                  showBottom: true,
+                                                  extendWaveform: true,
+                                                  showMiddleLine: false,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  border: Border.fromBorderSide(BorderSide(
+                                                    color: context.theme.colorScheme.outline,
+                                                    width: 1,
+                                                  )),
+                                                  borderRadius: BorderRadius.circular(20),
+                                                  color: context.theme.colorScheme.properSurface,
+                                                ),
+                                              );
                                       }),
                               ))),
                     SendAnimation(parentController: controller),

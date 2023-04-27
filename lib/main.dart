@@ -392,8 +392,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
 
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
     if (kIsDesktop) {
-      /* ----- VLC INITIALIZATION ----- */
-      DartVLC.initialize();
+      /* ----- MEDIAKIT INITIALIZATION ----- */
+      MediaKit.ensureInitialized();
 
       /* ----- WINDOW INITIALIZATION ----- */
       await windowManager.ensureInitialized();
