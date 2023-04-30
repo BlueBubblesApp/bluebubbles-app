@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/intera
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/custom/custom_cupertino_alert_dialog.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
@@ -498,94 +499,93 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                           duration: const Duration(milliseconds: 250),
                           child: currentlySelectedReaction == "init"
                               ? const SizedBox(height: 80)
-                              : Material(
-                                  clipBehavior: Clip.antiAlias,
-                                  color: Colors.transparent,
-                                  elevation: !iOS ? 3 : 0,
-                                  shadowColor: context.theme.colorScheme.background,
-                                  borderRadius: BorderRadius.circular(20.0),
-                                  child: ClipPath(
-                                    clipper: ReactionPickerClipper(
-                                      messageSize: widget.size,
-                                      isFromMe: message.isFromMe!,
-                                    ),
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(5).add(const EdgeInsets.only(bottom: 15)),
-                                        color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).lightenOrDarken(iOS ? 0 : 10),
-                                        child: Column(
+                              : ClipShadowPath(
+                                shadow: iOS ? BoxShadow(
+                                  color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).lightenOrDarken(iOS ? 0 : 10)
+                                ) : BoxShadow(
+                                  color: context.theme.colorScheme.shadow,
+                                  blurRadius: 2,
+                                ),
+                                clipper: ReactionPickerClipper(
+                                  messageSize: widget.size,
+                                  isFromMe: message.isFromMe!,
+                                ),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5).add(const EdgeInsets.only(bottom: 15)),
+                                    color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).lightenOrDarken(iOS ? 0 : 10),
+                                    child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: List.generate(narrowScreen ? 2 : 1, (index) {
+                                          return Row(
                                             mainAxisSize: MainAxisSize.min,
-                                            children: List.generate(narrowScreen ? 2 : 1, (index) {
-                                              return Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                children: ReactionTypes.toList()
-                                                    .slice(narrowScreen && index == 1 ? 3 : 0, narrowScreen && index == 0 ? 3 : null)
-                                                    .map((e) {
-                                                  return Padding(
-                                                    padding: iOS ? const EdgeInsets.all(5.0) : const EdgeInsets.symmetric(horizontal: 5),
-                                                    child: Material(
-                                                      color: currentlySelectedReaction == e ? context.theme.colorScheme.primary : Colors.transparent,
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: ReactionTypes.toList()
+                                                .slice(narrowScreen && index == 1 ? 3 : 0, narrowScreen && index == 0 ? 3 : null)
+                                                .map((e) {
+                                              return Padding(
+                                                padding: iOS ? const EdgeInsets.all(5.0) : const EdgeInsets.symmetric(horizontal: 5),
+                                                child: Material(
+                                                  color: currentlySelectedReaction == e ? context.theme.colorScheme.primary : Colors.transparent,
+                                                  borderRadius: BorderRadius.circular(20),
+                                                  child: SizedBox(
+                                                    width: iOS ? 35 : null,
+                                                    height: iOS ? 35 : null,
+                                                    child: InkWell(
                                                       borderRadius: BorderRadius.circular(20),
-                                                      child: SizedBox(
-                                                        width: iOS ? 35 : null,
-                                                        height: iOS ? 35 : null,
-                                                        child: InkWell(
-                                                          borderRadius: BorderRadius.circular(20),
-                                                          onTap: () {
-                                                            if (currentlySelectedReaction == e) {
-                                                              currentlySelectedReaction = null;
-                                                            } else {
-                                                              currentlySelectedReaction = e;
-                                                            }
-                                                            setState(() {});
-                                                            HapticFeedback.lightImpact();
-                                                            widget.sendTapback(selfReaction == e ? "-$e" : e, part.part);
-                                                            popDetails();
-                                                          },
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets.all(6.5).add(EdgeInsets.only(right: e == "emphasize" ? 2.5 : 0)),
-                                                            child: iOS
-                                                                ? SvgPicture.asset(
-                                                                    'assets/reactions/$e-black.svg',
-                                                                    colorFilter: ColorFilter.mode(e == "love" && currentlySelectedReaction == e
-                                                                        ? Colors.pink
-                                                                        : (currentlySelectedReaction == e
-                                                                        ? context.theme.colorScheme.onPrimary
-                                                                        : context.theme.colorScheme.outline), BlendMode.srcIn),
-                                                                  )
-                                                                : Center(
-                                                                    child: Builder(builder: (context) {
-                                                                      final text = Text(
-                                                                        ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                                        style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
-                                                                        textAlign: TextAlign.center,
-                                                                      );
-                                                                      // rotate thumbs down to match iOS
-                                                                      if (e == "dislike") {
-                                                                        return Transform(
-                                                                          transform: Matrix4.identity()..rotateY(pi),
-                                                                          alignment: FractionalOffset.center,
-                                                                          child: text,
-                                                                        );
-                                                                      }
-                                                                      return text;
-                                                                    }),
-                                                                  ),
-                                                          ),
-                                                        ),
+                                                      onTap: () {
+                                                        if (currentlySelectedReaction == e) {
+                                                          currentlySelectedReaction = null;
+                                                        } else {
+                                                          currentlySelectedReaction = e;
+                                                        }
+                                                        setState(() {});
+                                                        HapticFeedback.lightImpact();
+                                                        widget.sendTapback(selfReaction == e ? "-$e" : e, part.part);
+                                                        popDetails();
+                                                      },
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets.all(6.5).add(EdgeInsets.only(right: e == "emphasize" ? 2.5 : 0)),
+                                                        child: iOS
+                                                            ? SvgPicture.asset(
+                                                                'assets/reactions/$e-black.svg',
+                                                                colorFilter: ColorFilter.mode(e == "love" && currentlySelectedReaction == e
+                                                                    ? Colors.pink
+                                                                    : (currentlySelectedReaction == e
+                                                                    ? context.theme.colorScheme.onPrimary
+                                                                    : context.theme.colorScheme.outline), BlendMode.srcIn),
+                                                              )
+                                                            : Center(
+                                                                child: Builder(builder: (context) {
+                                                                  final text = Text(
+                                                                    ReactionTypes.reactionToEmoji[e] ?? "X",
+                                                                    style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
+                                                                    textAlign: TextAlign.center,
+                                                                  );
+                                                                  // rotate thumbs down to match iOS
+                                                                  if (e == "dislike") {
+                                                                    return Transform(
+                                                                      transform: Matrix4.identity()..rotateY(pi),
+                                                                      alignment: FractionalOffset.center,
+                                                                      child: text,
+                                                                    );
+                                                                  }
+                                                                  return text;
+                                                                }),
+                                                              ),
                                                       ),
                                                     ),
-                                                  );
-                                                }).toList(),
+                                                  ),
+                                                ),
                                               );
-                                            })),
-                                      ),
-                                    ),
+                                            }).toList(),
+                                          );
+                                        })),
                                   ),
                                 ),
+                              ),
                         ),
                       ),
                     if (iOS)
