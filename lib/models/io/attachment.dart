@@ -223,7 +223,7 @@ class Attachment {
 
   String get directory => "$baseDirectory/$guid";
 
-  String get path => "$directory/$transferName";
+  String get path => Platform.isWindows ? "$directory/$transferName".replaceAll(RegExp(r'[<>:"/\|?*]'), "_") : "$directory/$transferName";
 
   String get convertedPath => "$path.jpg";
 
