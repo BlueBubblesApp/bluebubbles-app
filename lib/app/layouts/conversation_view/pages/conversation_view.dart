@@ -189,6 +189,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                                   alignment: Alignment.bottomCenter,
                                   child: GestureDetector(
                                     onPanUpdate: (details) {
+                                      if (!mounted) return;
                                       if (ss.settings.swipeToCloseKeyboard.value &&
                                           details.delta.dy > 0 &&
                                           controller.keyboardOpen) {

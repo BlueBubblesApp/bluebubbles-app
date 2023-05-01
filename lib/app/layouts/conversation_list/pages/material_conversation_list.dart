@@ -110,9 +110,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                 controller: controller.materialScrollController,
                 child: Obx(() => ListView.builder(
                   controller: controller.materialScrollController,
-                  physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                      ? const NeverScrollableScrollPhysics()
-                      : ThemeSwitcher.getScrollPhysics(),
+                  physics: ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (context, index) {
                     final chat = _chats[index];
                     return ListItem(chat: chat, controller: controller, update: () {

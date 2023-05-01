@@ -14,6 +14,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
+import 'package:path/path.dart';
+import 'package:record/record.dart';
 import 'package:universal_io/io.dart';
 
 class TextFieldSuffix extends StatefulWidget {
@@ -63,7 +65,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 150),
-              firstChild: kIsDesktop || kIsWeb ? const SizedBox(height: 32, width: 32) : TextButton(
+              firstChild: kIsWeb ? const SizedBox(height: 32, width: 32) : TextButton(
                 style: TextButton.styleFrom(
                   backgroundColor: !iOS || (iOS && !isChatCreator && !showRecording)
                       ? null
@@ -90,21 +92,41 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   if (widget.controller == null) return;
                   widget.controller!.showRecording.toggle();
                   if (widget.controller!.showRecording.value) {
+                    if (kIsDesktop) {
+                      File temp = File(join(fs.appDocDir.path, "temp", "recorder", widget.controller!.chat.guid.characters.where((c) => c.isAlphabetOnly).join(), "recording.m4a"));
+                      temp.createSync(recursive: true);
+                      await RecordPlatform.instance.start(bitRate: 320000, path: temp.path);
+                      return;
+                    }
                     await widget.recorderController!.record(
                       sampleRate: 44100,
                       bitRate: 320000,
                     );
                   } else {
-                    final path = await widget.recorderController!.stop();
-                    if (path == null) return;
-                    final _file = File(path);
-                    final file = PlatformFile(
-                      name: _file.path.split("/").last,
-                      path: _file.path,
-                      bytes: await _file.readAsBytes(),
-                      size: await _file.length(),
-                    );
-                    showDialog(
+                    late final String? path;
+                    late final PlatformFile file;
+                    if (kIsDesktop) {
+                      path = await RecordPlatform.instance.stop();
+                      if (path == null) return;
+                      final _file = File(path);
+                      file = PlatformFile(
+                        name: basename(_file.path),
+                        path: _file.path,
+                        bytes: await _file.readAsBytes(),
+                        size: await _file.length(),
+                      );
+                    } else {
+                      path = await widget.recorderController!.stop();
+                      if (path == null) return;
+                      final _file = File(path);
+                      file = PlatformFile(
+                        name: basename(_file.path),
+                        path: _file.path,
+                        bytes: await _file.readAsBytes(),
+                        size: await _file.length(),
+                      );
+                    }
+                    await showDialog(
                       context: context,
                       barrierDismissible: false,
                       builder: (BuildContext context) {

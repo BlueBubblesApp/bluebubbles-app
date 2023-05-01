@@ -14,6 +14,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/cupertino_conversation_list.dart';
@@ -76,7 +77,7 @@ class ConversationListController extends StatefulController {
 
     openNewChatCreator(context, existing: [
       PlatformFile(
-        name: file.path.split("/").last,
+        name: basename(file.path),
         path: file.path,
         bytes: await file.readAsBytes(),
         size: await file.length(),

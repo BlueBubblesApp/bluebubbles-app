@@ -26,8 +26,7 @@ class BackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return XGestureDetector(
-      onTap: (details) {
-        if (!kIsDesktop) return;
+      onTap: !kIsDesktop ? null : (details) {
         final result = onPressed?.call() ?? false;
         if (!result) {
           while (Get.isOverlaysOpen) {
@@ -42,8 +41,7 @@ class BackButton extends StatelessWidget {
               color: color ?? context.theme.colorScheme.primary,
             )),
         iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
-        onPressed: () {
-          if (kIsDesktop) return;
+        onPressed: kIsDesktop ? null : () {
           final result = onPressed?.call() ?? false;
           if (!result) {
             while (Get.isOverlaysOpen) {
@@ -64,8 +62,7 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
         padding: padding,
         width: 25,
         child: XGestureDetector(
-          onTap: (details) {
-            if (!kIsDesktop) return;
+          onTap: !kIsDesktop ? null : (details) {
             final result = callback?.call() ?? true;
             if (result) {
               while (Get.isOverlaysOpen) {
@@ -675,4 +672,13 @@ AlertDialog areYouSure(BuildContext context, {
       ),
     ],
   );
+}
+
+extension VideoAspectRatio on VideoController {
+  double get aspectRatio {
+    Rect? _rect = rect.value;
+    if (_rect == null || _rect.height == 0 || _rect.width == 0) return 1;
+
+    return _rect.width / _rect.height;
+  }
 }

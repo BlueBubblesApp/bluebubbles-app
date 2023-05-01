@@ -98,13 +98,13 @@ class OverflowMenu extends StatelessWidget {
           if (currentChat != null) {
             await cm.setActiveChat(currentChat);
             if (ss.settings.tabletMode.value) {
-              ns.pushAndRemoveUntil(
-                context,
-                ConversationView(
-                  chat: currentChat,
-                ),
-                    (route) => route.isFirst,
-              );
+                ns.pushAndRemoveUntil(
+                  context,
+                  ConversationView(
+                    chat: currentChat,
+                  ),
+                      (route) => route.isFirst,
+                ).onError((error, stackTrace) => cm.setAllInactiveSync());
             } else {
               cvc(currentChat).close();
             }

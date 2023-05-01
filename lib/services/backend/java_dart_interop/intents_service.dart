@@ -13,6 +13,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Intent;
 import 'package:get/get.dart';
+import 'package:path/path.dart';
 import 'package:receive_intent/receive_intent.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
@@ -59,7 +60,7 @@ class IntentsService extends GetxService {
               final bytes = await File(path).readAsBytes();
               files.add(PlatformFile(
                 path: path,
-                name: path.split("/").last,
+                name: basename(path),
                 bytes: bytes,
                 size: bytes.length,
               ));
@@ -69,7 +70,7 @@ class IntentsService extends GetxService {
             final bytes = await File(path).readAsBytes();
             files.add(PlatformFile(
               path: path,
-              name: path.split("/").last,
+              name: basename(path),
               bytes: bytes,
               size: bytes.length,
             ));

@@ -131,10 +131,6 @@ class Settings {
   final RxDouble windowEffectCustomOpacityLight = 0.5.obs;
   final RxDouble windowEffectCustomOpacityDark = 0.5.obs;
 
-  // Scrolling
-  final RxBool betterScrolling = false.obs;
-  final RxDouble betterScrollingMultiplier = 7.0.obs;
-
   // Notification actions
   final RxList<int> selectedActionIndices = Platform.isWindows ? [0, 1, 2, 3, 4].obs : [0, 1, 2].obs;
   final RxList<String> actionList = RxList.from(["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]);
@@ -232,8 +228,6 @@ class Settings {
       'launchAtStartup': launchAtStartup.value,
       'launchAtStartupMinimized': launchAtStartupMinimized.value,
       'closeToTray': closeToTray.value,
-      'betterScrolling': betterScrolling.value,
-      'betterScrollingMultiplier': betterScrollingMultiplier.value,
       'minimizeToTray': minimizeToTray.value,
       'selectedActionIndices': selectedActionIndices,
       'actionList': actionList,
@@ -350,8 +344,6 @@ class Settings {
     ss.settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     ss.settings.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     ss.settings.closeToTray.value = map['closeToTray'] ?? true;
-    ss.settings.betterScrolling.value = map['betterScrolling'] ?? false;
-    ss.settings.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
     ss.settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     ss.settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     ss.settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
@@ -470,8 +462,6 @@ class Settings {
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
-    s.betterScrolling.value = map['betterScrolling'] ?? false;
-    s.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;

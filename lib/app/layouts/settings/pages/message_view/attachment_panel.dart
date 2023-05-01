@@ -8,13 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AttachmentPanel extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() => _AttachmentPanelState();
 }
 
 class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
-
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -38,8 +36,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           },
                           initialVal: ss.settings.autoDownload.value,
                           title: "Auto-download Attachments",
-                          subtitle:
-                              "Automatically downloads new attachments from the server and caches them internally",
+                          subtitle: "Automatically downloads new attachments from the server and caches them internally",
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
@@ -101,48 +98,46 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           )),
                   ],
                 ),
-                if (!kIsDesktop)
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Video Mute Behavior"),
-                if (!kIsDesktop)
-                  SettingsSection(
-                    backgroundColor: tileColor,
-                    children: [
-                      const SettingsSubtitle(
-                        subtitle: "Set where videos start playing muted",
-                        bottomPadding: false,
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Video Mute Behavior"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    const SettingsSubtitle(
+                      subtitle: "Set where videos start playing muted",
+                      bottomPadding: false,
+                    ),
+                    Obx(() => SettingsSwitch(
+                          onChanged: (bool val) {
+                            ss.settings.startVideosMuted.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.startVideosMuted.value,
+                          title: "Mute in Attachment Preview",
+                          backgroundColor: tileColor,
+                        )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
-                      Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          ss.settings.startVideosMuted.value = val;
-                          saveSettings();
-                        },
-                        initialVal: ss.settings.startVideosMuted.value,
-                        title: "Mute in Attachment Preview",
-                        backgroundColor: tileColor,
-                      )),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
-                      Obx(() => SettingsSwitch(
-                            onChanged: (bool val) {
-                              ss.settings.startVideosMutedFullscreen.value = val;
-                              saveSettings();
-                            },
-                            initialVal: ss.settings.startVideosMutedFullscreen.value,
-                            title: "Mute in Fullscreen Player",
-                            backgroundColor: tileColor,
-                          )),
-                    ],
-                  ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                          onChanged: (bool val) {
+                            ss.settings.startVideosMutedFullscreen.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.startVideosMutedFullscreen.value,
+                          title: "Mute in Fullscreen Player",
+                          backgroundColor: tileColor,
+                        )),
+                  ],
+                ),
                 if (!kIsWeb)
                   SettingsHeader(
                       headerColor: headerColor,
@@ -158,8 +153,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                         if (iOS) {
                           return SettingsTile(
                             title: kIsDesktop ? "Arrow key direction" : "Swipe direction",
-                            subtitle:
-                                "Set the ${kIsDesktop ? "arrow key" : "swipe direction"} to go to previous media items",
+                            subtitle: "Set the ${kIsDesktop ? "arrow key" : "swipe direction"} to go to previous media items",
                           );
                         } else {
                           return const SizedBox.shrink();

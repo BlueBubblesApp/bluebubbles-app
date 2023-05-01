@@ -17,23 +17,23 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
   final originatorPart = message.threadOriginatorGuid != null ? message.normalizedThreadPart : part.part;
   final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!, originatorPart);
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
-  _buildThreadView(_messages, originatorPart, cvController);
+  _buildThreadView(_messages, originatorPart, cvController, context);
 }
 
-void showBookmarksThread(ConversationViewController cvController) async {
+void showBookmarksThread(ConversationViewController cvController, BuildContext context) async {
   final _messages = (messageBox.query(Message_.isBookmarked.equals(true))
     ..link(Message_.chat, Chat_.guid.equals(cvController.chat.guid))
     ..order(Message_.dateCreated, flags: Order.descending)).build().find();
   if (_messages.isEmpty) {
     return showSnackbar("Error", "There are no bookmarked messages in this chat!");
   }
-  _buildThreadView(_messages, null, cvController);
+  _buildThreadView(_messages, null, cvController, context);
 }
 
-void _buildThreadView(List<Message> _messages, int? originatorPart, ConversationViewController cvController) {
+void _buildThreadView(List<Message> _messages, int? originatorPart, ConversationViewController cvController, BuildContext context) {
   final controller = ScrollController();
   Navigator.push(
-    Get.context!,
+    context,
     PageRouteBuilder(
       transitionDuration: const Duration(milliseconds: 150),
       pageBuilder: (context, animation, secondaryAnimation) {
