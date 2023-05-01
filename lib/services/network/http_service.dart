@@ -519,12 +519,12 @@ class HttpService extends GetxService {
   ///
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
   /// `"handle"`, `"chats.participants"` / `"chat.participants"`,  `"attachment.metadata"`, `"attributedBody"
-  Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, bool convertAttachment = true, CancelToken? cancelToken}) async {
+  Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, bool convertAttachments = true, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/message/query",
           queryParameters: buildQueryParams(),
-          data: {"with": withQuery, "where": where, "sort": sort, "before": before, "after": after, "chatGuid": chatGuid, "offset": offset, "limit": limit, "convertAttachment": convertAttachment},
+          data: {"with": withQuery, "where": where, "sort": sort, "before": before, "after": after, "chatGuid": chatGuid, "offset": offset, "limit": limit, "convertAttachments": convertAttachments},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
