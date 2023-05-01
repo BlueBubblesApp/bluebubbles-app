@@ -216,6 +216,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     }
     if (checkDeleted && existingChat?.dateDeleted != null) {
       Chat.unDelete(existingChat!);
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       await chats.addChat(existingChat);
     }
     return existingChat;

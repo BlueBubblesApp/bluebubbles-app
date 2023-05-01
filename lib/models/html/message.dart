@@ -53,6 +53,7 @@ class Message {
   bool hasApplePayloadData;
   bool wasDeliveredQuietly;
   bool didNotifyRecipient;
+  bool isBookmarked;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -113,6 +114,7 @@ class Message {
     DateTime? dateEdited,
     this.wasDeliveredQuietly = false,
     this.didNotifyRecipient = false,
+    this.isBookmarked = false,
   }) {
     if (error != null) _error.value = error;
     if (dateRead != null) _dateRead.value = dateRead;
@@ -203,10 +205,11 @@ class Message {
       dateEdited: parseDate(json["dateEdited"]),
       wasDeliveredQuietly: json['wasDeliveredQuietly'] ?? false,
       didNotifyRecipient: json['didNotifyRecipient'] ?? false,
+      isBookmarked: json['isBookmarked'] ?? false,
     );
   }
 
-  Message save({Chat? chat}) {
+  Message save({Chat? chat, bool updateIsBookmarked = false}) {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     WebListeners.notifyMessage(this, chat: chat);
     return this;
@@ -581,6 +584,8 @@ class Message {
       existing.didNotifyRecipient = newMessage.didNotifyRecipient;
     }
 
+    existing.isBookmarked = newMessage.isBookmarked;
+
     return existing;
   }
 
@@ -620,6 +625,7 @@ class Message {
       "dateEdited": dateEdited,
       "wasDeliveredQuietly": wasDeliveredQuietly,
       "didNotifyRecipient": didNotifyRecipient,
+      "isBookmarked": isBookmarked,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();
