@@ -672,7 +672,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 ),
                               );
                               final response = await http.downloadFromUrl(
-                                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
+                                "https://github.com/tneotia/tneotia/releases/download/ios-font-3/AppleColorEmoji.ttf",
                                 progress: (current, total) {
                                   if (current <= total) {
                                     controller.downloadingFont.value = true;
