@@ -771,8 +771,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         attachmentObs.value = element;
         final response = await http.downloadAttachment(element!.guid!,
             original: true, onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+        final segments = element.transferName!.split(".");
+        segments.removeLast();
         final file = PlatformFile(
-          name: element.transferName!,
+          name: segments.join(".") + element.uti!.split(".").last,
           size: response.data.length,
           bytes: response.data,
         );
