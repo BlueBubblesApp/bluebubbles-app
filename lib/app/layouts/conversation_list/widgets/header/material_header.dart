@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
@@ -5,6 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_vi
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
@@ -114,7 +116,8 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                         children: [
                                           Obx(() => ss.settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
                                               ? GestureDetector(
-                                                  onLongPress: ss.settings.cameraFAB.value ? () => controller.openCamera(context) : null,
+                                                  onLongPress: ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop
+                                                      ? () => controller.openCamera(context) : null,
                                                   child: IconButton(
                                                     onPressed: () => controller.openNewChatCreator(context),
                                                     icon: Icon(

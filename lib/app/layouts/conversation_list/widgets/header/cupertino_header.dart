@@ -93,8 +93,9 @@ class CupertinoHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (ss.settings.moveChatCreatorToHeader.value && ss.settings.cameraFAB.value) const SizedBox(width: 10.0),
-                      if (ss.settings.moveChatCreatorToHeader.value && ss.settings.cameraFAB.value)
+                      if (ss.settings.moveChatCreatorToHeader.value && ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop)
+                        const SizedBox(width: 10.0),
+                      if (ss.settings.moveChatCreatorToHeader.value && ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop)
                         ClipOval(
                           child: Material(
                             color: context.theme.colorScheme.properSurface, // button color

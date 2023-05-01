@@ -135,7 +135,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                               Obx(() => ss.settings.moveChatCreatorToHeader.value
                                   && !showArchived
                                   && !showUnknown ? InkWell(
-                                onLongPress: ss.settings.cameraFAB.value
+                                onLongPress: ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop
                                     ? () => controller.openCamera(context) : null,
                                 child: IconButton(
                                   onPressed: () => controller.openNewChatCreator(context),
