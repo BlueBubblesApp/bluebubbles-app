@@ -1,3 +1,4 @@
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -112,9 +113,15 @@ class AttachmentDownloadController extends GetxController {
       return Response(requestOptions: RequestOptions(path: ''));
     });
     if (response.statusCode != 200) return;
+    Uint8List bytes;
+    if (attachment.mimeType == "image/gif") {
+      bytes = await fixSpeedyGifs(response.data);
+    } else {
+      bytes = response.data;
+    }
     if (!kIsWeb && !kIsDesktop) {
       await mcs.invokeMethod("download-file", {
-        "data": response.data,
+        "data": bytes,
         "path": attachment.path,
       });
     }
@@ -135,14 +142,14 @@ class AttachmentDownloadController extends GetxController {
 
     // Finish the downloader
     attachmentDownloader._removeFromQueue(this);
-    attachment.bytes = response.data;
+    attachment.bytes = bytes;
     // Add attachment to sink based on if we got data
 
     file.value = PlatformFile(
       name: attachment.transferName!,
       path: kIsWeb ? null : attachment.path,
-      size: response.data.length,
-      bytes: response.data,
+      size: bytes.length,
+      bytes: bytes,
     );
     for (Function f in completeFuncs) {
       f.call(file.value);

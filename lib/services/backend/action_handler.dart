@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
@@ -176,6 +177,9 @@ class ActionHandler extends GetxService {
     if (!kIsWeb) {
       String pathName = "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
       final file = await File(pathName).create(recursive: true);
+      if (attachment.mimeType == "image/gif") {
+        attachment.bytes = await fixSpeedyGifs(attachment.bytes!);
+      }
       await file.writeAsBytes(attachment.bytes!);
     }
     await c.addMessage(m);
