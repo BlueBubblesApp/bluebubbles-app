@@ -844,16 +844,19 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
 
                         // Perform the restart
                         try {
-                          if (kIsDesktop || kIsWeb) {
-                            var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
-                            var ref = db.reference().child('config').child('nextRestart');
-                            await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
+                          if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
+                            if (kIsDesktop || kIsWeb) {
+                              var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
+                              var ref = db.reference().child('config').child('nextRestart');
+                              await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
+                            } else {
+                              await mcs.invokeMethod("set-next-restart", {
+                                  "value": DateTime.now().toUtc().millisecondsSinceEpoch
+                                }
+                              );
+                            }
                           } else {
-                            await mcs.invokeMethod(
-                              "set-next-restart", {
-                                "value": DateTime.now().toUtc().millisecondsSinceEpoch
-                              }
-                            );
+                            await http.setRestartDateCF(ss.fcmData.projectID!);
                           }
                         } finally {
                           controller.isRestarting.value = false;

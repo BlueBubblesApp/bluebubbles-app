@@ -45,7 +45,7 @@ class FCMData {
       await ss.prefs.setString('projectID', projectID!);
       await ss.prefs.setString('storageBucket', storageBucket!);
       await ss.prefs.setString('apiKey', apiKey!);
-      await ss.prefs.setString('firebaseURL', firebaseURL!);
+      if (firebaseURL != null) await ss.prefs.setString('firebaseURL', firebaseURL!);
       await ss.prefs.setString('clientID', clientID!);
       await ss.prefs.setString('applicationID', applicationID!);
     });
@@ -90,7 +90,6 @@ class FCMData {
       projectID == null ||
       storageBucket == null ||
       apiKey == null ||
-      firebaseURL == null ||
       clientID == null ||
       applicationID == null;
 }

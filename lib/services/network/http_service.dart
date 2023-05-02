@@ -1055,6 +1055,16 @@ class HttpService extends GetxService {
     }, checkOrigin: false);
   }
 
+  Future<Response> setRestartDateCF(String project) async {
+    return runApiGuarded(() async {
+      final response = await dio.patch(
+        "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/server/config?updateMask.fieldPaths=nextRestart",
+        data: {"fields":{"nextRestart": {"integerValue": DateTime.now().toUtc().millisecondsSinceEpoch}}},
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
   /// Test most API GET requests (the ones that don't have required parameters)
   void testAPI() {
     Stopwatch s = Stopwatch();

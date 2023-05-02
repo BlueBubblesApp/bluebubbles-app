@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/implementation/pure_dart.dart';
+import 'package:firebase_dart/src/firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
@@ -66,11 +67,19 @@ class DatabaseService extends GetxService {
           app = Firebase.apps.first;
         }
 
-        final FirebaseDatabase db = FirebaseDatabase(app: app);
-        final DatabaseReference ref = db.reference().child('config').child('serverUrl');
+        if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
+          final FirebaseDatabase db = FirebaseDatabase(app: app);
+          final DatabaseReference ref = db.reference().child('config').child('serverUrl');
 
-        final Event event = await ref.onValue.first;
-        url = sanitizeServerAddress(address: event.snapshot.value);
+          final Event event = await ref.onValue.first;
+          url = sanitizeServerAddress(address: event.snapshot.value);
+        } else {
+          final FirebaseFirestore db = FirebaseFirestore.instanceFor(app: app);
+          final doc = await db.collection("server").doc("config").get();
+          if (doc.data()?['serverUrl'] != null) {
+            url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
+          }
+        }
       } else {
         // First, try to auth with FCM with the current data
         Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
