@@ -134,6 +134,14 @@ flutter {
     source '../..'
 }
 
+// for cloud firestore okio error
+configurations.all {
+    resolutionStrategy {
+        force 'com.squareup.okhttp:okhttp:2.7.5'
+        force 'com.squareup.okio:okio:1.17.5'
+    }
+}
+
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
