@@ -38,6 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.5
   defer_pointer: ^0.0.2
   desktop_drop: ^0.4.1
+  desktop_webview_auth: ^0.0.11
   device_info_plus: ^8.1.0
   dio: ^5.0.3
   disable_battery_optimization: ^1.1.0+1
@@ -49,7 +50,11 @@ dependencies:
   faker: ^2.1.0
   fast_contacts: ^3.0.3 # mobile only
   file_picker: ^5.2.6
-  firebase_dart: ^1.0.11
+  firebase_dart:
+    git:
+      url: https://github.com/appsup-dart/firebase_dart.git
+      ref: feature/firestore
+      path: packages/firebase_dart
   flex_color_picker: ^3.1.0
   flex_color_scheme: ^6.1.2
   flutter_acrylic: ^1.1.1
@@ -83,6 +88,7 @@ dependencies:
   github: ^9.11.0
   google_fonts: ^4.0.3
   google_ml_kit: ^0.13.0 # mobile only
+  google_sign_in: ^6.1.0
   hand_signature: ^3.0.1
   idb_shim: ^2.3.0+2
   image: ^4.0.15

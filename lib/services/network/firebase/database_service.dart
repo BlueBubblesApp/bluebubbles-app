@@ -23,6 +23,19 @@ class DatabaseService extends GetxService {
     }
   }
 
+  String getClientId() {
+    if (kIsWeb) return '795335779559-n81mfu5g5r58bphui6lmjphnn22mcqhd.apps.googleusercontent.com';
+    if (kIsDesktop) return '795335779559-jqfjh4l8v98bmfka7jusbega8j3o6bc4.apps.googleusercontent.com';
+    switch (fs.packageInfo.packageName) {
+      case "com.bluebubbles.messaging.tanay":
+        return "795335779559-qrpbpjj1mgp248kt33kj75or771gpk4r.apps.googleusercontent.com";
+      case "com.bluebubbles.messaging.joel":
+        return "";
+      default:
+        return "";
+    }
+  }
+
   /// Fetch the new server URL from the Firebase Database
   Future<String?> fetchNewUrl() async {
     // Make sure setup is complete and we have valid data

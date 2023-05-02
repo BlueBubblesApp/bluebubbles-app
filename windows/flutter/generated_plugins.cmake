@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
   connectivity_plus
   desktop_drop
+  desktop_webview_auth
   dynamic_color
   flutter_acrylic
   geolocator_windows

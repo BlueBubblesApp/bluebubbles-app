@@ -31,8 +31,8 @@ class HttpService extends GetxService {
   }
 
   /// Global try-catch function
-  Future<Response> runApiGuarded(Future<Response> Function() func) async {
-    if (http.origin.isEmpty) {
+  Future<Response> runApiGuarded(Future<Response> Function() func, {bool checkOrigin = true}) async {
+    if (http.origin.isEmpty && checkOrigin) {
       return Future.error("No server URL!");
     }
     try {
@@ -1015,6 +1015,44 @@ class HttpService extends GetxService {
       );
       return returnSuccessOrError(response);
     });
+  }
+
+  // The following methods are for Firebase only
+
+  Future<Response> getFirebaseProjects(String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://firebase.googleapis.com/v1beta1/projects",
+        queryParameters: {
+          "access_token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
+  Future<Response> getServerUrlRTDB(String rtdb, String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://$rtdb.firebaseio.com/config.json",
+        queryParameters: {
+          "token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
+  Future<Response> getServerUrlCF(String project, String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/server/config",
+        queryParameters: {
+          "access_token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
   }
 
   /// Test most API GET requests (the ones that don't have required parameters)

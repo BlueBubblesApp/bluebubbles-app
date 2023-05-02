@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_linux
   desktop_drop
+  desktop_webview_auth
   dynamic_color
   flutter_acrylic
   local_notifier

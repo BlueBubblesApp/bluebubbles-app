@@ -8,6 +8,7 @@
 
 #include <bitsdojo_window_linux/bitsdojo_window_plugin.h>
 #include <desktop_drop/desktop_drop_plugin.h>
+#include <desktop_webview_auth/desktop_webview_auth_plugin.h>
 #include <dynamic_color/dynamic_color_plugin.h>
 #include <flutter_acrylic/flutter_acrylic_plugin.h>
 #include <local_notifier/local_notifier_plugin.h>
@@ -30,6 +31,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) desktop_drop_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "DesktopDropPlugin");
   desktop_drop_plugin_register_with_registrar(desktop_drop_registrar);
+  g_autoptr(FlPluginRegistrar) desktop_webview_auth_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "DesktopWebviewAuthPlugin");
+  desktop_webview_auth_plugin_register_with_registrar(desktop_webview_auth_registrar);
   g_autoptr(FlPluginRegistrar) dynamic_color_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "DynamicColorPlugin");
   dynamic_color_plugin_register_with_registrar(dynamic_color_registrar);
