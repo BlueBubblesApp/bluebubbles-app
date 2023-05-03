@@ -223,7 +223,17 @@ class Attachment {
 
   String get directory => "$baseDirectory/$guid";
 
-  String get path => "$directory/$transferName";
+  String get path {
+    switch (Platform.operatingSystem) {
+      case "windows":
+        return "$directory/${"$transferName".replaceAll(RegExp(r'[<>:"/\|?*]'), "_")}";
+      case "linux":
+      case "macos":
+        return "$directory/${"$transferName".replaceAll(RegExp(r'/'), "_")}";
+      default:
+        return "$directory/$transferName";
+    }
+  }
 
   String get convertedPath => "$path.jpg";
 
