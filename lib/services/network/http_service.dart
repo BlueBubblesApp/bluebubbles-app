@@ -1058,7 +1058,7 @@ class HttpService extends GetxService {
   Future<Response> setRestartDateCF(String project) async {
     return runApiGuarded(() async {
       final response = await dio.patch(
-        "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/server/config?updateMask.fieldPaths=nextRestart",
+        "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/server/commands?updateMask.fieldPaths=nextRestart",
         data: {"fields":{"nextRestart": {"integerValue": DateTime.now().toUtc().millisecondsSinceEpoch}}},
       );
       return returnSuccessOrError(response);
