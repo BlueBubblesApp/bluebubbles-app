@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/html/contact.dart';
 import 'package:bluebubbles/models/html/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
@@ -48,7 +47,7 @@ class Handle {
     // Split by a space or special character delimiter, take each of the items and
     // reduce it to just the capitalized first letter. Then join the array by an empty char
     String reduced = importantChars
-        .split(RegExp(r' |-|_'))
+        .split(RegExp(r'[ \-_]'))
         .take(2)
         .map((e) => e.isEmpty ? '' : e[0].toUpperCase())
         .join('');

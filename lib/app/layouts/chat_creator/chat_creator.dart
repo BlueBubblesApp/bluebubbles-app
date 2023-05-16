@@ -13,7 +13,6 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -425,22 +424,22 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   fillColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
                   splashColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text("iMessage"),
                         ),
-                        const Icon(CupertinoIcons.chat_bubble, size: 16),
+                        Icon(CupertinoIcons.chat_bubble, size: 16),
                       ],
                     ),
-                    Row(
+                    const Row(
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text("SMS Forwarding"),
                         ),
-                        const Icon(Icons.messenger_outline, size: 16),
+                        Icon(Icons.messenger_outline, size: 16),
                       ],
                     ),
                   ],

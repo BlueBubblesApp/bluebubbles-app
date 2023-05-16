@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/components/mentionable_text_editing_controller.d
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +21,7 @@ import 'package:video_player/video_player.dart';
 ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
 ? Get.find<ConversationViewController>(tag: tag ?? chat.guid) : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
 
-class ConversationViewController extends StatefulController with SingleGetTickerProviderMixin {
+class ConversationViewController extends StatefulController with GetSingleTickerProviderStateMixin {
   final Chat chat;
   late final String tag;
   bool fromChatCreator = false;

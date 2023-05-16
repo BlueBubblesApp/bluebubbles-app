@@ -9,7 +9,6 @@ import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
-import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flex_color_picker/flex_color_picker.dart';
