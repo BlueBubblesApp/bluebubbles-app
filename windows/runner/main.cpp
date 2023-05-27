@@ -27,34 +27,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
-  LPCWSTR szTitle = L"BlueBubbles";
-  LPCWSTR szWindowClass = L"FLUTTER_RUNNER_WIN32_WINDOW";
-
-  HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, szTitle);
-
-  if (!hMutex) {
-      // Mutex doesn't exist. This is
-      // the first instance so create
-      // the mutex.
-      hMutex = CreateMutex(0, 0, szTitle);
-  } else {
-      // The mutex exists so this is the
-      // the second instance so return.
-
-      // Find the window of First Instance
-      HWND hwnd = FindWindow(szWindowClass,szTitle);
-
-      // Display the window of First Instance
-      ShowWindow(hwnd,SW_SHOWNORMAL);
-      SetForegroundWindow(hwnd);
-
-      return 0; // Exit Second instance
-  }
-
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.CreateAndShow(L"BlueBubbles", origin, size)) {
+  if (!window.Create(L"BlueBubbles", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

@@ -93,7 +93,7 @@ class BaseLogger extends GetxService {
       final bytes = utf8.encode(logs.join('\n'));
       final content = base64.encode(bytes);
       html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-        ..setAttribute("download", logPath.split("/").last)
+        ..setAttribute("download", basename(logPath))
         ..click();
       return;
     }

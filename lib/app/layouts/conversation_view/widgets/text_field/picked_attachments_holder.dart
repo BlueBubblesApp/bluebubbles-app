@@ -31,8 +31,7 @@ class PickedAttachmentsHolder extends StatefulWidget {
 
 class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHolder> {
   
-  List<PlatformFile> get pickedAttachments => widget.initialAttachments.isNotEmpty
-      ? widget.initialAttachments : widget.controller != null
+  List<PlatformFile> get pickedAttachments => widget.controller != null
       ? widget.controller!.pickedAttachments : widget.initialAttachments;
   
   @override

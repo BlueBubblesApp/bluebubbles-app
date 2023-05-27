@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
+import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -9,6 +11,7 @@ import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
@@ -111,6 +114,26 @@ class ChatsService extends GetxService {
             ),
           });
         }
+      });
+    }
+
+    if (kIsDesktop && Platform.isWindows) {
+      /* ----- IMESSAGE:// HANDLER ----- */
+      final _appLinks = AppLinks();
+      _appLinks.allStringLinkStream.listen((String string) async {
+        final uri = Uri.tryParse(string.replaceFirst("imessage://", "imessage:").replaceFirst("&body=", "?body=").replaceFirst(RegExp(r'/$'), ''));
+        if (uri == null) return;
+
+        final address = uri.path;
+        final handle = Handle.findOne(addressAndService: Tuple2(address, "iMessage"));
+        await ns.pushAndRemoveUntil(
+          Get.context!,
+          ChatCreator(
+            initialSelected: [SelectedContact(displayName: handle?.displayName ?? address, address: address)],
+            initialText: uri.queryParameters['body'],
+          ),
+              (route) => route.isFirst,
+        );
       });
     }
   }

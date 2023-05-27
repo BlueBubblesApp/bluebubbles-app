@@ -42,85 +42,79 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
       child: InkWell(
         mouseCursor: MouseCursor.defer,
         onTap: () => controller.onTap(context),
-        onLongPress: kIsDesktop || kIsWeb ? null : () async {
-          await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
-        },
+        onLongPress: kIsDesktop || kIsWeb
+            ? null
+            : () async {
+                await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+              },
         onTapDown: (details) {
           longPressPosition = details.globalPosition;
         },
         child: Obx(() => ListTile(
-          mouseCursor: MouseCursor.defer,
-          enableFeedback: true,
-          dense: ss.settings.denseChatTiles.value,
-          contentPadding: const EdgeInsets.only(left: 0),
-          visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
-          minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
-          horizontalTitleGap: 10,
-          title: Row(
-            children: [
-              Expanded(
-                child: ChatTitle(
-                  parentController: controller,
-                  style: context.theme.textTheme.bodyLarge!.copyWith(
-                      fontWeight: controller.shouldHighlight.value
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: controller.shouldHighlight.value
-                          ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
-                          : null
+            mouseCursor: MouseCursor.defer,
+            enableFeedback: true,
+            dense: ss.settings.denseChatTiles.value,
+            contentPadding: const EdgeInsets.only(left: 0),
+            visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+            minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
+            horizontalTitleGap: 10,
+            title: Row(
+              children: [
+                Expanded(
+                  child: ChatTitle(
+                    parentController: controller,
+                    style: context.theme.textTheme.bodyLarge!.copyWith(
+                        fontWeight: controller.shouldHighlight.value ? FontWeight.w600 : FontWeight.w500,
+                        color: controller.shouldHighlight.value ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage) : null),
                   ),
                 ),
-              ),
-              CupertinoTrailing(parentController: controller),
-            ],
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: controller.subtitle ?? ChatSubtitle(
-              parentController: controller,
-              style: context.theme.textTheme.bodySmall!.copyWith(
-                color: controller.shouldHighlight.value
-                    ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
-                    : context.theme.colorScheme.outline,
-                height: 1.5,
-              ),
+                CupertinoTrailing(parentController: controller),
+              ],
             ),
-          ),
-          leading: leading
-        )),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: controller.subtitle ??
+                  ChatSubtitle(
+                    parentController: controller,
+                    style: context.theme.textTheme.bodySmall!.copyWith(
+                      color: controller.shouldHighlight.value
+                          ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
+                          : context.theme.colorScheme.outline,
+                      height: 1.5,
+                    ),
+                  ),
+            ),
+            leading: leading)),
       ),
     );
 
-    return kIsDesktop || kIsWeb
-        ? GestureDetector(
-            onTap: () => controller.onTap(context),
-            onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
-            child: Obx(() {
-              ns.listener.value;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 100),
-                decoration: BoxDecoration(
-                  color: controller.shouldPartialHighlight.value
-                      ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
-                      : controller.shouldHighlight.value
-                          ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
-                          : controller.hoverHighlight.value
-                              ? context.theme.colorScheme.properSurface.withOpacity(0.5)
-                              : null,
-                  borderRadius: BorderRadius.circular(
-                      controller.shouldHighlight.value || controller.shouldPartialHighlight.value || controller.hoverHighlight.value ? 8 : 0),
-                ),
-                child: ns.isAvatarOnly(context)
-                    ? Padding(
-                          padding:
-                              EdgeInsets.symmetric(vertical: 10.0, horizontal: (ns.width(context) - 100) / 2).add(const EdgeInsets.only(right: 15)),
-                          child: leading,
-                      )
-                    : child,
-              );
-            }),
-          )
-        : child;
+    return GestureDetector(
+      onTap: () => controller.onTap(context),
+      onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
+      child: Obx(() {
+        ns.listener.value;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          decoration: BoxDecoration(
+            color: controller.shouldPartialHighlight.value
+                ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
+                : controller.shouldHighlight.value
+                    ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
+                    : controller.hoverHighlight.value
+                        ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                        : null,
+            borderRadius: BorderRadius.circular(
+                controller.shouldHighlight.value || controller.shouldPartialHighlight.value || controller.hoverHighlight.value ? 8 : 0),
+          ),
+          child: ns.isAvatarOnly(context)
+              ? Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: (ns.width(context) - 100) / 2).add(const EdgeInsets.only(right: 15)),
+                  child: leading,
+                )
+              : child,
+        );
+      }),
+    );
   }
 }
 
@@ -151,8 +145,8 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
     if (!kIsWeb) {
       updateObx(() {
         final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
-          ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-          ..order(Message_.dateCreated, flags: Order.descending))
+              ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
+              ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
 
         sub = latestMessageQuery.listen((Query<Message> query) async {
@@ -213,13 +207,16 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
                   ? "Error"
                   : "${indicatorText.isNotEmpty && indicatorText != "None" ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
               textAlign: TextAlign.right,
-              style: context.theme.textTheme.bodySmall!.copyWith(
-                color: (cachedLatestMessage?.error ?? 0) > 0
-                    ? context.theme.colorScheme.error
-                    : controller.shouldHighlight.value ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage) : context.theme.colorScheme.outline,
-                fontWeight: controller.shouldHighlight.value
-                    ? FontWeight.w500 : null,
-              ).apply(fontSizeFactor: 1.1),
+              style: context.theme.textTheme.bodySmall!
+                  .copyWith(
+                    color: (cachedLatestMessage?.error ?? 0) > 0
+                        ? context.theme.colorScheme.error
+                        : controller.shouldHighlight.value
+                            ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
+                            : context.theme.colorScheme.outline,
+                    fontWeight: controller.shouldHighlight.value ? FontWeight.w500 : null,
+                  )
+                  .apply(fontSizeFactor: 1.1),
               overflow: TextOverflow.clip,
             );
           }),
@@ -235,15 +232,14 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
               ),
               if (controller.chat.muteType == "mute")
                 Padding(
-                  padding: const EdgeInsets.only(top: 5.0),
-                  child: Icon(
-                    CupertinoIcons.bell_slash_fill,
-                    color: controller.shouldHighlight.value
-                        ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
-                        : context.theme.colorScheme.outline,
-                    size: 12,
-                  )
-              )
+                    padding: const EdgeInsets.only(top: 5.0),
+                    child: Icon(
+                      CupertinoIcons.bell_slash_fill,
+                      color: controller.shouldHighlight.value
+                          ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
+                          : context.theme.colorScheme.outline,
+                      size: 12,
+                    ))
             ],
           ),
         ],
@@ -273,12 +269,13 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     unread = controller.chat.hasUnreadMessage ?? false;
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-            .watch();
+        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
-          });
+          final chat = controller.chat.id == null
+              ? null
+              : await runAsync(() {
+                  return chatBox.get(controller.chat.id!);
+                });
           if (chat == null) return;
           if (chat.hasUnreadMessage != unread) {
             setState(() {
@@ -310,14 +307,16 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: unread ? Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(35),
-          color: context.theme.colorScheme.primary,
-        ),
-        width: 10,
-        height: 10,
-      ) : const SizedBox(width: 10),
+      child: unread
+          ? Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(35),
+                color: context.theme.colorScheme.primary,
+              ),
+              width: 10,
+              height: 10,
+            )
+          : const SizedBox(width: 10),
     );
   }
 }

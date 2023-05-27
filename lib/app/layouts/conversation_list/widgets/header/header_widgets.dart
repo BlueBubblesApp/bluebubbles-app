@@ -98,13 +98,13 @@ class OverflowMenu extends StatelessWidget {
           if (currentChat != null) {
             await cm.setActiveChat(currentChat);
             if (ss.settings.tabletMode.value) {
-              ns.pushAndRemoveUntil(
-                context,
-                ConversationView(
-                  chat: currentChat,
-                ),
-                    (route) => route.isFirst,
-              );
+                ns.pushAndRemoveUntil(
+                  context,
+                  ConversationView(
+                    chat: currentChat,
+                  ),
+                      (route) => route.isFirst,
+                ).onError((error, stackTrace) => cm.setAllInactiveSync());
             } else {
               cvc(currentChat).close();
             }
@@ -145,8 +145,6 @@ class OverflowMenu extends StatelessWidget {
                       await ss.prefs.clear();
                       await ss.prefs.setString("selected-dark", "OLED Dark");
                       await ss.prefs.setString("selected-light", "Bright White");
-                      themeBox.putMany(ts.defaultThemes);
-                      await ts.changeTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
                         child: TitleBarWrapper(child: SetupView()),

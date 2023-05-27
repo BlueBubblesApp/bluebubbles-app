@@ -3,5 +3,5 @@ class LaunchAtStartup {
 
   static Future<void> disable() async => throw Exception('Not supported on Web!');
 
-  static setup(String appName) => throw Exception('Not supported on Web!');
+  static setup(String appName, bool minimized) => throw Exception('Not supported on Web!');
 }

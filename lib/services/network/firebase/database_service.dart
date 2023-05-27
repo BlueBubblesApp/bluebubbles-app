@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/implementation/pure_dart.dart';
+import 'package:firebase_dart/src/firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
@@ -20,6 +21,19 @@ class DatabaseService extends GetxService {
           isOnline: true,
         ),
       );
+    }
+  }
+
+  String getClientId() {
+    if (kIsWeb) return '795335779559-n81mfu5g5r58bphui6lmjphnn22mcqhd.apps.googleusercontent.com';
+    if (kIsDesktop) return '795335779559-jqfjh4l8v98bmfka7jusbega8j3o6bc4.apps.googleusercontent.com';
+    switch (fs.packageInfo.packageName) {
+      case "com.bluebubbles.messaging.tanay":
+        return "795335779559-qrpbpjj1mgp248kt33kj75or771gpk4r.apps.googleusercontent.com";
+      case "com.bluebubbles.messaging.joel":
+        return "";
+      default:
+        return "";
     }
   }
 
@@ -53,11 +67,19 @@ class DatabaseService extends GetxService {
           app = Firebase.apps.first;
         }
 
-        final FirebaseDatabase db = FirebaseDatabase(app: app);
-        final DatabaseReference ref = db.reference().child('config').child('serverUrl');
+        if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
+          final FirebaseDatabase db = FirebaseDatabase(app: app);
+          final DatabaseReference ref = db.reference().child('config').child('serverUrl');
 
-        final Event event = await ref.onValue.first;
-        url = sanitizeServerAddress(address: event.snapshot.value);
+          final Event event = await ref.onValue.first;
+          url = sanitizeServerAddress(address: event.snapshot.value);
+        } else {
+          final FirebaseFirestore db = FirebaseFirestore.instanceFor(app: app);
+          final doc = await db.collection("server").doc("config").get();
+          if (doc.data()?['serverUrl'] != null) {
+            url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
+          }
+        }
       } else {
         // First, try to auth with FCM with the current data
         Logger.info('Authenticating with FCM', tag: 'FCM-Auth');

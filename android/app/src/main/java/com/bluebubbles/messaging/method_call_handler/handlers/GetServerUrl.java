@@ -6,6 +6,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
@@ -38,20 +40,35 @@ public class GetServerUrl implements Handler {
 
         // Get the server URL from Firebase
         FirebaseDatabase database = FirebaseDatabase.getInstance(app);
-        if (database == null) {
-            result.success(null);
-            return;
-        }
-
-        database.getReference("config").child("serverUrl").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-            @Override
-            public void onComplete(Task<DataSnapshot> task) {
-                if (!task.isSuccessful()) {
-                    result.success(null);
-                } else {
-                    result.success(String.valueOf(task.getResult().getValue()));
-                }
+        if (app.getOptions().getDatabaseUrl() == null) {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            if (db != null) {
+                db.collection("server").document("config").get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                        @Override
+                        public void onComplete(Task<DocumentSnapshot> task) {
+                            if (task.isSuccessful()) {
+                                DocumentSnapshot document = task.getResult();
+                                result.success(document.getData().get("serverUrl"));
+                            } else {
+                                result.success(null);
+                            }
+                        }
+                    });
+            } else {
+                result.success(null);
+                return;
             }
-        });
+        } else {
+            database.getReference("config").child("serverUrl").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                @Override
+                public void onComplete(Task<DataSnapshot> task) {
+                    if (!task.isSuccessful()) {
+                        result.success(null);
+                    } else {
+                        result.success(String.valueOf(task.getResult().getValue()));
+                    }
+                }
+            });
+        }
     }
 }

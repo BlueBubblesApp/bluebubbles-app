@@ -7,7 +7,6 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
@@ -110,9 +109,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                 controller: controller.materialScrollController,
                 child: Obx(() => ListView.builder(
                   controller: controller.materialScrollController,
-                  physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                      ? const NeverScrollableScrollPhysics()
-                      : ThemeSwitcher.getScrollPhysics(),
+                  physics: ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (context, index) {
                     final chat = _chats[index];
                     return ListItem(chat: chat, controller: controller, update: () {

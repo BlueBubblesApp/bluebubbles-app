@@ -1,7 +1,9 @@
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+// it does actually export (Web only)
+// ignore: undefined_hidden_name
+import 'package:bluebubbles/models/models.dart' hide PlayerState;
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -20,16 +22,19 @@ class AudioPlayer extends StatefulWidget {
   final ConversationViewController? controller;
 
   @override
-  OptimizedState createState() => _AudioPlayerState();
+  OptimizedState createState() => kIsDesktop ? _DesktopAudioPlayerState() : _AudioPlayerState();
 }
 
 class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   Attachment? get attachment => widget.attachment;
+
   PlatformFile get file => widget.file;
+
   ConversationViewController? get cvController => widget.controller;
 
   PlayerController? controller;
-  late final animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400), animationBehavior: AnimationBehavior.preserve);
+  late final animController =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 400), animationBehavior: AnimationBehavior.preserve);
 
   @override
   void initState() {
@@ -52,9 +57,10 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   void initBytes() async {
     if (attachment != null) controller = cvController?.audioPlayers[attachment!.guid];
     if (controller == null) {
-      controller = PlayerController()..addListener(() {
-        setState(() {});
-      });
+      controller = PlayerController()
+        ..addListener(() {
+          setState(() {});
+        });
       controller!.onPlayerStateChanged.listen((event) {
         if ((controller!.playerState == PlayerState.paused || controller!.playerState == PlayerState.stopped) && animController.value > 0) {
           animController.reverse();
@@ -71,82 +77,139 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   Widget build(BuildContext context) {
     super.build(context);
     return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () async {
-              if (controller == null) return;
-              if (controller!.playerState == PlayerState.playing) {
-                animController.reverse();
-                await controller!.pausePlayer();
-              } else {
-                animController.forward();
-                await controller!.startPlayer(finishMode: FinishMode.pause);
-              }
-              setState(() {});
-            },
-            icon: AnimatedIcon(
-              icon: AnimatedIcons.play_pause,
-              progress: animController,
+        padding: const EdgeInsets.all(5),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () async {
+                if (controller == null) return;
+                if (controller!.playerState == PlayerState.playing) {
+                  animController.reverse();
+                  await controller!.pausePlayer();
+                } else {
+                  animController.forward();
+                  await controller!.startPlayer(finishMode: FinishMode.pause);
+                }
+                setState(() {});
+              },
+              icon: AnimatedIcon(
+                icon: AnimatedIcons.play_pause,
+                progress: animController,
+              ),
+              color: context.theme.colorScheme.properOnSurface,
+              visualDensity: VisualDensity.compact,
             ),
-            color: context.theme.colorScheme.properOnSurface,
-            visualDensity: VisualDensity.compact,
-          ),
-          (controller?.maxDuration ?? 0) == 0 ? SizedBox(width: ns.width(context) * 0.25) : AudioFileWaveforms(
-            size: Size(ns.width(context) * 0.25, 40),
-            playerController: controller!,
-            padding: EdgeInsets.zero,
-            playerWaveStyle: PlayerWaveStyle(
-              fixedWaveColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
-              liveWaveColor: context.theme.colorScheme.properOnSurface,
-              waveCap: StrokeCap.square,
-              waveThickness: 2,
-              seekLineThickness: 2,
-              showSeekLine: false
+            (controller?.maxDuration ?? 0) == 0
+                ? SizedBox(width: ns.width(context) * 0.25)
+                : AudioFileWaveforms(
+                    size: Size(ns.width(context) * 0.25, 40),
+                    playerController: controller!,
+                    padding: EdgeInsets.zero,
+                    playerWaveStyle: PlayerWaveStyle(
+                        fixedWaveColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
+                        liveWaveColor: context.theme.colorScheme.properOnSurface,
+                        waveCap: StrokeCap.square,
+                        waveThickness: 2,
+                        seekLineThickness: 2,
+                        showSeekLine: false),
+                  ),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Center(
+                heightFactor: 1,
+                child: Text(prettyDuration(Duration(milliseconds: controller?.maxDuration ?? 0)), style: context.theme.textTheme.labelLarge!),
+              ),
             ),
-          ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: Center(
-              heightFactor: 1,
-              child: Text(prettyDuration(Duration(milliseconds: controller?.maxDuration ?? 0)), style: context.theme.textTheme.labelLarge!),
-            ),
-          ),
-        ],
-      )
-    );
+          ],
+        ));
   }
 
-  String prettyDuration(Duration duration) {
-    var components = <String>[];
+  @override
+  bool get wantKeepAlive => true;
+}
 
-    var days = duration.inDays;
-    if (days != 0) {
-      components.add('$days:');
-    }
-    var hours = duration.inHours % 24;
-    if (hours != 0) {
-      components.add('${hours < 10 ? '0' : ''}$hours:');
-    }
-    var minutes = duration.inMinutes % 60;
-    if (minutes != 0) {
-      components.add('${minutes < 10 ? '0' : ''}$minutes:');
-    }
+class _DesktopAudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+  Attachment? get attachment => widget.attachment;
 
-    var seconds = duration.inSeconds % 60;
-    if (components.isEmpty || seconds != 0) {
-      if (components.isEmpty) {
-        components.add('00:');
-      }
-      components.add('${seconds < 10 ? '0' : ''}$seconds');
+  PlatformFile get file => widget.file;
+
+  ConversationViewController? get cvController => widget.controller;
+
+  Player? controller;
+  late final animController =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 400), animationBehavior: AnimationBehavior.preserve);
+
+  @override
+  void initState() {
+    super.initState();
+    if (attachment != null) controller = cvController?.audioPlayersDesktop[attachment!.guid];
+    updateObx(() {
+      initBytes();
+    });
+  }
+
+  @override
+  void dispose() {
+    if (attachment == null) {
+      controller?.dispose();
     }
-    var joined = components.join();
-    if (joined.characters.first == '0') {
-      return joined.substring(1);
-    } else {
-      return joined;
+    animController.dispose();
+    super.dispose();
+  }
+
+  void initBytes() async {
+    if (attachment != null) controller = cvController?.audioPlayersDesktop[attachment!.guid];
+    if (controller == null) {
+      controller = Player()..streams.position.listen((position) => setState(() {}))
+      ..streams.completed.listen((bool completed) async {
+        if (completed) {
+          await controller!.pause();
+          await controller!.seek(Duration.zero);
+          animController.reverse();
+        }
+        setState(() {});
+      });
+      await controller!.setPlaylistMode(PlaylistMode.none);
+      await controller!.open(Media(file.path!), play: false);
+      if (attachment != null) cvController?.audioPlayersDesktop[attachment!.guid!] = controller!;
     }
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Padding(
+        padding: const EdgeInsets.all(5),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              onPressed: () async {
+                if (controller == null) return;
+                if (controller!.state.playing) {
+                  animController.reverse();
+                  await controller!.pause();
+                } else {
+                  animController.forward();
+                  await controller!.play();
+                }
+                setState(() {});
+              },
+              icon: AnimatedIcon(
+                icon: AnimatedIcons.play_pause,
+                progress: animController,
+              ),
+              color: context.theme.colorScheme.properOnSurface,
+              visualDensity: VisualDensity.compact,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child:
+            Text("${prettyDuration(controller?.state.position ?? Duration.zero)} / ${prettyDuration(controller?.state.duration ?? Duration.zero)}"),
+            )
+          ],
+        ));
   }
 
   @override

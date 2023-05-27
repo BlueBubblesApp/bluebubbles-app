@@ -81,7 +81,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   final linkIndexMatches = <Tuple3<String, List<int>, List?>>[];
   final controller = cvc(message.chat.target ?? cm.activeChat!.chat);
   if (!isNullOrEmpty(part.text)!) {
-    if (!kIsWeb && !kIsDesktop) {
+    if (!kIsWeb && !kIsDesktop && ss.settings.smartReply.value) {
       if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
         try {
           controller.mlKitParsedText["${message.guid!}-${part.part}"] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english)
@@ -118,7 +118,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
           linkIndexMatches.add(Tuple3("link", [element.start, element.end], null));
         } else if (element.entities.first is DateTimeEntity) {
           final ent = (element.entities.first as DateTimeEntity);
-          if (part.text?.substring(element.start, element.end) == "now") {
+          if (part.text?.substring(element.start, element.end).toLowerCase() == "now") {
             continue;
           }
           linkIndexMatches.add(Tuple3("date", [element.start, element.end], [ent.timestamp]));

@@ -95,9 +95,7 @@ class SettingsScaffold extends StatelessWidget {
                   child: Obx(() => CustomScrollView(
                       controller: controller,
                       shrinkWrap: true,
-                      physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                          ? const NeverScrollableScrollPhysics()
-                          : ThemeSwitcher.getScrollPhysics(),
+                      physics: ThemeSwitcher.getScrollPhysics(),
                       slivers: <Widget>[
                         if (ss.settings.skin.value == Skins.Samsung)
                           SliverAppBar(
