@@ -12,7 +12,6 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart' hide GetStringUtils;
 import 'package:material_color_utilities/material_color_utilities.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -178,7 +177,7 @@ class ThemesService extends GetxService {
   bool inDarkMode(BuildContext context) =>
       (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
         (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
-            SchedulerBinding.instance.window.platformBrightness == Brightness.dark));
+            PlatformDispatcher.instance.platformBrightness == Brightness.dark));
 
   bool isGradientBg(BuildContext context) {
     if (inDarkMode(context)) {

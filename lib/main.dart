@@ -369,7 +369,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           home: SplashScreen(shouldNavigate: false),
           theme: ThemeData(
             colorScheme: ColorScheme.fromSwatch(
-                backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark ? Colors.black : Colors.white),
+                backgroundColor: PlatformDispatcher.instance.platformBrightness == Brightness.dark ? Colors.black : Colors.white),
           )));
     }
 

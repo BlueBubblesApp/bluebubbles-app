@@ -10,7 +10,6 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
@@ -29,8 +28,8 @@ class BackButton extends StatelessWidget {
       onTap: !kIsDesktop ? null : (details) {
         final result = onPressed?.call() ?? false;
         if (!result) {
-          while (Get.isOverlaysOpen) {
-            Get.back();
+          if (Get.isSnackbarOpen) {
+            Get.closeAllSnackbars();
           }
           Navigator.of(context).pop();
         }
@@ -44,8 +43,8 @@ class BackButton extends StatelessWidget {
         onPressed: kIsDesktop ? null : () {
           final result = onPressed?.call() ?? false;
           if (!result) {
-            while (Get.isOverlaysOpen) {
-              Get.back();
+            if (Get.isSnackbarOpen) {
+              Get.closeAllSnackbars();
             }
             Navigator.of(context).pop();
           }
@@ -65,8 +64,8 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
           onTap: !kIsDesktop ? null : (details) {
             final result = callback?.call() ?? true;
             if (result) {
-              while (Get.isOverlaysOpen) {
-                Get.back();
+              if (Get.isSnackbarOpen) {
+                Get.closeAllSnackbars();
               }
               Navigator.of(context).pop();
             }
@@ -81,8 +80,8 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
               if (kIsDesktop) return;
               final result = callback?.call() ?? true;
               if (result) {
-                while (Get.isOverlaysOpen) {
-                  Get.back();
+                if (Get.isSnackbarOpen) {
+                  Get.closeAllSnackbars();
                 }
                 Navigator.of(context).pop();
               }
@@ -356,7 +355,7 @@ IconData getAttachmentIcon(String mimeType) {
 }
 
 void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
+    {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.theme.colorScheme.onInverseSurface,
@@ -368,8 +367,8 @@ void showSnackbar(String title, String message,
       animationDuration: Duration(milliseconds: animationMs),
       mainButton: button,
       onTap: onTap ??
-              (GetBar bar) {
-            if (Get.isSnackbarOpen ?? false) Get.back();
+              (GetSnackBar bar) {
+            if (Get.isSnackbarOpen) Get.back();
           });
 }
 
@@ -420,7 +419,7 @@ Future<void> paintGroupAvatar({
   required bool usingParticipantsOverride,
 }) async {
   late final ThemeData theme;
-  final bool systemDark = SchedulerBinding.instance.window.platformBrightness == Brightness.dark;
+  final bool systemDark = PlatformDispatcher.instance.platformBrightness == Brightness.dark;
   if (!ls.isAlive) {
     if (systemDark) {
       theme = ThemeStruct.getDarkTheme().data;
