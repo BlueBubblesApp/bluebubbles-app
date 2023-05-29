@@ -34,6 +34,9 @@ class DatabaseService extends GetxService {
       // Flavor: Joel
       case "com.bluebubbles.messaging.joel":
         return "";
+      // Flavor: Beta
+      case "com.bluebubbles.messaging.beta":
+        return "795335779559-aa2tmal53ifekk1e3f1lmgd7ftvs4i1g.apps.googleusercontent.com";
       // Flavor: Production
       default:
         return "795335779559-qrpbpjj1mgp248kt33kj75or771gpk4r.apps.googleusercontent.com";
