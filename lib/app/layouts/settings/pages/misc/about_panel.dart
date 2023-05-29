@@ -268,7 +268,8 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                                     child: SingleChildScrollView(
                                       child: DataTable(
                                         columnSpacing: 5,
-                                        dataRowHeight: 75,
+                                        dataRowMinHeight: 75,
+                                        dataRowMaxHeight: 75,
                                         dataTextStyle: context.theme.textTheme.bodyLarge,
                                         headingTextStyle: context.theme.textTheme.bodyLarge!.copyWith(fontStyle: FontStyle.italic),
                                         columns: const <DataColumn>[

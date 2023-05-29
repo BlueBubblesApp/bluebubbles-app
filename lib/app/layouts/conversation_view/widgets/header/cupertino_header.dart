@@ -54,8 +54,8 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                         return;
                       }
                       controller.close();
-                      while (Get.isOverlaysOpen) {
-                        Get.back();
+                      if (Get.isSnackbarOpen) {
+                        Get.closeAllSnackbars();
                       }
                       Navigator.of(context).pop();
                     },
@@ -73,8 +73,8 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                           return;
                         }
                         controller.close();
-                        while (Get.isOverlaysOpen) {
-                          Get.back();
+                        if (Get.isSnackbarOpen) {
+                          Get.closeAllSnackbars();
                         }
                         Navigator.of(context).pop();
                       },
