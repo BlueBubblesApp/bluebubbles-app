@@ -657,7 +657,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                       child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                       onPressed: () async {
                                         if (Get.isSnackbarOpen) {
-                                          Get.close(1);
+                                          Get.closeAllSnackbars();
                                         }
                                         Get.back();
                                         Future.delayed(const Duration(milliseconds: 400), ()
