@@ -73,9 +73,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   List<Message> reactions = [];
   late double messageOffset = Get.height - widget.childPosition.dy - widget.size.height;
   late double materialOffset = widget.childPosition.dy +
-      EdgeInsets.fromWindowPadding(
-        WidgetsBinding.instance.window.viewInsets,
-        WidgetsBinding.instance.window.devicePixelRatio,
+      EdgeInsets.fromViewPadding(
+        View.of(context).viewInsets,
+        View.of(context).devicePixelRatio,
       ).bottom;
   late int numberToShow = 5;
   late Chat? dmChat = chats.chats
@@ -756,9 +756,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 : TextButton(
                     child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                     onPressed: () async {
-                      if (Get.isSnackbarOpen ?? false) {
-                        Get.close(1);
-                      }
+                      Get.closeAllSnackbars();
                       Navigator.of(context).pop();
                       popDetails();
                     },
@@ -837,9 +835,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 : TextButton(
               child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
               onPressed: () async {
-                if (Get.isSnackbarOpen ?? false) {
-                  Get.close(1);
-                }
+                Get.closeAllSnackbars();
                 Navigator.of(context).pop();
                 popDetails();
               },

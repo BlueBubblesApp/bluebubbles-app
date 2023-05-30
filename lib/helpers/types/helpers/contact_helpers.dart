@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 

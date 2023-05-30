@@ -56,10 +56,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                ),
+                color: HexColor('4285F4'),
               ),
               height: 40,
               child: ElevatedButton(
@@ -75,20 +72,16 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
                 ),
                 onPressed: googleOAuth,
-                child: Shimmer.fromColors(
-                  baseColor: Colors.white70,
-                  highlightColor: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.apple, color: Colors.white, size: 20),
-                      const SizedBox(width: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                        child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
-                      ),
-                    ],
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain),
+                    const SizedBox(width: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 0.0, left: 5.0),
+                      child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                    ),
+                  ],
                 ),
               ),
             ),

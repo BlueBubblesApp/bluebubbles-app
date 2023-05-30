@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -43,7 +41,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     final size = globalKey.currentContext?.size;
     Offset? childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
     if (size == null || childPos == null) return;
-    childPos = Offset(childPos.dx - MediaQueryData.fromWindow(window).padding.left, childPos.dy);
+    childPos = Offset(childPos.dx - MediaQueryData.fromView(View.of(context)).padding.left, childPos.dy);
     final tuple = await ss.getServerDetails();
     final version = tuple.item4;
     final minSierra = await ss.isMinSierra;

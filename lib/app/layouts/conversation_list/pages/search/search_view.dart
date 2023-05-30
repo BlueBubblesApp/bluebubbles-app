@@ -261,22 +261,22 @@ class SearchViewState extends OptimizedState<SearchView> {
                   fillColor: context.theme.colorScheme.primary.withOpacity(0.2),
                   splashColor: context.theme.colorScheme.primary.withOpacity(0.2),
                   children: [
-                    Row(
+                    const  Row(
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text("Search Device"),
                         ),
-                        const Icon(Icons.storage_outlined, size: 16),
+                        Icon(Icons.storage_outlined, size: 16),
                       ],
                     ),
-                    Row(
+                    const Row(
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text("Search Mac"),
                         ),
-                        const Icon(Icons.cloud_outlined, size: 16),
+                        Icon(Icons.cloud_outlined, size: 16),
                       ],
                     ),
                   ],

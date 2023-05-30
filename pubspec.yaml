@@ -83,8 +83,8 @@ dependencies:
       path: geolocator
       ref: no_windows_streams
   gesture_x_detector: ^1.1.1
-  get: 4.3.8 # pinned because of snackbar issue
-  giphy_get: ^3.3.0
+  get: ^4.6.5
+  giphy_get: ^3.4.0
   github: ^9.11.0
   google_fonts: ^4.0.3
   google_ml_kit: ^0.13.0 # mobile only
@@ -131,7 +131,7 @@ dependencies:
   permission_handler: ^10.2.0 # mobile only
   photo_manager: ^2.6.0 # only mobile
   photo_view: ^0.14.0
-  printing: ^5.10.1
+  printing: ^5.10.4
   qr_flutter:
     git:
       url: https://github.com/theyakka/qr.flutter
@@ -159,7 +159,7 @@ dependencies:
   universal_io: ^2.2.0 # cross-platform dart:io implementation
   url_launcher: ^6.1.10
   version: ^3.0.2
-  video_player: ^2.6.0 # no desktop support, todo desktop
+  video_player: ^2.6.0
   video_thumbnail: ^0.5.3 # mobile only
   window_manager: ^0.3.1
   windows_taskbar: ^1.1.1
@@ -239,6 +239,7 @@ flutter:
     - assets/reactions/love-black.svg
     - assets/icon/moon.svg
     - assets/icon/discord.svg
+    - assets/images/google-sign-in.png
     - assets/images/person.png
     - assets/images/person64.png
     - assets/images/transparent.png
