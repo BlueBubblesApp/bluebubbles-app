@@ -239,6 +239,7 @@ flutter:
     - assets/reactions/love-black.svg
     - assets/icon/moon.svg
     - assets/icon/discord.svg
+    - assets/images/google-sign-in.png
     - assets/images/person.png
     - assets/images/person64.png
     - assets/images/transparent.png
