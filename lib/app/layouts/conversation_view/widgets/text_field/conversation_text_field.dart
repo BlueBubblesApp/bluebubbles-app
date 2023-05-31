@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
@@ -970,57 +971,10 @@ class TextFieldComponent extends StatelessWidget {
                             int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
                             if (mentionIndex == null) return; // Shouldn't happen
                             final mention = controller?.mentionables[mentionIndex];
-                            final TextEditingController mentionController = TextEditingController(text: mention?.displayName);
-                            String? changed;
                             if (kIsDesktop || kIsWeb) {
                               controller?.showingOverlays = true;
                             }
-                            await showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  actions: [
-                                    TextButton(
-                                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () => Get.back(),
-                                    ),
-                                    TextButton(
-                                      child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () {
-                                        if (isNullOrEmptyString(mentionController.text)) {
-                                          changed = mention?.handle.displayName ?? "";
-                                        } else {
-                                          changed = mentionController.text;
-                                        }
-                                        Get.back();
-                                      },
-                                    ),
-                                  ],
-                                  content: TextField(
-                                    controller: mentionController,
-                                    textCapitalization: TextCapitalization.sentences,
-                                    autocorrect: true,
-                                    scrollPhysics: const CustomBouncingScrollPhysics(),
-                                    autofocus: true,
-                                    enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                                    decoration: InputDecoration(
-                                      labelText: "Custom Mention",
-                                      hintText: mention?.handle.displayName ?? "",
-                                      border: const OutlineInputBorder(),
-                                    ),
-                                    onSubmitted: (val) {
-                                      if (isNullOrEmptyString(val)) {
-                                        val = mention?.handle.displayName ?? "";
-                                      }
-                                      changed = val;
-                                      Get.back();
-                                    },
-                                  ),
-                                  title: Text("Custom Mention", style: context.theme.textTheme.titleLarge),
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                );
-                              }
-                            );
+                            final changed = await showCustomMentionDialog(context, mention);
                             if (kIsDesktop || kIsWeb) {
                               controller?.showingOverlays = false;
                             }
