@@ -35,7 +35,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   final TextEditingController passwordController = TextEditingController();
   final controller = Get.find<SetupViewController>();
 
-  bool showManualEntry = false;
+  bool showLoginButtons = true;
   bool obscureText = true;
 
   @override
@@ -47,12 +47,12 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
       contentWrapper: (child) => AnimatedSize(
         duration: const Duration(milliseconds: 200),
-        child: showManualEntry && context.isPhone ? const SizedBox.shrink() : child,
+        child: !showLoginButtons && context.isPhone ? const SizedBox.shrink() : child,
       ),
       customButton: Column(
         children: [
           ErrorText(parentController: controller),
-          if (!showManualEntry)
+          if (showLoginButtons)
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
@@ -75,19 +75,19 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain),
+                    Image.asset("assets/images/google-sign-in.png", width: 20, fit: BoxFit.contain),
                     const SizedBox(width: 10),
                     Padding(
                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                      child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                      child: Text("Connect with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                     ),
                   ],
                 ),
               ),
             ),
-          if (!showManualEntry)
-            const SizedBox(height: 20),
-          if (!kIsWeb && !kIsDesktop && showManualEntry)
+          if (showLoginButtons)
+            const SizedBox(height: 10),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons)
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
@@ -127,52 +127,49 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 ),
               ),
             ),
-          if (!kIsWeb && !kIsDesktop && showManualEntry)
-            const SizedBox(height: 20),
-          if (!showManualEntry)
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                ),
-              ),
-              height: 40,
-              padding: const EdgeInsets.all(2),
-              child: ElevatedButton(
-                style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  ),
-                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                ),
-                onPressed: () async {
-                  setState(() {
-                    showManualEntry = !showManualEntry;
-                  });
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(CupertinoIcons.camera, color: context.theme.colorScheme.onBackground, size: 20),
-                    const SizedBox(width: 10),
-                    Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
-                    const SizedBox(width: 10),
-                    Text("Manual entry",
-                        style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
-                  ],
-                ),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons)
+            const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(25),
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
               ),
             ),
+            height: 40,
+            padding: const EdgeInsets.all(2),
+            child: ElevatedButton(
+              style: ButtonStyle(
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                ),
+                backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+              ),
+              onPressed: () async {
+                setState(() {
+                  showLoginButtons = !showLoginButtons;
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
+                  const SizedBox(width: 10),
+                  Text("Manual entry",
+                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                ],
+              ),
+            ),
+          ),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
-            child: !showManualEntry
+            child: showLoginButtons
                 ? const SizedBox.shrink()
                 : Theme(
                     data: context.theme.copyWith(
@@ -277,7 +274,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 ),
                                 onPressed: () async {
                                   setState(() {
-                                    showManualEntry = false;
+                                    showLoginButtons = false;
                                   });
                                 },
                                 child: Row(
@@ -727,7 +724,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           }
 
           setState(() {
-            showManualEntry = false;
+            showLoginButtons = false;
           });
 
           dio.Response fcmResponse = await fcmFuture;
