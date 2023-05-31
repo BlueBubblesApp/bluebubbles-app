@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/create_new_theme_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/advanced_theming_tile.dart';
@@ -9,6 +10,7 @@ import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -34,6 +36,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
   List<ThemeStruct> allThemes = [];
   bool editable = false;
   double master = 1;
+  ThemeData? oldData;
   final _controller = ScrollController();
 
   @override
@@ -236,6 +239,59 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                   subtitle:
                   "Make the background of the messages view an animated gradient based on the background and primary colors",
                   isThreeLine: true,
+                ),
+                AnimatedSizeAndFade.showHide(
+                  show: editable,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
+                      SettingsTile(
+                        title: "Generate From Image",
+                        subtitle: "Overwrite this theme by generating a color palette from an image",
+                        backgroundColor: tileColor,
+                        onTap: () async {
+                          final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);
+                          if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                          final image = MemoryImage(res.files.first.bytes!);
+                          final swatch = await ColorScheme.fromImageProvider(provider: image, brightness: widget.isDarkMode ? Brightness.dark : Brightness.light);
+                          oldData = currentTheme.data;
+                          setState(() {});
+                          currentTheme.data = currentTheme.data.copyWith(colorScheme: swatch);
+                          currentTheme.save();
+                          if (widget.isDarkMode) {
+                            await ts.changeTheme(context, dark: currentTheme);
+                          } else {
+                            await ts.changeTheme(context, light: currentTheme);
+                          }
+                        },
+                        trailing: oldData == null ? null : TextButton(
+                          style: TextButton.styleFrom(
+                            backgroundColor: context.theme.colorScheme.secondary,
+                          ),
+                          onPressed: () async {
+                            currentTheme.data = oldData!;
+                            setState(() {
+                              oldData = null;
+                            });
+                            currentTheme.save();
+                            if (widget.isDarkMode) {
+                              await ts.changeTheme(context, dark: currentTheme);
+                            } else {
+                              await ts.changeTheme(context, light: currentTheme);
+                            }
+                          },
+                          child: Text("UNDO", style: TextStyle(color: context.theme.colorScheme.onSecondary)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SettingsSubtitle(
                   subtitle: "Tap to edit the base color\nLong press to edit the color for elements displayed on top of the base color\nDouble tap to learn how the colors are used",
