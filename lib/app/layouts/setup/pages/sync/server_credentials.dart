@@ -40,6 +40,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
 
   @override
   Widget build(BuildContext context) {
+    Size buttonSize = Size(context.width * 2 / 3, 36);
     return SetupPageTemplate(
       title: "Server Connection",
       subtitle: kIsWeb || kIsDesktop
@@ -55,7 +56,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           if (showLoginButtons)
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(20),
                 color: HexColor('4285F4'),
               ),
               height: 40,
@@ -68,14 +69,14 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   ),
                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                   shadowColor: MaterialStateProperty.all(Colors.transparent),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                  maximumSize: MaterialStateProperty.all(buttonSize),
+                  minimumSize: MaterialStateProperty.all(buttonSize),
                 ),
                 onPressed: googleOAuth,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset("assets/images/google-sign-in.png", width: 20, fit: BoxFit.contain),
+                    Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain),
                     const SizedBox(width: 10),
                     Padding(
                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
@@ -90,7 +91,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           if (!kIsWeb && !kIsDesktop && showLoginButtons)
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(20),
                 gradient: LinearGradient(
                   begin: AlignmentDirectional.topStart,
                   colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
@@ -106,24 +107,20 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   ),
                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                   shadowColor: MaterialStateProperty.all(Colors.transparent),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                  maximumSize: MaterialStateProperty.all(buttonSize),
+                  minimumSize: MaterialStateProperty.all(buttonSize),
                 ),
                 onPressed: scanQRCode,
-                child: Shimmer.fromColors(
-                  baseColor: Colors.white70,
-                  highlightColor: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
-                      const SizedBox(width: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                        child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
-                      ),
-                    ],
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 0.0, left: 5.0),
+                      child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -131,7 +128,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
+              borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
                 begin: AlignmentDirectional.topStart,
                 colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
@@ -148,8 +145,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 ),
                 backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
                 shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                maximumSize: MaterialStateProperty.all(buttonSize),
+                minimumSize: MaterialStateProperty.all(buttonSize),
               ),
               onPressed: () async {
                 setState(() {
@@ -274,7 +271,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 ),
                                 onPressed: () async {
                                   setState(() {
-                                    showLoginButtons = false;
+                                    showLoginButtons = true;
                                   });
                                 },
                                 child: Row(
