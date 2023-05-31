@@ -79,7 +79,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                     const SizedBox(width: 10),
                     Padding(
                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                      child: Text("Connect with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                      child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                     ),
                   ],
                 ),
@@ -787,7 +787,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             }
           } else {
             controller.updateConnectError(
-                "Failed to connect to $addr! Please ensure your credentials are correct and check the server logs for more info.");
+                "Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.");
             return;
           }
         }
