@@ -22,7 +22,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:universal_io/io.dart';
 
 class ServerCredentials extends StatefulWidget {
