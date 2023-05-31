@@ -434,13 +434,13 @@ packages:
     source: hosted
     version: "2.5.0"
   csslib:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: csslib
-      sha256: "831883fb353c8bdc1d71979e5b342c7d88acfbc643113c14ae51e2442ea0f20f"
+      sha256: f857285c8dc0b4f2f77b49a1c083ff8c75223a7549de20f3e607df58cf497a43
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.3"
+    version: "0.17.0"
   cupertino_icons:
     dependency: "direct main"
     description:

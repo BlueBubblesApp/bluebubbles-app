@@ -342,6 +342,7 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
   ConversationViewController? get cvController => widget.controller;
 
   bool hasListener = false;
+  late Player player;
   VideoController? videoController;
 
   final RxBool showPlayPauseOverlay = true.obs;
@@ -350,20 +351,18 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
 
   @override
   void initState() {
-    videoController = cvController?.videoPlayersDesktop[attachment.guid];
-
-    if (videoController != null) {
+    VideoController? cachedController = cvController?.videoPlayersDesktop[attachment.guid];
+    player = Player();
+    if (cachedController != null) {
+      videoController = cachedController;
       aspectRatio.value = videoController!.aspectRatio;
+
+      updateObx(() {
+        createListener(videoController!, player);
+      });
     }
 
-    updateObx(() {
-      if (videoController != null) {
-        createListener(videoController!);
-      }
-    });
-
     initializeController();
-
     super.initState();
   }
 
@@ -376,25 +375,25 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
     } else {
       media = Media(widget.file.path!);
     }
-    videoController ??= await VideoController.create(Player());
-    await videoController!.player.setPlaylistMode(PlaylistMode.none);
-    await videoController!.player.open(media, play: false);
-    await videoController!.player.setVolume(muted.value ? 0 : 100);
-    createListener(videoController!);
+    videoController ??= VideoController(player);
+    await player.setPlaylistMode(PlaylistMode.none);
+    await player.open(media, play: false);
+    await player.setVolume(muted.value ? 0 : 100);
+    createListener(videoController!, player);
     cvController?.videoPlayersDesktop[attachment.guid!] = videoController!;
     setState(() {});
   }
 
-  void createListener(VideoController controller) {
+  void createListener(VideoController controller, Player player) {
     if (hasListener) return;
     controller.rect.addListener(() {
       aspectRatio.value = controller.aspectRatio;
     });
-    controller.player.streams.completed.listen((completed) async {
+    player.streams.completed.listen((completed) async {
       // If the status is ended, restart
       if (completed) {
-        await controller.player.pause();
-        await controller.player.seek(Duration.zero);
+        await player.pause();
+        await player.seek(Duration.zero);
         showPlayPauseOverlay.value = true;
         showPlayPauseOverlay.refresh();
       }
@@ -408,12 +407,12 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
     if (videoController != null) {
       return MouseRegion(
         onEnter: (event) => showPlayPauseOverlay.value = true,
-        onExit: (event) => showPlayPauseOverlay.value = !videoController!.player.state.playing,
+        onExit: (event) => showPlayPauseOverlay.value = !player.state.playing,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () async {
             if (attachment.id == null) return;
-            await videoController!.player.pause();
+            await player.pause();
             await Navigator.of(Get.context!).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => FullscreenMediaHolder(
@@ -432,10 +431,10 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
             children: <Widget>[
               Obx(() => AspectRatio(
                     aspectRatio: aspectRatio.value,
-                    child: Video(controller: videoController),
+                    child: Video(controller: videoController!),
                   )),
-              DesktopPlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: videoController!.player),
-              DesktopMuteButton(muted: muted, controller: videoController!.player, isFromMe: widget.isFromMe),
+              DesktopPlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: player),
+              DesktopMuteButton(muted: muted, controller: player, isFromMe: widget.isFromMe),
               FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe,),
             ],
           ),
@@ -467,12 +466,12 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
             children: <Widget>[
               DesktopPlayPauseButton(
                   showPlayPauseOverlay: showPlayPauseOverlay,
-                  controller: videoController?.player,
+                  controller: player,
                   hover: hover,
                   customOnTap: () async {
                     await initializeController();
-                    await videoController!.player.setVolume(muted.value ? 0.0 : 100.0);
-                    await videoController!.player.play();
+                    await player.setVolume(muted.value ? 0.0 : 100.0);
+                    await player.play();
                     showPlayPauseOverlay.value = false;
                   }),
               const SizedBox(width: 10),

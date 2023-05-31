@@ -35,6 +35,7 @@ dependencies:
   confetti: ^0.7.0
   connectivity_plus: ^3.0.3
   crop_your_image: ^0.7.4
+  csslib: 0.17.0
   cupertino_icons: ^1.0.5
   defer_pointer: ^0.0.2
   desktop_drop: ^0.4.1
