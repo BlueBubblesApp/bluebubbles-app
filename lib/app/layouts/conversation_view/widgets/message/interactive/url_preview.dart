@@ -120,7 +120,7 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_data.imageMetadata?.url != null && _data.imageMetadata?.size != Size.zero && ReplyScope.maybeOf(context) == null)
+          if (_data.imageMetadata?.url != null && ReplyScope.maybeOf(context) == null)
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
@@ -243,9 +243,9 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                     ]
                   ),
                 ),
-                if (_data.iconMetadata?.url != null && _data.imageMetadata?.size == Size.zero)
+                if (_data.iconMetadata?.url != null)
                   const SizedBox(width: 10),
-                if (_data.iconMetadata?.url != null && _data.imageMetadata?.size == Size.zero)
+                if (_data.iconMetadata?.url != null)
                   ConstrainedBox(
                     constraints: const BoxConstraints(
                       maxWidth: 45,
