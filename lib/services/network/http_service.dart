@@ -924,7 +924,7 @@ class HttpService extends GetxService {
           "payload": {
             "chatGuid": chatGuid,
             "message": message,
-            "method": "apple-script"
+            "method": ss.settings.privateAPISend.value ? 'private-api' : "apple-script"
           },
           "scheduledFor": date.millisecondsSinceEpoch,
           "schedule": schedule,
