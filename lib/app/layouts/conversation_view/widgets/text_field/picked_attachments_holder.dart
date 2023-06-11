@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -33,6 +34,26 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
   
   List<PlatformFile> get pickedAttachments => widget.controller != null
       ? widget.controller!.pickedAttachments : widget.initialAttachments;
+
+  void selectMention(int index, bool custom) async {
+    final mention = widget.controller!.mentionMatches[index];
+    if (custom) {
+      final changed = await showCustomMentionDialog(context, mention);
+      if (isNullOrEmpty(changed)!) return;
+      mention.customDisplayName = changed!;
+    }
+    final _controller = widget.textController;
+    widget.controller!.mentionSelectedIndex.value = 0;
+    final text = _controller.text;
+    final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
+    final matches = regExp.allMatches(text);
+    if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
+      final match = matches.lastWhere((m) => m.start < _controller.selection.start);
+      _controller.addMention(text.substring(match.start, match.end), mention);
+    }
+    widget.controller!.mentionMatches.clear();
+    widget.controller!.focusNode.requestFocus();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -180,17 +201,13 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                               widget.controller!.mentionSelectedIndex.value = index;
                             },
                             onTap: () {
-                              final _controller = widget.textController;
-                              widget.controller!.mentionSelectedIndex.value = 0;
-                              final text = _controller.text;
-                              final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
-                              final matches = regExp.allMatches(text);
-                              if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
-                                final match = matches.lastWhere((m) => m.start < _controller.selection.start);
-                                _controller.addMention(text.substring(match.start, match.end), widget.controller!.mentionMatches[index]);
-                              }
-                              widget.controller!.mentionMatches.clear();
-                              widget.controller!.focusNode.requestFocus();
+                              selectMention(index, false);
+                            },
+                            onLongPress: () {
+                              selectMention(index, true);
+                            },
+                            onSecondaryTapUp: (details) {
+                              selectMention(index, true);
                             },
                             child: Obx(() => ListTile(
                                 mouseCursor: MouseCursor.defer,

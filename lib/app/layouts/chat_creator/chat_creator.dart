@@ -645,7 +645,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               // only used in non-tablet mode context
                               customRoute: PageRouteBuilder(
                                 pageBuilder: (_, __, ___) => TitleBarWrapper(
-                                  child: ConversationView(chat: chat, fromChatCreator: true,)
+                                  child: ConversationView(chat: chat, fromChatCreator: true)
                                 ),
                                 transitionDuration: Duration.zero,
                               ),
@@ -782,12 +782,5 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    cm.setAllInactiveSync();
   }
 }

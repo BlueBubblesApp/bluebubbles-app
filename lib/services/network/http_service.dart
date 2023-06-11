@@ -158,6 +158,18 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Check for new server versions
+  Future<Response> installUpdate({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/server/update/install",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get server totals (number of handles, messages, chats, and attachments)
   Future<Response> serverStatTotals({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
