@@ -24,23 +24,10 @@ class DatabaseService extends GetxService {
     }
   }
 
-  String getClientId() {
+  String? getClientId() {
     if (kIsWeb) return '795335779559-n81mfu5g5r58bphui6lmjphnn22mcqhd.apps.googleusercontent.com';
     if (kIsDesktop) return '795335779559-jqfjh4l8v98bmfka7jusbega8j3o6bc4.apps.googleusercontent.com';
-    switch (fs.packageInfo.packageName) {
-      // Flavor: Tanay
-      case "com.bluebubbles.messaging.tanay":
-        return "795335779559-dm9ril4hvc7ieaokhfra82pr6onk7qo3.apps.googleusercontent.com";
-      // Flavor: Joel
-      case "com.bluebubbles.messaging.joel":
-        return "";
-      // Flavor: Beta
-      case "com.bluebubbles.messaging.beta":
-        return "795335779559-aa2tmal53ifekk1e3f1lmgd7ftvs4i1g.apps.googleusercontent.com";
-      // Flavor: Production
-      default:
-        return "795335779559-qrpbpjj1mgp248kt33kj75or771gpk4r.apps.googleusercontent.com";
-    }
+    return null;
   }
 
   /// Fetch the new server URL from the Firebase Database

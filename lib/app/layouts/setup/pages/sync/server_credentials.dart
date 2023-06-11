@@ -466,7 +466,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     // desktop implementation
     } else {
       final args = GoogleSignInArgs(
-        clientId: fdb.getClientId(),
+        clientId: fdb.getClientId()!,
         redirectUri: 'http://localhost:8641/oauth/callback',
         scope: 'https://www.googleapis.com/auth/cloud-platform',
       );
