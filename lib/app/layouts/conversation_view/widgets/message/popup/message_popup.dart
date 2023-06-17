@@ -756,9 +756,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 : TextButton(
                     child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                     onPressed: () async {
-                      if (Get.isSnackbarOpen) {
-                        Get.close(1);
-                      }
+                      Get.closeAllSnackbars();
                       Navigator.of(context).pop();
                       popDetails();
                     },
@@ -837,9 +835,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 : TextButton(
               child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
               onPressed: () async {
-                if (Get.isSnackbarOpen) {
-                  Get.close(1);
-                }
+                Get.closeAllSnackbars();
                 Navigator.of(context).pop();
                 popDetails();
               },

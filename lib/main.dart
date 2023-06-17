@@ -332,6 +332,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
             case 4:
               ss.getFcmData();
               ss.fcmData.save();
+              version = 4;
+              migrate.call();
               return;
             default:
               return;

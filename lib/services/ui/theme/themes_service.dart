@@ -13,7 +13,7 @@ import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide GetStringUtils;
-import 'package:material_color_utilities/material_color_utilities.dart';
+import 'package:material_color_utilities/material_color_utilities.dart' as mui_utils;
 import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
@@ -21,7 +21,7 @@ import 'package:universal_io/io.dart';
 ThemesService ts = Get.isRegistered<ThemesService>() ? Get.find<ThemesService>() : Get.put(ThemesService());
 
 class ThemesService extends GetxService {
-  CorePalette? monetPalette;
+  mui_utils.CorePalette? monetPalette;
   Color? windowsAccentColor;
 
   final Rx<MovieTween> gradientTween = Rx<MovieTween>(MovieTween()
