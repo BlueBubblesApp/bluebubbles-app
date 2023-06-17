@@ -22,7 +22,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:universal_io/io.dart';
 
 class ServerCredentials extends StatefulWidget {
@@ -35,11 +34,12 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   final TextEditingController passwordController = TextEditingController();
   final controller = Get.find<SetupViewController>();
 
-  bool showManualEntry = false;
+  bool showLoginButtons = true;
   bool obscureText = true;
 
   @override
   Widget build(BuildContext context) {
+    Size buttonSize = Size(context.width * 2 / 3, 36);
     return SetupPageTemplate(
       title: "Server Connection",
       subtitle: kIsWeb || kIsDesktop
@@ -47,19 +47,16 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
       contentWrapper: (child) => AnimatedSize(
         duration: const Duration(milliseconds: 200),
-        child: showManualEntry && context.isPhone ? const SizedBox.shrink() : child,
+        child: !showLoginButtons && context.isPhone ? const SizedBox.shrink() : child,
       ),
       customButton: Column(
         children: [
           ErrorText(parentController: controller),
-          if (!showManualEntry)
+          if (showLoginButtons)
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                ),
+                borderRadius: BorderRadius.circular(20),
+                color: HexColor('4285F4'),
               ),
               height: 40,
               child: ElevatedButton(
@@ -71,115 +68,104 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   ),
                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                   shadowColor: MaterialStateProperty.all(Colors.transparent),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                  maximumSize: MaterialStateProperty.all(buttonSize),
+                  minimumSize: MaterialStateProperty.all(buttonSize),
                 ),
                 onPressed: googleOAuth,
-                child: Shimmer.fromColors(
-                  baseColor: Colors.white70,
-                  highlightColor: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.apple, color: Colors.white, size: 20),
-                      const SizedBox(width: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                        child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          if (!showManualEntry)
-            const SizedBox(height: 20),
-          if (!kIsWeb && !kIsDesktop && showManualEntry)
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                ),
-              ),
-              height: 40,
-              child: ElevatedButton(
-                style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  ),
-                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                  shadowColor: MaterialStateProperty.all(Colors.transparent),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                ),
-                onPressed: scanQRCode,
-                child: Shimmer.fromColors(
-                  baseColor: Colors.white70,
-                  highlightColor: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
-                      const SizedBox(width: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                        child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          if (!kIsWeb && !kIsDesktop && showManualEntry)
-            const SizedBox(height: 20),
-          if (!showManualEntry)
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                ),
-              ),
-              height: 40,
-              padding: const EdgeInsets.all(2),
-              child: ElevatedButton(
-                style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  ),
-                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                ),
-                onPressed: () async {
-                  setState(() {
-                    showManualEntry = !showManualEntry;
-                  });
-                },
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(CupertinoIcons.camera, color: context.theme.colorScheme.onBackground, size: 20),
+                    Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain),
                     const SizedBox(width: 10),
-                    Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
-                    const SizedBox(width: 10),
-                    Text("Manual entry",
-                        style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 0.0, left: 5.0),
+                      child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                    ),
                   ],
                 ),
               ),
             ),
+          if (showLoginButtons)
+            const SizedBox(height: 10),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons)
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: AlignmentDirectional.topStart,
+                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                ),
+              ),
+              height: 40,
+              child: ElevatedButton(
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                  ),
+                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                  shadowColor: MaterialStateProperty.all(Colors.transparent),
+                  maximumSize: MaterialStateProperty.all(buttonSize),
+                  minimumSize: MaterialStateProperty.all(buttonSize),
+                ),
+                onPressed: scanQRCode,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 0.0, left: 5.0),
+                      child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons)
+            const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+              ),
+            ),
+            height: 40,
+            padding: const EdgeInsets.all(2),
+            child: ElevatedButton(
+              style: ButtonStyle(
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                ),
+                backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                maximumSize: MaterialStateProperty.all(buttonSize),
+                minimumSize: MaterialStateProperty.all(buttonSize),
+              ),
+              onPressed: () async {
+                setState(() {
+                  showLoginButtons = !showLoginButtons;
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
+                  const SizedBox(width: 10),
+                  Text("Manual entry",
+                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                ],
+              ),
+            ),
+          ),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
-            child: !showManualEntry
+            child: showLoginButtons
                 ? const SizedBox.shrink()
                 : Theme(
                     data: context.theme.copyWith(
@@ -284,7 +270,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 ),
                                 onPressed: () async {
                                   setState(() {
-                                    showManualEntry = false;
+                                    showLoginButtons = true;
                                   });
                                 },
                                 child: Row(
@@ -480,7 +466,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     // desktop implementation
     } else {
       final args = GoogleSignInArgs(
-        clientId: fdb.getClientId(),
+        clientId: fdb.getClientId()!,
         redirectUri: 'http://localhost:8641/oauth/callback',
         scope: 'https://www.googleapis.com/auth/cloud-platform',
       );
@@ -734,7 +720,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           }
 
           setState(() {
-            showManualEntry = false;
+            showLoginButtons = false;
           });
 
           dio.Response fcmResponse = await fcmFuture;
@@ -797,7 +783,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             }
           } else {
             controller.updateConnectError(
-                "Failed to connect to $addr! Please ensure your credentials are correct and check the server logs for more info.");
+                "Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.");
             return;
           }
         }

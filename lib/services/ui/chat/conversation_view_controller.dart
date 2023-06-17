@@ -146,10 +146,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     for (VideoPlayerController v in videoPlayers.values) {
       v.dispose();
     }
-    for (VideoController v in videoPlayersDesktop.values) {
-      v.player.dispose();
-      v.dispose();
-    }
     for (PlayerController a in audioPlayers.values) {
       a.pausePlayer();
       a.dispose();

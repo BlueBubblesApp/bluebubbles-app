@@ -177,7 +177,7 @@ class SettingsService extends GetxService {
                 height: 15.0,
               ),
               if (metadata.isNotEmpty)
-                Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}", style: context.theme.textTheme.bodyLarge)
+                Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}\n\nWarning: Installing the update will briefly disconnect you.", style: context.theme.textTheme.bodyLarge)
             ],
           ),
           actions: [
@@ -185,6 +185,14 @@ class SettingsService extends GetxService {
               child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
               onPressed: () async {
                 await prefs.setString("server-update-check", metadata['version']);
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Install", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+              onPressed: () async {
+                await prefs.setString("server-update-check", metadata['version']);
+                http.installUpdate();
                 Navigator.of(context).pop();
               },
             ),

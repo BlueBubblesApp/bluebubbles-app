@@ -197,6 +197,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
   @override
   void dispose() {
     hideOverlayTimer?.cancel();
+    print("ON DISPOSE");
     controller.dispose();
     chewieController.dispose();
     super.dispose();
@@ -352,9 +353,11 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
 class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with AutomaticKeepAliveClientMixin {
   Timer? hideOverlayTimer;
 
-  VideoController? videoController;
+  late Player player;
+  late VideoController videoController;
 
   bool hasListener = false;
+  bool hasDisposed = false;
   final RxBool muted = ss.settings.startVideosMutedFullscreen.value.obs;
   final RxBool showPlayPauseOverlay = true.obs;
   final RxDouble aspectRatio = 1.0.obs;
@@ -366,6 +369,9 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
   }
 
   void initControllers() async {
+    player = Player();
+    videoController = VideoController(player);
+
     late final Media media;
     if (widget.file.path == null) {
       final blob = html.Blob([widget.file.bytes]);
@@ -374,25 +380,25 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
     } else {
       media = Media(widget.file.path!);
     }
-    videoController = await VideoController.create(Player());
-    await videoController!.player.setPlaylistMode(PlaylistMode.none);
-    await videoController!.player.open(media, play: false);
-    await videoController!.player.setVolume(muted.value ? 0 : 100);
-    createListener(videoController!);
+    
+    await player.setPlaylistMode(PlaylistMode.none);
+    await player.open(media, play: false);
+    await player.setVolume(muted.value ? 0 : 100);
+    createListener(videoController, player);
     showPlayPauseOverlay.value = true;
     setState(() {});
   }
 
-  void createListener(VideoController controller) {
+  void createListener(VideoController controller, Player player) {
     if (hasListener) return;
     controller.rect.addListener(() {
       aspectRatio.value = controller.aspectRatio;
     });
-    controller.player.streams.completed.listen((completed) async {
+    player.streams.completed.listen((completed) async {
       // If the status is ended, restart
-      if (completed) {
-        await controller.player.pause();
-        await controller.player.seek(Duration.zero);
+      if (completed && !hasDisposed) {
+        await player.pause();
+        await player.seek(Duration.zero);
         showPlayPauseOverlay.value = true;
       }
     });
@@ -401,15 +407,16 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
 
   @override
   void dispose() {
+    hasDisposed = true;
     hideOverlayTimer?.cancel();
-    videoController?.player.dispose();
-    videoController?.dispose();
+    player.dispose();
     super.dispose();
   }
 
   void refreshAttachment() {
     showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
     as.redownloadAttachment(widget.attachment, onComplete: (file) async {
+      if (hasDisposed) return;
       hasListener = false;
       late final Media media;
       if (widget.file.path == null) {
@@ -419,10 +426,10 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
       } else {
         media = Media(widget.file.path!);
       }
-      await videoController!.player.open(media, play: false);
-      await videoController!.player.setVolume(muted.value ? 0 : 100);
-      createListener(videoController!);
-      showPlayPauseOverlay.value = !videoController!.player.state.playing;
+      await player.open(media, play: false);
+      await player.setVolume(muted.value ? 0 : 100);
+      createListener(videoController, player);
+      showPlayPauseOverlay.value = !player.state.playing;
     });
   }
 
@@ -472,7 +479,7 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
                         label: 'Refresh'),
                     NavigationDestination(
                         icon: Icon(
-                          videoController?.player.state.volume == 0.0
+                          player.state.volume == 0.0
                               ? iOS
                                   ? CupertinoIcons.volume_mute
                                   : Icons.volume_mute
@@ -491,7 +498,7 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
                     } else if (value == 2) {
                       refreshAttachment();
                     } else if (value == 3) {
-                      await videoController?.player.setVolume(videoController?.player.state.volume != 0.0 ? 0.0 : 100.0);
+                      await player.setVolume(player.state.volume != 0.0 ? 0.0 : 100.0);
                       setState(() {});
                     }
                   },
@@ -499,7 +506,7 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
               ),
         body: MouseRegion(
           onEnter: (event) => showPlayPauseOverlay.value = true,
-          onExit: (event) => showPlayPauseOverlay.value = !(videoController?.player.state.playing ?? false),
+          onExit: (event) => showPlayPauseOverlay.value = !player.state.playing,
           child: Obx(() {
             return SafeArea(
               child: Center(
@@ -530,11 +537,11 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(40),
                                   onTap: () async {
-                                    if (videoController?.player.state.playing ?? false) {
-                                      await videoController?.player.pause();
+                                    if (player.state.playing) {
+                                      await player.pause();
                                       showPlayPauseOverlay.value = true;
                                     } else {
-                                      await videoController?.player.play();
+                                      await player.play();
                                       showPlayPauseOverlay.value = false;
                                     }
                                   },
@@ -548,13 +555,13 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
                                     clipBehavior: Clip.antiAlias,
                                     child: Padding(
                                       padding: EdgeInsets.only(
-                                        left: ss.settings.skin.value == Skins.iOS && !(videoController?.player.state.playing ?? false) ? 17 : 10,
+                                        left: ss.settings.skin.value == Skins.iOS && !player.state.playing ? 17 : 10,
                                         top: ss.settings.skin.value == Skins.iOS ? 13 : 10,
                                         right: 10,
                                         bottom: 10,
                                       ),
                                       child: Obx(
-                                        () => videoController?.player.state.playing ?? false
+                                        () => player.state.playing
                                             ? Icon(
                                                 ss.settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
                                                 color: context.iconColor,
