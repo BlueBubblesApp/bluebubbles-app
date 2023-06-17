@@ -706,7 +706,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   backgroundColor: tileColor,
                                   onTap: () async {
                                     void closeDialog() {
-                                      if (Get.isSnackbarOpen ?? false) {
+                                      if (Get.isSnackbarOpen) {
                                         Get.close(1);
                                       }
                                       Navigator.of(context).pop();
