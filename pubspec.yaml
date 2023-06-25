@@ -140,7 +140,7 @@ dependencies:
   store_checker: ^1.1.0
   synchronized: ^3.0.1
   supercharged: ^2.1.1
-  system_tray: ^2.0.2
+  system_tray: ^2.0.3
   tuple: ^2.0.1
   universal_html: ^2.2.1 # cross-platform dart:html implementation
   universal_io: ^2.2.0 # cross-platform dart:io implementation
