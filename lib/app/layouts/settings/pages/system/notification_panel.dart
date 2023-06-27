@@ -451,9 +451,7 @@ class ChatListState extends OptimizedState<ChatList> {
                   child: ScrollbarWrapper(
                     controller: _controller,
                     child: ListView.builder(
-                      physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                          ? const NeverScrollableScrollPhysics()
-                          : ThemeSwitcher.getScrollPhysics(),
+                      physics: ThemeSwitcher.getScrollPhysics(),
                       shrinkWrap: true,
                       controller: _controller,
                       itemBuilder: (context, index) {

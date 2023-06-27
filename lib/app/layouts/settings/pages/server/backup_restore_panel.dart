@@ -7,7 +7,6 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
-import 'package:collection/collection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -414,7 +413,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                 final content = base64.encode(bytes);
                                 html.AnchorElement(
                                     href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-                                  ..setAttribute("download", filePath.split("/").last)
+                                  ..setAttribute("download", basename(filePath))
                                   ..click();
                                 return;
                               }
@@ -836,7 +835,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               final content = base64.encode(bytes);
                               html.AnchorElement(
                                   href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-                                ..setAttribute("download", filePath.split("/").last)
+                                ..setAttribute("download", basename(filePath))
                                 ..click();
                               return;
                             }

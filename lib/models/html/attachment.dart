@@ -21,6 +21,7 @@ class Attachment {
   Uint8List? bytes;
   String? webUrl;
   Map<String, dynamic>? metadata;
+  bool hasLivePhoto;
 
   final message = ToOne<Message>();
 
@@ -38,6 +39,7 @@ class Attachment {
     this.metadata,
     this.bytes,
     this.webUrl,
+    this.hasLivePhoto = false,
   });
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
@@ -66,6 +68,7 @@ class Attachment {
       height: json["height"] ?? 0,
       width: json["width"] ?? 0,
       metadata: metadata is String ? null : metadata,
+      hasLivePhoto: json["hasLivePhoto"] ?? false,
     );
   }
 
@@ -138,6 +141,9 @@ class Attachment {
     attachment1.uti ??= attachment2.uti;
     attachment1.webUrl ??= attachment2.webUrl;
     attachment1.metadata = mergeTopLevelDicts(attachment1.metadata, attachment2.metadata);
+    if (attachment2.hasLivePhoto) {
+      attachment1.hasLivePhoto = attachment2.hasLivePhoto;
+    }
     return attachment1;
   }
 
@@ -153,6 +159,7 @@ class Attachment {
     "height": height,
     "width": width,
     "metadata": jsonEncode(metadata),
+    "hasLivePhoto": hasLivePhoto,
   };
 
   bool  get _isPortrait {

@@ -11,14 +11,17 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
+import 'package:desktop_webview_auth/desktop_webview_auth.dart';
+import 'package:desktop_webview_auth/google.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:universal_io/io.dart';
 
 class ServerCredentials extends StatefulWidget {
@@ -31,11 +34,12 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   final TextEditingController passwordController = TextEditingController();
   final controller = Get.find<SetupViewController>();
 
-  bool showManualEntry = kIsDesktop || kIsWeb;
+  bool showLoginButtons = true;
   bool obscureText = true;
 
   @override
   Widget build(BuildContext context) {
+    Size buttonSize = Size(context.width * 2 / 3, 36);
     return SetupPageTemplate(
       title: "Server Connection",
       subtitle: kIsWeb || kIsDesktop
@@ -43,15 +47,50 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
       contentWrapper: (child) => AnimatedSize(
         duration: const Duration(milliseconds: 200),
-        child: showManualEntry && context.isPhone ? const SizedBox.shrink() : child,
+        child: !showLoginButtons && context.isPhone ? const SizedBox.shrink() : child,
       ),
       customButton: Column(
         children: [
           ErrorText(parentController: controller),
-          if (!kIsWeb && !kIsDesktop)
+          if (showLoginButtons)
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(20),
+                color: HexColor('4285F4'),
+              ),
+              height: 40,
+              child: ElevatedButton(
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                  ),
+                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                  shadowColor: MaterialStateProperty.all(Colors.transparent),
+                  maximumSize: MaterialStateProperty.all(buttonSize),
+                  minimumSize: MaterialStateProperty.all(buttonSize),
+                ),
+                onPressed: googleOAuth,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain),
+                    const SizedBox(width: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 0.0, left: 5.0),
+                      child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (showLoginButtons)
+            const SizedBox(height: 10),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons)
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
                 gradient: LinearGradient(
                   begin: AlignmentDirectional.topStart,
                   colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
@@ -67,70 +106,66 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   ),
                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                   shadowColor: MaterialStateProperty.all(Colors.transparent),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                  maximumSize: MaterialStateProperty.all(buttonSize),
+                  minimumSize: MaterialStateProperty.all(buttonSize),
                 ),
                 onPressed: scanQRCode,
-                child: Shimmer.fromColors(
-                  baseColor: Colors.white70,
-                  highlightColor: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
-                      const SizedBox(width: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                        child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          if (!kIsDesktop && !kIsWeb) const SizedBox(height: 20),
-          if (!kIsDesktop && !kIsWeb)
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                ),
-              ),
-              height: 40,
-              padding: const EdgeInsets.all(2),
-              child: ElevatedButton(
-                style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  ),
-                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                ),
-                onPressed: () async {
-                  setState(() {
-                    showManualEntry = !showManualEntry;
-                  });
-                },
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
+                    const Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
                     const SizedBox(width: 10),
-                    Text("Manual entry",
-                        style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 0.0, left: 5.0),
+                      child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                    ),
                   ],
                 ),
               ),
             ),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons)
+            const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+              ),
+            ),
+            height: 40,
+            padding: const EdgeInsets.all(2),
+            child: ElevatedButton(
+              style: ButtonStyle(
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                ),
+                backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                maximumSize: MaterialStateProperty.all(buttonSize),
+                minimumSize: MaterialStateProperty.all(buttonSize),
+              ),
+              onPressed: () async {
+                setState(() {
+                  showLoginButtons = !showLoginButtons;
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
+                  const SizedBox(width: 10),
+                  Text("Manual entry",
+                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                ],
+              ),
+            ),
+          ),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
-            child: !showManualEntry
+            child: showLoginButtons
                 ? const SizedBox.shrink()
                 : Theme(
                     data: context.theme.copyWith(
@@ -154,7 +189,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                             child: TextField(
                               cursorColor: context.theme.colorScheme.primary,
                               autocorrect: false,
-                              autofocus: true,
+                              autofocus: false,
                               controller: urlController,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
@@ -235,7 +270,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 ),
                                 onPressed: () async {
                                   setState(() {
-                                    showManualEntry = false;
+                                    showLoginButtons = true;
                                   });
                                 },
                                 child: Row(
@@ -367,6 +402,269 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     }
   }
 
+  Future<void> googleOAuth() async {
+    String? token;
+    // android / web implementation
+    if (Platform.isAndroid || kIsWeb) {
+      // on web, show a dialog to make sure users allow scopes
+      if (kIsWeb) {
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+                backgroundColor: context.theme.colorScheme.properSurface,
+                title: Text("Important Notice", style: context.theme.textTheme.titleLarge),
+                content: Text(
+                  'Please make sure to allow BlueBubbles to see, edit, configure, and delete your Google Cloud data after signing in. BlueBubbles will only use this ability to find your server URL.',
+                  style: context.theme.textTheme.bodyLarge,
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ]
+            );
+          },
+        );
+      }
+      // initialize gsi
+      final gsi = GoogleSignIn(
+        clientId: fdb.getClientId(),
+        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+      );
+      try {
+        // sign in
+        final account = await gsi.signIn();
+        if (account != null) {
+          // get access token
+          final auth = await account.authentication;
+          token = auth.accessToken;
+          // make sure scopes were granted on web
+          if (kIsWeb && !(await gsi.canAccessScopes(['https://www.googleapis.com/auth/cloud-platform'], accessToken: token))) {
+            final result = await gsi.requestScopes(['https://www.googleapis.com/auth/cloud-platform']);
+            if (!result) {
+              throw Exception("Scopes not granted!");
+            }
+          }
+          // error if token is not present
+          if (token == null) {
+            throw Exception("No access token!");
+          }
+        } else {
+          // error if account is not present
+          throw Exception("No account!");
+        }
+      } catch (e) {
+        Logger.error(e);
+        showSnackbar("Error", "Something went wrong authenticating with Google! $e");
+        return;
+      }
+    // desktop implementation
+    } else {
+      final args = GoogleSignInArgs(
+        clientId: fdb.getClientId()!,
+        redirectUri: 'http://localhost:8641/oauth/callback',
+        scope: 'https://www.googleapis.com/auth/cloud-platform',
+      );
+      try {
+        final result = await DesktopWebviewAuth.signIn(args);
+        token = result?.accessToken;
+        // error if token is not present
+        if (token == null) {
+          throw Exception("No access token!");
+        }
+      } catch (e) {
+        Logger.error(e);
+        showSnackbar("Error", "Something went wrong authenticating with Google! $e");
+        return;
+      }
+    }
+
+    bool dialogActive = true;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: context.theme.colorScheme.properSurface,
+          title: Text(
+            "Fetching Firebase configurations...",
+            style: context.theme.textTheme.titleLarge,
+          ),
+          content: Container(
+            height: 70,
+            child: Center(
+              child: CircularProgressIndicator(
+                backgroundColor: context.theme.colorScheme.properSurface,
+                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+              ),
+            ),
+          ),
+        );
+      }
+    );
+    try {
+      // query firebase projects
+      final response1 = await http.getFirebaseProjects(token);
+      final projects = response1.data['results'];
+      List usableProjects = [];
+      // find projects with RTDB or cloud firestore
+      if (projects.isNotEmpty) {
+        for (Map e in projects) {
+          if (e['resources']['realtimeDatabaseInstance'] != null) {
+             try {
+               final serverUrlResponse = await http.getServerUrlRTDB(e['resources']['realtimeDatabaseInstance'], token);
+               e['serverUrl'] = serverUrlResponse.data['serverUrl'];
+               usableProjects.add(e);
+             } catch (e) {
+               Logger.error("Failed to fetch from realtime database!");
+               Logger.error(e);
+             }
+          } else {
+            try {
+              final serverUrlResponse = await http.getServerUrlCF(e['projectId'], token);
+              e['serverUrl'] = serverUrlResponse.data['fields']['serverUrl']['stringValue'];
+              usableProjects.add(e);
+            } catch (e) {
+              Logger.error("Failed to fetch from cloud firestore!");
+              Logger.error(e);
+            }
+          }
+        }
+        usableProjects.removeWhere((element) => element['serverUrl'] == null);
+        // get the final server URL to use, ask the user which project to use if there are multiple possibilities
+        if (usableProjects.isNotEmpty) {
+          dialogActive = false;
+          Navigator.of(context).pop();
+          String? serverUrl;
+          if (usableProjects.length > 1) {
+            serverUrl = await showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text("Select Firebase", style: context.theme.textTheme.titleLarge),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  content: SingleChildScrollView(
+                    child: Container(
+                      width: double.maxFinite,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text("Select the Firebase project to use:"),
+                          ),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: context.mediaQuery.size.height * 0.4,
+                            ),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: usableProjects.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: Text(
+                                    usableProjects[index]['displayName'],
+                                  ),
+                                  subtitle: Text(
+                                    "${usableProjects[index]['projectId']}\n${usableProjects[index]['serverUrl']}",
+                                  ),
+                                  onTap: () {
+                                    Navigator.of(context).pop(usableProjects[index]['serverUrl']);
+                                  },
+                                  isThreeLine: true,
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      )
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      }
+                    ),
+                  ],
+                );
+              }
+            );
+          } else {
+            serverUrl = usableProjects.first['serverUrl'];
+          }
+
+          if (serverUrl != null) {
+            final TextEditingController passController = TextEditingController();
+            await showDialog(
+              context: context,
+              builder: (_) {
+                return AlertDialog(
+                  actions: [
+                    TextButton(
+                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    TextButton(
+                      child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                      onPressed: () async {
+                        if (passController.text.isEmpty) {
+                          showSnackbar("Error", "Enter a valid password!");
+                          return;
+                        }
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                  content: TextField(
+                    controller: passController,
+                    decoration: const InputDecoration(
+                      labelText: "Password",
+                      border: OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                    onSubmitted: (str) {
+                      if (passController.text.isEmpty) {
+                        showSnackbar("Error", "Enter a valid password!");
+                        return;
+                      }
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                );
+              }
+            );
+
+            if (passController.text.isNotEmpty) {
+              connect(serverUrl, passController.text);
+            } else {
+              throw Exception("Invalid password provided!");
+            }
+          } else {
+            throw Exception("Server URL not found!");
+          }
+        } else {
+          throw Exception("No usable Firebase projects found!");
+        }
+      } else {
+        throw Exception("No Firebase projects found!");
+      }
+    } catch (e) {
+      if (dialogActive) {
+        Navigator.of(context).pop();
+      }
+      Logger.error(e);
+      showSnackbar("Error", "Something went wrong when fetching Firebase details! $e");
+    }
+  }
+
   Future<void> connect(String url, String password) async {
     if (url.endsWith("/")) {
       url = url.substring(0, url.length - 1);
@@ -422,7 +720,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           }
 
           setState(() {
-            showManualEntry = false;
+            showLoginButtons = false;
           });
 
           dio.Response fcmResponse = await fcmFuture;
@@ -485,7 +783,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             }
           } else {
             controller.updateConnectError(
-                "Failed to connect to $addr! Please ensure your credentials are correct and check the server logs for more info.");
+                "Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.");
             return;
           }
         }

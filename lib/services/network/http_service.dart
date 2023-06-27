@@ -31,8 +31,8 @@ class HttpService extends GetxService {
   }
 
   /// Global try-catch function
-  Future<Response> runApiGuarded(Future<Response> Function() func) async {
-    if (http.origin.isEmpty) {
+  Future<Response> runApiGuarded(Future<Response> Function() func, {bool checkOrigin = true}) async {
+    if (http.origin.isEmpty && checkOrigin) {
       return Future.error("No server URL!");
     }
     try {
@@ -151,6 +151,18 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/server/update/check",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Check for new server versions
+  Future<Response> installUpdate({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/server/update/install",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -519,12 +531,12 @@ class HttpService extends GetxService {
   ///
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
   /// `"handle"`, `"chats.participants"` / `"chat.participants"`,  `"attachment.metadata"`, `"attributedBody"
-  Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, bool convertAttachment = true, CancelToken? cancelToken}) async {
+  Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, bool convertAttachments = true, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/message/query",
           queryParameters: buildQueryParams(),
-          data: {"with": withQuery, "where": where, "sort": sort, "before": before, "after": after, "chatGuid": chatGuid, "offset": offset, "limit": limit, "convertAttachment": convertAttachment},
+          data: {"with": withQuery, "where": where, "sort": sort, "before": before, "after": after, "chatGuid": chatGuid, "offset": offset, "limit": limit, "convertAttachments": convertAttachments},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -924,7 +936,7 @@ class HttpService extends GetxService {
           "payload": {
             "chatGuid": chatGuid,
             "message": message,
-            "method": "apple-script"
+            "method": ss.settings.privateAPISend.value ? 'private-api' : "apple-script"
           },
           "scheduledFor": date.millisecondsSinceEpoch,
           "schedule": schedule,
@@ -1015,6 +1027,54 @@ class HttpService extends GetxService {
       );
       return returnSuccessOrError(response);
     });
+  }
+
+  // The following methods are for Firebase only
+
+  Future<Response> getFirebaseProjects(String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://firebase.googleapis.com/v1beta1/projects",
+        queryParameters: {
+          "access_token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
+  Future<Response> getServerUrlRTDB(String rtdb, String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://$rtdb.firebaseio.com/config.json",
+        queryParameters: {
+          "token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
+  Future<Response> getServerUrlCF(String project, String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/server/config",
+        queryParameters: {
+          "access_token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
+  Future<Response> setRestartDateCF(String project) async {
+    return runApiGuarded(() async {
+      final response = await dio.patch(
+        "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/server/commands?updateMask.fieldPaths=nextRestart",
+        data: {"fields":{"nextRestart": {"integerValue": DateTime.now().toUtc().millisecondsSinceEpoch}}},
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
   }
 
   /// Test most API GET requests (the ones that don't have required parameters)

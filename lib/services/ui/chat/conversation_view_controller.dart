@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/components/mentionable_text_editing_controller.d
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +21,7 @@ import 'package:video_player/video_player.dart';
 ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
 ? Get.find<ConversationViewController>(tag: tag ?? chat.guid) : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
 
-class ConversationViewController extends StatefulController with SingleGetTickerProviderMixin {
+class ConversationViewController extends StatefulController with GetSingleTickerProviderStateMixin {
   final Chat chat;
   late final String tag;
   bool fromChatCreator = false;
@@ -39,9 +38,9 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final Map<String, Map<String, Uint8List>> stickerData = {};
   final Map<String, Metadata> legacyUrlPreviews = {};
   final Map<String, VideoPlayerController> videoPlayers = {};
-  final Map<String, Player> videoPlayersDesktop = {};
+  final Map<String, VideoController> videoPlayersDesktop = {};
   final Map<String, PlayerController> audioPlayers = {};
-  final Map<String, Tuple2<Player, Player>> audioPlayersDesktop = {};
+  final Map<String, Player> audioPlayersDesktop = {};
   final Map<String, List<EntityAnnotation>> mlKitParsedText = {};
 
   // message view items
@@ -147,16 +146,12 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     for (VideoPlayerController v in videoPlayers.values) {
       v.dispose();
     }
-    for (Player v in videoPlayersDesktop.values) {
-      v.dispose();
-    }
     for (PlayerController a in audioPlayers.values) {
       a.pausePlayer();
       a.dispose();
     }
-    for (Tuple2<Player, Player> a in audioPlayersDesktop.values) {
-      a.item1.dispose();
-      a.item2.dispose();
+    for (Player a in audioPlayersDesktop.values) {
+      a.dispose();
     }
     scrollController.dispose();
     super.onClose();

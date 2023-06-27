@@ -4,15 +4,18 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_linux
-  dart_vlc
   desktop_drop
+  desktop_webview_auth
   dynamic_color
   flutter_acrylic
   local_notifier
   maps_launcher
+  media_kit_libs_linux
+  media_kit_video
   objectbox_flutter_libs
   pasteboard
   printing
+  record_linux
   screen_retriever
   system_tray
   url_launcher_linux
@@ -20,6 +23,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  media_kit_native_event_loop
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

@@ -4,8 +4,10 @@ export 'package:bluebubbles/models/io/chat.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/chat.dart';
 export 'package:bluebubbles/models/io/contact.dart'
   if (dart.library.html) 'package:bluebubbles/models/html/contact.dart';
-export 'package:dart_vlc/dart_vlc.dart'
-  if (dart.library.html) 'package:bluebubbles/models/html/dart_vlc.dart' hide Record;
+export 'package:media_kit/media_kit.dart'
+  if (dart.library.html) 'package:bluebubbles/models/html/media_kit.dart';
+export 'package:media_kit_video/media_kit_video.dart'
+  if (dart.library.html) 'package:bluebubbles/models/html/media_kit.dart';
 export 'package:bluebubbles/models/io/fcm_data.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/fcm_data.dart';
 export 'package:bluebubbles/models/io/handle.dart'

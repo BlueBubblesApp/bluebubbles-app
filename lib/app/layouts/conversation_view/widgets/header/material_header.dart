@@ -121,8 +121,8 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                 );
               } else if (value == 1) {
                 controller.chat.toggleArchived(!controller.chat.isArchived!);
-                while (Get.isOverlaysOpen) {
-                  Get.back();
+                if (Get.isSnackbarOpen) {
+                  Get.closeAllSnackbars();
                 }
                 Navigator.of(context).pop();
               } else if (value == 2) {
@@ -144,8 +144,8 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                         TextButton(
                           child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                           onPressed: () {
-                            while (Get.isOverlaysOpen) {
-                              Get.back();
+                            if (Get.isSnackbarOpen) {
+                              Get.closeAllSnackbars();
                             }
                             Navigator.of(context).pop();
                           },
@@ -155,8 +155,8 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                           onPressed: () async {
                             chats.removeChat(controller.chat);
                             Chat.softDelete(controller.chat);
-                            while (Get.isOverlaysOpen) {
-                              Get.back();
+                            if (Get.isSnackbarOpen) {
+                              Get.closeAllSnackbars();
                             }
                             Navigator.of(context).pop();
                           },
@@ -166,7 +166,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   },
                 );
               } else if (value == 3) {
-                showBookmarksThread(controller);
+                showBookmarksThread(controller, context);
               }
             },
             itemBuilder: (context) {

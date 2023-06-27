@@ -85,9 +85,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                       .unknownSendersHelper(controller.showUnknownSenders);
 
                   return CustomScrollView(
-                    physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                        ? const NeverScrollableScrollPhysics()
-                        : ThemeSwitcher.getScrollPhysics(),
+                    physics: ThemeSwitcher.getScrollPhysics(),
                     controller: controller.samsungScrollController,
                     slivers: [
                       SamsungHeader(parentController: controller),

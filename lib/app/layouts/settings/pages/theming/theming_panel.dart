@@ -656,9 +656,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                         : TextButton(
                                       child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                       onPressed: () async {
-                                        if (Get.isSnackbarOpen ?? false) {
-                                          Get.close(1);
-                                        }
+                                        Get.closeAllSnackbars();
                                         Get.back();
                                         Future.delayed(const Duration(milliseconds: 400), ()
                                         {
@@ -672,7 +670,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 ),
                               );
                               final response = await http.downloadFromUrl(
-                                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
+                                "https://github.com/tneotia/tneotia/releases/download/ios-font-3/AppleColorEmoji.ttf",
                                 progress: (current, total) {
                                   if (current <= total) {
                                     controller.downloadingFont.value = true;

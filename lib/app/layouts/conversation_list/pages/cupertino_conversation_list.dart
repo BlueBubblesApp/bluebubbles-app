@@ -70,7 +70,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
             controller: controller.iosScrollController,
             child: Obx(() => CustomScrollView(
                   controller: controller.iosScrollController,
-                  physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb)) ? const NeverScrollableScrollPhysics() : ts.scrollPhysics,
+                  physics: ts.scrollPhysics,
                   slivers: <Widget>[
                     if (!showArchived && !showUnknown) CupertinoHeader(controller: controller),
                     Obx(() {

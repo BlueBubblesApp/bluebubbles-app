@@ -1,8 +1,10 @@
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -51,7 +53,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
     final widget = Obx(() => Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if (ss.settings.cameraFAB.value && iOS)
+        if (ss.settings.cameraFAB.value && iOS && !kIsWeb && !kIsDesktop)
           ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: 45,
@@ -68,12 +70,12 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
               backgroundColor: context.theme.colorScheme.primaryContainer,
             ),
           ),
-        if (ss.settings.cameraFAB.value && iOS)
+        if (ss.settings.cameraFAB.value && iOS && !kIsWeb && !kIsDesktop)
           const SizedBox(
             height: 10,
           ),
         InkWell(
-          onLongPress: iOS || !ss.settings.cameraFAB.value
+          onLongPress: iOS || !ss.settings.cameraFAB.value || kIsWeb || kIsDesktop
             ? null : () => controller.openCamera(context),
           child: FloatingActionButton(
             backgroundColor: context.theme.colorScheme.primary,
@@ -124,7 +126,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
               Positioned(
                 right: material ? 15 : 0,
                 child: InkWell(
-                  onLongPress: ss.settings.cameraFAB.value
+                  onLongPress: ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop
                       ? () => controller.openCamera(context) : null,
                   child: Container(
                     height: 65,

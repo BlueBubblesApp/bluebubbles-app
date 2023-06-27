@@ -25,6 +25,7 @@ class ChatManager extends GetxService {
       value.isAlive = false;
     });
     if (save) {
+      eventDispatcher.emit("update-highlight", null);
       Future.delayed(Duration.zero, () async => await ss.prefs.remove('lastOpenedChat'));
     }
   }

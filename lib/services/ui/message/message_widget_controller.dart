@@ -19,7 +19,7 @@ MessageWidgetController mwc(Message message) => Get.isRegistered<MessageWidgetCo
 MessageWidgetController? getActiveMwc(String guid) => Get.isRegistered<MessageWidgetController>(tag: guid)
     ? Get.find<MessageWidgetController>(tag: guid) : null;
 
-class MessageWidgetController extends StatefulController with SingleGetTickerProviderMixin {
+class MessageWidgetController extends StatefulController with GetSingleTickerProviderStateMixin {
   final RxBool showEdits = false.obs;
   final Rxn<DateTime> audioWasKept = Rxn<DateTime>(null);
 
@@ -56,6 +56,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
           if (_message.hasAttachments) {
             _message.attachments = List<Attachment>.from(_message.dbAttachments);
           }
+          _message.associatedMessages = message.associatedMessages;
           _message.handle = _message.getHandle();
           updateMessage(_message);
         }

@@ -34,7 +34,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
       if (ns.isAvatarOnly(context)) {
         return SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(10.0).add(const EdgeInsets.only(top: 30)),
             child: Material(
               color: Colors.transparent,
               shape: const CircleBorder(),
@@ -135,7 +135,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                               Obx(() => ss.settings.moveChatCreatorToHeader.value
                                   && !showArchived
                                   && !showUnknown ? InkWell(
-                                onLongPress: ss.settings.cameraFAB.value
+                                onLongPress: ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop
                                     ? () => controller.openCamera(context) : null,
                                 child: IconButton(
                                   onPressed: () => controller.openNewChatCreator(context),

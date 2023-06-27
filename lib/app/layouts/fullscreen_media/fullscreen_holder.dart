@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -99,8 +96,7 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
           child: Scaffold(
             appBar: !iOS ? null : AppBar(
               leading: XGestureDetector(
-                onTap: (details) {
-                  if (!kIsDesktop) return;
+                onTap: !kIsDesktop ? null : (details) {
                   Navigator.of(context).pop();
                 },
                 child: TextButton(
@@ -181,22 +177,12 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                           }
                         );
                       } else if (attachment.mimeStart == "video") {
-                        if (kIsDesktop) {
-                          Player player = Player(id: attachment.hashCode)..add(Media.file(File(content.path!)));
-                          player.play();
-                          Future.delayed(Duration.zero, () async => await player.playbackStream.first).then((state) {
-                            player.pause();
-                            player.seek(Duration.zero);
-                          });
-                          return Video(player: player);
-                        } else {
-                          return FullscreenVideo(
-                            key: Key(key),
-                            file: content,
-                            attachment: attachment,
-                            showInteractions: widget.showInteractions,
-                          );
-                        }
+                        return FullscreenVideo(
+                          key: Key(key),
+                          file: content,
+                          attachment: attachment,
+                          showInteractions: widget.showInteractions,
+                        );
                       } else {
                         return const SizedBox.shrink();
                       }

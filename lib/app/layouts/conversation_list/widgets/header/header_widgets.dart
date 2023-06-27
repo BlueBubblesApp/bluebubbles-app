@@ -8,7 +8,6 @@ import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -98,13 +97,13 @@ class OverflowMenu extends StatelessWidget {
           if (currentChat != null) {
             await cm.setActiveChat(currentChat);
             if (ss.settings.tabletMode.value) {
-              ns.pushAndRemoveUntil(
-                context,
-                ConversationView(
-                  chat: currentChat,
-                ),
-                    (route) => route.isFirst,
-              );
+                ns.pushAndRemoveUntil(
+                  context,
+                  ConversationView(
+                    chat: currentChat,
+                  ),
+                      (route) => route.isFirst,
+                ).onError((error, stackTrace) => cm.setAllInactiveSync());
             } else {
               cvc(currentChat).close();
             }
@@ -145,8 +144,6 @@ class OverflowMenu extends StatelessWidget {
                       await ss.prefs.clear();
                       await ss.prefs.setString("selected-dark", "OLED Dark");
                       await ss.prefs.setString("selected-light", "Bright White");
-                      themeBox.putMany(ts.defaultThemes);
-                      await ts.changeTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
                         child: TitleBarWrapper(child: SetupView()),

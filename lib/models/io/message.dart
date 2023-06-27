@@ -406,7 +406,7 @@ class Message {
       guid: json["guid"],
       handleId: json["handleId"] ?? 0,
       otherHandle: json["otherHandle"],
-      text: sanitizeString(json["text"] ?? attributedBody.firstOrNull?.string),
+      text: sanitizeString(attributedBody.firstOrNull?.string ?? json["text"]),
       subject: json["subject"],
       country: json["country"],
       error: json["error"] ?? json["_error"] ?? 0,
@@ -560,6 +560,9 @@ class Message {
     // We just need to update the timestamps & error
     if (existing.guid != newMessage.guid) {
       existing.guid = newMessage.guid;
+    }
+    if (newMessage.text != null) {
+      existing.text = newMessage.text;
     }
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;

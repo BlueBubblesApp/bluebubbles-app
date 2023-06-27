@@ -13,7 +13,6 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -132,7 +131,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         });
       }
       setState(() {});
+      if (widget.initialSelected.isNotEmpty) {
+        findExistingChat();
+      }
     });
+
+    if (widget.initialSelected.isNotEmpty) messageNode.requestFocus();
   }
 
   void addSelected(SelectedContact c) {
@@ -204,6 +208,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       if (existingChat != null) {
         await cm.setActiveChat(existingChat, clearNotifications: false);
         cm.activeChat!.controller = cvc(existingChat);
+        cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
         fakeController.value = cm.activeChat!.controller;
       } else {
         await cm.setAllInactive();
@@ -212,6 +217,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     }
     if (checkDeleted && existingChat?.dateDeleted != null) {
       Chat.unDelete(existingChat!);
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       await chats.addChat(existingChat);
     }
     return existingChat;
@@ -255,7 +261,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             scrolledUnderElevation: 3,
             surfaceTintColor: context.theme.colorScheme.primary,
             leading: buildBackButton(context),
-            backgroundColor: context.theme.colorScheme.background,
+            backgroundColor: Colors.transparent,
             centerTitle: ss.settings.skin.value == Skins.iOS,
             title: Text(
               "New Conversation",
@@ -418,22 +424,22 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   fillColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
                   splashColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text("iMessage"),
                         ),
-                        const Icon(CupertinoIcons.chat_bubble, size: 16),
+                        Icon(CupertinoIcons.chat_bubble, size: 16),
                       ],
                     ),
-                    Row(
+                    const Row(
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text("SMS Forwarding"),
                         ),
-                        const Icon(Icons.messenger_outline, size: 16),
+                        Icon(Icons.messenger_outline, size: 16),
                       ],
                     ),
                   ],
@@ -480,13 +486,13 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                           : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      CustomScrollView(
+                  child: Obx(() {
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 150),
+                      child: fakeController.value == null
+                          ? CustomScrollView(
                         shrinkWrap: true,
-                        physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                            ? const NeverScrollableScrollPhysics()
-                            : ThemeSwitcher.getScrollPhysics(),
+                        physics: ThemeSwitcher.getScrollPhysics(),
                         slivers: <Widget>[
                           SliverList(
                             delegate: SliverChildBuilderDelegate((context, index) {
@@ -518,9 +524,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     addSelectedList(chat.participants
                                         .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
                                         .map((e) => SelectedContact(
-                                              displayName: e.displayName,
-                                              address: e.address,
-                                            )));
+                                      displayName: e.displayName,
+                                      address: e.address,
+                                    )));
                                   },
                                   child: ChatCreatorTile(
                                     key: ValueKey(chat.guid),
@@ -583,22 +589,15 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             ),
                           ),
                         ],
-                      ),
-                      Obx(() {
-                        return AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 150),
-                          child: fakeController.value == null
-                              ? const SizedBox.shrink()
-                              : Container(
-                                  color: context.theme.colorScheme.background,
-                                  child: MessagesView(
-                                    controller: fakeController.value!,
-                                  ),
-                                ),
-                        );
-                      }),
-                    ],
-                  ),
+                      )
+                          : Container(
+                              color: Colors.transparent,
+                              child: MessagesView(
+                                controller: fakeController.value!,
+                              ),
+                            ),
+                    );
+                  }),
                 ),
               ),
               Padding(
@@ -646,7 +645,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               // only used in non-tablet mode context
                               customRoute: PageRouteBuilder(
                                 pageBuilder: (_, __, ___) => TitleBarWrapper(
-                                  child: ConversationView(chat: chat, fromChatCreator: true,)
+                                  child: ConversationView(chat: chat, fromChatCreator: true)
                                 ),
                                 transitionDuration: Duration.zero,
                               ),
@@ -655,10 +654,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             if (fakeController.value == null) {
                               await cm.setActiveChat(chat, clearNotifications: false);
                               cm.activeChat!.controller = cvc(chat);
+                              cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
                               fakeController.value = cm.activeChat!.controller;
                             }
                             await fakeController.value!.send(
-                              widget.initialAttachments,
+                              fakeController.value!.pickedAttachments,
                               textController.text,
                               subjectController.text,
                               fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ?? fakeController.value!.replyToMessage?.item1.guid,

@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
-import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -29,7 +30,9 @@ import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
+import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supercharged/supercharged.dart';
 import 'package:universal_io/io.dart';
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
@@ -125,7 +128,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       if (!currentPicked.contains(s) && await file.exists()) {
         final bytes = await file.readAsBytes();
         controller.pickedAttachments.add(PlatformFile(
-          name: file.path.split("/").last,
+          name: basename(file.path),
           bytes: bytes,
           size: bytes.length,
           path: s,
@@ -646,7 +649,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         }
                       }
                     }),
-              if (kIsDesktop && Platform.isWindows)
+              if (kIsDesktop)
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
                   onPressed: () async {
@@ -678,27 +681,50 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                     : Builder(builder: (context) {
                                         final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
                                         final textFieldSize = box?.size ?? const Size(250, 35);
-                                        return AudioWaveforms(
-                                          size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
-                                          recorderController: recorderController!,
-                                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                                          waveStyle: const WaveStyle(
-                                            waveColor: Colors.white,
-                                            waveCap: StrokeCap.square,
-                                            spacing: 4.0,
-                                            showBottom: true,
-                                            extendWaveform: true,
-                                            showMiddleLine: false,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            border: Border.fromBorderSide(BorderSide(
-                                              color: context.theme.colorScheme.outline,
-                                              width: 1,
-                                            )),
-                                            borderRadius: BorderRadius.circular(20),
-                                            color: context.theme.colorScheme.properSurface,
-                                          ),
-                                        );
+                                        Duration start = DateTime.now().duration();
+                                        return kIsDesktop
+                                            ? StreamBuilder(
+                                                stream: Stream.periodic(const Duration(milliseconds: 100)),
+                                                builder: (context, snapshot) {
+                                                  Duration elapsed = DateTime.now().duration() - start;
+                                                  return Container(
+                                                    width: textFieldSize.width - (samsung ? 0 : 80),
+                                                    height: textFieldSize.height - 15,
+                                                    child: Center(child: AnimatedOpacity(
+                                                      duration: const Duration(seconds: 1),
+                                                      opacity: (elapsed.inMilliseconds ~/ 1200 % 2 + 0.5).clamp(0, 1),
+                                                      child: Text("Recording... (${prettyDuration(elapsed)})", style: context.textTheme.titleMedium),),),
+                                                    decoration: BoxDecoration(
+                                                      border: Border.fromBorderSide(BorderSide(
+                                                        color: context.theme.colorScheme.outline,
+                                                        width: 1,
+                                                      )),
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      color: context.theme.colorScheme.properSurface,
+                                                    ),
+                                                  );
+                                                })
+                                            : AudioWaveforms(
+                                                size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
+                                                recorderController: recorderController!,
+                                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                                                waveStyle: const WaveStyle(
+                                                  waveColor: Colors.white,
+                                                  waveCap: StrokeCap.square,
+                                                  spacing: 4.0,
+                                                  showBottom: true,
+                                                  extendWaveform: true,
+                                                  showMiddleLine: false,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  border: Border.fromBorderSide(BorderSide(
+                                                    color: context.theme.colorScheme.outline,
+                                                    width: 1,
+                                                  )),
+                                                  borderRadius: BorderRadius.circular(20),
+                                                  color: context.theme.colorScheme.properSurface,
+                                                ),
+                                              );
                                       }),
                               ))),
                     SendAnimation(parentController: controller),
@@ -761,7 +787,7 @@ class TextFieldComponent extends StatelessWidget {
 
   Chat? get chat => controller?.chat;
 
-  bool get isChatCreator => controller == null;
+  bool get isChatCreator => focusNode != null;
 
   @override
   Widget build(BuildContext context) {
@@ -898,6 +924,7 @@ class TextFieldComponent extends StatelessWidget {
                               controller: controller,
                               recorderController: recorderController,
                               sendMessage: sendMessage,
+                              isChatCreator: isChatCreator,
                             ),
                           ),
                   ),
@@ -944,57 +971,10 @@ class TextFieldComponent extends StatelessWidget {
                             int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
                             if (mentionIndex == null) return; // Shouldn't happen
                             final mention = controller?.mentionables[mentionIndex];
-                            final TextEditingController mentionController = TextEditingController(text: mention?.displayName);
-                            String? changed;
                             if (kIsDesktop || kIsWeb) {
                               controller?.showingOverlays = true;
                             }
-                            await showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  actions: [
-                                    TextButton(
-                                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () => Get.back(),
-                                    ),
-                                    TextButton(
-                                      child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () {
-                                        if (isNullOrEmptyString(mentionController.text)) {
-                                          changed = mention?.handle.displayName ?? "";
-                                        } else {
-                                          changed = mentionController.text;
-                                        }
-                                        Get.back();
-                                      },
-                                    ),
-                                  ],
-                                  content: TextField(
-                                    controller: mentionController,
-                                    textCapitalization: TextCapitalization.sentences,
-                                    autocorrect: true,
-                                    scrollPhysics: const CustomBouncingScrollPhysics(),
-                                    autofocus: true,
-                                    enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                                    decoration: InputDecoration(
-                                      labelText: "Custom Mention",
-                                      hintText: mention?.handle.displayName ?? "",
-                                      border: const OutlineInputBorder(),
-                                    ),
-                                    onSubmitted: (val) {
-                                      if (isNullOrEmptyString(val)) {
-                                        val = mention?.handle.displayName ?? "";
-                                      }
-                                      changed = val;
-                                      Get.back();
-                                    },
-                                  ),
-                                  title: Text("Custom Mention", style: context.theme.textTheme.titleLarge),
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                );
-                              }
-                            );
+                            final changed = await showCustomMentionDialog(context, mention);
                             if (kIsDesktop || kIsWeb) {
                               controller?.showingOverlays = false;
                             }

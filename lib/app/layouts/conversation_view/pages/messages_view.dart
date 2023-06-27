@@ -366,9 +366,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
               child: CustomScrollView(
                 controller: scrollController,
                 reverse: true,
-                physics: ss.settings.betterScrolling.value
-                    ? const NeverScrollableScrollPhysics()
-                    : ThemeSwitcher.getScrollPhysics(),
+                physics: ThemeSwitcher.getScrollPhysics(),
                 slivers: <Widget>[
                   if (showSmartReplies || internalSmartReplies.isNotEmpty)
                     SliverToBoxAdapter(
