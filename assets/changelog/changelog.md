@@ -2,6 +2,60 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## 1.12.3
+
+### Enhancements
+
+- Google Sign In
+- Adds support for Google Firestore setups
+- Replaces `Show Smart Replies` toggle with a more universal, `Smart Suggestions` toggle to encompass other "MLKit" related features
+- Adds support for sharing location on Linux [Desktop]
+- Adds support for imessage deep links (i.e. `imessage://` links)
+- Adds video playback support for all platforms [Desktop]
+- Adds showing your live location in the FindMy maps
+- Updates iOS emojis to v16.4
+- Ability to generate a custom theme color scheme from an image
+
+### Fixes
+
+- Fixes issue where notifications may be spammed when a manual or incremental sync is completed
+- Fixes issues with loading shared attachments into the chat creator screen
+- Fixes issue where reactions disappear when they are edited
+- Fixes issue where edited and unsent messages were not being updated in the chat list
+- Fixes issue with transparency in the chat creator [Desktop]
+- Fixes issue where the socket error notification would be shown prematurely
+- Fixes issue where GIFs would play at a high speed (Thanks @MatthewStadter)
+- Fixes issue where special characters in an attachment name would cause a download to fail (Thanks @MatthewStadter)
+- Fixes issue with downloading original attachments (i.e. an heic converted to a jpeg)
+- Fixes issue where the camera icon would show on desktop/web
+- Fixes issue where URL previews would not load properly
+- Fixes potential issue with the QRCode scanner during setup
+
+### Upgrades
+
+- Flutter v3.10
+
+## 1.12.2
+
+### Fixes
+
+* Fixed issue where shared media would not show properly in the text field when trying to share to a contact.
+* Fixed issue where the sync would get stuck on 0%
+
+## 1.12.1
+
+### Fixes
+
+- Fixed issue where transparency would not be applied correctly (Desktop)
+- Fixed issue with not registering the client with the server to receive notifications (Android)
+- Fixed issue where marking a chat as unread via the Private API would mark it read immediately after
+- Fixed issue where texts/images would not be removed from the message view after being unsent
+
+### Other Changes
+
+- Username set in settings is now purely cosmetic
+   - Any instance of yourself will be represented by `You`
+- Keyboard status should now restore when returning from a different app
 
 ## 1.12.0
 
