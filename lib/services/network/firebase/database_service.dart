@@ -25,8 +25,8 @@ class DatabaseService extends GetxService {
   }
 
   String? getClientId() {
-    if (kIsWeb) return '795335779559-n81mfu5g5r58bphui6lmjphnn22mcqhd.apps.googleusercontent.com';
-    if (kIsDesktop) return '795335779559-jqfjh4l8v98bmfka7jusbega8j3o6bc4.apps.googleusercontent.com';
+    if (kIsWeb) return '500464701389-8trcdkcj7ni5l4dn6n7l795rhb1asnh3.apps.googleusercontent.com';
+    if (kIsDesktop) return '500464701389-tqqvjqk03q7dotrvt1rug7g1flgn9rtg.apps.googleusercontent.com';
     return null;
   }
 
