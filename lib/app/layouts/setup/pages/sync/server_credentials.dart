@@ -431,13 +431,17 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           },
         );
       }
+
+      final defaultScopes = [
+        'https://www.googleapis.com/auth/cloudplatformprojects',
+        'https://www.googleapis.com/auth/firebase',
+        'https://www.googleapis.com/auth/datastore'
+      ];
+
       // initialize gsi
       final gsi = GoogleSignIn(
         clientId: fdb.getClientId(),
-        scopes: [
-          'https://www.googleapis.com/auth/cloudplatformprojects',
-          'https://www.googleapis.com/auth/firebase'
-        ],
+        scopes: defaultScopes
       );
       try {
         // sign in
@@ -447,8 +451,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           final auth = await account.authentication;
           token = auth.accessToken;
           // make sure scopes were granted on web
-          if (kIsWeb && !(await gsi.canAccessScopes(['https://www.googleapis.com/auth/cloud-platform'], accessToken: token))) {
-            final result = await gsi.requestScopes(['https://www.googleapis.com/auth/cloud-platform']);
+          if (kIsWeb && !(await gsi.canAccessScopes(defaultScopes, accessToken: token))) {
+            final result = await gsi.requestScopes(defaultScopes);
             if (!result) {
               throw Exception("Scopes not granted!");
             }
@@ -509,34 +513,39 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         );
       }
     );
+
     try {
       // query firebase projects
       final response1 = await http.getFirebaseProjects(token);
       final projects = response1.data['results'];
       List usableProjects = [];
+      List<Object> errors = [];
       // find projects with RTDB or cloud firestore
       if (projects.isNotEmpty) {
         for (Map e in projects) {
           if (e['resources']['realtimeDatabaseInstance'] != null) {
-             try {
-               final serverUrlResponse = await http.getServerUrlRTDB(e['resources']['realtimeDatabaseInstance'], token);
-               e['serverUrl'] = serverUrlResponse.data['serverUrl'];
-               usableProjects.add(e);
-             } catch (e) {
-               Logger.error("Failed to fetch from realtime database!");
-               Logger.error(e);
-             }
+            try {
+              final serverUrlResponse = await http.getServerUrlRTDB(e['resources']['realtimeDatabaseInstance'], token);
+              e['serverUrl'] = serverUrlResponse.data['serverUrl'];
+              usableProjects.add(e);
+            } catch (ex) {
+              errors.add("Realtime Database Error: $ex");
+            }
           } else {
             try {
               final serverUrlResponse = await http.getServerUrlCF(e['projectId'], token);
               e['serverUrl'] = serverUrlResponse.data['fields']['serverUrl']['stringValue'];
               usableProjects.add(e);
-            } catch (e) {
-              Logger.error("Failed to fetch from cloud firestore!");
-              Logger.error(e);
+            } catch (ex) {
+              errors.add("Firestore Database Error: $ex");
             }
           }
         }
+
+        if (usableProjects.isEmpty && errors.isNotEmpty) {
+          throw Exception(errors[0]);
+        }
+
         usableProjects.removeWhere((element) => element['serverUrl'] == null);
         // get the final server URL to use, ask the user which project to use if there are multiple possibilities
         if (usableProjects.isNotEmpty) {
@@ -664,7 +673,10 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         Navigator.of(context).pop();
       }
       Logger.error(e);
-      showSnackbar("Error", "Something went wrong when fetching Firebase details! $e");
+      showSnackbar(
+        "Error", "Something went wrong when fetching Firebase details! $e",
+        durationMs: 5000
+      );
     }
   }
 
