@@ -434,7 +434,10 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       // initialize gsi
       final gsi = GoogleSignIn(
         clientId: fdb.getClientId(),
-        scopes: ['https://www.googleapis.com/auth/cloudplatformprojects'],
+        scopes: [
+          'https://www.googleapis.com/auth/cloudplatformprojects',
+          'https://www.googleapis.com/auth/firebase'
+        ],
       );
       try {
         // sign in
