@@ -90,6 +90,9 @@ class Chat {
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
   int? style;
+  bool lockChatName;
+  bool lockChatIcon;
+  String? lastReadMessageGuid;
 
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -125,6 +128,9 @@ class Chat {
     this.textFieldAttachments = const [],
     this.dateDeleted,
     this.style,
+    this.lockChatName = false,
+    this.lockChatIcon = false,
+    this.lastReadMessageGuid,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -153,6 +159,9 @@ class Chat {
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
       dateDeleted: parseDate(json["dateDeleted"]),
       style: json["style"],
+      lockChatName: json["lockChatName"] ?? false,
+      lockChatIcon: json["lockChatIcon"] ?? false,
+      lastReadMessageGuid: json["lastReadMessageGuid"],
     );
   }
 
@@ -170,6 +179,9 @@ class Chat {
     bool updateTextFieldAttachments = false,
     bool updateDisplayName = false,
     bool updateDateDeleted = false,
+    bool updateLockChatName = false,
+    bool updateLockChatIcon = false,
+    bool updateLastReadMessageGuid = false,
   }) {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     WebListeners.notifyChat(this);
@@ -255,6 +267,10 @@ class Chat {
     }
     return !ss.settings.notifyReactions.value &&
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
+  }
+
+  static void unDelete(Chat chat) {
+    return;
   }
 
   static void softDelete(Chat chat) {
@@ -532,7 +548,7 @@ class Chat {
     return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
-  static Future<void> getIcon(Chat c) async {}
+  static Future<void> getIcon(Chat c, {bool force = false}) async {}
 
   Map<String, dynamic> toMap() => {
     "ROWID": id,
@@ -551,5 +567,8 @@ class Chat {
     "autoSendTypingIndicators": autoSendTypingIndicators!,
     "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
     "style": style,
+    "lockChatName": lockChatName,
+    "lockChatIcon": lockChatIcon,
+    "lastReadMessageGuid": lastReadMessageGuid,
   };
 }

@@ -133,7 +133,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       child: Icon(iOS ? CupertinoIcons.bookmark : Icons.bookmark),
                     ),
                     onTap: () async {
-                      showBookmarksThread(cvc(widget.chat));
+                      showBookmarksThread(cvc(widget.chat), context);
                     }
                 ),
               SettingsTile(

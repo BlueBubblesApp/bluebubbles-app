@@ -98,7 +98,7 @@ class NotificationsService extends GetxService {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
         final activeChatFetching = cm.activeChat != null ? ms(cm.activeChat!.chat.guid).isFetching : false;
-        if (ls.isAlive && !activeChatFetching && newCount > currentCount && currentCount != 0) {
+        if (ls.isAlive && (!sync.isIncrementalSyncing.value && !kIsDesktop) && !activeChatFetching && newCount > currentCount && currentCount != 0) {
           event.limit = newCount - currentCount;
           final messages = event.find();
           event.limit = 0;

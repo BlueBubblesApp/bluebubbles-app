@@ -13,7 +13,6 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -284,14 +283,14 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                   );
                                 }
                               );
-                            } else if ((attachment.mimeStart == "video" || attachment.mimeType == "audio/mp4") && !kIsDesktop && !ss.settings.highPerfMode.value) {
+                            } else if ((attachment.mimeStart == "video" || attachment.mimeType == "audio/mp4") && !ss.settings.highPerfMode.value) {
                               return VideoPlayer(
                                 attachment: attachment,
                                 file: _content,
                                 controller: controller.cvController,
                                 isFromMe: message.isFromMe!,
                               );
-                            } else if (attachment.mimeStart == "audio" && !kIsDesktop) {
+                            } else if (attachment.mimeStart == "audio") {
                               return Padding(
                                 padding: showTail ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0) : EdgeInsets.zero,
                                 child: AudioPlayer(

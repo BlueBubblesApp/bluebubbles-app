@@ -13,7 +13,9 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Intent;
 import 'package:get/get.dart';
+import 'package:path/path.dart';
 import 'package:receive_intent/receive_intent.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
 IntentsService intents = Get.isRegistered<IntentsService>() ? Get.find<IntentsService>() : Get.put(IntentsService());
@@ -58,7 +60,7 @@ class IntentsService extends GetxService {
               final bytes = await File(path).readAsBytes();
               files.add(PlatformFile(
                 path: path,
-                name: path.split("/").last,
+                name: basename(path),
                 bytes: bytes,
                 size: bytes.length,
               ));
@@ -68,7 +70,7 @@ class IntentsService extends GetxService {
             final bytes = await File(path).readAsBytes();
             files.add(PlatformFile(
               path: path,
-              name: path.split("/").last,
+              name: basename(path),
               bytes: bytes,
               size: bytes.length,
             ));
@@ -77,7 +79,21 @@ class IntentsService extends GetxService {
         await openChat(id, text: text, attachments: files);
         return;
       default:
-        if (intent.extra?["chatGuid"] != null) {
+        if (intent.data?.startsWith("imessage://") ?? false) {
+          final uri = Uri.tryParse(intent.data!.replaceFirst("imessage://", "imessage:").replaceFirst("&body=", "?body="));
+          if (uri != null) {
+            final address = uri.path;
+            final handle = Handle.findOne(addressAndService: Tuple2(address, "iMessage"));
+            ns.pushAndRemoveUntil(
+              Get.context!,
+              ChatCreator(
+                initialSelected: [SelectedContact(displayName: handle?.displayName ?? address, address: address)],
+                initialText: uri.queryParameters['body'],
+              ),
+              (route) => route.isFirst,
+            );
+          }
+        } else if (intent.extra?["chatGuid"] != null) {
           final guid = intent.extra!["chatGuid"]!;
           final bubble = intent.extra!["bubble"] == "true";
           ls.isBubble = bubble;

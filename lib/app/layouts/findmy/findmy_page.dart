@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/findmy/findmy_location_clipper.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -36,8 +37,9 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   final MapController mapController = MapController();
   final completer = Completer<void>();
 
+  StreamSubscription? locationSub;
   List<FindMy> devices = [];
-  List<Marker> markers = [];
+  Map<String, Marker> markers = {};
   Position? location;
   bool? fetching = true;
   bool refreshing = false;
@@ -64,60 +66,47 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     if (response.statusCode == 200 && response.data['data'] != null) {
       try {
         devices = (response.data['data'] as List).map((e) => FindMy.fromJson(e)).toList().cast<FindMy>();
-        markers = devices.where((e) => e.location?.latitude != null && e.location?.longitude != null).map((e) => Marker(
-          point: LatLng(e.location!.latitude!, e.location!.longitude!),
-          width: 30,
-          height: 35,
-          builder: (_) => ClipShadowPath(
-            clipper: const FindMyPinClipper(),
-            shadow: const BoxShadow(
-              color: Colors.black,
-              blurRadius: 2,
-            ),
-            child: Container(
-              color: Colors.white,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 5.0),
-                  child: e.role?['emoji'] != null ? Text(e.role!['emoji'], style: context.theme.textTheme.bodyLarge!.copyWith(fontFamily: 'Apple Color Emoji'))
-                      : Icon((e.isMac ?? false)
-                      ? CupertinoIcons.desktopcomputer
-                      : e.isConsideredAccessory
-                      ? CupertinoIcons.headphones
-                      : CupertinoIcons.device_phone_portrait,
-                    color: Colors.black,
-                    size: 20,
+        for (FindMy e in devices.where((e) => e.location?.latitude != null && e.location?.longitude != null)) {
+          markers[e.id ?? randomString(6)] = Marker(
+            point: LatLng(e.location!.latitude!, e.location!.longitude!),
+            width: 30,
+            height: 35,
+            builder: (_) => ClipShadowPath(
+              clipper: const FindMyPinClipper(),
+              shadow: const BoxShadow(
+                color: Colors.black,
+                blurRadius: 2,
+              ),
+              child: Container(
+                color: Colors.white,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0),
+                    child: e.role?['emoji'] != null ? Text(e.role!['emoji'], style: context.theme.textTheme.bodyLarge!.copyWith(fontFamily: 'Apple Color Emoji'))
+                        : Icon((e.isMac ?? false)
+                        ? CupertinoIcons.desktopcomputer
+                        : e.isConsideredAccessory
+                        ? CupertinoIcons.headphones
+                        : CupertinoIcons.device_phone_portrait,
+                      color: Colors.black,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          anchorPos: AnchorPos.align(AnchorAlign.top),
-        )).toList();
+            anchorPos: AnchorPos.align(AnchorAlign.top),
+          );
+        }
         final granted = await Geolocator.checkPermission();
         if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
           location = await Geolocator.getCurrentPosition();
-          markers.add(
-            Marker(
-              point: LatLng(location!.latitude, location!.longitude),
-              width: 25,
-              height: 25,
-              builder: (_) => Container(
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                ),
-                padding: const EdgeInsets.all(5),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: context.theme.colorScheme.primary,
-                  ),
-                ),
-              ),
-              anchorPos: AnchorPos.align(AnchorAlign.center),
-            ),
-          );
+          buildLocationMarker(location!);
+          locationSub = Geolocator.getPositionStream().listen((event) {
+            setState(() {
+              buildLocationMarker(event);
+            });
+          });
         }
         setState(() {
           fetching = false;
@@ -140,6 +129,57 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     }
   }
 
+  void buildLocationMarker(Position pos) {
+    markers['current'] = Marker(
+      point: LatLng(pos.latitude, pos.longitude),
+      width: 25,
+      height: 55,
+      builder: (_) => Stack(
+        alignment: Alignment.center,
+        children: [
+          Transform.rotate(
+            angle: pos.heading,
+            child: ClipPath(
+              clipper: const FindMyLocationClipper(),
+              child: Container(
+                width: 25,
+                height: 55,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: AlignmentDirectional.center,
+                    end: Alignment.topCenter,
+                    colors: [context.theme.colorScheme.primary, context.theme.colorScheme.primary.withAlpha(50)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: 25,
+            height: 25,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            padding: const EdgeInsets.all(5),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: context.theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+      anchorPos: AnchorPos.align(AnchorAlign.center),
+    );
+  }
+
+  @override
+  void dispose() {
+    locationSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +234,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                           index.value = 1;
                           tabController.animateTo(1);
                           await completer.future;
-                          final marker = markers.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
+                          final marker = markers.values.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
                           popupController.showPopupsOnlyFor([marker]);
                           mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
                         } : null,
@@ -271,7 +311,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                           index.value = 1;
                           tabController.animateTo(1);
                           await completer.future;
-                          final marker = markers.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
+                          final marker = markers.values.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
                           popupController.showPopupsOnlyFor([marker]);
                           mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
                         } : null,
@@ -345,7 +385,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         index.value = 1;
                         tabController.animateTo(1);
                         await completer.future;
-                        final marker = markers.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
+                        final marker = markers.values.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
                         popupController.showPopupsOnlyFor([marker]);
                         mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
                       } : null,
@@ -570,6 +610,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 mapController: mapController,
                 options: MapOptions(
                   zoom: 5.0,
+                  maxZoom: 18.0,
                   center: location == null ? null : LatLng(location!.latitude, location!.longitude),
                   onTap: (_, __) => popupController.hideAllPopups(), // Hide popup when the map is tapped.
                   keepAlive: true,
@@ -586,7 +627,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   PopupMarkerLayerWidget(
                     options: PopupMarkerLayerOptions(
                       popupController: popupController,
-                      markers: markers,
+                      markers: markers.values.toList(),
                       popupBuilder: (context, marker) {
                         final item = devices.firstWhere((e) => e.location?.latitude == marker.point.latitude && e.location?.longitude == marker.point.longitude);
                         return Padding(

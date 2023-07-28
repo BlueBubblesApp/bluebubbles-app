@@ -301,6 +301,9 @@ class Message_ {
 
   /// see [Message.dbMetadata]
   static final dbMetadata = Temp();
+
+  /// see [Message.isBookmarked]
+  static final isBookmarked = Temp();
 }
 
 Future<Store> openStore(

@@ -13,7 +13,6 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -305,6 +304,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   late final StreamSubscription sub;
   String? cachedLatestMessageGuid = "";
   DateTime? cachedDateCreated;
+  DateTime? cachedDateEdited;
   bool isDelivered = false;
   bool isFromMe = false;
 
@@ -317,6 +317,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
     forceDelete = false;
     subtitle = MessageHelper.getNotificationText(controller.chat.latestMessage);
     cachedLatestMessageGuid = controller.chat.latestMessage.guid!;
+    cachedDateEdited = controller.chat.latestMessage.dateEdited;
     isFromMe = controller.chat.latestMessage.isFromMe!;
     isDelivered = controller.chat.isGroup || !isFromMe || controller.chat.latestMessage.dateDelivered != null
         || controller.chat.latestMessage.dateRead != null;
@@ -336,7 +337,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           isFromMe = message?.isFromMe ?? false;
           isDelivered = controller.chat.isGroup || !isFromMe || message?.dateDelivered != null || message?.dateRead != null;
           // check if we really need to update this widget
-          if (message != null && message.guid != cachedLatestMessageGuid) {
+          if (message != null && (message.guid != cachedLatestMessageGuid || message.dateEdited != cachedDateEdited)) {
             message.handle = message.getHandle();
             String newSubtitle = MessageHelper.getNotificationText(message);
             if (newSubtitle != subtitle) {
@@ -353,6 +354,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
             setState(() {});
           }
           cachedLatestMessageGuid = message?.guid;
+          cachedDateEdited = message?.dateEdited;
         });
       });
     } else {
@@ -361,7 +363,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
         if (tuple.item2?.guid == controller.chat.guid && (cachedDateCreated == null || message.dateCreated!.isAfter(cachedDateCreated!))) {
           isFromMe = message.isFromMe ?? false;
           isDelivered = controller.chat.isGroup || !isFromMe || message.dateDelivered != null || message.dateRead != null;
-          if (message.guid != cachedLatestMessageGuid) {
+          if (message.guid != cachedLatestMessageGuid || message.dateEdited != cachedDateEdited) {
             String newSubtitle = MessageHelper.getNotificationText(message);
             if (newSubtitle != subtitle) {
               setState(() {
@@ -377,6 +379,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           }
           cachedDateCreated = message.dateCreated;
           cachedLatestMessageGuid = message.guid;
+          cachedDateEdited = message.dateEdited;
         }
       });
     }

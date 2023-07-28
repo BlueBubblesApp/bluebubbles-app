@@ -66,6 +66,8 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
             HelperUtils.getServerUrl(context, mPrefs.getString("flutter.guidAuthKey", ""), "", new Result() {
                 @Override
                 public void success(Object result) {
+                    if (result == null) return;
+
                     Intent intent = new Intent();
                     intent.setAction("net.dinglisch.android.taskerm.BB_EVENT");
                     intent.putExtra("url", result.toString());

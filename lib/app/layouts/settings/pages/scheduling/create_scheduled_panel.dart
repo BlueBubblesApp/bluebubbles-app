@@ -50,24 +50,33 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
       setState(() {});
     }
     messageController.addListener(() {
-     if (messageController.text.isEmpty && !isEmpty) {
-       isEmpty = true;
-       setState(() {});
-     } else if (isEmpty) {
-       isEmpty = false;
-       setState(() {});
-     }
+      if (messageController.text.isEmpty && !isEmpty) {
+        isEmpty = true;
+        setState(() {});
+      } else if (isEmpty) {
+        isEmpty = false;
+        setState(() {});
+      }
     });
     numberController.addListener(() {
-     final value = int.tryParse(numberController.text) ?? 1;
-     if (interval != value) {
-       setState(() => interval = value);
-     }
-});
+      final value = int.tryParse(numberController.text) ?? 1;
+      if (interval != value) {
+        setState(() => interval = value);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isFutureTime = date.isBefore(DateTime.now());
+    String? error;
+    if (isEmpty) {
+      error = "Please enter a message!";
+    } else if (isFutureTime) {
+      error = "Please pick a date in the future!";
+    }
+
+
     return SettingsScaffold(
       title: widget.existing != null ? "Edit Existing" : "Create New",
       initialHeader: "Message Info",
@@ -75,7 +84,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
       materialSubtitle: materialSubtitle,
       tileColor: tileColor,
       headerColor: headerColor,
-      fab: isEmpty || date.isBefore(DateTime.now()) ? null : FloatingActionButton(
+      fab: error != null ? null : FloatingActionButton(
         backgroundColor: context.theme.colorScheme.primary,
         child: Icon(
             iOS ? CupertinoIcons.check_mark : Icons.done,
@@ -357,6 +366,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                   child: ValueListenableBuilder(
                     valueListenable: messageController,
                     builder: (context, value, _) {
+                      if (error != null) return Text(error, style: const TextStyle(color: Colors.red));
                       return Text("Scheduling \"${messageController.text}\" to ${chats.chats.firstWhere((e) => e.guid == selectedChat).getTitle()}.\nScheduling $schedule${schedule == "recurring" ? " every $interval ${frequencyToText[frequency]}(s) starting" : ""} on ${buildSeparatorDateSamsung(date)} at ${buildTime(date)}.");
                     },
                   ),

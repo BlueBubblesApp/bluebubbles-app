@@ -156,42 +156,6 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                 ],
               ),
               SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                text: "Scrolling",
-              ),
-              Obx(() => SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  SettingsSwitch(
-                    initialVal: ss.settings.betterScrolling.value,
-                    onChanged: (bool val) async {
-                      ss.settings.betterScrolling.value = val;
-                      saveSettings();
-                    },
-                    title: "Improve Mouse Wheel Scrolling",
-                    subtitle: "Enabling this setting will break touch scrolling and trackpad scrolling.",
-                  ),
-                  if (ss.settings.betterScrolling.value)
-                    SettingsSlider(
-                      leading: const Text("Multiplier"),
-                      max: 14.0,
-                      min: 4.0,
-                      divisions: 20,
-                      startingVal: ss.settings.betterScrollingMultiplier.value,
-                      update: (double val) {
-                        ss.settings.betterScrollingMultiplier.value = val;
-                      },
-                      onChangeEnd: (double val) {
-                        saveSettings();
-                      },
-                      backgroundColor: tileColor,
-                    )
-                ],
-              )),
-              SettingsHeader(
                   headerColor: headerColor,
                   tileColor: tileColor,
                   iosSubtitle: iosSubtitle,

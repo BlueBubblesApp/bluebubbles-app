@@ -43,8 +43,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: XGestureDetector(
-                    onTap: (details) {
-                      if (!kIsDesktop) return;
+                    onTap: !kIsDesktop ? null : (details) {
                       if (controller.inSelectMode.value) {
                         controller.inSelectMode.value = false;
                         controller.selected.clear();
@@ -55,8 +54,8 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                         return;
                       }
                       controller.close();
-                      while (Get.isOverlaysOpen) {
-                        Get.back();
+                      if (Get.isSnackbarOpen) {
+                        Get.closeAllSnackbars();
                       }
                       Navigator.of(context).pop();
                     },
@@ -74,8 +73,8 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                           return;
                         }
                         controller.close();
-                        while (Get.isOverlaysOpen) {
-                          Get.back();
+                        if (Get.isSnackbarOpen) {
+                          Get.closeAllSnackbars();
                         }
                         Navigator.of(context).pop();
                       },
@@ -89,8 +88,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                 Align(
                   alignment: Alignment.center,
                   child: XGestureDetector(
-                    onTap: (details) {
-                      if (!kIsDesktop) return;
+                    onTap: !kIsDesktop ? null : (details) {
                       Navigator.of(context).push(
                         ThemeSwitcher.buildPageRoute(
                           builder: (context) => ConversationDetails(

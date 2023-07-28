@@ -7,7 +7,6 @@ import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -164,8 +163,6 @@ class SocketService extends GetxService {
           handleSocketException(data);
         }
 
-        notif.createSocketError();
-
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection
         _reconnectTimer = Timer(const Duration(seconds: 5), () async {
@@ -173,6 +170,9 @@ class SocketService extends GetxService {
 
           await fdb.fetchNewUrl();
           restartSocket();
+
+          if (state.value == SocketState.connected) return;
+          notif.createSocketError();
         });
         return;
       default:

@@ -15,6 +15,8 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.lang.reflect.Method;
 
@@ -78,17 +80,21 @@ public class FirebaseAuth implements Handler {
                     }
                 });
 
-        // Get the config database reference
-        db = FirebaseDatabase.getInstance(app).getReference("config");
-        try {
-            // Remove any previous listeners
-            db.removeEventListener(DBListener.dbListener);
-        } catch (Exception e) {
-            // Don't do anything
+        if (call.argument("firebase_url") == null) {
+            try {
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                DocumentReference doc = db.collection("server").document("config");
+                // Add the listener
+                doc.addSnapshotListener(DBListener.cfdbListener);
+            } catch (Exception e) {}
+        } else {
+            try {
+                db = FirebaseDatabase.getInstance(app).getReference("config");
+                // Remove any previous listeners and re-add the listener
+                db.removeEventListener(DBListener.rtdbListener);
+                db.addValueEventListener(DBListener.rtdbListener);
+            } catch (Exception e) {}
         }
-
-        // Re-add the listener
-        db.addValueEventListener(DBListener.dbListener);
     }
 
 
