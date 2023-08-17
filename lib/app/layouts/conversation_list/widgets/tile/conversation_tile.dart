@@ -108,7 +108,7 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
         onSelect: onSelect,
         inSelectMode: inSelectMode,
         subtitle: subtitle,
-      ), tag: inSelectMode ? randomString(8) : chat.guid)
+      ), tag: inSelectMode ? randomString(8) : chat.guid, permanent: kIsDesktop || kIsWeb)
   );
 
   @override
