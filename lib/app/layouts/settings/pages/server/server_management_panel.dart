@@ -111,226 +111,245 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
-      title: "Connection & Server Management",
-      initialHeader: "Connection & Server Details",
-      iosSubtitle: iosSubtitle,
-      materialSubtitle: materialSubtitle,
-      tileColor: tileColor,
-      headerColor: headerColor,
-      bodySlivers: [
-        SliverList(
-          delegate: SliverChildListDelegate(
-            <Widget>[
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  Obx(() {
-                    bool redact = ss.settings.redactedMode.value;
-                    return Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 300),
-                            opacity: controller.opacity.value,
-                            child: SelectableText.rich(
-                              TextSpan(
-                                  children: [
-                                    const TextSpan(text: "API Connection: "),
-                                    TextSpan(text: (controller.hasCheckedStats.value == null
-                                        ? 'Disconnected'
-                                        : controller.hasCheckedStats.value == true
-                                        ? 'Connected' : 'Connecting').toUpperCase(),
-                                        style: TextStyle(color: getIndicatorColor(controller.hasCheckedStats.value == null
-                                            ? SocketState.disconnected
-                                            : controller.hasCheckedStats.value == true
-                                            ? SocketState.connected : SocketState.connecting))
-                                    ),
-                                    const TextSpan(text: "\n\n"),
-                                    const TextSpan(text: "Socket Connection: "),
-                                    TextSpan(text: describeEnum(socket.state.value).toUpperCase(), style: TextStyle(color: getIndicatorColor(socket.state.value))),
-                                    // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
-                                    //   const TextSpan(text: "\n"),
-                                    // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
-                                    //   TextSpan(text: " (${socket.lastError.value})", style: TextStyle(color: getIndicatorColor(socket.state.value))),
-                                    const TextSpan(text: "\n\n"),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      const TextSpan(text: "Private API Status: "),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED", style: TextStyle(color: getIndicatorColor(controller.privateAPIStatus.value
-                                          ? SocketState.connected
-                                          : SocketState.disconnected))),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      const TextSpan(text: "\n\n"),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      const TextSpan(text: "Private API Helper Bundle Status: "),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED", style: TextStyle(color: getIndicatorColor(controller.helperBundleStatus.value
-                                          ? SocketState.connected
-                                          : SocketState.disconnected))),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      const TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : http.origin}", recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Clipboard.setData(ClipboardData(text: http.origin));
-                                        if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
-                                          showSnackbar("Copied", "Server address copied to clipboard!");
-                                        }
-                                      }),
-                                    const TextSpan(text: "\n\n"),
-                                    if (hasBadCert)
-                                      TextSpan(text: "Server URL has a bad certificate!", style: TextStyle(color: getIndicatorColor(SocketState.disconnected))),
-                                    if (hasBadCert)
-                                      const TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
-                                    const TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
-                                    const TextSpan(text: "\n\n"),
-                                    TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
-                                    if (controller.iCloudAccount.value != null)
-                                      const TextSpan(text: "\n\n"),
-                                    if (controller.iCloudAccount.value != null)
-                                      TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
-                                    if (controller.proxyService.value != null)
-                                      const TextSpan(text: "\n\n"),
-                                    if (controller.proxyService.value != null)
-                                      TextSpan(text: "Proxy Service: ${controller.proxyService.value!.capitalizeFirst}"),
-                                    if (controller.timeSync.value != null)
-                                      const TextSpan(text: "\n\n"),
-                                    if (controller.timeSync.value != null)
-                                      const TextSpan(text: "Server Time Sync: "),
-                                    if (controller.timeSync.value != null)
-                                      TextSpan(text: "${controller.timeSync.value!.toStringAsFixed(3)}s", style: TextStyle(color: getIndicatorColor(controller.timeSync.value! < 1
-                                          ? SocketState.connected
-                                          : SocketState.disconnected))),
-                                    const TextSpan(text: "\n\n"),
-                                    const TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
-                                  ]
-                              ),
-                              onTap: () {
-                                if (socket.state.value != SocketState.connected) return;
-                                controller.opacity.value = 0.0;
-                                controller.getServerStats();
-                              },
-                            ),
-                          ),
-                        )
-                    );
-                  }),
-                  Obx(() => AnimatedSizeAndFade.showHide(
-                    show: (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SettingsTile(
-                          title: "Show Stats",
-                          subtitle: "Show iMessage statistics",
-                          backgroundColor: tileColor,
-                          leading: const SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.chart_bar_square,
-                            materialIcon: Icons.stacked_bar_chart,
-                          ),
-                          onTap: () {
-                            showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                  content: Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                                    child: SelectableText.rich(
-                                      TextSpan(
-                                          children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
-                                      ),
-                                      style: context.theme.textTheme.bodyLarge,
-                                    ),
-                                  ),
-                                  title: Text("Stats", style: context.theme.textTheme.titleLarge),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                  ],
-                                )
-                            );
-                          },
-                        ),
-                        Container(
+        title: "Connection & Server Management",
+        initialHeader: "Connection & Server Details",
+        iosSubtitle: iosSubtitle,
+        materialSubtitle: materialSubtitle,
+        tileColor: tileColor,
+        headerColor: headerColor,
+        bodySlivers: [
+          SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    Obx(() {
+                      bool redact = ss.settings.redactedMode.value;
+                      return Container(
                           color: tileColor,
                           child: Padding(
-                            padding: const EdgeInsets.only(left: 65.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        )
-                      ],
-                    )
-                  )),
-                  if (!ss.fcmData.isNull)
-                  SettingsTile(
-                    title: "Show QR Code",
-                    subtitle: "Generate QR Code to screenshot or sync other devices",
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.qrcode,
-                      materialIcon: Icons.qr_code,
-                    ),
-                    onTap: () {
-                      List<dynamic> json = [
-                        ss.settings.guidAuthKey.value,
-                        ss.settings.serverAddress.value,
-                        ss.fcmData.projectID,
-                        ss.fcmData.storageBucket,
-                        ss.fcmData.apiKey,
-                        ss.fcmData.firebaseURL,
-                        ss.fcmData.clientID,
-                        ss.fcmData.applicationID,
-                      ];
-                      String qrtext = jsonEncode(json);
-                      showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.properSurface,
-                            content: AspectRatio(
-                              aspectRatio: 1,
-                              child: Container(
-                                height: 320,
-                                width: 320,
-                                child: QrImageView(
-                                  data: qrtext,
-                                  version: QrVersions.auto,
-                                  size: 320,
-                                  gapless: true,
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                  foregroundColor: context.theme.colorScheme.properOnSurface,
-                                ),
-                              ),
-                            ),
-                            title: Text("QR Code", style: context.theme.textTheme.titleLarge),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
+                            padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 300),
+                              opacity: controller.opacity.value,
+                              child: SelectableText.rich(
+                                TextSpan(children: [
+                                  const TextSpan(text: "API Connection: "),
+                                  TextSpan(
+                                      text: (controller.hasCheckedStats.value == null
+                                              ? 'Disconnected'
+                                              : controller.hasCheckedStats.value == true
+                                                  ? 'Connected'
+                                                  : 'Connecting')
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                          color: getIndicatorColor(controller.hasCheckedStats.value == null
+                                              ? SocketState.disconnected
+                                              : controller.hasCheckedStats.value == true
+                                                  ? SocketState.connected
+                                                  : SocketState.connecting))),
+                                  const TextSpan(text: "\n\n"),
+                                  const TextSpan(text: "Socket Connection: "),
+                                  TextSpan(
+                                      text: describeEnum(socket.state.value).toUpperCase(),
+                                      style: TextStyle(color: getIndicatorColor(socket.state.value))),
+                                  // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                                  //   const TextSpan(text: "\n"),
+                                  // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                                  //   TextSpan(text: " (${socket.lastError.value})", style: TextStyle(color: getIndicatorColor(socket.state.value))),
+                                  const TextSpan(text: "\n\n"),
+                                  if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                    const TextSpan(text: "Private API Status: "),
+                                  if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                    TextSpan(
+                                        text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED",
+                                        style: TextStyle(
+                                            color: getIndicatorColor(controller.privateAPIStatus.value
+                                                ? SocketState.connected
+                                                : SocketState.disconnected))),
+                                  if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "\n\n"),
+                                  if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                    const TextSpan(text: "Private API Helper Bundle Status: "),
+                                  if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                    TextSpan(
+                                        text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED",
+                                        style: TextStyle(
+                                            color: getIndicatorColor(controller.helperBundleStatus.value
+                                                ? SocketState.connected
+                                                : SocketState.disconnected))),
+                                  if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "\n\n"),
+                                  TextSpan(
+                                      text: "Server URL: ${redact ? "Redacted" : http.origin}",
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          Clipboard.setData(ClipboardData(text: http.origin));
+                                          if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+                                            showSnackbar("Copied", "Server address copied to clipboard!");
+                                          }
+                                        }),
+                                  const TextSpan(text: "\n\n"),
+                                  if (hasBadCert)
+                                    TextSpan(
+                                        text: "Server URL has a bad certificate!",
+                                        style: TextStyle(color: getIndicatorColor(SocketState.disconnected))),
+                                  if (hasBadCert) const TextSpan(text: "\n\n"),
+                                  TextSpan(
+                                      text:
+                                          "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
+                                  const TextSpan(text: "\n\n"),
+                                  TextSpan(
+                                      text:
+                                          "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
+                                  const TextSpan(text: "\n\n"),
+                                  TextSpan(
+                                      text:
+                                          "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                                  if (controller.iCloudAccount.value != null) const TextSpan(text: "\n\n"),
+                                  if (controller.iCloudAccount.value != null)
+                                    TextSpan(
+                                        text:
+                                            "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
+                                  if (controller.proxyService.value != null) const TextSpan(text: "\n\n"),
+                                  if (controller.proxyService.value != null)
+                                    TextSpan(text: "Proxy Service: ${controller.proxyService.value!.capitalizeFirst}"),
+                                  if (controller.timeSync.value != null) const TextSpan(text: "\n\n"),
+                                  if (controller.timeSync.value != null) const TextSpan(text: "Server Time Sync: "),
+                                  if (controller.timeSync.value != null)
+                                    TextSpan(
+                                        text: "${controller.timeSync.value!.toStringAsFixed(3)}s",
+                                        style: TextStyle(
+                                            color: getIndicatorColor(controller.timeSync.value! < 1
+                                                ? SocketState.connected
+                                                : SocketState.disconnected))),
+                                  const TextSpan(text: "\n\n"),
+                                  const TextSpan(
+                                      text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                                ]),
+                                onTap: () {
+                                  if (socket.state.value != SocketState.connected) return;
+                                  controller.opacity.value = 0.0;
+                                  controller.getServerStats();
                                 },
                               ),
-                            ],
-                          )
-                      );
-                    },
-                  ),
-                ],
-              ),
-              SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Connection & Sync"
-              ),
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
+                            ),
+                          ));
+                    }),
+                    Obx(() => AnimatedSizeAndFade.showHide(
+                        show: (controller.serverVersionCode.value ?? 0) >= 42 && controller.stats.isNotEmpty,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SettingsTile(
+                              title: "Show Stats",
+                              subtitle: "Show iMessage statistics",
+                              backgroundColor: tileColor,
+                              leading: const SettingsLeadingIcon(
+                                iosIcon: CupertinoIcons.chart_bar_square,
+                                materialIcon: Icons.stacked_bar_chart,
+                              ),
+                              onTap: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                          backgroundColor: context.theme.colorScheme.properSurface,
+                                          content: Padding(
+                                            padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                                            child: SelectableText.rich(
+                                              TextSpan(
+                                                  children: controller.stats.entries
+                                                      .map((e) => TextSpan(
+                                                          text:
+                                                              "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}"))
+                                                      .toList()),
+                                              style: context.theme.textTheme.bodyLarge,
+                                            ),
+                                          ),
+                                          title: Text("Stats", style: context.theme.textTheme.titleLarge),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              child: Text("Dismiss",
+                                                  style: context.theme.textTheme.bodyLarge!
+                                                      .copyWith(color: context.theme.colorScheme.primary)),
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        ));
+                              },
+                            ),
+                            Container(
+                              color: tileColor,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 65.0),
+                                child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                              ),
+                            )
+                          ],
+                        ))),
+                    if (!ss.fcmData.isNull)
+                      SettingsTile(
+                        title: "Show QR Code",
+                        subtitle: "Generate QR Code to screenshot or sync other devices",
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.qrcode,
+                          materialIcon: Icons.qr_code,
+                        ),
+                        onTap: () {
+                          List<dynamic> json = [
+                            ss.settings.guidAuthKey.value,
+                            ss.settings.serverAddress.value,
+                            ss.fcmData.projectID,
+                            ss.fcmData.storageBucket,
+                            ss.fcmData.apiKey,
+                            ss.fcmData.firebaseURL,
+                            ss.fcmData.clientID,
+                            ss.fcmData.applicationID,
+                          ];
+                          String qrtext = jsonEncode(json);
+                          showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                    backgroundColor: context.theme.colorScheme.properSurface,
+                                    content: AspectRatio(
+                                      aspectRatio: 1,
+                                      child: Container(
+                                        height: 320,
+                                        width: 320,
+                                        child: QrImageView(
+                                          data: qrtext,
+                                          version: QrVersions.auto,
+                                          size: 320,
+                                          gapless: true,
+                                          backgroundColor: context.theme.colorScheme.properSurface,
+                                          foregroundColor: context.theme.colorScheme.properOnSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text("QR Code", style: context.theme.textTheme.titleLarge),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: Text("Dismiss",
+                                            style: context.theme.textTheme.bodyLarge!
+                                                .copyWith(color: context.theme.colorScheme.primary)),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  ));
+                        },
+                      ),
+                  ],
+                ),
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Connection & Sync"),
+                SettingsSection(backgroundColor: tileColor, children: [
                   /*Obx(() {
                     if (controller.proxyService.value != null && iOS)
                       return Container(
@@ -422,192 +441,149 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   ) : SizedBox.shrink()),*/
                   SettingsTile(
                     title: "Re-configure with BlueBubbles Server",
-                    subtitle: kIsWeb || kIsDesktop ? "Click for manual entry" : "Tap to scan QR code\nLong press for manual entry",
+                    subtitle: kIsWeb || kIsDesktop
+                        ? "Click for manual entry"
+                        : "Tap to scan QR code\nLong press for manual entry",
                     isThreeLine: kIsWeb || kIsDesktop ? false : true,
                     leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
                     ),
-                    onLongPress: kIsWeb || kIsDesktop ? null : () {
-                      showDialog(
-                        context: context,
-                        builder: (connectContext) => ManualEntryDialog(
-                          onConnect: () {
-                            Get.back();
-                          },
-                          onClose: () {
-                            Get.back();
-                          },
-                        ),
-                      );
-                    },
-                    onTap: kIsWeb || kIsDesktop ? () {
-                      showDialog(
-                        context: context,
-                        builder: (connectContext) => ManualEntryDialog(
-                          onConnect: () {
-                            Get.back();
-                          },
-                          onClose: () {
-                            Get.back();
-                          },
-                        ),
-                      );
-                    } : () async {
-                      List<dynamic>? fcmData;
-                      try {
-                        fcmData = jsonDecode(
-                          await Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (BuildContext context) {
-                                return QRCodeScanner();
-                              },
-                            ),
-                          ),
-                        );
-                      } catch (e) {
-                        return;
-                      }
-                      if (fcmData != null && fcmData[0] != null && sanitizeServerAddress(address: fcmData[1]) != null) {
-                        final data = FCMData(
-                          projectID: fcmData[2],
-                          storageBucket: fcmData[3],
-                          apiKey: fcmData[4],
-                          firebaseURL: fcmData[5],
-                          clientID: fcmData[6],
-                          applicationID: fcmData[7],
-                        );
-                        ss.settings.guidAuthKey.value = fcmData[0];
-                        ss.settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
-
-                        ss.saveSettings();
-                        ss.saveFCMData(data);
-                        socket.restartSocket();
-                      }
-                    },
-                  ),
-                  if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
-                  if (!kIsWeb)
-                    Obx(() => SettingsTile(
-                      title: "Manually Sync Messages",
-                      subtitle: socket.state.value == SocketState.connected
-                          ? "Tap to sync messages" : "Disconnected, cannot sync",
-                      backgroundColor: tileColor,
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.arrow_2_circlepath,
-                        materialIcon: Icons.sync,
-                      ),
-                      onTap: () async {
-                        if (socket.state.value != SocketState.connected) return;
-                        if (manager != null) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => SyncDialog(manager: manager!),
-                          );
-                        } else {
-                          final date = await showTimeframePicker("How Far Back?", context, showHourPicker: false);
-                          if (date == null) return;
-                          try {
-                            sync.isIncrementalSyncing.value = true;
-                            manager = IncrementalSyncManager(startTimestamp: date.millisecondsSinceEpoch);
+                    onLongPress: kIsWeb || kIsDesktop
+                        ? null
+                        : () {
                             showDialog(
                               context: context,
-                              builder: (context) => SyncDialog(manager: manager!),
+                              builder: (connectContext) => ManualEntryDialog(
+                                onConnect: () {
+                                  Get.back();
+                                },
+                                onClose: () {
+                                  Get.back();
+                                },
+                              ),
                             );
-                            await manager!.start();
-                          } catch (_) {}
-                          Get.back();
-                          manager = null;
-                          sync.isIncrementalSyncing.value = false;
-                        }
-                      }),
-                    ),
-                  if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
-                  SettingsTile(
-                    title: "Configure Custom Headers",
-                    subtitle: "Add or edit custom headers to connect to your server",
-                    backgroundColor: tileColor,
-                    onTap: () async {
-                      final result = await showCustomHeadersDialog(context);
-                      if (result) {
-                        socket.restartSocket();
-                      }
-                    }),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
-                  if (!kIsWeb)
-                    Obx(() => SettingsSwitch(
-                      initialVal: ss.settings.localhostPort.value != null,
-                      title: "Detect Localhost Address",
-                      subtitle: "Look up localhost address for a faster direct connection",
-                      backgroundColor: tileColor,
-                      onChanged: (bool val) async {
-                        if (val) {
-                          final TextEditingController portController = TextEditingController();
-                          await showDialog(
-                            context: context,
-                            builder: (_) {
-                              return AlertDialog(
-                                actions: [
-                                  TextButton(
-                                    child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                    onPressed: () => Get.back(),
-                                  ),
-                                  TextButton(
-                                    child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                    onPressed: () async {
-                                      if (portController.text.isEmpty || !portController.text.isNumericOnly) {
-                                        showSnackbar("Error", "Enter a valid port!");
-                                        return;
-                                      }
-                                      Get.back();
-                                      ss.settings.localhostPort.value = portController.text;
+                          },
+                    onTap: kIsWeb || kIsDesktop
+                        ? () {
+                            showDialog(
+                              context: context,
+                              builder: (connectContext) => ManualEntryDialog(
+                                onConnect: () {
+                                  Get.back();
+                                },
+                                onClose: () {
+                                  Get.back();
+                                },
+                              ),
+                            );
+                          }
+                        : () async {
+                            List<dynamic>? fcmData;
+                            try {
+                              fcmData = jsonDecode(
+                                await Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (BuildContext context) {
+                                      return QRCodeScanner();
                                     },
                                   ),
-                                ],
-                                content: TextField(
-                                  controller: portController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Port Number",
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  keyboardType: TextInputType.number,
                                 ),
-                                title: Text("Enter Server Port", style: context.theme.textTheme.titleLarge),
-                                backgroundColor: context.theme.colorScheme.properSurface,
                               );
+                            } catch (e) {
+                              return;
                             }
-                          );
-                        } else {
-                          ss.settings.localhostPort.value = null;
+                            if (fcmData != null &&
+                                fcmData[0] != null &&
+                                sanitizeServerAddress(address: fcmData[1]) != null) {
+                              final data = FCMData(
+                                projectID: fcmData[2],
+                                storageBucket: fcmData[3],
+                                apiKey: fcmData[4],
+                                firebaseURL: fcmData[5],
+                                clientID: fcmData[6],
+                                applicationID: fcmData[7],
+                              );
+                              ss.settings.guidAuthKey.value = fcmData[0];
+                              ss.settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
+
+                              ss.saveSettings();
+                              ss.saveFCMData(data);
+                              socket.restartSocket();
+                            }
+                          },
+                  ),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    Obx(
+                      () => SettingsTile(
+                          title: "Manually Sync Messages",
+                          subtitle: socket.state.value == SocketState.connected
+                              ? "Tap to sync messages"
+                              : "Disconnected, cannot sync",
+                          backgroundColor: tileColor,
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.arrow_2_circlepath,
+                            materialIcon: Icons.sync,
+                          ),
+                          onTap: () async {
+                            if (socket.state.value != SocketState.connected) return;
+                            if (manager != null) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => SyncDialog(manager: manager!),
+                              );
+                            } else {
+                              final date = await showTimeframePicker("How Far Back?", context, showHourPicker: false);
+                              if (date == null) return;
+                              try {
+                                sync.isIncrementalSyncing.value = true;
+                                manager = IncrementalSyncManager(startTimestamp: date.millisecondsSinceEpoch);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => SyncDialog(manager: manager!),
+                                );
+                                await manager!.start();
+                              } catch (_) {}
+                              Get.back();
+                              manager = null;
+                              sync.isIncrementalSyncing.value = false;
+                            }
+                          }),
+                    ),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  SettingsTile(
+                      leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.pencil, materialIcon: Icons.edit),
+                      title: "Configure Custom Headers",
+                      subtitle: "Add or edit custom headers to connect to your server",
+                      backgroundColor: tileColor,
+                      onTap: () async {
+                        final result = await showCustomHeadersDialog(context);
+                        if (result) {
+                          socket.restartSocket();
                         }
-                        ss.settings.save();
-                        if (ss.settings.localhostPort.value == null) {
-                          http.originOverride = null;
-                        } else {
-                          NetworkTasks.detectLocalhost(createSnackbar: true);
-                        }
-                      },
-                    )),
+                      }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
                   if (Platform.isAndroid)
                     Container(
                       color: tileColor,
@@ -618,15 +594,15 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     ),
                   if (Platform.isAndroid)
                     Obx(() => SettingsSwitch(
-                      initialVal: ss.settings.syncContactsAutomatically.value,
-                      title: "Auto-Sync Contacts",
-                      subtitle: "Automatically re-upload contacts to server when changes are detected",
-                      backgroundColor: tileColor,
-                      onChanged: (bool val) async {
-                        ss.settings.syncContactsAutomatically.value = val;
-                        ss.saveSettings();
-                      },
-                    )),
+                          initialVal: ss.settings.syncContactsAutomatically.value,
+                          title: "Auto-Sync Contacts",
+                          subtitle: "Automatically re-upload contacts to server when changes are detected",
+                          backgroundColor: tileColor,
+                          onChanged: (bool val) async {
+                            ss.settings.syncContactsAutomatically.value = val;
+                            ss.saveSettings();
+                          },
+                        )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -635,277 +611,352 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     ),
                   ),
                   SettingsTile(
-                    title: "Fetch Latest URL",
-                    subtitle: "Forcefully fetch latest URL from Firebase",
-                    backgroundColor: tileColor,
-                    onTap: () async {
-                      String? newUrl = await fdb.fetchNewUrl();
-                      showSnackbar("Notice", "Fetched URL: $newUrl");
-                      socket.restartSocket();
-                    }),
-                ]
-              ),
-              SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Server Actions"
-              ),
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  Obx(() => SettingsTile(
-                    title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
-                    subtitle: controller.fetchStatus.value ?? (socket.state.value == SocketState.connected
-                        ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
-                    backgroundColor: tileColor,
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.doc_plaintext,
-                      materialIcon: Icons.article,
-                    ),
-                    onTap: () {
-                      if (socket.state.value != SocketState.connected) return;
-
-                      controller.fetchStatus.value = "Fetching logs, please wait...";
-
-                      http.serverLogs().then((response) async {
-                        if (kIsDesktop) {
-                          String downloadsPath = (await getDownloadsDirectory())!.path;
-                          await File(join(downloadsPath, "main.log")).writeAsString(response.data['data']);
-                          controller.fetchStatus.value = null;
-                          return showSnackbar('Success', 'Saved logs to $downloadsPath!');
-                        }
-
-                        if (kIsWeb) {
-                          final bytes = utf8.encode(response.data['data']);
-                          final content = base64.encode(bytes);
-                          html.AnchorElement(
-                              href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-                            ..setAttribute("download", "main.log")
-                            ..click();
-                          controller.fetchStatus.value = null;
-                          return;
-                        }
-
-                        File logFile = File("${fs.appDocDir.path}/attachments/main.log");
-
-                        if (await logFile.exists()) {
-                          await logFile.delete();
-                        }
-
-                        await logFile.writeAsString(response.data['data']);
-
-                        try {
-                          Share.file("BlueBubbles Server Log", logFile.absolute.path);
-                          controller.fetchStatus.value = null;
-                        } catch (ex) {
-                          controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
-                        }
-                      }).catchError((_) {
-                        controller.fetchStatus.value = "Failed to fetch logs!";
-                      });
-                    },
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
-                  Obx(() => SettingsTile(
-                      title: "Restart iMessage",
-                      subtitle: controller.isRestartingMessages.value && socket.state.value == SocketState.connected
-                          ? "Restart in progress..."
-                          : socket.state.value == SocketState.connected
-                          ? "Restart the iMessage app"
-                          : "Disconnected, cannot restart",
+                      leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.refresh, materialIcon: Icons.refresh),
+                      title: "Fetch Latest URL",
+                      subtitle: "Forcefully fetch latest URL from Firebase",
                       backgroundColor: tileColor,
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.chat_bubble,
-                        materialIcon: Icons.sms,
-                      ),
                       onTap: () async {
-                        if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value) return;
-
-                        controller.isRestartingMessages.value = true;
-
-                        // Prevent restarting more than once every 30 seconds
-                        int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30) return;
-
-                        // Save the last time we restarted
-                        controller.lastRestartMessages = now;
-
-                        // Execute the restart
-                        http.restartImessage().then((_) {
-                          controller.isRestartingMessages.value = false;
-                        }).catchError((_) {
-                          controller.isRestartingMessages.value = false;
-                        });
-                      },
-                      trailing: Obx(() => (!controller.isRestartingMessages.value)
-                          ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
-                          : Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          ))))),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
-                  Obx(() => AnimatedSizeAndFade.showHide(
-                    show: ss.settings.enablePrivateAPI.value
-                        && (controller.serverVersionCode.value ?? 0) >= 41,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SettingsTile(
-                          title: "Restart Private API & Services",
-                          subtitle: controller.isRestartingPrivateAPI.value && socket.state.value == SocketState.connected
-                              ? "Restart in progress..."
-                              : socket.state.value == SocketState.connected
-                              ? "Restart the Private API"
-                              : "Disconnected, cannot restart",
+                        String? newUrl = await fdb.fetchNewUrl();
+                        showSnackbar("Notice", "Fetched URL: $newUrl");
+                        socket.restartSocket();
+                      }),
+                  if (!kIsWeb)
+                    Obx(() => SettingsSwitch(
+                          initialVal: ss.settings.localhostPort.value != null,
+                          title: "Detect Localhost Address",
+                          subtitle: ss.settings.localhostPort.value != null
+                              ? "Configured Port: ${ss.settings.localhostPort.value}"
+                              : "Look up localhost address for a faster direct connection",
+                          backgroundColor: tileColor,
+                          onChanged: (bool val) async {
+                            if (val) {
+                              final TextEditingController portController = TextEditingController();
+                              await showDialog(
+                                  context: context,
+                                  builder: (_) {
+                                    return AlertDialog(
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Cancel",
+                                              style: context.theme.textTheme.bodyLarge!
+                                                  .copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () => Get.back(),
+                                        ),
+                                        TextButton(
+                                          child: Text("OK",
+                                              style: context.theme.textTheme.bodyLarge!
+                                                  .copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () async {
+                                            if (portController.text.isEmpty || !portController.text.isNumericOnly) {
+                                              showSnackbar("Error", "Enter a valid port!");
+                                              return;
+                                            }
+                                            Get.back();
+                                            ss.settings.localhostPort.value = portController.text;
+                                          },
+                                        ),
+                                      ],
+                                      content: TextField(
+                                        controller: portController,
+                                        decoration: const InputDecoration(
+                                          labelText: "Port Number",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                      title: Text("Enter Server Port", style: context.theme.textTheme.titleLarge),
+                                      backgroundColor: context.theme.colorScheme.properSurface,
+                                    );
+                                  });
+                            } else {
+                              ss.settings.localhostPort.value = null;
+                            }
+                            ss.settings.save();
+                            if (ss.settings.localhostPort.value == null) {
+                              http.originOverride = null;
+                            } else {
+                              NetworkTasks.detectLocalhost(createSnackbar: true);
+                            }
+                          },
+                        )),
+                  if (!kIsWeb)
+                    Obx(() => ss.settings.localhostPort.value != null
+                        ? SettingsSwitch(
+                            initialVal: ss.settings.useLocalIpv6.value,
+                            title: "Use IPv6",
+                            subtitle: "Do not enable this unless your environment supports IPv6",
+                            isThreeLine: true,
+                            onChanged: (bool val) {
+                              ss.settings.useLocalIpv6.value = val;
+                              NetworkTasks.detectLocalhost(createSnackbar: true);
+                            },
+                          )
+                        : const SizedBox.shrink()),
+                ]),
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Server Actions"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    Obx(() => SettingsTile(
+                          title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
+                          subtitle: controller.fetchStatus.value ??
+                              (socket.state.value == SocketState.connected
+                                  ? "Tap to fetch logs"
+                                  : "Disconnected, cannot fetch logs"),
                           backgroundColor: tileColor,
                           leading: const SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.exclamationmark_shield,
-                            materialIcon: Icons.gpp_maybe,
+                            iosIcon: CupertinoIcons.doc_plaintext,
+                            materialIcon: Icons.article,
                           ),
-                          onTap: () async {
-                            if (socket.state.value != SocketState.connected || controller.isRestartingPrivateAPI.value) return;
+                          onTap: () {
+                            if (socket.state.value != SocketState.connected) return;
 
-                            controller.isRestartingPrivateAPI.value = true;
+                            controller.fetchStatus.value = "Fetching logs, please wait...";
 
-                            // Prevent restarting more than once every 30 seconds
-                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                            if (controller.lastRestartPrivateAPI != null && now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
+                            http.serverLogs().then((response) async {
+                              if (kIsDesktop) {
+                                String downloadsPath = (await getDownloadsDirectory())!.path;
+                                await File(join(downloadsPath, "main.log")).writeAsString(response.data['data']);
+                                controller.fetchStatus.value = null;
+                                return showSnackbar('Success', 'Saved logs to $downloadsPath!');
+                              }
 
-                            // Save the last time we restarted
-                            controller.lastRestartPrivateAPI = now;
+                              if (kIsWeb) {
+                                final bytes = utf8.encode(response.data['data']);
+                                final content = base64.encode(bytes);
+                                html.AnchorElement(
+                                    href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                                  ..setAttribute("download", "main.log")
+                                  ..click();
+                                controller.fetchStatus.value = null;
+                                return;
+                              }
 
-                            // Execute the restart
-                            http.softRestart().then((_) {
-                              controller.isRestartingPrivateAPI.value = false;
+                              File logFile = File("${fs.appDocDir.path}/attachments/main.log");
+
+                              if (await logFile.exists()) {
+                                await logFile.delete();
+                              }
+
+                              await logFile.writeAsString(response.data['data']);
+
+                              try {
+                                Share.file("BlueBubbles Server Log", logFile.absolute.path);
+                                controller.fetchStatus.value = null;
+                              } catch (ex) {
+                                controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
+                              }
                             }).catchError((_) {
-                              controller.isRestartingPrivateAPI.value = false;
+                              controller.fetchStatus.value = "Failed to fetch logs!";
                             });
                           },
-                          trailing: (!controller.isRestartingPrivateAPI.value)
-                              ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
-                              : Container(
-                              constraints: const BoxConstraints(
-                                maxHeight: 20,
-                                maxWidth: 20,
-                              ),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                              ))),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 65.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        )
-                      ],
-                    ),
-                  )),
-                  Obx(() => SettingsTile(
-                      title: "Restart BlueBubbles Server",
-                      subtitle: (controller.isRestarting.value)
-                          ? "Restart in progress..."
-                          : "This will briefly disconnect you",
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.desktopcomputer,
-                        materialIcon: Icons.dvr,
+                        )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
-                      onTap: () async {
-                        if (controller.isRestarting.value) return;
-
-                        controller.isRestarting.value = true;
-
-                        // Prevent restarting more than once every 30 seconds
-                        int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (controller.lastRestart != null && now - controller.lastRestart! < 1000 * 30) return;
-
-                        // Save the last time we restarted
-                        controller.lastRestart = now;
-
-                        // Perform the restart
-                        try {
-                          if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
-                            if (kIsDesktop || kIsWeb) {
-                              var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
-                              var ref = db.reference().child('config').child('nextRestart');
-                              await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
-                            } else {
-                              await mcs.invokeMethod("set-next-restart", {
-                                  "value": DateTime.now().toUtc().millisecondsSinceEpoch
-                                }
-                              );
-                            }
-                          } else {
-                            await http.setRestartDateCF(ss.fcmData.projectID!);
-                          }
-                        } finally {
-                          controller.isRestarting.value = false;
-                        }
-                      },
-                      trailing: (!controller.isRestarting.value)
-                          ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
-                          : Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          )))),
-                  Obx(() => AnimatedSizeAndFade.showHide(
-                    show: (controller.serverVersionCode.value ?? 0) >= 42,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 65.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
-                        SettingsTile(
-                          title: "Check for Server Updates",
-                          subtitle: "Check for new BlueBubbles Server updates",
-                          backgroundColor: tileColor,
-                          leading: const SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.desktopcomputer,
-                            materialIcon: Icons.dvr,
-                          ),
-                          onTap: () async {
-                            await ss.checkServerUpdate();
-                          },
-                        ),
-                      ],
                     ),
-                  )),
-                ],
-              ),
-            ],
+                    Obx(() => SettingsTile(
+                        title: "Restart iMessage",
+                        subtitle: controller.isRestartingMessages.value && socket.state.value == SocketState.connected
+                            ? "Restart in progress..."
+                            : socket.state.value == SocketState.connected
+                                ? "Restart the iMessage app"
+                                : "Disconnected, cannot restart",
+                        backgroundColor: tileColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.chat_bubble,
+                          materialIcon: Icons.sms,
+                        ),
+                        onTap: () async {
+                          if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value)
+                            return;
+
+                          controller.isRestartingMessages.value = true;
+
+                          // Prevent restarting more than once every 30 seconds
+                          int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                          if (controller.lastRestartMessages != null &&
+                              now - controller.lastRestartMessages! < 1000 * 30) return;
+
+                          // Save the last time we restarted
+                          controller.lastRestartMessages = now;
+
+                          // Execute the restart
+                          http.restartImessage().then((_) {
+                            controller.isRestartingMessages.value = false;
+                          }).catchError((_) {
+                            controller.isRestartingMessages.value = false;
+                          });
+                        },
+                        trailing: Obx(() => (!controller.isRestartingMessages.value)
+                            ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
+                            : Container(
+                                constraints: const BoxConstraints(
+                                  maxHeight: 20,
+                                  maxWidth: 20,
+                                ),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                ))))),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                    Obx(() => AnimatedSizeAndFade.showHide(
+                          show: ss.settings.enablePrivateAPI.value && (controller.serverVersionCode.value ?? 0) >= 41,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SettingsTile(
+                                  title: "Restart Private API & Services",
+                                  subtitle: controller.isRestartingPrivateAPI.value &&
+                                          socket.state.value == SocketState.connected
+                                      ? "Restart in progress..."
+                                      : socket.state.value == SocketState.connected
+                                          ? "Restart the Private API"
+                                          : "Disconnected, cannot restart",
+                                  backgroundColor: tileColor,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.exclamationmark_shield,
+                                    materialIcon: Icons.gpp_maybe,
+                                  ),
+                                  onTap: () async {
+                                    if (socket.state.value != SocketState.connected ||
+                                        controller.isRestartingPrivateAPI.value) return;
+
+                                    controller.isRestartingPrivateAPI.value = true;
+
+                                    // Prevent restarting more than once every 30 seconds
+                                    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                    if (controller.lastRestartPrivateAPI != null &&
+                                        now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
+
+                                    // Save the last time we restarted
+                                    controller.lastRestartPrivateAPI = now;
+
+                                    // Execute the restart
+                                    http.softRestart().then((_) {
+                                      controller.isRestartingPrivateAPI.value = false;
+                                    }).catchError((_) {
+                                      controller.isRestartingPrivateAPI.value = false;
+                                    });
+                                  },
+                                  trailing: (!controller.isRestartingPrivateAPI.value)
+                                      ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
+                                      : Container(
+                                          constraints: const BoxConstraints(
+                                            maxHeight: 20,
+                                            maxWidth: 20,
+                                          ),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 3,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                          ))),
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 65.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              )
+                            ],
+                          ),
+                        )),
+                    Obx(() => SettingsTile(
+                        title: "Restart BlueBubbles Server",
+                        subtitle: (controller.isRestarting.value)
+                            ? "Restart in progress..."
+                            : "This will briefly disconnect you",
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.desktopcomputer,
+                          materialIcon: Icons.dvr,
+                        ),
+                        onTap: () async {
+                          if (controller.isRestarting.value) return;
+
+                          controller.isRestarting.value = true;
+
+                          // Prevent restarting more than once every 30 seconds
+                          int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                          if (controller.lastRestart != null && now - controller.lastRestart! < 1000 * 30) return;
+
+                          // Save the last time we restarted
+                          controller.lastRestart = now;
+
+                          // Perform the restart
+                          try {
+                            if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
+                              if (kIsDesktop || kIsWeb) {
+                                var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
+                                var ref = db.reference().child('config').child('nextRestart');
+                                await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
+                              } else {
+                                await mcs.invokeMethod(
+                                    "set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
+                              }
+                            } else {
+                              await http.setRestartDateCF(ss.fcmData.projectID!);
+                            }
+                          } finally {
+                            controller.isRestarting.value = false;
+                          }
+                        },
+                        trailing: (!controller.isRestarting.value)
+                            ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
+                            : Container(
+                                constraints: const BoxConstraints(
+                                  maxHeight: 20,
+                                  maxWidth: 20,
+                                ),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                )))),
+                    Obx(() => AnimatedSizeAndFade.showHide(
+                          show: (controller.serverVersionCode.value ?? 0) >= 42,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 65.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              ),
+                              SettingsTile(
+                                title: "Check for Server Updates",
+                                subtitle: "Check for new BlueBubbles Server updates",
+                                backgroundColor: tileColor,
+                                leading: const SettingsLeadingIcon(
+                                  iosIcon: CupertinoIcons.desktopcomputer,
+                                  materialIcon: Icons.dvr,
+                                ),
+                                onTap: () async {
+                                  await ss.checkServerUpdate();
+                                },
+                              ),
+                            ],
+                          ),
+                        )),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ]
-    );
+        ]);
   }
 }
