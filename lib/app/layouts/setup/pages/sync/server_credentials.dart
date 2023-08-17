@@ -33,6 +33,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   final TextEditingController urlController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final controller = Get.find<SetupViewController>();
+  final FocusNode focusNode = FocusNode();
 
   bool showLoginButtons = true;
   bool obscureText = true;
@@ -79,14 +80,14 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                     const SizedBox(width: 10),
                     Padding(
                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                      child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                      child: Text("Sign in with Google",
+                          style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                     ),
                   ],
                 ),
               ),
             ),
-          if (showLoginButtons)
-            const SizedBox(height: 10),
+          if (showLoginButtons) const SizedBox(height: 10),
           if (!kIsWeb && !kIsDesktop && showLoginButtons)
             Container(
               decoration: BoxDecoration(
@@ -117,14 +118,14 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                     const SizedBox(width: 10),
                     Padding(
                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                      child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                      child: Text("Scan QR Code",
+                          style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                     ),
                   ],
                 ),
               ),
             ),
-          if (!kIsWeb && !kIsDesktop && showLoginButtons)
-            const SizedBox(height: 10),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons) const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
@@ -150,6 +151,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               onPressed: () async {
                 setState(() {
                   showLoginButtons = !showLoginButtons;
+                  focusNode.requestFocus();
                 });
               },
               child: Row(
@@ -158,7 +160,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
                   const SizedBox(width: 10),
                   Text("Manual entry",
-                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                      style: context.theme.textTheme.bodyLarge!
+                          .apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                 ],
               ),
             ),
@@ -179,8 +182,11 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                         Container(
                           width: context.width * 2 / 3,
                           child: Focus(
+                            focusNode: focusNode,
                             onKey: (node, event) {
-                              if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                              if (event is RawKeyDownEvent &&
+                                  !event.data.isShiftPressed &&
+                                  event.logicalKey == LogicalKeyboardKey.tab) {
                                 node.nextFocus();
                                 return KeyEventResult.handled;
                               }
@@ -194,9 +200,11 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
                                 enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.outline), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                                    borderRadius: BorderRadius.circular(20)),
                                 focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.primary), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                                    borderRadius: BorderRadius.circular(20)),
                                 labelText: "URL",
                               ),
                             ),
@@ -207,7 +215,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                           width: context.width * 2 / 3,
                           child: Focus(
                             onKey: (node, event) {
-                              if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                              if (event is RawKeyDownEvent &&
+                                  event.data.isShiftPressed &&
+                                  event.logicalKey == LogicalKeyboardKey.tab) {
                                 node.previousFocus();
                                 node.previousFocus(); // This is intentional. Should probably figure out why it's needed
                                 return KeyEventResult.handled;
@@ -223,9 +233,11 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                               onSubmitted: (pass) => connect(urlController.text, pass),
                               decoration: InputDecoration(
                                 enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.outline), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                                    borderRadius: BorderRadius.circular(20)),
                                 focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.primary), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                                    borderRadius: BorderRadius.circular(20)),
                                 labelText: "Password",
                                 contentPadding: const EdgeInsets.fromLTRB(12, 24, 40, 16),
                                 suffixIcon: IconButton(
@@ -318,7 +330,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text("Connect", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                    Text("Connect",
+                                        style: context.theme.textTheme.bodyLarge!
+                                            .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     const SizedBox(width: 10),
                                     const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                   ],
@@ -421,13 +435,13 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 ),
                 actions: <Widget>[
                   TextButton(
-                    child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    child: Text("OK",
+                        style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
                   ),
-                ]
-            );
+                ]);
           },
         );
       }
@@ -439,10 +453,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       ];
 
       // initialize gsi
-      final gsi = GoogleSignIn(
-        clientId: fdb.getClientId(),
-        scopes: defaultScopes
-      );
+      final gsi = GoogleSignIn(clientId: fdb.getClientId(), scopes: defaultScopes);
       try {
         // sign in
         final account = await gsi.signIn();
@@ -470,13 +481,12 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         showSnackbar("Error", "Something went wrong authenticating with Google! $e");
         return;
       }
-    // desktop implementation
+      // desktop implementation
     } else {
       final args = GoogleSignInArgs(
-        clientId: fdb.getClientId()!,
-        redirectUri: 'http://localhost:8641/oauth/callback',
-        scope: 'https://www.googleapis.com/auth/cloudplatformprojects'
-      );
+          clientId: fdb.getClientId()!,
+          redirectUri: 'http://localhost:8641/oauth/callback',
+          scope: 'https://www.googleapis.com/auth/cloudplatformprojects');
       try {
         final result = await DesktopWebviewAuth.signIn(args);
         token = result?.accessToken;
@@ -493,26 +503,25 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
 
     bool dialogActive = true;
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: context.theme.colorScheme.properSurface,
-          title: Text(
-            "Fetching Firebase configurations...",
-            style: context.theme.textTheme.titleLarge,
-          ),
-          content: Container(
-            height: 70,
-            child: Center(
-              child: CircularProgressIndicator(
-                backgroundColor: context.theme.colorScheme.properSurface,
-                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: context.theme.colorScheme.properSurface,
+            title: Text(
+              "Fetching Firebase configurations...",
+              style: context.theme.textTheme.titleLarge,
+            ),
+            content: Container(
+              height: 70,
+              child: Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                ),
               ),
             ),
-          ),
-        );
-      }
-    );
+          );
+        });
 
     try {
       // query firebase projects
@@ -554,59 +563,58 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           String? serverUrl;
           if (usableProjects.length > 1) {
             serverUrl = await showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text("Select Firebase", style: context.theme.textTheme.titleLarge),
-                  backgroundColor: context.theme.colorScheme.properSurface,
-                  content: SingleChildScrollView(
-                    child: Container(
-                      width: double.maxFinite,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text("Select the Firebase project to use:"),
-                          ),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: context.mediaQuery.size.height * 0.4,
-                            ),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: usableProjects.length,
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  title: Text(
-                                    usableProjects[index]['displayName'],
-                                  ),
-                                  subtitle: Text(
-                                    "${usableProjects[index]['projectId']}\n${usableProjects[index]['serverUrl']}",
-                                  ),
-                                  onTap: () {
-                                    Navigator.of(context).pop(usableProjects[index]['serverUrl']);
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Select Firebase", style: context.theme.textTheme.titleLarge),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    content: SingleChildScrollView(
+                      child: Container(
+                          width: double.maxFinite,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text("Select the Firebase project to use:"),
+                              ),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxHeight: context.mediaQuery.size.height * 0.4,
+                                ),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: usableProjects.length,
+                                  itemBuilder: (context, index) {
+                                    return ListTile(
+                                      title: Text(
+                                        usableProjects[index]['displayName'],
+                                      ),
+                                      subtitle: Text(
+                                        "${usableProjects[index]['projectId']}\n${usableProjects[index]['serverUrl']}",
+                                      ),
+                                      onTap: () {
+                                        Navigator.of(context).pop(usableProjects[index]['serverUrl']);
+                                      },
+                                      isThreeLine: true,
+                                    );
                                   },
-                                  isThreeLine: true,
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      )
+                                ),
+                              ),
+                            ],
+                          )),
                     ),
-                  ),
-                  actions: [
-                    TextButton(
-                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      }
-                    ),
-                  ],
-                );
-              }
-            );
+                    actions: [
+                      TextButton(
+                          child: Text("Cancel",
+                              style: context.theme.textTheme.bodyLarge!
+                                  .copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          }),
+                    ],
+                  );
+                });
           } else {
             serverUrl = usableProjects.first['serverUrl'];
           }
@@ -614,17 +622,37 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           if (serverUrl != null) {
             final TextEditingController passController = TextEditingController();
             await showDialog(
-              context: context,
-              builder: (_) {
-                return AlertDialog(
-                  actions: [
-                    TextButton(
-                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    TextButton(
-                      child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () async {
+                context: context,
+                builder: (_) {
+                  return AlertDialog(
+                    actions: [
+                      TextButton(
+                        child: Text("Cancel",
+                            style:
+                                context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      TextButton(
+                        child: Text("OK",
+                            style:
+                                context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          if (passController.text.isEmpty) {
+                            showSnackbar("Error", "Enter a valid password!");
+                            return;
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                    content: TextField(
+                      controller: passController,
+                      decoration: const InputDecoration(
+                        labelText: "Password",
+                        border: OutlineInputBorder(),
+                      ),
+                      obscureText: true,
+                      onSubmitted: (str) {
                         if (passController.text.isEmpty) {
                           showSnackbar("Error", "Enter a valid password!");
                           return;
@@ -632,27 +660,10 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                         Navigator.of(context).pop();
                       },
                     ),
-                  ],
-                  content: TextField(
-                    controller: passController,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                    onSubmitted: (str) {
-                      if (passController.text.isEmpty) {
-                        showSnackbar("Error", "Enter a valid password!");
-                        return;
-                      }
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
-                  backgroundColor: context.theme.colorScheme.properSurface,
-                );
-              }
-            );
+                    title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                  );
+                });
 
             if (passController.text.isNotEmpty) {
               connect(serverUrl, passController.text);
@@ -673,10 +684,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         Navigator.of(context).pop();
       }
       Logger.error(e);
-      showSnackbar(
-        "Error", "Something went wrong when fetching Firebase details! $e",
-        durationMs: 5000
-      );
+      showSnackbar("Error", "Something went wrong when fetching Firebase details! $e", durationMs: 5000);
     }
   }
 
@@ -729,7 +737,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       future: fcmFuture,
       showErrorDialog: false,
       onConnect: (bool result, Object? err) async {
-        if (result) {
+        if (result || (err is dio.Response && err.statusCode == 404)) {
           if (Get.isDialogOpen ?? false) {
             Get.back();
           }
@@ -738,18 +746,20 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             showLoginButtons = false;
           });
 
-          dio.Response fcmResponse = await fcmFuture;
-          Map<String, dynamic> data = fcmResponse.data;
-          if (fcmResponse.statusCode != 200) {
-            controller.updateConnectError(
-                "Failed to connect to server! ${data["error"]?["type"] ?? "API_ERROR"}: ${data["message"] ?? data["error"]["message"]}");
-            return;
+          dio.Response fcmResponse;
+          Map<String, dynamic> data = {"data": {}};
+          if (err == null) {
+            fcmResponse = await fcmFuture;
+            data = fcmResponse.data;
+            if (fcmResponse.statusCode != 200) {
+              return controller.updateConnectError(
+                  "Failed to connect to server! ${data["error"]?["type"] ?? "API_ERROR"}: ${data["message"] ??
+                      data["error"]["message"]}");
+            }
           }
 
           if (isNullOrEmpty(data["data"])! && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
-            return setState(() {
-              controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
-            });
+            return controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
           } else {
             try {
               FCMData fcmData = FCMData.fromMap(data["data"]);
@@ -772,7 +782,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                       backgroundColor: context.theme.colorScheme.properSurface,
                       actions: <Widget>[
                         TextButton(
-                          child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          child: Text("Close",
+                              style: context.theme.textTheme.bodyLarge!
+                                  .copyWith(color: context.theme.colorScheme.primary)),
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
@@ -793,7 +805,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               controller.updateConnectError("Authentication failed. Incorrect password!");
               return;
             } else {
-              controller.updateConnectError("Failed to connect! Error: [${errorData['status']}] ${errorData['message']}");
+              controller
+                  .updateConnectError("Failed to connect! Error: [${errorData['status']}] ${errorData['message']}");
               return;
             }
           } else {

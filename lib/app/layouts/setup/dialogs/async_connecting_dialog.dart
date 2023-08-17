@@ -24,7 +24,7 @@ class _AsyncConnectingDialogState extends OptimizedState<AsyncConnectingDialog> 
     widget.future.then((value) {
       widget.onConnect(true, null);
     }).catchError((e) {
-      widget.onConnect(false, e.toString());
+      widget.onConnect(false, e);
     });
   }
 
@@ -38,7 +38,7 @@ class _AsyncConnectingDialogState extends OptimizedState<AsyncConnectingDialog> 
               return FailedToConnectDialog(
                 onDismiss: () => Navigator.of(context).pop(),
               );
-            } else {
+            } else if (!(snapshot.error is dio.Response && (snapshot.error as dio.Response).statusCode == 404)){
               Navigator.of(context).pop();
               return WillPopScope(
                 onWillPop: () async {
