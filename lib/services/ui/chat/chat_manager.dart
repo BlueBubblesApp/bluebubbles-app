@@ -26,7 +26,7 @@ class ChatManager extends GetxService {
     });
     if (save) {
       eventDispatcher.emit("update-highlight", null);
-      Future.delayed(Duration.zero, () async => await ss.prefs.remove('lastOpenedChat'));
+      Future(() async => await ss.prefs.remove('lastOpenedChat'));
     }
   }
 
@@ -51,7 +51,7 @@ class ChatManager extends GetxService {
       chat.toggleHasUnread(false, force: true);
     }
     if (save) {
-      Future.delayed(Duration.zero, () async => await ss.prefs.setString('lastOpenedChat', chat.guid));
+      Future(() async => await ss.prefs.setString('lastOpenedChat', chat.guid));
     }
   }
 
@@ -62,6 +62,7 @@ class ChatManager extends GetxService {
 
   void setActiveToAlive() {
     Logger.info('Setting active chat to alive: ${activeChat?.chat.guid}');
+    eventDispatcher.emit("update-highlight", activeChat?.chat.guid);
     activeChat?.isAlive = true;
   }
 
