@@ -6,6 +6,8 @@ import 'package:firebase_dart/implementation/pure_dart.dart';
 import 'package:firebase_dart/src/firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:_discoveryapis_commons/_discoveryapis_commons.dart' show DetailedApiRequestError;
+import 'package:bluebubbles/models/models.dart';
 
 DatabaseService fdb = Get.isRegistered<DatabaseService>() ? Get.find<DatabaseService>() : Get.put(DatabaseService());
 
@@ -50,7 +52,7 @@ class DatabaseService extends GetxService {
             appId: ss.fcmData.applicationID ?? '',
             messagingSenderId: '',
             projectId: ss.fcmData.projectID ?? '',
-            databaseURL: ss.fcmData.firebaseURL
+            databaseURL: ss.fcmData.firebaseURL,
         );
 
         late final FirebaseApp app;
@@ -68,9 +70,29 @@ class DatabaseService extends GetxService {
           url = sanitizeServerAddress(address: event.snapshot.value);
         } else {
           final FirebaseFirestore db = FirebaseFirestore.instanceFor(app: app);
-          final doc = await db.collection("server").doc("config").get();
-          if (doc.data()?['serverUrl'] != null) {
-            url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
+          try {
+            final doc = await db.collection("server").doc("config").get();
+            if (doc.data()?['serverUrl'] != null) {
+              url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
+            }
+          } catch (e) {
+            if (e is DetailedApiRequestError && e.status == 403) {
+              // This means the db url is probably wrong. Refresh it and try again
+              http.fcmClient().then((response) async {
+                Map<String, dynamic>? data = response.data["data"];
+                print(data);
+                if (!isNullOrEmpty(data)!) {
+                  FCMData newData = FCMData.fromMap(data!);
+                  ss.saveFCMData(newData);
+
+                  final FirebaseFirestore db = FirebaseFirestore.instanceFor(app: app);
+                  final doc = await db.collection("server").doc("config").get();
+                  if (doc.data()?['serverUrl'] != null) {
+                    url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
+                  }
+                }
+              });
+            }
           }
         }
       } else {
