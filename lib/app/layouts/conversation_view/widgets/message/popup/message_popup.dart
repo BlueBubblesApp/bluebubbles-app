@@ -28,6 +28,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' hide context;
 import 'package:sprung/sprung.dart';
 import 'package:tuple/tuple.dart';
@@ -1014,7 +1015,28 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void messageInfo() {
     const encoder = JsonEncoder.withIndent("     ");
-    final str = encoder.convert(message.toMap(includeObjects: true));
+    Map map = message.toMap(includeObjects: true);
+    if (map["dateCreated"] is int) {
+      map["dateCreated"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateCreated"]));
+    }
+    if (map["dateDelivered"] is int) {
+      map["dateDelivered"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateDelivered"]));
+    }
+    if (map["dateRead"] is int) {
+      map["dateRead"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateRead"]));
+    }
+    if (map["dateEdited"] is int) {
+      map["dateEdited"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateEdited"]));
+    }
+    String str = encoder.convert(map);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
