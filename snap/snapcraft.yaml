@@ -1,6 +1,6 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.12.2.1
+version: 1.12.3.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
@@ -11,8 +11,10 @@ grade: stable
 apps:
   bluebubbles:
     command: bin/bluebubbles
-    extensions: [gnome-3-38]
-    slots: [dbus-bluebubbles]
+    extensions:
+      - gnome-3-38
+    slots:
+      - dbus-bluebubbles
     plugs:
       - network
       - network-manager
@@ -24,11 +26,13 @@ apps:
       - home
       - opengl
       - audio-playback
+    environment:
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/samba
 
 parts:
   flutter-git:
     source: https://github.com/flutter/flutter.git
-    source-branch: stable
+    source-branch: 3.10.6
     source-depth: 1
     plugin: nil
     override-build: |
@@ -53,7 +57,6 @@ parts:
     override-build: |
       set -eux
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      flutter upgrade
       flutter config --no-analytics
       flutter config --enable-linux-desktop
       flutter doctor
@@ -62,18 +65,18 @@ parts:
       flutter build linux --release -v
       tmp=$(mktemp)
       chmod 644 "$tmp"
-      jq '.version = "1.12.2.1"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
+      jq '.version = "1.12.3.0"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
       chmod +x build/linux/*/release/bundle/bluebubbles
       cp -r build/linux/*/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
       mv build/linux/*/release/bundle/lib/libobjectbox.so $SNAPCRAFT_PART_INSTALL/usr/lib/
     build-packages:
       - jq
-      - libvlc-dev
+      - libmpv-dev
     stage-packages:
       - libglu1-mesa
       - freeglut3
       - libnotify-dev
-      - vlc
+      - libmpv1
       - gir1.2-appindicator3-0.1
       - zenity
       - wmctrl
