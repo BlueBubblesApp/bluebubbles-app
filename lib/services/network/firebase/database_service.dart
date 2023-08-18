@@ -1,12 +1,12 @@
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/implementation/pure_dart.dart';
 import 'package:firebase_dart/src/firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
-import 'package:_discoveryapis_commons/_discoveryapis_commons.dart' show DetailedApiRequestError;
+import 'package:get/get.dart' hide Response;
 import 'package:bluebubbles/models/models.dart';
 
 DatabaseService fdb = Get.isRegistered<DatabaseService>() ? Get.find<DatabaseService>() : Get.put(DatabaseService());
@@ -32,6 +32,20 @@ class DatabaseService extends GetxService {
     return null;
   }
 
+  Future<void> fetchFirebaseConfig() async {
+    await http.fcmClient().then((response) async {
+      Map<String, dynamic>? data = response.data["data"];
+      if (!isNullOrEmpty(data)!) {
+        FCMData newData = FCMData.fromMap(data!);
+        ss.saveFCMData(newData);
+      }
+    }).onError((error, stackTrace) {
+      if (error is Response && error.statusCode == 404) {
+        FCMData.deleteFcmData();
+      }
+    });
+  }
+
   /// Fetch the new server URL from the Firebase Database
   Future<String?> fetchNewUrl() async {
     // Make sure setup is complete and we have valid data
@@ -48,11 +62,11 @@ class DatabaseService extends GetxService {
       if (kIsWeb || kIsDesktop) {
         // Instantiate the FirebaseDatabase, and try to access the serverUrl field
         final defaultOptions = FirebaseOptions(
-            apiKey: ss.fcmData.apiKey ?? '',
-            appId: ss.fcmData.applicationID ?? '',
-            messagingSenderId: '',
-            projectId: ss.fcmData.projectID ?? '',
-            databaseURL: ss.fcmData.firebaseURL,
+          apiKey: ss.fcmData.apiKey ?? '',
+          appId: ss.fcmData.applicationID ?? '',
+          messagingSenderId: '',
+          projectId: ss.fcmData.projectID ?? '',
+          databaseURL: ss.fcmData.firebaseURL,
         );
 
         late final FirebaseApp app;
@@ -70,29 +84,9 @@ class DatabaseService extends GetxService {
           url = sanitizeServerAddress(address: event.snapshot.value);
         } else {
           final FirebaseFirestore db = FirebaseFirestore.instanceFor(app: app);
-          try {
-            final doc = await db.collection("server").doc("config").get();
-            if (doc.data()?['serverUrl'] != null) {
-              url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
-            }
-          } catch (e) {
-            if (e is DetailedApiRequestError && e.status == 403) {
-              // This means the db url is probably wrong. Refresh it and try again
-              http.fcmClient().then((response) async {
-                Map<String, dynamic>? data = response.data["data"];
-                print(data);
-                if (!isNullOrEmpty(data)!) {
-                  FCMData newData = FCMData.fromMap(data!);
-                  ss.saveFCMData(newData);
-
-                  final FirebaseFirestore db = FirebaseFirestore.instanceFor(app: app);
-                  final doc = await db.collection("server").doc("config").get();
-                  if (doc.data()?['serverUrl'] != null) {
-                    url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
-                  }
-                }
-              });
-            }
+          final doc = await db.collection("server").doc("config").get();
+          if (doc.data()?['serverUrl'] != null) {
+            url = sanitizeServerAddress(address: doc.data()!['serverUrl']);
           }
         }
       } else {

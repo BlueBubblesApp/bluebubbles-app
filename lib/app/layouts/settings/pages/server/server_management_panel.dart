@@ -189,6 +189,12 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           }
                                         }),
                                   const TextSpan(text: "\n\n"),
+                                  if (!ss.fcmData.isNull)
+                                    TextSpan(
+                                      text: "Firebase Database: ${isNullOrEmptyString(ss.fcmData.firebaseURL) ? "Firestore" : "Realtime"}"
+                                    ),
+                                  if (!ss.fcmData.isNull)
+                                    const TextSpan(text: "\n\n"),
                                   if (hasBadCert)
                                     TextSpan(
                                         text: "Server URL has a bad certificate!",
@@ -609,6 +615,15 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       padding: const EdgeInsets.only(left: 65.0),
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
+                  ),
+                  SettingsTile(
+                      leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.down_arrow, materialIcon: Icons.download),
+                      title: "Fetch Firebase Config",
+                      subtitle: "Forcefully fetch current Firebase Config from server",
+                      backgroundColor: tileColor,
+                      onTap: () async {
+                        await fdb.fetchFirebaseConfig();
+                      },
                   ),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.refresh, materialIcon: Icons.refresh),
