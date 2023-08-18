@@ -625,16 +625,32 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         await fdb.fetchFirebaseConfig();
                       },
                   ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.refresh, materialIcon: Icons.refresh),
                       title: "Fetch Latest URL",
                       subtitle: "Forcefully fetch latest URL from Firebase",
                       backgroundColor: tileColor,
                       onTap: () async {
+                        await fdb.fetchFirebaseConfig();
                         String? newUrl = await fdb.fetchNewUrl();
                         showSnackbar("Notice", "Fetched URL: $newUrl");
                         socket.restartSocket();
                       }),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                           initialVal: ss.settings.localhostPort.value != null,
