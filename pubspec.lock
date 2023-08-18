@@ -1826,6 +1826,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  on_exit:
+    dependency: "direct main"
+    description:
+      name: on_exit
+      sha256: "5a4c625374ddc9146b5dc6617e5c9885e326d0e876cf6554875f9961f564bd96"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   open_filex:
     dependency: "direct main"
     description:
@@ -2609,6 +2617,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  try_catch:
+    dependency: transitive
+    description:
+      name: try_catch
+      sha256: "3e0f62abdd51ea40f59c0e5958cfac7d6b92faec5a9faf85f174c6cc34c018af"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
   tuple:
     dependency: "direct main"
     description:
