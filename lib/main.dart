@@ -27,7 +27,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
@@ -373,9 +372,6 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       if (!await EntityExtractorModelManager().isModelDownloaded(EntityExtractorLanguage.english.name)) {
         EntityExtractorModelManager().downloadModel(EntityExtractorLanguage.english.name, isWifiRequired: false);
       }
-
-      /* ----- PHONE NUMBER FORMATTING INITIALIZATION ----- */
-      await FlutterLibphonenumber().init();
     }
 
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */

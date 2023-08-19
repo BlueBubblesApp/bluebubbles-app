@@ -124,6 +124,8 @@ class ContactsService extends GetxService {
     if (!kIsWeb) {
       Handle.bulkSave(handles, matchOnOriginalROWID: isMin1_5_2);
     } else {
+      // dummy to make the full contacts UI refresh happen on web
+      changedIds.last.add(handles.length);
       contacts = _contacts;
     }
 

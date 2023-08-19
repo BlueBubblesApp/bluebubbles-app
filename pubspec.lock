@@ -816,14 +816,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.1"
-  flutter_libphonenumber:
-    dependency: "direct main"
-    description:
-      name: flutter_libphonenumber
-      sha256: "3cb0d5bde8efbf47f2c3dec84c77a4abcd9002adc7a457464ebb9e61d449b10d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -1498,30 +1490,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
-  libphonenumber_platform_interface:
-    dependency: transitive
-    description:
-      name: libphonenumber_platform_interface
-      sha256: cdd1230aad1d8e12fb4d9752d67ed2361b1cbb26fc8d202a9990c218553b3963
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.0"
-  libphonenumber_plugin:
-    dependency: "direct main"
-    description:
-      name: libphonenumber_plugin
-      sha256: "1be7c9de4beaed6dffdaf4a3d87758ef9b259c1111283736faef2179919e3ca2"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.1"
-  libphonenumber_web:
-    dependency: transitive
-    description:
-      name: libphonenumber_web
-      sha256: "35a106149d2f7a05a670d02be2f4ea288258d7bca2f8bdda8a96617151dfa5b9"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.0"
   lints:
     dependency: transitive
     description:
@@ -2020,6 +1988,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.4.0"
+  phone_numbers_parser:
+    dependency: "direct main"
+    description:
+      name: phone_numbers_parser
+      sha256: "3b809c0190e7d1272a831f12a67ae5b329ef889d3a9e6da7a59fe86a471576e5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "8.0.0"
   photo_manager:
     dependency: "direct main"
     description:

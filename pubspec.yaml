@@ -71,7 +71,6 @@ dependencies:
   flutter_improved_scrolling: ^0.0.3
   flutter_isolate: ^2.0.3
   flutter_keyboard_visibility: ^5.4.0 # no desktop support
-  flutter_libphonenumber: ^1.4.0 # no web or desktop support, used to speed up chat loading on mobile
   flutter_local_notifications: ^13.0.0 # mobile only
   flutter_map: ^3.1.0
   flutter_map_marker_popup: ^4.0.1
@@ -102,7 +101,6 @@ dependencies:
   intl: ^0.18.0
   js: ^0.6.7
   launch_at_startup: ^0.2.2
-  libphonenumber_plugin: ^0.3.1 # no desktop support, todo desktop
   local_auth: ^2.1.6
   local_notifier:
     git:
@@ -134,6 +132,7 @@ dependencies:
   path_provider: ^2.0.14 # no web support
   pdf: ^3.9.0
   permission_handler: ^10.2.0 # mobile only
+  phone_numbers_parser: ^8.0.0
   photo_manager: ^2.6.0 # only mobile
   photo_view: ^0.14.0
   printing: ^5.10.4
