@@ -113,7 +113,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
     String _pid = lockFile.readAsStringSync();
 
     String ps = Process.runSync('ps', ['-p', _pid]).stdout;
-    if (kReleaseMode && ps.endsWith('bluebubbles\n')) {
+    if (kReleaseMode && "$pid" != _pid && ps.endsWith('bluebubbles\n')) {
       Logger.debug("Another instance is running. Sending foreground signal");
       instanceFile.openSync(mode: FileMode.write).closeSync();
       exit(0);
