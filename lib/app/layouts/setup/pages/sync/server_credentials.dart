@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
-import 'package:bluebubbles/app/layouts/setup/dialogs/async_connecting_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';
@@ -731,92 +730,100 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     ss.settings.save();
 
     // Request data from the API
-    Future<dio.Response> fcmFuture = http.fcmClient();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return WillPopScope(
+          onWillPop: () async {
+            return false;
+          },
+          child: AlertDialog(
+            title: Text(
+              "Fetching server info...",
+              style: context.theme.textTheme.titleLarge,
+            ),
+            backgroundColor: context.theme.colorScheme.properSurface,
+            content: LinearProgressIndicator(
+              backgroundColor: context.theme.colorScheme.outline,
+              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+            ),
+          ),
+        );
+      }
+    );
 
-    Get.dialog(AsyncConnectingDialog(
-      future: fcmFuture,
-      showErrorDialog: false,
-      onConnect: (bool result, Object? err) async {
-        if (result || (err is dio.Response && err.statusCode == 404)) {
-          if (Get.isDialogOpen ?? false) {
-            Get.back();
-          }
+    dio.Response? serverResponse;
+    await http.serverInfo().then((response) {
+      serverResponse = response;
+    }).catchError((err) {
+      if (err is dio.Response) {
+        serverResponse = err;
+      }
+    });
+    dio.Response? fcmResponse;
+    await http.fcmClient().then((response) {
+      fcmResponse = response;
+    }).catchError((err) {
+      if (err is dio.Response) {
+        fcmResponse = err;
+      }
+    });
 
-          setState(() {
-            showLoginButtons = false;
-          });
-
-          dio.Response fcmResponse;
-          Map<String, dynamic> data = {"data": {}};
-          if (err == null) {
-            fcmResponse = await fcmFuture;
-            data = fcmResponse.data;
-            if (fcmResponse.statusCode != 200) {
-              return controller.updateConnectError(
-                  "Failed to connect to server! ${data["error"]?["type"] ?? "API_ERROR"}: ${data["message"] ??
-                      data["error"]["message"]}");
-            }
-          }
-
-          if (isNullOrEmpty(data["data"])! && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
-            return controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
-          } else {
-            try {
-              FCMData fcmData = FCMData.fromMap(data["data"]);
-              ss.saveFCMData(fcmData);
-            } catch (_) {
-              if (Platform.isAndroid) {
-                showDialog(
-                  barrierDismissible: false,
-                  context: Get.context!,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text(
-                        "No Firebase Detected",
-                        style: context.theme.textTheme.titleLarge,
-                      ),
-                      content: Text(
-                        "We couldn't find a Firebase setup on your server. To receive notifications, please enable the foreground service option from Settings > Misc & Advanced.",
-                        style: context.theme.textTheme.bodyLarge,
-                      ),
-                      backgroundColor: context.theme.colorScheme.properSurface,
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text("Close",
-                              style: context.theme.textTheme.bodyLarge!
-                                  .copyWith(color: context.theme.colorScheme.primary)),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
-            }
-            socket.restartSocket();
-            goToNextPage();
-          }
-        } else if (mounted) {
-          if (err != null && err is dio.DioError && err.response != null) {
-            final errorData = jsonDecode(err.response!.data as String);
-            if (errorData.st == 401) {
-              controller.updateConnectError("Authentication failed. Incorrect password!");
-              return;
-            } else {
-              controller
-                  .updateConnectError("Failed to connect! Error: [${errorData['status']}] ${errorData['message']}");
-              return;
-            }
-          } else {
-            controller.updateConnectError(
-                "Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.");
-            return;
-          }
+    Get.back();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    // Unauthorized request
+    if (serverResponse?.statusCode == 401) {
+      socket.forgetConnection();
+      return controller.updateConnectError("Authentication failed. Incorrect password!");
+    }
+    // Server didn't even respond
+    if (serverResponse?.statusCode != 200) {
+      socket.forgetConnection();
+      return controller.updateConnectError("Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.");
+    }
+    // Ignore any other server errors unless user is using ngrok or cloudflare
+    final data = fcmResponse?.data;
+    if ((data == null || isNullOrEmpty(data["data"])!) && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+      return controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
+    } else {
+      try {
+        FCMData fcmData = FCMData.fromMap(data["data"]);
+        ss.saveFCMData(fcmData);
+      } catch (_) {
+        if (Platform.isAndroid) {
+          showDialog(
+            barrierDismissible: false,
+            context: Get.context!,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "No Firebase Detected",
+                  style: context.theme.textTheme.titleLarge,
+                ),
+                content: Text(
+                  "We couldn't find a Firebase setup on your server. To receive notifications, please enable the foreground service option from Settings > Misc & Advanced.",
+                  style: context.theme.textTheme.bodyLarge,
+                ),
+                backgroundColor: context.theme.colorScheme.properSurface,
+                actions: <Widget>[
+                  TextButton(
+                    child: Text("Close",
+                        style: context.theme.textTheme.bodyLarge!
+                            .copyWith(color: context.theme.colorScheme.primary)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
         }
-      },
-    ));
+      }
+      socket.restartSocket();
+      goToNextPage();
+    }
   }
 }
 
