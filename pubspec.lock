@@ -492,12 +492,11 @@ packages:
   desktop_webview_auth:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "webkit2gtk-4.1"
-      resolved-ref: "97f2259949dc0b4e7d6f2b8a1d3429ce32cfccd5"
-      url: "https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git"
-    source: git
-    version: "0.0.11"
+      name: desktop_webview_auth
+      sha256: a277d3ee920325560c06970bb817825d9ae369cf9ddf870b3eb704094d02a44c
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.12"
   device_info_plus:
     dependency: "direct main"
     description:

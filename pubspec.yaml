@@ -39,10 +39,7 @@ dependencies:
   cupertino_icons: ^1.0.5
   defer_pointer: ^0.0.2
   desktop_drop: ^0.4.1
-  desktop_webview_auth:
-    git:
-      url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
-      ref: webkit2gtk-4.1
+  desktop_webview_auth: ^0.0.11
   device_info_plus: ^8.1.0
   dio: ^5.0.3
   disable_battery_optimization: ^1.1.0+1
