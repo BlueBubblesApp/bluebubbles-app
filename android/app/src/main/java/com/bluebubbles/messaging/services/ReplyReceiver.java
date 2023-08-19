@@ -78,25 +78,29 @@ public class ReplyReceiver extends BroadcastReceiver {
                         style = new Notification.MessagingStyle(temp.getUser().getName());
                     }
                     SharedPreferences mPrefs = context.getSharedPreferences("FlutterSharedPreferences", 0);
-                    Person.Builder sender = new Person.Builder()
-                        .setName(mPrefs.getString("flutter.userName", "You"))
-                        .setImportant(true);
-                    String avatarPath = mPrefs.getString("flutter.userAvatarPath", "");
-                    if (avatarPath != "") {
-                        File file = new File(avatarPath);
-                        byte bytes[] = new byte[(int) file.length()];
-                        try {
-                            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-                            DataInputStream dis = new DataInputStream(bis);
-                            dis.readFully(bytes);
-                            Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                            Icon senderIcon = Icon.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
-                            sender.setIcon(senderIcon);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        Person.Builder sender = new Person.Builder()
+                                .setName(mPrefs.getString("flutter.userName", "You"))
+                                .setImportant(true);
+                        String avatarPath = mPrefs.getString("flutter.userAvatarPath", "");
+                        if (avatarPath != "") {
+                            File file = new File(avatarPath);
+                            byte bytes[] = new byte[(int) file.length()];
+                            try {
+                                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                                DataInputStream dis = new DataInputStream(bis);
+                                dis.readFully(bytes);
+                                Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                                Icon senderIcon = Icon.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
+                                sender.setIcon(senderIcon);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
+                        style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, sender.build()));
+                    } else {
+                        style.addMessage(replyText, System.currentTimeMillis() / 1000, mPrefs.getString("flutter.userName", "You"));
                     }
-                    style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, sender.build()));
                     builder.setStyle(style);
                     builder.setOnlyAlertOnce(true);
                     notificationManagerCompat.notify(NewMessageNotification.notificationTag, existingId, builder.build());
