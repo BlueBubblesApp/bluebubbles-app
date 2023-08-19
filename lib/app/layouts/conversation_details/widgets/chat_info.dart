@@ -356,11 +356,11 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                                     children: [
                                       Icon(
                                         iOS ? CupertinoIcons.phone : Icons.call,
-                                        color: context.theme.colorScheme.primary,
+                                        color: context.theme.colorScheme.onSurface,
                                         size: 20
                                       ),
                                       const SizedBox(height: 7.5),
-                                      Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                                      Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
                                     ],
                                   ),
                                 ),
@@ -390,11 +390,11 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                                     children: [
                                       Icon(
                                           iOS ? CupertinoIcons.video_camera : Icons.video_call_outlined,
-                                          color: context.theme.colorScheme.primary,
+                                          color: context.theme.colorScheme.onSurface,
                                           size: 25
                                       ),
                                       const SizedBox(height: 2.5),
-                                      Text("Video Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                                      Text("Video Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
                                     ],
                                   ),
                                 ),
@@ -427,11 +427,11 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                               children: [
                                 Icon(
                                   iOS ? CupertinoIcons.mail : Icons.email,
-                                  color: context.theme.colorScheme.primary,
+                                  color: context.theme.colorScheme.onSurface,
                                   size: 20
                                 ),
                                 const SizedBox(height: 7.5),
-                                Text("Mail", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                                Text("Mail", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
                               ],
                             ),
                           ),
@@ -465,13 +465,13 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                                   chat.participants.first.contact != null
                                       ? (iOS ? CupertinoIcons.info : Icons.info)
                                       : (iOS ? CupertinoIcons.plus_circle : Icons.add_circle_outline),
-                                  color: context.theme.colorScheme.primary,
+                                  color: context.theme.colorScheme.onSurface,
                                   size: 20,
                                 ),
                                 const SizedBox(height: 7.5),
                                 Text(
                                   chat.participants.first.contact != null ? "Info" : "Add Contact",
-                                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)
+                                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)
                                 ),
                               ],
                             ),
