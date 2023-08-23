@@ -329,7 +329,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           size: 320,
                                           gapless: true,
                                           backgroundColor: context.theme.colorScheme.properSurface,
-                                          foregroundColor: context.theme.colorScheme.properOnSurface,
+                                          eyeStyle: QrEyeStyle(color: context.theme.colorScheme.properOnSurface),
+                                          dataModuleStyle: QrDataModuleStyle(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
                                     ),
@@ -807,8 +808,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           materialIcon: Icons.sms,
                         ),
                         onTap: () async {
-                          if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value)
+                          if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value) {
                             return;
+                          }
 
                           controller.isRestartingMessages.value = true;
 
