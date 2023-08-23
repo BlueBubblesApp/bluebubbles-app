@@ -358,11 +358,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                       } else {
                                         widget.cvController.selected.add(message);
                                       }
-                                    } : kIsDesktop || kIsWeb || iOS || material ? () {
-                                      final node = FocusNode();
-                                      widget.cvController.editing.add(Tuple4(message, e, TextEditingController(text: e.text!), node));
-                                      node.requestFocus();
-                                    } : null,
+                                    } : kIsDesktop || kIsWeb || iOS || material ? () => tapped.value = !tapped.value : null,
                                     child: IgnorePointer(
                                       ignoring: widget.cvController.inSelectMode.value,
                                       child: Container(
