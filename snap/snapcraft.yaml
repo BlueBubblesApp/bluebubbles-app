@@ -5,14 +5,32 @@ summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
 confinement: strict
-base: core20
+base: core22
 grade: stable
+
+plugs:
+  graphics-core22:
+    interface: content
+    target: $SNAP/graphics
+    default-provider: mesa-core22
+
+layout:
+  /usr/share/libdrm:
+    bind: $SNAP/graphics/libdrm
+  /usr/share/drirc.d:
+    symlink: $SNAP/graphics/drirc.d
+  /usr/share/X11/XErrorDB:
+    symlink: $SNAP/graphics/X11/XErrorDB
+  /usr/share/X11/locale:
+    symlink: $SNAP/graphics/X11/locale
 
 apps:
   bluebubbles:
     command: bin/bluebubbles
+    command-chain:
+      - bin/graphics-core22-wrapper
     extensions:
-      - gnome-3-38
+      - gnome
     slots:
       - dbus-bluebubbles
     plugs:
@@ -27,7 +45,7 @@ apps:
       - opengl
       - audio-playback
     environment:
-      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/samba
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/blas:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/lapack:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/samba:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/vdpau:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri
 
 parts:
   flutter-git:
@@ -49,9 +67,20 @@ parts:
       - xz-utils
       - unzip
     override-prime: ''
+    
+  desktop-glib-only:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: glib-only
+    plugin: make
+    build-packages:
+      - libglib2.0-dev
+    stage-packages:
+      - libglib2.0-bin
 
   bluebubbles:
-    after: [flutter-git]
+    after:
+      - flutter-git
+      - desktop-glib-only
     source: .
     plugin: nil
     override-build: |
@@ -72,14 +101,39 @@ parts:
     build-packages:
       - jq
       - libmpv-dev
-    stage-packages:
-      - libglu1-mesa
-      - freeglut3
       - libnotify-dev
-      - libmpv1
+    stage-packages:
+      - freeglut3
       - gir1.2-appindicator3-0.1
-      - zenity
+      - libglu1-mesa
+      - libmpv1
+      - libnotify4
       - wmctrl
+      - zenity
+
+  graphics-core22:
+    after:
+      - bluebubbles
+    source: https://github.com/MirServer/graphics-core22.git
+    plugin: dump
+    override-prime: |
+      craftctl default
+      ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22 nvidia-core22
+    prime:
+    - bin/graphics-core22-wrapper
+
+  cleanup:
+    after:
+      - bluebubbles
+    plugin: nil
+    build-snaps:
+      - core22
+      - gtk-common-themes
+    override-prime: |
+      set -eux
+      for snap in "core22" "gtk-common-themes"; do
+          cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
+      done
 
 slots:
   dbus-bluebubbles:
