@@ -138,15 +138,26 @@ class Handle {
     return handle1;
   }
 
-  Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "originalROWID": originalROWID,
-    "address": address,
-    "formattedAddress": formattedAddress,
-    "country": country,
-    "color": color,
-    "defaultPhone": defaultPhone,
-    "service": service,
-    "uniqueAddrAndService": uniqueAddressAndService,
-  };
+  Map<String, dynamic> toMap({bool includeObjects = false}) {
+
+    final output = {
+      "ROWID": id,
+      "originalROWID": originalROWID,
+      "address": address,
+      "formattedAddress": formattedAddress,
+      "service": service,
+      "uniqueAddrAndService": uniqueAddressAndService,
+      "country": country,
+      "color": color,
+      "defaultPhone": defaultPhone,
+      "defaultEmail": defaultEmail,
+    };
+
+    if (includeObjects) {
+      output['contact'] = contact?.toMap();
+      output['contactRelation'] = contactRelation.target?.toMap();
+    }
+
+    return output;
+  }
 }

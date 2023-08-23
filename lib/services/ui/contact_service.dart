@@ -127,6 +127,10 @@ class ContactsService extends GetxService {
       // dummy to make the full contacts UI refresh happen on web
       changedIds.last.add(handles.length);
       contacts = _contacts;
+      for (Chat c in chats.chats) {
+        c.webSyncParticipants();
+      }
+      chats.chats.refresh();
     }
 
     final endTime = DateTime.now().millisecondsSinceEpoch;
