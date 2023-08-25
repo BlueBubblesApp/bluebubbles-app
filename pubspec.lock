@@ -492,11 +492,12 @@ packages:
   desktop_webview_auth:
     dependency: "direct main"
     description:
-      name: desktop_webview_auth
-      sha256: a277d3ee920325560c06970bb817825d9ae369cf9ddf870b3eb704094d02a44c
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.12"
+      path: "."
+      ref: "webkit2gtk-4.1"
+      resolved-ref: "97f2259949dc0b4e7d6f2b8a1d3429ce32cfccd5"
+      url: "https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git"
+    source: git
+    version: "0.0.11"
   device_info_plus:
     dependency: "direct main"
     description:
@@ -815,14 +816,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.1"
-  flutter_libphonenumber:
-    dependency: "direct main"
-    description:
-      name: flutter_libphonenumber
-      sha256: "3cb0d5bde8efbf47f2c3dec84c77a4abcd9002adc7a457464ebb9e61d449b10d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -1497,30 +1490,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
-  libphonenumber_platform_interface:
-    dependency: transitive
-    description:
-      name: libphonenumber_platform_interface
-      sha256: cdd1230aad1d8e12fb4d9752d67ed2361b1cbb26fc8d202a9990c218553b3963
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.0"
-  libphonenumber_plugin:
-    dependency: "direct main"
-    description:
-      name: libphonenumber_plugin
-      sha256: "1be7c9de4beaed6dffdaf4a3d87758ef9b259c1111283736faef2179919e3ca2"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.1"
-  libphonenumber_web:
-    dependency: transitive
-    description:
-      name: libphonenumber_web
-      sha256: "35a106149d2f7a05a670d02be2f4ea288258d7bca2f8bdda8a96617151dfa5b9"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.0"
   lints:
     dependency: transitive
     description:
@@ -1826,6 +1795,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  on_exit:
+    dependency: "direct main"
+    description:
+      name: on_exit
+      sha256: "5a4c625374ddc9146b5dc6617e5c9885e326d0e876cf6554875f9961f564bd96"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   open_filex:
     dependency: "direct main"
     description:
@@ -2011,6 +1988,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.4.0"
+  phone_numbers_parser:
+    dependency: "direct main"
+    description:
+      name: phone_numbers_parser
+      sha256: "3b809c0190e7d1272a831f12a67ae5b329ef889d3a9e6da7a59fe86a471576e5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "8.0.0"
   photo_manager:
     dependency: "direct main"
     description:
@@ -2609,6 +2594,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  try_catch:
+    dependency: transitive
+    description:
+      name: try_catch
+      sha256: "3e0f62abdd51ea40f59c0e5958cfac7d6b92faec5a9faf85f174c6cc34c018af"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
   tuple:
     dependency: "direct main"
     description:

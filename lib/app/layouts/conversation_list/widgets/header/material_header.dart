@@ -42,7 +42,8 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                       return Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(25),
-                          color: !ns.isAvatarOnly(context) && !showArchived && !showUnknown ? context.theme.colorScheme.properSurface : Colors.transparent,
+                          color: !ns.isAvatarOnly(context) && !showArchived && !showUnknown ? context.theme.colorScheme.properSurface
+                              .withOpacity(ss.settings.windowEffect.value == WindowEffect.disabled ? 1 : 0.7) : Colors.transparent,
                         ),
                         child: Material(
                           color: Colors.transparent,

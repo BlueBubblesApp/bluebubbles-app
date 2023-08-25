@@ -86,7 +86,7 @@ class SettingsScaffold extends StatelessWidget {
             return false;
           },
           child: ScrollbarWrapper(
-            showScrollbar: false,
+            showScrollbar: kIsDesktop || kIsWeb,
             controller: controller,
             child: Column(
               children: [

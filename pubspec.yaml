@@ -39,7 +39,10 @@ dependencies:
   cupertino_icons: ^1.0.5
   defer_pointer: ^0.0.2
   desktop_drop: ^0.4.1
-  desktop_webview_auth: ^0.0.11
+  desktop_webview_auth:
+    git:
+      url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
+      ref: webkit2gtk-4.1
   device_info_plus: ^8.1.0
   dio: ^5.0.3
   disable_battery_optimization: ^1.1.0+1
@@ -68,7 +71,6 @@ dependencies:
   flutter_improved_scrolling: ^0.0.3
   flutter_isolate: ^2.0.3
   flutter_keyboard_visibility: ^5.4.0 # no desktop support
-  flutter_libphonenumber: ^1.4.0 # no web or desktop support, used to speed up chat loading on mobile
   flutter_local_notifications: ^13.0.0 # mobile only
   flutter_map: ^3.1.0
   flutter_map_marker_popup: ^4.0.1
@@ -99,7 +101,6 @@ dependencies:
   intl: ^0.18.0
   js: ^0.6.7
   launch_at_startup: ^0.2.2
-  libphonenumber_plugin: ^0.3.1 # no desktop support, todo desktop
   local_auth: ^2.1.6
   local_notifier:
     git:
@@ -122,6 +123,7 @@ dependencies:
   numberpicker: ^2.1.1
   objectbox: ^2.0.0
   objectbox_flutter_libs: any
+  on_exit: ^1.0.0
   open_filex: ^4.3.2
   package_info_plus: ^3.1.0
   particles_flutter: ^0.1.4
@@ -130,6 +132,7 @@ dependencies:
   path_provider: ^2.0.14 # no web support
   pdf: ^3.9.0
   permission_handler: ^10.2.0 # mobile only
+  phone_numbers_parser: ^8.0.0
   photo_manager: ^2.6.0 # only mobile
   photo_view: ^0.14.0
   printing: ^5.10.4
@@ -154,7 +157,7 @@ dependencies:
   store_checker: ^1.1.0
   synchronized: ^3.0.1
   supercharged: ^2.1.1
-  system_tray: ^2.0.2
+  system_tray: ^2.0.3
   tuple: ^2.0.1
   universal_html: ^2.2.1 # cross-platform dart:html implementation
   universal_io: ^2.2.0 # cross-platform dart:io implementation
@@ -288,7 +291,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.12.2.0
+  msix_version: 1.12.3.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

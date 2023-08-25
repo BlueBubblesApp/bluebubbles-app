@@ -28,6 +28,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' hide context;
 import 'package:sprung/sprung.dart';
 import 'package:tuple/tuple.dart';
@@ -491,7 +492,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       ),
                     if (ss.settings.enablePrivateAPI.value && isSent && minSierra && chat.isIMessage)
                       Positioned(
-                        bottom: iOS ? itemHeight * numberToShow + 35 + widget.size.height : context.height - materialOffset,
+                        bottom: (iOS ? itemHeight * numberToShow + 35 + widget.size.height : context.height - materialOffset)
+                            .clamp(0, context.height - (narrowScreen ? 200 : 125)),
                         right: message.isFromMe! ? 15 : null,
                         left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
                         child: AnimatedSize(
@@ -770,10 +772,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         attachmentObs.value = element;
         final response = await http.downloadAttachment(element!.guid!,
             original: true, onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
-        final segments = element.transferName!.split(".");
-        segments.removeLast();
         final file = PlatformFile(
-          name: segments.join(".") + element.uti!.split(".").last,
+          name: element.transferName!,
           size: response.data.length,
           bytes: response.data,
         );
@@ -1016,7 +1016,28 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void messageInfo() {
     const encoder = JsonEncoder.withIndent("     ");
-    final str = encoder.convert(message.toMap(includeObjects: true));
+    Map map = message.toMap(includeObjects: true);
+    if (map["dateCreated"] is int) {
+      map["dateCreated"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateCreated"]));
+    }
+    if (map["dateDelivered"] is int) {
+      map["dateDelivered"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateDelivered"]));
+    }
+    if (map["dateRead"] is int) {
+      map["dateRead"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateRead"]));
+    }
+    if (map["dateEdited"] is int) {
+      map["dateEdited"] =
+          DateFormat("MMMM d, yyyy h:mm:ss a").format(
+              DateTime.fromMillisecondsSinceEpoch(map["dateEdited"]));
+    }
+    String str = encoder.convert(map);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

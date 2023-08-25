@@ -608,7 +608,7 @@ class HttpService extends GetxService {
   /// body of the message.
   Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
-      final fileName = file.path!.split('/').last;
+      final fileName = file.name;
       final formData = FormData.fromMap({
         "attachment": kIsWeb ? MultipartFile.fromBytes(file.bytes!, filename: fileName) : await MultipartFile.fromFile(file.path!, filename: fileName),
         "chatGuid": chatGuid,

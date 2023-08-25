@@ -97,6 +97,10 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
         socket.disconnect();
       }
     }
+    if (cm.activeChat != null) {
+      ConversationViewController _cvc = cvc(cm.activeChat!.chat);
+      _cvc.lastFocusedNode.unfocus();
+    }
     if (kIsDesktop) {
       windowFocused = false;
     }

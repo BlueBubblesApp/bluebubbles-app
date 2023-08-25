@@ -45,6 +45,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
                   }
                 }
               }
+              contacts.sort((c1, c2) => c1.item2.compareTo(c2.item2));
               Tuple2<String, String>? selected;
               await showDialog(
                   context: context,

@@ -194,7 +194,7 @@ class ActionHandler extends GetxService {
     http.sendAttachment(
       c.guid,
       attachment.guid!,
-      PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: attachment.path, size: attachment.totalBytes ?? 0),
+      PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: kIsWeb ? null : attachment.path, size: attachment.totalBytes ?? 0),
       onSendProgress: (count, total) => progress.item2.value = count / attachment.bytes!.length,
       method: (ss.settings.enablePrivateAPI.value
           && ss.settings.privateAPIAttachmentSend.value)
