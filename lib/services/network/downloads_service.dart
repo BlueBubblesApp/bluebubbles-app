@@ -93,7 +93,7 @@ class AttachmentDownloadController extends GetxController {
   }
 
   Future<void> fetchAttachment() async {
-    if (attachment.guid == null) return;
+    if (attachment.guid == null || attachment.guid!.contains("temp")) return;
     isFetching = true;
     stopwatch.start();
     var response = await http.downloadAttachment(attachment.guid!,

@@ -69,6 +69,7 @@ class Settings {
   final RxBool cancelQueuedMessages = false.obs;
   final RxBool repliesToPrevious = false.obs;
   final RxnString localhostPort = RxnString(null);
+  final RxBool useLocalIpv6 = false.obs;
   final RxnString sendSoundPath = RxnString();
   final RxnString receiveSoundPath = RxnString();
   final RxBool syncContactsAutomatically = false.obs;
@@ -238,6 +239,7 @@ class Settings {
       'cancelQueuedMessages': cancelQueuedMessages.value,
       'repliesToPrevious': repliesToPrevious.value,
       'useLocalhost': localhostPort.value,
+      'useLocalIpv6': useLocalIpv6.value,
       'sendSoundPath': sendSoundPath.value,
       'receiveSoundPath': receiveSoundPath.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
@@ -352,6 +354,7 @@ class Settings {
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     ss.settings.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     ss.settings.localhostPort.value = map['useLocalhost'];
+    ss.settings.useLocalIpv6.value = map['useLocalIpv6'] ?? false;
     ss.settings.sendSoundPath.value = map['sendSoundPath'];
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
     ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
@@ -399,7 +402,7 @@ class Settings {
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
     ss.settings.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
-    ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
+    ss.settings.windowEffect.value = kIsDesktop && Platform.isWindows ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled : WindowEffect.disabled;
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
@@ -470,6 +473,7 @@ class Settings {
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     s.localhostPort.value = map['useLocalhost'];
+    s.useLocalIpv6.value = map['useLocalIpv6'] ?? false;
     s.sendSoundPath.value = map['sendSoundPath'];
     s.receiveSoundPath.value = map['receiveSoundPath'];
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;

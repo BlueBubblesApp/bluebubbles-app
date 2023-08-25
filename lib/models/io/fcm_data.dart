@@ -40,15 +40,43 @@ class FCMData {
 
   FCMData save() {
     if (kIsWeb) return this;
+    List<FCMData> data = fcmDataBox.getAll();
+    if (data.length > 1) data.removeRange(1, data.length); // These were being ignored anyway
+    id = !fcmDataBox.isEmpty() ? data.first.id : null;
     fcmDataBox.put(this);
-    Future.delayed(Duration.zero, () async {
-      await ss.prefs.setString('projectID', projectID!);
-      await ss.prefs.setString('storageBucket', storageBucket!);
-      await ss.prefs.setString('apiKey', apiKey!);
-      if (firebaseURL != null) await ss.prefs.setString('firebaseURL', firebaseURL!);
-      await ss.prefs.setString('clientID', clientID!);
-      await ss.prefs.setString('applicationID', applicationID!);
+    Future(() async {
+      if (projectID != null) {
+        await ss.prefs.setString('projectID', projectID!);
+      } else {
+        await ss.prefs.remove('projectID');
+      }
+      if (storageBucket != null) {
+        await ss.prefs.setString('storageBucket', storageBucket!);
+      } else {
+        await ss.prefs.remove('storageBucket');
+      }
+      if (apiKey != null) {
+        await ss.prefs.setString('apiKey', apiKey!);
+      } else {
+        await ss.prefs.remove('apiKey');
+      }
+      if (firebaseURL != null) {
+        await ss.prefs.setString('firebaseURL', firebaseURL!);
+      } else {
+        await ss.prefs.remove('firebaseURL');
+      }
+      if (clientID != null) {
+        await ss.prefs.setString('clientID', clientID!);
+      } else {
+        await ss.prefs.remove('clientID');
+      }
+      if (applicationID != null) {
+        await ss.prefs.setString('applicationID', applicationID!);
+      } else {
+        await ss.prefs.remove('applicationID');
+      }
     });
+    ss.fcmData = this;
     return this;
   }
 
@@ -60,6 +88,7 @@ class FCMData {
     await ss.prefs.remove('firebaseURL');
     await ss.prefs.remove('clientID');
     await ss.prefs.remove('applicationID');
+    ss.fcmData = FCMData();
   }
 
   static FCMData getFCM() {

@@ -143,6 +143,9 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                     } else {
                       controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
                     }
+                  } else if (event.data.physicalKey.debugName == "Escape") {
+                    Navigator.of(context).pop();
+                    return KeyEventResult.handled;
                   }
                   return KeyEventResult.ignored;
                 },

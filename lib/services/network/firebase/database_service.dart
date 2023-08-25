@@ -1,11 +1,13 @@
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/implementation/pure_dart.dart';
 import 'package:firebase_dart/src/firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
+import 'package:bluebubbles/models/models.dart';
 
 DatabaseService fdb = Get.isRegistered<DatabaseService>() ? Get.find<DatabaseService>() : Get.put(DatabaseService());
 
@@ -24,23 +26,25 @@ class DatabaseService extends GetxService {
     }
   }
 
-  String getClientId() {
-    if (kIsWeb) return '795335779559-n81mfu5g5r58bphui6lmjphnn22mcqhd.apps.googleusercontent.com';
-    if (kIsDesktop) return '795335779559-jqfjh4l8v98bmfka7jusbega8j3o6bc4.apps.googleusercontent.com';
-    switch (fs.packageInfo.packageName) {
-      // Flavor: Tanay
-      case "com.bluebubbles.messaging.tanay":
-        return "795335779559-dm9ril4hvc7ieaokhfra82pr6onk7qo3.apps.googleusercontent.com";
-      // Flavor: Joel
-      case "com.bluebubbles.messaging.joel":
-        return "";
-      // Flavor: Beta
-      case "com.bluebubbles.messaging.beta":
-        return "795335779559-aa2tmal53ifekk1e3f1lmgd7ftvs4i1g.apps.googleusercontent.com";
-      // Flavor: Production
-      default:
-        return "795335779559-qrpbpjj1mgp248kt33kj75or771gpk4r.apps.googleusercontent.com";
-    }
+  String? getClientId() {
+    if (kIsWeb && (kDebugMode || Uri.base.toString().contains("tneotia.github.io"))) return '500464701389-5u2eogcqls1eljhu3hq825oed6iue1f0.apps.googleusercontent.com';
+    if (kIsWeb) return '500464701389-8trcdkcj7ni5l4dn6n7l795rhb1asnh3.apps.googleusercontent.com';
+    if (kIsDesktop) return '500464701389-tqqvjqk03q7dotrvt1rug7g1flgn9rtg.apps.googleusercontent.com';
+    return null;
+  }
+
+  Future<void> fetchFirebaseConfig() async {
+    await http.fcmClient().then((response) async {
+      Map<String, dynamic>? data = response.data["data"];
+      if (!isNullOrEmpty(data)!) {
+        FCMData newData = FCMData.fromMap(data!);
+        ss.saveFCMData(newData);
+      }
+    }).onError((error, stackTrace) {
+      if (error is Response && error.statusCode == 404) {
+        FCMData.deleteFcmData();
+      }
+    });
   }
 
   /// Fetch the new server URL from the Firebase Database
@@ -59,11 +63,11 @@ class DatabaseService extends GetxService {
       if (kIsWeb || kIsDesktop) {
         // Instantiate the FirebaseDatabase, and try to access the serverUrl field
         final defaultOptions = FirebaseOptions(
-            apiKey: ss.fcmData.apiKey ?? '',
-            appId: ss.fcmData.applicationID ?? '',
-            messagingSenderId: '',
-            projectId: ss.fcmData.projectID ?? '',
-            databaseURL: ss.fcmData.firebaseURL
+          apiKey: ss.fcmData.apiKey ?? '',
+          appId: ss.fcmData.applicationID ?? '',
+          messagingSenderId: '',
+          projectId: ss.fcmData.projectID ?? '',
+          databaseURL: ss.fcmData.firebaseURL,
         );
 
         late final FirebaseApp app;

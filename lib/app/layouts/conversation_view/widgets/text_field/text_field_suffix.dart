@@ -93,8 +93,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   widget.controller!.showRecording.toggle();
                   if (widget.controller!.showRecording.value) {
                     if (kIsDesktop) {
-                      File temp = File(join(fs.appDocDir.path, "temp", "recorder", widget.controller!.chat.guid.characters.where((c) => c.isAlphabetOnly).join(), "recording.m4a"));
-                      temp.createSync(recursive: true);
+                      File temp = File(join(fs.appDocDir.path, "temp", "recorder", "${widget.controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a"));
                       await RecordPlatform.instance.start(bitRate: 320000, path: temp.path);
                       return;
                     }

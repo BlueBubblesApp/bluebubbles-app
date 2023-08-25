@@ -58,7 +58,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
       if (event.item1 == 'update-highlight' && mounted) {
         if ((kIsDesktop || kIsWeb) && event.item2 == controller.chat.guid) {
           controller.shouldHighlight.value = true;
-        } else if (controller.shouldHighlight.value = true) {
+        } else if (controller.shouldHighlight.value) {
           controller.shouldHighlight.value = false;
         }
       }

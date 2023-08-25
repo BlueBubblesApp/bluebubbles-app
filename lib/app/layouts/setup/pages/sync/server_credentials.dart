@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
-import 'package:bluebubbles/app/layouts/setup/dialogs/async_connecting_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';
@@ -33,6 +32,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   final TextEditingController urlController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final controller = Get.find<SetupViewController>();
+  final FocusNode focusNode = FocusNode();
 
   bool showLoginButtons = true;
   bool obscureText = true;
@@ -79,14 +79,14 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                     const SizedBox(width: 10),
                     Padding(
                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                      child: Text("Sign in with Google", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                      child: Text("Sign in with Google",
+                          style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                     ),
                   ],
                 ),
               ),
             ),
-          if (showLoginButtons)
-            const SizedBox(height: 10),
+          if (showLoginButtons) const SizedBox(height: 10),
           if (!kIsWeb && !kIsDesktop && showLoginButtons)
             Container(
               decoration: BoxDecoration(
@@ -117,14 +117,14 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                     const SizedBox(width: 10),
                     Padding(
                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
-                      child: Text("Scan QR Code", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                      child: Text("Scan QR Code",
+                          style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                     ),
                   ],
                 ),
               ),
             ),
-          if (!kIsWeb && !kIsDesktop && showLoginButtons)
-            const SizedBox(height: 10),
+          if (!kIsWeb && !kIsDesktop && showLoginButtons) const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
@@ -150,6 +150,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               onPressed: () async {
                 setState(() {
                   showLoginButtons = !showLoginButtons;
+                  focusNode.requestFocus();
                 });
               },
               child: Row(
@@ -158,7 +159,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   Icon(CupertinoIcons.text_cursor, color: context.theme.colorScheme.onBackground, size: 20),
                   const SizedBox(width: 10),
                   Text("Manual entry",
-                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
+                      style: context.theme.textTheme.bodyLarge!
+                          .apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                 ],
               ),
             ),
@@ -179,8 +181,11 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                         Container(
                           width: context.width * 2 / 3,
                           child: Focus(
+                            focusNode: focusNode,
                             onKey: (node, event) {
-                              if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                              if (event is RawKeyDownEvent &&
+                                  !event.data.isShiftPressed &&
+                                  event.logicalKey == LogicalKeyboardKey.tab) {
                                 node.nextFocus();
                                 return KeyEventResult.handled;
                               }
@@ -194,9 +199,11 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
                                 enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.outline), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                                    borderRadius: BorderRadius.circular(20)),
                                 focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.primary), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                                    borderRadius: BorderRadius.circular(20)),
                                 labelText: "URL",
                               ),
                             ),
@@ -207,7 +214,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                           width: context.width * 2 / 3,
                           child: Focus(
                             onKey: (node, event) {
-                              if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                              if (event is RawKeyDownEvent &&
+                                  event.data.isShiftPressed &&
+                                  event.logicalKey == LogicalKeyboardKey.tab) {
                                 node.previousFocus();
                                 node.previousFocus(); // This is intentional. Should probably figure out why it's needed
                                 return KeyEventResult.handled;
@@ -223,9 +232,11 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                               onSubmitted: (pass) => connect(urlController.text, pass),
                               decoration: InputDecoration(
                                 enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.outline), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                                    borderRadius: BorderRadius.circular(20)),
                                 focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: context.theme.colorScheme.primary), borderRadius: BorderRadius.circular(20)),
+                                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                                    borderRadius: BorderRadius.circular(20)),
                                 labelText: "Password",
                                 contentPadding: const EdgeInsets.fromLTRB(12, 24, 40, 16),
                                 suffixIcon: IconButton(
@@ -318,7 +329,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text("Connect", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                    Text("Connect",
+                                        style: context.theme.textTheme.bodyLarge!
+                                            .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     const SizedBox(width: 10),
                                     const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                   ],
@@ -421,21 +434,25 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 ),
                 actions: <Widget>[
                   TextButton(
-                    child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    child: Text("OK",
+                        style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
                   ),
-                ]
-            );
+                ]);
           },
         );
       }
+
+      final defaultScopes = [
+        'https://www.googleapis.com/auth/cloudplatformprojects',
+        'https://www.googleapis.com/auth/firebase',
+        'https://www.googleapis.com/auth/datastore'
+      ];
+
       // initialize gsi
-      final gsi = GoogleSignIn(
-        clientId: fdb.getClientId(),
-        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      );
+      final gsi = GoogleSignIn(clientId: fdb.getClientId(), scopes: defaultScopes);
       try {
         // sign in
         final account = await gsi.signIn();
@@ -444,8 +461,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           final auth = await account.authentication;
           token = auth.accessToken;
           // make sure scopes were granted on web
-          if (kIsWeb && !(await gsi.canAccessScopes(['https://www.googleapis.com/auth/cloud-platform'], accessToken: token))) {
-            final result = await gsi.requestScopes(['https://www.googleapis.com/auth/cloud-platform']);
+          if (kIsWeb && !(await gsi.canAccessScopes(defaultScopes, accessToken: token))) {
+            final result = await gsi.requestScopes(defaultScopes);
             if (!result) {
               throw Exception("Scopes not granted!");
             }
@@ -463,13 +480,12 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         showSnackbar("Error", "Something went wrong authenticating with Google! $e");
         return;
       }
-    // desktop implementation
+      // desktop implementation
     } else {
       final args = GoogleSignInArgs(
-        clientId: fdb.getClientId(),
-        redirectUri: 'http://localhost:8641/oauth/callback',
-        scope: 'https://www.googleapis.com/auth/cloud-platform',
-      );
+          clientId: fdb.getClientId()!,
+          redirectUri: 'http://localhost:8641/oauth/callback',
+          scope: 'https://www.googleapis.com/auth/cloudplatformprojects');
       try {
         final result = await DesktopWebviewAuth.signIn(args);
         token = result?.accessToken;
@@ -486,54 +502,58 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
 
     bool dialogActive = true;
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: context.theme.colorScheme.properSurface,
-          title: Text(
-            "Fetching Firebase configurations...",
-            style: context.theme.textTheme.titleLarge,
-          ),
-          content: Container(
-            height: 70,
-            child: Center(
-              child: CircularProgressIndicator(
-                backgroundColor: context.theme.colorScheme.properSurface,
-                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: context.theme.colorScheme.properSurface,
+            title: Text(
+              "Fetching Firebase configurations...",
+              style: context.theme.textTheme.titleLarge,
+            ),
+            content: Container(
+              height: 70,
+              child: Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                ),
               ),
             ),
-          ),
-        );
-      }
-    );
+          );
+        });
+
     try {
       // query firebase projects
       final response1 = await http.getFirebaseProjects(token);
       final projects = response1.data['results'];
       List usableProjects = [];
+      List<Object> errors = [];
       // find projects with RTDB or cloud firestore
       if (projects.isNotEmpty) {
         for (Map e in projects) {
           if (e['resources']['realtimeDatabaseInstance'] != null) {
-             try {
-               final serverUrlResponse = await http.getServerUrlRTDB(e['resources']['realtimeDatabaseInstance'], token);
-               e['serverUrl'] = serverUrlResponse.data['serverUrl'];
-               usableProjects.add(e);
-             } catch (e) {
-               Logger.error("Failed to fetch from realtime database!");
-               Logger.error(e);
-             }
+            try {
+              final serverUrlResponse = await http.getServerUrlRTDB(e['resources']['realtimeDatabaseInstance'], token);
+              e['serverUrl'] = serverUrlResponse.data['serverUrl'];
+              usableProjects.add(e);
+            } catch (ex) {
+              errors.add("Realtime Database Error: $ex");
+            }
           } else {
             try {
               final serverUrlResponse = await http.getServerUrlCF(e['projectId'], token);
               e['serverUrl'] = serverUrlResponse.data['fields']['serverUrl']['stringValue'];
               usableProjects.add(e);
-            } catch (e) {
-              Logger.error("Failed to fetch from cloud firestore!");
-              Logger.error(e);
+            } catch (ex) {
+              errors.add("Firestore Database Error: $ex");
             }
           }
         }
+
+        if (usableProjects.isEmpty && errors.isNotEmpty) {
+          throw Exception(errors[0]);
+        }
+
         usableProjects.removeWhere((element) => element['serverUrl'] == null);
         // get the final server URL to use, ask the user which project to use if there are multiple possibilities
         if (usableProjects.isNotEmpty) {
@@ -542,59 +562,58 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           String? serverUrl;
           if (usableProjects.length > 1) {
             serverUrl = await showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text("Select Firebase", style: context.theme.textTheme.titleLarge),
-                  backgroundColor: context.theme.colorScheme.properSurface,
-                  content: SingleChildScrollView(
-                    child: Container(
-                      width: double.maxFinite,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text("Select the Firebase project to use:"),
-                          ),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: context.mediaQuery.size.height * 0.4,
-                            ),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: usableProjects.length,
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  title: Text(
-                                    usableProjects[index]['displayName'],
-                                  ),
-                                  subtitle: Text(
-                                    "${usableProjects[index]['projectId']}\n${usableProjects[index]['serverUrl']}",
-                                  ),
-                                  onTap: () {
-                                    Navigator.of(context).pop(usableProjects[index]['serverUrl']);
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Select Firebase", style: context.theme.textTheme.titleLarge),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    content: SingleChildScrollView(
+                      child: Container(
+                          width: double.maxFinite,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text("Select the Firebase project to use:"),
+                              ),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxHeight: context.mediaQuery.size.height * 0.4,
+                                ),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: usableProjects.length,
+                                  itemBuilder: (context, index) {
+                                    return ListTile(
+                                      title: Text(
+                                        usableProjects[index]['displayName'],
+                                      ),
+                                      subtitle: Text(
+                                        "${usableProjects[index]['projectId']}\n${usableProjects[index]['serverUrl']}",
+                                      ),
+                                      onTap: () {
+                                        Navigator.of(context).pop(usableProjects[index]['serverUrl']);
+                                      },
+                                      isThreeLine: true,
+                                    );
                                   },
-                                  isThreeLine: true,
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      )
+                                ),
+                              ),
+                            ],
+                          )),
                     ),
-                  ),
-                  actions: [
-                    TextButton(
-                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      }
-                    ),
-                  ],
-                );
-              }
-            );
+                    actions: [
+                      TextButton(
+                          child: Text("Cancel",
+                              style: context.theme.textTheme.bodyLarge!
+                                  .copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          }),
+                    ],
+                  );
+                });
           } else {
             serverUrl = usableProjects.first['serverUrl'];
           }
@@ -602,17 +621,37 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           if (serverUrl != null) {
             final TextEditingController passController = TextEditingController();
             await showDialog(
-              context: context,
-              builder: (_) {
-                return AlertDialog(
-                  actions: [
-                    TextButton(
-                      child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    TextButton(
-                      child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () async {
+                context: context,
+                builder: (_) {
+                  return AlertDialog(
+                    actions: [
+                      TextButton(
+                        child: Text("Cancel",
+                            style:
+                                context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      TextButton(
+                        child: Text("OK",
+                            style:
+                                context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () async {
+                          if (passController.text.isEmpty) {
+                            showSnackbar("Error", "Enter a valid password!");
+                            return;
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                    content: TextField(
+                      controller: passController,
+                      decoration: const InputDecoration(
+                        labelText: "Password",
+                        border: OutlineInputBorder(),
+                      ),
+                      obscureText: true,
+                      onSubmitted: (str) {
                         if (passController.text.isEmpty) {
                           showSnackbar("Error", "Enter a valid password!");
                           return;
@@ -620,27 +659,10 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                         Navigator.of(context).pop();
                       },
                     ),
-                  ],
-                  content: TextField(
-                    controller: passController,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                    onSubmitted: (str) {
-                      if (passController.text.isEmpty) {
-                        showSnackbar("Error", "Enter a valid password!");
-                        return;
-                      }
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
-                  backgroundColor: context.theme.colorScheme.properSurface,
-                );
-              }
-            );
+                    title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                  );
+                });
 
             if (passController.text.isNotEmpty) {
               connect(serverUrl, passController.text);
@@ -661,7 +683,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         Navigator.of(context).pop();
       }
       Logger.error(e);
-      showSnackbar("Error", "Something went wrong when fetching Firebase details! $e");
+      showSnackbar("Error", "Something went wrong when fetching Firebase details! $e", durationMs: 5000);
     }
   }
 
@@ -708,87 +730,100 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     ss.settings.save();
 
     // Request data from the API
-    Future<dio.Response> fcmFuture = http.fcmClient();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return WillPopScope(
+          onWillPop: () async {
+            return false;
+          },
+          child: AlertDialog(
+            title: Text(
+              "Fetching server info...",
+              style: context.theme.textTheme.titleLarge,
+            ),
+            backgroundColor: context.theme.colorScheme.properSurface,
+            content: LinearProgressIndicator(
+              backgroundColor: context.theme.colorScheme.outline,
+              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+            ),
+          ),
+        );
+      }
+    );
 
-    Get.dialog(AsyncConnectingDialog(
-      future: fcmFuture,
-      showErrorDialog: false,
-      onConnect: (bool result, Object? err) async {
-        if (result) {
-          if (Get.isDialogOpen ?? false) {
-            Get.back();
-          }
+    dio.Response? serverResponse;
+    await http.serverInfo().then((response) {
+      serverResponse = response;
+    }).catchError((err) {
+      if (err is dio.Response) {
+        serverResponse = err;
+      }
+    });
+    dio.Response? fcmResponse;
+    await http.fcmClient().then((response) {
+      fcmResponse = response;
+    }).catchError((err) {
+      if (err is dio.Response) {
+        fcmResponse = err;
+      }
+    });
 
-          setState(() {
-            showLoginButtons = false;
-          });
-
-          dio.Response fcmResponse = await fcmFuture;
-          Map<String, dynamic> data = fcmResponse.data;
-          if (fcmResponse.statusCode != 200) {
-            controller.updateConnectError(
-                "Failed to connect to server! ${data["error"]?["type"] ?? "API_ERROR"}: ${data["message"] ?? data["error"]["message"]}");
-            return;
-          }
-
-          if (isNullOrEmpty(data["data"])! && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
-            return setState(() {
-              controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
-            });
-          } else {
-            try {
-              FCMData fcmData = FCMData.fromMap(data["data"]);
-              ss.saveFCMData(fcmData);
-            } catch (_) {
-              if (Platform.isAndroid) {
-                showDialog(
-                  barrierDismissible: false,
-                  context: Get.context!,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text(
-                        "No Firebase Detected",
-                        style: context.theme.textTheme.titleLarge,
-                      ),
-                      content: Text(
-                        "We couldn't find a Firebase setup on your server. To receive notifications, please enable the foreground service option from Settings > Misc & Advanced.",
-                        style: context.theme.textTheme.bodyLarge,
-                      ),
-                      backgroundColor: context.theme.colorScheme.properSurface,
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
-            }
-            socket.restartSocket();
-            goToNextPage();
-          }
-        } else if (mounted) {
-          if (err != null && err is dio.DioError && err.response != null) {
-            final errorData = jsonDecode(err.response!.data as String);
-            if (errorData.st == 401) {
-              controller.updateConnectError("Authentication failed. Incorrect password!");
-              return;
-            } else {
-              controller.updateConnectError("Failed to connect! Error: [${errorData['status']}] ${errorData['message']}");
-              return;
-            }
-          } else {
-            controller.updateConnectError(
-                "Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.");
-            return;
-          }
+    Get.back();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    // Unauthorized request
+    if (serverResponse?.statusCode == 401) {
+      socket.forgetConnection();
+      return controller.updateConnectError("Authentication failed. Incorrect password!");
+    }
+    // Server didn't even respond
+    if (serverResponse?.statusCode != 200) {
+      socket.forgetConnection();
+      return controller.updateConnectError("Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.");
+    }
+    // Ignore any other server errors unless user is using ngrok or cloudflare
+    final data = fcmResponse?.data;
+    if ((data == null || isNullOrEmpty(data["data"])!) && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+      return controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
+    } else {
+      try {
+        FCMData fcmData = FCMData.fromMap(data["data"]);
+        ss.saveFCMData(fcmData);
+      } catch (_) {
+        if (Platform.isAndroid) {
+          showDialog(
+            barrierDismissible: false,
+            context: Get.context!,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "No Firebase Detected",
+                  style: context.theme.textTheme.titleLarge,
+                ),
+                content: Text(
+                  "We couldn't find a Firebase setup on your server. To receive notifications, please enable the foreground service option from Settings > Misc & Advanced.",
+                  style: context.theme.textTheme.bodyLarge,
+                ),
+                backgroundColor: context.theme.colorScheme.properSurface,
+                actions: <Widget>[
+                  TextButton(
+                    child: Text("Close",
+                        style: context.theme.textTheme.bodyLarge!
+                            .copyWith(color: context.theme.colorScheme.primary)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
         }
-      },
-    ));
+      }
+      socket.restartSocket();
+      goToNextPage();
+    }
   }
 }
 

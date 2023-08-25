@@ -1,3 +1,5 @@
+import '../../services/backend/settings/settings_service.dart';
+
 class ScheduledMessage {
   ScheduledMessage({
     required this.id,
@@ -60,7 +62,7 @@ class Payload {
   factory Payload.fromJson(Map<String, dynamic> json) => Payload(
     chatGuid: json["chatGuid"],
     message: json["message"],
-    method: json["method"],
+    method: json["method"] ?? (ss.settings.privateAPISend.value ? 'private-api' : 'apple-script'),
   );
 
   Map<String, dynamic> toJson() => {
