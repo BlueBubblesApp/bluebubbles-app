@@ -12,4 +12,10 @@ elif [[ $arch == "aarch64" ]]; then
     folder="arm64"
 fi
 
+# Inject version number into version.json
+tmp=$(mktemp)
+chmod 644 "$tmp"
+jq '.version = "1.12.4.0"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
+chmod +x build/linux/*/release/bundle/bluebubbles
+
 tar cvf bluebubbles-linux-"$arch".tar -C build/linux/$folder/release/bundle .
