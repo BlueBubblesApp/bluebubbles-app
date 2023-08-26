@@ -154,6 +154,15 @@ class SettingsService extends GetxService {
     return (prefs.getInt("macos-minor-version") ?? 11) >= 15 || isMinBigSurSync;
   }
 
+  /// Group chats can be created on macOS <= Catalina or
+  /// if the Private API is enabled, and the server supports it (v1.8.0).
+  Future<bool> canCreateGroupChat() async {
+    int serverVersion = (await ss.getServerDetails()).item4;
+    bool isMin_1_8_0 = serverVersion >= 268; // Server: v1.8.0 (1 * 100 + 8 * 21 + 0)
+    bool papiEnabled = settings.enablePrivateAPI.value;
+    return (isMin_1_8_0 && papiEnabled) || !isMinBigSurSync;
+  }
+
   Future<void> checkServerUpdate() async {
     final response = await http.checkUpdate();
     if (response.statusCode == 200) {
