@@ -70,7 +70,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
 
   final messageNode = FocusNode();
 
-  bool canCreateGroupChats = !ss.isMinBigSurSync;
+  bool canCreateGroupChats = ss.canCreateGroupChatSync();
 
   @override
   void initState() {
@@ -140,12 +140,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     });
 
     if (widget.initialSelected.isNotEmpty) messageNode.requestFocus();
-
-    ss.canCreateGroupChat().then((value) => {
-      setState(() {
-        canCreateGroupChats = value; 
-      })
-    });
   }
 
   void addSelected(SelectedContact c) {
