@@ -29,7 +29,7 @@ class DatabaseService extends GetxService {
   String? getClientId() {
     if (kIsWeb && (kDebugMode || Uri.base.toString().contains("tneotia.github.io"))) return '500464701389-5u2eogcqls1eljhu3hq825oed6iue1f0.apps.googleusercontent.com';
     if (kIsWeb) return '500464701389-8trcdkcj7ni5l4dn6n7l795rhb1asnh3.apps.googleusercontent.com';
-    if (kIsDesktop) return '500464701389-tqqvjqk03q7dotrvt1rug7g1flgn9rtg.apps.googleusercontent.com';
+    if (kIsDesktop) return '500464701389-18rfq995s6dqo3e5d3n2e7i3ljr0uc9i.apps.googleusercontent.com';
     return null;
   }
 
