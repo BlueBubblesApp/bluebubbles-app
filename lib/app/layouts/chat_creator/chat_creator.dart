@@ -13,6 +13,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -90,7 +91,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
           final _contacts = contacts
               .where((e) =>
                   e.displayName.toLowerCase().contains(query) ||
-                  e.phones.firstWhereOrNull((e) => e.toLowerCase().numericOnly().contains(query)) != null ||
+                  e.phones.firstWhereOrNull((e) => cleansePhoneNumber(e.toLowerCase()).contains(query)) != null ||
                   e.emails.firstWhereOrNull((e) => e.toLowerCase().contains(query)) != null)
               .toList();
           final ids = _contacts.map((e) => e.id);
@@ -191,7 +192,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             // match last digits
             final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
             final numeric = contact.address.numericOnly();
-            if (matchLengths.contains(numeric.length) && participant.address.numericOnly().endsWith(numeric)) {
+            if (matchLengths.contains(numeric.length) && cleansePhoneNumber(participant.address).endsWith(numeric)) {
               matches += 1;
               break;
             }
@@ -671,7 +672,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             createCompleter = Completer();
-                            final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : e.address.numericOnly()).toList();
+                            final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : cleansePhoneNumber(e.address)).toList();
                             final method = iMessage ? "iMessage" : "SMS";
                             showDialog(
                                 context: context,

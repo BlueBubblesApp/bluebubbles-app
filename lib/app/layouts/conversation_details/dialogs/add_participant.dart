@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:slugify/slugify.dart';
@@ -90,7 +91,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
               );
               if (selected?.item1 != null) {
                 if (!selected!.item1.isEmail) {
-                  participantController.text = selected!.item1.numericOnly();
+                  participantController.text = cleansePhoneNumber(selected!.item1);
                 } else {
                   participantController.text = selected!.item1;
                 }

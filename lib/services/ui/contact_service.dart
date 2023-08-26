@@ -5,6 +5,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -340,10 +341,10 @@ class ContactsService extends GetxService {
                 if (match) {
                   break;
                 }
-                String? formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(a.numericOnly());
+                String? formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(a));
                 if (formatA.isEmpty) continue;
                 for (String _a in _addresses) {
-                  String? _formatA = _a.contains("@") ? _a.toLowerCase() : await formatPhoneNumber(_a.numericOnly());
+                  String? _formatA = _a.contains("@") ? _a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(_a));
                   if (formatA == _formatA) {
                     match = true;
                     break;
