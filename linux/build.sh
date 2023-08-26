@@ -1,4 +1,5 @@
 #!/bin/bash
+trap "exit" INT
 set -eux
 
 cd "$(dirname "$0")/.."
