@@ -379,7 +379,12 @@ class HttpService extends GetxService {
       final response = await dio.post(
           "$apiRoot/chat/new",
           queryParameters: buildQueryParams(),
-          data: {"addresses": addresses, "message": message, "service": service},
+          data: {
+            "addresses": addresses,
+            "message": message,
+            "service": service,
+            "method": ss.settings.enablePrivateAPI.value ? 'private-api' : 'apple-script'
+          },
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -608,7 +613,7 @@ class HttpService extends GetxService {
   /// body of the message.
   Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
-      final fileName = file.path!.split('/').last;
+      final fileName = file.name;
       final formData = FormData.fromMap({
         "attachment": kIsWeb ? MultipartFile.fromBytes(file.bytes!, filename: fileName) : await MultipartFile.fromFile(file.path!, filename: fileName),
         "chatGuid": chatGuid,

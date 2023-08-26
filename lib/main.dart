@@ -27,13 +27,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
+import 'package:on_exit/init.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
@@ -47,9 +47,6 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
-
-// todo list desktop
-/// Show notif badges
 
 const databaseVersion = 4;
 late final Store store;
@@ -89,73 +86,61 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
   ls.isUiThread = true;
   await ss.init();
   await fs.init();
+  await Logger.init();
+  Logger.startup.value = true;
+  Logger.info('Startup Logs');
+
+  /* ------ LINUX SINGLE INSTANCE ------ */
   if (kIsDesktop && Platform.isLinux) {
-    debugPrint("Starting process with PID $pid");
-    ProcessSignal.sigusr1.watch().listen((event) async {
-      debugPrint("Got Signal to go to foreground");
-      doWhenWindowReady(() async {
-        await windowManager.show();
-        Tuple2<String, String>? widAndName = (await (await Process.start('wmctrl', ['-pl']))
-                .stdout
-                .transform(utf8.decoder)
-                .transform(const LineSplitter())
-                .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
-                .map((split) => split[2] == "$pid" ? Tuple2(split.first, split.last) : null)
-                .where((tuple) => tuple != null)
-                .toList())
-            .lastOrNull;
-        if (widAndName != null) {
-          debugPrint("Bringing Window ${widAndName.item1} to foreground");
-          Process.runSync('wmctrl', ['-iR', widAndName.item1]);
-        }
-      });
-    });
+    Logger.debug("Starting process with PID $pid");
 
     final lockFile = File(join(fs.appDocDir.path, 'bluebubbles.lck'));
-    if (lockFile.existsSync()) {
-      String _pid = lockFile.readAsStringSync();
-      String exists = Process.runSync('ps', ['-p', _pid]).stdout;
-      bool focused = false;
-      if (exists.endsWith('bluebubbles\n')) {
-        debugPrint("Found existing process");
+    final instanceFile = File(join(fs.appDocDir.path, '.instance'));
+    onExit(() {
+      if (lockFile.existsSync()) lockFile.deleteSync();
+    });
+
+    if (!lockFile.existsSync()) {
+      lockFile.createSync();
+    }
+    if (!instanceFile.existsSync()) {
+      instanceFile.createSync();
+    }
+
+    Logger.debug("Lockfile at ${lockFile.path}");
+
+    String _pid = lockFile.readAsStringSync();
+
+    String ps = Process.runSync('ps', ['-p', _pid]).stdout;
+    if (kReleaseMode && "$pid" != _pid && ps.endsWith('bluebubbles\n')) {
+      Logger.debug("Another instance is running. Sending foreground signal");
+      instanceFile.openSync(mode: FileMode.write).closeSync();
+      exit(0);
+    }
+
+    lockFile.writeAsStringSync("$pid");
+
+    instanceFile.watch(events: FileSystemEvent.modify).listen((event) async {
+      Logger.debug("Got Signal to go to foreground");
+      doWhenWindowReady(() async {
+        await windowManager.show();
         List<Tuple2<String, String>?> widAndNames = await (await Process.start('wmctrl', ['-pl']))
             .stdout
             .transform(utf8.decoder)
             .transform(const LineSplitter())
             .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
-            .map((split) => split[2] == _pid ? Tuple2(split.first, split.last) : null)
+            .map((split) => split[2] == "$pid" ? Tuple2(split.first, split.last) : null)
             .where((tuple) => tuple != null)
             .toList();
-
-        if (widAndNames.where((t) => t!.item2 == 'BlueBubbles').isNotEmpty) {
-          focused = true;
-        }
-        bool badExists = false; // For making hot restart possible
         for (Tuple2<String, String>? window in widAndNames) {
           if (window?.item2 == "BlueBubbles") {
-            debugPrint("Bringing other instance to foreground");
             Process.runSync('wmctrl', ['-iR', window!.item1]);
-          } else if (window?.item2 == "bluebubbles_app") {
-            debugPrint("Closing current instance");
-            badExists = true;
-            Process.runSync('wmctrl', ['-ic', window!.item1]);
+            break;
           }
         }
-        if (badExists) {
-          if (focused) return;
-          // Signal previous instance to focus
-          debugPrint("Sending signal to bring other instance ($_pid) to foreground");
-          Process.runSync('kill', ['-SIGUSR1', _pid]);
-          return;
-        }
-      }
-    }
-    lockFile.createSync();
-    lockFile.writeAsStringSync("$pid");
+      });
+    });
   }
-  await Logger.init();
-  Logger.startup.value = true;
-  Logger.info('Startup Logs');
   await ts.init();
   await mcs.init();
 
@@ -252,6 +237,12 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
           store = await openStore(directory: objectBoxDirectory.path);
         } catch (e, s) {
+          if (Platform.isLinux) {
+            Logger.debug("Another instance is probably running. Sending foreground signal");
+            final instanceFile = File(join(fs.appDocDir.path, '.instance'));
+            instanceFile.openSync(mode: FileMode.write).closeSync();
+            exit(0);
+          }
           Logger.error(e);
           Logger.error(s);
         }
@@ -387,9 +378,6 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       if (!await EntityExtractorModelManager().isModelDownloaded(EntityExtractorLanguage.english.name)) {
         EntityExtractorModelManager().downloadModel(EntityExtractorLanguage.english.name, isWifiRequired: false);
       }
-
-      /* ----- PHONE NUMBER FORMATTING INITIALIZATION ----- */
-      await FlutterLibphonenumber().init();
     }
 
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */

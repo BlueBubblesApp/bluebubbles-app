@@ -157,7 +157,11 @@ class AttachmentsService extends GetxService {
                 TextButton(
                   child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                   onPressed: () async {
-                    await File(file.path!).copy(savePath);
+                    if (file.path != null) {
+                      await File(file.path!).copy(savePath);
+                    } else {
+                      await File(savePath).writeAsBytes(file.bytes!);
+                    }
                     Navigator.of(context).pop();
                     showSnackbar(
                       'Success',
@@ -180,7 +184,11 @@ class AttachmentsService extends GetxService {
           },
         );
       } else {
-        await File(file.path!).copy(savePath);
+        if (file.path != null) {
+          await File(file.path!).copy(savePath);
+        } else {
+          await File(savePath).writeAsBytes(file.bytes!);
+        }
         showSnackbar(
           'Success',
           'Saved attachment to $savePath!',

@@ -832,6 +832,8 @@ class Chat {
     return this;
   }
 
+  void webSyncParticipants() {}
+
   void _deduplicateParticipants() {
     if (_participants.isEmpty) return;
     final ids = _participants.map((e) => e.uniqueAddressAndService).toSet();

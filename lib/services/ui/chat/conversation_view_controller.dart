@@ -138,7 +138,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
         _subjectWasLastFocused = true;
       }
     });
-
   }
 
   @override

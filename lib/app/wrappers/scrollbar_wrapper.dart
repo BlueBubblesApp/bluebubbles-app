@@ -22,6 +22,7 @@ class ScrollbarWrapper extends StatelessWidget {
   Widget build(BuildContext context) => !kIsDesktop && !kIsWeb
       ? child
       : ImprovedScrolling(
+          enableKeyboardScrolling: true,
           enableMMBScrolling: true,
           mmbScrollConfig: MMBScrollConfig(
             customScrollCursor: DefaultCustomScrollCursor(

@@ -358,7 +358,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                       } else {
                                         widget.cvController.selected.add(message);
                                       }
-                                    } : kIsDesktop || kIsWeb || material ? () => tapped.value = !tapped.value : null,
+                                    } : kIsDesktop || kIsWeb || iOS || material ? () => tapped.value = !tapped.value : null,
                                     child: IgnorePointer(
                                       ignoring: widget.cvController.inSelectMode.value,
                                       child: Container(
@@ -539,7 +539,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 maxLines: 14,
                                                                                 minLines: 1,
                                                                                 selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
-                                                                                autofocus: true,
+                                                                                autofocus: kIsDesktop || kIsWeb,
                                                                                 enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                                                                                 textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                                                                                     ? TextInputAction.send

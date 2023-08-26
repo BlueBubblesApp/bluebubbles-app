@@ -5,6 +5,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -124,7 +125,13 @@ class ContactsService extends GetxService {
     if (!kIsWeb) {
       Handle.bulkSave(handles, matchOnOriginalROWID: isMin1_5_2);
     } else {
+      // dummy to make the full contacts UI refresh happen on web
+      changedIds.last.add(handles.length);
       contacts = _contacts;
+      for (Chat c in chats.chats) {
+        c.webSyncParticipants();
+      }
+      chats.chats.refresh();
     }
 
     final endTime = DateTime.now().millisecondsSinceEpoch;
@@ -313,47 +320,47 @@ class ContactsService extends GetxService {
     logger?.call("Fetching contacts (with avatars)...");
     try {
       if (kIsWeb) {
-        http.contacts(withAvatars: true).then((response) async {
-          if (!isNullOrEmpty(response.data['data'])!) {
-            logger?.call("Found contacts!");
-            for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
-              final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
-              logger?.call("Adding avatar for contact: $displayName");
-              final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-              final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-              for (Contact contact in contacts) {
-                bool match = contact.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
+        final response = await http.contacts(withAvatars: true);
 
-                // Ensure contact first name matches to avoid issues with shared numbers (landlines)
-                if (!match && map['firstName'] != null && !contact.displayName.startsWith(map['firstName'])) continue;
+        if (!isNullOrEmpty(response.data['data'])!) {
+          logger?.call("Found contacts!");
+          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
+            final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
+            logger?.call("Adding avatar for contact: $displayName");
+            final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            for (Contact contact in networkContacts) {
+              bool match = contact.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
 
-                List<String> addresses = [...contact.phones, ...contact.emails];
-                List<String> _addresses = [...phones, ...emails];
-                for (String a in addresses) {
-                  if (match) {
+              // Ensure contact first name matches to avoid issues with shared numbers (landlines)
+              if (!match && map['firstName'] != null && !contact.displayName.startsWith(map['firstName'])) continue;
+
+              List<String> addresses = [...contact.phones, ...contact.emails];
+              List<String> _addresses = [...phones, ...emails];
+              for (String a in addresses) {
+                if (match) {
+                  break;
+                }
+                String? formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(a));
+                if (formatA.isEmpty) continue;
+                for (String _a in _addresses) {
+                  String? _formatA = _a.contains("@") ? _a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(_a));
+                  if (formatA == _formatA) {
+                    match = true;
                     break;
                   }
-                  String? formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(a.numericOnly());
-                  if (formatA.isEmpty) continue;
-                  for (String _a in _addresses) {
-                    String? _formatA = _a.contains("@") ? _a.toLowerCase() : await formatPhoneNumber(_a.numericOnly());
-                    if (formatA == _formatA) {
-                      match = true;
-                      break;
-                    }
-                  }
-                }
-
-                if (match && contact.avatar == null) {
-                  contact.avatar = base64Decode(map['avatar'].toString());
                 }
               }
+
+              if (match && contact.avatar == null) {
+                contact.avatar = base64Decode(map['avatar'].toString());
+              }
             }
-          } else {
-            logger?.call("No contacts found!");
           }
-          logger?.call("Finished contacts sync (with avatars)");
-        });
+        } else {
+          logger?.call("No contacts found!");
+        }
+        logger?.call("Finished contacts sync (with avatars)");
       } else {
         final response = await http.contacts(withAvatars: true);
 

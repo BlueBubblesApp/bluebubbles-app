@@ -108,7 +108,7 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
         onSelect: onSelect,
         inSelectMode: inSelectMode,
         subtitle: subtitle,
-      ), tag: inSelectMode ? randomString(8) : chat.guid)
+      ), tag: inSelectMode ? randomString(8) : chat.guid, permanent: kIsDesktop || kIsWeb)
   );
 
   @override
@@ -138,7 +138,7 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
       if (event.item1 == 'update-highlight' && mounted) {
         if ((kIsDesktop || kIsWeb) && event.item2 == controller.chat.guid) {
           controller.shouldHighlight.value = true;
-        } else if (controller.shouldHighlight.value = true) {
+        } else if (controller.shouldHighlight.value) {
           controller.shouldHighlight.value = false;
         }
       }

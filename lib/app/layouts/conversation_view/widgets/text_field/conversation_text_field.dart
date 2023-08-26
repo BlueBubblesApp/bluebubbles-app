@@ -649,7 +649,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         }
                       }
                     }),
-              if (kIsDesktop)
+              if (kIsDesktop && !Platform.isLinux)
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
                   onPressed: () async {
@@ -688,6 +688,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                                 builder: (context, snapshot) {
                                                   Duration elapsed = DateTime.now().duration() - start;
                                                   return Container(
+                                                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
                                                     width: textFieldSize.width - (samsung ? 0 : 80),
                                                     height: textFieldSize.height - 15,
                                                     child: Center(child: AnimatedOpacity(

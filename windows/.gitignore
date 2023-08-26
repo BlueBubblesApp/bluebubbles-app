@@ -18,3 +18,6 @@ x86/
 /out/
 /.vs/
 cmake-build-debug
+
+# Generated executable
+bluebubbles-windows.exe

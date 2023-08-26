@@ -4,9 +4,10 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
 
 /// Get an instance of our [CloudMessagingService]
@@ -85,7 +86,13 @@ class CloudMessagingService extends GetxService {
 
       // If the first try fails, let's try again with new FCM data from the server
       Logger.info('Fetching FCM data from the server...', tag: 'FCM-Auth');
-      final response = await http.fcmClient();
+      final response = await http.fcmClient().catchError((err) {
+        if (err is Response) {
+          return err;
+        } else {
+          return Response(requestOptions: RequestOptions(), statusCode: 500);
+        }
+      });
 
       // If we get valid FCM data, redo the FCM auth, otherwise error out
       if (response.statusCode == 200 && response.data['data'] is Map<String, dynamic>) {

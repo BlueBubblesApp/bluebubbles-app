@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:get/get.dart';
-import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
+import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
 Future<String> formatPhoneNumber(dynamic item) async {
   String cc = countryCode ?? "US";
@@ -18,20 +18,14 @@ Future<String> formatPhoneNumber(dynamic item) async {
   }
 
   // If we don't have a valid address, or it's an email, return it
-  if (isNullOrEmpty(address)! || address!.isEmail) return address ?? "Unknown";
+  if (isNullOrEmpty(address)! || address!.isEmail || address.contains("urn:biz")) return address ?? "Unknown";
   address = address.trim();
 
   String? formatted;
   try {
-    formatted = await PhoneNumberUtil.formatAsYouType(address, cc);
-  } catch (ex) {
-    CountryCode? code = countryCodes.firstWhereOrNull((e) => e.code == cc);
-    if (!address.startsWith("+") && code != null) {
-      try {
-        formatted = await PhoneNumberUtil.formatAsYouType("${code.dialCode}$address", cc);
-      } catch (_) {}
-    }
-  }
+    final parsed = PhoneNumber.parse(address);
+    formatted = parsed.getFormattedNsn();
+  } catch (_) {}
 
   return formatted ?? address;
 }

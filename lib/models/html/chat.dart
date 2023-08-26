@@ -392,6 +392,11 @@ class Chat {
     return this;
   }
 
+  void webSyncParticipants() {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    _participants = chats.webCachedHandles.where((e) => _participants.map((e2) => e2.address).contains(e.address)).toList();
+  }
+
   Chat addParticipant(Handle participant) {
     participants.add(participant);
     _deduplicateParticipants();
@@ -517,6 +522,9 @@ class Chat {
     displayName ??= other.displayName;
     if (handles.isEmpty) {
       handles.addAll(other.handles);
+    }
+    if (_participants.isEmpty) {
+      _participants.addAll(other._participants);
     }
     hasUnreadMessage ??= other.hasUnreadMessage;
     isArchived ??= other.isArchived;

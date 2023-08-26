@@ -13,6 +13,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -69,6 +70,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
 
   final messageNode = FocusNode();
 
+  bool canCreateGroupChats = ss.canCreateGroupChatSync();
+
   @override
   void initState() {
     super.initState();
@@ -90,7 +93,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
           final _contacts = contacts
               .where((e) =>
                   e.displayName.toLowerCase().contains(query) ||
-                  e.phones.firstWhereOrNull((e) => e.toLowerCase().numericOnly().contains(query)) != null ||
+                  e.phones.firstWhereOrNull((e) => cleansePhoneNumber(e.toLowerCase()).contains(query)) != null ||
                   e.emails.firstWhereOrNull((e) => e.toLowerCase().contains(query)) != null)
               .toList();
           final ids = _contacts.map((e) => e.id);
@@ -191,7 +194,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             // match last digits
             final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
             final numeric = contact.address.numericOnly();
-            if (matchLengths.contains(numeric.length) && participant.address.numericOnly().endsWith(numeric)) {
+            if (matchLengths.contains(numeric.length) && cleansePhoneNumber(participant.address).endsWith(numeric)) {
               matches += 1;
               break;
             }
@@ -268,7 +271,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               style: context.theme.textTheme.titleLarge,
             ),
             actions: [
-              if (ss.isMinBigSurSync)
+              if (!canCreateGroupChats)
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: context.theme.colorScheme.error),
                   onPressed: () {
@@ -282,7 +285,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               style: context.theme.textTheme.titleLarge,
                             ),
                             content: Text(
-                                "Creating group chats from BlueBubbles is not possible on macOS 11 (Big Sur) and later due to limitations from Apple.",
+                                "Creating group chats from BlueBubbles is not possible on macOS 11 (Big Sur) and later due to limitations from Apple. You must setup the Private API to gain this feature.",
                                 style: context.theme.textTheme.bodyLarge),
                             backgroundColor: context.theme.colorScheme.properSurface,
                             actions: <Widget>[
@@ -654,11 +657,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             if (fakeController.value == null) {
                               await cm.setActiveChat(chat, clearNotifications: false);
                               cm.activeChat!.controller = cvc(chat);
-                              cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
+                              cm.activeChat!.controller!.pickedAttachments.value = [];
                               fakeController.value = cm.activeChat!.controller;
                             }
                             await fakeController.value!.send(
-                              fakeController.value!.pickedAttachments,
+                              widget.initialAttachments,
                               textController.text,
                               subjectController.text,
                               fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ?? fakeController.value!.replyToMessage?.item1.guid,
@@ -667,10 +670,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               false,
                             );
                             fakeController.value!.replyToMessage = null;
+                            fakeController.value!.pickedAttachments.clear();
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             createCompleter = Completer();
-                            final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : e.address.numericOnly()).toList();
+                            final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : cleansePhoneNumber(e.address)).toList();
                             final method = iMessage ? "iMessage" : "SMS";
                             showDialog(
                                 context: context,

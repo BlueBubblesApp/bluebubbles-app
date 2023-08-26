@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -52,7 +53,7 @@ class _ChatCreatorTileState extends OptimizedState<ChatCreatorTile> with Automat
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: widget.format ? FutureBuilder<String>(
-        future: formatPhoneNumber(widget.subtitle.numericOnly()),
+        future: formatPhoneNumber(cleansePhoneNumber(widget.subtitle)),
         initialData: widget.subtitle,
         builder: (context, snapshot) {
           return Text(

@@ -12,6 +12,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class HeaderText extends StatelessWidget {
@@ -66,7 +67,8 @@ class OverflowMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => PopupMenuButton<int>(
-      color: context.theme.colorScheme.properSurface.lightenOrDarken(ss.settings.skin.value == Skins.Samsung ? 20 : 0),
+      color: context.theme.colorScheme.properSurface.lightenOrDarken(ss.settings.skin.value == Skins.Samsung ? 20 : 0)
+          .withOpacity(ss.settings.windowEffect.value != WindowEffect.disabled ? 0.9 : 1),
       shape: ss.settings.skin.value != Skins.Material ? const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(20.0),

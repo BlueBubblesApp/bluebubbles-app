@@ -122,7 +122,7 @@ class Player {
   FutureOr<void> setShuffle(bool shuffle) {}
 }
 
-abstract class VideoController {
+class VideoController {
   /// The [Player] instance associated with this [VideoController].
   final Player player;
 
@@ -143,7 +143,7 @@ abstract class VideoController {
 
   /// Disposes the [VideoController].
   /// Releases the allocated resources back to the system.
-  Future<void> dispose();
+  Future<void> dispose() async {}
 }
 
 class Video extends StatefulWidget {
