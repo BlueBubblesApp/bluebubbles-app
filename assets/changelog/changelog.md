@@ -2,11 +2,11 @@
 
 Below are the last few BlueBubbles App release changelogs
 
-# What's New?
+## v1.12.4
 
 This update fixes a few bugs and brings the client apps up to speed with the latest server release's features.
 
-## Enhancements
+### Enhancements
 
 - Adds private API group chat creation (MacOS 11+)
 - Adds support for imessage deep links (i.e. `imessage://` links) [Desktop]
@@ -15,7 +15,7 @@ This update fixes a few bugs and brings the client apps up to speed with the lat
 - Message info summary now shows human readable dates
 - Tapping a message in iOS skin will show a timestamp
 
-## Fixes
+### Fixes
 
 - Fixed issue where text cursor is blinking and BlueBubbles is not the active window
 - Fixed missing scrollbars
