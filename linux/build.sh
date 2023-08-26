@@ -2,6 +2,7 @@
 set -eux
 
 cd "$(dirname "$0")/.."
+flutter pub get
 flutter build linux --release -v
 
 arch=$(uname -m)
