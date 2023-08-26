@@ -160,8 +160,8 @@ class _DesktopAudioPlayerState extends OptimizedState<AudioPlayer> with Automati
   void initBytes() async {
     if (attachment != null) controller = cvController?.audioPlayersDesktop[attachment!.guid];
     if (controller == null) {
-      controller = Player()..streams.position.listen((position) => setState(() {}))
-      ..streams.completed.listen((bool completed) async {
+      controller = Player()..stream.position.listen((position) => setState(() {}))
+      ..stream.completed.listen((bool completed) async {
         if (completed) {
           await controller!.pause();
           await controller!.seek(Duration.zero);

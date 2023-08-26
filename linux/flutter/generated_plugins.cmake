@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   desktop_webview_auth
   dynamic_color
+  file_selector_linux
   flutter_acrylic
   local_notifier
   maps_launcher

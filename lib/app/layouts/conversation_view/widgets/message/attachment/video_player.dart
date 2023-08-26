@@ -69,7 +69,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
     if (kIsWeb || _file.path == null) {
       final blob = html.Blob([_file.bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
-      controller = VideoPlayerController.network(url);
+      controller = VideoPlayerController.networkUrl(Uri.parse(url));
     } else {
       dynamic file = File(_file.path!);
       controller = VideoPlayerController.file(file);
@@ -389,7 +389,7 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
     controller.rect.addListener(() {
       aspectRatio.value = controller.aspectRatio;
     });
-    player.streams.completed.listen((completed) async {
+    player.stream.completed.listen((completed) async {
       // If the status is ended, restart
       if (completed) {
         await player.pause();

@@ -27,7 +27,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:intl/date_symbol_data_local.dart';
@@ -365,7 +365,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       /* ----- TIME ZONE INITIALIZATION ----- */
       tz.initializeTimeZones();
       try {
-        tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+        tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
       } catch (_) {}
 
       /* ----- MLKIT INITIALIZATION ----- */
@@ -448,7 +448,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       });
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */
-      await dotenv.load(fileName: '.env');
+      await dotenv.load(fileName: '.env', isOptional: true);
     }
 
     /* ----- EMOJI FONT INITIALIZATION ----- */

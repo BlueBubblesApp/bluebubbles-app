@@ -69,7 +69,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
     if (kIsWeb || widget.file.path == null) {
       final blob = html.Blob([widget.file.bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
-      controller = VideoPlayerController.network(url);
+      controller = VideoPlayerController.networkUrl(Uri.parse(url));
     } else {
       dynamic file = File(widget.file.path!);
       controller = VideoPlayerController.file(file);
@@ -213,7 +213,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
       if (kIsWeb || file.path == null) {
         final blob = html.Blob([file.bytes]);
         final url = html.Url.createObjectUrlFromBlob(blob);
-        controller = VideoPlayerController.network(url);
+        controller = VideoPlayerController.networkUrl(Uri.parse(url));
       } else {
         dynamic _file = File(file.path!);
         controller = VideoPlayerController.file(_file);
@@ -394,7 +394,7 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
     controller.rect.addListener(() {
       aspectRatio.value = controller.aspectRatio;
     });
-    player.streams.completed.listen((completed) async {
+    player.stream.completed.listen((completed) async {
       // If the status is ended, restart
       if (completed && !hasDisposed) {
         await player.pause();

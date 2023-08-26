@@ -624,32 +624,33 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                     subdomains: const ['a', 'b', 'c'],
                   ),
-                  PopupMarkerLayerWidget(
+                  PopupMarkerLayer(
                     options: PopupMarkerLayerOptions(
                       popupController: popupController,
                       markers: markers.values.toList(),
-                      popupBuilder: (context, marker) {
-                        final item = devices.firstWhere((e) => e.location?.latitude == marker.point.latitude && e.location?.longitude == marker.point.longitude);
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 5.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                      popupDisplayOptions: PopupDisplayOptions(
+                        builder: (context, marker) {
+                          final item = devices.firstWhere((e) => e.location?.latitude == marker.point.latitude && e.location?.longitude == marker.point.longitude);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 5.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                              ),
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.name ?? "Unknown Device", style: context.theme.textTheme.labelLarge),
+                                  Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
+                                ],
+                              ),
                             ),
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.name ?? "Unknown Device", style: context.theme.textTheme.labelLarge),
-                                Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                      markerRotateAlignment: PopupMarkerLayerOptions.rotationAlignmentFor(AnchorAlign.top),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],

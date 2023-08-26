@@ -1220,7 +1220,7 @@ class ApiInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioError err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) {
     Logger.error("PATH: ${err.requestOptions.path}", tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.error, tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.requestOptions.contentType, tag: "ERROR[${err.response?.statusCode}]");
