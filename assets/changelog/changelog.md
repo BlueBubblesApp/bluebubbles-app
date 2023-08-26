@@ -9,7 +9,6 @@ This update fixes a few bugs and brings the client apps up to speed with the lat
 ## Enhancements
 
 - Adds private API group chat creation (MacOS 11+)
-- Adds support for sharing location on Linux [Desktop]
 - Adds support for imessage deep links (i.e. `imessage://` links) [Desktop]
 - Adds video playback and audio recording support for all platforms [Desktop]
 - Adds better localhost detection with ipv4 and ipv6
