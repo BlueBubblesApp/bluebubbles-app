@@ -70,6 +70,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
 
   final messageNode = FocusNode();
 
+  bool canCreateGroupChats = ss.canCreateGroupChatSync();
+
   @override
   void initState() {
     super.initState();
@@ -269,7 +271,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
               style: context.theme.textTheme.titleLarge,
             ),
             actions: [
-              if (ss.isMinBigSurSync)
+              if (!canCreateGroupChats)
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: context.theme.colorScheme.error),
                   onPressed: () {
@@ -283,7 +285,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               style: context.theme.textTheme.titleLarge,
                             ),
                             content: Text(
-                                "Creating group chats from BlueBubbles is not possible on macOS 11 (Big Sur) and later due to limitations from Apple.",
+                                "Creating group chats from BlueBubbles is not possible on macOS 11 (Big Sur) and later due to limitations from Apple. You must setup the Private API to gain this feature.",
                                 style: context.theme.textTheme.bodyLarge),
                             backgroundColor: context.theme.colorScheme.properSurface,
                             actions: <Widget>[
