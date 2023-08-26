@@ -2,6 +2,36 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+# What's New?
+
+This update fixes a few bugs and brings the client apps up to speed with the latest server release's features.
+
+## Enhancements
+
+- Adds private API group chat creation (MacOS 11+)
+- Adds support for sharing location on Linux [Desktop]
+- Adds support for imessage deep links (i.e. `imessage://` links) [Desktop]
+- Adds video playback and audio recording support for all platforms [Desktop]
+- Adds better localhost detection with ipv4 and ipv6
+- Message info summary now shows human readable dates
+- Tapping a message in iOS skin will show a timestamp
+
+## Fixes
+
+- Fixed issue where text cursor is blinking and BlueBubbles is not the active window
+- Fixed missing scrollbars
+- Fixed non-FCM servers not allowing to proceed with setup
+- Fixed contacts not sorted alphabetically when adding to a group chat
+- Fixed colors on switches in chat details
+- Fixed esc key not backing out of photo fullscreen view
+- Improved applying of window effects
+- Fixed issues with multiple instances on Linux
+- Fixed crash when replying to a notification on Android <9
+- Fixed tapback options not visible for long messages
+- Improved readability of contact options in chat details
+- Fixed attachments not getting cleared after sharing to the app
+- Fixed keyboard glitches when editing a message
+
 ## 1.12.3
 
 ### Enhancements
