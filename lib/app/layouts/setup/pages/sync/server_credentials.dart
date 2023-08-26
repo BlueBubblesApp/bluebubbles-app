@@ -485,7 +485,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       final args = GoogleSignInArgs(
           clientId: fdb.getClientId()!,
           redirectUri: 'http://localhost:8641/oauth/callback',
-          scope: 'https://www.googleapis.com/auth/cloudplatformprojects');
+          scope: 'https://www.googleapis.com/auth/cloudplatformprojects https://www.googleapis.com/auth/firebase https://www.googleapis.com/auth/datastore'
+      );
       try {
         final result = await DesktopWebviewAuth.signIn(args);
         token = result?.accessToken;

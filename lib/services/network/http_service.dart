@@ -379,7 +379,12 @@ class HttpService extends GetxService {
       final response = await dio.post(
           "$apiRoot/chat/new",
           queryParameters: buildQueryParams(),
-          data: {"addresses": addresses, "message": message, "service": service},
+          data: {
+            "addresses": addresses,
+            "message": message,
+            "service": service,
+            "method": ss.settings.enablePrivateAPI.value ? 'private-api' : 'apple-script'
+          },
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
