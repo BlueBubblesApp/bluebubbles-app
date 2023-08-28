@@ -73,7 +73,7 @@ parts:
     override-build: |
       set -eux
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      cp -r ./* "$SNAPCRAFT_PART_INSTALL"/bin/
+      cp -r ./* $SNAPCRAFT_PART_INSTALL/bin/
       mv lib/libobjectbox.so $SNAPCRAFT_PART_INSTALL/usr/lib/
     stage-packages:
       - freeglut3
@@ -93,7 +93,7 @@ parts:
       craftctl default
       ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22 nvidia-core22
     prime:
-    - bin/graphics-core22-wrapper
+      - bin/graphics-core22-wrapper
 
   cleanup:
     after:
@@ -105,7 +105,7 @@ parts:
     override-prime: |
       set -eux
       for snap in "core22" "gtk-common-themes"; do
-          cd "/snap/$snap/current" && find . -type f,l -exec rm -rf "$SNAPCRAFT_PRIME/{}" \;
+          cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
 
 slots:
