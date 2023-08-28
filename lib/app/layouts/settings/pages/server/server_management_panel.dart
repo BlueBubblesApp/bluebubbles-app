@@ -620,9 +620,13 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   SettingsTile(
                       leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.down_arrow, materialIcon: Icons.download),
                       title: "Fetch Firebase Config",
-                      subtitle: "Forcefully fetch current Firebase Config from server",
+                      subtitle: socket.state.value == SocketState.connected
+                          ? "Forcefully fetch current Firebase Config from server"
+                          : "Disconnected, cannot fetch",
                       backgroundColor: tileColor,
                       onTap: () async {
+                        if (socket.state.value != SocketState.connected) return;
+
                         await fdb.fetchFirebaseConfig();
                       },
                   ),
@@ -972,13 +976,17 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               ),
                               SettingsTile(
                                 title: "Check for Server Updates",
-                                subtitle: "Check for new BlueBubbles Server updates",
+                                subtitle: socket.state.value == SocketState.connected
+                                    ? "Check for new BlueBubbles Server updates"
+                                    : "Disconnected, cannot check for updates",
                                 backgroundColor: tileColor,
                                 leading: const SettingsLeadingIcon(
                                   iosIcon: CupertinoIcons.desktopcomputer,
                                   materialIcon: Icons.dvr,
                                 ),
                                 onTap: () async {
+                                  if (socket.state.value != SocketState.connected) return;
+
                                   await ss.checkServerUpdate();
                                 },
                               ),

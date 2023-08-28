@@ -57,56 +57,58 @@ class NetworkTasks {
 
     final schemes = ['https', 'http'];
 
-    await http.serverInfo().then((response) async {
-      List<String> localIpv4s = ((response.data?['data']?['local_ipv4s'] ?? []) as List).cast<String>();
-      List<String> localIpv6s = ((response.data?['data']?['local_ipv6s'] ?? []) as List).cast<String>();
-      String? address;
-      if (ss.settings.useLocalIpv6.value) {
-        for (String ip in localIpv6s) {
-          for (String scheme in schemes) {
-            String addr = "$scheme://[$ip]:${ss.settings.localhostPort.value!}";
-            try {
-              Response response = await http.dio.get(addr);
-              if (response.data.toString().contains("BlueBubbles")) {
-                address = addr;
-                break;
+    try {
+      await http.serverInfo().then((response) async {
+        List<String> localIpv4s = ((response.data?['data']?['local_ipv4s'] ?? []) as List).cast<String>();
+        List<String> localIpv6s = ((response.data?['data']?['local_ipv6s'] ?? []) as List).cast<String>();
+        String? address;
+        if (ss.settings.useLocalIpv6.value) {
+          for (String ip in localIpv6s) {
+            for (String scheme in schemes) {
+              String addr = "$scheme://[$ip]:${ss.settings.localhostPort.value!}";
+              try {
+                Response response = await http.dio.get(addr);
+                if (response.data.toString().contains("BlueBubbles")) {
+                  address = addr;
+                  break;
+                }
+              } catch (ex) {
+                Logger.debug('Failed to connect to localhost addres: $addr');
               }
-            } catch (ex) {
-              Logger.debug('Failed to connect to localhost addres: $addr');
             }
+            if (address != null) break;
           }
-          if (address != null) break;
         }
-      }
-      if (address == null) {
-        for (String ip in localIpv4s) {
-          for (String scheme in schemes) {
-            String addr = "$scheme://$ip:${ss.settings.localhostPort.value!}";
-            try {
-              final response = await http.dio.get(addr);
-              if (response.data.toString().contains("BlueBubbles")) {
-                address = addr;
-                break;
+        if (address == null) {
+          for (String ip in localIpv4s) {
+            for (String scheme in schemes) {
+              String addr = "$scheme://$ip:${ss.settings.localhostPort.value!}";
+              try {
+                final response = await http.dio.get(addr);
+                if (response.data.toString().contains("BlueBubbles")) {
+                  address = addr;
+                  break;
+                }
+              } catch (ex) {
+                Logger.debug('Failed to connect to localhost addres: $addr');
               }
-            } catch (ex) {
-              Logger.debug('Failed to connect to localhost addres: $addr');
             }
+            if (address != null) break;
           }
-          if (address != null) break;
-        }
-      }
-
-      if (address != null) {
-        Logger.debug('Localhost Detected. Connected to $address');
-        if (createSnackbar) {
-          showSnackbar('Localhost Detected', 'Connected to $address');
         }
 
-        http.originOverride = address;
-      } else {
-        http.originOverride = null;
-      }
-    });
+        if (address != null) {
+          Logger.debug('Localhost Detected. Connected to $address');
+          if (createSnackbar) {
+            showSnackbar('Localhost Detected', 'Connected to $address');
+          }
+
+          http.originOverride = address;
+        } else {
+          http.originOverride = null;
+        }
+      });
+    } catch (_) {}
 
     if (http.originOverride != null) return;
 
