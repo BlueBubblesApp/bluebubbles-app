@@ -21,31 +21,33 @@ class ScrollbarWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) => !kIsDesktop && !kIsWeb
       ? child
-      : ImprovedScrolling(
-          enableKeyboardScrolling: true,
-          enableMMBScrolling: true,
-          mmbScrollConfig: MMBScrollConfig(
-            customScrollCursor: DefaultCustomScrollCursor(
-              cursorColor: context.textTheme.labelLarge!.color!,
-              backgroundColor: context.theme.colorScheme.background,
-              borderColor: context.textTheme.headlineMedium!.color!,
+      : ExcludeFocus(
+          child: ImprovedScrolling(
+            enableKeyboardScrolling: true,
+            enableMMBScrolling: true,
+            mmbScrollConfig: MMBScrollConfig(
+              customScrollCursor: DefaultCustomScrollCursor(
+                cursorColor: context.textTheme.labelLarge!.color!,
+                backgroundColor: context.theme.colorScheme.background,
+                borderColor: context.textTheme.headlineMedium!.color!,
+              ),
             ),
-          ),
-          scrollController: controller,
-          child: showScrollbar
-              ? RawScrollbar(
-                  controller: controller,
-                  thumbColor: context.theme.colorScheme.properOnSurface.withOpacity(0.3),
-                  thickness: 10,
-                  radius: const Radius.circular(5),
-                  child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(context).copyWith(scrollbars: !showScrollbar),
+            scrollController: controller,
+            child: showScrollbar
+                ? RawScrollbar(
+                    controller: controller,
+                    thumbColor: context.theme.colorScheme.properOnSurface.withOpacity(0.3),
+                    thickness: 10,
+                    radius: const Radius.circular(5),
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: !showScrollbar),
+                      child: child,
+                    ),
+                  )
+                : ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(scrollbars: showScrollbar),
                     child: child,
                   ),
-                )
-              : ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(scrollbars: showScrollbar),
-                  child: child,
-                ),
+          ),
         );
 }
