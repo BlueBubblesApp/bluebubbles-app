@@ -76,7 +76,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   set replyToMessage(Tuple2<Message, int>? m) {
     _replyToMessage.value = m;
     if (m != null) {
-      focusNode.requestFocus();
+      lastFocusedNode.requestFocus();
     }
   }
   final focusNode = FocusNode();
