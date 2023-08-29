@@ -313,7 +313,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Icon(
-                      Icons.delete_forever,
+                      Icons.delete_forever_outlined,
                       color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
