@@ -633,7 +633,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         subjectTextController: subjectController,
                         textController: textController,
                         controller: fakeController.value,
-                        recorderController: RecorderController(),
+                        recorderController: null,
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
