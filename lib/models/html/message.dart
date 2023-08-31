@@ -210,6 +210,10 @@ class Message {
   }
 
   Message save({Chat? chat, bool updateIsBookmarked = false}) {
+    // Save the participant & set the handle ID to the new participant
+    if (handle == null && handleId != null) {
+      handle = Handle.findOne(originalROWID: handleId);
+    }
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     WebListeners.notifyMessage(this, chat: chat);
     return this;
@@ -217,6 +221,10 @@ class Message {
 
   static Future<List<Message>> bulkSaveNewMessages(Chat chat, List<Message> messages) async {
     for (Message m in messages) {
+      // Save the participant & set the handle ID to the new participant
+      if (m.handle == null && m.handleId != null) {
+        m.handle = Handle.findOne(originalROWID: m.handleId);
+      }
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       WebListeners.notifyMessage(m, chat: chat);
     }
@@ -225,6 +233,10 @@ class Message {
 
   static List<Message> bulkSave(List<Message> messages) {
     for (Message m in messages) {
+      // Save the participant & set the handle ID to the new participant
+      if (m.handle == null && m.handleId != null) {
+        m.handle = Handle.findOne(originalROWID: m.handleId);
+      }
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       WebListeners.notifyMessage(m);
     }
@@ -232,6 +244,9 @@ class Message {
   }
 
   static Future<Message> replaceMessage(String? oldGuid, Message newMessage, {bool awaitNewMessageEvent = true, Chat? chat}) async {
+    if (newMessage.handle == null && newMessage.handleId != null) {
+      newMessage.handle = Handle.findOne(originalROWID: newMessage.handleId);
+    }
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     WebListeners.notifyMessage(newMessage, tempGuid: oldGuid, chat: chat);
     return newMessage;
@@ -323,7 +338,7 @@ class Message {
 
     String? other = "someone";
     if (otherHandle != null && isParticipantEvent) {
-      other = Handle.findOne(id: otherHandle)?.displayName;
+      other = Handle.findOne(originalROWID: otherHandle)?.displayName ?? other;
     }
 
     if (itemType == 1 && groupActionType == 1) {

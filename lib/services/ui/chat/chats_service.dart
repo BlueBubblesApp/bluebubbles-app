@@ -84,17 +84,16 @@ class ChatsService extends GetxService {
         temp = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
 
-      for (Chat c in temp) {
-        cm.createChatController(c);
-      }
-      newChats.addAll(temp);
-
       if (kIsWeb) {
-        webCachedHandles.addAll(chats.map((e) => e.participants).flattened.toList());
+        webCachedHandles.addAll(temp.map((e) => e.participants).flattened.toList());
         final ids = webCachedHandles.map((e) => e.address).toSet();
         webCachedHandles.retainWhere((element) => ids.remove(element.address));
       }
 
+      for (Chat c in temp) {
+        cm.createChatController(c);
+      }
+      newChats.addAll(temp);
       newChats.sort(Chat.sort);
       chats.value = newChats;
       loadedChatBatch.value = true;
