@@ -73,6 +73,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
       || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
   bool get showAvatar => (!iOS || chat.isGroup) && !samsung;
+  bool isEditing(int part) => message.isFromMe! && widget.cvController.editing.firstWhereOrNull((e2) => e2.item1.guid == message.guid! && e2.item2.part == part) != null;
 
   List<MessagePart> messageParts = [];
   List<RxDouble> replyOffsets = [];
@@ -427,7 +428,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                           part: e,
                                                           child: GestureDetector(
                                                             behavior: HitTestBehavior.deferToChild,
-                                                            onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                                            onHorizontalDragUpdate: !canSwipeToReply || isEditing(e.part) ? null : (details) {
                                                               if (ReplyScope.maybeOf(context) != null) return;
                                                               final offset = replyOffsets[index];
                                                               offset.value += details.delta.dx * 0.5;
@@ -443,7 +444,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                 gaveHapticFeedback = false;
                                                               }
                                                             },
-                                                            onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                                            onHorizontalDragEnd: !canSwipeToReply || isEditing(e.part) ? null : (details) {
                                                               if (ReplyScope.maybeOf(context) != null) return;
                                                               final offset = replyOffsets[index];
                                                               if (offset.value.abs() >= SlideToReply.replyThreshold) {
@@ -451,7 +452,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                               }
                                                               offset.value = 0;
                                                             },
-                                                            onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                                            onHorizontalDragCancel: !canSwipeToReply || isEditing(e.part) ? null : () {
                                                               if (ReplyScope.maybeOf(context) != null) return;
                                                               replyOffsets[index].value = 0;
                                                             },
