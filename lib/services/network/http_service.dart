@@ -788,6 +788,34 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get a single handle's iMessage state by [address]
+  Future<Response> handleiMessageState(String address, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/handle/availability/imessage",
+          queryParameters: buildQueryParams({
+            "address": address,
+          }),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get a single handle's FaceTime state by [address]
+  Future<Response> handleFaceTimeState(String address, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/handle/availability/facetime",
+          queryParameters: buildQueryParams({
+            "address": address,
+          }),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get all icloud contacts
   Future<Response> contacts({bool withAvatars = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
