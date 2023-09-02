@@ -113,32 +113,16 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       }
       initialized = true;
       if (ss.settings.scrollToLastUnread.value && chat.lastReadMessageGuid != null) {
-        // Give the UI a chance to render
-        final message = Message.findOne(guid: chat.lastReadMessageGuid);
-        final query = (messageBox.query(Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
-          ..link(Message_.chat, Chat_.id.equals(chat.id!))
-          ..order(Message_.dateCreated, flags: Order.descending))
-            .build();
-        final ids = await query.findIdsAsync();
-        final pos = ids.indexOf(message!.id!);
-        // make sure the message is not in view
-        if (pos != -1 && !(getActiveMwc(message.guid!)?.built ?? false)) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (getActiveMwc(chat.lastReadMessageGuid!)?.built ?? false) return;
           internalSmartReplies['scroll-last-read'] = _buildReply("Jump to oldest unread", onTap: () async {
             if (jumpingToOldestUnread.value) return;
-            int index = _messages.indexWhere((element) => element.guid == message.guid);
-            if (index == -1) {
-              await loadNextChunk(limit: pos + 10);
-            }
-            index = _messages.indexWhere((element) => element.guid == message.guid);
-            if (index != -1) {
-              await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
-              scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
-            } else {
-              showSnackbar("Error", "Failed to find message!");
-            }
+            jumpingToOldestUnread.value = true;
+            await jumpToMessage(chat.lastReadMessageGuid!);
             internalSmartReplies.remove('scroll-last-read');
+            jumpingToOldestUnread.value = false;
           });
-        }
+        });
       }
     });
   }
