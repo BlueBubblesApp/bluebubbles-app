@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
@@ -51,6 +52,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   final listKey = GlobalKey<SliverAnimatedListState>();
   final RxBool dragging = false.obs;
   final RxBool latestMessageDeliveredState = false.obs;
+  final RxBool jumpingToOldestUnread = false.obs;
 
   ConversationViewController get controller => widget.controller;
   AutoScrollController get scrollController => controller.scrollController;
@@ -110,31 +112,28 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         updateReplies();
       }
       initialized = true;
-      if (ss.settings.scrollToLastUnread.value) {
+      if (ss.settings.scrollToLastUnread.value && chat.lastReadMessageGuid != null) {
         // Give the UI a chance to render
-        Future.delayed(const Duration(milliseconds: 100), () async {
-          if (chat.lastReadMessageGuid != null) {
-            Message? m = _messages.firstWhereOrNull((element) => element.guid == chat.lastReadMessageGuid);
-            if (m == null) {
-              // we need to load messages up to the guid in the background
-              bool stop = false;
-              while (!stop) {
-                await loadNextChunk();
-                m = _messages.firstWhereOrNull((element) => element.guid == chat.lastReadMessageGuid);
-                stop = m != null;
-              }
+        final message = Message.findOne(guid: chat.lastReadMessageGuid);
+        final query = (messageBox.query(Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
+          ..link(Message_.chat, Chat_.id.equals(chat.id!))
+          ..order(Message_.dateCreated, flags: Order.descending))
+            .build();
+        final ids = await query.findIdsAsync();
+        final pos = ids.indexOf(message!.id!);
+        // make sure the message is not in view
+        if (pos != -1 && !(getActiveMwc(message.guid!)?.built ?? false)) {
+          internalSmartReplies['scroll-last-read'] = _buildReply("Jump to oldest unread", onTap: () async {
+            if (jumpingToOldestUnread.value) return;
+            int index = _messages.indexWhere((element) => element.guid == message.guid);
+            if (index == -1) {
+              await loadNextChunk(limit: pos);
             }
-            // make sure the message is not in view
-            if (m != null && !(getActiveMwc(m.guid!)?.built ?? false)) {
-              internalSmartReplies['scroll-last-read'] = _buildReply("Jump to oldest unread", onTap: () async {
-                final index = _messages.indexOf(m!);
-                await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
-                scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
-                internalSmartReplies.remove('scroll-last-read');
-              });
-            }
-          }
-        });
+            index = _messages.indexWhere((element) => element.guid == message.guid);
+            await jumpToMessage(index);
+            internalSmartReplies.remove('scroll-last-read');
+          });
+        }
       }
     });
   }
@@ -161,6 +160,15 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       }).catchError((error) async {
         Logger.error('Failed to get focus state! Error: ${error.toString()}');
       });
+    }
+  }
+
+  Future<void> jumpToMessage(int index) async {
+    if (index != -1) {
+      await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+      scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
+    } else {
+      showSnackbar("Error", "Failed to find message!");
     }
   }
 
@@ -199,12 +207,12 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
   }
 
-  Future<void> loadNextChunk() async {
+  Future<void> loadNextChunk({int limit = 25}) async {
     if (noMoreMessages || fetching) return;
     fetching = true;
 
     // Start loading the next chunk of messages
-    noMoreMessages = !(await messageService.loadChunk(_messages.length, controller).catchError((e) {
+    noMoreMessages = !(await messageService.loadChunk(_messages.length, controller, limit: limit).catchError((e) {
       Logger.error("Failed to fetch message chunk! $e");
       return true;
     }));
@@ -308,14 +316,14 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       child: Center(
         child: Padding(
           padding: const EdgeInsets.only(bottom: 1.5, left: 13.0, right: 13.0),
-          child: RichText(
+          child: Obx(() => RichText(
             text: TextSpan(
               children: MessageHelper.buildEmojiText(
-                text,
+                jumpingToOldestUnread.value && text == "Jump to oldest unread" ? "Jumping to oldest unread..." : text,
                 context.theme.extension<BubbleText>()!.bubbleText,
               ),
             ),
-          ),
+          )),
         ),
       ),
     ),

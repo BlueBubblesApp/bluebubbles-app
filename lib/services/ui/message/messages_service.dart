@@ -141,19 +141,19 @@ class MessagesService extends GetxController {
     removeFunc.call(toRemove);
   }
 
-  Future<bool> loadChunk(int offset, ConversationViewController controller) async {
+  Future<bool> loadChunk(int offset, ConversationViewController controller, {int limit = 25}) async {
     isFetching = true;
     List<Message> _messages = [];
     offset = offset + struct.reactions.length;
     try {
-      _messages = await Chat.getMessagesAsync(chat, offset: offset);
+      _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
       if (_messages.isEmpty) {
         // get from server and save
-        final fromServer = await cm.getMessages(chat.guid, offset: offset);
+        final fromServer = await cm.getMessages(chat.guid, offset: offset, limit: limit);
         final temp = await MessageHelper.bulkAddMessages(chat, fromServer, checkForLatestMessageText: false);
         if (!kIsWeb) {
           // re-fetch from the DB because it will find handles / associated messages for us
-          _messages = await Chat.getMessagesAsync(chat, offset: offset);
+          _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
         } else {
           final reactions = temp.where((e) => e.associatedMessageGuid != null);
           for (Message m in reactions) {
