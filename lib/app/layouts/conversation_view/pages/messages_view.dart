@@ -47,7 +47,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   RxMap<String, Widget> internalSmartReplies = <String, Widget>{}.obs;
 
   late final messageService = widget.customService ?? ms(chat.guid)
-    ..init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
+    ..init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage, jumpToMessage);
   final smartReply = GoogleMlKit.nlp.smartReply();
   final listKey = GlobalKey<SliverAnimatedListState>();
   final RxBool dragging = false.obs;
@@ -70,7 +70,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         _messages = [];
         // Reload the state after refreshing
         messageService.reload();
-        messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
+        messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage, jumpToMessage);
         setState(() {});
       } else if (e.item1 == "add-custom-smartreply") {
         if (e.item2 != null && internalSmartReplies['attach-recent'] == null) {
@@ -127,10 +127,15 @@ class MessagesViewState extends OptimizedState<MessagesView> {
             if (jumpingToOldestUnread.value) return;
             int index = _messages.indexWhere((element) => element.guid == message.guid);
             if (index == -1) {
-              await loadNextChunk(limit: pos);
+              await loadNextChunk(limit: pos + 10);
             }
             index = _messages.indexWhere((element) => element.guid == message.guid);
-            await jumpToMessage(index);
+            if (index != -1) {
+              await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+              scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
+            } else {
+              showSnackbar("Error", "Failed to find message!");
+            }
             internalSmartReplies.remove('scroll-last-read');
           });
         }
@@ -163,7 +168,24 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
   }
 
-  Future<void> jumpToMessage(int index) async {
+  Future<void> jumpToMessage(String guid) async {
+    // check if the message is already loaded
+    int index = _messages.indexWhere((element) => element.guid == guid);
+    if (index != -1) {
+      await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+      scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
+      return;
+    }
+    // otherwise fetch until it is loaded
+    final message = Message.findOne(guid: guid);
+    final query = (messageBox.query(Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
+      ..link(Message_.chat, Chat_.id.equals(chat.id!))
+      ..order(Message_.dateCreated, flags: Order.descending))
+        .build();
+    final ids = await query.findIdsAsync();
+    final pos = ids.indexOf(message!.id!);
+    await loadNextChunk(limit: pos + 10);
+    index = _messages.indexWhere((element) => element.guid == guid);
     if (index != -1) {
       await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
       scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));

@@ -24,6 +24,7 @@ class MessagesService extends GetxController {
   late Function(Message) newFunc;
   late Function(Message, {String? oldGuid}) updateFunc;
   late Function(Message) removeFunc;
+  late Function(String) jumpToMessage;
 
   final String tag;
   MessagesService(this.tag);
@@ -39,13 +40,14 @@ class MessagesService extends GetxController {
   Message? get mostRecent => (struct.messages.toList()
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
-  void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage) {
+  void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage, Function(String) jumpToMessageFunc) {
     chat = c;
     Get.put<String>(tag, tag: 'lastReloadedChat');
 
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
     newFunc = onNewMessage;
+    jumpToMessage = jumpToMessageFunc;
 
     // watch for new messages
     if (!_init) {
