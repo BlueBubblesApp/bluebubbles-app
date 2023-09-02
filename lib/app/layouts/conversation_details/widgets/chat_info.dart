@@ -486,7 +486,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
             Padding(
               padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
               child: Text(
-                "${chat.participants.length} ${iOS ? "MEMBERS" : "OTHER PEOPLE"}",
+                "${chat.participants.length} ${iOS ? "OTHER MEMBERS" : "OTHER PEOPLE"}",
                 style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)
               ),
             ),
