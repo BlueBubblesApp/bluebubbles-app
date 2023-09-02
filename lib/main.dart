@@ -237,6 +237,12 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
           store = await openStore(directory: objectBoxDirectory.path);
         } catch (e, s) {
+          if (Platform.isLinux) {
+            Logger.debug("Another instance is probably running. Sending foreground signal");
+            final instanceFile = File(join(fs.appDocDir.path, '.instance'));
+            instanceFile.openSync(mode: FileMode.write).closeSync();
+            exit(0);
+          }
           Logger.error(e);
           Logger.error(s);
         }

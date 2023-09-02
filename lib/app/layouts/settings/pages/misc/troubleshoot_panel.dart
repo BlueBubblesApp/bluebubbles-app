@@ -297,7 +297,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                             subtitle: basename(savedLogs[index].path),
                             onTap: () async => await launchUrl(Uri.file(savedLogs[index].path)),
                             trailing: IconButton(
-                              icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete),
+                              icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
                               onPressed: () {
                                 savedLogs[index].deleteSync();
                                 savedLogs.value =

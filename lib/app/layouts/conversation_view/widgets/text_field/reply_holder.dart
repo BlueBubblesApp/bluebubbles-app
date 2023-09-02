@@ -42,6 +42,7 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
                   onPressed: () {
                     widget.controller.replyToMessage = null;
                     widget.controller.scheduledDate.value = null;
+                    widget.controller.lastFocusedNode.requestFocus();
                   },
                   iconSize: 17,
                 ),

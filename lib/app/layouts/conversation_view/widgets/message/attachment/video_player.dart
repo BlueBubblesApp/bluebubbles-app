@@ -402,6 +402,13 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
   }
 
   @override
+  void dispose() {
+    player.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     if (videoController != null) {

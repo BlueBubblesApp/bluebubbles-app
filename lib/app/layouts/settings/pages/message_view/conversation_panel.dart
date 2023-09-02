@@ -1,22 +1,45 @@
+import 'package:audio_waveforms/audio_waveforms.dart' as aw;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart' hide PlatformFile;
 import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
 class ConversationPanel extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() => _ConversationPanelState();
 }
 
 class _ConversationPanelState extends OptimizedState<ConversationPanel> {
   final RxnBool gettingIcons = RxnBool(null);
+  final RxBool playingSendSound = false.obs;
+  final RxBool playingReceiveSound = false.obs;
+  late final dynamic sendPlayer;
+  late final dynamic receivePlayer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (kIsDesktop) {
+      sendPlayer = Player();
+      receivePlayer = Player();
+      (sendPlayer as Player).stream.playing.listen((value) => playingSendSound.value = value);
+      (receivePlayer as Player).stream.playing.listen((value) => playingReceiveSound.value = value);
+    } else {
+      sendPlayer = aw.PlayerController();
+      receivePlayer = aw.PlayerController();
+      (sendPlayer as aw.PlayerController).onPlayerStateChanged.listen((value) => playingSendSound.value = value == aw.PlayerState.playing);
+      (receivePlayer as aw.PlayerController).onPlayerStateChanged.listen((value) => playingReceiveSound.value = value == aw.PlayerState.playing);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +58,14 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.showDeliveryTimestamps.value = val;
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.showDeliveryTimestamps.value,
-                    title: "Show Delivery Timestamps",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          ss.settings.showDeliveryTimestamps.value = val;
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.showDeliveryTimestamps.value,
+                        title: "Show Delivery Timestamps",
+                        backgroundColor: tileColor,
+                      )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -51,16 +74,16 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.recipientAsPlaceholder.value = val;
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.recipientAsPlaceholder.value,
-                    title: "Show Chat Name as Placeholder",
-                    subtitle: "Changes the default hint text in the message box to display the recipient name",
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  )),
+                        onChanged: (bool val) {
+                          ss.settings.recipientAsPlaceholder.value = val;
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.recipientAsPlaceholder.value,
+                        title: "Show Chat Name as Placeholder",
+                        subtitle: "Changes the default hint text in the message box to display the recipient name",
+                        backgroundColor: tileColor,
+                        isThreeLine: true,
+                      )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -69,16 +92,16 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.alwaysShowAvatars.value = val;
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.alwaysShowAvatars.value,
-                    title: "Show Avatars in DM Chats",
-                    subtitle: "Shows contact avatars in direct messages rather than just in group messages",
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  )),
+                        onChanged: (bool val) {
+                          ss.settings.alwaysShowAvatars.value = val;
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.alwaysShowAvatars.value,
+                        title: "Show Avatars in DM Chats",
+                        subtitle: "Shows contact avatars in direct messages rather than just in group messages",
+                        backgroundColor: tileColor,
+                        isThreeLine: true,
+                      )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
@@ -89,16 +112,17 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.smartReply.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.smartReply.value,
-                      title: "Smart Suggestions",
-                      subtitle: "Shows smart reply suggestions above the message text field and detects various interactive content in message text",
-                      backgroundColor: tileColor,
-                      isThreeLine: true,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.smartReply.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.smartReply.value,
+                          title: "Smart Suggestions",
+                          subtitle:
+                              "Shows smart reply suggestions above the message text field and detects various interactive content in message text",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -107,16 +131,16 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.repliesToPrevious.value = val;
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.repliesToPrevious.value,
-                    title: "Show Replies To Previous Message",
-                    subtitle: "Shows replies to the previous message in the thread rather than the original",
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  )),
+                        onChanged: (bool val) {
+                          ss.settings.repliesToPrevious.value = val;
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.repliesToPrevious.value,
+                        title: "Show Replies To Previous Message",
+                        subtitle: "Shows replies to the previous message in the thread rather than the original",
+                        backgroundColor: tileColor,
+                        isThreeLine: true,
+                      )),
                   if (!kIsWeb)
                     Container(
                       color: tileColor,
@@ -130,16 +154,17 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       title: "Sync Group Chat Icons",
                       trailing: Obx(() => gettingIcons.value == null
                           ? const SizedBox.shrink()
-                          : gettingIcons.value == true ? Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
-                      ),
+                          : gettingIcons.value == true
+                              ? Container(
+                                  constraints: const BoxConstraints(
+                                    maxHeight: 20,
+                                    maxWidth: 20,
+                                  ),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                  ))
+                              : Icon(Icons.check, color: context.theme.colorScheme.outline)),
                       onTap: () async {
                         gettingIcons.value = true;
                         for (Chat c in chats.chats.where((c) => c.isGroup)) {
@@ -163,16 +188,16 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.scrollToLastUnread.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.scrollToLastUnread.value,
-                      title: "Store Last Read Message",
-                      subtitle: "Remembers the last opened message and allows automatically scrolling back to it if out of view",
-                      backgroundColor: tileColor,
-                      isThreeLine: true,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.scrollToLastUnread.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.scrollToLastUnread.value,
+                          title: "Store Last Read Message",
+                          subtitle: "Remembers the last opened message and allows automatically scrolling back to it if out of view",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        )),
                   if (!kIsWeb)
                     const SettingsSubtitle(
                       subtitle: "Note: Can result in degraded performance depending on how many unread messages there are.",
@@ -181,19 +206,17 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
               ),
               if (!kIsWeb)
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Sounds"),
+                    headerColor: headerColor, tileColor: tileColor, iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Sounds"),
               if (!kIsWeb)
-                Obx(() => SettingsSection(
-                  backgroundColor: tileColor,
-                  children: [
-                    if (ss.settings.sendSoundPath.value == null)
+                Obx(
+                  () => SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
                       SettingsTile(
-                        title: "Add Send Sound",
-                        subtitle: "Adds a sound to be played when sending a message",
+                        title: "${ss.settings.sendSoundPath.value == null ? "Add" : "Change"} Send Sound",
+                        subtitle: ss.settings.sendSoundPath.value != null
+                            ? basename(ss.settings.sendSoundPath.value!).substring("send-".length)
+                            : "Adds a sound to be played when sending a message",
                         onTap: () async {
                           FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio, withData: true);
                           if (result != null) {
@@ -205,30 +228,59 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                             ss.saveSettings();
                           }
                         },
+                        trailing: (ss.settings.sendSoundPath.value == null)
+                            ? const SizedBox.shrink()
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                      icon: playingSendSound.value
+                                          ? Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.stop : Icons.stop_outlined)
+                                          : Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow_outlined),
+                                      onPressed: () async {
+                                        if (sendPlayer is Player) {
+                                          final _sendPlayer = sendPlayer as Player;
+                                          if (playingSendSound.value) {
+                                            await _sendPlayer.stop();
+                                          } else {
+                                            await _sendPlayer.open(Media(ss.settings.sendSoundPath.value!));
+                                          }
+                                        } else if (sendPlayer is aw.PlayerController) {
+                                          final _sendPlayer = sendPlayer as aw.PlayerController;
+                                          if (playingSendSound.value) {
+                                            await _sendPlayer.stopPlayer();
+                                          } else {
+                                            await _sendPlayer.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: 1.0);
+                                            await _sendPlayer.startPlayer();
+                                          }
+                                        }
+                                      }),
+                                  IconButton(
+                                    icon: Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_outline),
+                                    onPressed: () async {
+                                      File file = File(ss.settings.sendSoundPath.value!);
+                                      if (await file.exists()) {
+                                        await file.delete();
+                                      }
+                                      ss.settings.sendSoundPath.value = null;
+                                      ss.saveSettings();
+                                    },
+                                  ),
+                                ],
+                              ),
                       ),
-                    if (ss.settings.sendSoundPath.value != null)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                       SettingsTile(
-                        title: "Delete Send Sound",
-                        onTap: () async {
-                          File file = File(ss.settings.sendSoundPath.value!);
-                          if (await file.exists()) {
-                            await file.delete();
-                          }
-                          ss.settings.sendSoundPath.value = null;
-                          ss.saveSettings();
-                        },
-                      ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
-                    if (ss.settings.receiveSoundPath.value == null)
-                      SettingsTile(
-                        title: "Add Receive Sound",
-                        subtitle: "Adds a sound to be played when receiving a message",
+                        title: "${ss.settings.receiveSoundPath.value == null ? "Add" : "Change"} Receive Sound",
+                        subtitle: ss.settings.receiveSoundPath.value != null
+                            ? basename(ss.settings.receiveSoundPath.value!).substring("receive-".length)
+                            : "Adds a sound to be played when receiving a message",
                         onTap: () async {
                           FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio, withData: true);
                           if (result != null) {
@@ -240,41 +292,66 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                             ss.saveSettings();
                           }
                         },
+                        trailing: (ss.settings.receiveSoundPath.value == null)
+                            ? const SizedBox.shrink()
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                      icon: playingReceiveSound.value
+                                          ? Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.stop : Icons.stop_outlined)
+                                          : Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow_outlined),
+                                      onPressed: () async {
+                                        if (receivePlayer is Player) {
+                                          final _receivePlayer = receivePlayer as Player;
+                                          if (playingReceiveSound.value) {
+                                            await _receivePlayer.stop();
+                                          } else {
+                                            await _receivePlayer.open(Media(ss.settings.receiveSoundPath.value!));
+                                          }
+                                        } else if (receivePlayer is aw.PlayerController) {
+                                          final _receivePlayer = receivePlayer as aw.PlayerController;
+                                          if (playingReceiveSound.value) {
+                                            await _receivePlayer.stopPlayer();
+                                          } else {
+                                            await _receivePlayer.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: 1.0);
+                                            await _receivePlayer.startPlayer();
+                                          }
+                                        }
+                                      }),
+                                  IconButton(
+                                    icon: Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_outline),
+                                    onPressed: () async {
+                                      File file = File(ss.settings.receiveSoundPath.value!);
+                                      if (await file.exists()) {
+                                        await file.delete();
+                                      }
+                                      ss.settings.receiveSoundPath.value = null;
+                                      ss.saveSettings();
+                                    },
+                                  ),
+                                ],
+                              ),
                       ),
-                    if (ss.settings.receiveSoundPath.value != null)
-                      SettingsTile(
-                        title: "Delete Receive Sound",
-                        onTap: () async {
-                          File file = File(ss.settings.receiveSoundPath.value!);
-                          if (await file.exists()) {
-                            await file.delete();
-                          }
-                          ss.settings.receiveSoundPath.value = null;
-                          ss.saveSettings();
-                        },
-                      ),
-                  ]
-                )),
+                    ],
+                  ),
+                ),
               SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Gestures"),
+                  headerColor: headerColor, tileColor: tileColor, iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Gestures"),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.autoOpenKeyboard.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.autoOpenKeyboard.value,
-                      title: "Auto-open Keyboard",
-                      subtitle: "Automatically open the keyboard when entering a chat",
-                      backgroundColor: tileColor,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.autoOpenKeyboard.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.autoOpenKeyboard.value,
+                          title: "Auto-open Keyboard",
+                          subtitle: "Automatically open the keyboard when entering a chat",
+                          backgroundColor: tileColor,
+                        )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
@@ -285,15 +362,15 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.swipeToCloseKeyboard.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.swipeToCloseKeyboard.value,
-                      title: "Swipe Message Box to Close Keyboard",
-                      subtitle: "Swipe down on the message box to hide the keyboard",
-                      backgroundColor: tileColor,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.swipeToCloseKeyboard.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.swipeToCloseKeyboard.value,
+                          title: "Swipe Message Box to Close Keyboard",
+                          subtitle: "Swipe down on the message box to hide the keyboard",
+                          backgroundColor: tileColor,
+                        )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
@@ -304,15 +381,15 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.swipeToOpenKeyboard.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.swipeToOpenKeyboard.value,
-                      title: "Swipe Message Box to Open Keyboard",
-                      subtitle: "Swipe up on the message box to show the keyboard",
-                      backgroundColor: tileColor,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.swipeToOpenKeyboard.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.swipeToOpenKeyboard.value,
+                          title: "Swipe Message Box to Open Keyboard",
+                          subtitle: "Swipe up on the message box to show the keyboard",
+                          backgroundColor: tileColor,
+                        )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
@@ -323,14 +400,14 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.hideKeyboardOnScroll.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.hideKeyboardOnScroll.value,
-                      title: "Hide Keyboard When Scrolling",
-                      backgroundColor: tileColor,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.hideKeyboardOnScroll.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.hideKeyboardOnScroll.value,
+                          title: "Hide Keyboard When Scrolling",
+                          backgroundColor: tileColor,
+                        )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
@@ -341,14 +418,14 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.openKeyboardOnSTB.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.openKeyboardOnSTB.value,
-                      title: "Open Keyboard After Tapping Scroll To Bottom",
-                      backgroundColor: tileColor,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.openKeyboardOnSTB.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.openKeyboardOnSTB.value,
+                          title: "Open Keyboard After Tapping Scroll To Bottom",
+                          backgroundColor: tileColor,
+                        )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
@@ -358,19 +435,19 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       ),
                     ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.doubleTapForDetails.value = val;
-                      if (val && ss.settings.enableQuickTapback.value) {
-                        ss.settings.enableQuickTapback.value = false;
-                      }
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.doubleTapForDetails.value,
-                    title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
-                    subtitle: "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  )),
+                        onChanged: (bool val) {
+                          ss.settings.doubleTapForDetails.value = val;
+                          if (val && ss.settings.enableQuickTapback.value) {
+                            ss.settings.enableQuickTapback.value = false;
+                          }
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.doubleTapForDetails.value,
+                        title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
+                        subtitle: "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
+                        backgroundColor: tileColor,
+                        isThreeLine: true,
+                      )),
                   if (!kIsDesktop && !kIsWeb)
                     Container(
                       color: tileColor,
@@ -381,14 +458,14 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsDesktop && !kIsWeb)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.sendWithReturn.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.sendWithReturn.value,
-                      title: "Send Message with Enter",
-                      backgroundColor: tileColor,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.sendWithReturn.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.sendWithReturn.value,
+                          title: "Send Message with Enter",
+                          backgroundColor: tileColor,
+                        )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -397,25 +474,37 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.scrollToBottomOnSend.value = val;
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.scrollToBottomOnSend.value,
-                    title: "Scroll To Bottom When Sending Messages",
-                    subtitle: "Scroll to the most recent messages in the chat when sending a new text",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          ss.settings.scrollToBottomOnSend.value = val;
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.scrollToBottomOnSend.value,
+                        title: "Scroll To Bottom When Sending Messages",
+                        subtitle: "Scroll to the most recent messages in the chat when sending a new text",
+                        backgroundColor: tileColor,
+                      )),
                 ],
               ),
             ],
           ),
         ),
-      ]
+      ],
     );
   }
 
   void saveSettings() {
     ss.saveSettings();
+  }
+
+  @override
+  void dispose() {
+    if (kIsDesktop) {
+      (sendPlayer as Player).dispose();
+      (receivePlayer as Player).dispose();
+    } else {
+      (sendPlayer as aw.PlayerController).dispose();
+      (receivePlayer as aw.PlayerController).dispose();
+    }
+    super.dispose();
   }
 }

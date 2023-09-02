@@ -120,6 +120,7 @@ class ChatsService extends GetxService {
       /* ----- IMESSAGE:// HANDLER ----- */
       final _appLinks = AppLinks();
       _appLinks.allStringLinkStream.listen((String string) async {
+        if (!string.startsWith("imessage://")) return;
         final uri = Uri.tryParse(string.replaceFirst("imessage://", "imessage:").replaceFirst("&body=", "?body=").replaceFirst(RegExp(r'/$'), ''));
         if (uri == null) return;
 

@@ -249,12 +249,16 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
 
     if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null && cm.isChatActive(chat.guid)) {
-      PlayerController controller = PlayerController();
-      controller.preparePlayer(
-        path: ss.settings.receiveSoundPath.value!, volume: 1.0
-      ).then((_) {
-        controller.startPlayer();
-      });
+      if (kIsDesktop) {
+        Player player = Player();
+        player.stream.completed
+            .firstWhere((completed) => completed)
+            .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
+        player.open(Media(ss.settings.receiveSoundPath.value!));
+      } else {
+        PlayerController controller = PlayerController();
+        controller.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: 1.0).then((_) => controller.startPlayer());
+      }
     }
   }
 

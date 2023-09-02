@@ -148,7 +148,7 @@ class ContactTile extends StatelessWidget {
           SlidableAction(
             label: 'Remove',
             backgroundColor: Colors.red,
-            icon: ss.settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
+            icon: ss.settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_outlined,
             onPressed: (_) async {
               showDialog(
                 context: context,
