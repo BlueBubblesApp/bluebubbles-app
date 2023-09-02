@@ -334,6 +334,7 @@ class Message {
 
   String get groupEventText {
     String text = "Unknown group event";
+    handle ??= getHandle();
     String name = handle?.displayName ?? 'You';
 
     String? other = "someone";
