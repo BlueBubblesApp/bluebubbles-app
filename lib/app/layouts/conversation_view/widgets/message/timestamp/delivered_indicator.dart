@@ -21,7 +21,7 @@ class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
 
 class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, MessageWidgetController> {
   Message get message => controller.message;
-  bool get showAvatar => (!iOS || (controller.cvController?.chat ?? cm.activeChat!.chat).isGroup) && !samsung;
+  bool get showAvatar => (controller.cvController?.chat ?? cm.activeChat!.chat).isGroup;
 
   @override
   void initState() {

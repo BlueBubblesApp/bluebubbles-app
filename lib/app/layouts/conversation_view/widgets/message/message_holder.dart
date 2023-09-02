@@ -72,7 +72,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       && !message.guid!.startsWith("error");
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
       || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
-  bool get showAvatar => (!iOS || chat.isGroup) && !samsung;
+  bool get showAvatar => chat.isGroup;
   bool isEditing(int part) => message.isFromMe! && widget.cvController.editing.firstWhereOrNull((e2) => e2.item1.guid == message.guid! && e2.item2.part == part) != null;
 
   List<MessagePart> messageParts = [];
