@@ -666,7 +666,7 @@ class NotificationsService extends GetxService {
   Future<void> clearDesktopNotificationsForChat(String chatGuid) async {
     await _lock.synchronized(() async {
       if (!notifications.containsKey(chatGuid)) return;
-      List<LocalNotification> toasts = notifications[chatGuid]!;
+      List<LocalNotification> toasts = [...notifications[chatGuid]!];
       for (LocalNotification toast in toasts) {
         await toast.close();
       }
