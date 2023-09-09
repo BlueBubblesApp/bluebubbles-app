@@ -311,7 +311,7 @@ class Settings {
     ss.settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     ss.settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     ss.settings.hideDividers.value = map['hideDividers'] ?? false;
-    ss.settings.scrollVelocity.value = (map['scrollVelocity'] ?? 1) as double;
+    ss.settings.scrollVelocity.value = map['scrollVelocity']?.toDouble() ?? 1;
     ss.settings.sendWithReturn.value = map['sendWithReturn'] ?? false;
     ss.settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     ss.settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
@@ -401,8 +401,8 @@ class Settings {
     ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
     ss.settings.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     ss.settings.windowEffect.value = kIsDesktop && Platform.isWindows ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled : WindowEffect.disabled;
-    ss.settings.windowEffectCustomOpacityLight.value = (map['windowEffectCustomOpacityLight'] ?? 0.5) as double;
-    ss.settings.windowEffectCustomOpacityDark.value = (map['windowEffectCustomOpacityDark'] ?? 0.5) as double;
+    ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
+    ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     ss.settings.save();
   }
