@@ -21,7 +21,7 @@ import 'package:synchronized/synchronized.dart';
 import 'package:timezone/timezone.dart';
 import 'package:universal_html/html.dart' hide File, Platform, Navigator;
 import 'package:universal_io/io.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:window_to_front/window_to_front.dart';
 
 NotificationsService notif = Get.isRegistered<NotificationsService>() ? Get.find<NotificationsService>() : Get.put(NotificationsService());
 
@@ -315,7 +315,7 @@ class NotificationsService extends GetxService {
 
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await windowManager.focus();
+          await WindowToFront.activate();
           return;
         }
 
@@ -327,7 +327,7 @@ class NotificationsService extends GetxService {
           );
         }
 
-        await windowManager.focus();
+        await WindowToFront.activate();
       };
 
       toast.onClickAction = (index) async {
@@ -404,7 +404,7 @@ class NotificationsService extends GetxService {
         // Show window and open the right chat
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await windowManager.focus();
+          await WindowToFront.activate();
           return;
         }
 
@@ -416,7 +416,7 @@ class NotificationsService extends GetxService {
           );
         }
 
-        await windowManager.focus();
+        await WindowToFront.activate();
 
         if (await File(path).exists()) {
           await File(path).delete();
@@ -429,14 +429,14 @@ class NotificationsService extends GetxService {
 
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await windowManager.focus();
+          await WindowToFront.activate();
           return;
         }
 
         chat.toggleHasUnread(false);
         EventDispatcher().emit('refresh', null);
 
-        await windowManager.focus();
+        await WindowToFront.activate();
 
         if (await File(path).exists()) {
           await File(path).delete();
@@ -484,7 +484,7 @@ class NotificationsService extends GetxService {
     allToast!.onClick = () async {
       notifications = {};
       notificationCounts = {};
-      await windowManager.focus();
+      await WindowToFront.activate();
     };
 
     allToast!.onClickAction = (index) async {
@@ -518,7 +518,7 @@ class NotificationsService extends GetxService {
 
       socketToast!.onClick = () async {
         socketToast = null;
-        await windowManager.focus();
+        await WindowToFront.activate();
         Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (BuildContext context) {
@@ -565,7 +565,7 @@ class NotificationsService extends GetxService {
 
       failedToast!.onClick = () async {
         failedToast = null;
-        await windowManager.focus();
+        await WindowToFront.activate();
         if (scheduled) {
           Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
@@ -622,7 +622,7 @@ class NotificationsService extends GetxService {
       );
 
       toast.onClick = () async {
-        await windowManager.focus();
+        await WindowToFront.activate();
       };
 
       await toast.show();

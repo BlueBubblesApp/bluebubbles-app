@@ -494,7 +494,7 @@ packages:
     description:
       path: "."
       ref: "webkit2gtk-4.1"
-      resolved-ref: "97f2259949dc0b4e7d6f2b8a1d3429ce32cfccd5"
+      resolved-ref: "9ca56f505d31d719b974c9c52ac50679c2a15629"
       url: "https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git"
     source: git
     version: "0.0.11"
@@ -3002,6 +3002,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.5"
+  window_to_front:
+    dependency: "direct main"
+    description:
+      name: window_to_front
+      sha256: "7aef379752b7190c10479e12b5fd7c0b9d92adc96817d9e96c59937929512aee"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   windows_taskbar:
     dependency: "direct main"
     description:
