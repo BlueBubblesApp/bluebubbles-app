@@ -1076,6 +1076,18 @@ class HttpService extends GetxService {
     }, checkOrigin: false);
   }
 
+  Future<Response> getGoogleInfo(String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
+        queryParameters: {
+          "access_token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
   Future<Response> getServerUrlRTDB(String rtdb, String accessToken) async {
     return runApiGuarded(() async {
       final response = await dio.get(
