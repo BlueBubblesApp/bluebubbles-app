@@ -179,7 +179,7 @@ class ChatsService extends GetxService {
       c.hasUnreadMessage = false;
       mcs.invokeMethod("clear-chat-notifs", {"chatGuid": c.guid});
       if (ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
-        http.markChatRead(c.guid);
+        backend.markRead(c.guid);
       }
     }
     chatBox.putMany(_chats);

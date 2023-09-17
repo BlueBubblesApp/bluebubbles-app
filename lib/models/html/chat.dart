@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/html/attachment.dart';
@@ -287,9 +288,9 @@ class Chat {
     try {
       if (privateMark && ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
         if (!hasUnread && autoSendReadReceipts!) {
-          http.markChatRead(guid);
+          backend.markRead(guid);
         } else if (hasUnread) {
-          http.markChatUnread(guid);
+          backend.getRemoteService()?.markChatUnread(guid);
         }
       }
     } catch (_) {}
@@ -452,7 +453,7 @@ class Chat {
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
     if (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value) {
-      http.markChatRead(guid);
+      backend.markRead(guid);
     }
     return this;
   }

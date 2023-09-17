@@ -875,7 +875,7 @@ class Chat {
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
     if (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value) {
-      http.markChatRead(guid);
+      backend.markRead(guid);
     }
     return this;
   }
@@ -1011,8 +1011,8 @@ class Chat {
   }
 
   static Future<void> getIcon(Chat c, {bool force = false}) async {
-    if (!force && c.lockChatIcon) return;
-    final response = await http.getChatIcon(c.guid).catchError((err) async {
+    if ((!force && c.lockChatIcon) || backend.getRemoteService() == null) return;
+    final response = await backend.getRemoteService()!.getChatIcon(c.guid).catchError((err) async {
       Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
       return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
     });

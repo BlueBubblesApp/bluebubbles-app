@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -94,8 +95,8 @@ class SettingsService extends GetxService {
   }
 
   Future<Tuple4<int, int, String, int>> getServerDetails({bool refresh = false}) async {
-    if (refresh) {
-      final response = await http.serverInfo();
+    if (refresh && backend.getRemoteService() != null) {
+      final response = await backend.getRemoteService()!.serverInfo();
       if (response.statusCode == 200) {
         if (ss.settings.iCloudAccount.isEmpty && response.data['data']['detected_icloud'] is String) {
           ss.settings.iCloudAccount.value = response.data['data']['detected_icloud'];
@@ -173,9 +174,9 @@ class SettingsService extends GetxService {
   }
 
   Future<void> checkServerUpdate() async {
-    final response = await http.checkUpdate();
-    if (response.statusCode == 200) {
-      bool available = response.data['data']['available'] ?? false;
+    final response = await backend.getRemoteService()?.checkUpdate();
+    if (response?.statusCode == 200) {
+      bool available = response!.data['data']['available'] ?? false;
       Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
       if (!available || prefs.getString("server-update-check") == metadata['version']) return;
       showDialog(

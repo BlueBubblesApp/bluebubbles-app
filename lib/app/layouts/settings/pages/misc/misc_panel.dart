@@ -1,3 +1,4 @@
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -250,66 +251,68 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                   }),
                 ],
               ),
-              SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Networking"),
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  const SettingsTile(
-                    title: "API Timeout Duration",
-                    subtitle: "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
-                    isThreeLine: true,
-                  ),
-                  Obx(() =>
-                      SettingsSlider(
-                          startingVal: ss.settings.apiTimeout.value / 1000,
-                          update: (double val) {
-                            ss.settings.apiTimeout.value = val.toInt() * 1000;
-                          },
-                          onChangeEnd: (double val) {
-                            saveSettings();
-                            http.dio = Dio(BaseOptions(
-                              connectTimeout: const Duration(milliseconds: 15000),
-                              receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
-                              sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
-                            ));
-                            http.dio.interceptors.add(ApiInterceptor());
-                          },
-                          backgroundColor: tileColor,
-                          min: 5,
-                          max: 60,
-                          divisions: 11)),
-                  Padding(
-                    padding: const EdgeInsets.all(15),
-                    child: Obx(() => Text(
-                      "Note: Attachment uploads will timeout after ${ss.settings.apiTimeout.value ~/ 1000 * 12} seconds",
-                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                    )),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+              if (backend.getRemoteService() != null)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Networking"),
+              if (backend.getRemoteService() != null)
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    const SettingsTile(
+                      title: "API Timeout Duration",
+                      subtitle: "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
+                      isThreeLine: true,
                     ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.cancelQueuedMessages.toggle();
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.cancelQueuedMessages.value,
-                    title: "Cancel Queued Messages on Failure",
-                    subtitle: "Cancel messages queued to send in a chat if one fails before them",
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  )),
-                ],
-              ),
+                    Obx(() =>
+                        SettingsSlider(
+                            startingVal: ss.settings.apiTimeout.value / 1000,
+                            update: (double val) {
+                              ss.settings.apiTimeout.value = val.toInt() * 1000;
+                            },
+                            onChangeEnd: (double val) {
+                              saveSettings();
+                              http.dio = Dio(BaseOptions(
+                                connectTimeout: const Duration(milliseconds: 15000),
+                                receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+                                sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+                              ));
+                              http.dio.interceptors.add(ApiInterceptor());
+                            },
+                            backgroundColor: tileColor,
+                            min: 5,
+                            max: 60,
+                            divisions: 11)),
+                    Padding(
+                      padding: const EdgeInsets.all(15),
+                      child: Obx(() => Text(
+                        "Note: Attachment uploads will timeout after ${ss.settings.apiTimeout.value ~/ 1000 * 12} seconds",
+                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                      )),
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        ss.settings.cancelQueuedMessages.toggle();
+                        saveSettings();
+                      },
+                      initialVal: ss.settings.cancelQueuedMessages.value,
+                      title: "Cancel Queued Messages on Failure",
+                      subtitle: "Cancel messages queued to send in a chat if one fails before them",
+                      backgroundColor: tileColor,
+                      isThreeLine: true,
+                    )),
+                  ],
+                ),
               SettingsHeader(
                 headerColor: headerColor,
                 tileColor: tileColor,
