@@ -769,12 +769,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     try {
       for (Attachment? element in toDownload) {
         attachmentObs.value = element;
-        final response = await http.downloadAttachment(element!.guid!,
+        final response = await backend.downloadAttachment(element!.guid!,
             original: true, onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
         final file = PlatformFile(
           name: element.transferName!,
-          size: response.data.length,
-          bytes: response.data,
+          size: response!["data"].length,
+          bytes: response["data"],
         );
         await as.saveToDisk(file);
       }
@@ -846,15 +846,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     try {
       for (Attachment? element in toDownload) {
         attachmentObs.value = element;
-        final response = await http.downloadLivePhoto(element!.guid!,
+        final nameSplit = element!.transferName!.split(".");
+        await backend.downloadLivePhoto(element.guid!, "${nameSplit.take(nameSplit.length - 1).join(".")}.mov",
             onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
-        final nameSplit = element.transferName!.split(".");
-        final file = PlatformFile(
-          name: "${nameSplit.take(nameSplit.length - 1).join(".")}.mov",
-          size: response.data.length,
-          bytes: response.data,
-        );
-        await as.saveToDisk(file);
       }
       progress.value = 1;
       downloadingAttachments.value = false;

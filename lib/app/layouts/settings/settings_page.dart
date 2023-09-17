@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_remind
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -327,7 +328,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                 trailing: nextIcon,
                               );
                             }),
-                            if (ss.serverDetailsSync().item4 >= 205)
+                            if (backend.canSchedule())
                               Container(
                                 color: tileColor,
                                 child: Padding(
@@ -335,7 +336,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                 ),
                               ),
-                            if (ss.serverDetailsSync().item4 >= 205)
+                            if (backend.canSchedule())
                               SettingsTile(
                                 backgroundColor: tileColor,
                                 title: "Scheduled Messages",

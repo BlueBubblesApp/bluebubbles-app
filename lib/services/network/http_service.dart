@@ -116,6 +116,41 @@ class HttpBackend implements BackendService {
   Future<bool> setChatIcon(String guid, String path, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
     return (await http.setChatIcon(guid, path, onSendProgress: onSendProgress, cancelToken: cancelToken)).statusCode == 200;
   }
+
+  @override
+  Future<bool> deleteChatIcon(String guid, {CancelToken? cancelToken}) async {
+    return (await http.deleteChatIcon(guid, cancelToken: cancelToken)).statusCode == 200;
+  }
+
+  @override
+  bool supportsFocusStates() {
+    return ss.isMinMontereySync;
+  }
+
+  @override
+  Future<bool> downloadLivePhoto(String guid, String target, {void Function(int p1, int p2)? onReceiveProgress, CancelToken? cancelToken}) async {
+    var response = await http.downloadLivePhoto(guid, onReceiveProgress: onReceiveProgress, cancelToken: cancelToken);
+    if (response.statusCode != 200) {
+      return false;
+    }
+    final file = PlatformFile(
+      name: target,
+      size: response.data.length,
+      bytes: response.data,
+    );
+    await as.saveToDisk(file);
+    return true;
+  }
+
+  @override
+  bool canSchedule() {
+    return ss.serverDetailsSync().item4 >= 205;
+  }
+
+  @override
+  bool supportsFindMy() {
+    return ss.isMinCatalinaSync;
+  }
 }
 
 /// Class that manages foreground network requests from client to server, using

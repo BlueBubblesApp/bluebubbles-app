@@ -25,4 +25,9 @@ abstract class BackendService {
   bool canCancelUploads();
   Future<bool> canUploadGroupPhotos();
   Future<bool> setChatIcon(String guid, String path, {void Function(int, int)? onSendProgress, CancelToken? cancelToken});
+  Future<bool> deleteChatIcon(String guid, {CancelToken? cancelToken});
+  bool supportsFocusStates();
+  Future<bool> downloadLivePhoto(String guid, String target, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken});
+  bool canSchedule();
+  bool supportsFindMy();
 }

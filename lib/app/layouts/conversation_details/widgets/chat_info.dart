@@ -128,15 +128,11 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
       papi = await showMethodDialog("Group Icon Deletion Method");
     }
     if (papi == null) return;
-    try {
-      File file = File(chat.customAvatarPath!);
-      file.delete();
-    } catch (_) {}
-    chat.customAvatarPath = null;
+    chat.removeProfilePhoto();
     chat.save(updateCustomAvatarPath: true);
-    if (papi && ss.settings.enablePrivateAPI.value && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
-      final response = await http.deleteChatIcon(chat.guid);
-      if (response.statusCode == 200) {
+    if (papi && ss.settings.enablePrivateAPI.value && await backend.canUploadGroupPhotos()) {
+      final response = await backend.deleteChatIcon(chat.guid);
+      if (response) {
         showSnackbar("Notice", "Deleted group photo successfully!");
       } else {
         showSnackbar("Error", "Failed to delete group photo!");
