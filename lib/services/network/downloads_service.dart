@@ -1,3 +1,4 @@
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -96,7 +97,7 @@ class AttachmentDownloadController extends GetxController {
     if (attachment.guid == null || attachment.guid!.contains("temp")) return;
     isFetching = true;
     stopwatch.start();
-    var response = await http.downloadAttachment(attachment.guid!,
+    var response = await backend.downloadAttachment(attachment.guid!,
         onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!))).catchError((err) async {
       if (!kIsWeb) {
         File file = File(attachment.path);
@@ -110,66 +111,80 @@ class AttachmentDownloadController extends GetxController {
 
       error.value = true;
       attachmentDownloader._removeFromQueue(this);
-      return Response(requestOptions: RequestOptions(path: ''));
+      return null;
     });
-    if (response.statusCode != 200) return;
+    if (response == null) return;
     Uint8List bytes;
-    if (attachment.mimeType == "image/gif") {
-      bytes = await fixSpeedyGifs(response.data);
+    if (response["data"] != null) {
+      if (attachment.mimeType == "image/gif") {
+        bytes = await fixSpeedyGifs(response["data"]);
+      } else {
+        bytes = response["data"];
+      }
+      if (!kIsWeb && !kIsDesktop) {
+        await mcs.invokeMethod("download-file", {
+          "data": bytes,
+          "path": attachment.path,
+        });
+      }
+      attachment.webUrl = response["weburl"];
+      Logger.info("Finished fetching attachment");
+      stopwatch.stop();
+      Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
+
+      try {
+        // Compress the attachment
+        if (!kIsWeb) {
+          await as.loadAndGetProperties(attachment, actualPath: attachment.path);
+          attachment.save(null);
+        }
+      } catch (ex) {
+        // So what if it crashes here.... I don't care...
+      }
+
+      // Finish the downloader
+      attachmentDownloader._removeFromQueue(this);
+      attachment.bytes = bytes;
+      // Add attachment to sink based on if we got data
+
+      file.value = PlatformFile(
+        name: attachment.transferName!,
+        path: kIsWeb ? null : attachment.path,
+        size: bytes.length,
+        bytes: bytes,
+      );
+      for (Function f in completeFuncs) {
+        f.call(file.value);
+      }
+      if (kIsDesktop) {
+        if (attachment.bytes != null) {
+          File _file = await File(attachment.path).create(recursive: true);
+          await _file.writeAsBytes(attachment.bytes!.toList());
+        }
+      }
+      if (ss.settings.autoSave.value
+          && !kIsWeb
+          && !kIsDesktop
+          && !(attachment.isOutgoing ?? false)
+          && !(attachment.message.target?.isInteractive ?? false)) {
+        String filePath = "/storage/emulated/0/Download/";
+        if (attachment.mimeType?.startsWith("image") ?? false) {
+          await as.saveToDisk(file.value!, isAutoDownload: true);
+        } else if (file.value?.bytes != null) {
+          await File(join(filePath, file.value!.name)).writeAsBytes(file.value!.bytes!);
+        }
+      }
     } else {
-      bytes = response.data;
-    }
-    if (!kIsWeb && !kIsDesktop) {
-      await mcs.invokeMethod("download-file", {
-        "data": bytes,
-        "path": attachment.path,
-      });
-    }
-    attachment.webUrl = response.requestOptions.path;
-    Logger.info("Finished fetching attachment");
-    stopwatch.stop();
-    Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
-
-    try {
-      // Compress the attachment
-      if (!kIsWeb) {
-        await as.loadAndGetProperties(attachment, actualPath: attachment.path);
-        attachment.save(null);
-      }
-    } catch (ex) {
-      // So what if it crashes here.... I don't care...
-    }
-
-    // Finish the downloader
-    attachmentDownloader._removeFromQueue(this);
-    attachment.bytes = bytes;
-    // Add attachment to sink based on if we got data
-
-    file.value = PlatformFile(
-      name: attachment.transferName!,
-      path: kIsWeb ? null : attachment.path,
-      size: bytes.length,
-      bytes: bytes,
-    );
-    for (Function f in completeFuncs) {
-      f.call(file.value);
-    }
-    if (kIsDesktop) {
-      if (attachment.bytes != null) {
-        File _file = await File(attachment.path).create(recursive: true);
-        await _file.writeAsBytes(attachment.bytes!.toList());
-      }
-    }
-    if (ss.settings.autoSave.value
-        && !kIsWeb
-        && !kIsDesktop
-        && !(attachment.isOutgoing ?? false)
-        && !(attachment.message.target?.isInteractive ?? false)) {
-      String filePath = "/storage/emulated/0/Download/";
-      if (attachment.mimeType?.startsWith("image") ?? false) {
-        await as.saveToDisk(file.value!, isAutoDownload: true);
-      } else if (file.value?.bytes != null) {
-        await File(join(filePath, file.value!.name)).writeAsBytes(file.value!.bytes!);
+      Logger.info("Finished fetching attachment");
+      stopwatch.stop();
+      Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
+      var file = PlatformFile(
+        name: attachment.transferName!,
+        path: kIsWeb ? null : attachment.path,
+        size: attachment.totalBytes!,
+      );
+      for (Function f in completeFuncs) {
+        f.call(file);
       }
     }
   }

@@ -192,7 +192,7 @@ class ActionHandler extends GetxService {
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
     latestCancelToken = CancelToken();
-    http.sendAttachment(
+    backend.sendAttachment(
       c.guid,
       attachment.guid!,
       PlatformFile(name: attachment.transferName!, bytes: attachment.bytes, path: kIsWeb ? null : attachment.path, size: attachment.totalBytes ?? 0),
@@ -210,7 +210,7 @@ class ActionHandler extends GetxService {
       cancelToken: latestCancelToken,
     ).then((response) async {
       latestCancelToken = null;
-      final newMessage = Message.fromMap(response.data['data']);
+      final newMessage = Message.fromMap(response!);
 
       for (Attachment? a in newMessage.attachments) {
         if (a == null) continue;

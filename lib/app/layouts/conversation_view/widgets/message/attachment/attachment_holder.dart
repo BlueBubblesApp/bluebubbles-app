@@ -12,6 +12,7 @@ import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -160,7 +161,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
                                     ),
-                                    if (message.error == 0)
+                                    if (message.error == 0 && backend.canCancelUploads())
                                       TextButton(
                                         style: TextButton.styleFrom(
                                           visualDensity: VisualDensity.compact,

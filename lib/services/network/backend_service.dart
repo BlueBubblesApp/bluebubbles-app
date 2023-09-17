@@ -2,6 +2,7 @@ import 'package:bluebubbles/services/rustpush/rustpush_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:bluebubbles/models/global/platform_file.dart';
 
 BackendService backend = Get.isRegistered<BackendService>() ? Get.find<BackendService>() : Get.put(RustPushBackend());
 
@@ -18,4 +19,10 @@ abstract class BackendService {
   bool canEditUnsend();
   Future<Map<String, dynamic>?> unsend(String msgGuid, int part);
   Future<Map<String, dynamic>?> edit(String msgGuid, String text, int part);
+  Future<Map<String, dynamic>?> downloadAttachment(String guid, {void Function(int, int)? onReceiveProgress, bool original = false, CancelToken? cancelToken});
+  // returns the new message that was sent
+  Future<Map<String, dynamic>?> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken});
+  bool canCancelUploads();
+  Future<bool> canUploadGroupPhotos();
+  Future<bool> setChatIcon(String guid, String path, {void Function(int, int)? onSendProgress, CancelToken? cancelToken});
 }

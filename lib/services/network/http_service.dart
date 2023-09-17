@@ -80,6 +80,42 @@ class HttpBackend implements BackendService {
     }
     return response.data['data'];
   }
+
+  @override
+  Future<Map<String, dynamic>?> downloadAttachment(String guid, {void Function(int p1, int p2)? onReceiveProgress, bool original = false, CancelToken? cancelToken}) async {
+    var response = await http.downloadAttachment(guid, onReceiveProgress: onReceiveProgress, original: original, cancelToken: cancelToken);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    return {
+      "bytes": response.data,
+      "weburl": response.requestOptions.path
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>?> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int p1, int p2)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken}) async {
+    var response = await http.sendAttachment(chatGuid, tempGuid, file, onSendProgress: onSendProgress, method: method, effectId: effectId, subject: subject, selectedMessageGuid: selectedMessageGuid, partIndex: partIndex, isAudioMessage: isAudioMessage, cancelToken: cancelToken);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    return response.data['data'];
+  }
+
+  @override
+  bool canCancelUploads() {
+    return true;
+  }
+
+  @override
+  Future<bool> canUploadGroupPhotos() async {
+    return (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226;
+  }
+
+  @override
+  Future<bool> setChatIcon(String guid, String path, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+    return (await http.setChatIcon(guid, path, onSendProgress: onSendProgress, cancelToken: cancelToken)).statusCode == 200;
+  }
 }
 
 /// Class that manages foreground network requests from client to server, using

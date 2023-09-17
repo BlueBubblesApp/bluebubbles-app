@@ -1006,6 +1006,10 @@ class Chat {
     return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
+  String getIconPath(int responseLength) {
+    return "${fs.appDocDir.path}/avatars/${guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-$responseLength.jpg";
+  }
+
   static Future<void> getIcon(Chat c, {bool force = false}) async {
     if (!force && c.lockChatIcon) return;
     final response = await http.getChatIcon(c.guid).catchError((err) async {
@@ -1020,7 +1024,7 @@ class Chat {
       }
     } else {
       Logger.debug("Got chat icon for chat ${c.getTitle()}");
-      File file = File("${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${response.data.length}.jpg");
+      File file = File(c.getIconPath(response.data.length));
       if (!(await file.exists())) {
         await file.create(recursive: true);
       }
