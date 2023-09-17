@@ -679,32 +679,30 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                         SettingsSection(
                             backgroundColor: tileColor,
                             children: [
-                              if (backend.getRemoteService() != null)
-                                SettingsTile(
-                                  backgroundColor: tileColor,
-                                  onTap: () {
-                                    ns.pushAndRemoveSettingsUntil(
-                                      context,
-                                      BackupRestorePanel(),
-                                          (route) => route.isFirst,
-                                    );
-                                  },
-                                  trailing: nextIcon,
-                                  leading: const SettingsLeadingIcon(
-                                    iosIcon: CupertinoIcons.cloud_upload,
-                                    materialIcon: Icons.backup,
-                                  ),
-                                  title: "Backup & Restore",
-                                  subtitle: "Backup and restore all app settings and custom themes",
+                              SettingsTile(
+                                backgroundColor: tileColor,
+                                onTap: () {
+                                  ns.pushAndRemoveSettingsUntil(
+                                    context,
+                                    BackupRestorePanel(),
+                                        (route) => route.isFirst,
+                                  );
+                                },
+                                trailing: nextIcon,
+                                leading: const SettingsLeadingIcon(
+                                  iosIcon: CupertinoIcons.cloud_upload,
+                                  materialIcon: Icons.backup,
                                 ),
-                              if (backend.getRemoteService() != null)
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 65.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
+                                title: "Backup & Restore",
+                                subtitle: "Backup and restore all app settings and custom themes",
+                              ),
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 65.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                 ),
+                              ),
                               if (!kIsWeb && !kIsDesktop)
                                 SettingsTile(
                                   backgroundColor: tileColor,
