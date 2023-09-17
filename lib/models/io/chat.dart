@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:async_task/async_task.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
@@ -15,6 +16,7 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
+import 'package:supercharged/supercharged.dart';
 import 'package:universal_io/io.dart';
 
 /// Async method to get attachments from objectbox
@@ -655,9 +657,9 @@ class Chat {
       }
       if (privateMark && ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
         if (!hasUnread) {
-          http.markChatRead(guid);
+          backend.markRead(guid);
         } else if (hasUnread) {
-          http.markChatUnread(guid);
+          backend.getRemoteService()?.markChatUnread(guid);
         }
       }
     } catch (_) {}
@@ -883,7 +885,7 @@ class Chat {
     this.autoSendTypingIndicators = autoSendTypingIndicators;
     save(updateAutoSendTypingIndicators: true);
     if (!(autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
-      socket.sendMessage("stopped-typing", {"chatGuid": guid});
+      socket.stoppedTyping(guid);
     }
     return this;
   }

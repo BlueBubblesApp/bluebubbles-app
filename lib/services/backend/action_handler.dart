@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/file_utils.dart';
@@ -68,7 +69,7 @@ class ActionHandler extends GetxService {
   Future<void> sendMessage(Chat c, Message m, Message? selected, String? r) async {
     final completer = Completer<void>();
     if (r == null) {
-      http.sendMessage(
+      backend.sendMessage(
         c.guid,
         m.guid!,
         m.text!,
@@ -83,7 +84,7 @@ class ActionHandler extends GetxService {
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
       ).then((response) async {
-        final newMessage = Message.fromMap(response.data['data']);
+        final newMessage = Message.fromMap(response);
         try {
           await Message.replaceMessage(m.guid, newMessage);
           Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
@@ -104,8 +105,8 @@ class ActionHandler extends GetxService {
         completer.completeError(error);
       });
     } else {
-      http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, partIndex: m.associatedMessagePart).then((response) async {
-        final newMessage = Message.fromMap(response.data['data']);
+      backend.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, m.associatedMessagePart).then((response) async {
+        final newMessage = Message.fromMap(response);
         try {
           await Message.replaceMessage(m.guid, newMessage);
           Logger.info("Reaction match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");

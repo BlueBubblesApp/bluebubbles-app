@@ -12,6 +12,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -278,7 +279,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   );
                 }, childCount: clippedParticipants.length + 2),
               ),
-            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value && ss.serverDetailsSync().item4 >= 226)
+            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value && backend.canLeaveChat())
               SliverToBoxAdapter(
                 child: Builder(
                   builder: (context) {
@@ -321,8 +322,8 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                             );
                           }
                         );
-                        final response = await http.leaveChat(chat.guid);
-                        if (response.statusCode == 200) {
+                        final response = await backend.leaveChat(chat.guid);
+                        if (response) {
                           Get.back();
                           showSnackbar("Notice", "Left chat successfully!");
                         } else {

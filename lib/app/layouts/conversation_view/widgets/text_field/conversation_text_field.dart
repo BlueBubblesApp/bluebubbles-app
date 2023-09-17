@@ -279,10 +279,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       if (ss.settings.enablePrivateAPI.value &&
           (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
         if (_debounceTyping == null) {
-          socket.sendMessage("started-typing", {"chatGuid": chatGuid});
+          socket.startedTyping(chatGuid);
         }
         _debounceTyping = Timer(const Duration(seconds: 3), () {
-          socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
+          socket.stoppedTyping(chatGuid);
           _debounceTyping = null;
         });
       }
@@ -390,7 +390,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.subjectTextController.dispose();
     recorderController?.dispose();
     if (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value) {
-      socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
+      socket.stoppedTyping(chatGuid);
     }
 
     super.dispose();

@@ -5,9 +5,82 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
+import 'backend_service.dart';
 
 /// Get an instance of our [HttpService]
 HttpService http = Get.isRegistered<HttpService>() ? Get.find<HttpService>() : Get.put(HttpService());
+
+class HttpBackend implements BackendService {
+  @override
+  Future<Map<String, dynamic>> createChat(List<String> addresses, String? message, String service, {CancelToken? cancelToken}) async {
+    var response = await http.createChat(addresses, message, service, cancelToken: cancelToken);
+    return response.data["data"];
+  }
+  
+  @override
+  Future<Map<String, dynamic>> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
+    var response = await http.sendMessage(chatGuid, tempGuid, message, method: method, effectId: effectId, subject: subject, selectedMessageGuid: selectedMessageGuid, partIndex: partIndex, cancelToken: cancelToken);
+    return response.data["data"];
+  }
+  
+  @override
+  Future<bool> renameChat(String chatGuid, String newName) async {
+    return (await http.updateChat(chatGuid, newName)).statusCode == 200;
+  }
+
+  @override
+  Future<bool> chatParticipant(String method, String chatGuid, String address) async {
+    return (await http.chatParticipant(method, chatGuid, address)).statusCode == 200;
+  }
+  
+  @override
+  Future<bool> leaveChat(String chatGuid) async {
+    return (await http.leaveChat(chatGuid)).statusCode == 200;
+  }
+  
+  @override
+  Future<Map<String, dynamic>> sendTapback(String chatGuid, String selectedMessageText, String selectedMessageGuid, String reaction, int? repPart) async {
+    return (await http.sendTapback(chatGuid, selectedMessageText, selectedMessageGuid, reaction, partIndex: repPart)).data['data'];
+  }
+  
+  @override
+  Future<bool> markRead(String chatGuid) async {
+    return (await http.markChatRead(chatGuid)).statusCode == 200;
+  }
+
+  @override
+  HttpService? getRemoteService() {
+    return http;
+  }
+
+  @override
+  bool canLeaveChat() {
+    return ss.serverDetailsSync().item4 >= 226;
+  }
+
+  @override
+  bool canEditUnsend() {
+    return ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> unsend(String msgGuid, int part) async {
+    var response = await http.unsend(msgGuid, partIndex: part);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    return response.data['data'];
+  }
+
+  @override
+  Future<Map<String, dynamic>?> edit(String msgGuid, String text, int part) async {
+    var response = await http.edit(msgGuid, text, "Edited to: “$text", partIndex: part);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    return response.data['data'];
+  }
+}
 
 /// Class that manages foreground network requests from client to server, using
 /// GET or POST requests.

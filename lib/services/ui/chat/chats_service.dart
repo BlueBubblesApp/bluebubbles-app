@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
@@ -61,10 +62,10 @@ class ChatsService extends GetxService {
   Future<void> init({bool force = false}) async {
     if (!force && !ss.settings.finishedSetup.value) return;
     Logger.info("Fetching chats...", tag: "ChatBloc");
-    currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
+    currentCount = Chat.count() ?? (await backend.getRemoteService()?.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
       return Response(requestOptions: RequestOptions(path: ''));
-    })).data['data']['total'] ?? 0;
+    }))?.data['data']['total'] ?? 0;
     loadedAllChats = Completer();
     if (currentCount != 0) {
       hasChats.value = true;

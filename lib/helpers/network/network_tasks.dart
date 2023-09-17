@@ -15,7 +15,7 @@ class NetworkTasks {
   static Future<void> onConnect() async {
     if (ss.settings.finishedSetup.value) {
       if (cm.activeChat != null) {
-        socket.sendMessage("update-typing-status", {"chatGuid": cm.activeChat!.chat.guid});
+        socket.updateTypingStatus(cm.activeChat!.chat.guid);
       }
       await fcm.registerDevice();
       await sync.startIncrementalSync();

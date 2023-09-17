@@ -16,6 +16,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
@@ -348,10 +349,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
-                                    if (ss.isMinVenturaSync &&
+                                    if (backend.canEditUnsend() && 
                                         message.isFromMe! &&
-                                        !message.guid!.startsWith("temp") &&
-                                        ss.serverDetailsSync().item4 >= 148)
+                                        !message.guid!.startsWith("temp"))
                                       PopupMenuItem(
                                         value: 6,
                                         child: Text(
@@ -359,10 +359,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
-                                    if (ss.isMinVenturaSync &&
+                                    if (backend.canEditUnsend() && 
                                         message.isFromMe! &&
                                         !message.guid!.startsWith("temp") &&
-                                        ss.serverDetailsSync().item4 >= 148 &&
                                         (part.text?.isNotEmpty ?? false))
                                       PopupMenuItem(
                                         value: 7,
@@ -981,11 +980,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void unsend() async {
     popDetails();
-    final response = await http.unsend(message.guid!, partIndex: part.part);
-    if (response.statusCode == 200) {
-      final updatedMessage = Message.fromMap(response.data['data']);
-      ah.handleUpdatedMessage(chat, updatedMessage, null);
+    final response = await backend.unsend(message.guid!, part.part);
+    if (response == null) {
+      return;
     }
+    final updatedMessage = Message.fromMap(response);
+    ah.handleUpdatedMessage(chat, updatedMessage, null);
   }
 
   void edit() async {
@@ -1328,7 +1328,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148)
+      if (backend.canEditUnsend() && message.isFromMe! && !message.guid!.startsWith("temp"))
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1347,10 +1347,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (ss.isMinVenturaSync &&
+      if (backend.canEditUnsend() &&
           message.isFromMe! &&
           !message.guid!.startsWith("temp") &&
-          ss.serverDetailsSync().item4 >= 148 &&
           (part.text?.isNotEmpty ?? false))
         Material(
           color: Colors.transparent,

@@ -21,6 +21,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -153,9 +154,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
           );
         }
       );
-      final response = await http.edit(message.guid!, newEdit, "Edited to: “$newEdit”", partIndex: part);
-      if (response.statusCode == 200) {
-        final updatedMessage = Message.fromMap(response.data['data']);
+      final response = await backend.edit(message.guid!, newEdit, part);
+      if (response != null) {
+        final updatedMessage = Message.fromMap(response);
         ah.handleUpdatedMessage(chat, updatedMessage, null);
       }
       if (kIsDesktop) {

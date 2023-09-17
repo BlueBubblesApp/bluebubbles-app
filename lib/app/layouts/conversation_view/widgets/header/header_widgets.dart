@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -60,9 +61,9 @@ class ManualMarkState extends OptimizedState<ManualMark> {
                 marking = true;
               });
               if (!marked) {
-                await http.markChatRead(chat.guid);
+                await backend.markRead(chat.guid);
               } else {
-                await http.markChatUnread(chat.guid);
+                await backend.getRemoteService()?.markChatUnread(chat.guid);
               }
               setState(() {
                 marking = false;

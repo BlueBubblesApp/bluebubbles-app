@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -39,8 +40,8 @@ void showChangeName(Chat chat, String method, BuildContext context) {
                     );
                   }
                 );
-                final response = await http.updateChat(chat.guid, controller.text);
-                if (response.statusCode == 200) {
+                final response = await backend.renameChat(chat.guid, controller.text);
+                if (response) {
                   Get.back();
                   Get.back();
                   chat.changeName(controller.text);
