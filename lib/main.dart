@@ -830,8 +830,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           fullyLoaded = true;
         });
       }
-
-      NetworkTasks.detectLocalhost();
     });
   }
 
