@@ -321,7 +321,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                         padding: const EdgeInsets.only(bottom: 5.0),
                         child: SettingsOptions<String>(
                           title: "With frequency:",
-                          options: ["daily", "weekly", "monthly", "yearly"],
+                          options: ["hourly", "daily", "weekly", "monthly", "yearly"],
                           initial: frequency,
                           textProcessing: (val) => "${frequencyToText[val]!.capitalizeFirst!}${interval == 1 ? "" : "s"}",
                           onChanged: (val) {
