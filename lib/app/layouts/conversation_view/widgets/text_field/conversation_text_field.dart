@@ -147,7 +147,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   }
 
   void textListener(bool subject) {
-    if (!subject) {
+    if (!subject && controller.textController.text.trim().isNotEmpty) {
       chat.textFieldText = controller.textController.text;
     }
 
@@ -380,7 +380,11 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
-    chat.textFieldText = controller.textController.text;
+    if (controller.textController.text.trim().isNotEmpty) {
+      chat.textFieldText = controller.textController.text;
+    } else {
+      chat.textFieldText = "";
+    }
     chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
 
