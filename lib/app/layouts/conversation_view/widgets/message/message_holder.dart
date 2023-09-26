@@ -426,6 +426,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                           controller: controller,
                                                           cvController: widget.cvController,
                                                           part: e,
+                                                          isEditing: isEditing(e.part),
                                                           child: GestureDetector(
                                                             behavior: HitTestBehavior.deferToChild,
                                                             onHorizontalDragUpdate: !canSwipeToReply || isEditing(e.part) ? null : (details) {
