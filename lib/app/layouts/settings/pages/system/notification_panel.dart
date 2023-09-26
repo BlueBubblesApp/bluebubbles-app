@@ -154,8 +154,6 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
               ),
             ]),
             SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Advanced"),

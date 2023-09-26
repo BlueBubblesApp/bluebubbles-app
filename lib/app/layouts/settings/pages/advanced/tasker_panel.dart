@@ -53,8 +53,6 @@ class _TaskerPanelState extends OptimizedState<TaskerPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Integration Settings"),

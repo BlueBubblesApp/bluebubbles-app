@@ -186,8 +186,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                 ),
               if (!kIsWeb && !kIsDesktop || ss.canAuthenticate)
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Speed & Responsiveness"),
@@ -251,8 +249,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                 ],
               ),
               SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Networking"),
@@ -311,8 +307,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                 ],
               ),
               SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Other",),

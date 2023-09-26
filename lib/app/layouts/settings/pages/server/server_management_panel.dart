@@ -351,8 +351,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Connection & Sync"),
@@ -730,8 +728,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         : const SizedBox.shrink()),
                 ]),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Server Actions"),

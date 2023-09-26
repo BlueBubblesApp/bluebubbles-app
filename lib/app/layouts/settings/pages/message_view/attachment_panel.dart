@@ -99,8 +99,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Video Mute Behavior"),
@@ -140,8 +138,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                 ),
                 if (!kIsWeb)
                   SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "Attachment Viewer"),

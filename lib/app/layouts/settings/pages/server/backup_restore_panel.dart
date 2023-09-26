@@ -599,8 +599,6 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                 ),
               if (fetching == false)
                 SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Theme Backups",

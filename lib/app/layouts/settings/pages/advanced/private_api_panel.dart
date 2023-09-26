@@ -113,8 +113,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
                             iosSubtitle: iosSubtitle,
                             materialSubtitle: materialSubtitle,
                             text: "Private API Settings"),

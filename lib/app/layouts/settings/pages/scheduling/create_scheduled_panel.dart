@@ -250,8 +250,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
               ]
             ),
             SettingsHeader(
-              headerColor: headerColor,
-              tileColor: tileColor,
               iosSubtitle: iosSubtitle,
               materialSubtitle: materialSubtitle,
               text: "Schedule",
@@ -352,8 +350,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
               ],
             ),
             SettingsHeader(
-              headerColor: headerColor,
-              tileColor: tileColor,
               iosSubtitle: iosSubtitle,
               materialSubtitle: materialSubtitle,
               text: "Summary",
