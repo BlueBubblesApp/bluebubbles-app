@@ -150,6 +150,11 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
           final message = await runAsync(() {
             return query.findFirst();
           });
+          if (message != null
+              && ss.settings.statusIndicatorsOnChats.value
+              && (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
+            setState(() {});
+          }
           cachedLatestMessage = message;
           // check if we really need to update this widget
           if (message != null && message.guid != cachedLatestMessageGuid) {
