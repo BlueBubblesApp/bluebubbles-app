@@ -42,7 +42,7 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
       child: InkWell(
         mouseCursor: MouseCursor.defer,
         onTap: () => controller.onTap(context),
-        onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
+        onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
         onLongPress: kIsDesktop || kIsWeb
             ? null
             : () async {
@@ -89,33 +89,29 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
       ),
     );
 
-    return GestureDetector(
-      onTap: () => controller.onTap(context),
-      onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
-      child: Obx(() {
-        ns.listener.value;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          decoration: BoxDecoration(
-            color: controller.shouldPartialHighlight.value
-                ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
-                : controller.shouldHighlight.value
-                    ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
-                    : controller.hoverHighlight.value
-                        ? context.theme.colorScheme.properSurface.withOpacity(0.5)
-                        : null,
-            borderRadius: BorderRadius.circular(
-                controller.shouldHighlight.value || controller.shouldPartialHighlight.value || controller.hoverHighlight.value ? 8 : 0),
-          ),
-          child: ns.isAvatarOnly(context)
-              ? Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: (ns.width(context) - 100) / 2).add(const EdgeInsets.only(right: 15)),
-                  child: leading,
-                )
-              : child,
-        );
-      }),
-    );
+    return Obx(() {
+      ns.listener.value;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        decoration: BoxDecoration(
+          color: controller.shouldPartialHighlight.value
+              ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
+              : controller.shouldHighlight.value
+                  ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
+                  : controller.hoverHighlight.value
+                      ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                      : null,
+          borderRadius: BorderRadius.circular(
+              controller.shouldHighlight.value || controller.shouldPartialHighlight.value || controller.hoverHighlight.value ? 8 : 0),
+        ),
+        child: ns.isAvatarOnly(context)
+            ? Padding(
+                padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: (ns.width(context) - 100) / 2).add(const EdgeInsets.only(right: 15)),
+                child: leading,
+              )
+            : child,
+      );
+    });
   }
 }
 

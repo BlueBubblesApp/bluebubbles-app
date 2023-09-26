@@ -38,6 +38,7 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
       child: InkWell(
         mouseCursor: MouseCursor.defer,
         onTap: () => controller.onTap(context),
+        onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
         onLongPress: controller.onLongPress,
         child: Obx(() => ListTile(
           mouseCursor: MouseCursor.defer,
@@ -68,26 +69,22 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
 
     return Obx(() {
       ns.listener.value;
-      return GestureDetector(
-        onTap: () => controller.onTap(context),
-        onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
-        child: AnimatedContainer(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: controller.isSelected
-                ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
-                : shouldPartialHighlight
-                ? context.theme.colorScheme.properSurface
-                : shouldHighlight
-                ? context.theme.colorScheme.primaryContainer
-                : hoverHighlight ? context.theme.colorScheme.properSurface.withOpacity(0.5) : null,
-          ),
-          duration: const Duration(milliseconds: 100),
-          child: ns.isAvatarOnly(context) ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
-            child: Center(child: leading),
-          ) : child,
+      return AnimatedContainer(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: controller.isSelected
+              ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
+              : shouldPartialHighlight
+              ? context.theme.colorScheme.properSurface
+              : shouldHighlight
+              ? context.theme.colorScheme.primaryContainer
+              : hoverHighlight ? context.theme.colorScheme.properSurface.withOpacity(0.5) : null,
         ),
+        duration: const Duration(milliseconds: 100),
+        child: ns.isAvatarOnly(context) ? Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
+          child: Center(child: leading),
+        ) : child,
       );
     });
   }
