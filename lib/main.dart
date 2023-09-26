@@ -20,6 +20,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
@@ -523,7 +524,8 @@ class Main extends StatelessWidget {
         darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
         navigatorKey: ns.key,
         // Specifically for GNU/Linux & Android-x86 family, where touch isn't interpreted as a drag device by Flutter apparently.
-        scrollBehavior: const MaterialScrollBehavior().copyWith(dragDevices: Platform.isLinux || Platform.isAndroid ? PointerDeviceKind.values.toSet() : null),
+        scrollBehavior:
+            const MaterialScrollBehavior().copyWith(dragDevices: Platform.isLinux || Platform.isAndroid ? PointerDeviceKind.values.toSet() : null),
         home: Home(),
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
@@ -749,11 +751,11 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           });
 
           /* ----- WINDOW EFFECT INITIALIZATION ----- */
-          await WindowEffects.setEffect(color: context.theme.colorScheme.background);
-
           eventDispatcher.stream.listen((event) async {
             if (event.item1 == 'theme-update') {
-              await WindowEffects.setEffect(color: context.theme.colorScheme.background);
+              EasyDebounce.debounce('window-effect', const Duration(milliseconds: 500), () async {
+                await WindowEffects.setEffect(color: context.theme.colorScheme.background);
+              });
             }
           });
         }

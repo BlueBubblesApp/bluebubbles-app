@@ -52,12 +52,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
   void initState() {
     super.initState();
 
-    eventDispatcher.stream.listen((event) {
-      if (event.item1 == 'theme-update') {
-        setState(() {});
-      }
-    });
-
     if (showAltLayoutContextless) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         ns.pushAndRemoveSettingsUntil(

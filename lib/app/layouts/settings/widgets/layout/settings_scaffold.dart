@@ -203,7 +203,6 @@ class SettingsScaffold extends StatelessWidget {
                         SliverToBoxAdapter(
                           child: Container(
                             height: 30,
-                            color: ss.settings.skin.value != Skins.Material ? headerColor : tileColor,
                           ),
                         ),
                       ],
