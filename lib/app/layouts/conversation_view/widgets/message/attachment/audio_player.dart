@@ -182,7 +182,7 @@ class _DesktopAudioPlayerState extends OptimizedState<AudioPlayer> with Automati
     return Padding(
         padding: const EdgeInsets.all(5),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
               onPressed: () async {
@@ -203,10 +203,21 @@ class _DesktopAudioPlayerState extends OptimizedState<AudioPlayer> with Automati
               color: context.theme.colorScheme.properOnSurface,
               visualDensity: VisualDensity.compact,
             ),
+            if (controller != null)
+              SizedBox(
+                height: 30,
+                child: Slider(
+                  value: controller!.state.position.inSeconds.toDouble(),
+                  onChanged: (double value) {
+                    controller!.seek(Duration(seconds: value.toInt()));
+                  },
+                  min: 0,
+                  max: controller!.state.duration.inSeconds.toDouble(),
+                ),
+              ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child:
-            Text("${prettyDuration(controller?.state.position ?? Duration.zero)} / ${prettyDuration(controller?.state.duration ?? Duration.zero)}"),
+              padding: const EdgeInsets.only(left: 10, right: 16),
+              child: Text("${prettyDuration(controller?.state.position ?? Duration.zero)} / ${prettyDuration(controller?.state.duration ?? Duration.zero)}"),
             )
           ],
         ));
