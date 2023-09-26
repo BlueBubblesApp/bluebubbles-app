@@ -37,6 +37,7 @@ import system_tray
 import url_launcher_macos
 import wakelock_plus
 import window_manager
+import window_to_front
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AppLinksMacosPlugin.register(with: registry.registrar(forPlugin: "AppLinksMacosPlugin"))
@@ -71,4 +72,5 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
   WakelockPlusMacosPlugin.register(with: registry.registrar(forPlugin: "WakelockPlusMacosPlugin"))
   WindowManagerPlugin.register(with: registry.registrar(forPlugin: "WindowManagerPlugin"))
+  WindowToFrontPlugin.register(with: registry.registrar(forPlugin: "WindowToFrontPlugin"))
 }

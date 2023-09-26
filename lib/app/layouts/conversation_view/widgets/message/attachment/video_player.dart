@@ -438,7 +438,7 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
             children: <Widget>[
               Obx(() => AspectRatio(
                     aspectRatio: aspectRatio.value,
-                    child: Video(controller: videoController!),
+                    child: Video(controller: videoController!, controls: null,),
                   )),
               DesktopPlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: player),
               DesktopMuteButton(muted: muted, controller: player, isFromMe: widget.isFromMe),
