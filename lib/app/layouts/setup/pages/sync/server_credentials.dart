@@ -83,7 +83,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                           child: Image.network(googlePicture!, width: 40, fit: BoxFit.contain),
                         ),
                       const SizedBox(width: 10),
-                      Text("$googleName",
+                      Text(googleName ?? "Unknown",
                           style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                     ],
                   ),
@@ -228,6 +228,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 ),
               ),
             ),
+          if (token != null) const SizedBox(height: 10),
           if (googleName == null && showLoginButtons)
             Container(
               decoration: BoxDecoration(
