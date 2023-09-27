@@ -405,6 +405,8 @@ class Settings {
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     ss.settings.save();
+
+    eventDispatcher.emit("theme-update", null);
   }
 
   static Settings fromMap(Map<String, dynamic> map) {
