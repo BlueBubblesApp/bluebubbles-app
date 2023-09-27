@@ -42,7 +42,7 @@ dependencies:
   desktop_webview_auth:
     git:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
-      ref: webkit2gtk-4.1
+      ref: 607c1f01c8a9e9302539bb9ec35acd83ae24842b
   device_info_plus: ^9.0.3
   dio: ^5.3.2
   disable_battery_optimization: ^1.1.0+1
@@ -58,7 +58,7 @@ dependencies:
   firebase_dart:
     git:
       url: https://github.com/appsup-dart/firebase_dart.git
-      ref: feature/firestore
+      ref: beb79f70a2bb0e96e6bb9fdebac2ff452f138950
       path: packages/firebase_dart
   flex_color_picker: ^3.3.0
   flex_color_scheme: ^7.3.1
@@ -85,7 +85,7 @@ dependencies:
     git:
       url: https://github.com/BlueBubblesApp/flutter-geolocator.git
       path: geolocator
-      ref: no_windows_streams
+      ref: 223195b3746686790ca188deac6260d901d30c51
   gesture_x_detector: ^1.1.1
   get: ^4.6.5
   giphy_get: ^3.5.0
@@ -140,7 +140,7 @@ dependencies:
   qr_flutter:
     git:
       url: https://github.com/theyakka/qr.flutter
-      ref: master
+      ref: ffbb276ec6ec2830ca50841a7aab9cfb4b7fb26b
   receive_intent: ^0.2.3 # mobile only
   record: ^4.4.4
   reorderables: ^0.6.0
@@ -182,7 +182,7 @@ dependency_overrides:
   permission_handler_windows:
     git:
       url: https://github.com/BlueBubblesApp/flutter-permission-handler.git
-      ref: no_windows_location
+      ref: a7a87683a7745c30e68161b3924fefb94818c95c
       path: permission_handler_windows
 
 dev_dependencies:
