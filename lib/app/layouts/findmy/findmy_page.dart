@@ -210,8 +210,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             ),
           if (devicesWithLocation.isNotEmpty)
             SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Devices"),
@@ -287,8 +285,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             ),
           if (itemsWithLocation.isNotEmpty)
             SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Items"),
@@ -364,8 +360,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             ),
           if (withoutLocation.isNotEmpty)
             SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Unknown Location"),

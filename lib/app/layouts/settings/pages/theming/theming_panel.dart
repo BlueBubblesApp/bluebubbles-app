@@ -118,9 +118,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       ),
                     ),
                     Container(
-                      decoration: BoxDecoration(
-                        color: tileColor,
-                      ),
                       padding: const EdgeInsets.only(left: 15, top: 10),
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
                     ),
@@ -141,8 +138,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Skin${kIsDesktop ? "" : " and Layout"}"),
@@ -222,8 +217,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                 ),
                 if (kIsDesktop && Platform.isWindows)
                   SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Window Effect",
@@ -329,8 +322,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     ]
                   ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Colors"),
@@ -544,8 +535,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                   Obx(() {
                     if (controller.refreshRates.length > 2) {
                       return SettingsHeader(
-                          headerColor: headerColor,
-                          tileColor: tileColor,
                           iosSubtitle: iosSubtitle,
                           materialSubtitle: materialSubtitle,
                           text: "Refresh Rate");
@@ -580,8 +569,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     }
                   }),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Text and Font"),

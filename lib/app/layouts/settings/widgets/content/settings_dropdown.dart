@@ -44,7 +44,6 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
       final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e), style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
       return Container(
-        color: backgroundColor,
         padding: const EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         width: context.width,
@@ -54,7 +53,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
             children: map,
             groupValue: initial,
             thumbColor: context.theme.colorScheme.primary,
-            backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
+            backgroundColor: Colors.transparent,
             onValueChanged: onChanged,
             padding: EdgeInsets.zero,
           ),
@@ -99,7 +98,6 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
             Builder(
               builder: (context) {
                 final widget = Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     color: secondaryColor ?? surfaceColor,
@@ -107,7 +105,9 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   child: Center(
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<T>(
-                        dropdownColor: secondaryColor?.opacity != 1 ? surfaceColor : (secondaryColor ?? surfaceColor),
+                        padding: const EdgeInsets.symmetric(horizontal: 9),
+                        borderRadius: BorderRadius.circular(8),
+                        dropdownColor: secondaryColor?.withOpacity(1) ?? surfaceColor,
                         icon: Icon(
                           Icons.arrow_drop_down,
                           color: context.theme.textTheme.bodyLarge!.color,

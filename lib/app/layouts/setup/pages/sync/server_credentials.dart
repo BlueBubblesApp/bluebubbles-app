@@ -22,6 +22,7 @@ import 'package:get/get.dart' hide Response;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:window_to_front/window_to_front.dart';
 
 class ServerCredentials extends StatefulWidget {
@@ -679,7 +680,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         final height = ss.prefs.getDouble('window-height')?.toInt();
         final result = await DesktopWebviewAuth.signIn(args,
             width: width != null ? (width * 0.9).ceil() : null, height: height != null ? (height * 0.9).ceil() : null);
-        Future.delayed(const Duration(milliseconds: 500), () async => await WindowToFront.activate());
+        Future.delayed(const Duration(milliseconds: 500), () async => await windowManager.show());
         token = result?.accessToken;
         // error if token is not present
         if (token == null) {

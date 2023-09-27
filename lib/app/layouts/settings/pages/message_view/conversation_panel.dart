@@ -206,7 +206,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
               ),
               if (!kIsWeb)
                 SettingsHeader(
-                    headerColor: headerColor, tileColor: tileColor, iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Sounds"),
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Sounds",
+                ),
               if (!kIsWeb)
                 Obx(
                   () => SettingsSection(
@@ -337,7 +340,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                   ),
                 ),
               SettingsHeader(
-                  headerColor: headerColor, tileColor: tileColor, iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Gestures"),
+                iosSubtitle: iosSubtitle,
+                materialSubtitle: materialSubtitle,
+                text: "Gestures",
+              ),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [

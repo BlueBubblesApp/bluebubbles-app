@@ -48,6 +48,7 @@ dependencies:
   disable_battery_optimization: ^1.1.0+1
   # todo linux
   dynamic_color: ^1.6.6
+  easy_debounce: ^2.0.3
   emojis: ^0.9.9
   encrypt: ^5.0.1
   exif: ^3.1.2
@@ -167,7 +168,6 @@ dependencies:
   video_thumbnail: ^0.5.3 # mobile only
   window_manager: ^0.3.5
   windows_taskbar: ^1.1.1
-  window_to_front: ^0.0.3
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions

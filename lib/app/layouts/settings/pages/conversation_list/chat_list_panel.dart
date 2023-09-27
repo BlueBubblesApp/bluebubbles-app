@@ -84,8 +84,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Filtering"),
@@ -147,8 +145,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Appearance"),
@@ -467,8 +463,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                 ),
                 if (!kIsWeb && !kIsDesktop && !iOS)
                   SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "Swipe Actions"),
@@ -532,8 +526,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                     ],
                   ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Misc"),

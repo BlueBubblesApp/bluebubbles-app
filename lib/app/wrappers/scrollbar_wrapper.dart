@@ -45,6 +45,11 @@ class ScrollbarWrapper extends StatelessWidget {
                 },
                 child: ImprovedScrolling(
                   enableKeyboardScrolling: true,
+                  keyboardScrollConfig: KeyboardScrollConfig(
+                    arrowsScrollAmount: reverse ? -200.0 : 200.0,
+                    pageUpDownScrollAmount: reverse ? -500.0 : 500.0,
+                    spaceScrollAmount: reverse ? -600.0 : 600.0,
+                  ),
                   enableMMBScrolling: true,
                   mmbScrollConfig: MMBScrollConfig(
                     customScrollCursor: DefaultCustomScrollCursor(
@@ -52,6 +57,8 @@ class ScrollbarWrapper extends StatelessWidget {
                       backgroundColor: context.theme.colorScheme.background,
                       borderColor: context.textTheme.headlineMedium!.color!,
                     ),
+                    decelerationForce: reverse ? -1000.0 : 1000.0,
+                    velocityBackpropagationPercent: 0.1,
                   ),
                   scrollController: controller,
                   child: showScrollbar

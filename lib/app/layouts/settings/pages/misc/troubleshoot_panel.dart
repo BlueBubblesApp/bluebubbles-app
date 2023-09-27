@@ -102,8 +102,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                 ),
               if (kIsWeb || kIsDesktop)
                 SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Logging"
@@ -176,8 +174,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
               ),
               if (kIsDesktop)
                 SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Saved Logs"
@@ -319,8 +315,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                 ]),
               if (!kIsWeb)
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Database Re-syncing"

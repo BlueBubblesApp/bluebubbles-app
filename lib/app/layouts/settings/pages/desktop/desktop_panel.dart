@@ -156,8 +156,6 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                 ],
               ),
               SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Notifications"),

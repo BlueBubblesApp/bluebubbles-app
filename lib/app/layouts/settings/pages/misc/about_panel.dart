@@ -116,8 +116,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Info"),
