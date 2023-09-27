@@ -168,7 +168,6 @@ dependencies:
   video_thumbnail: ^0.5.3 # mobile only
   window_manager: ^0.3.5
   windows_taskbar: ^1.1.1
-  window_to_front: ^0.0.3
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions

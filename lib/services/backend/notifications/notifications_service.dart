@@ -21,7 +21,7 @@ import 'package:synchronized/synchronized.dart';
 import 'package:timezone/timezone.dart';
 import 'package:universal_html/html.dart' hide File, Platform, Navigator;
 import 'package:universal_io/io.dart';
-import 'package:window_to_front/window_to_front.dart';
+import 'package:window_manager/window_manager.dart';
 
 NotificationsService notif = Get.isRegistered<NotificationsService>() ? Get.find<NotificationsService>() : Get.put(NotificationsService());
 
@@ -179,8 +179,7 @@ class NotificationsService extends GetxService {
         : await avatarAsBytes(
             participantsOverride: !chat.isGroup ? null : chat.participants.where((e) => e.address == message.handle!.address).toList(),
             chat: chat,
-            quality: 256
-        );
+            quality: 256);
     if (chatIcon.isEmpty) {
       chatIcon = personIcon;
     }
@@ -215,7 +214,8 @@ class NotificationsService extends GetxService {
     }
   }
 
-  Future<void> showDesktopNotif(Message message, String text, Chat chat, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
+  Future<void> showDesktopNotif(
+      Message message, String text, Chat chat, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
     List<int> selectedIndices = ss.settings.selectedActionIndices;
     List<String> _actions = ss.settings.actionList;
     final papi = ss.settings.enablePrivateAPI.value;
@@ -223,10 +223,10 @@ class NotificationsService extends GetxService {
     List<String> actions = _actions
         .whereIndexed((i, e) => selectedIndices.contains(i))
         .map((action) => action == "Mark Read"
-        ? action
-        : !isReaction && !message.isGroupEvent && papi
-        ? ReactionTypes.reactionToEmoji[action]!
-        : null)
+            ? action
+            : !isReaction && !message.isGroupEvent && papi
+                ? ReactionTypes.reactionToEmoji[action]!
+                : null)
         .whereNotNull()
         .toList();
 
@@ -303,8 +303,8 @@ class NotificationsService extends GetxService {
         duration: LocalNotificationDuration.long,
         actions: notifications[guid]!.isNotEmpty
             ? showMarkRead
-            ? [LocalNotificationAction(text: "Mark ${notificationCounts[guid]!} Messages Read")]
-            : []
+                ? [LocalNotificationAction(text: "Mark ${notificationCounts[guid]!} Messages Read")]
+                : []
             : nActions,
       );
       notifications[guid]!.add(toast);
@@ -315,7 +315,7 @@ class NotificationsService extends GetxService {
 
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await WindowToFront.activate();
+          await windowManager.show();
           return;
         }
 
@@ -323,11 +323,11 @@ class NotificationsService extends GetxService {
           ns.pushAndRemoveUntil(
             Get.context!,
             ConversationView(chat: chat),
-                (route) => route.isFirst,
+            (route) => route.isFirst,
           );
         }
 
-        await WindowToFront.activate();
+        await windowManager.show();
       };
 
       toast.onClickAction = (index) async {
@@ -404,7 +404,7 @@ class NotificationsService extends GetxService {
         // Show window and open the right chat
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await WindowToFront.activate();
+          await windowManager.show();
           return;
         }
 
@@ -412,11 +412,11 @@ class NotificationsService extends GetxService {
           ns.pushAndRemoveUntil(
             Get.context!,
             ConversationView(chat: chat),
-                (route) => route.isFirst,
+            (route) => route.isFirst,
           );
         }
 
-        await WindowToFront.activate();
+        await windowManager.show();
 
         if (await File(path).exists()) {
           await File(path).delete();
@@ -429,14 +429,14 @@ class NotificationsService extends GetxService {
 
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await WindowToFront.activate();
+          await windowManager.show();
           return;
         }
 
         chat.toggleHasUnread(false);
         EventDispatcher().emit('refresh', null);
 
-        await WindowToFront.activate();
+        await windowManager.show();
 
         if (await File(path).exists()) {
           await File(path).delete();
@@ -484,7 +484,7 @@ class NotificationsService extends GetxService {
     allToast!.onClick = () async {
       notifications = {};
       notificationCounts = {};
-      await WindowToFront.activate();
+      await windowManager.show();
     };
 
     allToast!.onClickAction = (index) async {
@@ -504,7 +504,6 @@ class NotificationsService extends GetxService {
     await allToast!.show();
   }
 
-
   Future<void> createSocketError() async {
     const title = 'Could not connect';
     const subtitle = 'Your server may be offline!';
@@ -518,7 +517,7 @@ class NotificationsService extends GetxService {
 
       socketToast!.onClick = () async {
         socketToast = null;
-        await WindowToFront.activate();
+        await windowManager.show();
         Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (BuildContext context) {
@@ -565,7 +564,7 @@ class NotificationsService extends GetxService {
 
       failedToast!.onClick = () async {
         failedToast = null;
-        await WindowToFront.activate();
+        await windowManager.show();
         if (scheduled) {
           Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
@@ -622,7 +621,7 @@ class NotificationsService extends GetxService {
       );
 
       toast.onClick = () async {
-        await WindowToFront.activate();
+        await windowManager.show();
       };
 
       await toast.show();
