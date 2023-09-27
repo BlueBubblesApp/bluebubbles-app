@@ -1051,6 +1051,10 @@ class TextFieldComponent extends StatelessWidget {
         androidData = ev.data as RawKeyEventDataAndroid;
       }
 
+      if (ev.isMetaPressed || ev.isControlPressed || ev.isAltPressed) {
+        return KeyEventResult.ignored;
+      }
+
       int maxShown = context.height / 3 ~/ 40;
       int upMovementIndex = maxShown ~/ 3;
       int downMovementIndex = maxShown * 2 ~/ 3;

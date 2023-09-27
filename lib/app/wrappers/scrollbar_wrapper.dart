@@ -1,7 +1,9 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 
@@ -38,6 +40,19 @@ class ScrollbarWrapper extends StatelessWidget {
                 ));
               },
               child: Focus(
+                onKey: (node, event) {
+                  if (!event.isAltPressed &&
+                      !event.isControlPressed &&
+                      !event.isMetaPressed &&
+                      !event.isShiftPressed &&
+                      event.physicalKey == PhysicalKeyboardKey.tab) {
+                    if (cm.activeChat != null) {
+                      cvc(cm.activeChat!.chat).lastFocusedNode.requestFocus();
+                      return KeyEventResult.handled;
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
                 onFocusChange: (focused) {
                   if (!focused) {
                     preventFocus.value = true;
