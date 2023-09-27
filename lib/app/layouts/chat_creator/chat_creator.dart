@@ -668,7 +668,15 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
                           final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
+                          bool existsOnServer = false;
                           if (chat != null) {
+                            // if we don't error, then the chat exists
+                            try {
+                              await http.singleChat(chat.guid);
+                              existsOnServer = true;
+                            } catch (_) {}
+                          }
+                          if (chat != null && existsOnServer) {
                             ns.pushAndRemoveUntil(
                               Get.context!,
                               ConversationView(chat: chat, fromChatCreator: true),
@@ -703,6 +711,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             fakeController.value!.pickedAttachments.clear();
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
+                            // hard delete a chat that exists on BB but not on the server to make way for the proper server data
+                            if (chat != null) {
+                              chats.removeChat(chat);
+                              Chat.deleteChat(chat);
+                            }
                             createCompleter = Completer();
                             final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : cleansePhoneNumber(e.address)).toList();
                             final method = iMessage ? "iMessage" : "SMS";
