@@ -905,6 +905,20 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Answers a facetime call with the given [callUuid].
+  /// The response is a data object with a `link` key that contains the link to the call.
+  Future<Response> answerFaceTime(String callUuid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/facetime/answer/$callUuid",
+          queryParameters: buildQueryParams(),
+          data: {},
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get the basic landing page for the server URL
   Future<Response> landingPage({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {

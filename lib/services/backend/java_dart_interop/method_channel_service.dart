@@ -204,6 +204,12 @@ class MethodChannelService extends GetxService {
           isRunning = false;
         }
         return true;
+      case "ft-call-status-changed":
+        await storeStartup.future;
+        Logger.info("Received facetime call status change from FCM");
+        Map<String, dynamic> data = jsonDecode(call.arguments);
+        await ActionHandler().handleFaceTimeStatusChange(data);
+        return true;
       default:
         return true;
     }

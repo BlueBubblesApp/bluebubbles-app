@@ -102,6 +102,16 @@ class IntentsService extends GetxService {
     }
   }
 
+  Future<void> answerFaceTime(String callUuid) async {
+    final call = await http.answerFaceTime(callUuid);
+    final link = call.data?["data"]?["link"];
+    if (link == null) {
+      return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
+    }
+
+    mcs.invokeMethod("open-link", {"link": link, "forceBrowser": true});
+  }
+
   Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
     if (guid == null) {
       await uiStartup.future;

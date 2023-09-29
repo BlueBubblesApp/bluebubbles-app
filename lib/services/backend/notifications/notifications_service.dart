@@ -27,6 +27,7 @@ NotificationsService notif = Get.isRegistered<NotificationsService>() ? Get.find
 
 class NotificationsService extends GetxService {
   static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
+  static const String INCOMING_FACETIME_CHANNEL = "com.bluebubbles.incoming_facetime";
   static const String ERROR_CHANNEL = "com.bluebubbles.errors";
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
   static const String FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
@@ -211,6 +212,48 @@ class NotificationsService extends GetxService {
         "messageText": text,
         "messageDate": message.dateCreated!.millisecondsSinceEpoch,
         "messageIsFromMe": false,
+      });
+    }
+  }
+
+  Future<void> createIncomingFaceTimeNotification(Map<String, dynamic> eventData) async {
+    await cs.init();
+    final callUuid = eventData["call_uuid"];
+    String? address = eventData["handle"]?["address"];
+    String caller = eventData["address"] ?? "Unknown Number";
+    Uint8List? chatIcon;
+
+    // Find the contact info for the caller
+    // Load the contact's avatar & name
+    if (address != null) {
+      Contact? contact = cs.getContact(address);
+      chatIcon = contact?.avatar;
+      caller = contact?.displayName ?? caller;
+    }
+
+    // Set some notification defaults
+    String title = "FaceTime ${eventData["is_audio"] ? 'Audio' : 'Video'} Call";
+    String text = "Incoming FaceTime from $caller";
+    chatIcon ??= (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+
+    if (kIsWeb && Notification.permission == "granted") {
+      final notif = Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: callUuid);
+      notif.onClick.listen((event) async {
+        await intents.answerFaceTime(callUuid);
+      });
+    } else if (kIsDesktop) {
+      // _lock.synchronized(() async => await showDesktopNotif(message, text, chat, guid, title, contactName, isGroup, isReaction));
+    } else {
+      await mcs.invokeMethod("incoming-facetime-notification", {
+        "CHANNEL_ID": INCOMING_FACETIME_CHANNEL,
+        "CHANNEL_NAME": "Incoming FaceTime",
+        "notificationId": Random().nextInt(9998) + 1,
+        "title": title,
+        "body": text,
+        "avatar": chatIcon,
+        "caller": caller,
+        "callUuid": callUuid,
+        "time": DateTime.now().millisecondsSinceEpoch
       });
     }
   }

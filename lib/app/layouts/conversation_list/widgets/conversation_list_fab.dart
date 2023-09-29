@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +85,22 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
               color: context.theme.colorScheme.onPrimary,
               size: 25
             ),
-            onPressed: () => controller.openNewChatCreator(context)
+            onPressed: () async {
+              // controller.openNewChatCreator(context);
+              Logger.info("Received facetime call status change from FCM");
+              Map<String, dynamic> data = {
+                "call_uuid": "test",
+                "status_id": 4,
+                "status": "incoming",
+                "address": "(000) 111-2222",
+                "handle": {
+                  "address": "+10001112222"
+                },
+                "is_audio": false,
+                "is_video": true
+              };
+              await ActionHandler().handleFaceTimeStatusChange(data);
+            }
           ),
         ),
       ],

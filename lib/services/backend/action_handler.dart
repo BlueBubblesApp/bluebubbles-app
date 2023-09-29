@@ -290,4 +290,17 @@ class ActionHandler extends GetxService {
     // get and return the chat from server
     return await cm.fetchChat(partialData.guid) ?? partialData;
   }
+
+  Future<void> handleFaceTimeStatusChange(Map<String, dynamic> data) async {
+    if (data["status_id"] == null) return;
+    final int statusId = data["status_id"] as int;
+    if (statusId == 4) {
+      await ActionHandler().handleIncomingFaceTimeCall(data);
+    }
+  }
+
+  Future<void> handleIncomingFaceTimeCall(Map<String, dynamic> data) async {
+    Logger.info("Handling incoming FaceTime call");
+    await notif.createIncomingFaceTimeNotification(data);
+  }
 }
