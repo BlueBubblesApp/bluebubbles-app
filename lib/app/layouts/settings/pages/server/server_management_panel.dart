@@ -807,8 +807,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           materialIcon: Icons.sms,
                         ),
                         onTap: () async {
-                          if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value)
+                          if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value) {
                             return;
+                          }
 
                           controller.isRestartingMessages.value = true;
 

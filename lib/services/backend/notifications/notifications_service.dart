@@ -30,7 +30,6 @@ class NotificationsService extends GetxService {
   static const String INCOMING_FACETIME_CHANNEL = "com.bluebubbles.incoming_facetime";
   static const String ERROR_CHANNEL = "com.bluebubbles.errors";
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
-  static const String FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
   static const String FOREGROUND_SERVICE_CHANNEL = "com.bluebubbles.foreground_service";
 
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
@@ -81,9 +80,9 @@ class NotificationsService extends GetxService {
         "Displays message reminders set through the app",
       );
       createNotificationChannel(
-        FACETIME_CHANNEL,
-        "Incoming FaceTimes",
-        "Displays incoming FaceTimes detected by the server",
+        INCOMING_FACETIME_CHANNEL,
+        "Incoming FaceTime Calls",
+        "Displays incoming FaceTime calls",
       );
       createNotificationChannel(
         FOREGROUND_SERVICE_CHANNEL,
@@ -232,8 +231,8 @@ class NotificationsService extends GetxService {
     }
 
     // Set some notification defaults
-    String title = "FaceTime ${eventData["is_audio"] ? 'Audio' : 'Video'} Call";
-    String text = "Incoming FaceTime from $caller";
+    String title = caller;
+    String text = "Answer FaceTime ${eventData["is_audio"] ? 'Audio' : 'Video'} Call";
     chatIcon ??= (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
 
     if (kIsWeb && Notification.permission == "granted") {
@@ -649,42 +648,6 @@ class NotificationsService extends GetxService {
         ),
       ),
       payload: chat.guid + (scheduled ? "-scheduled" : ""),
-    );
-  }
-
-  Future<void> createFacetimeNotif(Handle handle) async {
-    await cs.init();
-    final contact = cs.matchHandleToContact(handle);
-    final title = 'Incoming FaceTime from ${contact?.displayName ?? handle.address}';
-    const subtitle = '';
-    if (kIsDesktop) {
-      final toast = LocalNotification(
-        title: title,
-        body: subtitle,
-        actions: [],
-      );
-
-      toast.onClick = () async {
-        await windowManager.focus();
-      };
-
-      await toast.show();
-      return;
-    }
-    await flnp.show(
-      Random().nextInt(9998) + 1,
-      title,
-      subtitle,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          FACETIME_CHANNEL,
-          'Incoming FaceTimes',
-          channelDescription: 'Displays incoming FaceTimes detected by the server',
-          priority: Priority.max,
-          importance: Importance.max,
-          color: HexColor("4990de"),
-        ),
-      ),
     );
   }
 
