@@ -202,10 +202,7 @@ class MethodChannelService extends GetxService {
         return true;
       case "answer-facetime":
         Logger.info("Answering FaceTime call");
-        Map<String, dynamic> data = jsonDecode(call.arguments);
-        print(data["callUuid"]);
-        print("FACETIME");
-        // await intents.answerFaceTime(data["callUuid"]);
+        await intents.answerFaceTime(call.arguments["callUuid"]);
         return true;
       default:
         return true;
