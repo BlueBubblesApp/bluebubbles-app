@@ -85,22 +85,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
               color: context.theme.colorScheme.onPrimary,
               size: 25
             ),
-            onPressed: () async {
-              // controller.openNewChatCreator(context);
-              Logger.info("Received facetime call status change from FCM");
-              Map<String, dynamic> data = {
-                "call_uuid": "test",
-                "status_id": 4,
-                "status": "incoming",
-                "address": "(000) 111-2222",
-                "handle": {
-                  "address": "+10001112222"
-                },
-                "is_audio": false,
-                "is_video": true
-              };
-              await ActionHandler().handleFaceTimeStatusChange(data);
-            }
+            onPressed: () => controller.openNewChatCreator(context)
           ),
         ),
       ],
