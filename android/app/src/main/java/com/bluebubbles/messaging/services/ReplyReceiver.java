@@ -136,6 +136,23 @@ public class ReplyReceiver extends BroadcastReceiver {
                 NotificationWorker.createWorker(context.getApplicationContext(), "markAsRead", params);
 
             }
+        } else if (intent.getType().equals("answerFaceTime")) {
+            String callUuid = intent.getExtras().getString("callUuid");
+            Log.d(TAG, "Answering FaceTime Call: " + callUuid);
+
+            // HelperUtils.tryCancelNotifications(context, existingId, null);
+
+            // Build params to send to Dart for it to handle whatever it needs
+            Map<String, Object> params = new HashMap<>();
+            params.put("callUuid", callUuid);
+
+            // Invoke the Dart isolate to clear the notification from that side
+            if (engine != null) {
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
+            } else {
+                NotificationWorker.createWorker(context.getApplicationContext(), "answer-facetime", params);
+
+            }
         } else if(intent.getType().equals("alarm")) {
 
             Map<String, Object> params = new HashMap<>();

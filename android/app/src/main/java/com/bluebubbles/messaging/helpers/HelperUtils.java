@@ -8,10 +8,12 @@ import android.service.notification.StatusBarNotification;
 import androidx.core.app.NotificationManagerCompat;
 
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -56,6 +58,28 @@ public class HelperUtils {
         canvas.drawBitmap(bitmap, null, rect, null);
         bitmap.recycle();
 
+        return output;
+    }
+
+    public static Bitmap getCircularBitmap(Bitmap bitmap) {
+        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getWidth(), Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+        final int color = 0xff000000;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(),
+                bitmap.getWidth());
+        final RectF rectF = new RectF(rect);
+
+        final float roundPx = (bitmap.getWidth()) / 2;
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
+        paint.setColor(color);
+        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
+        // paint.setStyle(Style.STROKE);
+        // paint.setStrokeWidth(2);
+        canvas.drawBitmap(bitmap, rect, rect, paint);
         return output;
     }
 

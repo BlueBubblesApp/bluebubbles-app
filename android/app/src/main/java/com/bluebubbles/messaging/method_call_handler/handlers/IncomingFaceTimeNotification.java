@@ -1,4 +1,3 @@
-
 package com.bluebubbles.messaging.method_call_handler.handlers;
 
 import android.util.Log;
@@ -44,7 +43,6 @@ import java.util.Arrays;
 
 public class IncomingFaceTimeNotification implements Handler {
     public static String TAG = "incoming-facetime-notification";
-    public static String GROUP_KEY = "com.bluebubbles.messaging.INCOMING_FACETIME";
     public static String notificationTag = "incoming-facetime";
 
     private Context context;
@@ -78,25 +76,10 @@ public class IncomingFaceTimeNotification implements Handler {
             .setImportant(true);
 
         // Load the group avatar
-        IconCompat senderIcon = null;
+        Bitmap bmp = null;
         if (avatar != null) {
-            Bitmap bmp = BitmapFactory.decodeByteArray(avatar, 0, avatar.length);
-            senderIcon = IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
+            bmp = HelperUtils.getCircularBitmap(BitmapFactory.decodeByteArray(avatar, 0, avatar.length));
         }
-
-        // Set the icon if available
-        if (senderIcon != null) {
-            sender.setIcon(senderIcon);
-        }
-
-        NotificationCompat.MessagingStyle style = new NotificationCompat.MessagingStyle(sender.build());
-
-        // Add the message to the notification
-        style.addMessage(new NotificationCompat.MessagingStyle.Message(
-            "Tap to answer FaceTime call",
-            Long.valueOf(time).longValue(),
-            sender.build()
-        ));
 
         // Create a bundle with some extra information in it
         Bundle extras = new Bundle();
@@ -108,18 +91,12 @@ public class IncomingFaceTimeNotification implements Handler {
             notificationId,
             new Intent(context, MainActivity.class)
                 .putExtra("callUuid", callUuid)
-                .setType("NotificationOpen"),
+                .setType("answerFaceTime"),
             PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
 
-        // Build the actual notification
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
                 // Set the status bar notification icon
                 .setSmallIcon(R.mipmap.ic_stat_icon)
-                // Add the notification to the BlueBubbles messages group
-                // .setGroup(GROUP_KEY)
-                // Prevent the message group notification from making sound, only let the child
-                // notification make sound
-                // .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
                 // Let's the notification dismiss itself when it's tapped
                 .setAutoCancel(true)
                 // Tell android that it's a message/conversation
@@ -128,8 +105,10 @@ public class IncomingFaceTimeNotification implements Handler {
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openIntent)
-                // Sets the style (messages/content/etc)
-                .setStyle(style)
+                // Set the content for the notification
+                .setContentTitle(title)
+                .setContentText(body)
+                .setLargeIcon(bmp)
                 // Add in any extra info we may want
                 .addExtras(extras)
                 // Set the color. This is the blue primary color
