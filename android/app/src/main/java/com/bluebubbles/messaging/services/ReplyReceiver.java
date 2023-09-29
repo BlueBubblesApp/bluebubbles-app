@@ -49,7 +49,8 @@ public class ReplyReceiver extends BroadcastReceiver {
 
         Integer existingId;
         String chatGuid;
-
+        
+        Log.d(TAG, "GOT INTENT");
         if (intent.getType().equals("reply")) {
             existingId = intent.getExtras().getInt("id");
             chatGuid = intent.getExtras().getString("chatGuid");
@@ -148,7 +149,7 @@ public class ReplyReceiver extends BroadcastReceiver {
 
             // Invoke the Dart isolate to clear the notification from that side
             if (engine != null) {
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("answer-facetime", params);
             } else {
                 NotificationWorker.createWorker(context.getApplicationContext(), "answer-facetime", params);
 

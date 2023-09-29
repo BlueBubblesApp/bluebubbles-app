@@ -89,10 +89,10 @@ public class IncomingFaceTimeNotification implements Handler {
         PendingIntent openIntent = PendingIntent.getActivity(
             context,
             notificationId,
-            new Intent(context, MainActivity.class)
+            new Intent(context, ReplyReceiver.class)
                 .putExtra("callUuid", callUuid)
                 .setType("answerFaceTime"),
-            PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
+            PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
                 // Set the status bar notification icon
