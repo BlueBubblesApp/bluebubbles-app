@@ -86,7 +86,7 @@ public class IncomingFaceTimeNotification implements Handler {
         extras.putString("callUuid", callUuid);
 
         // Create intent for opening the conversation in the app
-        PendingIntent openIntent = PendingIntent.getActivity(
+        PendingIntent openIntent = PendingIntent.getBroadcast(
             context,
             notificationId,
             new Intent(context, ReplyReceiver.class)

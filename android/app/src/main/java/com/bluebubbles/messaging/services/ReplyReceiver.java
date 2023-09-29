@@ -49,8 +49,7 @@ public class ReplyReceiver extends BroadcastReceiver {
 
         Integer existingId;
         String chatGuid;
-        
-        Log.d(TAG, "GOT INTENT");
+
         if (intent.getType().equals("reply")) {
             existingId = intent.getExtras().getInt("id");
             chatGuid = intent.getExtras().getString("chatGuid");
