@@ -27,7 +27,7 @@ NotificationsService notif = Get.isRegistered<NotificationsService>() ? Get.find
 
 class NotificationsService extends GetxService {
   static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
-  static const String INCOMING_FACETIME_CHANNEL = "com.bluebubbles.incoming_facetime";
+  static const String INCOMING_FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
   static const String ERROR_CHANNEL = "com.bluebubbles.errors";
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
   static const String FOREGROUND_SERVICE_CHANNEL = "com.bluebubbles.foreground_service";
@@ -81,8 +81,8 @@ class NotificationsService extends GetxService {
       );
       createNotificationChannel(
         INCOMING_FACETIME_CHANNEL,
-        "Incoming FaceTime Calls",
-        "Displays incoming FaceTime calls",
+        "Incoming FaceTimes",
+        "Displays incoming FaceTimes detected by the server",
       );
       createNotificationChannel(
         FOREGROUND_SERVICE_CHANNEL,
@@ -217,7 +217,7 @@ class NotificationsService extends GetxService {
 
   Future<void> createIncomingFaceTimeNotification(Map<String, dynamic> eventData) async {
     await cs.init();
-    final callUuid = eventData["call_uuid"];
+    final callUuid = eventData["uuid"];
     String? address = eventData["handle"]?["address"];
     String caller = eventData["address"] ?? "Unknown Number";
     Uint8List? chatIcon;
@@ -241,18 +241,17 @@ class NotificationsService extends GetxService {
         await intents.answerFaceTime(callUuid);
       });
     } else if (kIsDesktop) {
-      // _lock.synchronized(() async => await showDesktopNotif(message, text, chat, guid, title, contactName, isGroup, isReaction));
+      // TODO: Implement desktop FaceTime notifications
+      // _lock.synchronized(() async => await showDesktopNotif(title, body, chat, guid, title, contactName, isGroup, isReaction));
     } else {
       await mcs.invokeMethod("incoming-facetime-notification", {
         "CHANNEL_ID": INCOMING_FACETIME_CHANNEL,
-        "CHANNEL_NAME": "Incoming FaceTime",
         "notificationId": Random().nextInt(9998) + 1,
         "title": title,
         "body": text,
         "avatar": chatIcon,
         "caller": caller,
-        "callUuid": callUuid,
-        "time": DateTime.now().millisecondsSinceEpoch
+        "callUuid": callUuid
       });
     }
   }
