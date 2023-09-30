@@ -33,6 +33,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
 import com.bluebubbles.messaging.method_call_handler.handlers.DownloadHandler;
 import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
+import com.bluebubbles.messaging.method_call_handler.handlers.IncomingFaceTimeNotification;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
@@ -93,6 +94,8 @@ public class FlutterFirebaseMessagingBackgroundExecutor implements MethodCallHan
             new CreateNotificationChannel(context, call, result).Handle();
         } else if (call.method.equals(NewMessageNotification.TAG)) {
             new NewMessageNotification(context, call, result).Handle();
+        } else if (call.method.equals(IncomingFaceTimeNotification.TAG)) {
+            new IncomingFaceTimeNotification(context, call, result).Handle();
         } else if (call.method.equals(OpenLink.TAG)) {
             new OpenLink(context, call, result).Handle();
         } else if (call.method.equals(ClearChatNotifs.TAG)) {
