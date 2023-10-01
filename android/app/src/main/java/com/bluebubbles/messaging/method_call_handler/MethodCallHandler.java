@@ -23,6 +23,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle;
 import com.bluebubbles.messaging.method_call_handler.handlers.MediaSessionListener;
+import com.bluebubbles.messaging.method_call_handler.handlers.IncomingFaceTimeNotification;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
@@ -51,6 +52,8 @@ public class MethodCallHandler {
             result.success("");
         } else if (call.method.equals(CreateNotificationChannel.TAG)) {
             new CreateNotificationChannel(context, call, result).Handle();
+        } else if (call.method.equals(IncomingFaceTimeNotification.TAG)) {
+            new IncomingFaceTimeNotification(context, call, result).Handle();
         } else if (call.method.equals(NewMessageNotification.TAG)) {
             new NewMessageNotification(context, call, result).Handle();
         } else if (call.method.equals(OpenLink.TAG)) {

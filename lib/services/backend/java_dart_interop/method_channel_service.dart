@@ -122,16 +122,6 @@ class MethodChannelService extends GetxService {
           notif.createFailedToSend(chat, scheduled: true);
         }
         return true;
-      case "incoming-facetime":
-        await storeStartup.future;
-        Logger.info("Received incoming facetime from FCM");
-        final replaced = call.arguments.toString().replaceAll("\\", "");
-        Map<String, dynamic> data = jsonDecode(replaced.substring(1, replaced.length - 1)) ?? {};
-        String? caller = data["caller"];
-        if (caller != null) {
-          notif.createFacetimeNotif(Handle(address: caller));
-        }
-        return true;
       case "reply":
         await storeStartup.future;
         Logger.info("Received reply to message from FCM");
@@ -203,6 +193,16 @@ class MethodChannelService extends GetxService {
           ts.updateMusicTheme(Get.context!, primary, lightBg, darkBg, primaryPercent, lightBgPercent, darkBgPercent);
           isRunning = false;
         }
+        return true;
+      case "ft-call-status-changed":
+        await storeStartup.future;
+        Logger.info("Received facetime call status change from FCM");
+        Map<String, dynamic> data = jsonDecode(call.arguments);
+        await ActionHandler().handleFaceTimeStatusChange(data);
+        return true;
+      case "answer-facetime":
+        Logger.info("Answering FaceTime call");
+        await intents.answerFaceTime(call.arguments["callUuid"]);
         return true;
       default:
         return true;

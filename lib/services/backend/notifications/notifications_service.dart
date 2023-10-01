@@ -214,8 +214,48 @@ class NotificationsService extends GetxService {
     }
   }
 
-  Future<void> showDesktopNotif(
-      Message message, String text, Chat chat, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
+  Future<void> createIncomingFaceTimeNotification(Map<String, dynamic> eventData) async {
+    await cs.init();
+    final callUuid = eventData["uuid"];
+    String? address = eventData["handle"]?["address"];
+    String caller = eventData["address"] ?? "Unknown Number";
+    Uint8List? chatIcon;
+
+    // Find the contact info for the caller
+    // Load the contact's avatar & name
+    if (address != null) {
+      Contact? contact = cs.getContact(address);
+      chatIcon = contact?.avatar;
+      caller = contact?.displayName ?? caller;
+    }
+
+    // Set some notification defaults
+    String title = caller;
+    String text = "Answer FaceTime ${eventData["is_audio"] ? 'Audio' : 'Video'} Call";
+    chatIcon ??= (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+
+    if (kIsWeb && Notification.permission == "granted") {
+      final notif = Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: callUuid);
+      notif.onClick.listen((event) async {
+        await intents.answerFaceTime(callUuid);
+      });
+    } else if (kIsDesktop) {
+      // TODO: Implement desktop FaceTime notifications
+      // _lock.synchronized(() async => await showDesktopNotif(title, body, chat, guid, title, contactName, isGroup, isReaction));
+    } else {
+      await mcs.invokeMethod("incoming-facetime-notification", {
+        "CHANNEL_ID": INCOMING_FACETIME_CHANNEL,
+        "notificationId": Random().nextInt(9998) + 1,
+        "title": title,
+        "body": text,
+        "avatar": chatIcon,
+        "caller": caller,
+        "callUuid": callUuid
+      });
+    }
+  }
+
+  Future<void> showDesktopNotif(Message message, String text, Chat chat, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
     List<int> selectedIndices = ss.settings.selectedActionIndices;
     List<String> _actions = ss.settings.actionList;
     final papi = ss.settings.enablePrivateAPI.value;
@@ -605,42 +645,6 @@ class NotificationsService extends GetxService {
         ),
       ),
       payload: chat.guid + (scheduled ? "-scheduled" : ""),
-    );
-  }
-
-  Future<void> createFacetimeNotif(Handle handle) async {
-    await cs.init();
-    final contact = cs.matchHandleToContact(handle);
-    final title = 'Incoming FaceTime from ${contact?.displayName ?? handle.address}';
-    const subtitle = '';
-    if (kIsDesktop) {
-      final toast = LocalNotification(
-        title: title,
-        body: subtitle,
-        actions: [],
-      );
-
-      toast.onClick = () async {
-        await windowManager.show();
-      };
-
-      await toast.show();
-      return;
-    }
-    await flnp.show(
-      Random().nextInt(9998) + 1,
-      title,
-      subtitle,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          FACETIME_CHANNEL,
-          'Incoming FaceTimes',
-          channelDescription: 'Displays incoming FaceTimes detected by the server',
-          priority: Priority.max,
-          importance: Importance.max,
-          color: HexColor("4990de"),
-        ),
-      ),
     );
   }
 
