@@ -758,6 +758,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
               });
             }
           });
+
+          Future(() => eventDispatcher.emit("theme-update", null));
         }
 
         /* ----- SYSTEM TRAY INITIALIZATION ----- */

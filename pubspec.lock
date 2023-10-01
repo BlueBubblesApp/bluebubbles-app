@@ -493,8 +493,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "webkit2gtk-4.1"
-      resolved-ref: "9ca56f505d31d719b974c9c52ac50679c2a15629"
+      ref: "607c1f01c8a9e9302539bb9ec35acd83ae24842b"
+      resolved-ref: "607c1f01c8a9e9302539bb9ec35acd83ae24842b"
       url: "https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git"
     source: git
     version: "0.0.11"
@@ -686,7 +686,7 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/firebase_dart"
-      ref: "feature/firestore"
+      ref: beb79f70a2bb0e96e6bb9fdebac2ff452f138950
       resolved-ref: beb79f70a2bb0e96e6bb9fdebac2ff452f138950
       url: "https://github.com/appsup-dart/firebase_dart.git"
     source: git
@@ -1003,7 +1003,7 @@ packages:
     dependency: "direct main"
     description:
       path: geolocator
-      ref: no_windows_streams
+      ref: "223195b3746686790ca188deac6260d901d30c51"
       resolved-ref: "223195b3746686790ca188deac6260d901d30c51"
       url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
     source: git
@@ -2047,7 +2047,7 @@ packages:
     dependency: "direct overridden"
     description:
       path: permission_handler_windows
-      ref: no_windows_location
+      ref: a7a87683a7745c30e68161b3924fefb94818c95c
       resolved-ref: a7a87683a7745c30e68161b3924fefb94818c95c
       url: "https://github.com/BlueBubblesApp/flutter-permission-handler.git"
     source: git
@@ -2184,7 +2184,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: ffbb276ec6ec2830ca50841a7aab9cfb4b7fb26b
       resolved-ref: ffbb276ec6ec2830ca50841a7aab9cfb4b7fb26b
       url: "https://github.com/theyakka/qr.flutter"
     source: git
