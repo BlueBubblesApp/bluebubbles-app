@@ -244,7 +244,7 @@ class NotificationsService extends GetxService {
       // _lock.synchronized(() async => await showDesktopNotif(title, body, chat, guid, title, contactName, isGroup, isReaction));
     } else {
       await mcs.invokeMethod("incoming-facetime-notification", {
-        "CHANNEL_ID": INCOMING_FACETIME_CHANNEL,
+        "CHANNEL_ID": FACETIME_CHANNEL,
         "notificationId": Random().nextInt(9998) + 1,
         "title": title,
         "body": text,
