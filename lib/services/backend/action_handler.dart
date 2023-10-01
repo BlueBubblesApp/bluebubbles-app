@@ -82,6 +82,7 @@ class ActionHandler extends GetxService {
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
+        ddScan: m.text!.isURL,
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {

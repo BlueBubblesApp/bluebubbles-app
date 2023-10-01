@@ -582,7 +582,7 @@ class HttpService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
+  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       Map<String, dynamic> data = {
         "chatGuid": chatGuid,
@@ -596,6 +596,7 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
+        "ddScan": ddScan,
       });
 
       final response = await dio.post(
@@ -651,7 +652,7 @@ class HttpService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMultipart(String chatGuid, String tempGuid, List<Map<String, dynamic>> parts, {String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
+  Future<Response> sendMultipart(String chatGuid, String tempGuid, List<Map<String, dynamic>> parts, {String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       Map<String, dynamic> data = {
         "chatGuid": chatGuid,
@@ -660,7 +661,8 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
-        "parts": parts
+        "parts": parts,
+        "ddScan": ddScan,
       };
 
       final response = await dio.post(
