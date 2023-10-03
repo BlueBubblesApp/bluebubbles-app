@@ -609,8 +609,8 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
                                       onTap: () async {
                                         Navigator.of(context).pop();
                                       },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(8.0),
                                         child: Icon(
                                           Icons.arrow_back,
                                           color: Colors.white,

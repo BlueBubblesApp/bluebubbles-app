@@ -1,5 +1,5 @@
-class FindMy {
-  FindMy({
+class FindMyDevice {
+  FindMyDevice({
     required this.deviceModel,
     required this.lowPowerMode,
     required this.passcodeLength,
@@ -99,7 +99,7 @@ class FindMy {
   final Map<String, dynamic>? role;
   final Map<String, dynamic>? lostModeMetadata;
 
-  factory FindMy.fromJson(Map<String, dynamic> json) => FindMy(
+  factory FindMyDevice.fromJson(Map<String, dynamic> json) => FindMyDevice(
     deviceModel: json["deviceModel"],
     lowPowerMode: json["lowPowerMode"],
     passcodeLength: json["passcodeLength"],
