@@ -1060,7 +1060,6 @@ class TextFieldComponent extends StatelessWidget {
               bytes: image,
               size: image.length,
             ));
-            return KeyEventResult.handled;
           }
         });
       }
@@ -1075,7 +1074,6 @@ class TextFieldComponent extends StatelessWidget {
               bytes: image,
               size: image.length,
             ));
-            return KeyEventResult.handled;
           }
         });
       }
@@ -1090,11 +1088,9 @@ class TextFieldComponent extends StatelessWidget {
               bytes: image,
               size: image.length,
             ));
-            return KeyEventResult.handled;
           }
         });
       }
-      return KeyEventResult.ignored;
     }
 
     if (ev.isMetaPressed || ev.isControlPressed || ev.isAltPressed) {
