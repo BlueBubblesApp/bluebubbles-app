@@ -798,7 +798,7 @@ class TextFieldComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: focusNode,
-      onKey: (_, ev) => isChatCreator ? KeyEventResult.ignored : handleKey(_, ev, context),
+      onKey: (_, ev) => handleKey(_, ev, context, isChatCreator),
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
         child: Container(
@@ -1035,178 +1035,174 @@ class TextFieldComponent extends StatelessWidget {
     }
   }
 
-  KeyEventResult handleKey(FocusNode _, RawKeyEvent ev, BuildContext context) {
-    if (ev is RawKeyDownEvent) {
-      RawKeyEventDataWindows? windowsData;
-      RawKeyEventDataLinux? linuxData;
-      RawKeyEventDataWeb? webData;
-      RawKeyEventDataAndroid? androidData;
-      if (ev.data is RawKeyEventDataWindows) {
-        windowsData = ev.data as RawKeyEventDataWindows;
-      } else if (ev.data is RawKeyEventDataLinux) {
-        linuxData = ev.data as RawKeyEventDataLinux;
-      } else if (ev.data is RawKeyEventDataWeb) {
-        webData = ev.data as RawKeyEventDataWeb;
-      } else if (ev.data is RawKeyEventDataAndroid) {
-        androidData = ev.data as RawKeyEventDataAndroid;
-      }
-
-      if (ev.isMetaPressed || ev.isControlPressed || ev.isAltPressed) {
-        return KeyEventResult.ignored;
-      }
-
-      int maxShown = context.height / 3 ~/ 40;
-      int upMovementIndex = maxShown ~/ 3;
-      int downMovementIndex = maxShown * 2 ~/ 3;
-
-      // Down arrow
-      if (windowsData?.keyCode == 40 ||
-          linuxData?.keyCode == 65364 ||
-          webData?.code == "ArrowDown" ||
-          androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
-        if (controller!.mentionSelectedIndex.value < controller!.mentionMatches.length - 1) {
-          controller!.mentionSelectedIndex.value++;
-          if (controller!.mentionSelectedIndex.value >= downMovementIndex &&
-              controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + downMovementIndex + 1) {
-            controller!.emojiScrollController
-                .jumpTo(max((controller!.mentionSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
-          }
-          return KeyEventResult.handled;
-        }
-        if (controller!.emojiSelectedIndex.value < controller!.emojiMatches.length - 1) {
-          controller!.emojiSelectedIndex.value++;
-          if (controller!.emojiSelectedIndex.value >= downMovementIndex &&
-              controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + downMovementIndex + 1) {
-            controller!.emojiScrollController
-                .jumpTo(max((controller!.emojiSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
-          }
-          return KeyEventResult.handled;
-        }
-      }
-
-      // Up arrow
-      if (windowsData?.keyCode == 38 ||
-          linuxData?.keyCode == 65362 ||
-          webData?.code == "ArrowUp" ||
-          androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
-        if (controller!.mentionSelectedIndex.value > 0) {
-          controller!.mentionSelectedIndex.value--;
-          if (controller!.mentionSelectedIndex.value >= upMovementIndex &&
-              controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + upMovementIndex + 1) {
-            controller!.emojiScrollController
-                .jumpTo(min((controller!.mentionSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
-          }
-          return KeyEventResult.handled;
-        }
-        if (controller!.emojiSelectedIndex.value > 0) {
-          controller!.emojiSelectedIndex.value--;
-          if (controller!.emojiSelectedIndex.value >= upMovementIndex &&
-              controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + upMovementIndex + 1) {
-            controller!.emojiScrollController
-                .jumpTo(min((controller!.emojiSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
-          }
-          return KeyEventResult.handled;
-        }
-      }
-
-      // Tab or Enter
-      if (windowsData?.keyCode == 9 ||
-          linuxData?.keyCode == 65289 ||
-          webData?.code == "Tab" ||
-          androidData?.physicalKey == PhysicalKeyboardKey.tab ||
-          windowsData?.keyCode == 13 ||
-          linuxData?.keyCode == 65293 ||
-          webData?.code == "Enter" ||
-          androidData?.physicalKey == PhysicalKeyboardKey.enter) {
-        if (controller!.focusNode.hasPrimaryFocus && controller!.mentionMatches.length > controller!.mentionSelectedIndex.value) {
-          int index = controller!.mentionSelectedIndex.value;
-          TextEditingController textField =
-          controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
-          String text = textField.text;
-          RegExp regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
-          Iterable<RegExpMatch> matches = regExp.allMatches(text);
-          if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
-            RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
-            controller!.textController.addMention(text.substring(match.start, match.end), controller!.mentionMatches[index]);
-          } else {
-            // If the user moved the cursor before trying to insert a mention, reset the picker
-            controller!.emojiScrollController.jumpTo(0);
-          }
-          controller!.mentionSelectedIndex.value = 0;
-          controller!.mentionMatches.value = <Mentionable>[];
-
-          return KeyEventResult.handled;
-        }
-        if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
-          int index = controller!.emojiSelectedIndex.value;
-          TextEditingController textField =
-              controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
-          String text = textField.text;
-          RegExp regExp = RegExp(r":[^: \n]+([ \n:]|$)", multiLine: true);
-          Iterable<RegExpMatch> matches = regExp.allMatches(text);
-          if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
-            RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
-            String char = controller!.emojiMatches[index].char;
-            String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
-            textField.value = TextEditingValue(text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1)));
-          } else {
-            // If the user moved the cursor before trying to insert an emoji, reset the picker
-            controller!.emojiScrollController.jumpTo(0);
-          }
-          controller!.emojiSelectedIndex.value = 0;
-          controller!.emojiMatches.value = <Emoji>[];
-
-          return KeyEventResult.handled;
-        }
-        if (ss.settings.privateSubjectLine.value) {
-          if (windowsData?.keyCode == 9 ||
-              linuxData?.keyCode == 65289 ||
-              webData?.code == "Tab" ||
-              androidData?.physicalKey == PhysicalKeyboardKey.tab) {
-            // Tab to switch between text fields
-            if (!ev.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
-              controller!.focusNode.requestFocus();
-              return KeyEventResult.handled;
-            }
-            if (ev.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
-              controller!.subjectFocusNode.requestFocus();
-              return KeyEventResult.handled;
-            }
-          }
-        }
-      }
-
-      // Escape
-      if (windowsData?.keyCode == 27 ||
-          linuxData?.keyCode == 65307 ||
-          webData?.code == "Escape" ||
-          androidData?.physicalKey == PhysicalKeyboardKey.escape) {
-        if (controller!.mentionMatches.isNotEmpty) {
-          controller!.mentionMatches.value = <Mentionable>[];
-          return KeyEventResult.handled;
-        }
-        if (controller!.emojiMatches.isNotEmpty) {
-          controller!.emojiMatches.value = <Emoji>[];
-          return KeyEventResult.handled;
-        }
-        if (controller!.replyToMessage != null) {
-          controller!.replyToMessage = null;
-          return KeyEventResult.handled;
-        }
-      }
-    }
-
+  KeyEventResult handleKey(FocusNode _, RawKeyEvent ev, BuildContext context, bool isChatCreator) {
     if (ev is! RawKeyDownEvent) return KeyEventResult.ignored;
     RawKeyEventDataWindows? windowsData;
     RawKeyEventDataLinux? linuxData;
     RawKeyEventDataWeb? webData;
+    RawKeyEventDataAndroid? androidData;
     if (ev.data is RawKeyEventDataWindows) {
       windowsData = ev.data as RawKeyEventDataWindows;
     } else if (ev.data is RawKeyEventDataLinux) {
       linuxData = ev.data as RawKeyEventDataLinux;
     } else if (ev.data is RawKeyEventDataWeb) {
       webData = ev.data as RawKeyEventDataWeb;
+    } else if (ev.data is RawKeyEventDataAndroid) {
+      androidData = ev.data as RawKeyEventDataAndroid;
     }
+
+    if (ev.isMetaPressed || ev.isControlPressed || ev.isAltPressed) {
+      return KeyEventResult.ignored;
+    }
+
+    if (isChatCreator) {
+      if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+        sendMessage();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+
+    int maxShown = context.height / 3 ~/ 40;
+    int upMovementIndex = maxShown ~/ 3;
+    int downMovementIndex = maxShown * 2 ~/ 3;
+
+    // Down arrow
+    if (windowsData?.keyCode == 40 ||
+        linuxData?.keyCode == 65364 ||
+        webData?.code == "ArrowDown" ||
+        androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
+      if (controller!.mentionSelectedIndex.value < controller!.mentionMatches.length - 1) {
+        controller!.mentionSelectedIndex.value++;
+        if (controller!.mentionSelectedIndex.value >= downMovementIndex &&
+            controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + downMovementIndex + 1) {
+          controller!.emojiScrollController
+              .jumpTo(max((controller!.mentionSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
+        }
+        return KeyEventResult.handled;
+      }
+      if (controller!.emojiSelectedIndex.value < controller!.emojiMatches.length - 1) {
+        controller!.emojiSelectedIndex.value++;
+        if (controller!.emojiSelectedIndex.value >= downMovementIndex &&
+            controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + downMovementIndex + 1) {
+          controller!.emojiScrollController
+              .jumpTo(max((controller!.emojiSelectedIndex.value - downMovementIndex) * 40, controller!.emojiScrollController.offset));
+        }
+        return KeyEventResult.handled;
+      }
+    }
+
+    // Up arrow
+    if (windowsData?.keyCode == 38 ||
+        linuxData?.keyCode == 65362 ||
+        webData?.code == "ArrowUp" ||
+        androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
+      if (controller!.mentionSelectedIndex.value > 0) {
+        controller!.mentionSelectedIndex.value--;
+        if (controller!.mentionSelectedIndex.value >= upMovementIndex &&
+            controller!.mentionSelectedIndex < controller!.mentionMatches.length - maxShown + upMovementIndex + 1) {
+          controller!.emojiScrollController
+              .jumpTo(min((controller!.mentionSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
+        }
+        return KeyEventResult.handled;
+      }
+      if (controller!.emojiSelectedIndex.value > 0) {
+        controller!.emojiSelectedIndex.value--;
+        if (controller!.emojiSelectedIndex.value >= upMovementIndex &&
+            controller!.emojiSelectedIndex < controller!.emojiMatches.length - maxShown + upMovementIndex + 1) {
+          controller!.emojiScrollController
+              .jumpTo(min((controller!.emojiSelectedIndex.value - upMovementIndex) * 40, controller!.emojiScrollController.offset));
+        }
+        return KeyEventResult.handled;
+      }
+    }
+
+    // Tab or Enter
+    if (windowsData?.keyCode == 9 ||
+        linuxData?.keyCode == 65289 ||
+        webData?.code == "Tab" ||
+        androidData?.physicalKey == PhysicalKeyboardKey.tab ||
+        windowsData?.keyCode == 13 ||
+        linuxData?.keyCode == 65293 ||
+        webData?.code == "Enter" ||
+        androidData?.physicalKey == PhysicalKeyboardKey.enter) {
+      if (controller!.focusNode.hasPrimaryFocus && controller!.mentionMatches.length > controller!.mentionSelectedIndex.value) {
+        int index = controller!.mentionSelectedIndex.value;
+        TextEditingController textField =
+            controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
+        String text = textField.text;
+        RegExp regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
+        Iterable<RegExpMatch> matches = regExp.allMatches(text);
+        if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
+          RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
+          controller!.textController.addMention(text.substring(match.start, match.end), controller!.mentionMatches[index]);
+        } else {
+          // If the user moved the cursor before trying to insert a mention, reset the picker
+          controller!.emojiScrollController.jumpTo(0);
+        }
+        controller!.mentionSelectedIndex.value = 0;
+        controller!.mentionMatches.value = <Mentionable>[];
+
+        return KeyEventResult.handled;
+      }
+      if (controller!.emojiMatches.length > controller!.emojiSelectedIndex.value) {
+        int index = controller!.emojiSelectedIndex.value;
+        TextEditingController textField =
+            controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
+        String text = textField.text;
+        RegExp regExp = RegExp(r":[^: \n]+([ \n:]|$)", multiLine: true);
+        Iterable<RegExpMatch> matches = regExp.allMatches(text);
+        if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
+          RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
+          String char = controller!.emojiMatches[index].char;
+          String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
+          textField.value = TextEditingValue(text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1)));
+        } else {
+          // If the user moved the cursor before trying to insert an emoji, reset the picker
+          controller!.emojiScrollController.jumpTo(0);
+        }
+        controller!.emojiSelectedIndex.value = 0;
+        controller!.emojiMatches.value = <Emoji>[];
+
+        return KeyEventResult.handled;
+      }
+      if (ss.settings.privateSubjectLine.value) {
+        if (windowsData?.keyCode == 9 ||
+            linuxData?.keyCode == 65289 ||
+            webData?.code == "Tab" ||
+            androidData?.physicalKey == PhysicalKeyboardKey.tab) {
+          // Tab to switch between text fields
+          if (!ev.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
+            controller!.focusNode.requestFocus();
+            return KeyEventResult.handled;
+          }
+          if (ev.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
+            controller!.subjectFocusNode.requestFocus();
+            return KeyEventResult.handled;
+          }
+        }
+      }
+    }
+
+    // Escape
+    if (windowsData?.keyCode == 27 ||
+        linuxData?.keyCode == 65307 ||
+        webData?.code == "Escape" ||
+        androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+      if (controller!.mentionMatches.isNotEmpty) {
+        controller!.mentionMatches.value = <Mentionable>[];
+        return KeyEventResult.handled;
+      }
+      if (controller!.emojiMatches.isNotEmpty) {
+        controller!.emojiMatches.value = <Emoji>[];
+        return KeyEventResult.handled;
+      }
+      if (controller!.replyToMessage != null) {
+        controller!.replyToMessage = null;
+        return KeyEventResult.handled;
+      }
+    }
+
     if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
       sendMessage();
       controller!.focusNode.requestFocus();
