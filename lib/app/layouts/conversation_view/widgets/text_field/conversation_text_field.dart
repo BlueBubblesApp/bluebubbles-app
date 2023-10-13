@@ -1051,6 +1051,52 @@ class TextFieldComponent extends StatelessWidget {
       androidData = ev.data as RawKeyEventDataAndroid;
     }
 
+    if (windowsData != null) {
+      if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV || windowsData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
+        Pasteboard.image.then((image) {
+          if (image != null) {
+            controller!.pickedAttachments.add(PlatformFile(
+              name: "${randomString(8)}.png",
+              bytes: image,
+              size: image.length,
+            ));
+            return KeyEventResult.handled;
+          }
+        });
+      }
+    }
+
+    if (linuxData != null) {
+      if ((linuxData.physicalKey == PhysicalKeyboardKey.keyV || linuxData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
+        Pasteboard.image.then((image) {
+          if (image != null) {
+            controller!.pickedAttachments.add(PlatformFile(
+              name: "${randomString(8)}.png",
+              bytes: image,
+              size: image.length,
+            ));
+            return KeyEventResult.handled;
+          }
+        });
+      }
+    }
+
+    if (webData != null) {
+      if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
+        Pasteboard.image.then((image) {
+          if (image != null) {
+            controller!.pickedAttachments.add(PlatformFile(
+              name: "${randomString(8)}.png",
+              bytes: image,
+              size: image.length,
+            ));
+            return KeyEventResult.handled;
+          }
+        });
+      }
+      return KeyEventResult.ignored;
+    }
+
     if (ev.isMetaPressed || ev.isControlPressed || ev.isAltPressed) {
       return KeyEventResult.ignored;
     }
@@ -1209,48 +1255,6 @@ class TextFieldComponent extends StatelessWidget {
       return KeyEventResult.handled;
     }
 
-    if (windowsData != null) {
-      if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV || windowsData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (linuxData != null) {
-      if ((linuxData.physicalKey == PhysicalKeyboardKey.keyV || linuxData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (webData != null) {
-      if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-      return KeyEventResult.ignored;
-    }
     if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
     if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
       if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(controller!.subjectTextController.text)!) {
