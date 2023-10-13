@@ -18,7 +18,6 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.capitalize = true,
-    this.backgroundColor,
     this.secondaryColor,
     this.useCupertino = true,
     this.clampWidth = true,
@@ -33,7 +32,6 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final void Function()? onMaterialTap;
   final String? subtitle;
   final bool capitalize;
-  final Color? backgroundColor;
   final Color? secondaryColor;
   final bool useCupertino;
   final bool clampWidth;
@@ -66,7 +64,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
       surfaceColor = context.theme.colorScheme.surfaceVariant;
     }
     return Container(
-      color: backgroundColor,
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(

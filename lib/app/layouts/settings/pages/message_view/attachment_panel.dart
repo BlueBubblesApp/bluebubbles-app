@@ -167,7 +167,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                             capitalize: false,
                             title: "Swipe Direction",
                             subtitle: "Set the swipe direction to go to previous media items",
-                            backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           )),
                     ],

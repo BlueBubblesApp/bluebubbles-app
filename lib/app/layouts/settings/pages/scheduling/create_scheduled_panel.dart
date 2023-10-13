@@ -170,7 +170,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                     });
                   },
                   title: "Select Chat",
-                  backgroundColor: tileColor,
                   secondaryColor: headerColor,
                   textProcessing: (val) => val.toString(),
                   useCupertino: false,
@@ -267,7 +266,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                     });
                   },
                   title: "Schedule",
-                  backgroundColor: tileColor,
                   secondaryColor: headerColor,
                   textProcessing: (val) => val.capitalizeFirst!,
                 ),
@@ -328,7 +326,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                               frequency = val;
                             });
                           },
-                          backgroundColor: tileColor,
                           secondaryColor: headerColor,
                         ),
                       ),

@@ -85,7 +85,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       options: AdaptiveThemeMode.values,
                       textProcessing: (val) => val.toString().split(".").last,
                       title: "App Theme",
-                      backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     ),
                     if (!kIsWeb)
@@ -158,7 +157,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       textProcessing: (val) => describeEnum(val),
                       capitalize: false,
                       title: "App Skin",
-                      backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     )),
                     if (!kIsDesktop)
@@ -389,7 +387,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           title: "Material You",
                           subtitle:
                           "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
-                          backgroundColor: tileColor,
                           secondaryColor: headerColor,
                         ),
                       ),
@@ -557,7 +554,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             options: controller.refreshRates,
                             textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
                             title: "Display",
-                            backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           )),
                         ],

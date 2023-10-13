@@ -287,7 +287,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                     ss.settings.quickTapbackType.value = val;
                                     saveSettings();
                                   },
-                                  backgroundColor: tileColor,
                                   secondaryColor: headerColor,
                                 ),
                               ),

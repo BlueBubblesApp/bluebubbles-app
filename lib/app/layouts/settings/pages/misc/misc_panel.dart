@@ -127,7 +127,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                                 .replaceAll("_", " ")
                                 .capitalizeFirst!,
                             title: "Security Level",
-                            backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
                         } else {
