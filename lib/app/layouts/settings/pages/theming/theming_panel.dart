@@ -245,7 +245,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             saveSettings();
                           },
                           title: "Window Effect",
-                          subtitle: "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}\nNote: Certain effects may cause window movements to become choppy",
+                          subtitle: "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
                           backgroundColor: tileColor,
                           secondaryColor: headerColor,
                           capitalize: true,
@@ -255,7 +255,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         Obx(() => SettingsSubtitle(
                               unlimitedSpace: true,
                               subtitle:
-                                  "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}\nNote: Certain effects may cause window movements to become choppy",
+                                  "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
                             )),
                       Obx(() {
                         if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.colorScheme.background)) {
