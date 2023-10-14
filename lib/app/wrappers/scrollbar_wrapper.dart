@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
@@ -26,20 +25,7 @@ class ScrollbarWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) => !kIsDesktop && !kIsWeb
       ? child
-      : Obx(
-          () => ExcludeFocus(
-            excluding: preventFocus.value,
-            child: Listener(
-              onPointerDown: (_) {
-                preventFocus.value = false;
-              },
-              onPointerUp: (_) {
-                GestureBinding.instance.handlePointerEvent(PointerHoverEvent(
-                  kind: _.kind,
-                  position: _.position,
-                ));
-              },
-              child: Focus(
+      : Focus(
                 onKey: (node, event) {
                   if (!event.isAltPressed &&
                       !event.isControlPressed &&
@@ -53,18 +39,7 @@ class ScrollbarWrapper extends StatelessWidget {
                   }
                   return KeyEventResult.ignored;
                 },
-                onFocusChange: (focused) {
-                  if (!focused) {
-                    preventFocus.value = true;
-                  }
-                },
                 child: ImprovedScrolling(
-                  enableKeyboardScrolling: true,
-                  keyboardScrollConfig: KeyboardScrollConfig(
-                    arrowsScrollAmount: reverse ? -200.0 : 200.0,
-                    pageUpDownScrollAmount: reverse ? -500.0 : 500.0,
-                    spaceScrollAmount: reverse ? -600.0 : 600.0,
-                  ),
                   enableMMBScrolling: true,
                   mmbScrollConfig: MMBScrollConfig(
                     customScrollCursor: DefaultCustomScrollCursor(
@@ -92,8 +67,5 @@ class ScrollbarWrapper extends StatelessWidget {
                           child: child,
                         ),
                 ),
-              ),
-            ),
-          ),
         );
 }
