@@ -33,6 +33,7 @@ import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:supercharged/supercharged.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
