@@ -164,6 +164,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         Navigator.of(context).pop();
       }
     }
+    widget.cvController.lastFocusedNode.requestFocus();
   }
 
   @override
@@ -524,6 +525,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 }
                                                                                 if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
                                                                                   widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
+                                                                                  widget.cvController.lastFocusedNode.requestFocus();
                                                                                   return KeyEventResult.handled;
                                                                                 }
                                                                                 return KeyEventResult.ignored;
@@ -588,6 +590,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                     ),
                                                                                     onPressed: () {
                                                                                       widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
+                                                                                      widget.cvController.lastFocusedNode.requestFocus();
                                                                                     },
                                                                                     iconSize: 22,
                                                                                     style: const ButtonStyle(
