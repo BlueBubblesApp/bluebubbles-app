@@ -1139,6 +1139,19 @@ class TextFieldComponent extends StatelessWidget {
         linuxData?.keyCode == 65362 ||
         webData?.code == "ArrowUp" ||
         androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
+      if (chat != null && controller!.lastFocusedTextController.text.isEmpty && ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148) {
+        final message = ms(chat!.guid).mostRecentSent;
+        if (message != null) {
+          final node = FocusNode();
+          final parts = mwc(message).parts;
+          final part = parts.filter((p) => p.text?.isNotEmpty ?? false).lastOrNull;
+          if (part != null) {
+            controller!.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
+            node.requestFocus();
+            return KeyEventResult.handled;
+          }
+        }
+      }
       if (controller!.mentionSelectedIndex.value > 0) {
         controller!.mentionSelectedIndex.value--;
         if (controller!.mentionSelectedIndex.value >= upMovementIndex &&

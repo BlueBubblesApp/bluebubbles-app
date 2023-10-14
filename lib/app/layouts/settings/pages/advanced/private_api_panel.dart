@@ -292,6 +292,19 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                               ),
                             ),
                             AnimatedSizeAndFade.showHide(
+                              show: ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148,
+                              child: SettingsSwitch(
+                                title: "Up Arrow for Quick Edit",
+                                initialVal: ss.settings.editLastSentMessageOnUpArrow.value,
+                                onChanged: (bool val) {
+                                  ss.settings.editLastSentMessageOnUpArrow.value = val;
+                                  saveSettings();
+                                },
+                                subtitle: "Press the Up Arrow to begin editing the last message you sent",
+                                backgroundColor: tileColor,
+                              ),
+                            ),
+                            AnimatedSizeAndFade.showHide(
                               show: controller.serverVersionCode.value >= 63,
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,

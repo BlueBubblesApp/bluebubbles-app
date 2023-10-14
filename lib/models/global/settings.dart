@@ -90,6 +90,7 @@ class Settings {
   final RxBool privateSubjectLine = false.obs;
   final RxBool privateAPISend = false.obs;
   final RxBool privateAPIAttachmentSend = false.obs;
+  final RxBool editLastSentMessageOnUpArrow = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -257,6 +258,7 @@ class Settings {
       'privateMarkChatAsRead': privateMarkChatAsRead.value,
       'privateManualMarkAsRead': privateManualMarkAsRead.value,
       'privateSubjectLine': privateSubjectLine.value,
+      'editLastSentMessageOnUpArrow': editLastSentMessageOnUpArrow.value,
       'redactedMode': redactedMode.value,
       'hideMessageContent': hideMessageContent.value,
       'hideAttachments': hideAttachments.value,
@@ -369,6 +371,7 @@ class Settings {
     ss.settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     ss.settings.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
     ss.settings.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
+    ss.settings.editLastSentMessageOnUpArrow.value = map['editLastSentMessageOnUpArrow'] ?? false;
     ss.settings.redactedMode.value = map['redactedMode'] ?? false;
     ss.settings.hideMessageContent.value = map['hideMessageContent'] ?? true;
     ss.settings.hideAttachments.value = map['hideAttachments'] ?? true;
@@ -491,6 +494,7 @@ class Settings {
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     s.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
     s.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
+    s.editLastSentMessageOnUpArrow.value = map['editLastSentMessageOnUpArrow'] ?? false;
     s.redactedMode.value = map['redactedMode'] ?? false;
     s.hideMessageContent.value = map['hideMessageContent'] ?? true;
     s.hideAttachments.value = map['hideAttachments'] ?? true;
