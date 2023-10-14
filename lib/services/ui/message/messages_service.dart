@@ -40,6 +40,9 @@ class MessagesService extends GetxController {
   Message? get mostRecent => (struct.messages.toList()
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
+  Message? get mostRecentReceived => (struct.messages.where((e) => !e.isFromMe!).toList()
+    ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
+
   void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage, Function(String) jumpToMessageFunc) {
     chat = c;
     Get.put<String>(tag, tag: 'lastReloadedChat');
