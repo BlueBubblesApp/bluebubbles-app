@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -302,6 +303,24 @@ class ActionHandler extends GetxService {
 
   Future<void> handleIncomingFaceTimeCall(Map<String, dynamic> data) async {
     Logger.info("Handling incoming FaceTime call");
-    await notif.createIncomingFaceTimeNotification(data);
+    await cs.init();
+    final callUuid = data["uuid"];
+    String? address = data["handle"]?["address"];
+    String caller = data["address"] ?? "Unknown Number";
+    bool isAudio = data["is_audio"];
+    Uint8List? chatIcon;
+
+    // Find the contact info for the caller
+    // Load the contact's avatar & name
+    if (address != null) {
+      Contact? contact = cs.getContact(address);
+      chatIcon = contact?.avatar;
+      caller = contact?.displayName ?? caller;
+    }
+
+    await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
+    if (!ls.isAlive) {
+      await notif.createIncomingFaceTimeNotification(callUuid, caller, chatIcon, isAudio);
+    }
   }
 }

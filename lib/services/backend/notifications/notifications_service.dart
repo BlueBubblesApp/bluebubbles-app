@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_mess
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -41,6 +42,7 @@ class NotificationsService extends GetxService {
   static LocalNotification? failedToast;
   static LocalNotification? socketToast;
   static Map<String, List<LocalNotification>> notifications = {};
+  static Map<String, LocalNotification> facetimeNotifications = {};
   static Map<String, int> notificationCounts = {};
   static final Lock _lock = Lock();
 
@@ -214,24 +216,10 @@ class NotificationsService extends GetxService {
     }
   }
 
-  Future<void> createIncomingFaceTimeNotification(Map<String, dynamic> eventData) async {
-    await cs.init();
-    final callUuid = eventData["uuid"];
-    String? address = eventData["handle"]?["address"];
-    String caller = eventData["address"] ?? "Unknown Number";
-    Uint8List? chatIcon;
-
-    // Find the contact info for the caller
-    // Load the contact's avatar & name
-    if (address != null) {
-      Contact? contact = cs.getContact(address);
-      chatIcon = contact?.avatar;
-      caller = contact?.displayName ?? caller;
-    }
-
+  Future<void> createIncomingFaceTimeNotification(String callUuid, String caller, Uint8List? chatIcon, bool isAudio) async {
     // Set some notification defaults
     String title = caller;
-    String text = "Answer FaceTime ${eventData["is_audio"] ? 'Audio' : 'Video'} Call";
+    String text = "Answer FaceTime ${isAudio ? 'Audio' : 'Video'} Call";
     chatIcon ??= (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
 
     if (kIsWeb && Notification.permission == "granted") {
@@ -240,8 +228,7 @@ class NotificationsService extends GetxService {
         await intents.answerFaceTime(callUuid);
       });
     } else if (kIsDesktop) {
-      // TODO: Implement desktop FaceTime notifications
-      // _lock.synchronized(() async => await showDesktopNotif(title, body, chat, guid, title, contactName, isGroup, isReaction));
+      _lock.synchronized(() async => await showPersistentDesktopFaceTimeNotif(callUuid, caller, chatIcon, isAudio));
     } else {
       await mcs.invokeMethod("incoming-facetime-notification", {
         "CHANNEL_ID": FACETIME_CHANNEL,
@@ -253,6 +240,70 @@ class NotificationsService extends GetxService {
         "callUuid": callUuid
       });
     }
+  }
+
+  Future<void> clearFaceTimeNotification(String callUuid) async {
+    if (kIsDesktop) {
+      await clearDesktopFaceTimeNotif(callUuid);
+    }
+  }
+
+  Future<void> showPersistentDesktopFaceTimeNotif(String callUuid, String caller, Uint8List? avatar, bool isAudio) async {
+    List<String> actions = ["Answer", "Ignore"];
+    List<LocalNotificationAction> nActions = actions.map((String a) => LocalNotificationAction(text: a)).toList();
+    LocalNotification? toast;
+    String? path;
+
+    if (avatar != null) {
+      Uint8List? _avatar = await clip(avatar, size: 256, circle: true);
+      if (_avatar != null) {
+        // Create a temp file with the avatar
+        path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");
+        await File(path).create(recursive: true);
+        await File(path).writeAsBytes(_avatar);
+      }
+    }
+
+    toast = LocalNotification(
+      imagePath: path,
+      title: caller,
+      body: "Incoming FaceTime ${isAudio ? 'Audio' : 'Video'} Call",
+      duration: LocalNotificationDuration.long,
+      actions: nActions,
+    );
+
+    toast.onClick = () async {
+      await windowManager.show();
+    };
+
+    toast.onClickAction = (index) async {
+      if (actions[index] == "Answer") {
+        await windowManager.show();
+        await intents.answerFaceTime(callUuid);
+      } else {
+        hideFaceTimeOverlay(callUuid);
+        await toast?.close();
+      }
+    };
+
+    toast.onClose = (reason) async {
+      if (reason == LocalNotificationCloseReason.timedOut && faceTimeOverlays.containsKey(callUuid)) {
+        await toast?.show();
+      }
+    };
+
+    if (facetimeNotifications[callUuid] != null) {
+      await facetimeNotifications[callUuid]?.close();
+    }
+
+    facetimeNotifications[callUuid] = toast;
+
+    await toast.show();
+  }
+
+  Future<void> clearDesktopFaceTimeNotif(String callerUuid) async {
+    await facetimeNotifications[callerUuid]?.close();
+    facetimeNotifications.remove(callerUuid);
   }
 
   Future<void> showDesktopNotif(Message message, String text, Chat chat, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
