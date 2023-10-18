@@ -242,18 +242,19 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                           : Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow_outlined),
                                       onPressed: () async {
                                         if (sendPlayer is Player) {
-                                          final _sendPlayer = sendPlayer as Player;
+                                          final Player _sendPlayer = sendPlayer as Player;
                                           if (playingSendSound.value) {
                                             await _sendPlayer.stop();
                                           } else {
+                                            await _sendPlayer.setVolume(ss.settings.soundVolume.value.toDouble());
                                             await _sendPlayer.open(Media(ss.settings.sendSoundPath.value!));
                                           }
                                         } else if (sendPlayer is aw.PlayerController) {
-                                          final _sendPlayer = sendPlayer as aw.PlayerController;
+                                          final aw.PlayerController _sendPlayer = sendPlayer as aw.PlayerController;
                                           if (playingSendSound.value) {
                                             await _sendPlayer.stopPlayer();
                                           } else {
-                                            await _sendPlayer.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: 1.0);
+                                            await _sendPlayer.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: ss.settings.soundVolume.value.toDouble() / 100);
                                             await _sendPlayer.startPlayer();
                                           }
                                         }
@@ -306,18 +307,19 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                           : Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow_outlined),
                                       onPressed: () async {
                                         if (receivePlayer is Player) {
-                                          final _receivePlayer = receivePlayer as Player;
+                                          final Player _receivePlayer = receivePlayer as Player;
                                           if (playingReceiveSound.value) {
                                             await _receivePlayer.stop();
                                           } else {
+                                            await _receivePlayer.setVolume(ss.settings.soundVolume.value.toDouble());
                                             await _receivePlayer.open(Media(ss.settings.receiveSoundPath.value!));
                                           }
                                         } else if (receivePlayer is aw.PlayerController) {
-                                          final _receivePlayer = receivePlayer as aw.PlayerController;
+                                          final aw.PlayerController _receivePlayer = receivePlayer as aw.PlayerController;
                                           if (playingReceiveSound.value) {
                                             await _receivePlayer.stopPlayer();
                                           } else {
-                                            await _receivePlayer.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: 1.0);
+                                            await _receivePlayer.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: ss.settings.soundVolume.value / 100);
                                             await _receivePlayer.startPlayer();
                                           }
                                         }
@@ -336,6 +338,18 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                 ],
                               ),
                       ),
+                      const SettingsTile(
+                        title: "Send/Receve Sound Volume",
+                        subtitle: "Controls the volume of the send and receive sounds",
+                      ),
+                      Obx(() => SettingsSlider(
+                        startingVal: ss.settings.soundVolume.value.toDouble(),
+                        min: 0,
+                        max: 100,
+                        divisions: 100,
+                        formatValue: (val) => "${val.toInt()}",
+                        update: (val) => ss.settings.soundVolume.value = val.toInt(),
+                      )),
                     ],
                   ),
                 ),

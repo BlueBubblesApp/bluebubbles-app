@@ -72,6 +72,7 @@ class Settings {
   final RxBool useLocalIpv6 = false.obs;
   final RxnString sendSoundPath = RxnString();
   final RxnString receiveSoundPath = RxnString();
+  final RxInt soundVolume = 100.obs;
   final RxBool syncContactsAutomatically = false.obs;
   final RxBool scrollToBottomOnSend = true.obs;
   final RxBool sendEventsToTasker = false.obs;
@@ -243,6 +244,7 @@ class Settings {
       'useLocalIpv6': useLocalIpv6.value,
       'sendSoundPath': sendSoundPath.value,
       'receiveSoundPath': receiveSoundPath.value,
+      'soundVolume': soundVolume.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
       'sendEventsToTasker': sendEventsToTasker.value,
@@ -357,6 +359,7 @@ class Settings {
     ss.settings.useLocalIpv6.value = map['useLocalIpv6'] ?? false;
     ss.settings.sendSoundPath.value = map['sendSoundPath'];
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
+    ss.settings.soundVolume.value = map['soundVolume'] ?? 100;
     ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     ss.settings.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     ss.settings.sendEventsToTasker.value = map['sendEventsToTasker'] ?? true;
@@ -479,6 +482,7 @@ class Settings {
     s.useLocalIpv6.value = map['useLocalIpv6'] ?? false;
     s.sendSoundPath.value = map['sendSoundPath'];
     s.receiveSoundPath.value = map['receiveSoundPath'];
+    s.soundVolume.value = map['soundVolume'] ?? 100;
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
