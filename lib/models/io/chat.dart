@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:async_task/async_task.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -39,10 +39,10 @@ class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
     /// Pull args from input and create new instances of store and boxes
     int chatId = stuff[0];
     bool includeDeleted = stuff[1];
-    return store.runInTransaction(TxMode.read, () {
-      /// Query the [messageBox] for all the message IDs and order by date
+    return db.runInTransaction(TxMode.read, () {
+      /// Query the [db.messages] for all the message IDs and order by date
       /// descending
-      final query = (messageBox.query(includeDeleted
+      final query = (db.messages.query(includeDeleted
           ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
           : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
             ..link(Message_.chat, Chat_.id.equals(chatId))
@@ -93,11 +93,11 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
     int limit = stuff[2];
     bool includeDeleted = stuff[3];
     int? searchAround = stuff[4];
-    return store.runInTransaction(TxMode.read, () {
+    return db.runInTransaction(TxMode.read, () {
       /// Get the message IDs for the chat by querying the [cmJoinBox]
       final messages = <Message>[];
       if (searchAround == null) {
-        final query = (messageBox.query(includeDeleted
+        final query = (db.messages.query(includeDeleted
             ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
             : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
           ..link(Message_.chat, Chat_.id.equals(chatId))
@@ -109,7 +109,7 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
         messages.addAll(query.find());
         query.close();
       } else {
-        final beforeQuery = (messageBox.query(Message_.dateCreated.lessThan(searchAround).and(includeDeleted
+        final beforeQuery = (db.messages.query(Message_.dateCreated.lessThan(searchAround).and(includeDeleted
             ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
             : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull())))
           ..link(Message_.chat, Chat_.id.equals(chatId))
@@ -118,7 +118,7 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
         beforeQuery.limit = limit;
         final before = beforeQuery.find();
         beforeQuery.close();
-        final afterQuery = (messageBox.query(Message_.dateCreated.greaterThan(searchAround).and(includeDeleted
+        final afterQuery = (db.messages.query(Message_.dateCreated.greaterThan(searchAround).and(includeDeleted
             ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
             : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull())))
           ..link(Message_.chat, Chat_.id.equals(chatId))
@@ -131,7 +131,7 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       /// Fetch and match handles
-      final chat = chatBox.get(chatId);
+      final chat = db.chats.get(chatId);
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
         if (chat!.participants.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
@@ -146,7 +146,7 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
       final messageGuids = messages.map((e) => e.guid!).toList();
       final associatedMessagesQuery =
-          (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+          (db.messages.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
       List<Message> associatedMessages = associatedMessagesQuery.find();
       associatedMessagesQuery.close();
       associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -185,7 +185,7 @@ class AddMessages extends AsyncTask<List<dynamic>, List<Message>> {
     List<Message> messages = stuff[0].map((e) => Message.fromMap(e)).toList().cast<Message>();
 
     /// Save the new messages and their attachments in a write transaction
-    final newMessages = store.runInTransaction(TxMode.write, () {
+    final newMessages = db.runInTransaction(TxMode.write, () {
       List<Message> newMessages = Message.bulkSave(messages);
       Attachment.bulkSave(
           Map.fromIterables(newMessages, newMessages.map((e) => (e.attachments).map((e) => e!).toList())));
@@ -193,13 +193,13 @@ class AddMessages extends AsyncTask<List<dynamic>, List<Message>> {
     });
 
     /// fetch attachments and reactions in a read transaction
-    return store.runInTransaction(TxMode.read, () {
+    return db.runInTransaction(TxMode.read, () {
       final messageGuids = newMessages.map((e) => e.guid!).toList();
 
-      /// Query the [messageBox] for associated messages (reactions) matching the
+      /// Query the [db.messages] for associated messages (reactions) matching the
       /// message IDs
       final associatedMessagesQuery =
-          (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+          (db.messages.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
       List<Message> associatedMessages = associatedMessagesQuery.find();
       associatedMessagesQuery.close();
       associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -237,15 +237,15 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
 
   @override
   FutureOr<List<Chat>> run() {
-    return store.runInTransaction(TxMode.write, () {
+    return db.runInTransaction(TxMode.write, () {
       late final QueryBuilder<Chat> queryBuilder;
 
       // If the 3rd param is available, it's for an ID query.
       // Otherwise, query without any criteria
       if (stuff.length >= 3 && stuff[2] != null && stuff[2] is List) {
-        queryBuilder = chatBox.query(Chat_.id.oneOf(stuff[2] as List<int>));
+        queryBuilder = db.chats.query(Chat_.id.oneOf(stuff[2] as List<int>));
       } else {
-        queryBuilder = chatBox.query(Chat_.dateDeleted.isNull());
+        queryBuilder = db.chats.query(Chat_.dateDeleted.isNull());
       }
 
       // Build the query, applying some sorting so we get data in the correct order.
@@ -420,7 +420,7 @@ class Chat {
     bool updateLastReadMessageGuid = false,
   }) {
     if (kIsWeb) return this;
-    store.runInTransaction(TxMode.write, () {
+    db.runInTransaction(TxMode.write, () {
       /// Find an existing, and update the ID to the existing ID if necessary
       Chat? existing = Chat.findOne(guid: guid);
       id = existing?.id ?? id;
@@ -480,10 +480,10 @@ class Chat {
       }
       dbOnlyLatestMessageDate = dbLatestMessage.dateCreated!;
       try {
-        id = chatBox.put(this);
+        id = db.chats.put(this);
         // make sure to add participant relation if its a new chat
         if (existing == null && participants.isNotEmpty) {
-          final toSave = chatBox.get(id!);
+          final toSave = db.chats.get(id!);
           toSave!.handles.clear();
           toSave.handles.addAll(participants);
           toSave.handles.applyToDb();
@@ -603,10 +603,10 @@ class Chat {
       await Future.delayed(const Duration(milliseconds: 500));
     }
     List<Message> messages = Chat.getMessages(chat);
-    store.runInTransaction(TxMode.write, () {
+    db.runInTransaction(TxMode.write, () {
       /// Remove all references of chat and its messages
-      chatBox.remove(chat.id!);
-      messageBox.removeMany(messages.map((e) => e.id!).toList());
+      db.chats.remove(chat.id!);
+      db.messages.removeMany(messages.map((e) => e.id!).toList());
     });
   }
 
@@ -618,7 +618,7 @@ class Chat {
       await cm.setAllInactive();
       await Future.delayed(const Duration(milliseconds: 500));
     }
-    store.runInTransaction(TxMode.write, () {
+    db.runInTransaction(TxMode.write, () {
       chat.dateDeleted = DateTime.now().toUtc();
       chat.hasUnreadMessage = false;
       chat.save(updateDateDeleted: true, updateHasUnreadMessage: true);
@@ -628,7 +628,7 @@ class Chat {
 
   static void unDelete(Chat chat) async {
     if (kIsWeb) return;
-    store.runInTransaction(TxMode.write, () {
+    db.runInTransaction(TxMode.write, () {
       chat.dateDeleted = null;
       chat.save(updateDateDeleted: true);
     });
@@ -756,7 +756,7 @@ class Chat {
   }
 
   static int? count() {
-    return chatBox.count();
+    return db.chats.count();
   }
 
   Future<List<Attachment>> getAttachmentsAsync({bool fetchDeleted = false}) async {
@@ -770,8 +770,8 @@ class Chat {
   /// otherwise prefer [getMessagesAsync]
   static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
     if (kIsWeb || chat.id == null) return [];
-    return store.runInTransaction(TxMode.read, () {
-      final query = (messageBox.query(includeDeleted
+    return db.runInTransaction(TxMode.read, () {
+      final query = (db.messages.query(includeDeleted
               ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
               : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
             ..link(Message_.chat, Chat_.id.equals(chat.id!))
@@ -797,7 +797,7 @@ class Chat {
       // fetch attachments and reactions if requested
       if (getDetails) {
         final messageGuids = messages.map((e) => e.guid!).toList();
-        final associatedMessagesQuery = (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))
+        final associatedMessagesQuery = (db.messages.query(Message_.associatedMessageGuid.oneOf(messageGuids))
               ..order(Message_.originalROWID))
             .build();
         List<Message> associatedMessages = associatedMessagesQuery.find();
@@ -823,7 +823,7 @@ class Chat {
 
   Chat getParticipants() {
     if (kIsWeb || id == null) return this;
-    store.runInTransaction(TxMode.read, () {
+    db.runInTransaction(TxMode.read, () {
       /// Find the handles themselves
       _participants = List<Handle>.from(handles);
     });
@@ -897,12 +897,12 @@ class Chat {
   /// instead!!
   static Chat? findOne({String? guid, String? chatIdentifier}) {
     if (guid != null) {
-      final query = chatBox.query(Chat_.guid.equals(guid)).build();
+      final query = db.chats.query(Chat_.guid.equals(guid)).build();
       final result = query.findFirst();
       query.close();
       return result;
     } else if (chatIdentifier != null) {
-      final query = chatBox.query(Chat_.chatIdentifier.equals(chatIdentifier)).build();
+      final query = db.chats.query(Chat_.chatIdentifier.equals(chatIdentifier)).build();
       final result = query.findFirst();
       query.close();
       return result;
@@ -942,12 +942,12 @@ class Chat {
 
   void clearTranscript() {
     if (kIsWeb) return;
-    store.runInTransaction(TxMode.write, () {
+    db.runInTransaction(TxMode.write, () {
       final toDelete = List<Message>.from(messages);
       for (Message element in toDelete) {
         element.dateDeleted = DateTime.now().toUtc();
       }
-      messageBox.putMany(toDelete);
+      db.messages.putMany(toDelete);
     });
   }
 

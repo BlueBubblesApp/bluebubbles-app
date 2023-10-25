@@ -1,10 +1,10 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -94,7 +94,7 @@ class SearchViewState extends OptimizedState<SearchView> {
     );
 
     if (local) {
-      final query = (messageBox.query(Message_.text.contains(currentSearchTerm!)
+      final query = (db.messages.query(Message_.text.contains(currentSearchTerm!)
           .and(Message_.associatedMessageGuid.isNull())
           .and(Message_.dateDeleted.isNull())
           .and(Message_.dateCreated.notNull()))
@@ -142,7 +142,7 @@ class SearchViewState extends OptimizedState<SearchView> {
         items.item2.add(message);
       }
       final chatsToGet = items.item1.map((e) => e.guid).toList();
-      final dbChats = chatBox.query(Chat_.guid.oneOf(chatsToGet)).build().find();
+      final dbChats = db.chats.query(Chat_.guid.oneOf(chatsToGet)).build().find();
       for (int i = 0; i < items.item1.length; i++) {
         final chat = dbChats.firstWhereOrNull((e) => e.guid == items.item1[i].guid) ?? items.item1[i];
         chat.latestMessage = items.item2[i];

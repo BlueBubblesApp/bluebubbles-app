@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -10,7 +11,6 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_ti
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -188,12 +188,12 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     unread = controller.chat.hasUnreadMessage ?? false;
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
+        final unreadQuery = db.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null
               ? null
               : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
+                  return db.chats.get(controller.chat.id!);
                 });
           if (chat == null) return;
           if (chat.hasUnreadMessage != unread) {
@@ -266,14 +266,14 @@ class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileControl
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox
+        final unreadQuery = db.chats
             .query((Chat_.hasUnreadMessage.equals(true).or(Chat_.muteType.equals("mute"))).and(Chat_.guid.equals(controller.chat.guid)))
             .watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null
               ? null
               : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
+                  return db.chats.get(controller.chat.id!);
                 });
           final newUnread = chat?.hasUnreadMessage ?? false;
           final newMute = chat?.muteType ?? "";
@@ -369,12 +369,12 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
+        final titleQuery = db.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null
               ? null
               : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
+                  return db.chats.get(controller.chat.id!);
                 });
           if (chat == null) return;
           // check if we really need to update this widget
@@ -541,12 +541,12 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
     unread = controller.chat.hasUnreadMessage ?? false;
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
+        final unreadQuery = db.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null
               ? null
               : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
+                  return db.chats.get(controller.chat.id!);
                 });
           if (chat == null) return;
           if (chat.hasUnreadMessage != unread) {

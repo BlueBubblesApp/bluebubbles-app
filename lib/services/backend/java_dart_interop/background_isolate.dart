@@ -1,10 +1,9 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' show join;
 import 'package:universal_io/io.dart';
 
 class BackgroundIsolate {
@@ -24,33 +23,5 @@ backgroundIsolateEntrypoint() async {
   await ss.init(headless: true);
   await fs.init(headless: true);
   await mcs.init(headless: true);
-  Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
-  debugPrint("Trying to attach to an existing ObjectBox store");
-  try {
-    store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
-  } catch (e, s) {
-    debugPrint(e.toString());
-    debugPrint(s.toString());
-    debugPrint("Failed to attach to existing store, opening from path");
-    try {
-      store = await openStore(directory: objectBoxDirectory.path);
-    } catch (e, s) {
-      debugPrint(e.toString());
-      debugPrint(s.toString());
-      // this can very rarely happen
-      if (e.toString().contains("another store is still open using the same path")) {
-        debugPrint("Retrying to attach to an existing ObjectBox store");
-        store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
-      }
-    }
-  }
-  debugPrint("Opening boxes");
-  attachmentBox = store.box<Attachment>();
-  chatBox = store.box<Chat>();
-  contactBox = store.box<Contact>();
-  fcmDataBox = store.box<FCMData>();
-  handleBox = store.box<Handle>();
-  messageBox = store.box<Message>();
-  themeBox = store.box<ThemeStruct>();
-  storeStartup.complete();
+  await db.init();
 }

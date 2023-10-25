@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +11,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:slugify/slugify.dart';
 import 'package:universal_io/io.dart';
+import 'package:bluebubbles/core/services/services.dart';
 
 FilesystemService fs = Get.isRegistered<FilesystemService>() ? Get.find<FilesystemService>() : Get.put(FilesystemService());
 
@@ -99,13 +99,7 @@ class FilesystemService extends GetxService {
 
   void deleteDB() {
     if (kIsWeb) return;
-    attachmentBox.removeAll();
-    chatBox.removeAll();
-    fcmDataBox.removeAll();
-    contactBox.removeAll();
-    handleBox.removeAll();
-    messageBox.removeAll();
-    themeBox.removeAll();
+    db.purge();
   }
 
   String uriToFilename(String? uri, String? mimeType) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -33,7 +34,7 @@ class ChatsService extends GetxService {
     super.onInit();
     if (!kIsWeb) {
       // watch for new chats
-      final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())
+      final countQuery = (db.chats.query(Chat_.dateDeleted.isNull())
         ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
       countSub = countQuery.listen((event) async {
         if (!ss.settings.finishedSetup.value) return;
@@ -173,7 +174,7 @@ class ChatsService extends GetxService {
   }
 
   void markAllAsRead() {
-    final _chats = chatBox.query(Chat_.hasUnreadMessage.equals(true)).build().find();
+    final _chats = db.chats.query(Chat_.hasUnreadMessage.equals(true)).build().find();
     for (Chat c in _chats) {
       c.hasUnreadMessage = false;
       mcs.invokeMethod("clear-chat-notifs", {"chatGuid": c.guid});
@@ -181,7 +182,7 @@ class ChatsService extends GetxService {
         http.markChatRead(c.guid);
       }
     }
-    chatBox.putMany(_chats);
+    db.chats.putMany(_chats);
   }
 
   void updateChatPinIndex(int oldIndex, int newIndex) {

@@ -6,10 +6,10 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -95,7 +95,7 @@ class NotificationsService extends GetxService {
 
     // watch for new messages and handle the notification
     if (!kIsWeb) {
-      final countQuery = (messageBox.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      final countQuery = (db.messages.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();

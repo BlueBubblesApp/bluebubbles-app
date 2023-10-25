@@ -49,20 +49,8 @@ import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
 
-const databaseVersion = 4;
-late final Store store;
-late final Box<Attachment> attachmentBox;
-late final Box<Chat> chatBox;
-late final Box<Contact> contactBox;
-late final Box<FCMData> fcmDataBox;
-late final Box<Handle> handleBox;
-late final Box<Message> messageBox;
-late final Box<ScheduledMessage> scheduledBox;
-late final Box<ThemeStruct> themeBox;
-late final Box<ThemeEntry> themeEntryBox;
-// ignore: deprecated_member_use_from_same_package
-late final Box<ThemeObject> themeObjectBox;
-final Completer<void> storeStartup = Completer();
+import 'core/services/services.dart';
+
 final Completer<void> uiStartup = Completer();
 bool isAuthing = false;
 bool hasBadCert = false;
@@ -200,149 +188,17 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
   }
 
   try {
-    /* ----- OBJECTBOX DB INITIALIZATION ----- */
-    if (!kIsWeb) {
-      Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
-      if (!kIsDesktop) {
-        Logger.info("Trying to attach to an existing ObjectBox store");
-        try {
-          store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
-        } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          Logger.info("Failed to attach to existing store, opening from path");
-          try {
-            store = await openStore(directory: objectBoxDirectory.path);
-          } catch (e, s) {
-            Logger.error(e);
-            Logger.error(s);
-            // this can very rarely happen
-            if (e.toString().contains("another store is still open using the same path")) {
-              Logger.info("Retrying to attach to an existing ObjectBox store");
-              store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
-            }
-          }
-        }
-      } else {
-        try {
-          objectBoxDirectory.createSync(recursive: true);
-          if (ss.prefs.getBool('use-custom-path') == true && ss.prefs.getString('custom-path') != null) {
-            Directory oldCustom = Directory(join(ss.prefs.getString('custom-path')!, 'objectbox'));
-            if (oldCustom.existsSync()) {
-              Logger.info("Detected prior use of custom path option. Migrating...");
-              copyDirectory(oldCustom, objectBoxDirectory);
-            }
-            await ss.prefs.remove('use-custom-path');
-            await ss.prefs.remove('custom-path');
-          }
-          Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
-          store = await openStore(directory: objectBoxDirectory.path);
-        } catch (e, s) {
-          if (Platform.isLinux) {
-            Logger.debug("Another instance is probably running. Sending foreground signal");
-            final instanceFile = File(join(fs.appDocDir.path, '.instance'));
-            instanceFile.openSync(mode: FileMode.write).closeSync();
-            exit(0);
-          }
-          Logger.error(e);
-          Logger.error(s);
-        }
-      }
-      attachmentBox = store.box<Attachment>();
-      chatBox = store.box<Chat>();
-      contactBox = store.box<Contact>();
-      fcmDataBox = store.box<FCMData>();
-      handleBox = store.box<Handle>();
-      messageBox = store.box<Message>();
-      themeBox = store.box<ThemeStruct>();
-      themeEntryBox = store.box<ThemeEntry>();
-      // ignore: deprecated_member_use_from_same_package
-      themeObjectBox = store.box<ThemeObject>();
+    // The DB depends on the settings service,
+    // and it will auto-initialized it as-needed.
+    // Initializing the DB will handle migrations.
+    await db.init();
 
-      if (!ss.settings.finishedSetup.value) {
-        attachmentBox.removeAll();
-        chatBox.removeAll();
-        contactBox.removeAll();
-        fcmDataBox.removeAll();
-        handleBox.removeAll();
-        messageBox.removeAll();
-        themeBox.removeAll();
-        themeEntryBox.removeAll();
-        themeObjectBox.removeAll();
-      }
-
-      if (themeBox.isEmpty()) {
-        await ss.prefs.setString("selected-dark", "OLED Dark");
-        await ss.prefs.setString("selected-light", "Bright White");
-        themeBox.putMany(ts.defaultThemes);
-      }
-      int version = ss.prefs.getInt('dbVersion') ?? (ss.settings.finishedSetup.value ? 1 : databaseVersion);
-
-      migrate() {
-        if (version < databaseVersion) {
-          switch (databaseVersion) {
-            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
-            case 2:
-              Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
-              final messages = messageBox.getAll();
-              if (messages.isNotEmpty) {
-                final handles = handleBox.getAll();
-                Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
-                for (Message m in messages) {
-                  if (m.isFromMe! || m.handleId == 0 || m.handleId == null) continue;
-                  m.handleId = handles.firstWhereOrNull((e) => e.id == m.handleId)?.originalROWID ?? m.handleId;
-                }
-                Logger.info("Final save...", tag: "DB-Migration");
-                messageBox.putMany(messages);
-              }
-              version = 2;
-              migrate.call();
-              return;
-            // Version 3 modifies chat typing indicators and read receipts values to follow global setting initially
-            case 3:
-              final chats = chatBox.getAll();
-              final papi = ss.settings.enablePrivateAPI.value;
-              final typeGlobal = ss.settings.privateSendTypingIndicators.value;
-              final readGlobal = ss.settings.privateMarkChatAsRead.value;
-              for (Chat c in chats) {
-                if (papi && readGlobal && !(c.autoSendReadReceipts ?? true)) {
-                  // dont do anything
-                } else {
-                  c.autoSendReadReceipts = null;
-                }
-                if (papi && typeGlobal && !(c.autoSendTypingIndicators ?? true)) {
-                  // dont do anything
-                } else {
-                  c.autoSendTypingIndicators = null;
-                }
-              }
-              chatBox.putMany(chats);
-              version = 3;
-              migrate.call();
-              return;
-            // Version 4 saves FCM Data to the shared preferences for use in Tasker integration
-            case 4:
-              ss.getFcmData();
-              ss.fcmData.save();
-              version = 4;
-              migrate.call();
-              return;
-            default:
-              return;
-          }
-        }
-      }
-
-      final Stopwatch s = Stopwatch();
-      s.start();
-      migrate.call();
-      s.stop();
-      Logger.info("Done in ${s.elapsedMilliseconds}ms", tag: "DB-Migration");
-    }
+    // We don't need to await the start because it's
+    // not required to be started before we can continue.
+    db.start();
 
     /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
-    await ss.prefs.setInt('dbVersion', databaseVersion);
-    storeStartup.complete();
+  
     ss.getFcmData();
     if (!kIsWeb) {
       await cs.init();
@@ -735,7 +591,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           /* ----- BADGE ICON LISTENER ----- */
           await WindowsTaskbar.resetOverlayIcon();
           int count = 0;
-          final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
+          final unreadQuery = db.chats.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
           unreadQuery.listen((Query<Chat> query) async {
             int c = query.count();
             if (count != c) {

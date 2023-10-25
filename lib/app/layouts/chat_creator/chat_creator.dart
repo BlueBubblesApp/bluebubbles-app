@@ -9,7 +9,6 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
@@ -23,6 +22,7 @@ import 'package:flutter_acrylic/window_effect.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:slugify/slugify.dart';
 import 'package:tuple/tuple.dart';
+import 'package:bluebubbles/core/services/services.dart';
 
 class SelectedContact {
   final String displayName;
@@ -120,7 +120,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
 
     updateObx(() {
       if (widget.initialAttachments.isEmpty && !kIsWeb) {
-        final query = (contactBox.query()..order(Contact_.displayName)).build();
+        final query = (db.contacts.query()..order(Contact_.displayName)).build();
         contacts = query.find().toSet().toList();
         filteredContacts = List<Contact>.from(contacts);
       }
@@ -199,7 +199,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     }
     // match each selected contact to a participant in a chat
     if (existingChat == null) {
-      for (Chat c in (checkDeleted ? chatBox.getAll() : filteredChats)) {
+      for (Chat c in (checkDeleted ? db.chats.getAll() : filteredChats)) {
         if (c.participants.length != selectedContacts.length) continue;
         int matches = 0;
         for (SelectedContact contact in selectedContacts) {

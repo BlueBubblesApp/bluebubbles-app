@@ -1,5 +1,5 @@
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
@@ -84,7 +84,7 @@ class HandleSyncManager extends SyncManager {
 
       // Clearing handle database
       addToOutput("Clearing handle database...");
-      handleBox.removeAll();
+      db.handles.removeAll();
 
       // This flag can be used to test the restore functionality
       if (simulateError) {
@@ -184,7 +184,7 @@ class HandleSyncManager extends SyncManager {
 
   Future<List<Chat>> getChatsFromDb() async {
     addToOutput("Loading chats from database...");
-    final chatQuery = chatBox.query().build();
+    final chatQuery = db.chats.query().build();
     List<Chat> chats = chatQuery.find();
     addToOutput("Loaded ${chats.length} from the database...");
     return chats;
@@ -205,7 +205,7 @@ class HandleSyncManager extends SyncManager {
     if (handleBackup.isEmpty || chatHandleCache.isEmpty) return;
 
     addToOutput('Restoring original handles...');
-    handleBox.removeAll();
+    db.handles.removeAll();
 
     List<Handle> newHandles = Handle.bulkSave(handleBackup.values.toList());
     for (Handle h in newHandles) {

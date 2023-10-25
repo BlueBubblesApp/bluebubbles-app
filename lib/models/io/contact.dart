@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:collection/collection.dart';
@@ -48,18 +48,18 @@ class Contact {
   }
 
   static List<Contact> getContacts() {
-    return contactBox.getAll();
+    return db.contacts.getAll();
   }
 
   Contact save() {
     if (kIsWeb) return this;
-    store.runInTransaction(TxMode.write, () {
+    db.runInTransaction(TxMode.write, () {
       Contact? existing = Contact.findOne(id: id);
       if (existing != null) {
         dbId = existing.dbId;
       }
       try {
-        dbId = contactBox.put(this);
+        dbId = db.contacts.put(this);
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -68,13 +68,13 @@ class Contact {
   static Contact? findOne({String? id, String? address}) {
     if (kIsWeb) return null;
     if (id != null) {
-      final query = contactBox.query(Contact_.id.equals(id)).build();
+      final query = db.contacts.query(Contact_.id.equals(id)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
     } else if (address != null) {
-      final query = contactBox.query(Contact_.phones.containsElement(address) | Contact_.emails.containsElement(address)).build();
+      final query = db.contacts.query(Contact_.phones.containsElement(address) | Contact_.emails.containsElement(address)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();

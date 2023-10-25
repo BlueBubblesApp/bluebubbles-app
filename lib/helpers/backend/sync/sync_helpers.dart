@@ -1,4 +1,4 @@
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:collection/collection.dart';
 
@@ -8,13 +8,13 @@ import 'package:collection/collection.dart';
 //   List<String> inputHandleAddresses = handles.map((element) => element.address).toList();
 //
 //   // Query the database for existing handles
-//   QueryBuilder<Handle> query = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
+//   QueryBuilder<Handle> query = db.handles.query(Handle_.address.oneOf(inputHandleAddresses));
 //   List<Handle> existingHandles = query.build().find();
 //   List<String> existingHandleAddresses = existingHandles.map((e) => e.address).toList();
 //
 //   // Insert any non-existing handles
 //   List<Handle> newHandles = handles.where((element) => !existingHandleAddresses.contains(element.address)).toList();
-//   handleBox.putMany(newHandles);
+//   db.handles.putMany(newHandles);
 //
 //   // Update any existing handles
 //   if (existingHandles.isNotEmpty) {
@@ -29,12 +29,12 @@ import 'package:collection/collection.dart';
 //     }
 //
 //     if (mods > 0) {
-//       handleBox.putMany(existingHandles);
+//       db.handles.putMany(existingHandles);
 //     }
 //   }
 //
 //   // Return a list of the inserted/existing handles
-//   QueryBuilder<Handle> query2 = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
+//   QueryBuilder<Handle> query2 = db.handles.query(Handle_.address.oneOf(inputHandleAddresses));
 //   List<Handle> syncedHandles = query2.build().find().toList();
 //
 //   // Insert the real IDs & other information
@@ -53,13 +53,13 @@ import 'package:collection/collection.dart';
 //   List<String> inputChatGuids = chats.map((element) => element.guid).toList();
 //
 //   // Query the database for existing chats
-//   QueryBuilder<Chat> query = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
+//   QueryBuilder<Chat> query = db.chats.query(Chat_.guid.oneOf(inputChatGuids));
 //   List<Chat> existingChats = query.build().find();
 //   List<String> existingChatGuids = existingChats.map((e) => e.guid).toList();
 //
 //   // Insert any non-existing chats
 //   List<Chat> newChats = chats.where((element) => !existingChatGuids.contains(element.guid)).toList();
-//   chatBox.putMany(newChats);
+//   db.chats.putMany(newChats);
 //
 //   // Update any existing chats
 //   if (existingChats.isNotEmpty) {
@@ -74,12 +74,12 @@ import 'package:collection/collection.dart';
 //     }
 //
 //     if (mods > 0) {
-//       chatBox.putMany(existingChats);
+//       db.chats.putMany(existingChats);
 //     }
 //   }
 //
 //   // Return a list of the inserted/existing chats
-//   QueryBuilder<Chat> query2 = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
+//   QueryBuilder<Chat> query2 = db.chats.query(Chat_.guid.oneOf(inputChatGuids));
 //   List<Chat> syncedChats = query2.build().find().toList();
 //
 //   // Insert the real ID
@@ -98,14 +98,14 @@ List<Attachment> syncAttachments(List<Attachment> attachments) {
   List<String> inputAttachmentGuids = attachments.map((element) => element.guid!).toList();
 
   // Query the database for existing attachments
-  final query = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids)).build();
+  final query = db.attachments.query(Attachment_.guid.oneOf(inputAttachmentGuids)).build();
   List<Attachment> existingAttachments = query.find();
   List<String> existingAttachmentGuids = existingAttachments.map((e) => e.guid!).toList();
 
   // Insert any non-existing attachments
   List<Attachment> newAttachments = attachments.where(
           (element) => !existingAttachmentGuids.contains(element.guid)).toList();
-  attachmentBox.putMany(newAttachments);
+  db.attachments.putMany(newAttachments);
 
   // Update any existing attachments
   if (existingAttachments.isNotEmpty) {
@@ -120,12 +120,12 @@ List<Attachment> syncAttachments(List<Attachment> attachments) {
     }
 
     if (mods > 0) {
-      attachmentBox.putMany(existingAttachments);
+      db.attachments.putMany(existingAttachments);
     }
   }
 
   // Return a list of the inserted/existing attachments
-  final query2 = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids)).build();
+  final query2 = db.attachments.query(Attachment_.guid.oneOf(inputAttachmentGuids)).build();
   List<Attachment> syncedAttachments = query2.find().toList();
 
   // Insert the real ID
@@ -144,13 +144,13 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
   List<String> inputMessageGuids = messages.map((element) => element.guid!).toList();
 
   // Query the database for existing messages
-  final query = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
+  final query = db.messages.query(Message_.guid.oneOf(inputMessageGuids)).build();
   List<Message> existingMessages = query.find();
   List<String> existingMessageGuids = existingMessages.map((e) => e.guid!).toList();
 
   // Insert any non-existing messages
   List<Message> newMessages = messages.where((element) => !existingMessageGuids.contains(element.guid)).toList();
-  messageBox.putMany(newMessages);
+  db.messages.putMany(newMessages);
 
   // Update any existing messages
   if (existingMessages.isNotEmpty) {
@@ -165,12 +165,12 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
     }
 
     if (mods > 0) {
-      messageBox.putMany(existingMessages, mode: PutMode.update);
+      db.messages.putMany(existingMessages, mode: PutMode.update);
     }
   }
 
   // Return a list of the inserted/existing messages
-  final query2 = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
+  final query2 = db.messages.query(Message_.guid.oneOf(inputMessageGuids)).build();
   List<Message> syncedMessages = query2.find().toList();
 
   // Insert the real ID & chat
@@ -183,7 +183,7 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
   }
 
   // Apply the chats
-  messageBox.putMany(messages, mode: PutMode.update);
+  db.messages.putMany(messages, mode: PutMode.update);
 
   return messages;
 }

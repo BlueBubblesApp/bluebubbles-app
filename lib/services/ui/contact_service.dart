@@ -1,7 +1,7 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -63,7 +63,7 @@ class ContactsService extends GetxService {
 
     // compare loaded contacts to db contacts
     if (!kIsWeb) {
-      final dbContacts = contactBox.getAll();
+      final dbContacts = db.contacts.getAll();
       // save any updated contacts
       for (Contact c in dbContacts) {
         final refreshedContact = _contacts.firstWhereOrNull((element) => element.id == c.id);
@@ -78,7 +78,7 @@ class ContactsService extends GetxService {
       // save any new contacts
       final newContacts = _contacts.where((e) => !dbContacts.map((e2) => e2.id).contains(e.id)).toList();
       if (newContacts.isNotEmpty) {
-        final ids = contactBox.putMany(newContacts);
+        final ids = db.contacts.putMany(newContacts);
         for (int i = 0; i < newContacts.length; i++) {
           newContacts[i].dbId = ids[i];
         }
@@ -89,7 +89,7 @@ class ContactsService extends GetxService {
     if (kIsWeb) {
       handles.addAll(chats.webCachedHandles);
     } else {
-      handles.addAll(handleBox.getAll());
+      handles.addAll(db.handles.getAll());
     }
     // get formatted addresses
     for (Handle h in handles) {

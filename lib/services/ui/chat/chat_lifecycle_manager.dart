@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -17,10 +17,10 @@ class ChatLifecycleManager {
 
   ChatLifecycleManager(this.chat) {
     if (!kIsWeb) {
-      final chatQuery = chatBox.query(Chat_.guid.equals(chat.guid)).watch();
+      final chatQuery = db.chats.query(Chat_.guid.equals(chat.guid)).watch();
       sub = chatQuery.listen((Query<Chat> query) async{
         final _chat = await runAsync(() {
-          return chatBox.get(chat.id!);
+          return db.chats.get(chat.id!);
         });
         if (_chat != null) {
           bool shouldSort = chat.latestMessage.dateCreated != _chat.latestMessage.dateCreated;
@@ -34,11 +34,11 @@ class ChatLifecycleManager {
         if (event.item2.isNotEmpty) {
           for (Handle h in chat.participants) {
             if (event.item2.first.contains(h.contactRelation.targetId)) {
-              final contact = contactBox.get(h.contactRelation.targetId);
+              final contact = db.contacts.get(h.contactRelation.targetId);
               h.contactRelation.target = contact;
             }
             if (event.item2.last.contains(h.id)) {
-              h = handleBox.get(h.id!)!;
+              h = db.handles.get(h.id!)!;
             }
           }
           chats.updateChat(chat, override: true);

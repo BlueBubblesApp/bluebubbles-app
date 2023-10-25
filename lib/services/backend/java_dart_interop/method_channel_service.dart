@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -49,7 +49,7 @@ class MethodChannelService extends GetxService {
   Future<dynamic> _callHandler(MethodCall call) async {
     switch (call.method) {
       case "new-server":
-        await storeStartup.future;
+        await db.initFuture.future;
         // remove brackets from URL
         String address = call.arguments.toString().replaceAll("[", "").replaceAll("]", "");
         String sanitized = sanitizeServerAddress(address: address)!;
@@ -63,7 +63,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "new-message":
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received new message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
@@ -77,7 +77,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "updated-message":
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received updated message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
@@ -94,7 +94,7 @@ class MethodChannelService extends GetxService {
       case "participant-removed":
       case "participant-added":
       case "participant-left":
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received ${call.method} from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
@@ -103,7 +103,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "group-icon-changed":
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received group icon change from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
         if (!isNullOrEmpty(data)!) {
@@ -123,7 +123,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "reply":
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received reply to message from FCM");
         final data = call.arguments as Map?;
         if (data == null) return;
@@ -156,7 +156,7 @@ class MethodChannelService extends GetxService {
         }
       case "markAsRead":
         if (ls.isAlive) return;
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received markAsRead from Java");
         final data = call.arguments as Map?;
         if (data != null) {
@@ -169,7 +169,7 @@ class MethodChannelService extends GetxService {
         return false;
       case "chat-read-status-changed":
         if (ls.isAlive) return;
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received chat status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);
         Chat? chat = Chat.findOne(guid: data["chatGuid"]);
@@ -180,7 +180,7 @@ class MethodChannelService extends GetxService {
           return true;
         }
       case "media-colors":
-        await storeStartup.future;
+        await db.initFuture.future;
         if (!ss.settings.colorsFromMedia.value) return false;
         final Color primary = Color(call.arguments['primary']);
         final Color lightBg = Color(call.arguments['lightBg']);
@@ -195,7 +195,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "ft-call-status-changed":
-        await storeStartup.future;
+        await db.initFuture.future;
         Logger.info("Received facetime call status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);
         await ActionHandler().handleFaceTimeStatusChange(data);

@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:core';
 import 'dart:ui';
 
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -51,16 +51,16 @@ class ThemeStruct {
       ts.defaultThemes.map((e) => e.name).contains(name);
 
   ThemeStruct save({bool updateIfNotAbsent = true}) {
-    store.runInTransaction(TxMode.write, () {
+    db.runInTransaction(TxMode.write, () {
       ThemeStruct? existing = ThemeStruct.findOne(name);
       if (existing != null) {
         id = existing.id;
       }
       try {
         if (id != null && existing != null && updateIfNotAbsent) {
-          id = themeBox.put(this);
+          id = db.themes.put(this);
         } else if (id == null || existing == null) {
-          id = themeBox.put(this);
+          id = db.themes.put(this);
         }
       } on UniqueViolationException catch (_) {}
     });
@@ -69,14 +69,14 @@ class ThemeStruct {
 
   void delete() {
     if (kIsWeb || isPreset || id == null) return;
-    store.runInTransaction(TxMode.write, () {
-      themeBox.remove(id!);
+    db.runInTransaction(TxMode.write, () {
+      db.themes.remove(id!);
     });
   }
 
   static ThemeStruct getLightTheme() {
     final name = ss.prefs.getString("selected-light");
-    final query = themeBox.query(ThemeStruct_.name.equals(name ?? "Bright White")).build();
+    final query = db.themes.query(ThemeStruct_.name.equals(name ?? "Bright White")).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
@@ -87,7 +87,7 @@ class ThemeStruct {
 
   static ThemeStruct getDarkTheme() {
     final name = ss.prefs.getString("selected-dark");
-    final query = themeBox.query(ThemeStruct_.name.equals(name ?? "OLED Dark")).build();
+    final query = db.themes.query(ThemeStruct_.name.equals(name ?? "OLED Dark")).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
@@ -98,8 +98,8 @@ class ThemeStruct {
 
   static ThemeStruct? findOne(String name) {
     if (kIsWeb) return null;
-    return store.runInTransaction(TxMode.read, () {
-      final query = themeBox.query(ThemeStruct_.name.equals(name)).build();
+    return db.runInTransaction(TxMode.read, () {
+      final query = db.themes.query(ThemeStruct_.name.equals(name)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
@@ -109,10 +109,10 @@ class ThemeStruct {
 
   static List<ThemeStruct> getThemes() {
     if (kIsWeb) return ts.defaultThemes;
-    List<ThemeStruct> allThemes = themeBox.getAll();
+    List<ThemeStruct> allThemes = db.themes.getAll();
     // sometimes the theme box is empty, this ensures it is never empty when queried
-    if (allThemes.isEmpty) themeBox.putMany(ts.defaultThemes);
-    allThemes = themeBox.getAll();
+    if (allThemes.isEmpty) db.themes.putMany(ts.defaultThemes);
+    allThemes = db.themes.getAll();
     return allThemes;
   }
 

@@ -6,8 +6,8 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.d
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -243,11 +243,11 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+        final titleQuery = db.chats.query(Chat_.guid.equals(controller.chat.guid))
             .watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = await runAsync(() {
-            return chatBox.get(controller.chat.id!)!;
+            return db.chats.get(controller.chat.id!)!;
           });
           // check if we really need to update this widget
           if (chat.displayName != cachedDisplayName

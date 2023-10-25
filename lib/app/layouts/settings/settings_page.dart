@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_remind
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -27,7 +28,6 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -827,7 +827,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                               await ss.prefs.clear();
                                               await ss.prefs.setString("selected-dark", "OLED Dark");
                                               await ss.prefs.setString("selected-light", "Bright White");
-                                              themeBox.putMany(ts.defaultThemes);
+                                              db.themes.putMany(ts.defaultThemes);
                                               await ts.changeTheme(context);
                                               Get.offAll(() => WillPopScope(
                                                 onWillPop: () async => false,
