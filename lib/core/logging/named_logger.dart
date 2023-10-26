@@ -1,9 +1,9 @@
 import 'package:bluebubbles/utils/logger.dart';
 
-class ServiceLogger {
+class NamedLogger {
   String name;
 
-  ServiceLogger(this.name);
+  NamedLogger(this.name);
 
   info(dynamic message) => Logger.info(message, tag: name);
   warn(dynamic message) => Logger.warn(message, tag: name);

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/core/enums/services.dart';
-import 'package:bluebubbles/core/utilities/service_logger.dart';
+import 'package:bluebubbles/core/enums/service.dart';
+import 'package:bluebubbles/core/logging/named_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
@@ -19,7 +19,7 @@ abstract class Service extends GetxService {
 
   List<Service> dependencies = [];
 
-  late ServiceLogger log;
+  late NamedLogger log;
 
   get isActive => ![ServiceState.disposing, ServiceState.disposed, ServiceState.inactive].contains(state);
 
@@ -60,7 +60,7 @@ abstract class Service extends GetxService {
   }
 
   Service() {
-    log = ServiceLogger(name);
+    log = NamedLogger(name);
   }
 
   setState(ServiceState state) {

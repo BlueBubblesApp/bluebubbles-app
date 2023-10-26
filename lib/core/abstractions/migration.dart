@@ -1,4 +1,4 @@
-import 'package:bluebubbles/core/utilities/service_logger.dart';
+import 'package:bluebubbles/core/logging/named_logger.dart';
 
 abstract class Migration {
   String get name;
@@ -7,10 +7,10 @@ abstract class Migration {
 
   int get version;
 
-  late ServiceLogger log;
+  late NamedLogger log;
 
   Migration() {
-    log = ServiceLogger(name);
+    log = NamedLogger(name);
   }
 
   Future<void> execute();
