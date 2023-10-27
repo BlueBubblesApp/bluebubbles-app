@@ -98,7 +98,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     http.fcmClient().then((response) {
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)!) {
-        FCMData newData = FCMData.fromMap(data!);
+        FCMData newData = FCMData.fromCredentials(data!);
         ss.saveFCMData(newData);
       }
 

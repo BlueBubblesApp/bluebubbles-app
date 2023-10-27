@@ -1,7 +1,8 @@
 import 'package:bluebubbles/core/abstractions/server_service.dart';
 import 'package:bluebubbles/core/abstractions/service.dart';
-import 'package:bluebubbles/core/lib/definitions/server_details.dart';
+import 'package:bluebubbles/core/lib/definitions/rx_server_details.dart';
 import 'package:bluebubbles/core/services/services.dart';
+import 'package:bluebubbles/services/network/http_service.dart';
 
 class RxServerService extends ServerService {
   @override
@@ -11,13 +12,13 @@ class RxServerService extends ServerService {
   final int version = 1;
 
   @override
-  List<Service> dependencies = [settings];
+  List<Service> dependencies = [settings, prefs];
 
   final RxServerDetails details = RxServerDetails();
 
-  int get macOsMajorVersion => settings.prefs.getInt("macos-version") ?? 11;
+  int get macOsMajorVersion => prefs.config.getInt("macos-version") ?? 11;
 
-  int get macOsMinorVersion => settings.prefs.getInt("macos-minor-version") ?? 11;
+  int get macOsMinorVersion => prefs.config.getInt("macos-minor-version") ?? 11;
 
   @override
   bool get isMinSierra => macOsMajorVersion >= 10 && macOsMinorVersion >= 13;
@@ -45,6 +46,16 @@ class RxServerService extends ServerService {
     bool isMin_1_8_0 = details.versionCode.value != null && details.versionCode.value! >= 268;
     bool papiEnabled = settings.config.enablePrivateAPI.value;
     return (isMin_1_8_0 && papiEnabled) || !server.isMinBigSur;
+  }
+
+  @override
+  Future<void> refreshDetails() async {
+    final response = await http.serverInfo();
+    if (response.statusCode != 200) {
+      throw Exception("Failed to get server info! Response Data: ${response.data.toString()}");
+    }
+
+    details.loadFromMap(response.data['data']);
   }
 }
   

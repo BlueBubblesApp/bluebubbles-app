@@ -118,6 +118,7 @@ abstract class Service extends GetxService {
     setState(ServiceState.initializing);
     final stopwatch = Stopwatch()..start();
 
+    await _handleMigration();
     await initAllPlatforms();
 
     // Handle initialization
@@ -128,8 +129,6 @@ abstract class Service extends GetxService {
     } else if (GetPlatform.isDesktop) {
       await initDesktop();
     }
-
-    await _handleMigration();
 
     // Mark the service as initialized
     log.debug("Service initialized in ${stopwatch.elapsedMilliseconds}ms");

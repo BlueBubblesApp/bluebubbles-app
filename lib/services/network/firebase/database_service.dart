@@ -37,7 +37,7 @@ class DatabaseService extends GetxService {
     await http.fcmClient().then((response) async {
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)!) {
-        FCMData newData = FCMData.fromMap(data!);
+        FCMData newData = FCMData.fromCredentials(data!);
         ss.saveFCMData(newData);
       }
     }).onError((error, stackTrace) {

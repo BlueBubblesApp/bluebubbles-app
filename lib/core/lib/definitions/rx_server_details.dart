@@ -16,15 +16,15 @@ class RxServerDetails {
 
   Future<void> saveToDevice() async {
     if (osMajorVersion.value != null) {
-      await settings.prefs.setInt('macos-version', osMajorVersion.value!);
+      await prefs.config.setInt('macos-version', osMajorVersion.value!);
     }
 
     if (osMinorVersion.value != null) {
-      await settings.prefs.setInt('macos-minor-version', osMinorVersion.value!);
+      await prefs.config.setInt('macos-minor-version', osMinorVersion.value!);
     }
 
     if (versionCode.value != null) {
-      await settings.prefs.setInt('server-version-code', osMinorVersion.value!);
+      await prefs.config.setInt('server-version-code', osMinorVersion.value!);
     }
 
     if (iCloudAccount.value != null) {
@@ -33,7 +33,7 @@ class RxServerDetails {
     }
   }
 
-  loadFromDict(Map<String, dynamic> data) {
+  void loadFromMap(Map<String, dynamic> data) {
     loadInto(this, data);
   }
 
@@ -53,7 +53,7 @@ class RxServerDetails {
     }
   }
 
-  static RxServerDetails fromDict(Map<String, dynamic> data) {
+  static RxServerDetails fromMap(Map<String, dynamic> data) {
     RxServerDetails serverDetails = RxServerDetails();
     loadInto(serverDetails, data);
     return serverDetails;

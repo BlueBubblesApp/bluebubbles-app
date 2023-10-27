@@ -20,4 +20,6 @@ abstract class ServerService extends Service {
   bool get isMinSonoma;
 
   bool get canCreateGroupChats;
+
+  Future<void> refreshDetails();
 }

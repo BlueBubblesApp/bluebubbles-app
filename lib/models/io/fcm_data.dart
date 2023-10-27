@@ -1,6 +1,6 @@
 import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/services/backend/settings/settings_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
 
@@ -24,7 +24,7 @@ class FCMData {
     this.applicationID,
   });
 
-  factory FCMData.fromMap(Map<String, dynamic> json) {
+  factory FCMData.fromCredentials(Map<String, dynamic> json) {
     Map<String, dynamic> projectInfo = json["project_info"];
     Map<String, dynamic> client = json["client"][0];
     String clientID = client["oauth_client"][0]["client_id"];
@@ -80,14 +80,24 @@ class FCMData {
     return this;
   }
 
+  clear() {
+    id = null;
+    projectID = null;
+    storageBucket = null;
+    apiKey = null;
+    firebaseURL = null;
+    clientID = null;
+    applicationID = null;
+  }
+
   static void deleteFcmData() async {
     db.fcm.removeAll();
-    await ss.prefs.remove('projectID');
-    await ss.prefs.remove('storageBucket');
-    await ss.prefs.remove('apiKey');
-    await ss.prefs.remove('firebaseURL');
-    await ss.prefs.remove('clientID');
-    await ss.prefs.remove('applicationID');
+    await prefs.config.remove('projectID');
+    await prefs.config.remove('storageBucket');
+    await prefs.config.remove('apiKey');
+    await prefs.config.remove('firebaseURL');
+    await prefs.config.remove('clientID');
+    await prefs.config.remove('applicationID');
     ss.fcmData = FCMData();
   }
 
@@ -95,12 +105,12 @@ class FCMData {
     final result = db.fcm.getAll();
     if (result.isEmpty) {
       return FCMData(
-        projectID: ss.prefs.getString('projectID'),
-        storageBucket: ss.prefs.getString('storageBucket'),
-        apiKey: ss.prefs.getString('apiKey'),
-        firebaseURL: ss.prefs.getString('firebaseURL'),
-        clientID: ss.prefs.getString('clientID'),
-        applicationID: ss.prefs.getString('applicationID'),
+        projectID: prefs.config.getString('projectID'),
+        storageBucket: prefs.config.getString('storageBucket'),
+        apiKey: prefs.config.getString('apiKey'),
+        firebaseURL: prefs.config.getString('firebaseURL'),
+        clientID: prefs.config.getString('clientID'),
+        applicationID: prefs.config.getString('applicationID'),
       );
     }
     return result.first;

@@ -1,6 +1,4 @@
 import 'package:bluebubbles/models/models.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../abstractions/service.dart';
 
 
@@ -10,15 +8,12 @@ abstract class SettingsService extends Service {
 
   Settings get config;
 
-  FCMData get fcmData;
-
-  SharedPreferences get prefs;
+  @override
+  Future<void> initAllPlatforms() async {
+    await loadConfig();
+  }
 
   Future<void> saveConfig([Settings? newSettings, bool updateDisplayMode = false]);
 
   Future<void> loadConfig();
-
-  Future<void> saveFCMData([FCMData? newData]);
-
-  Future<void> loadFCMData();
 }

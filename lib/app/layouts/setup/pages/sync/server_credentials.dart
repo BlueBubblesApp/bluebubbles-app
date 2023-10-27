@@ -699,7 +699,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       return controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
     } else {
       try {
-        FCMData fcmData = FCMData.fromMap(data["data"]);
+        FCMData fcmData = FCMData.fromCredentials(data["data"]);
         ss.saveFCMData(fcmData);
       } catch (_) {
         if (Platform.isAndroid) {

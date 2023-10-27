@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:bluebubbles/core/abstractions/settings_service.dart';
+import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/backend/filesystem/filesystem_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class RxSettingsService extends SettingsService {
   @override
@@ -14,23 +16,11 @@ class RxSettingsService extends SettingsService {
   final int version = 1;
 
   @override
-  late SharedPreferences prefs;
-
-  @override
   late Settings config;
 
   bool _isAuthSupported = false;
 
   bool get canAuthenticate => _isAuthSupported && (Platform.isWindows || (fs.androidInfo?.version.sdkInt ?? 0) > 28);
-
-  @override
-  FCMData get fcmData => throw UnimplementedError();
-
-  @override
-  Future<void> initAllPlatforms() async {
-    prefs = await SharedPreferences.getInstance();
-    config = Settings.getSettings();
-  }
 
   @override
   Future<void> initMobile() async {
@@ -41,22 +31,22 @@ class RxSettingsService extends SettingsService {
 
   @override
   Future<void> loadConfig() {
-    throw UnimplementedError();
+    config = Settings.getSettings();
+    return Future.value();
   }
 
   @override
-  Future<void> loadFCMData() {
-    throw UnimplementedError();
-  }
+  Future<void> saveConfig([Settings? newSettings, bool updateDisplayMode = false]) async {
+    // Set the new settings as the current settings in the manager
+    config = newSettings ?? config;
+    config.save();
 
-  @override
-  Future<void> saveConfig([Settings? newSettings, bool updateDisplayMode = false]) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> saveFCMData([FCMData? newData]) {
-    throw UnimplementedError();
+    if (updateDisplayMode && !kIsWeb && !kIsDesktop) {
+      try {
+        final mode = await config.getDisplayMode();
+        FlutterDisplayMode.setPreferredMode(mode);
+      } catch (_) {}
+    }
   }
 }
   

@@ -101,7 +101,7 @@ class CloudMessagingService extends GetxService {
 
         try {
           // Parse and save new FCM data, then retry auth with FCM
-          FCMData fcmData = FCMData.fromMap(fcmMeta);
+          FCMData fcmData = FCMData.fromCredentials(fcmMeta);
           ss.saveFCMData(fcmData);
           result = await mcs.invokeMethod('auth', fcmData.toMap());
         } on PlatformException catch (e) {
