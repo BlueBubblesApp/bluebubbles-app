@@ -13,11 +13,13 @@ abstract class Service extends GetxService {
 
   bool get required;
 
+  bool headless;
+
   ServiceState state = ServiceState.inactive;
 
   List<ServiceState> completedStates = [];
 
-  List<Service> dependencies = [];
+  List<Service> get dependencies => [];
 
   late NamedLogger log;
 
@@ -59,7 +61,7 @@ abstract class Service extends GetxService {
     return _stopCompleter ?? Completer.sync();
   }
 
-  Service() {
+  Service({ this.headless = false }) {
     log = NamedLogger(name);
   }
 
@@ -88,6 +90,10 @@ abstract class Service extends GetxService {
     }
   }
 
+  Future<void> initAllPlatforms() {
+    return Future.value();
+  }
+
   Future<void> initWeb() {
     return Future.value();
   }
@@ -111,6 +117,8 @@ abstract class Service extends GetxService {
     // Set the state to initializing
     setState(ServiceState.initializing);
     final stopwatch = Stopwatch()..start();
+
+    await initAllPlatforms();
 
     // Handle initialization
     if (kIsWeb) {
