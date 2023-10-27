@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/core/abstractions/update_service.dart';
+import 'package:bluebubbles/core/abstractions/service.dart' as s;
 import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/filesystem/filesystem_service.dart';
@@ -16,6 +17,9 @@ class GithubUpdateService extends UpdateService {
 
   @override
   final int version = 1;
+
+  @override
+  List<s.Service> dependencies = [device];
 
   @override
   bool required = false;

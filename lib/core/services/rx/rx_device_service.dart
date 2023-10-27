@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/core/abstractions/device_service.dart';
+import 'package:bluebubbles/core/abstractions/service.dart';
 import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/backend/filesystem/filesystem_service.dart';
@@ -16,6 +17,9 @@ class RxDeviceService extends DeviceService {
 
   @override
   final int version = 1;
+
+  @override
+  List<Service> dependencies = [settings];
 
   bool _isAuthSupported = false;
 
