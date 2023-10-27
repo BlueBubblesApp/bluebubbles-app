@@ -1,9 +1,9 @@
 import 'package:bluebubbles/core/abstractions/shared_preference_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class RxSharedPrefsService extends SharedPreferenceService {
+class DefaultSharedPrefsService extends SharedPreferenceService {
   @override
-  final String name = "Rx Shared Prefs Service";
+  final String name = "Default Shared Prefs Service";
 
   @override
   final int version = 1;

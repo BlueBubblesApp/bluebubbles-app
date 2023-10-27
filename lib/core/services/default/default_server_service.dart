@@ -4,9 +4,9 @@ import 'package:bluebubbles/core/lib/definitions/rx_server_details.dart';
 import 'package:bluebubbles/core/services/services.dart';
 import 'package:bluebubbles/services/network/http_service.dart';
 
-class RxServerService extends ServerService {
+class DefaultServerService extends ServerService {
   @override
-  final String name = "Rx Server Service";
+  final String name = "Default Server Service";
 
   @override
   final int version = 1;

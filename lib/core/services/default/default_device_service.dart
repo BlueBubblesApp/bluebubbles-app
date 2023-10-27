@@ -22,9 +22,9 @@ import 'package:tuple/tuple.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:path/path.dart' as p;
 
-class RxDeviceService extends DeviceService {
+class DefaultDeviceService extends DeviceService {
   @override
-  final String name = "Rx Device Service";
+  final String name = "Default Device Service";
 
   @override
   final int version = 1;
@@ -37,7 +37,7 @@ class RxDeviceService extends DeviceService {
   @override
   bool get supportsLocalAuth => _isAuthSupported && (Platform.isWindows || (fs.androidInfo?.version.sdkInt ?? 0) > 28);
 
-  RxDeviceService() {
+  DefaultDeviceService() {
     StoreChecker.getSource.then((value) {
       installedFromStore = value != Source.IS_INSTALLED_FROM_LOCAL_SOURCE;
     });

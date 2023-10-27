@@ -8,9 +8,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
 
-class RxSettingsService extends SettingsService {
+class DefaultSettingsService extends SettingsService {
   @override
-  final String name = "Rx Settings Service";
+  final String name = "Default Settings Service";
 
   @override
   final int version = 1;
