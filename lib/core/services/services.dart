@@ -20,4 +20,4 @@ SettingsService settings = Get.isRegistered<DefaultSettingsService>() ? Get.find
 SharedPreferenceService prefs = Get.isRegistered<DefaultSharedPrefsService>() ? Get.find<DefaultSharedPrefsService>() : Get.put(DefaultSharedPrefsService());
 ServerService server = Get.isRegistered<DefaultServerService>() ? Get.find<DefaultServerService>() : Get.put(DefaultServerService());
 DeviceService device = Get.isRegistered<DefaultDeviceService>() ? Get.find<DefaultDeviceService>() : Get.put(DefaultDeviceService());
-UpdateService updateService = Get.isRegistered<GithubUpdateService>() ? Get.find<GithubUpdateService>() : Get.put(GithubUpdateService());
+UpdateService updater = Get.isRegistered<GithubUpdateService>() ? Get.find<GithubUpdateService>() : Get.put(GithubUpdateService());
