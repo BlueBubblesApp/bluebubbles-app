@@ -1,5 +1,5 @@
 import 'package:bluebubbles/models/models.dart';
-import '../abstractions/service.dart';
+import '../../abstractions/service.dart';
 
 
 abstract class SettingsService extends Service {

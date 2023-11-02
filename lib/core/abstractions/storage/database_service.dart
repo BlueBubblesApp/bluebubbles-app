@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/models/models.dart';
-import '../abstractions/service.dart';
+import '../service.dart';
 
 
 abstract class DatabaseService extends Service {

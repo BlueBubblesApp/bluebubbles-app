@@ -1,8 +1,8 @@
-import 'package:bluebubbles/core/abstractions/database_service.dart';
+import 'package:bluebubbles/core/abstractions/storage/database_service.dart';
 import 'package:bluebubbles/core/abstractions/device_service.dart';
 import 'package:bluebubbles/core/abstractions/server_service.dart';
-import 'package:bluebubbles/core/abstractions/settings_service.dart';
-import 'package:bluebubbles/core/abstractions/shared_preference_service.dart';
+import 'package:bluebubbles/core/abstractions/storage/settings_service.dart';
+import 'package:bluebubbles/core/abstractions/storage/shared_preference_service.dart';
 import 'package:bluebubbles/core/abstractions/update_service.dart';
 import 'package:bluebubbles/core/services/github_update_service.dart';
 import 'package:bluebubbles/core/services/default/default_device_service.dart';

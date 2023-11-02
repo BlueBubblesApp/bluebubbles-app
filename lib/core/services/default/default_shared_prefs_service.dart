@@ -1,4 +1,4 @@
-import 'package:bluebubbles/core/abstractions/shared_preference_service.dart';
+import 'package:bluebubbles/core/abstractions/storage/shared_preference_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DefaultSharedPrefsService extends SharedPreferenceService {

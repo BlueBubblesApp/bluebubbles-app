@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:bluebubbles/core/abstractions/settings_service.dart';
+import 'package:bluebubbles/core/abstractions/storage/settings_service.dart';
 import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/backend/filesystem/filesystem_service.dart';

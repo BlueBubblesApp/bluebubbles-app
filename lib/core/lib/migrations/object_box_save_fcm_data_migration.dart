@@ -1,4 +1,4 @@
-import 'package:bluebubbles/core/abstractions/migration.dart';
+import 'package:bluebubbles/core/abstractions/storage/migration.dart';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
 
 class ObjectBoxSaveFcmDataMigration extends Migration {

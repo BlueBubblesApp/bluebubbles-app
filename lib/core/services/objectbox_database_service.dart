@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bluebubbles/core/abstractions/migration.dart';
+import 'package:bluebubbles/core/abstractions/storage/migration.dart';
 import 'package:bluebubbles/core/abstractions/service.dart';
-import 'package:bluebubbles/core/abstractions/database_service.dart';
+import 'package:bluebubbles/core/abstractions/storage/database_service.dart';
 import 'package:bluebubbles/core/lib/migrations/object_box_handle_id_migration.dart';
 import 'package:bluebubbles/core/lib/migrations/object_box_nulify_fields_migration.dart';
 import 'package:bluebubbles/core/lib/migrations/object_box_save_fcm_data_migration.dart';
