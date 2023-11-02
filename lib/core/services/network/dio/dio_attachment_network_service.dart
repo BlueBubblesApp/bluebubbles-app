@@ -5,6 +5,9 @@ import 'package:bluebubbles/core/services/network/dio/dio_network_service.dart';
 
 class DioAttachmentNetworkService implements AttachmentNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioAttachmentNetworkService(this.network);

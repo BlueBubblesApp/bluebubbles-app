@@ -5,6 +5,9 @@ import 'package:bluebubbles/core/services/network/dio/dio_network_service.dart';
 
 class DioContactNetworkService implements ContactNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioContactNetworkService(this.network);

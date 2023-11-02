@@ -5,6 +5,9 @@ import 'package:bluebubbles/core/services/network/dio/dio_network_service.dart';
 
 class DioFcmNetworkService implements FcmNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioFcmNetworkService(this.network);

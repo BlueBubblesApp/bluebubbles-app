@@ -1,7 +1,8 @@
+import 'package:bluebubbles/core/abstractions/network/network_service.dart';
 import 'package:bluebubbles/core/lib/definitions/network_cancel_token.dart';
 
 
-abstract class ChatNetworkService {
+abstract class ChatNetworkService implements SubNetworkService {
   Future<dynamic> query({List<String> withQuery = const [], int offset = 0, int limit = 100, NetworkCancelToken? cancelToken, void Function(int, int)? onReceiveProgress});
   Future<dynamic> messages(String guid, {String withQuery = "", String sort = "DESC", int? before, int? after, int offset = 0, int limit = 100, NetworkCancelToken? cancelToken, void Function(int, int)? onReceiveProgress});
   Future<dynamic> addParticipant(String guid, String address, {NetworkCancelToken? cancelToken, void Function(int, int)? onReceiveProgress});

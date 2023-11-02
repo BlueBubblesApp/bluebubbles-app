@@ -40,6 +40,7 @@ abstract class NetworkService extends Service {
   void testApi();
 }
 
+
 abstract class SubNetworkService {
-  // Nothing is here, but allows us to add stuff later, if required
+  bool get isAvailable;
 }

@@ -5,6 +5,9 @@ import 'package:bluebubbles/core/services/network/dio/dio_network_service.dart';
 
 class DioThemeNetworkService implements ThemeNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioThemeNetworkService(this.network);
@@ -37,5 +40,4 @@ class DioThemeNetworkService implements ThemeNetworkService {
       onReceiveProgress: onReceiveProgress
     );
   }
-  
 }

@@ -10,6 +10,9 @@ import 'package:get/get.dart' hide FormData, MultipartFile;
 
 class DioMessageNetworkService implements MessageNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioMessageNetworkService(this.network);

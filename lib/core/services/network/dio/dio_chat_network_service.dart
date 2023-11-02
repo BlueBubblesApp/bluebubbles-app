@@ -7,6 +7,9 @@ import 'package:dio/dio.dart';
 
 class DioChatNetworkService implements ChatNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioChatNetworkService(this.network);

@@ -1,7 +1,8 @@
+import 'package:bluebubbles/core/abstractions/network/network_service.dart';
 import 'package:bluebubbles/core/lib/definitions/network_cancel_token.dart';
 
 
-abstract class ServerNetworkService {
+abstract class ServerNetworkService implements SubNetworkService {
   Future<dynamic> ping({NetworkCancelToken? cancelToken, void Function(int, int)? onReceiveProgress});
   Future<dynamic> lockMac({NetworkCancelToken? cancelToken, void Function(int, int)? onReceiveProgress});
   Future<dynamic> restartImessage({NetworkCancelToken? cancelToken, void Function(int, int)? onReceiveProgress});

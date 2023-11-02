@@ -5,6 +5,9 @@ import 'package:bluebubbles/core/services/network/dio/dio_network_service.dart';
 
 class DioHandleNetworkService implements HandleNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioHandleNetworkService(this.network);

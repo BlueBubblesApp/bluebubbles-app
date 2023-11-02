@@ -6,6 +6,9 @@ import 'package:bluebubbles/core/services/services.dart';
 
 class DioScheduledMessagesNetworkService implements ScheduledMessagesNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioScheduledMessagesNetworkService(this.network);

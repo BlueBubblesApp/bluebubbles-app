@@ -4,6 +4,9 @@ import 'package:bluebubbles/core/services/network/dio/dio_network_service.dart';
 
 class DioFirebaseNetworkService implements FirebaseNetworkService {
 
+  @override
+  bool isAvailable = true;
+
   DioNetworkService network;
 
   DioFirebaseNetworkService(this.network);
