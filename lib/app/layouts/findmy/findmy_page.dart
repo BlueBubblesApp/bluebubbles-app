@@ -150,7 +150,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           markers[randomString(6)] = Marker(
             key: ValueKey('friend-${randomString(6)}'),
             point: LatLng(e.latitude!, e.longitude!),
-            width: 30,
+            width: 35,
             height: 35,
             builder: (_) => Container(
               decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
@@ -532,6 +532,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       final item = friendsWithLocation[i];
                       return ListTile(
                         mouseCursor: MouseCursor.defer,
+                        leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
                         subtitle: Text(item.longAddress ?? "No location found"),
                         onTap: () async {
@@ -563,6 +564,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       title: const Text("Friends without locations"),
                       children: friendsWithoutLocation.map((item) => ListTile(
                         mouseCursor: MouseCursor.defer,
+                        leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
                         subtitle: Text(item.longAddress ?? "No location found"),
                       )).toList()
@@ -597,7 +599,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
           systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
           statusBarColor: Colors.transparent, // status bar color
-          statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
+          statusBarIconBrightness: Brightness.dark,
         ),
         child: Obx(() => Scaffold(
           backgroundColor: material ? tileColor : headerColor,
@@ -942,7 +944,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 ),
               ),
               Positioned(
-                top: kIsDesktop ? 30 : 20,
+                top: kIsDesktop ? 30 : 10 + MediaQuery.of(context).padding.top,
                 left: 20,
                 child: Container(
                   padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 10),
@@ -954,24 +956,29 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 )
               ),
               Positioned(
-                top: kIsDesktop ? 30 : 20,
+                top: (kIsDesktop ? 30 : 10 + MediaQuery.of(context).padding.top) + (refreshing ? 10 : 0),
                 right: 20,
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Theme.of(context).colorScheme.properSurface.withOpacity(0.6),
                   ),
-                  child: refreshing ? Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: buildProgressIndicator(context),
-                  ) : IconButton(
-                    icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground),
-                    onPressed: () {
-                      setState(() {
-                        refreshing = true;
-                      });
-                      getLocations(refresh: true);
-                    },
+                  padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 10),
+                  child: Container(
+                    width: 25,
+                    child: refreshing ? Padding(
+                      padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 0),
+                      child: buildProgressIndicator(context),
+                    ) :  IconButton(
+                      iconSize: 22,
+                      icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground, size: 22),
+                      onPressed: () {
+                        setState(() {
+                          refreshing = true;
+                        });
+                        getLocations(refresh: true);
+                      },
+                    ),
                   ),
                 ),
               ),
