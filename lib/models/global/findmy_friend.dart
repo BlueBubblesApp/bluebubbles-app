@@ -23,8 +23,8 @@ class FindMyFriend {
   factory FindMyFriend.fromJson(Map<String, dynamic> json) => FindMyFriend(
     latitude: json["coordinates"]?[0].toDouble(),
     longitude: json["coordinates"]?[1].toDouble(),
-    longAddress: json["longAddress"],
-    shortAddress: json["shortAddress"],
+    longAddress: json["long_address"],
+    shortAddress: json["short_address"],
     title: json["title"],
     subtitle: json["subtitle"],
     handle: json["handle"] == null ? null : Handle.findOne(addressAndService: Tuple2(json["handle"], "iMessage")),
