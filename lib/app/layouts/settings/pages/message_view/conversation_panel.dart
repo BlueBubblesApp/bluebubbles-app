@@ -24,6 +24,9 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
   late final dynamic sendPlayer;
   late final dynamic receivePlayer;
 
+  bool sendPrepared = false;
+  bool receivePrepared = false;
+
   @override
   void initState() {
     super.initState();
@@ -252,10 +255,13 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                         } else if (sendPlayer is aw.PlayerController) {
                                           final aw.PlayerController _sendPlayer = sendPlayer as aw.PlayerController;
                                           if (playingSendSound.value) {
-                                            await _sendPlayer.stopPlayer();
+                                            await _sendPlayer.pausePlayer();
                                           } else {
-                                            await _sendPlayer.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: ss.settings.soundVolume.value.toDouble() / 100);
-                                            await _sendPlayer.startPlayer();
+                                            if (!sendPrepared) {
+                                              await _sendPlayer.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: ss.settings.soundVolume.value.toDouble() / 100);
+                                              sendPrepared = true;
+                                            }
+                                            await _sendPlayer.startPlayer(finishMode: aw.FinishMode.pause);
                                           }
                                         }
                                       }),
@@ -317,10 +323,13 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                         } else if (receivePlayer is aw.PlayerController) {
                                           final aw.PlayerController _receivePlayer = receivePlayer as aw.PlayerController;
                                           if (playingReceiveSound.value) {
-                                            await _receivePlayer.stopPlayer();
+                                            await _receivePlayer.pausePlayer();
                                           } else {
-                                            await _receivePlayer.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: ss.settings.soundVolume.value / 100);
-                                            await _receivePlayer.startPlayer();
+                                            if (!receivePrepared) {
+                                              await _receivePlayer.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: ss.settings.soundVolume.value / 100);
+                                              receivePrepared = true;
+                                            }
+                                            await _receivePlayer.startPlayer(finishMode: aw.FinishMode.pause);
                                           }
                                         }
                                       }),
