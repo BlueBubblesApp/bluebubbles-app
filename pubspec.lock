@@ -2482,6 +2482,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.99"
+  sliding_up_panel2:
+    dependency: "direct main"
+    description:
+      name: sliding_up_panel2
+      sha256: "7c2aac81c03e74fcd070799c5e2011f1c5de7026bd22a76164e81e23a49f2bdb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.0+1"
   slugify:
     dependency: "direct main"
     description:
