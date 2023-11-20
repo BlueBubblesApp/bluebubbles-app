@@ -601,365 +601,381 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
         ),
         child: Obx(() => Scaffold(
           backgroundColor: material ? tileColor : headerColor,
-          appBar: samsung && index.value < 2
-              ? null
-              : PreferredSize(
-            preferredSize: Size(ns.width(context), kIsDesktop ? 80 : 50),
-            child: AppBar(
-              systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
-                  ? SystemUiOverlayStyle.light
-                  : SystemUiOverlayStyle.dark,
-              toolbarHeight: kIsDesktop ? 80 : 50,
-              elevation: 0,
-              scrolledUnderElevation: 3,
-              surfaceTintColor: context.theme.colorScheme.primary,
-              leading: buildBackButton(context),
-              backgroundColor: headerColor,
-              centerTitle: iOS,
-              title: Text(
-                "FindMy",
-                style: context.theme.textTheme.titleLarge,
-              ),
-              actions: actions,
-            ),
-          ),
-          body: SlidingUpPanel(
-            controller: panelController,
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(25.0),
-              topRight: Radius.circular(25.0),
-            ),
-            minHeight: 50,
-            maxHeight: MediaQuery.of(context).size.height * 0.75,
-            header: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ForceDraggableWidget(
-                    child: Container(
-                      width: 50,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.outline,
-                        borderRadius: BorderRadius.circular(5),
+          body: Stack(
+            children: [
+              SlidingUpPanel(
+                controller: panelController,
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(25.0),
+                  topRight: Radius.circular(25.0),
+                ),
+                minHeight: 50,
+                maxHeight: MediaQuery.of(context).size.height * 0.75,
+                header: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ForceDraggableWidget(
+                        child: Container(
+                          width: 50,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.outline,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            panelBuilder: () => TabBarView(
-              physics: const NeverScrollableScrollPhysics(),
-              controller: tabController,
-              children: <Widget>[
-                NotificationListener<ScrollEndNotification>(
-                  onNotification: (_) {
-                    if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
-                    final scrollDistance = context.height / 3 - 57;
+                panelBuilder: () => TabBarView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  controller: tabController,
+                  children: <Widget>[
+                    NotificationListener<ScrollEndNotification>(
+                      onNotification: (_) {
+                        if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
+                        final scrollDistance = context.height / 3 - 57;
 
-                    if (controller1.offset > 0 && controller1.offset < scrollDistance) {
-                      final double snapOffset = controller1.offset / scrollDistance > 0.5 ? scrollDistance : 0;
+                        if (controller1.offset > 0 && controller1.offset < scrollDistance) {
+                          final double snapOffset = controller1.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
-                      Future.microtask(() =>
-                          controller1.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
-                    }
-                    return false;
-                  },
-                  child: ScrollbarWrapper(
-                    controller: controller1,
-                    child: Obx(() => CustomScrollView(
-                      controller: controller1,
-                      physics: (kIsDesktop || kIsWeb)
-                          ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
-                      slivers: <Widget>[
-                        if (samsung)
-                          SliverAppBar(
-                            backgroundColor: headerColor,
-                            pinned: true,
-                            stretch: true,
-                            expandedHeight: context.height / 3,
-                            elevation: 0,
-                            automaticallyImplyLeading: false,
-                            flexibleSpace: LayoutBuilder(
-                              builder: (context, constraints) {
-                                var expandRatio = (constraints.maxHeight - 100) / (context.height / 3 - 50);
-
-                                if (expandRatio > 1.0) expandRatio = 1.0;
-                                if (expandRatio < 0.0) expandRatio = 0.0;
-                                final animation = AlwaysStoppedAnimation<double>(expandRatio);
-
-                                return Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    FadeTransition(
-                                      opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-                                        parent: animation,
-                                        curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
-                                      )),
-                                      child: Center(child: Text("FindMy Devices", style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
-                                    ),
-                                    FadeTransition(
-                                      opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
-                                        parent: animation,
-                                        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-                                      )),
-                                      child: Align(
-                                        alignment: Alignment.bottomLeft,
-                                        child: Container(
-                                          padding: const EdgeInsets.only(left: 40),
-                                          height: 50,
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              "FindMy Devices",
-                                              style: context.theme.textTheme.titleLarge,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Align(
-                                        alignment: Alignment.bottomLeft,
-                                        child: Container(
-                                          height: 50,
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: buildBackButton(context),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: Container(
-                                        height: 50,
-                                        child: Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: actions,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        if (ss.settings.skin.value != Skins.Samsung)
-                          ...bodySlivers,
-                        if (ss.settings.skin.value == Skins.Samsung)
-                          SliverToBoxAdapter(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
-                              child: CustomScrollView(
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                slivers: bodySlivers,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    ),
-                  ),
-                ),
-                NotificationListener<ScrollEndNotification>(
-                  onNotification: (_) {
-                    if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
-                    final scrollDistance = context.height / 3 - 57;
-
-                    if (controller2.offset > 0 && controller2.offset < scrollDistance) {
-                      final double snapOffset = controller2.offset / scrollDistance > 0.5 ? scrollDistance : 0;
-
-                      Future.microtask(() =>
-                          controller2.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
-                    }
-                    return false;
-                  },
-                  child: ScrollbarWrapper(
-                    controller: controller2,
-                    child: Obx(() => CustomScrollView(
-                      controller: controller2,
-                      physics: (kIsDesktop || kIsWeb)
-                          ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
-                      slivers: <Widget>[
-                        if (samsung)
-                          SliverAppBar(
-                            backgroundColor: headerColor,
-                            pinned: true,
-                            stretch: true,
-                            expandedHeight: context.height / 3,
-                            elevation: 0,
-                            automaticallyImplyLeading: false,
-                            flexibleSpace: LayoutBuilder(
-                              builder: (context, constraints) {
-                                var expandRatio = (constraints.maxHeight - 100) / (context.height / 3 - 50);
-
-                                if (expandRatio > 1.0) expandRatio = 1.0;
-                                if (expandRatio < 0.0) expandRatio = 0.0;
-                                final animation = AlwaysStoppedAnimation<double>(expandRatio);
-
-                                return Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    FadeTransition(
-                                      opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-                                        parent: animation,
-                                        curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
-                                      )),
-                                      child: Center(child: Text("FindMy Friends", style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
-                                    ),
-                                    FadeTransition(
-                                      opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
-                                        parent: animation,
-                                        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-                                      )),
-                                      child: Align(
-                                        alignment: Alignment.bottomLeft,
-                                        child: Container(
-                                          padding: const EdgeInsets.only(left: 40),
-                                          height: 50,
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              "FindMy Friends",
-                                              style: context.theme.textTheme.titleLarge,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Align(
-                                        alignment: Alignment.bottomLeft,
-                                        child: Container(
-                                          height: 50,
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: buildBackButton(context),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: Container(
-                                        height: 50,
-                                        child: Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: actions,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        if (ss.settings.skin.value != Skins.Samsung)
-                          ...bodySlivers2,
-                        if (ss.settings.skin.value == Skins.Samsung)
-                          SliverToBoxAdapter(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
-                              child: CustomScrollView(
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                slivers: bodySlivers2,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            body: FlutterMap(
-              mapController: mapController,
-              options: MapOptions(
-                zoom: 5.0,
-                maxZoom: 18.0,
-                center: location == null ? null : LatLng(location!.latitude, location!.longitude),
-                onTap: (_, __) => popupController.hideAllPopups(), // Hide popup when the map is tapped.
-                keepAlive: true,
-                interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                onMapReady: () {
-                  completer.complete();
-                },
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c'],
-                ),
-                PopupMarkerLayer(
-                  options: PopupMarkerLayerOptions(
-                    popupController: popupController,
-                    markers: markers.values.toList(),
-                    popupDisplayOptions: PopupDisplayOptions(
-                      builder: (context, marker) {
-                        final ValueKey? key = marker.key as ValueKey?;
-                        if (key?.value == "current") return const SizedBox();
-                        if (key?.value.contains("device")) {
-                          final item = devices.firstWhere((e) => e.location?.latitude == marker.point.latitude && e.location?.longitude == marker.point.longitude);
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 5.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: context.theme.colorScheme.properSurface.withOpacity(0.8),
-                              ),
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item.name ?? "Unknown Device", style: context.theme.textTheme.labelLarge),
-                                  Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
-                                ],
-                              ),
-                            ),
-                          );
-                        } else {
-                          final item = friends.firstWhere((e) => e.latitude == marker.point.latitude && e.longitude == marker.point.longitude);
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 5.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: context.theme.colorScheme.properSurface.withOpacity(0.8),
-                              ),
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item.handle?.displayName ?? item.title ?? "Unknown Friend", style: context.theme.textTheme.labelLarge),
-                                  Text(item.longAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
-                                ],
-                              ),
-                            ),
-                          );
+                          Future.microtask(() =>
+                              controller1.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
                         }
+                        return false;
                       },
+                      child: ScrollbarWrapper(
+                        controller: controller1,
+                        child: Obx(() => CustomScrollView(
+                          controller: controller1,
+                          physics: (kIsDesktop || kIsWeb)
+                              ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
+                          slivers: <Widget>[
+                            if (samsung)
+                              SliverAppBar(
+                                backgroundColor: headerColor,
+                                pinned: true,
+                                stretch: true,
+                                expandedHeight: context.height / 3,
+                                elevation: 0,
+                                automaticallyImplyLeading: false,
+                                flexibleSpace: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    var expandRatio = (constraints.maxHeight - 100) / (context.height / 3 - 50);
+
+                                    if (expandRatio > 1.0) expandRatio = 1.0;
+                                    if (expandRatio < 0.0) expandRatio = 0.0;
+                                    final animation = AlwaysStoppedAnimation<double>(expandRatio);
+
+                                    return Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        FadeTransition(
+                                          opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+                                            parent: animation,
+                                            curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
+                                          )),
+                                          child: Center(child: Text("FindMy Devices", style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
+                                        ),
+                                        FadeTransition(
+                                          opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
+                                            parent: animation,
+                                            curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+                                          )),
+                                          child: Align(
+                                            alignment: Alignment.bottomLeft,
+                                            child: Container(
+                                              padding: const EdgeInsets.only(left: 40),
+                                              height: 50,
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  "FindMy Devices",
+                                                  style: context.theme.textTheme.titleLarge,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8.0),
+                                          child: Align(
+                                            alignment: Alignment.bottomLeft,
+                                            child: Container(
+                                              height: 50,
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: buildBackButton(context),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: Container(
+                                            height: 50,
+                                            child: Align(
+                                              alignment: Alignment.centerRight,
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: actions,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            if (ss.settings.skin.value != Skins.Samsung)
+                              ...bodySlivers,
+                            if (ss.settings.skin.value == Skins.Samsung)
+                              SliverToBoxAdapter(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
+                                  child: CustomScrollView(
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    slivers: bodySlivers,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        ),
+                      ),
                     ),
+                    NotificationListener<ScrollEndNotification>(
+                      onNotification: (_) {
+                        if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
+                        final scrollDistance = context.height / 3 - 57;
+
+                        if (controller2.offset > 0 && controller2.offset < scrollDistance) {
+                          final double snapOffset = controller2.offset / scrollDistance > 0.5 ? scrollDistance : 0;
+
+                          Future.microtask(() =>
+                              controller2.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
+                        }
+                        return false;
+                      },
+                      child: ScrollbarWrapper(
+                        controller: controller2,
+                        child: Obx(() => CustomScrollView(
+                          controller: controller2,
+                          physics: (kIsDesktop || kIsWeb)
+                              ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
+                          slivers: <Widget>[
+                            if (samsung)
+                              SliverAppBar(
+                                backgroundColor: headerColor,
+                                pinned: true,
+                                stretch: true,
+                                expandedHeight: context.height / 3,
+                                elevation: 0,
+                                automaticallyImplyLeading: false,
+                                flexibleSpace: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    var expandRatio = (constraints.maxHeight - 100) / (context.height / 3 - 50);
+
+                                    if (expandRatio > 1.0) expandRatio = 1.0;
+                                    if (expandRatio < 0.0) expandRatio = 0.0;
+                                    final animation = AlwaysStoppedAnimation<double>(expandRatio);
+
+                                    return Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        FadeTransition(
+                                          opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+                                            parent: animation,
+                                            curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
+                                          )),
+                                          child: Center(child: Text("FindMy Friends", style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
+                                        ),
+                                        FadeTransition(
+                                          opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
+                                            parent: animation,
+                                            curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+                                          )),
+                                          child: Align(
+                                            alignment: Alignment.bottomLeft,
+                                            child: Container(
+                                              padding: const EdgeInsets.only(left: 40),
+                                              height: 50,
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  "FindMy Friends",
+                                                  style: context.theme.textTheme.titleLarge,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8.0),
+                                          child: Align(
+                                            alignment: Alignment.bottomLeft,
+                                            child: Container(
+                                              height: 50,
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: buildBackButton(context),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: Container(
+                                            height: 50,
+                                            child: Align(
+                                              alignment: Alignment.centerRight,
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: actions,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            if (ss.settings.skin.value != Skins.Samsung)
+                              ...bodySlivers2,
+                            if (ss.settings.skin.value == Skins.Samsung)
+                              SliverToBoxAdapter(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
+                                  child: CustomScrollView(
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    slivers: bodySlivers2,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                body: FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                    zoom: 5.0,
+                    maxZoom: 18.0,
+                    center: location == null ? null : LatLng(location!.latitude, location!.longitude),
+                    onTap: (_, __) => popupController.hideAllPopups(), // Hide popup when the map is tapped.
+                    keepAlive: true,
+                    interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    onMapReady: () {
+                      completer.complete();
+                    },
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                    ),
+                    PopupMarkerLayer(
+                      options: PopupMarkerLayerOptions(
+                        popupController: popupController,
+                        markers: markers.values.toList(),
+                        popupDisplayOptions: PopupDisplayOptions(
+                          builder: (context, marker) {
+                            final ValueKey? key = marker.key as ValueKey?;
+                            if (key?.value == "current") return const SizedBox();
+                            if (key?.value.contains("device")) {
+                              final item = devices.firstWhere((e) => e.location?.latitude == marker.point.latitude && e.location?.longitude == marker.point.longitude);
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 5.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                                  ),
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item.name ?? "Unknown Device", style: context.theme.textTheme.labelLarge),
+                                      Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            } else {
+                              final item = friends.firstWhere((e) => e.latitude == marker.point.latitude && e.longitude == marker.point.longitude);
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 5.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                                  ),
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item.handle?.displayName ?? item.title ?? "Unknown Friend", style: context.theme.textTheme.labelLarge),
+                                      Text(item.longAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: kIsDesktop ? 30 : 20,
+                left: 20,
+                child: Container(
+                  padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 10),
+                  child: buildBackButton(context),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.properSurface.withOpacity(0.6),
+                  ),
+                )
+              ),
+              Positioned(
+                top: kIsDesktop ? 30 : 20,
+                right: 20,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.properSurface.withOpacity(0.6),
+                  ),
+                  child: refreshing ? Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: buildProgressIndicator(context),
+                  ) : IconButton(
+                    icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground),
+                    onPressed: () {
+                      setState(() {
+                        refreshing = true;
+                      });
+                      getLocations(refresh: true);
+                    },
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: index.value,
