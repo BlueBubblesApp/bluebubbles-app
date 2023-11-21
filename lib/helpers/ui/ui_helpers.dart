@@ -103,11 +103,17 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
           ),
         )
       : Container(
+          alignment: Alignment.center,
           constraints: BoxConstraints(maxHeight: size, maxWidth: size),
-          child: CircularProgressIndicator(
-            strokeWidth: strokeWidth,
-            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-          ));
+          child: SizedBox(
+              width: size,
+              height: size,
+              child: CircularProgressIndicator(
+                strokeWidth: strokeWidth,
+                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+              ),
+          ),
+      );
 }
 
 Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget child, {bool isLoaded = false}) {
