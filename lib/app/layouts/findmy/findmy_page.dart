@@ -953,7 +953,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   child: buildBackButton(context),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.properSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
                   ),
                 )
               ),
@@ -963,7 +963,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.properSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
                   ),
                   padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 10),
                   child: Container(
