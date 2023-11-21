@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:ui';
 
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_location_clipper.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
@@ -946,11 +948,12 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 ),
               ),
               Positioned(
-                top: kIsDesktop ? 30 : 10 + MediaQuery.of(context).padding.top,
+                top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
                 left: 20,
                 child: Container(
-                  padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 10),
-                  child: buildBackButton(context),
+                  width: 48,
+                  height: 48,
+                  child: buildBackButton(context, padding: const EdgeInsets.only(right: 2)),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
@@ -958,20 +961,19 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 )
               ),
               Positioned(
-                top: (kIsDesktop ? 30 : 10 + MediaQuery.of(context).padding.top) + (refreshing ? 10 : 0),
+                top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
                 right: 20,
                 child: Container(
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
                   ),
-                  padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 10),
                   child: Container(
-                    width: 25,
-                    child: refreshing ? Padding(
-                      padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 0),
-                      child: buildProgressIndicator(context),
-                    ) :  IconButton(
+                    width: 48,
+                    child: refreshing ? buildProgressIndicator(context) :
+                    IconButton(
                       iconSize: 22,
                       icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground, size: 22),
                       onPressed: () {
@@ -984,6 +986,25 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   ),
                 ),
               ),
+              if (kIsDesktop)
+                SizedBox(height: appWindow.titleBarHeight,
+                  child: AbsorbPointer(
+                    child: Row(
+                      children: [
+                        Expanded(child: Container()),
+                        ClipRect(
+                          child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
+                              child: Container(
+                                  height: appWindow.titleBarHeight,
+                                  width: appWindow.titleBarButtonSize.width * 3,
+                                  color: context.theme.colorScheme.properSurface.withOpacity(0.5)
+                              ),
+                          ),
+                        ),
+                      ]),
+                  ),
+                ),
             ],
           ),
           bottomNavigationBar: NavigationBar(

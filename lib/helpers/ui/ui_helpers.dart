@@ -59,7 +59,7 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
       color: Colors.transparent,
       child: Container(
         padding: padding,
-        width: 25,
+        width: 48,
         child: XGestureDetector(
           onTap: !kIsDesktop ? null : (details) {
             final result = callback?.call() ?? true;
