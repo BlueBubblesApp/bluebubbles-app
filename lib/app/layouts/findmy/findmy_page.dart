@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -60,18 +61,20 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   }
 
   void getLocations({bool refresh = false}) async {
-    final response = refresh ? await http.refreshFindMyDevices().catchError((_) async {
-      setState(() {
-        refreshing = false;
-      });
-      showSnackbar("Error", "Something went wrong refreshing FindMy data!");
-      return Response(requestOptions: RequestOptions(path: ''));
-    }) : await http.findMyDevices().catchError((_) async {
-      setState(() {
-        fetching = null;
-      });
-      return Response(requestOptions: RequestOptions(path: ''));
-    });
+    final response = refresh
+        ? await http.refreshFindMyDevices().catchError((_) async {
+            setState(() {
+              refreshing = false;
+            });
+            showSnackbar("Error", "Something went wrong refreshing FindMy data!");
+            return Response(requestOptions: RequestOptions(path: ''));
+          })
+        : await http.findMyDevices().catchError((_) async {
+            setState(() {
+              fetching = null;
+            });
+            return Response(requestOptions: RequestOptions(path: ''));
+          });
     final response2 = await http.findMyFriends().catchError((_) async {
       setState(() {
         fetching2 = null;
@@ -98,15 +101,18 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 5.0),
-                    child: e.role?['emoji'] != null ? Text(e.role!['emoji'], style: context.theme.textTheme.bodyLarge!.copyWith(fontFamily: 'Apple Color Emoji'))
-                        : Icon((e.isMac ?? false)
-                        ? CupertinoIcons.desktopcomputer
-                        : e.isConsideredAccessory
-                        ? CupertinoIcons.headphones
-                        : CupertinoIcons.device_phone_portrait,
-                      color: Colors.black,
-                      size: 20,
-                    ),
+                    child: e.role?['emoji'] != null
+                        ? Text(e.role!['emoji'],
+                            style: context.theme.textTheme.bodyLarge!.copyWith(fontFamily: 'Apple Color Emoji'))
+                        : Icon(
+                            (e.isMac ?? false)
+                                ? CupertinoIcons.desktopcomputer
+                                : e.isConsideredAccessory
+                                    ? CupertinoIcons.headphones
+                                    : CupertinoIcons.device_phone_portrait,
+                            color: Colors.black,
+                            size: 20,
+                          ),
                   ),
                 ),
               ),
@@ -147,7 +153,10 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
 
     if (response2.statusCode == 200 && response2.data['data'] != null) {
       try {
-        friends = (response2.data['data']['locations'] as List).map((e) => FindMyFriend.fromJson(e)).toList().cast<FindMyFriend>();
+        friends = (response2.data['data']['locations'] as List)
+            .map((e) => FindMyFriend.fromJson(e))
+            .toList()
+            .cast<FindMyFriend>();
         for (FindMyFriend e in friends.where((e) => (e.latitude ?? 0) != 0 && (e.longitude ?? 0) != 0)) {
           markers[randomString(6)] = Marker(
             key: ValueKey('friend-${randomString(6)}'),
@@ -159,10 +168,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(3),
-                  child: ContactAvatarWidget(
-                    editable: false,
-                    handle: e.handle ?? Handle(address: e.title ?? "Unknown")
-                  ),
+                  child:
+                      ContactAvatarWidget(editable: false, handle: e.handle ?? Handle(address: e.title ?? "Unknown")),
                 ),
               ),
             ),
@@ -246,10 +253,17 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
-    final devicesWithLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null && !item.isConsideredAccessory).toList();
-    final itemsWithLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null && item.isConsideredAccessory).toList();
-    final withoutLocation = devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) == null).toList();
-    final bodySlivers = [
+    final devicesWithLocation = devices
+        .where(
+            (item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null && !item.isConsideredAccessory)
+        .toList();
+    final itemsWithLocation = devices
+        .where(
+            (item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null && item.isConsideredAccessory)
+        .toList();
+    final withoutLocation =
+        devices.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) == null).toList();
+    final devicesBodySlivers = [
       SliverList(
         delegate: SliverChildListDelegate([
           if (fetching == null || fetching == true || (fetching == false && devices.isEmpty))
@@ -261,21 +275,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        fetching == null ? "Something went wrong!" : fetching == false ? "You have no devices." : "Getting FindMy data...",
+                        fetching == null
+                            ? "Something went wrong!"
+                            : fetching == false
+                                ? "You have no devices."
+                                : "Getting FindMy data...",
                         style: context.theme.textTheme.labelLarge,
                       ),
                     ),
-                    if (fetching == true)
-                      buildProgressIndicator(context, size: 15),
+                    if (fetching == true) buildProgressIndicator(context, size: 15),
                   ],
                 ),
               ),
             ),
           if (devicesWithLocation.isNotEmpty)
-            SettingsHeader(
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                text: "Devices"),
+            SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Devices"),
           if (devicesWithLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: tileColor,
@@ -291,13 +305,17 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         mouseCursor: MouseCursor.defer,
                         title: Text(item.name ?? "Unknown Device"),
                         subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
-                        onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
-                          await panelController.close();
-                          await completer.future;
-                          final marker = markers.values.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
-                          popupController.showPopupsOnlyFor([marker]);
-                          mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
-                        } : null,
+                        onTap: item.location?.latitude != null && item.location?.longitude != null
+                            ? () async {
+                                await panelController.close();
+                                await completer.future;
+                                final marker = markers.values.firstWhere((e) =>
+                                    e.point.latitude == item.location?.latitude &&
+                                    e.point.longitude == item.location?.longitude);
+                                popupController.showPopupsOnlyFor([marker]);
+                                mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
+                              }
+                            : null,
                         onLongPress: () async {
                           const encoder = JsonEncoder.withIndent("     ");
                           final str = encoder.convert(item.toJson());
@@ -316,8 +334,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                   padding: const EdgeInsets.all(10.0),
                                   decoration: BoxDecoration(
                                       color: context.theme.colorScheme.background,
-                                      borderRadius: const BorderRadius.all(Radius.circular(10))
-                                  ),
+                                      borderRadius: const BorderRadius.all(Radius.circular(10))),
                                   child: SingleChildScrollView(
                                     child: SelectableText(
                                       str,
@@ -328,10 +345,9 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                               ),
                               actions: [
                                 TextButton(
-                                  child: Text(
-                                      "Close",
-                                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
-                                  ),
+                                  child: Text("Close",
+                                      style: context.theme.textTheme.bodyLarge!
+                                          .copyWith(color: context.theme.colorScheme.primary)),
                                   onPressed: () => Navigator.of(context).pop(),
                                 ),
                               ],
@@ -346,10 +362,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               ],
             ),
           if (itemsWithLocation.isNotEmpty)
-            SettingsHeader(
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                text: "Items"),
+            SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Items"),
           if (itemsWithLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: tileColor,
@@ -362,16 +375,19 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     itemBuilder: (context, i) {
                       final item = itemsWithLocation[i];
                       return ListTile(
-                        mouseCursor: MouseCursor.defer,
                         title: Text(item.name ?? "Unknown Device"),
                         subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
-                        onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
-                          await panelController.close();
-                          await completer.future;
-                          final marker = markers.values.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
-                          popupController.showPopupsOnlyFor([marker]);
-                          mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
-                        } : null,
+                        onTap: item.location?.latitude != null && item.location?.longitude != null
+                            ? () async {
+                                await panelController.close();
+                                await completer.future;
+                                final marker = markers.values.firstWhere((e) =>
+                                    e.point.latitude == item.location?.latitude &&
+                                    e.point.longitude == item.location?.longitude);
+                                popupController.showPopupsOnlyFor([marker]);
+                                mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
+                              }
+                            : null,
                         onLongPress: () async {
                           const encoder = JsonEncoder.withIndent("     ");
                           final str = encoder.convert(item.toJson());
@@ -390,8 +406,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                   padding: const EdgeInsets.all(10.0),
                                   decoration: BoxDecoration(
                                       color: context.theme.colorScheme.background,
-                                      borderRadius: const BorderRadius.all(Radius.circular(10))
-                                  ),
+                                      borderRadius: const BorderRadius.all(Radius.circular(10))),
                                   child: SingleChildScrollView(
                                     child: SelectableText(
                                       str,
@@ -402,10 +417,9 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                               ),
                               actions: [
                                 TextButton(
-                                  child: Text(
-                                      "Close",
-                                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
-                                  ),
+                                  child: Text("Close",
+                                      style: context.theme.textTheme.bodyLarge!
+                                          .copyWith(color: context.theme.colorScheme.primary)),
                                   onPressed: () => Navigator.of(context).pop(),
                                 ),
                               ],
@@ -420,10 +434,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               ],
             ),
           if (withoutLocation.isNotEmpty)
-            SettingsHeader(
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                text: "Unknown Location"),
+            SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Unknown Location"),
           if (withoutLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: tileColor,
@@ -431,61 +442,65 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 Material(
                   color: Colors.transparent,
                   child: ExpansionTile(
-                    shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
-                    title: const Text("Devices without locations"),
-                    children: withoutLocation.map((item) => ListTile(
-                      mouseCursor: MouseCursor.defer,
-                      title: Text(item.name ?? "Unknown Device"),
-                      subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
-                      onTap: item.location?.latitude != null && item.location?.longitude != null ? () async {
-                        await panelController.close();
-                        await completer.future;
-                        final marker = markers.values.firstWhere((e) => e.point.latitude == item.location?.latitude && e.point.longitude == item.location?.longitude);
-                        popupController.showPopupsOnlyFor([marker]);
-                        mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
-                      } : null,
-                      onLongPress: () async {
-                        const encoder = JsonEncoder.withIndent("     ");
-                        final str = encoder.convert(item.toJson());
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(
-                              "Raw FindMy Data",
-                              style: context.theme.textTheme.titleLarge,
-                            ),
-                            backgroundColor: context.theme.colorScheme.properSurface,
-                            content: SizedBox(
-                              width: ns.width(context) * 3 / 5,
-                              height: context.height * 1 / 4,
-                              child: Container(
-                                padding: const EdgeInsets.all(10.0),
-                                decoration: BoxDecoration(
-                                    color: context.theme.colorScheme.background,
-                                    borderRadius: const BorderRadius.all(Radius.circular(10))
-                                ),
-                                child: SingleChildScrollView(
-                                  child: SelectableText(
-                                    str,
-                                    style: context.theme.textTheme.bodyLarge,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                child: Text(
-                                    "Close",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
-                                ),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    )).toList()
-                  ),
+                      shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
+                      title: const Text("Devices without locations"),
+                      children: withoutLocation
+                          .map((item) => ListTile(
+                                title: Text(item.name ?? "Unknown Device"),
+                                subtitle: Text(
+                                    item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                                onTap: item.location?.latitude != null && item.location?.longitude != null
+                                    ? () async {
+                                        await panelController.close();
+                                        await completer.future;
+                                        final marker = markers.values.firstWhere((e) =>
+                                            e.point.latitude == item.location?.latitude &&
+                                            e.point.longitude == item.location?.longitude);
+                                        popupController.showPopupsOnlyFor([marker]);
+                                        mapController.move(
+                                            LatLng(item.location!.latitude!, item.location!.longitude!), 10);
+                                      }
+                                    : null,
+                                onLongPress: () async {
+                                  const encoder = JsonEncoder.withIndent("     ");
+                                  final str = encoder.convert(item.toJson());
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(
+                                        "Raw FindMy Data",
+                                        style: context.theme.textTheme.titleLarge,
+                                      ),
+                                      backgroundColor: context.theme.colorScheme.properSurface,
+                                      content: SizedBox(
+                                        width: ns.width(context) * 3 / 5,
+                                        height: context.height * 1 / 4,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(10.0),
+                                          decoration: BoxDecoration(
+                                              color: context.theme.colorScheme.background,
+                                              borderRadius: const BorderRadius.all(Radius.circular(10))),
+                                          child: SingleChildScrollView(
+                                            child: SelectableText(
+                                              str,
+                                              style: context.theme.textTheme.bodyLarge,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Close",
+                                              style: context.theme.textTheme.bodyLarge!
+                                                  .copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ))
+                          .toList()),
                 ),
               ],
             ),
@@ -493,9 +508,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       ),
     ];
 
-    final friendsWithLocation = friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
-    final friendsWithoutLocation = friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
-    final bodySlivers2 = [
+    final friendsWithLocation =
+        friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
+    final friendsWithoutLocation =
+        friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
+    final friendsBodySlivers = [
       SliverList(
         delegate: SliverChildListDelegate([
           if (fetching == null || fetching == true || (fetching == false && devices.isEmpty))
@@ -507,21 +524,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        fetching == null ? "Something went wrong!" : fetching == false ? "You have no friends." : "Getting FindMy data...",
+                        fetching == null
+                            ? "Something went wrong!"
+                            : fetching == false
+                                ? "You have no friends."
+                                : "Getting FindMy data...",
                         style: context.theme.textTheme.labelLarge,
                       ),
                     ),
-                    if (fetching == true)
-                      buildProgressIndicator(context, size: 15),
+                    if (fetching == true) buildProgressIndicator(context, size: 15),
                   ],
                 ),
               ),
             ),
           if (friendsWithLocation.isNotEmpty)
-            SettingsHeader(
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                text: "Friends"),
+            SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Friends"),
           if (friendsWithLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: tileColor,
@@ -534,14 +551,16 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     itemBuilder: (context, i) {
                       final item = friendsWithLocation[i];
                       return ListTile(
-                        mouseCursor: MouseCursor.defer,
                         leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
                         subtitle: Text(item.longAddress ?? "No location found"),
                         onTap: () async {
-                          await panelController.close();
+                          if (context.isPhone) {
+                            await panelController.close();
+                          }
                           await completer.future;
-                          final marker = markers.values.firstWhere((e) => e.point.latitude == item.latitude && e.point.longitude == item.longitude);
+                          final marker = markers.values.firstWhere(
+                              (e) => e.point.latitude == item.latitude && e.point.longitude == item.longitude);
                           popupController.showPopupsOnlyFor([marker]);
                           mapController.move(LatLng(item.latitude!, item.longitude!), 10);
                         },
@@ -591,10 +610,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               ],
             ),
           if (friendsWithoutLocation.isNotEmpty)
-            SettingsHeader(
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                text: "Unknown Location"),
+            SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Unknown Location"),
           if (friendsWithoutLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: tileColor,
@@ -660,7 +676,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     final actions = [
       if (!refreshing)
         IconButton(
-          icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground),
+          icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh,
+              color: context.theme.colorScheme.onBackground),
           onPressed: () {
             setState(() {
               refreshing = true;
@@ -677,66 +694,261 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
-          systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+          systemNavigationBarColor: ss.settings.immersiveMode.value
+              ? Colors.transparent
+              : context.theme.colorScheme.background, // navigation bar color
           systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
           statusBarColor: Colors.transparent, // status bar color
           statusBarIconBrightness: Brightness.dark,
         ),
-        child: Obx(() => Scaffold(
-          backgroundColor: material ? tileColor : headerColor,
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            if (context.isPhone) {
+              return buildNormal(context, devicesBodySlivers, friendsBodySlivers, actions);
+            }
+            return buildDesktop(context, devicesBodySlivers, friendsBodySlivers);
+          },
+        ));
+  }
+
+  Widget buildDesktop(BuildContext context, List<SliverList> devicesBodySlivers, List<SliverList> friendsBodySlivers) {
+    return Obx(
+      () => Scaffold(
+          backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
           body: Stack(
-            children: [
-              SlidingUpPanel(
-                controller: panelController,
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(25.0),
-                  topRight: Radius.circular(25.0),
+          children: [
+            Row(
+              children: [
+                ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: 300, maxWidth: max(300, min(500, ns.width(context) / 3))),
+                  child: Container(
+                    width: 500,
+                  ),
                 ),
-                minHeight: 50,
-                maxHeight: MediaQuery.of(context).size.height * 0.75,
-                header: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10.0),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ForceDraggableWidget(
+                Expanded(
+                  child: Stack(
+                    children: [
+                      buildMap(),
+                      Positioned(
+                        top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
+                        right: 20,
                         child: Container(
-                          width: 50,
-                          height: 5,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.outline,
-                            borderRadius: BorderRadius.circular(5),
+                            shape: BoxShape.circle,
+                            color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
                           ),
+                          child: Container(
+                            width: 48,
+                            child: refreshing
+                                ? buildProgressIndicator(context)
+                                : IconButton(
+                                    iconSize: 22,
+                                    icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh,
+                                        color: context.theme.colorScheme.onBackground, size: 22),
+                                    onPressed: () {
+                                      setState(() {
+                                        refreshing = true;
+                                      });
+                                      getLocations(refresh: true);
+                                    },
+                                  ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: appWindow.titleBarHeight,
+                        child: AbsorbPointer(
+                          child: Row(children: [
+                            Expanded(child: Container()),
+                            ClipRect(
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
+                                child: Container(
+                                    height: appWindow.titleBarHeight,
+                                    width: appWindow.titleBarButtonSize.width * 3,
+                                    color: context.theme.colorScheme.properSurface.withOpacity(0.5)),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            ConstrainedBox(
+              constraints: BoxConstraints(minWidth: 300, maxWidth: max(300, min(500, ns.width(context) / 3))),
+              child: Column(
+                children: [
+                  Container(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          child: buildBackButton(context),
+                        ),
+                        Expanded(child: Text("Find My", style: context.theme.textTheme.titleLarge)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TabBar(
+                    controller: tabController,
+                    tabs: [
+                      Container(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(iOS ? CupertinoIcons.device_desktop : Icons.devices),
+                            const Text("Devices"),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(iOS ? CupertinoIcons.person_2 : Icons.person),
+                            const Text("Friends"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: Container(
+                      width: 500,
+                      child: TabBarView(
+                        controller: tabController,
+                        children: [
+                          ScrollbarWrapper(
+                            controller: controller1,
+                            child: CustomScrollView(
+                              controller: controller1,
+                              slivers: [
+                                if (ss.settings.skin.value != Skins.Samsung) ...devicesBodySlivers,
+                                if (ss.settings.skin.value == Skins.Samsung)
+                                  SliverToBoxAdapter(
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                          minHeight: context.height -
+                                              50 -
+                                              context.mediaQueryPadding.top -
+                                              context.mediaQueryViewPadding.top),
+                                      child: CustomScrollView(
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        shrinkWrap: true,
+                                        slivers: devicesBodySlivers,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          ScrollbarWrapper(
+                            controller: controller2,
+                            child: CustomScrollView(
+                              controller: controller2,
+                              slivers: [
+                                if (ss.settings.skin.value != Skins.Samsung) ...friendsBodySlivers,
+                                if (ss.settings.skin.value == Skins.Samsung)
+                                  SliverToBoxAdapter(
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                          minHeight: context.height -
+                                              50 -
+                                              context.mediaQueryPadding.top -
+                                              context.mediaQueryViewPadding.top),
+                                      child: CustomScrollView(
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        shrinkWrap: true,
+                                        slivers: friendsBodySlivers,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildNormal(BuildContext context, List<SliverList> devicesBodySlivers, List<SliverList> friendsBodySlivers,
+      List<Widget> actions) {
+    return Obx(
+      () => Scaffold(
+        backgroundColor: material ? tileColor : headerColor,
+        body: Stack(
+          children: [
+            SlidingUpPanel(
+              controller: panelController,
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(25.0),
+                topRight: Radius.circular(25.0),
+              ),
+              minHeight: 50,
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+              header: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ForceDraggableWidget(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.outline,
+                          borderRadius: BorderRadius.circular(5),
                         ),
                       ),
                     ),
                   ),
                 ),
-                panelBuilder: () => TabBarView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  controller: tabController,
-                  children: <Widget>[
-                    NotificationListener<ScrollEndNotification>(
-                      onNotification: (_) {
-                        if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
-                        final scrollDistance = context.height / 3 - 57;
+              ),
+              panelBuilder: () => TabBarView(
+                physics: const NeverScrollableScrollPhysics(),
+                controller: tabController,
+                children: <Widget>[
+                  NotificationListener<ScrollEndNotification>(
+                    onNotification: (_) {
+                      if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
+                      final scrollDistance = context.height / 3 - 57;
 
-                        if (controller1.offset > 0 && controller1.offset < scrollDistance) {
-                          final double snapOffset = controller1.offset / scrollDistance > 0.5 ? scrollDistance : 0;
+                      if (controller1.offset > 0 && controller1.offset < scrollDistance) {
+                        final double snapOffset = controller1.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
-                          Future.microtask(() =>
-                              controller1.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
-                        }
-                        return false;
-                      },
-                      child: ScrollbarWrapper(
-                        controller: controller1,
-                        child: Obx(() => CustomScrollView(
+                        Future.microtask(() => controller1.animateTo(snapOffset,
+                            duration: const Duration(milliseconds: 200), curve: Curves.linear));
+                      }
+                      return false;
+                    },
+                    child: ScrollbarWrapper(
+                      controller: controller1,
+                      child: Obx(
+                        () => CustomScrollView(
                           controller: controller1,
                           physics: (kIsDesktop || kIsWeb)
-                              ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
+                              ? const NeverScrollableScrollPhysics()
+                              : ThemeSwitcher.getScrollPhysics(),
                           slivers: <Widget>[
                             if (samsung)
                               SliverAppBar(
@@ -762,7 +974,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                             parent: animation,
                                             curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
                                           )),
-                                          child: Center(child: Text("FindMy Devices", style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
+                                          child: Center(
+                                              child: Text("FindMy Devices",
+                                                  style: context.theme.textTheme.displaySmall!
+                                                      .copyWith(color: context.theme.colorScheme.onBackground),
+                                                  textAlign: TextAlign.center)),
                                         ),
                                         FadeTransition(
                                           opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
@@ -815,43 +1031,48 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                   },
                                 ),
                               ),
-                            if (ss.settings.skin.value != Skins.Samsung)
-                              ...bodySlivers,
+                            if (ss.settings.skin.value != Skins.Samsung) ...devicesBodySlivers,
                             if (ss.settings.skin.value == Skins.Samsung)
                               SliverToBoxAdapter(
                                 child: ConstrainedBox(
-                                  constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
+                                  constraints: BoxConstraints(
+                                      minHeight: context.height -
+                                          50 -
+                                          context.mediaQueryPadding.top -
+                                          context.mediaQueryViewPadding.top),
                                   child: CustomScrollView(
                                     physics: const NeverScrollableScrollPhysics(),
                                     shrinkWrap: true,
-                                    slivers: bodySlivers,
+                                    slivers: devicesBodySlivers,
                                   ),
                                 ),
                               ),
                           ],
                         ),
-                        ),
                       ),
                     ),
-                    NotificationListener<ScrollEndNotification>(
-                      onNotification: (_) {
-                        if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
-                        final scrollDistance = context.height / 3 - 57;
+                  ),
+                  NotificationListener<ScrollEndNotification>(
+                    onNotification: (_) {
+                      if (ss.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
+                      final scrollDistance = context.height / 3 - 57;
 
-                        if (controller2.offset > 0 && controller2.offset < scrollDistance) {
-                          final double snapOffset = controller2.offset / scrollDistance > 0.5 ? scrollDistance : 0;
+                      if (controller2.offset > 0 && controller2.offset < scrollDistance) {
+                        final double snapOffset = controller2.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
-                          Future.microtask(() =>
-                              controller2.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
-                        }
-                        return false;
-                      },
-                      child: ScrollbarWrapper(
-                        controller: controller2,
-                        child: Obx(() => CustomScrollView(
+                        Future.microtask(() => controller2.animateTo(snapOffset,
+                            duration: const Duration(milliseconds: 200), curve: Curves.linear));
+                      }
+                      return false;
+                    },
+                    child: ScrollbarWrapper(
+                      controller: controller2,
+                      child: Obx(
+                        () => CustomScrollView(
                           controller: controller2,
                           physics: (kIsDesktop || kIsWeb)
-                              ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
+                              ? const NeverScrollableScrollPhysics()
+                              : ThemeSwitcher.getScrollPhysics(),
                           slivers: <Widget>[
                             if (samsung)
                               SliverAppBar(
@@ -877,7 +1098,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                             parent: animation,
                                             curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
                                           )),
-                                          child: Center(child: Text("FindMy Friends", style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground), textAlign: TextAlign.center)),
+                                          child: Center(
+                                              child: Text("FindMy Friends",
+                                                  style: context.theme.textTheme.displaySmall!
+                                                      .copyWith(color: context.theme.colorScheme.onBackground),
+                                                  textAlign: TextAlign.center)),
                                         ),
                                         FadeTransition(
                                           opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
@@ -930,101 +1155,32 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                   },
                                 ),
                               ),
-                            if (ss.settings.skin.value != Skins.Samsung)
-                              ...bodySlivers2,
+                            if (ss.settings.skin.value != Skins.Samsung) ...friendsBodySlivers,
                             if (ss.settings.skin.value == Skins.Samsung)
                               SliverToBoxAdapter(
                                 child: ConstrainedBox(
-                                  constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
+                                  constraints: BoxConstraints(
+                                      minHeight: context.height -
+                                          50 -
+                                          context.mediaQueryPadding.top -
+                                          context.mediaQueryViewPadding.top),
                                   child: CustomScrollView(
                                     physics: const NeverScrollableScrollPhysics(),
                                     shrinkWrap: true,
-                                    slivers: bodySlivers2,
+                                    slivers: friendsBodySlivers,
                                   ),
                                 ),
                               ),
                           ],
                         ),
-                        ),
                       ),
                     ),
-                  ],
-                ),
-                body: FlutterMap(
-                  mapController: mapController,
-                  options: MapOptions(
-                    zoom: 5.0,
-                    maxZoom: 18.0,
-                    center: location == null ? null : LatLng(location!.latitude, location!.longitude),
-                    onTap: (_, __) => popupController.hideAllPopups(), // Hide popup when the map is tapped.
-                    keepAlive: true,
-                    interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                    onMapReady: () {
-                      completer.complete();
-                    },
                   ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: const ['a', 'b', 'c'],
-                    ),
-                    PopupMarkerLayer(
-                      options: PopupMarkerLayerOptions(
-                        popupController: popupController,
-                        markers: markers.values.toList(),
-                        popupDisplayOptions: PopupDisplayOptions(
-                          builder: (context, marker) {
-                            final ValueKey? key = marker.key as ValueKey?;
-                            if (key?.value == "current") return const SizedBox();
-                            if (key?.value.contains("device")) {
-                              final item = devices.firstWhere((e) => e.location?.latitude == marker.point.latitude && e.location?.longitude == marker.point.longitude);
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 5.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: context.theme.colorScheme.properSurface.withOpacity(0.8),
-                                  ),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.name ?? "Unknown Device", style: context.theme.textTheme.labelLarge),
-                                      Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            } else {
-                              final item = friends.firstWhere((e) => e.latitude == marker.point.latitude && e.longitude == marker.point.longitude);
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 5.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: context.theme.colorScheme.properSurface.withOpacity(0.8),
-                                  ),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.handle?.displayName ?? item.title ?? "Unknown Friend", style: context.theme.textTheme.labelLarge),
-                                      Text(item.longAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
-              Positioned(
+              body: buildMap(),
+            ),
+            Positioned(
                 top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
                 left: 20,
                 child: Container(
@@ -1035,77 +1191,159 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     shape: BoxShape.circle,
                     color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
                   ),
-                )
-              ),
-              Positioned(
-                top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
-                right: 20,
+                )),
+            Positioned(
+              top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
+              right: 20,
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
+                ),
                 child: Container(
                   width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
-                  ),
-                  child: Container(
-                    width: 48,
-                    child: refreshing ? buildProgressIndicator(context) :
-                    IconButton(
-                      iconSize: 22,
-                      icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh, color: context.theme.colorScheme.onBackground, size: 22),
-                      onPressed: () {
-                        setState(() {
-                          refreshing = true;
-                        });
-                        getLocations(refresh: true);
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              if (kIsDesktop)
-                SizedBox(height: appWindow.titleBarHeight,
-                  child: AbsorbPointer(
-                    child: Row(
-                      children: [
-                        Expanded(child: Container()),
-                        ClipRect(
-                          child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
-                              child: Container(
-                                  height: appWindow.titleBarHeight,
-                                  width: appWindow.titleBarButtonSize.width * 3,
-                                  color: context.theme.colorScheme.properSurface.withOpacity(0.5)
-                              ),
-                          ),
+                  child: refreshing
+                      ? buildProgressIndicator(context)
+                      : IconButton(
+                          iconSize: 22,
+                          icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh,
+                              color: context.theme.colorScheme.onBackground, size: 22),
+                          onPressed: () {
+                            setState(() {
+                              refreshing = true;
+                            });
+                            getLocations(refresh: true);
+                          },
                         ),
-                      ]),
-                  ),
                 ),
-            ],
-          ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: index.value,
-            backgroundColor: headerColor,
-            destinations: [
-              NavigationDestination(
-                icon: Icon(iOS ? CupertinoIcons.device_desktop : Icons.devices),
-                label: "DEVICES",
               ),
-              NavigationDestination(
-                icon: Icon(iOS ? CupertinoIcons.person_2 : Icons.person),
-                label: "FRIENDS",
+            ),
+            if (kIsDesktop)
+              SizedBox(
+                height: appWindow.titleBarHeight,
+                child: AbsorbPointer(
+                  child: Row(children: [
+                    Expanded(child: Container()),
+                    ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
+                        child: Container(
+                            height: appWindow.titleBarHeight,
+                            width: appWindow.titleBarButtonSize.width * 3,
+                            color: context.theme.colorScheme.properSurface.withOpacity(0.5)),
+                      ),
+                    ),
+                  ]),
+                ),
               ),
-            ],
-            onDestinationSelected: (page) {
-              if (fetching != false) return;
-              index.value = page;
-              tabController.animateTo(page);
-              panelController.open();
-            },
-          ),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: index.value,
+          backgroundColor: headerColor,
+          destinations: [
+            NavigationDestination(
+              icon: Icon(iOS ? CupertinoIcons.device_desktop : Icons.devices),
+              label: "DEVICES",
+            ),
+            NavigationDestination(
+              icon: Icon(iOS ? CupertinoIcons.person_2 : Icons.person),
+              label: "FRIENDS",
+            ),
+          ],
+          onDestinationSelected: (page) {
+            if (fetching != false) return;
+            index.value = page;
+            tabController.animateTo(page);
+            panelController.open();
+          },
         ),
       ),
+    );
+  }
+
+  Widget buildMap() {
+    return FlutterMap(
+      mapController: mapController,
+      options: MapOptions(
+        zoom: 5.0,
+        maxZoom: 18.0,
+        center: location == null ? null : LatLng(location!.latitude, location!.longitude),
+        onTap: (_, __) => popupController.hideAllPopups(),
+        // Hide popup when the map is tapped.
+        keepAlive: true,
+        interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        onMapReady: () {
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
+        },
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: const ['a', 'b', 'c'],
+        ),
+        PopupMarkerLayer(
+          options: PopupMarkerLayerOptions(
+            popupController: popupController,
+            markers: markers.values.toList(),
+            popupDisplayOptions: PopupDisplayOptions(
+              builder: (context, marker) {
+                final ValueKey? key = marker.key as ValueKey?;
+                if (key?.value == "current") return const SizedBox();
+                if (key?.value.contains("device")) {
+                  final item = devices.firstWhere((e) =>
+                      e.location?.latitude == marker.point.latitude && e.location?.longitude == marker.point.longitude);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.name ?? "Unknown Device", style: context.theme.textTheme.labelLarge),
+                          Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found",
+                              style: context.theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  );
+                } else {
+                  final item = friends
+                      .firstWhere((e) => e.latitude == marker.point.latitude && e.longitude == marker.point.longitude);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.handle?.displayName ?? item.title ?? "Unknown Friend",
+                              style: context.theme.textTheme.labelLarge),
+                          Text(item.longAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
