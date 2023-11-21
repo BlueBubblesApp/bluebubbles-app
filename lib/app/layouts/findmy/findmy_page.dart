@@ -429,6 +429,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 Material(
                   color: Colors.transparent,
                   child: ExpansionTile(
+                    shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
                     title: const Text("Devices without locations"),
                     children: withoutLocation.map((item) => ListTile(
                       mouseCursor: MouseCursor.defer,
@@ -561,6 +562,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 Material(
                   color: Colors.transparent,
                   child: ExpansionTile(
+                      shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
                       title: const Text("Friends without locations"),
                       children: friendsWithoutLocation.map((item) => ListTile(
                         mouseCursor: MouseCursor.defer,
