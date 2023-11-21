@@ -545,6 +545,44 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                           popupController.showPopupsOnlyFor([marker]);
                           mapController.move(LatLng(item.latitude!, item.longitude!), 10);
                         },
+                        onLongPress: () async {
+                          const encoder = JsonEncoder.withIndent("     ");
+                          final str = encoder.convert(item.toJson());
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(
+                                "Raw FindMy Data",
+                                style: context.theme.textTheme.titleLarge,
+                              ),
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              content: SizedBox(
+                                width: ns.width(context) * 3 / 5,
+                                height: context.height / 2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(10.0),
+                                  decoration: BoxDecoration(
+                                      color: context.theme.colorScheme.background,
+                                      borderRadius: const BorderRadius.all(Radius.circular(10))),
+                                  child: SingleChildScrollView(
+                                    child: SelectableText(
+                                      str,
+                                      style: context.theme.textTheme.bodyLarge,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  child: Text("Close",
+                                      style: context.theme.textTheme.bodyLarge!
+                                          .copyWith(color: context.theme.colorScheme.primary)),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       );
                     },
                     itemCount: friendsWithLocation.length,
@@ -566,13 +604,52 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   child: ExpansionTile(
                       shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
                       title: const Text("Friends without locations"),
-                      children: friendsWithoutLocation.map((item) => ListTile(
-                        mouseCursor: MouseCursor.defer,
-                        leading: ContactAvatarWidget(handle: item.handle),
-                        title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
-                        subtitle: Text(item.longAddress ?? "No location found"),
-                      )).toList()
-                  ),
+                      children: friendsWithoutLocation
+                          .map((item) => ListTile(
+                                mouseCursor: MouseCursor.defer,
+                                leading: ContactAvatarWidget(handle: item.handle),
+                                title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
+                                subtitle: Text(item.longAddress ?? "No location found"),
+                                onLongPress: () async {
+                                  const encoder = JsonEncoder.withIndent("     ");
+                                  final str = encoder.convert(item.toJson());
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(
+                                        "Raw FindMy Data",
+                                        style: context.theme.textTheme.titleLarge,
+                                      ),
+                                      backgroundColor: context.theme.colorScheme.properSurface,
+                                      content: SizedBox(
+                                        width: ns.width(context) * 3 / 5,
+                                        height: context.height * 1 / 4,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(10.0),
+                                          decoration: BoxDecoration(
+                                              color: context.theme.colorScheme.background,
+                                              borderRadius: const BorderRadius.all(Radius.circular(10))),
+                                          child: SingleChildScrollView(
+                                            child: SelectableText(
+                                              str,
+                                              style: context.theme.textTheme.bodyLarge,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Close",
+                                              style: context.theme.textTheme.bodyLarge!
+                                                  .copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ))
+                          .toList()),
                 ),
               ],
             ),

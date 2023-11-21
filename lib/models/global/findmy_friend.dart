@@ -29,5 +29,14 @@ class FindMyFriend {
     subtitle: json["subtitle"],
     handle: json["handle"] == null ? null : Handle.findOne(addressAndService: Tuple2(json["handle"], "iMessage")),
   );
+
+  Map<String, dynamic> toJson() => {
+    "coordinates": [latitude, longitude],
+    "long_address": longAddress,
+    "short_address": shortAddress,
+    "title": title,
+    "subtitle": subtitle,
+    "handle": handle?.address,
+  };
 }
 
