@@ -120,7 +120,10 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             anchorPos: AnchorPos.align(AnchorAlign.top),
           );
         }
-        final granted = await Geolocator.checkPermission();
+        LocationPermission granted = await Geolocator.checkPermission();
+        if (granted == LocationPermission.denied) {
+          granted = await Geolocator.requestPermission();
+        }
         if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
           location = await Geolocator.getCurrentPosition();
           buildLocationMarker(location!);
