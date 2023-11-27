@@ -2,6 +2,78 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.12.5
+
+This update fixes bugs (especially on Desktop) and brings some of the latest server's features to the client apps.
+
+### The Big Stuff
+**New Stuff**
+- Added ability to check if an address is iMessage capable in the chat creator
+- Brand new incoming FaceTime notification (aaaaaand maybe some extra new features if you're brave enough to try them)
+- Added ability to send rich link content to iDevice users (DD Scan)
+- Added FindMy friends & redesigned FindMy screen
+
+**Important Bug Fixes**
+- Reworked "jump to last unread" logic to prevent lagging/freezing chats
+- Fixed text field losing focus if mouse moved outside [Desktop]
+- Fixed gesture interference preventing moving cursor when editing a message
+
+### Enhancements
+
+- Added autofill hints for password managers
+- Improved send/receive sound UI & added volume setting
+- Added ability to check if an address is iMessage capable in the chat creator
+- Disabled swipe to reply when editing a message (gesture interference)
+- Reworked "jump to last unread" logic to prevent lagging/freezing chats
+- Added ability to jump to a message when tapping on it from the reply thread view
+- Added better clarity to group member count text in conversation details
+- "Always show avatar" now functions as expected [Material skin]
+- Chat avatar now shows in conversation header [Material skin]
+- Message content detection prioritizes the longest detected string in the message
+- Improved Google Sign In UI
+- Added ability to schedule messages on an hourly basis (Don't abuse this!)
+- Added audio player seek bar [Desktop]
+- Added ability to change user color even if colorful avatar is off
+- Check if chat exists on server before creating a chat, in case it exists on the app but not on the server
+- Added ability to sign in via Google in connection settings
+- Ctrl + tab switches to the next chat even if the text field is focused [Desktop]
+- Brand new FaceTime notification (aaaaaand maybe some extra new features if you're brave enough to try them)
+- Added ability to send rich link content to iDevice users (DD Scan)
+- Added FindMy friends & redesigned FindMy screen
+- Refocus main text field after editing a message
+- Added up arrow shortcut setting to edit the last sent message
+
+### Fixes
+
+- Added better error handling to localhost detection
+- Fixed initial conversation page not reacting to window effect change without a restart [Windows]
+- Dispose video players properly [Desktop]
+- Fixed non-functional send/receive sound [Desktop]
+- Fixed text field losing focus if mouse moved outside [Desktop]
+- Fixed issue where the app searches a chat called "minimized" when starting the app minimized [Desktop]
+- Fixed text field focus when iMessage replying
+- Fixed color emoji [Web]
+- Fixed a few issues with displaying "Someone" (not all are fixed) [Web]
+- Fixed issues loading settings backups
+- Fixed window sizing with multiple monitors [Desktop]
+- Fixed issues with window not coming to front when clicking a notification [Desktop]
+- Fixed crash if Firestore collection is null [Android]
+- Fixed right click not functioning on conversation tile [Desktop, Material / Samsung skin]
+- Fixed video player controls [Desktop]
+- Fixed whitespace getting saved as message drafts
+- Fixed gesture interference preventing moving cursor when editing a message
+- Fixed status indicators not updating for delivered or read messages in the chat list
+- Fixed middle click scroll reversed and glitchy [Desktop]
+- Fixed auto dark mode not working when window effects enabled [Windows]
+- Fixed firebase error when project / configuration changes
+- Fixed shared vCards without a contact photo using your personal avatar
+- Fixed transparency issues in various components with a window effect enabled [Windows]
+
+### For Developers
+- Upgraded to Flutter 3.13
+- Updated dependencies
+- Improved snap build process
+
 ## v1.12.4
 
 This update fixes a few bugs and brings the client apps up to speed with the latest server release's features.
@@ -500,133 +572,3 @@ This update fixes a few bugs and brings the client apps up to speed with the lat
 - Updated targetSdkVersion & compileSdkVersion to 32 (Android 12L)
 - Updated gradle plugin
 - Updated Java & Dart dependencies
-
-## 1.9.1
-
-### Bug Fixes
-
-* Fixes issues creating new chats
-* Fixes issue with scroll-to-bottom when scrolled up in a chat, and trying sending a message
-* Fixes invisible icon during setup
-* Fixes issues opening external links (i.e. twitter or youtube)
-* Fixes missing avatars for chats with no participants
-    - A chat having no participants is technically a bug, however, we still want to maintain a good UI
-
-## 1.9.0
-
-### Notes
-
-* Reminder to **not** upgrade to macOS Ventura until further notice
-
-### The Big Stuff
-
-- Material You / Material 3 / Android 12 stretchy scroll theming support
-- Conversation bubble notifications (Android 12 and up)
-- Full REST API migration, which means better error handling, reliability, and overall UX!
-    - This has also given us faster reactions (private API only)
-- Chat peek (long press chat)
-- Tons of nice bug fixes & improvements (replying via notification is fixed!)
-- Migration to Flutter 3.0 - more performance improvements
-- Desktop & Web
-   - Better contacts support
-   - Image paste
-   - Better notifications
-   - Better scrolling
-
-### The Nitty Gritty
-
-#### New Features
-
-- Material You theming
-- Material 3 UI design
-- Android 12's stretchy over-scroll indicator
-- Conversation bubble notifications
-- Sync iMessage group chat icons
-- Download original attachment from server (heic, caf, etc) if converted by server
-- Added toggle for sent / delivered / received indicators on chat list
-- Added option to refresh contacts list manually
-- Chat peek when chat long pressed
-- Save initial sync log for later analysis
-- Rewrite of initial sync code - at least twice as fast and more reliable!
-- Added button to report bug (redirect to GitHub issues)
-- Added filename and MIME type info to attachment metadata
-- Marking as read on one BlueBubbles client now marks as read on all BlueBubbles clients (Private API only)
-- Check for server updates on app start
-- Desktop
-   - Contact photo support
-   - Image paste
-   - Customizable notification actions
-   - Contact photos and avatars in notifications
-   - Allow text selection when in the message details popup (Web too)
-   - Remember window size and position when relaunching app
-   - Added new option to dramatically improve mouse wheel scrolling
-   - Option to change mouse wheel scrolling multiplier
-   - Ability to send location
-
-#### Bug Fixes
-
-- Fixed replying via notification not working
-- Fixed message sending getting bricked if a sent message errors
-- Fixed issues where enter to send would not work well with a physical keyboard on Android
-- Fixed some issues with downloading videos
-- Fixed migration error
-- Fixed error when setting up share targets with null icon
-- Fixed show/hide dividers option not showing for Samsung skin
-- Fixed back button not present on Material and Samsung, and in new chat creator
-- Fixed status bar icon brightness
-- Fixed clear transcript dialog not popping after clicking confirm
-- Fixed theme not updating on system theme (when switching dark -> light)
-- Fixed failed to send & connection loss notifications not working on Android 12
-- Fixed chat creation dialog on Big Sur+
-- Fixed loading theme backups not working
-- Fixed reaction sending to the wrong chat if the chat is switched quickly
-- Fixed gray screen after changing chat name
-- Fixed new chats not loading the name or icon after being created
-- Fixed restart iMessage showing as in-progress indefinitely
-- Fixed up/down arrow keys not moving through text in the text field
-- Fixed IP addresses with http at the front being flagged as "invalid"
-- Fixed total chat calculation on initial sync
-- Fixed custom avatars not being hidden in redacted mode
-- Fixed messages sent with subject text and only emojis as the main body not showing the subject text
-- Fixed private API featured message not sending as private API when sent with an attachment
-- Fixed group name change sometimes causing a chat to jump to the bottom of the entire list
-- Fixed settings menus getting grayed out when spamming them (in tablet mode)
-- Fixed gray screen when automatically opening the last used chat on Web
-- Fixed group icon change events not showing correctly
-- Fixed chats sometimes not loading on Web without a refresh
-- Fixed networking and platform-specific related exceptions on Web
-- Fixed minor UI bug in notification settings screen
-- Desktop
-   - Fixed redacted mode not hiding contact names
-   - Fixed brick on desktop when server URL changes and new messages are fetched
-   - Fixed laggy sliders
-   - Contact photos update correctly when they are loaded
-
-#### Improvements
-
-- Full REST API transition
-- Improved battery optimization logic
-- Improved resolution of avatars in pinned chats, notifications, and share targets
-- Improved initial sync code
-- Improved Samsung skin coloring and scrolling on chat list
-- Show confirmation when attachment is saved locally
-- Ask for confirmation before overwriting file on Desktop
-- Regenerate thumbnail when re-downloading attachment
-- Reworked video preview tap actions
-- Rounded corners of 3dot dropdown in iOS and Samsung skin
-- Reworked message tail to match iMessage better
-- Updated iOS emoji font to iOS 15.4
-- Added hover highlight to conversation tiles
-- Improved hit-box on reaction widgets
-- Reaction widgets are now hidden on El Capitan servers
-- Auto open keyboard settings apply when closing error popups
-- Scroll chat window to the bottom when sending a message
-- Add delay to recording a voice memo after sending a message (to prevent accidental activations)
-- Changed URL preview overflow to show as much text as possible, rather than clipping with ellipsis
-- Removed portrait mode restriction for tablets in the setup view
-- Added support for physical keyboards on Android to cycle through the Discord-style emoji insertion with up/down arrow keys
-- Added GitHub Sponsors link to Info page
-- Removed attachment chunk size setting (not needed anymore)
-- Added signed-in iCloud account to the server metadata
-- Upgraded to Flutter 3.0
-- Show more attachments per row in conversation details if space is available
