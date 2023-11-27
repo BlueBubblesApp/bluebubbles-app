@@ -10,7 +10,6 @@ This update fixes bugs (especially on Desktop) and brings some of the latest ser
 **New Stuff**
 - Added ability to check if an address is iMessage capable in the chat creator
 - Brand new incoming FaceTime notification (aaaaaand maybe some extra new features if you're brave enough to try them)
-- Added ability to send rich link content to iDevice users (DD Scan)
 - Added FindMy friends & redesigned FindMy screen
 
 **Important Bug Fixes**
@@ -38,7 +37,6 @@ This update fixes bugs (especially on Desktop) and brings some of the latest ser
 - Added ability to sign in via Google in connection settings
 - Ctrl + tab switches to the next chat even if the text field is focused [Desktop]
 - Brand new FaceTime notification (aaaaaand maybe some extra new features if you're brave enough to try them)
-- Added ability to send rich link content to iDevice users (DD Scan)
 - Added FindMy friends & redesigned FindMy screen
 - Refocus main text field after editing a message
 - Added up arrow shortcut setting to edit the last sent message
