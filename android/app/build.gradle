@@ -75,28 +75,28 @@ android {
     productFlavors {
         joel {
             dimension "app"
-            resValue "string", "app_name", "BlueBubbles Dev (Joel)"
+            resValue "string", "app_name_en", "BlueBubbles Dev (Joel)"
             resValue "color", "ic_launcher_background", "#4c49de"
             resValue "string", "file_provider", "com.bluebubbles.messaging.joel.fileprovider"
             applicationId "com.bluebubbles.messaging.joel"
         }
         tanay {
             dimension "app"
-            resValue "string", "app_name", "BlueBubbles (Tanay Special Sauce)"
+            resValue "string", "app_name_en", "BlueBubbles (Tanay Special Sauce)"
             resValue "color", "ic_launcher_background", "#4c49de"
             resValue "string", "file_provider", "com.bluebubbles.messaging.tanay.fileprovider"
             applicationId "com.bluebubbles.messaging.tanay"
         }
         alpha {
             dimension "app"
-            resValue "string", "app_name", "BlueBubbles (Alpha)"
+            resValue "string", "app_name_en", "BlueBubbles (Alpha)"
             resValue "color", "ic_launcher_background", "#49dbde"
             resValue "string", "file_provider", "com.bluebubbles.messaging.alpha.fileprovider"
             applicationId "com.bluebubbles.messaging.alpha"
         }
         beta {
             dimension "app"
-            resValue "string", "app_name", "BlueBubbles (Beta)"
+            resValue "string", "app_name_en", "BlueBubbles (Beta)"
             resValue "color", "ic_launcher_background", "#4990de"
             resValue "string", "file_provider", "com.bluebubbles.messaging.beta.fileprovider"
             applicationId "com.bluebubbles.messaging.beta"
