@@ -66,6 +66,7 @@ This update fixes bugs (especially on Desktop) and brings some of the latest ser
 - Fixed firebase error when project / configuration changes
 - Fixed shared vCards without a contact photo using your personal avatar
 - Fixed transparency issues in various components with a window effect enabled [Windows]
+- Prevent crashes and unsupported behavior when running as Snap [Linux]
 
 ### For Developers
 - Upgraded to Flutter 3.13
