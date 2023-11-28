@@ -185,14 +185,14 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                             showSnackbar("Copied", "Server address copied to clipboard!");
                                           }
                                         }),
-                                  const TextSpan(text: "\n\n"),
-                                  if (!ss.fcmData.isNull)
-                                    TextSpan(text: "Firebase Database: ${isNullOrEmptyString(ss.fcmData.firebaseURL) ? "Firestore" : "Realtime"}"),
-                                  if (!ss.fcmData.isNull) const TextSpan(text: "\n\n"),
                                   if (hasBadCert)
                                     TextSpan(
                                         text: "Server URL has a bad certificate!",
                                         style: TextStyle(color: getIndicatorColor(SocketState.disconnected))),
+                                  const TextSpan(text: "\n\n"),
+                                  if (!ss.fcmData.isNull)
+                                    TextSpan(text: "Firebase Database: ${isNullOrEmptyString(ss.fcmData.firebaseURL) ? "Firestore" : "Realtime"}"),
+                                  if (!ss.fcmData.isNull) const TextSpan(text: "\n\n"),
                                   if (hasBadCert) const TextSpan(text: "\n\n"),
                                   TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
                                   const TextSpan(text: "\n\n"),
