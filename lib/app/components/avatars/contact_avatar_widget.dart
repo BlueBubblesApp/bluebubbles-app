@@ -59,7 +59,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
     }
 
     if (!widget.editable
-        || !ss.settings.colorfulAvatars.value
+        || (!ss.settings.colorfulAvatars.value && !ss.settings.colorfulBubbles.value)
         || widget.handle == null) return;
 
     bool didReset = false;

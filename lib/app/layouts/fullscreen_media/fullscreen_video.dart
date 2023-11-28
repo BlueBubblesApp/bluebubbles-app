@@ -15,6 +15,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart' as media_kit_video_controls;
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -69,7 +70,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
     if (kIsWeb || widget.file.path == null) {
       final blob = html.Blob([widget.file.bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
-      controller = VideoPlayerController.network(url);
+      controller = VideoPlayerController.networkUrl(Uri.parse(url));
     } else {
       dynamic file = File(widget.file.path!);
       controller = VideoPlayerController.file(file);
@@ -213,7 +214,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
       if (kIsWeb || file.path == null) {
         final blob = html.Blob([file.bytes]);
         final url = html.Url.createObjectUrlFromBlob(blob);
-        controller = VideoPlayerController.network(url);
+        controller = VideoPlayerController.networkUrl(Uri.parse(url));
       } else {
         dynamic _file = File(file.path!);
         controller = VideoPlayerController.file(_file);
@@ -394,7 +395,7 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
     controller.rect.addListener(() {
       aspectRatio.value = controller.aspectRatio;
     });
-    player.streams.completed.listen((completed) async {
+    player.stream.completed.listen((completed) async {
       // If the status is ended, restart
       if (completed && !hasDisposed) {
         await player.pause();
@@ -518,7 +519,10 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
                   child: Stack(
                     alignment: Alignment.center,
                     children: <Widget>[
-                      Video(controller: videoController),
+                      Video(controller: videoController, controls: (state) => Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: media_kit_video_controls.AdaptiveVideoControls(state),
+                      )),
                       Obx(() {
                         return MouseRegion(
                           onEnter: (event) => _hover.value = true,
@@ -581,6 +585,45 @@ class _DesktopFullscreenVideoState extends OptimizedState<FullscreenVideo> with 
                           ),
                         );
                       }),
+                      if (!iOS)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Obx(() {
+                            return MouseRegion(
+                              onEnter: (event) => _hover.value = true,
+                              onExit: (event) => _hover.value = false,
+                              child: AbsorbPointer(
+                                absorbing: !showPlayPauseOverlay.value && !_hover.value,
+                                child: AnimatedOpacity(
+                                  opacity: _hover.value
+                                      ? 1
+                                      : showPlayPauseOverlay.value
+                                      ? 1
+                                      : 0,
+                                  duration: const Duration(milliseconds: 100),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(40),
+                                      onTap: () async {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: Icon(
+                                          Icons.arrow_back,
+                                          color: Colors.white,
+                                          size: 25,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
                     ],
                   ),
                 ),

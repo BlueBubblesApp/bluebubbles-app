@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
@@ -28,8 +27,11 @@ import 'package:tuple/tuple.dart';
 class SelectedContact {
   final String displayName;
   final String address;
+  late final RxnBool iMessage;
 
-  const SelectedContact({required this.displayName, required this.address});
+  SelectedContact({required this.displayName, required this.address, bool? isIMessage}) {
+    iMessage = RxnBool(isIMessage);
+  }
 }
 
 class ChatCreator extends StatefulWidget {
@@ -142,8 +144,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     if (widget.initialSelected.isNotEmpty) messageNode.requestFocus();
   }
 
-  void addSelected(SelectedContact c) {
+  void addSelected(SelectedContact c) async {
     selectedContacts.add(c);
+    try {
+      final response = await http.handleiMessageState(c.address);
+      c.iMessage.value = response.data["data"]["available"];
+    } catch (_) {}
     addressController.text = "";
     findExistingChat();
   }
@@ -165,6 +171,19 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       await cm.setAllInactive();
       fakeController.value = null;
       return null;
+    }
+    if (selectedContacts.firstWhereOrNull((element) => element.iMessage.value == false) != null) {
+      setState(() {
+        iMessage = false;
+        sms = true;
+        filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
+      });
+    } else {
+      setState(() {
+        iMessage = true;
+        sms = false;
+        filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
+      });
     }
     Chat? existingChat;
     // try and find the chat simply by identifier
@@ -337,9 +356,13 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         final e = selectedContacts[index];
                                         return Padding(
                                           padding: const EdgeInsets.symmetric(horizontal: 2.5),
-                                          child: Material(
+                                          child: Obx(() => Material(
                                             key: ValueKey(e.address),
-                                            color: context.theme.colorScheme.properSurface,
+                                            color: e.iMessage.value == true
+                                                ? context.theme.colorScheme.bubble(context, true).withOpacity(0.2)
+                                                : e.iMessage.value == false
+                                                ? context.theme.colorScheme.bubble(context, false).withOpacity(0.2)
+                                                : context.theme.colorScheme.properSurface,
                                             borderRadius: BorderRadius.circular(5),
                                             clipBehavior: Clip.antiAlias,
                                             child: InkWell(
@@ -352,9 +375,16 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                                   mainAxisAlignment: MainAxisAlignment.start,
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: <Widget>[
-                                                    Text(e.displayName,
-                                                        style:
-                                                            context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.primary)),
+                                                    Text(
+                                                      e.displayName,
+                                                      style: context.theme.textTheme.bodyMedium!.copyWith(
+                                                        color: e.iMessage.value == true
+                                                            ? context.theme.colorScheme.bubble(context, true)
+                                                            : e.iMessage.value == false
+                                                            ? context.theme.colorScheme.bubble(context, false)
+                                                            : context.theme.colorScheme.properOnSurface,
+                                                      )
+                                                    ),
                                                     const SizedBox(width: 5.0),
                                                     Icon(
                                                       iOS ? CupertinoIcons.xmark : Icons.close,
@@ -364,7 +394,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                                 ),
                                               ),
                                             ),
-                                          ),
+                                          )),
                                         );
                                       },
                                     )),
@@ -492,8 +522,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   child: Obx(() {
                     return AnimatedSwitcher(
                       duration: const Duration(milliseconds: 150),
-                      child: fakeController.value == null
-                          ? CustomScrollView(
+                      child: fakeController.value == null ? CustomScrollView(
                         shrinkWrap: true,
                         physics: ThemeSwitcher.getScrollPhysics(),
                         slivers: <Widget>[
@@ -529,6 +558,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         .map((e) => SelectedContact(
                                       displayName: e.displayName,
                                       address: e.address,
+                                      isIMessage: chat.isIMessage,
                                     )));
                                   },
                                   child: ChatCreatorTile(
@@ -633,12 +663,20 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         subjectTextController: subjectController,
                         textController: textController,
                         controller: fakeController.value,
-                        recorderController: RecorderController(),
+                        recorderController: null,
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
                           final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
+                          bool existsOnServer = false;
                           if (chat != null) {
+                            // if we don't error, then the chat exists
+                            try {
+                              await http.singleChat(chat.guid);
+                              existsOnServer = true;
+                            } catch (_) {}
+                          }
+                          if (chat != null && existsOnServer) {
                             ns.pushAndRemoveUntil(
                               Get.context!,
                               ConversationView(chat: chat, fromChatCreator: true),
@@ -673,6 +711,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             fakeController.value!.pickedAttachments.clear();
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
+                            // hard delete a chat that exists on BB but not on the server to make way for the proper server data
+                            if (chat != null) {
+                              chats.removeChat(chat);
+                              Chat.deleteChat(chat);
+                            }
                             createCompleter = Completer();
                             final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : cleansePhoneNumber(e.address)).toList();
                             final method = iMessage ? "iMessage" : "SMS";

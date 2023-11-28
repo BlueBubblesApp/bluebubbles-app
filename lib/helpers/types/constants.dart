@@ -68,6 +68,7 @@ final balloonBundleIdIconMap = {
 };
 
 const frequencyToText = {
+  "hourly": "hour",
   "daily": "day",
   "weekly": "week",
   "monthly": "month",

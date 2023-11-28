@@ -9,6 +9,7 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class OpenSettingsIntent extends Intent {
   const OpenSettingsIntent();
@@ -105,9 +106,10 @@ class ReplyRecentAction extends Action<ReplyRecentIntent> {
 
   @override
   Object? invoke(covariant ReplyRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecent;
+    final message = ms(chat.guid).mostRecentReceived;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      eventDispatcher.emit("focus-keyboard", message);
+      final parts = mwc(message).parts;
+      cvc(chat).replyToMessage = Tuple2(message, parts.length - 1);
     }
     return null;
   }

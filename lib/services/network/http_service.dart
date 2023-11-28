@@ -582,7 +582,7 @@ class HttpService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
+  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       Map<String, dynamic> data = {
         "chatGuid": chatGuid,
@@ -596,6 +596,7 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
+        //"ddScan": ddScan,
       });
 
       final response = await dio.post(
@@ -651,7 +652,7 @@ class HttpService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMultipart(String chatGuid, String tempGuid, List<Map<String, dynamic>> parts, {String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
+  Future<Response> sendMultipart(String chatGuid, String tempGuid, List<Map<String, dynamic>> parts, {String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       Map<String, dynamic> data = {
         "chatGuid": chatGuid,
@@ -660,7 +661,8 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
-        "parts": parts
+        "parts": parts,
+        //"ddScan": ddScan,
       };
 
       final response = await dio.post(
@@ -788,6 +790,34 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Get a single handle's iMessage state by [address]
+  Future<Response> handleiMessageState(String address, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/handle/availability/imessage",
+          queryParameters: buildQueryParams({
+            "address": address,
+          }),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get a single handle's FaceTime state by [address]
+  Future<Response> handleFaceTimeState(String address, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$apiRoot/handle/availability/facetime",
+          queryParameters: buildQueryParams({
+            "address": address,
+          }),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get all icloud contacts
   Future<Response> contacts({bool withAvatars = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
@@ -899,6 +929,33 @@ class HttpService extends GetxService {
           "$apiRoot/backup/settings",
           data: {"name": name, "data": json},
           queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Answers a facetime call with the given [callUuid].
+  /// The response is a data object with a `link` key that contains the link to the call.
+  Future<Response> answerFaceTime(String callUuid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/facetime/answer/$callUuid",
+          queryParameters: buildQueryParams(),
+          data: {},
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Leave a facetime call with the given [callUuid].
+  Future<Response> leaveFacetime(String callUuid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$apiRoot/facetime/leave/$callUuid",
+          queryParameters: buildQueryParams(),
+          data: {},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -1040,6 +1097,18 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
         "https://firebase.googleapis.com/v1beta1/projects",
+        queryParameters: {
+          "access_token": accessToken,
+        },
+      );
+      return returnSuccessOrError(response);
+    }, checkOrigin: false);
+  }
+
+  Future<Response> getGoogleInfo(String accessToken) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
         queryParameters: {
           "access_token": accessToken,
         },
@@ -1225,7 +1294,7 @@ class ApiInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioError err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) {
     Logger.error("PATH: ${err.requestOptions.path}", tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.error, tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.requestOptions.contentType, tag: "ERROR[${err.response?.statusCode}]");

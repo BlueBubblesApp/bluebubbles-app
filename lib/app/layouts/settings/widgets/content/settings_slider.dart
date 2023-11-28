@@ -1,6 +1,4 @@
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -41,20 +39,9 @@ class SettingsSlider extends StatelessWidget {
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
       minLeadingWidth: leadingMinWidth,
-      title: ss.settings.skin.value == Skins.iOS ? MouseRegion(
-        cursor: SystemMouseCursors.click,
-          child: CupertinoSlider(
-          activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
-          thumbColor: context.theme.colorScheme.primary,
-          value: startingVal,
-          onChanged: update,
-          onChangeEnd: onChangeEnd,
-          divisions: divisions,
-          min: min,
-          max: max,
-        ),
-      ) : Slider(
-        activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
+      title: Slider(
+        activeColor: context.theme.colorScheme.primary.oppositeLightenOrDarken(20),
+        secondaryActiveColor: context.theme.colorScheme.primary.withOpacity(0.6),
         thumbColor: context.theme.colorScheme.primary,
         inactiveColor: context.theme.colorScheme.primary.withOpacity(0.2),
         value: startingVal,

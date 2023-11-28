@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -69,7 +70,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
     if (kIsWeb || _file.path == null) {
       final blob = html.Blob([_file.bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
-      controller = VideoPlayerController.network(url);
+      controller = VideoPlayerController.networkUrl(Uri.parse(url));
     } else {
       dynamic file = File(_file.path!);
       controller = VideoPlayerController.file(file);
@@ -389,7 +390,7 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
     controller.rect.addListener(() {
       aspectRatio.value = controller.aspectRatio;
     });
-    player.streams.completed.listen((completed) async {
+    player.stream.completed.listen((completed) async {
       // If the status is ended, restart
       if (completed) {
         await player.pause();
@@ -402,8 +403,26 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
   }
 
   @override
+  void dispose() {
+    player.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (isSnap) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OtherFile(
+            attachment: attachment,
+            file: file,
+          ),
+        ],
+      );
+    }
     if (videoController != null) {
       return MouseRegion(
         onEnter: (event) => showPlayPauseOverlay.value = true,
@@ -431,7 +450,7 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
             children: <Widget>[
               Obx(() => AspectRatio(
                     aspectRatio: aspectRatio.value,
-                    child: Video(controller: videoController!),
+                    child: Video(controller: videoController!, controls: null,),
                   )),
               DesktopPlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: player),
               DesktopMuteButton(muted: muted, controller: player, isFromMe: widget.isFromMe),

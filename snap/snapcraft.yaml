@@ -1,12 +1,18 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.12.4.0
+version: 1.12.5.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
 confinement: strict
 base: core22
 grade: stable
+
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  - build-on: arm64
+    build-for: arm64
 
 plugs:
   graphics-core22:
@@ -23,6 +29,8 @@ layout:
     symlink: $SNAP/graphics/X11/XErrorDB
   /usr/share/X11/locale:
     symlink: $SNAP/graphics/X11/locale
+  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
+    bind: $SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
 
 apps:
   bluebubbles:
@@ -48,26 +56,6 @@ apps:
       LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/blas:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/lapack:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/samba:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/vdpau:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri
 
 parts:
-  flutter-git:
-    source: https://github.com/flutter/flutter.git
-    source-branch: 3.10.6
-    source-depth: 1
-    plugin: nil
-    override-build: |
-      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/bin
-      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/libexec
-      cp -r $SNAPCRAFT_PART_SRC $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter
-      ln -s $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter/bin/flutter $SNAPCRAFT_PART_INSTALL/usr/bin/flutter
-    build-packages:
-      - curl
-      - clang
-      - cmake
-      - libgtk-3-dev
-      - ninja-build
-      - xz-utils
-      - unzip
-    override-prime: ''
-    
   desktop-glib-only:
     source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
     source-subdir: glib-only
@@ -79,29 +67,16 @@ parts:
 
   bluebubbles:
     after:
-      - flutter-git
       - desktop-glib-only
-    source: .
+    source:
+      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.4%2B58/bluebubbles-linux-x86_64.tar
+      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.4%2B58/bluebubbles-linux-aarch64.tar
     plugin: nil
     override-build: |
       set -eux
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      flutter config --no-analytics
-      flutter config --enable-linux-desktop
-      flutter doctor
-      flutter pub get
-      rm -rf build
-      flutter build linux --release -v
-      tmp=$(mktemp)
-      chmod 644 "$tmp"
-      jq '.version = "1.12.4.0"' build/linux/*/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/*/release/bundle/data/flutter_assets/version.json
-      chmod +x build/linux/*/release/bundle/bluebubbles
-      cp -r build/linux/*/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
-      mv build/linux/*/release/bundle/lib/libobjectbox.so $SNAPCRAFT_PART_INSTALL/usr/lib/
-    build-packages:
-      - jq
-      - libmpv-dev
-      - libnotify-dev
+      cp -r ./* $SNAPCRAFT_PART_INSTALL/bin/
+      mv lib/libobjectbox.so $SNAPCRAFT_PART_INSTALL/usr/lib/
     stage-packages:
       - freeglut3
       - gir1.2-appindicator3-0.1
@@ -120,7 +95,7 @@ parts:
       craftctl default
       ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22 nvidia-core22
     prime:
-    - bin/graphics-core22-wrapper
+      - bin/graphics-core22-wrapper
 
   cleanup:
     after:

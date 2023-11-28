@@ -6,13 +6,13 @@ Message handleSendError(dynamic error, Message m) {
   if (error is Response) {
     m.guid = m.guid!.replaceAll("temp", "error-${error.data['error']['message'] ?? error.data.toString()}");
     m.error = error.statusCode ?? MessageError.BAD_REQUEST.code;
-  } else if (error is DioError) {
+  } else if (error is DioException) {
     String _error;
-    if (error.type == DioErrorType.connectionTimeout) {
+    if (error.type == DioExceptionType.connectionTimeout) {
       _error = "Connect timeout occured! Check your connection.";
-    } else if (error.type == DioErrorType.sendTimeout) {
+    } else if (error.type == DioExceptionType.sendTimeout) {
       _error = "Send timeout occured!";
-    } else if (error.type == DioErrorType.receiveTimeout) {
+    } else if (error.type == DioExceptionType.receiveTimeout) {
       _error = "Receive data timeout occured! Check server logs for more info.";
     } else {
       _error = error.error.toString();

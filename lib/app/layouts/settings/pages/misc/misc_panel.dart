@@ -127,7 +127,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                                 .replaceAll("_", " ")
                                 .capitalizeFirst!,
                             title: "Security Level",
-                            backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
                         } else {
@@ -186,8 +185,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                 ),
               if (!kIsWeb && !kIsDesktop || ss.canAuthenticate)
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Speed & Responsiveness"),
@@ -251,8 +248,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                 ],
               ),
               SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Networking"),
@@ -311,8 +306,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                 ],
               ),
               SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Other",),

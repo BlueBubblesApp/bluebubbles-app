@@ -49,7 +49,13 @@ class BubbleColors extends ThemeExtension<BubbleColors> {
   final Color? onReceivedBubbleColor;
 
   @override
-  BubbleColors copyWith({Color? iMessageBubbleColor, Color? oniMessageBubbleColor, Color? smsBubbleColor, Color? onSmsBubbleColor, Color? receivedBubbleColor, Color? onReceivedBubbleColor}) {
+  BubbleColors copyWith(
+      {Color? iMessageBubbleColor,
+      Color? oniMessageBubbleColor,
+      Color? smsBubbleColor,
+      Color? onSmsBubbleColor,
+      Color? receivedBubbleColor,
+      Color? onReceivedBubbleColor}) {
     return BubbleColors(
       iMessageBubbleColor: iMessageBubbleColor ?? this.iMessageBubbleColor,
       oniMessageBubbleColor: oniMessageBubbleColor ?? this.oniMessageBubbleColor,
@@ -106,27 +112,29 @@ class BubbleText extends ThemeExtension<BubbleText> {
 /// theming values
 mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   // Samsung theme should always use the background color as the "header" color
-  bool get reverseMapping =>
-      ss.settings.skin.value == Skins.Material
-          && ts.inDarkMode(context);
+  bool get reverseMapping => ss.settings.skin.value == Skins.Material && ts.inDarkMode(context);
 
   /// iOS skin [ListTile] subtitle [TextStyle]s
   TextStyle get iosSubtitle => context.theme.textTheme.labelLarge!.copyWith(
       color: ts.inDarkMode(context)
-          ? context.theme.colorScheme.onBackground
-          : context.theme.colorScheme.properOnSurface,
-      fontWeight: FontWeight.w300
-  );
+          ? (ss.settings.windowEffect.value != WindowEffect.disabled
+              ? context.theme.colorScheme.properOnSurface
+              : context.theme.colorScheme.onBackground)
+          : (ss.settings.windowEffect.value != WindowEffect.disabled
+              ? context.theme.colorScheme.onBackground
+              : context.theme.colorScheme.properOnSurface),
+      fontWeight: FontWeight.w300);
 
   /// Material / Samsung skin [ListTile] subtitle [TextStyle]s
-  TextStyle get materialSubtitle => context.theme.textTheme.labelLarge!.copyWith(
-      color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold
-  );
+  TextStyle get materialSubtitle =>
+      context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
 
-  Color get _headerColor => ts.inDarkMode(context)
-      ? (ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background) : context.theme.colorScheme.properSurface;
-  Color get _tileColor => ts.inDarkMode(context)
-      ? context.theme.colorScheme.properSurface : (ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background);
+  Color get _headerColor => (ts.inDarkMode(context)
+      ? context.theme.colorScheme.background
+      : context.theme.colorScheme.properSurface).withAlpha(ss.settings.windowEffect.value != WindowEffect.disabled ? 20 : 255);
+
+  Color get _tileColor => (ts.inDarkMode(context) ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background)
+      .withAlpha(ss.settings.windowEffect.value != WindowEffect.disabled ? 100 : 255);
 
   /// Header / background color on settings pages
   Color get headerColor => reverseMapping ? _tileColor : _headerColor;
@@ -135,15 +143,14 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   Color get tileColor => reverseMapping ? _headerColor : _tileColor;
 
   /// Whether or not to use tablet mode
-  bool get showAltLayout => ss.settings.tabletMode.value
-      && (!context.isPhone || context.width / context.height > 0.8)
-      && context.width > 600
-      && !ls.isBubble;
+  bool get showAltLayout =>
+      ss.settings.tabletMode.value && (!context.isPhone || context.width / context.height > 0.8) && context.width > 600 && !ls.isBubble;
 
-  bool get showAltLayoutContextless => ss.settings.tabletMode.value
-      && (!Get.context!.isPhone || Get.context!.width / Get.context!.height > 0.8)
-      && Get.context!.width > 600
-      && !ls.isBubble;
+  bool get showAltLayoutContextless =>
+      ss.settings.tabletMode.value &&
+      (!Get.context!.isPhone || Get.context!.width / Get.context!.height > 0.8) &&
+      Get.context!.width > 600 &&
+      !ls.isBubble;
 
   bool get iOS => ss.settings.skin.value == Skins.iOS;
 
@@ -159,7 +166,8 @@ extension ColorSchemeHelpers on ColorScheme {
 
   Color get properOnSurface => surface.computeDifference(background) < 10 ? onSurfaceVariant : onSurface;
 
-  Color get iMessageBubble => HSLColor.fromColor(primary).colorfulness < HSLColor.fromColor(primaryContainer).colorfulness ? primary : primaryContainer;
+  Color get iMessageBubble =>
+      HSLColor.fromColor(primary).colorfulness < HSLColor.fromColor(primaryContainer).colorfulness ? primary : primaryContainer;
 
   Color get oniMessageBubble => iMessageBubble == primary ? onPrimary : onPrimaryContainer;
 
@@ -170,29 +178,27 @@ extension ColorSchemeHelpers on ColorScheme {
   Color bubble(BuildContext context, bool iMessage) => ss.settings.monetTheming.value != Monet.none
       ? (iMessage ? iMessageBubble : smsBubble)
       : iMessage
-      ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor ?? iMessageBubble
-      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor ?? smsBubble;
+          ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor ?? iMessageBubble
+          : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor ?? smsBubble;
 
   Color onBubble(BuildContext context, bool iMessage) => ss.settings.monetTheming.value != Monet.none
       ? (iMessage ? oniMessageBubble : onSmsBubble)
       : iMessage
-      ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.oniMessageBubbleColor ?? oniMessageBubble
-      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onSmsBubbleColor ?? onSmsBubble;
+          ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.oniMessageBubbleColor ?? oniMessageBubble
+          : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onSmsBubbleColor ?? onSmsBubble;
 }
 
 extension ColorHelpers on Color {
   Color darkenPercent([double percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var f = 1 - percent / 100;
-    return Color.fromARGB(
-        alpha, (red * f).round(), (green * f).round(), (blue * f).round());
+    return Color.fromARGB(alpha, (red * f).round(), (green * f).round(), (blue * f).round());
   }
 
   Color lightenPercent([double percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var p = percent / 100;
-    return Color.fromARGB(alpha, red + ((255 - red) * p).round(),
-        green + ((255 - green) * p).round(), blue + ((255 - blue) * p).round());
+    return Color.fromARGB(alpha, red + ((255 - red) * p).round(), green + ((255 - green) * p).round(), blue + ((255 - blue) * p).round());
   }
 
   Color lightenOrDarken([double percent = 10]) {
@@ -203,14 +209,13 @@ extension ColorHelpers on Color {
       return lightenPercent(percent);
     }
   }
-  
+
   Color oppositeLightenOrDarken([double percent = 10]) {
     if (percent == 0) return this;
     if (computeDifference(Colors.black) <= 50) {
       return lightenPercent(percent);
     } else {
       return darkenPercent(percent);
-      
     }
   }
 
@@ -260,8 +265,8 @@ extension ColorHelpers on Color {
     final r2 = other.red;
     final g2 = other.green;
     final b2 = other.blue;
-    final d = sqrt(pow(r2-r1, 2)+pow(g2-g1, 2)+pow(b2-b1, 2));
-    return d / sqrt(pow(255, 2)+pow(255, 2)+pow(255, 2)) * 100;
+    final d = sqrt(pow(r2 - r1, 2) + pow(g2 - g1, 2) + pow(b2 - b1, 2));
+    return d / sqrt(pow(255, 2) + pow(255, 2) + pow(255, 2)) * 100;
   }
 }
 

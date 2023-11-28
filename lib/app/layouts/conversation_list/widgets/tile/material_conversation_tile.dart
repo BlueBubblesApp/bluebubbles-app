@@ -82,6 +82,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
       child: InkWell(
         mouseCursor: MouseCursor.defer,
         onTap: () => controller.onTap(context),
+        onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
         onLongPress: controller.onLongPress,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
@@ -122,40 +123,35 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
       ),
     );
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => controller.onTap(context),
-      onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
-      child: Obx(() {
-        ns.listener.value;
-        return AnimatedContainer(
-          padding: const EdgeInsets.only(left: 10),
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-            ),
-            color: controller.isSelected
-                ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
-                : shouldPartialHighlight
-                    ? context.theme.colorScheme.properSurface
-                    : shouldHighlight
-                        ? context.theme.colorScheme.primaryContainer
-                        : hoverHighlight
-                            ? context.theme.colorScheme.properSurface.withOpacity(0.5)
-                            : null,
+    return Obx(() {
+      ns.listener.value;
+      return AnimatedContainer(
+        padding: const EdgeInsets.only(left: 10),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            bottomLeft: Radius.circular(20),
           ),
-          duration: const Duration(milliseconds: 100),
-          child: ns.isAvatarOnly(context)
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                  child: Center(child: leading),
-                )
-              : child,
-        );
-      }),
-    );
+          color: controller.isSelected
+              ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
+              : shouldPartialHighlight
+                  ? context.theme.colorScheme.properSurface
+                  : shouldHighlight
+                      ? context.theme.colorScheme.primaryContainer
+                      : hoverHighlight
+                          ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                          : null,
+        ),
+        duration: const Duration(milliseconds: 100),
+        child: ns.isAvatarOnly(context)
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                child: Center(child: leading),
+              )
+            : child,
+      );
+    });
   }
 }
 
@@ -197,6 +193,11 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
           final message = await runAsync(() {
             return query.findFirst();
           });
+          if (message != null
+              && ss.settings.statusIndicatorsOnChats.value
+              && (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
+            setState(() {});
+          }
           cachedLatestMessage = message;
           // check if we really need to update this widget
           if (message != null && message.guid != cachedLatestMessageGuid) {

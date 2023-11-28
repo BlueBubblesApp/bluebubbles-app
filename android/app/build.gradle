@@ -32,6 +32,7 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
+    namespace "com.bluebubbles.messaging"
     compileSdkVersion 33
 
     lintOptions {
@@ -143,14 +144,14 @@ configurations.all {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'com.google.firebase:firebase-analytics:21.2.0'
+    implementation 'com.google.firebase:firebase-analytics:21.3.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.core:core:1.9.0"
+    implementation "androidx.core:core:1.10.1"
     implementation 'androidx.core:core-google-shortcuts:1.1.0'
     implementation "androidx.sharetarget:sharetarget:1.2.0"
 
@@ -161,18 +162,15 @@ dependencies {
     implementation 'androidx.palette:palette:1.0.0'
 
     // Add the SDK for Firebase Cloud Messaging
-    implementation 'com.google.firebase:firebase-messaging:23.1.1'
-    implementation 'com.google.firebase:firebase-analytics:21.2.0'
-    implementation 'com.google.firebase:firebase-database:20.1.0'
-    implementation 'com.google.firebase:firebase-messaging-directboot:23.1.1'
+    implementation 'com.google.firebase:firebase-messaging:23.2.1'
+    implementation 'com.google.firebase:firebase-analytics:21.3.0'
+    implementation 'com.google.firebase:firebase-database:20.2.2'
+    implementation 'com.google.firebase:firebase-messaging-directboot:23.2.1'
     implementation 'com.google.firebase:firebase-iid:21.1.0'
-    implementation 'com.google.firebase:firebase-firestore:24.5.0'
+    implementation 'com.google.firebase:firebase-firestore:24.7.0'
 
     //for json string to map
-    implementation 'com.google.code.gson:gson:2.8.9'
-
-    //for crash reporting
-    // implementation 'io.sentry:sentry-android:2.2.2'
+    implementation 'com.google.code.gson:gson:2.9.0'
 
     implementation 'com.google.mlkit:smart-reply:17.0.2'
     implementation 'com.google.mlkit:entity-extraction:16.0.0-beta4'
@@ -182,5 +180,4 @@ dependencies {
 
     // Why won't it fucking compile
     implementation 'com.google.guava:guava:27.0.1-android'
-
 }

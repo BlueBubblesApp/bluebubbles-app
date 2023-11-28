@@ -24,6 +24,7 @@ class MessagesService extends GetxController {
   late Function(Message) newFunc;
   late Function(Message, {String? oldGuid}) updateFunc;
   late Function(Message) removeFunc;
+  late Function(String) jumpToMessage;
 
   final String tag;
   MessagesService(this.tag);
@@ -39,13 +40,17 @@ class MessagesService extends GetxController {
   Message? get mostRecent => (struct.messages.toList()
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
-  void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage) {
+  Message? get mostRecentReceived => (struct.messages.where((e) => !e.isFromMe!).toList()
+    ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
+
+  void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage, Function(String) jumpToMessageFunc) {
     chat = c;
     Get.put<String>(tag, tag: 'lastReloadedChat');
 
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
     newFunc = onNewMessage;
+    jumpToMessage = jumpToMessageFunc;
 
     // watch for new messages
     if (!_init) {
@@ -141,19 +146,19 @@ class MessagesService extends GetxController {
     removeFunc.call(toRemove);
   }
 
-  Future<bool> loadChunk(int offset, ConversationViewController controller) async {
+  Future<bool> loadChunk(int offset, ConversationViewController controller, {int limit = 25}) async {
     isFetching = true;
     List<Message> _messages = [];
     offset = offset + struct.reactions.length;
     try {
-      _messages = await Chat.getMessagesAsync(chat, offset: offset);
+      _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
       if (_messages.isEmpty) {
         // get from server and save
-        final fromServer = await cm.getMessages(chat.guid, offset: offset);
+        final fromServer = await cm.getMessages(chat.guid, offset: offset, limit: limit);
         final temp = await MessageHelper.bulkAddMessages(chat, fromServer, checkForLatestMessageText: false);
         if (!kIsWeb) {
           // re-fetch from the DB because it will find handles / associated messages for us
-          _messages = await Chat.getMessagesAsync(chat, offset: offset);
+          _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
         } else {
           final reactions = temp.where((e) => e.associatedMessageGuid != null);
           for (Message m in reactions) {

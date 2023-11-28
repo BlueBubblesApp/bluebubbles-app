@@ -85,7 +85,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       options: AdaptiveThemeMode.values,
                       textProcessing: (val) => val.toString().split(".").last,
                       title: "App Theme",
-                      backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     ),
                     if (!kIsWeb)
@@ -118,9 +117,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       ),
                     ),
                     Container(
-                      decoration: BoxDecoration(
-                        color: tileColor,
-                      ),
                       padding: const EdgeInsets.only(left: 15, top: 10),
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
                     ),
@@ -141,8 +137,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Skin${kIsDesktop ? "" : " and Layout"}"),
@@ -163,7 +157,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       textProcessing: (val) => describeEnum(val),
                       capitalize: false,
                       title: "App Skin",
-                      backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     )),
                     if (!kIsDesktop)
@@ -222,8 +215,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                 ),
                 if (kIsDesktop && Platform.isWindows)
                   SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Window Effect",
@@ -252,8 +243,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             saveSettings();
                           },
                           title: "Window Effect",
-                          subtitle: "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
-                          backgroundColor: tileColor,
+                          subtitle: "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}${parsedWindowsVersion() < 22000 && ss.settings.windowEffect.value == WindowEffect.acrylic ? "\n\n⚠️ This effect causes window movement lag on Windows 10" : ""}",
                           secondaryColor: headerColor,
                           capitalize: true,
                         ),
@@ -261,9 +251,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       if (ss.settings.skin.value == Skins.iOS)
                         Obx(() => SettingsSubtitle(
                               unlimitedSpace: true,
-                              subtitle:
-                                  "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
-                            )),
+                              subtitle: "${WindowEffects.descriptions[ss.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}${parsedWindowsVersion() < 22000 && ss.settings.windowEffect.value == WindowEffect.acrylic ? "\n\n⚠️ This effect causes window movement lag on Windows 10" : ""}",
+                        )),
                       Obx(() {
                         if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.colorScheme.background)) {
                           return SettingsTile(
@@ -329,8 +318,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     ]
                   ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Colors"),
@@ -400,7 +387,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           title: "Material You",
                           subtitle:
                           "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
-                          backgroundColor: tileColor,
                           secondaryColor: headerColor,
                         ),
                       ),
@@ -544,8 +530,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                   Obx(() {
                     if (controller.refreshRates.length > 2) {
                       return SettingsHeader(
-                          headerColor: headerColor,
-                          tileColor: tileColor,
                           iosSubtitle: iosSubtitle,
                           materialSubtitle: materialSubtitle,
                           text: "Refresh Rate");
@@ -570,7 +554,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             options: controller.refreshRates,
                             textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
                             title: "Display",
-                            backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           )),
                         ],
@@ -580,8 +563,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     }
                   }),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Text and Font"),

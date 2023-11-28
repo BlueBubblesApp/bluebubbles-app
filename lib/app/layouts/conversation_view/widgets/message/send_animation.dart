@@ -21,7 +21,8 @@ class SendAnimation extends CustomStateful<ConversationViewController> {
   CustomState createState() => _SendAnimationState();
 }
 
-class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, ConversationViewController> {
+class _SendAnimationState
+    extends CustomState<SendAnimation, Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, ConversationViewController> {
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
   Control control = Control.stop;
@@ -50,11 +51,17 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
     if (ss.settings.scrollToBottomOnSend.value) {
       await controller.scrollToBottom();
     }
-    if (ss.settings.sendSoundPath.value != null) {
-      PlayerController controller = PlayerController();
-      controller.preparePlayer(
-        path: ss.settings.sendSoundPath.value!, volume: 1.0
-      ).then((_) => controller.startPlayer());
+    if (ss.settings.sendSoundPath.value != null && !(isNullOrEmptyString(text) && isNullOrEmptyString(subject) && controller.pickedAttachments.isEmpty)) {
+      if (kIsDesktop) {
+        Player player = Player();
+        await player.open(Media(ss.settings.sendSoundPath.value!));
+        player.stream.completed
+            .firstWhere((completed) => completed)
+            .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
+      } else {
+        PlayerController controller = PlayerController();
+        controller.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: 1.0).then((_) => controller.startPlayer());
+      }
     }
     for (int i = 0; i < attachments.length; i++) {
       final file = attachments[i];
@@ -80,12 +87,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
       );
       message.generateTempGuid();
       message.attachments.first!.guid = message.guid;
-      await outq.queue(OutgoingItem(
-        type: QueueType.sendAttachment,
-        chat: controller.chat,
-        message: message,
-        customArgs: {"audio": isAudioMessage}
-      ));
+      await outq.queue(OutgoingItem(type: QueueType.sendAttachment, chat: controller.chat, message: message, customArgs: {"audio": isAudioMessage}));
     }
 
     if (text.isNotEmpty || subject.isNotEmpty) {
@@ -124,28 +126,29 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
           if (textSplit.length > 1)
             AttributedBody(
               string: text,
-              runs: newText.whereType<Mentionable>().isEmpty ? [] : newText.map((e) {
-                if (e is Mentionable) {
-                  final run = Run(
-                    range: [currentPos, e.toString().length],
-                    attributes: Attributes(
-                      mention: e.address,
-                      messagePart: 0,
-                    )
-                  );
-                  currentPos += e.toString().length;
-                  return run;
-                } else {
-                  final run = Run(
-                    range: [currentPos, e.length],
-                    attributes: Attributes(
-                      messagePart: 0,
-                    ),
-                  );
-                  currentPos += e.toString().length;
-                  return run;
-                }
-              }).toList(),
+              runs: newText.whereType<Mentionable>().isEmpty
+                  ? []
+                  : newText.map((e) {
+                      if (e is Mentionable) {
+                        final run = Run(
+                            range: [currentPos, e.toString().length],
+                            attributes: Attributes(
+                              mention: e.address,
+                              messagePart: 0,
+                            ));
+                        currentPos += e.toString().length;
+                        return run;
+                      } else {
+                        final run = Run(
+                          range: [currentPos, e.length],
+                          attributes: Attributes(
+                            messagePart: 0,
+                          ),
+                        );
+                        currentPos += e.toString().length;
+                        return run;
+                      }
+                    }).toList(),
             ),
         ],
       );
@@ -169,8 +172,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
 
   @override
   Widget build(BuildContext context) {
-    final typicalWidth = message?.isBigEmoji ?? false
-        ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
+    final typicalWidth = message?.isBigEmoji ?? false ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
     return AnimatedPositioned(
       duration: Duration(milliseconds: message != null ? 400 : 0),
       bottom: message != null ? textFieldSize + focusInfoSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) + (!iOS ? 15 : 0) : 0,
@@ -202,34 +204,30 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
                 connectUpper: false,
               ),
               child: AnimatedContainer(
-                constraints: BoxConstraints(
-                  maxWidth: max(ns.width(context) * value, typicalWidth),
-                  minWidth: ns.width(context) * value > typicalWidth ? ns.width(context) * value : 0.0,
-                  minHeight: 40,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15)
-                    .add(EdgeInsets.only(
-                      left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10,
-                      right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0
-                    )),
-                color: !message!.isBigEmoji ? context.theme.colorScheme.primary.darkenAmount(0.2) : null,
-                duration: Duration(milliseconds: ns.width(context) * value > typicalWidth ? 0 : 150),
-                child: Center(
-                  widthFactor: 1,
-                  child: Padding(
-                    padding: message!.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
-                    child: RichText(
-                      text: TextSpan(
-                        children: buildMessageSpans(
-                          context,
-                          MessagePart(part: 0, text: message!.text, subject: message!.subject),
-                          message!,
+                  constraints: BoxConstraints(
+                    maxWidth: max(ns.width(context) * value, typicalWidth),
+                    minWidth: ns.width(context) * value > typicalWidth ? ns.width(context) * value : 0.0,
+                    minHeight: 40,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(
+                      left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10, right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0)),
+                  color: !message!.isBigEmoji ? context.theme.colorScheme.primary.darkenAmount(0.2) : null,
+                  duration: Duration(milliseconds: ns.width(context) * value > typicalWidth ? 0 : 150),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Padding(
+                      padding: message!.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
+                      child: RichText(
+                        text: TextSpan(
+                          children: buildMessageSpans(
+                            context,
+                            MessagePart(part: 0, text: message!.text, subject: message!.subject),
+                            message!,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                )
-              ),
+                  )),
             );
           },
         ),

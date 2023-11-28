@@ -101,6 +101,8 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
       )));
       List<EntityAnnotation> normalizedEntities = [];
       if (entities.isNotEmpty) {
+        // detect the longest amount of the message text as possible
+        entities.sort((a, b) => (b.end - b.start).compareTo(a.end - a.start));
         for (int i = 0; i < entities.length; i++) {
           if (i == 0 || entities[i].start > normalizedEntities.last.end) {
             normalizedEntities.add(entities[i]);

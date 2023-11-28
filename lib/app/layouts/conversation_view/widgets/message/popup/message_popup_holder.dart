@@ -18,12 +18,14 @@ class MessagePopupHolder extends StatefulWidget {
     required this.part,
     required this.controller,
     required this.cvController,
+    required this.isEditing,
   }) : super(key: key);
 
   final Widget child;
   final MessagePart part;
   final MessageWidgetController controller;
   final ConversationViewController cvController;
+  final bool isEditing;
 
   @override
   OptimizedState createState() => _MessagePopupHolderState();
@@ -132,18 +134,20 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
   Widget build(BuildContext context) {
     return GestureDetector(
       key: globalKey,
-      onDoubleTap: ss.settings.doubleTapForDetails.value || message.guid!.startsWith('temp')
+      onDoubleTap: widget.isEditing ? null
+        : ss.settings.doubleTapForDetails.value || message.guid!.startsWith('temp')
         ? () => openPopup()
         : ss.settings.enableQuickTapback.value && widget.cvController.chat.isIMessage
         ? () => sendTapback(null, widget.part.part)
         : null,
-      onLongPress: ss.settings.doubleTapForDetails.value &&
+      onLongPress: widget.isEditing ? null
+        : ss.settings.doubleTapForDetails.value &&
         ss.settings.enableQuickTapback.value &&
         widget.cvController.chat.isIMessage &&
         !message.guid!.startsWith('temp')
         ? () => sendTapback(null, widget.part.part)
         : () => openPopup(),
-      onSecondaryTapUp: (details) async {
+      onSecondaryTapUp: widget.isEditing ? null : (details) async {
         if (!kIsWeb && !kIsDesktop) return;
         if (kIsWeb) {
           (await html.document.onContextMenu.first).preventDefault();

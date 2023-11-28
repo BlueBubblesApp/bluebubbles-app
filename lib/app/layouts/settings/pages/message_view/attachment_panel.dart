@@ -99,8 +99,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Video Mute Behavior"),
@@ -140,8 +138,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                 ),
                 if (!kIsWeb)
                   SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "Attachment Viewer"),
@@ -171,7 +167,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                             capitalize: false,
                             title: "Swipe Direction",
                             subtitle: "Set the swipe direction to go to previous media items",
-                            backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           )),
                     ],

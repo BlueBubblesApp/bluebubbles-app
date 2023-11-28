@@ -219,7 +219,7 @@ class ThemeSelector extends StatelessWidget {
                                               child: Theme(
                                                 data: ts.whiteLightTheme,
                                                 child: Container(
-                                                  color: ts.whiteLightTheme.backgroundColor,
+                                                  color: ts.whiteLightTheme.colorScheme.background,
                                                   child: Padding(
                                                     padding: const EdgeInsets.only(bottom: 28.0),
                                                     child: Skin(
@@ -297,7 +297,7 @@ class ThemeSelector extends StatelessWidget {
                                               child: Theme(
                                                 data: ts.oledDarkTheme,
                                                 child: Container(
-                                                  color: ts.oledDarkTheme.backgroundColor,
+                                                  color: ts.oledDarkTheme.colorScheme.background,
                                                   child: Padding(
                                                     padding: const EdgeInsets.only(bottom: 28.0),
                                                     child: Skin(
@@ -305,7 +305,7 @@ class ThemeSelector extends StatelessWidget {
                                                       child: Builder(
                                                           builder: (context) {
                                                             return Scaffold(
-                                                                backgroundColor: ts.oledDarkTheme.backgroundColor,
+                                                                backgroundColor: ts.oledDarkTheme.colorScheme.background,
                                                                 appBar: buildConversationViewHeader(context, Chat(
                                                                     id: 69,
                                                                     guid: 'theme-selector',
@@ -371,7 +371,7 @@ class ThemeSelector extends StatelessWidget {
                                           Material(
                                             shape: TriangleBorder(section: Section.TOP),
                                             clipBehavior: Clip.antiAlias,
-                                            color: ts.whiteLightTheme.backgroundColor,
+                                            color: ts.whiteLightTheme.colorScheme.background,
                                             child: AbsorbPointer(
                                               absorbing: true,
                                               child: SizedBox.expand(
@@ -384,13 +384,13 @@ class ThemeSelector extends StatelessWidget {
                                                         child: Theme(
                                                           data: ts.whiteLightTheme,
                                                           child: Container(
-                                                            color: ts.whiteLightTheme.backgroundColor,
+                                                            color: ts.whiteLightTheme.colorScheme.background,
                                                             child: Padding(
                                                               padding: const EdgeInsets.only(bottom: 28.0),
                                                               child: Builder(
                                                                   builder: (context) {
                                                                     return Scaffold(
-                                                                        backgroundColor: ts.whiteLightTheme.backgroundColor,
+                                                                        backgroundColor: ts.whiteLightTheme.colorScheme.background,
                                                                         appBar: buildConversationViewHeader(context, Chat(
                                                                             id: 69,
                                                                             guid: 'theme-selector',
@@ -425,7 +425,7 @@ class ThemeSelector extends StatelessWidget {
                                           Material(
                                             shape: TriangleBorder(section: Section.BOTTOM),
                                             clipBehavior: Clip.antiAlias,
-                                            color: ts.oledDarkTheme.backgroundColor,
+                                            color: ts.oledDarkTheme.colorScheme.background,
                                             child: AbsorbPointer(
                                               absorbing: true,
                                               child: SizedBox.expand(
@@ -438,13 +438,13 @@ class ThemeSelector extends StatelessWidget {
                                                         child: Theme(
                                                           data: ts.oledDarkTheme,
                                                           child: Container(
-                                                            color: ts.oledDarkTheme.backgroundColor,
+                                                            color: ts.oledDarkTheme.colorScheme.background,
                                                             child: Padding(
                                                               padding: const EdgeInsets.only(bottom: 28.0),
                                                               child: Builder(
                                                                   builder: (context) {
                                                                     return Scaffold(
-                                                                        backgroundColor: ts.oledDarkTheme.backgroundColor,
+                                                                        backgroundColor: ts.oledDarkTheme.colorScheme.background,
                                                                         appBar: buildConversationViewHeader(context, Chat(
                                                                             id: 69,
                                                                             guid: 'theme-selector',
@@ -537,13 +537,13 @@ class ThemeSelector extends StatelessWidget {
                                                   child: Skin(
                                                     skin: Skins.iOS,
                                                     child: Container(
-                                                      color: Theme.of(context).backgroundColor,
+                                                      color: Theme.of(context).colorScheme.background,
                                                       child: Padding(
                                                         padding: const EdgeInsets.only(bottom: 28.0),
                                                         child: Builder(
                                                             builder: (context) {
                                                               return Scaffold(
-                                                                  backgroundColor: Theme.of(context).backgroundColor,
+                                                                  backgroundColor: Theme.of(context).colorScheme.background,
                                                                   appBar: buildConversationViewHeader(context, Chat(
                                                                       id: 69,
                                                                       guid: 'theme-selector',
@@ -616,13 +616,13 @@ class ThemeSelector extends StatelessWidget {
                                                   child: Skin(
                                                     skin: Skins.Material,
                                                     child: Container(
-                                                      color: Theme.of(context).backgroundColor,
+                                                      color: Theme.of(context).colorScheme.background,
                                                       child: Padding(
                                                         padding: const EdgeInsets.only(bottom: 28.0),
                                                         child: Builder(
                                                             builder: (context) {
                                                               return Scaffold(
-                                                                  backgroundColor: Theme.of(context).backgroundColor,
+                                                                  backgroundColor: Theme.of(context).colorScheme.background,
                                                                   appBar: buildConversationViewHeader(context, Chat(
                                                                       id: 69,
                                                                       guid: 'theme-selector',
@@ -750,14 +750,14 @@ class TriangleBorder extends ShapeBorder {
 }
 
 Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData theme) {
-  Color backgroundColor = theme.backgroundColor;
+  Color backgroundColor = theme.colorScheme.background;
   Color? fontColor = theme.textTheme.headlineMedium!.color;
   String? title = chat.title ?? chat.displayName;
   Skins skin = Skin.of(context)!.skin;
   if (skin == Skins.Material ||
       skin == Skins.Samsung) {
     return AppBar(
-      systemOverlayStyle: ThemeData.estimateBrightnessForColor(theme.backgroundColor) == Brightness.dark
+      systemOverlayStyle: ThemeData.estimateBrightnessForColor(theme.colorScheme.background) == Brightness.dark
           ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       elevation: 0.0,
       title: Text(
