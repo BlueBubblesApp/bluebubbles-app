@@ -225,7 +225,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               ),
             ),
           if (token != null) const SizedBox(height: 10),
-          if (googleName == null && showLoginButtons)
+          if (googleName == null && showLoginButtons && !isSnap)
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -276,7 +276,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 ),
               ),
             ),
-          if (googleName == null && showLoginButtons) const SizedBox(height: 10),
+          if (googleName == null && showLoginButtons && !isSnap) const SizedBox(height: 10),
           if (googleName == null && !kIsWeb && !kIsDesktop && showLoginButtons)
             Container(
               decoration: BoxDecoration(

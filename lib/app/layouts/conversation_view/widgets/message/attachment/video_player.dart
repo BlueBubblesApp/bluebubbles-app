@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -411,6 +412,17 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (isSnap) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OtherFile(
+            attachment: attachment,
+            file: file,
+          ),
+        ],
+      );
+    }
     if (videoController != null) {
       return MouseRegion(
         onEnter: (event) => showPlayPauseOverlay.value = true,

@@ -558,13 +558,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           socket.restartSocket();
                         }
                       }),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
                   if (Platform.isAndroid)
                     Container(
                       color: tileColor,
@@ -604,39 +597,41 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       await fdb.fetchFirebaseConfig();
                     },
                   ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                  if (!isSnap)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
                     ),
-                  ),
-                  SettingsTile(
-                    leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Obx(() => Material(
-                          shape: ss.settings.skin.value == Skins.Samsung
-                              ? SquircleBorder(
-                                  side: BorderSide(color: context.theme.colorScheme.outline, width: 3.0),
-                                )
-                              : null,
-                          color: ss.settings.skin.value != Skins.Material ? context.theme.colorScheme.outline : Colors.transparent,
-                          borderRadius: ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(5) : null,
-                          child: SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: Center(child: Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain)))))
-                    ]),
-                    title: "Sign in with Google",
-                    subtitle: "Fetch Firebase Config by Signing in with Google",
-                    backgroundColor: tileColor,
-                    onTap: () {
-                      ns.pushSettings(context, OauthPanel());
-                    },
-                    trailing: ThemeSwitcher(
-                      iOSSkin: const Icon(CupertinoIcons.chevron_forward),
-                      materialSkin: const Icon(Icons.chevron_right),
+                  if (!isSnap)
+                    SettingsTile(
+                      leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Obx(() => Material(
+                            shape: ss.settings.skin.value == Skins.Samsung
+                                ? SquircleBorder(
+                                    side: BorderSide(color: context.theme.colorScheme.outline, width: 3.0),
+                                  )
+                                : null,
+                            color: ss.settings.skin.value != Skins.Material ? context.theme.colorScheme.outline : Colors.transparent,
+                            borderRadius: ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(5) : null,
+                            child: SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: Center(child: Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain)))))
+                      ]),
+                      title: "Sign in with Google",
+                      subtitle: "Fetch Firebase Config by Signing in with Google",
+                      backgroundColor: tileColor,
+                      onTap: () {
+                        ns.pushSettings(context, OauthPanel());
+                      },
+                      trailing: ThemeSwitcher(
+                        iOSSkin: const Icon(CupertinoIcons.chevron_forward),
+                        materialSkin: const Icon(Icons.chevron_right),
+                      ),
                     ),
-                  ),
                   Container(
                     color: tileColor,
                     child: Padding(
