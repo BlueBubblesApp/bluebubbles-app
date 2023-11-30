@@ -31,12 +31,17 @@ layout:
     symlink: $SNAP/graphics/X11/locale
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
     bind: $SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
+  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
+    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
+  /usr/share/alsa:
+    bind: $SNAP/usr/share/alsa
 
 apps:
   bluebubbles:
     command: bin/bluebubbles
     command-chain:
       - bin/graphics-core22-wrapper
+      - snap/command-chain/alsa-launch
     extensions:
       - gnome
     slots:
@@ -51,9 +56,12 @@ apps:
       - x11
       - home
       - opengl
+      - alsa
       - audio-playback
+      - audio-record
     environment:
       LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/blas:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/lapack:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/samba:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/vdpau:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri
+      ALWAYS_USE_PULSEAUDIO: '1'
 
 parts:
   desktop-glib-only:
@@ -65,9 +73,35 @@ parts:
     stage-packages:
       - libglib2.0-bin
 
+  alsa-mixin:
+    plugin: dump
+    source: https://github.com/diddlesnaps/snapcraft-alsa.git
+    source-subdir: snapcraft-assets
+    build-packages:
+      - libasound2-dev
+    stage-packages:
+      - libasound2
+      - libasound2-plugins
+      - yad
+    stage:
+      - etc/asound.conf
+      - snap/command-chain/alsa-launch
+      - usr/bin/yad*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libasound*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libdnsfile*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libFLAC*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libjack*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libpulse*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libsamplerate*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libspeex*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libvorbis*
+      - usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio
+
   bluebubbles:
     after:
       - desktop-glib-only
+      - alsa-mixin
     source:
       - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.4%2B58/bluebubbles-linux-x86_64.tar
       - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.4%2B58/bluebubbles-linux-aarch64.tar
