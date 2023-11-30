@@ -103,8 +103,8 @@ parts:
       - desktop-glib-only
       - alsa-mixin
     source:
-      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.4%2B58/bluebubbles-linux-x86_64.tar
-      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.4%2B58/bluebubbles-linux-aarch64.tar
+      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.5%2B59/bluebubbles-linux-x86_64.tar
+      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.12.5%2B59/bluebubbles-linux-aarch64.tar
     plugin: nil
     override-build: |
       set -eux
