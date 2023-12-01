@@ -48,7 +48,11 @@ public class GetServerUrl implements Handler {
                         public void onComplete(Task<DocumentSnapshot> task) {
                             if (task.isSuccessful()) {
                                 DocumentSnapshot document = task.getResult();
-                                result.success(document.getData().get("serverUrl"));
+                                if (document.getData() != null) {
+                                    result.success(document.getData().get("serverUrl"));
+                                } else {
+                                    result.success(null);
+                                }
                             } else {
                                 result.success(null);
                             }

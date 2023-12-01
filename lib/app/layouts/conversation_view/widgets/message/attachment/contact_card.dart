@@ -126,7 +126,7 @@ class _ContactCardState extends OptimizedState<ContactCard> with AutomaticKeepAl
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     ContactAvatarWidget(
-                      handle: null,
+                      handle: Handle(),
                       contact: contact,
                       borderThickness: 0.5,
                     ),

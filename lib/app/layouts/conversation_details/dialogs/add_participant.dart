@@ -145,6 +145,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
             labelText: "Phone Number / Email",
             border: OutlineInputBorder(),
           ),
+          autofillHints: [AutofillHints.telephoneNumber, AutofillHints.email],
         ),
         title: Text("Add Participant", style: context.theme.textTheme.titleLarge),
         backgroundColor: context.theme.colorScheme.properSurface,

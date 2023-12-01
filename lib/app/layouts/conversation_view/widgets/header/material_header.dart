@@ -295,17 +295,16 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (samsung)
-          Padding(
-            padding: const EdgeInsets.only(right: 12.5),
-            child: IgnorePointer(
-              ignoring: true,
-              child: ContactAvatarGroupWidget(
-                chat: controller.chat,
-                size: !controller.chat.isGroup ? 35 : 40,
-              ),
+        Padding(
+          padding: const EdgeInsets.only(right: 12.5),
+          child: IgnorePointer(
+            ignoring: true,
+            child: ContactAvatarGroupWidget(
+              chat: controller.chat,
+              size: !controller.chat.isGroup ? 35 : 40,
             ),
           ),
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

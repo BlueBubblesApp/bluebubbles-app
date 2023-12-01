@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:collection/collection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:idb_shim/idb.dart';
 import 'package:idb_shim/idb_browser.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:slugify/slugify.dart';
 import 'package:universal_io/io.dart';
@@ -26,6 +28,21 @@ class FilesystemService extends GetxService {
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+      if (kIsDesktop && Platform.isWindows) {
+        final String appDataRoot = joinAll(split(appDocDir.absolute.path).slice(0, 4));
+        final Directory msStoreLocation = Directory(join(
+            appDataRoot,
+            "Local",
+            "Packages",
+            "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw",
+            "LocalCache",
+            "Roaming",
+            "BlueBubbles",
+            "bluebubbles"));
+        if (!appDocDir.existsSync() && msStoreLocation.existsSync()) {
+          appDocDir = msStoreLocation;
+        }
+      }
       if (!headless) {
         final file = await loadAsset("assets/images/no-video-preview.png");
         noVideoPreviewIcon = file.buffer.asUint8List();

@@ -12,18 +12,14 @@ class InitialWidgetRight extends StatefulWidget {
 }
 
 class _InitialWidgetRightState extends OptimizedState<InitialWidgetRight> {
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background,
-      extendBodyBehindAppBar: true,
-      body: Center(
-        child: Container(
-          child: Text(
-            "Select a chat from the list",
-            style: context.theme.textTheme.bodyLarge
-          )
+    return Obx(
+      () => Scaffold(
+        backgroundColor: ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background,
+        extendBodyBehindAppBar: true,
+        body: Center(
+          child: Container(child: Text("Select a chat from the list", style: context.theme.textTheme.bodyLarge)),
         ),
       ),
     );

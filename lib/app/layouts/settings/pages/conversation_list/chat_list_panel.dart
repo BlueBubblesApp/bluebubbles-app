@@ -84,8 +84,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Filtering"),
@@ -147,8 +145,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                   ],
                 ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Appearance"),
@@ -274,7 +270,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                               saveSettings();
                                             },
                                             title: "Pin Rows",
-                                            backgroundColor: tileColor,
                                             secondaryColor: context.theme.colorScheme.secondary,
                                             textProcessing: (val) => val.toString(),
                                           ),
@@ -300,7 +295,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                               saveSettings();
                                             },
                                             title: "Pins Per Row",
-                                            backgroundColor: tileColor,
                                             secondaryColor: context.theme.colorScheme.secondary,
                                             textProcessing: (val) => val.toString(),
                                           ),
@@ -467,8 +461,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                 ),
                 if (!kIsWeb && !kIsDesktop && !iOS)
                   SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "Swipe Actions"),
@@ -504,7 +496,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                   textProcessing: (val) =>
                                       val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
                                   title: "Swipe Right Action",
-                                  backgroundColor: tileColor,
                                   secondaryColor: headerColor,
                                 ),
                                 SettingsOptions<MaterialSwipeAction>(
@@ -519,7 +510,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                   textProcessing: (val) =>
                                       val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
                                   title: "Swipe Left Action",
-                                  backgroundColor: tileColor,
                                   secondaryColor: headerColor,
                                 ),
                               ],
@@ -532,8 +522,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                     ],
                   ),
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Misc"),

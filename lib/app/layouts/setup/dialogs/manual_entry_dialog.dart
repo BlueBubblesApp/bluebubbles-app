@@ -122,68 +122,72 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
           style: context.theme.textTheme.titleLarge,
         ),
         backgroundColor: context.theme.colorScheme.properSurface,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Focus(
-              onKey: (node, event) {
-                if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
-                  node.nextFocus();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: TextField(
-                cursorColor: context.theme.colorScheme.primary,
-                autocorrect: false,
-                autofocus: true,
-                controller: urlController,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: context.theme.colorScheme.outline),
-                      borderRadius: BorderRadius.circular(20)),
-                  focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: context.theme.colorScheme.primary),
-                      borderRadius: BorderRadius.circular(20)),
-                  labelText: "URL",
-                ),
-            ),
-            ),
-            const SizedBox(height: 10),
-            Focus(
-              onKey: (node, event) {
-                if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
-                  node.previousFocus();
-                  node.previousFocus(); // This is intentional. Should probably figure out why it's needed
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: TextField(
-                cursorColor: context.theme.colorScheme.primary,
-                autocorrect: false,
-                autofocus: false,
-                controller: passwordController,
-                textInputAction: TextInputAction.next,
-                onSubmitted: (_) {
-                  connect(urlController.text, passwordController.text);
-                  connecting = true;
-                  if (mounted) setState(() {});
+        content: AutofillGroup(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Focus(
+                onKey: (node, event) {
+                  if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                    node.nextFocus();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
                 },
-                decoration: InputDecoration(
-                  enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: context.theme.colorScheme.outline),
-                      borderRadius: BorderRadius.circular(20)),
-                  focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: context.theme.colorScheme.primary),
-                      borderRadius: BorderRadius.circular(20)),
-                  labelText: "Password",
-                ),
-                obscureText: true,
+                child: TextField(
+                  cursorColor: context.theme.colorScheme.primary,
+                  autocorrect: false,
+                  autofocus: true,
+                  controller: urlController,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: [AutofillHints.username, AutofillHints.url],
+                  decoration: InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                        borderRadius: BorderRadius.circular(20)),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                        borderRadius: BorderRadius.circular(20)),
+                    labelText: "URL",
+                  ),
               ),
-            ),
-          ],
+              ),
+              const SizedBox(height: 10),
+              Focus(
+                onKey: (node, event) {
+                  if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                    node.previousFocus();
+                    node.previousFocus(); // This is intentional. Should probably figure out why it's needed
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: TextField(
+                  cursorColor: context.theme.colorScheme.primary,
+                  autocorrect: false,
+                  autofocus: false,
+                  controller: passwordController,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: [AutofillHints.password],
+                  onSubmitted: (_) {
+                    connect(urlController.text, passwordController.text);
+                    connecting = true;
+                    if (mounted) setState(() {});
+                  },
+                  decoration: InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                        borderRadius: BorderRadius.circular(20)),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                        borderRadius: BorderRadius.circular(20)),
+                    labelText: "Password",
+                  ),
+                  obscureText: true,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

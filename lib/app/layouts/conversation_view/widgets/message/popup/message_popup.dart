@@ -1438,7 +1438,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
-              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete_outlined,
               color: context.theme.colorScheme.properOnSurface,
             ),
           ),

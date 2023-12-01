@@ -113,8 +113,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
                             iosSubtitle: iosSubtitle,
                             materialSubtitle: materialSubtitle,
                             text: "Private API Settings"),
@@ -289,9 +287,21 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                     ss.settings.quickTapbackType.value = val;
                                     saveSettings();
                                   },
-                                  backgroundColor: tileColor,
                                   secondaryColor: headerColor,
                                 ),
+                              ),
+                            ),
+                            AnimatedSizeAndFade.showHide(
+                              show: ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148,
+                              child: SettingsSwitch(
+                                title: "Up Arrow for Quick Edit",
+                                initialVal: ss.settings.editLastSentMessageOnUpArrow.value,
+                                onChanged: (bool val) {
+                                  ss.settings.editLastSentMessageOnUpArrow.value = val;
+                                  saveSettings();
+                                },
+                                subtitle: "Press the Up Arrow to begin editing the last message you sent",
+                                backgroundColor: tileColor,
                               ),
                             ),
                             AnimatedSizeAndFade.showHide(

@@ -64,7 +64,7 @@ class PlayerState {
 
 class Player {
   PlayerState get state => throw Exception();
-  PlayerStreams get streams => throw Exception();
+  PlayerStreams get stream => throw Exception();
 
   FutureOr<void> dispose({int code = 0}) {}
 

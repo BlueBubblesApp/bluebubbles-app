@@ -358,6 +358,20 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
         });
       });
     } else {
+      // listen for contacts update (if tile is active, we can update it)
+      eventDispatcher.stream.listen((event) {
+        if (event.item1 != 'update-contacts') return;
+        if (event.item2.isNotEmpty) {
+          print('fired');
+          String newSubtitle = MessageHelper.getNotificationText(controller.chat.latestMessage);
+          if (newSubtitle != subtitle) {
+            setState(() {
+              subtitle = newSubtitle;
+              fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
+            });
+          }
+        }
+      });
       sub = WebListeners.newMessage.listen((tuple) {
         final message = tuple.item1;
         if (tuple.item2?.guid == controller.chat.guid && (cachedDateCreated == null || message.dateCreated!.isAfter(cachedDateCreated!))) {

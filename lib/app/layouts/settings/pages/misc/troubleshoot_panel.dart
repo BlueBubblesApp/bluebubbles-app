@@ -102,8 +102,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                 ),
               if (kIsWeb || kIsDesktop)
                 SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Logging"
@@ -176,8 +174,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
               ),
               if (kIsDesktop)
                 SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Saved Logs"
@@ -297,7 +293,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                             subtitle: basename(savedLogs[index].path),
                             onTap: () async => await launchUrl(Uri.file(savedLogs[index].path)),
                             trailing: IconButton(
-                              icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete),
+                              icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
                               onPressed: () {
                                 savedLogs[index].deleteSync();
                                 savedLogs.value =
@@ -319,8 +315,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                 ]),
               if (!kIsWeb)
                 SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Database Re-syncing"

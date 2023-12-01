@@ -59,7 +59,7 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
       color: Colors.transparent,
       child: Container(
         padding: padding,
-        width: 25,
+        width: 48,
         child: XGestureDetector(
           onTap: !kIsDesktop ? null : (details) {
             final result = callback?.call() ?? true;
@@ -103,11 +103,17 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
           ),
         )
       : Container(
+          alignment: Alignment.center,
           constraints: BoxConstraints(maxHeight: size, maxWidth: size),
-          child: CircularProgressIndicator(
-            strokeWidth: strokeWidth,
-            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-          ));
+          child: SizedBox(
+              width: size,
+              height: size,
+              child: CircularProgressIndicator(
+                strokeWidth: strokeWidth,
+                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+              ),
+          ),
+      );
 }
 
 Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget child, {bool isLoaded = false}) {
@@ -313,7 +319,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Icon(
-                      Icons.delete_forever,
+                      Icons.delete_forever_outlined,
                       color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),

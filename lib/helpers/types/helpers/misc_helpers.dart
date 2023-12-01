@@ -79,6 +79,8 @@ PlayerStatus getDesktopControllerStatus(Player controller) {
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
 
+bool get isSnap => !kIsWeb && Platform.isLinux && Platform.environment['SNAP'] != null;
+
 bool chromeOS = false;
 
 /// From https://github.com/modulovalue/dart_intersperse/blob/master/lib/src/intersperse.dart

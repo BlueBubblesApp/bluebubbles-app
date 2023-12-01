@@ -9,6 +9,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   desktop_webview_auth
   dynamic_color
+  file_selector_windows
   flutter_acrylic
   geolocator_windows
   local_auth_windows
@@ -16,12 +17,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   maps_launcher
   media_kit_libs_windows_video
   media_kit_video
-  network_info_plus
   objectbox_flutter_libs
   pasteboard
   permission_handler_windows
   printing
   record_windows
+  screen_brightness_windows
   screen_retriever
   secure_application
   share_plus

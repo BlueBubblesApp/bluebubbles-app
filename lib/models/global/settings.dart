@@ -72,6 +72,7 @@ class Settings {
   final RxBool useLocalIpv6 = false.obs;
   final RxnString sendSoundPath = RxnString();
   final RxnString receiveSoundPath = RxnString();
+  final RxInt soundVolume = 100.obs;
   final RxBool syncContactsAutomatically = false.obs;
   final RxBool scrollToBottomOnSend = true.obs;
   final RxBool sendEventsToTasker = false.obs;
@@ -90,6 +91,7 @@ class Settings {
   final RxBool privateSubjectLine = false.obs;
   final RxBool privateAPISend = false.obs;
   final RxBool privateAPIAttachmentSend = false.obs;
+  final RxBool editLastSentMessageOnUpArrow = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -242,6 +244,7 @@ class Settings {
       'useLocalIpv6': useLocalIpv6.value,
       'sendSoundPath': sendSoundPath.value,
       'receiveSoundPath': receiveSoundPath.value,
+      'soundVolume': soundVolume.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
       'sendEventsToTasker': sendEventsToTasker.value,
@@ -257,6 +260,7 @@ class Settings {
       'privateMarkChatAsRead': privateMarkChatAsRead.value,
       'privateManualMarkAsRead': privateManualMarkAsRead.value,
       'privateSubjectLine': privateSubjectLine.value,
+      'editLastSentMessageOnUpArrow': editLastSentMessageOnUpArrow.value,
       'redactedMode': redactedMode.value,
       'hideMessageContent': hideMessageContent.value,
       'hideAttachments': hideAttachments.value,
@@ -311,9 +315,7 @@ class Settings {
     ss.settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     ss.settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     ss.settings.hideDividers.value = map['hideDividers'] ?? false;
-    ss.settings.scrollVelocity.value = map['scrollVelocity'] is int?
-        ? (map['scrollVelocity'] as int? ?? 1).toDouble()
-        : map['scrollVelocity'] as double? ?? 1.0;
+    ss.settings.scrollVelocity.value = map['scrollVelocity']?.toDouble() ?? 1;
     ss.settings.sendWithReturn.value = map['sendWithReturn'] ?? false;
     ss.settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     ss.settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
@@ -357,6 +359,7 @@ class Settings {
     ss.settings.useLocalIpv6.value = map['useLocalIpv6'] ?? false;
     ss.settings.sendSoundPath.value = map['sendSoundPath'];
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
+    ss.settings.soundVolume.value = map['soundVolume'] ?? 100;
     ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     ss.settings.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     ss.settings.sendEventsToTasker.value = map['sendEventsToTasker'] ?? true;
@@ -371,6 +374,7 @@ class Settings {
     ss.settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     ss.settings.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
     ss.settings.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
+    ss.settings.editLastSentMessageOnUpArrow.value = map['editLastSentMessageOnUpArrow'] ?? false;
     ss.settings.redactedMode.value = map['redactedMode'] ?? false;
     ss.settings.hideMessageContent.value = map['hideMessageContent'] ?? true;
     ss.settings.hideAttachments.value = map['hideAttachments'] ?? true;
@@ -403,10 +407,12 @@ class Settings {
     ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
     ss.settings.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     ss.settings.windowEffect.value = kIsDesktop && Platform.isWindows ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled : WindowEffect.disabled;
-    ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
-    ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
+    ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
+    ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     ss.settings.save();
+
+    eventDispatcher.emit("theme-update", null);
   }
 
   static Settings fromMap(Map<String, dynamic> map) {
@@ -476,6 +482,7 @@ class Settings {
     s.useLocalIpv6.value = map['useLocalIpv6'] ?? false;
     s.sendSoundPath.value = map['sendSoundPath'];
     s.receiveSoundPath.value = map['receiveSoundPath'];
+    s.soundVolume.value = map['soundVolume'] ?? 100;
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
     s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
@@ -491,6 +498,7 @@ class Settings {
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     s.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
     s.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
+    s.editLastSentMessageOnUpArrow.value = map['editLastSentMessageOnUpArrow'] ?? false;
     s.redactedMode.value = map['redactedMode'] ?? false;
     s.hideMessageContent.value = map['hideMessageContent'] ?? true;
     s.hideAttachments.value = map['hideAttachments'] ?? true;
@@ -523,8 +531,8 @@ class Settings {
     s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
     s.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     s.windowEffect.value = (kIsDesktop && Platform.isWindows) ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled : WindowEffect.disabled;
-    s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
-    s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
+    s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
+    s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     return s;
   }

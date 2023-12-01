@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_mess
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -41,6 +42,7 @@ class NotificationsService extends GetxService {
   static LocalNotification? failedToast;
   static LocalNotification? socketToast;
   static Map<String, List<LocalNotification>> notifications = {};
+  static Map<String, LocalNotification> facetimeNotifications = {};
   static Map<String, int> notificationCounts = {};
   static final Lock _lock = Lock();
 
@@ -158,7 +160,7 @@ class NotificationsService extends GetxService {
         ),
       ),
       payload: "${time.millisecondsSinceEpoch}",
-      androidAllowWhileIdle: true,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
@@ -179,8 +181,7 @@ class NotificationsService extends GetxService {
         : await avatarAsBytes(
             participantsOverride: !chat.isGroup ? null : chat.participants.where((e) => e.address == message.handle!.address).toList(),
             chat: chat,
-            quality: 256
-        );
+            quality: 256);
     if (chatIcon.isEmpty) {
       chatIcon = personIcon;
     }
@@ -215,6 +216,96 @@ class NotificationsService extends GetxService {
     }
   }
 
+  Future<void> createIncomingFaceTimeNotification(String callUuid, String caller, Uint8List? chatIcon, bool isAudio) async {
+    // Set some notification defaults
+    String title = caller;
+    String text = "Answer FaceTime ${isAudio ? 'Audio' : 'Video'} Call";
+    chatIcon ??= (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+
+    if (kIsWeb && Notification.permission == "granted") {
+      final notif = Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: callUuid);
+      notif.onClick.listen((event) async {
+        await intents.answerFaceTime(callUuid);
+      });
+    } else if (kIsDesktop) {
+      _lock.synchronized(() async => await showPersistentDesktopFaceTimeNotif(callUuid, caller, chatIcon, isAudio));
+    } else {
+      await mcs.invokeMethod("incoming-facetime-notification", {
+        "CHANNEL_ID": FACETIME_CHANNEL,
+        "notificationId": Random().nextInt(9998) + 1,
+        "title": title,
+        "body": text,
+        "avatar": chatIcon,
+        "caller": caller,
+        "callUuid": callUuid
+      });
+    }
+  }
+
+  Future<void> clearFaceTimeNotification(String callUuid) async {
+    if (kIsDesktop) {
+      await clearDesktopFaceTimeNotif(callUuid);
+    }
+  }
+
+  Future<void> showPersistentDesktopFaceTimeNotif(String callUuid, String caller, Uint8List? avatar, bool isAudio) async {
+    List<String> actions = ["Answer", "Ignore"];
+    List<LocalNotificationAction> nActions = actions.map((String a) => LocalNotificationAction(text: a)).toList();
+    LocalNotification? toast;
+    String? path;
+
+    if (avatar != null) {
+      Uint8List? _avatar = await clip(avatar, size: 256, circle: true);
+      if (_avatar != null) {
+        // Create a temp file with the avatar
+        path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");
+        await File(path).create(recursive: true);
+        await File(path).writeAsBytes(_avatar);
+      }
+    }
+
+    toast = LocalNotification(
+      imagePath: path,
+      title: caller,
+      body: "Incoming FaceTime ${isAudio ? 'Audio' : 'Video'} Call",
+      duration: LocalNotificationDuration.long,
+      actions: nActions,
+    );
+
+    toast.onClick = () async {
+      await windowManager.show();
+    };
+
+    toast.onClickAction = (index) async {
+      if (actions[index] == "Answer") {
+        await windowManager.show();
+        await intents.answerFaceTime(callUuid);
+      } else {
+        hideFaceTimeOverlay(callUuid);
+        await toast?.close();
+      }
+    };
+
+    toast.onClose = (reason) async {
+      if (reason == LocalNotificationCloseReason.timedOut && faceTimeOverlays.containsKey(callUuid)) {
+        await toast?.show();
+      }
+    };
+
+    if (facetimeNotifications[callUuid] != null) {
+      await facetimeNotifications[callUuid]?.close();
+    }
+
+    facetimeNotifications[callUuid] = toast;
+
+    await toast.show();
+  }
+
+  Future<void> clearDesktopFaceTimeNotif(String callerUuid) async {
+    await facetimeNotifications[callerUuid]?.close();
+    facetimeNotifications.remove(callerUuid);
+  }
+
   Future<void> showDesktopNotif(Message message, String text, Chat chat, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
     List<int> selectedIndices = ss.settings.selectedActionIndices;
     List<String> _actions = ss.settings.actionList;
@@ -223,10 +314,10 @@ class NotificationsService extends GetxService {
     List<String> actions = _actions
         .whereIndexed((i, e) => selectedIndices.contains(i))
         .map((action) => action == "Mark Read"
-        ? action
-        : !isReaction && !message.isGroupEvent && papi
-        ? ReactionTypes.reactionToEmoji[action]!
-        : null)
+            ? action
+            : !isReaction && !message.isGroupEvent && papi
+                ? ReactionTypes.reactionToEmoji[action]!
+                : null)
         .whereNotNull()
         .toList();
 
@@ -303,8 +394,8 @@ class NotificationsService extends GetxService {
         duration: LocalNotificationDuration.long,
         actions: notifications[guid]!.isNotEmpty
             ? showMarkRead
-            ? [LocalNotificationAction(text: "Mark ${notificationCounts[guid]!} Messages Read")]
-            : []
+                ? [LocalNotificationAction(text: "Mark ${notificationCounts[guid]!} Messages Read")]
+                : []
             : nActions,
       );
       notifications[guid]!.add(toast);
@@ -315,7 +406,7 @@ class NotificationsService extends GetxService {
 
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await windowManager.focus();
+          await windowManager.show();
           return;
         }
 
@@ -323,11 +414,11 @@ class NotificationsService extends GetxService {
           ns.pushAndRemoveUntil(
             Get.context!,
             ConversationView(chat: chat),
-                (route) => route.isFirst,
+            (route) => route.isFirst,
           );
         }
 
-        await windowManager.focus();
+        await windowManager.show();
       };
 
       toast.onClickAction = (index) async {
@@ -404,7 +495,7 @@ class NotificationsService extends GetxService {
         // Show window and open the right chat
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await windowManager.focus();
+          await windowManager.show();
           return;
         }
 
@@ -412,11 +503,11 @@ class NotificationsService extends GetxService {
           ns.pushAndRemoveUntil(
             Get.context!,
             ConversationView(chat: chat),
-                (route) => route.isFirst,
+            (route) => route.isFirst,
           );
         }
 
-        await windowManager.focus();
+        await windowManager.show();
 
         if (await File(path).exists()) {
           await File(path).delete();
@@ -429,14 +520,14 @@ class NotificationsService extends GetxService {
 
         Chat? chat = Chat.findOne(guid: guid);
         if (chat == null) {
-          await windowManager.focus();
+          await windowManager.show();
           return;
         }
 
         chat.toggleHasUnread(false);
         EventDispatcher().emit('refresh', null);
 
-        await windowManager.focus();
+        await windowManager.show();
 
         if (await File(path).exists()) {
           await File(path).delete();
@@ -484,7 +575,7 @@ class NotificationsService extends GetxService {
     allToast!.onClick = () async {
       notifications = {};
       notificationCounts = {};
-      await windowManager.focus();
+      await windowManager.show();
     };
 
     allToast!.onClickAction = (index) async {
@@ -504,7 +595,6 @@ class NotificationsService extends GetxService {
     await allToast!.show();
   }
 
-
   Future<void> createSocketError() async {
     const title = 'Could not connect';
     const subtitle = 'Your server may be offline!';
@@ -518,7 +608,7 @@ class NotificationsService extends GetxService {
 
       socketToast!.onClick = () async {
         socketToast = null;
-        await windowManager.focus();
+        await windowManager.show();
         Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (BuildContext context) {
@@ -565,7 +655,7 @@ class NotificationsService extends GetxService {
 
       failedToast!.onClick = () async {
         failedToast = null;
-        await windowManager.focus();
+        await windowManager.show();
         if (scheduled) {
           Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
@@ -609,42 +699,6 @@ class NotificationsService extends GetxService {
     );
   }
 
-  Future<void> createFacetimeNotif(Handle handle) async {
-    await cs.init();
-    final contact = cs.matchHandleToContact(handle);
-    final title = 'Incoming FaceTime from ${contact?.displayName ?? handle.address}';
-    const subtitle = '';
-    if (kIsDesktop) {
-      final toast = LocalNotification(
-        title: title,
-        body: subtitle,
-        actions: [],
-      );
-
-      toast.onClick = () async {
-        await windowManager.focus();
-      };
-
-      await toast.show();
-      return;
-    }
-    await flnp.show(
-      Random().nextInt(9998) + 1,
-      title,
-      subtitle,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          FACETIME_CHANNEL,
-          'Incoming FaceTimes',
-          channelDescription: 'Displays incoming FaceTimes detected by the server',
-          priority: Priority.max,
-          importance: Importance.max,
-          color: HexColor("4990de"),
-        ),
-      ),
-    );
-  }
-
   Future<void> clearSocketError() async {
     if (kIsDesktop) {
       await socketToast?.close();
@@ -666,7 +720,7 @@ class NotificationsService extends GetxService {
   Future<void> clearDesktopNotificationsForChat(String chatGuid) async {
     await _lock.synchronized(() async {
       if (!notifications.containsKey(chatGuid)) return;
-      List<LocalNotification> toasts = notifications[chatGuid]!;
+      List<LocalNotification> toasts = [...notifications[chatGuid]!];
       for (LocalNotification toast in toasts) {
         await toast.close();
       }

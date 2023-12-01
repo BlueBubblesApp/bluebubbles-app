@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -17,6 +18,7 @@ import 'package:path/path.dart';
 import 'package:receive_intent/receive_intent.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 IntentsService intents = Get.isRegistered<IntentsService>() ? Get.find<IntentsService>() : Get.put(IntentsService());
 
@@ -99,6 +101,23 @@ class IntentsService extends GetxService {
           ls.isBubble = bubble;
           await openChat(guid);
         }
+    }
+  }
+
+  Future<void> answerFaceTime(String callUuid) async {
+    final call = await http.answerFaceTime(callUuid);
+    final link = call.data?["data"]?["link"];
+    if (link == null) {
+      return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
+    }
+
+    hideFaceTimeOverlay(callUuid);
+    if (kIsDesktop) {
+      await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    } else if (kIsWeb) {
+      // TODO: Implement web FaceTime
+    } else {
+      mcs.invokeMethod("open-link", {"link": link, "forceBrowser": true});
     }
   }
 

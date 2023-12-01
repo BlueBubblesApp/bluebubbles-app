@@ -170,7 +170,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                     });
                   },
                   title: "Select Chat",
-                  backgroundColor: tileColor,
                   secondaryColor: headerColor,
                   textProcessing: (val) => val.toString(),
                   useCupertino: false,
@@ -250,8 +249,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
               ]
             ),
             SettingsHeader(
-              headerColor: headerColor,
-              tileColor: tileColor,
               iosSubtitle: iosSubtitle,
               materialSubtitle: materialSubtitle,
               text: "Schedule",
@@ -269,7 +266,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                     });
                   },
                   title: "Schedule",
-                  backgroundColor: tileColor,
                   secondaryColor: headerColor,
                   textProcessing: (val) => val.capitalizeFirst!,
                 ),
@@ -321,7 +317,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                         padding: const EdgeInsets.only(bottom: 5.0),
                         child: SettingsOptions<String>(
                           title: "With frequency:",
-                          options: ["daily", "weekly", "monthly", "yearly"],
+                          options: ["hourly", "daily", "weekly", "monthly", "yearly"],
                           initial: frequency,
                           textProcessing: (val) => "${frequencyToText[val]!.capitalizeFirst!}${interval == 1 ? "" : "s"}",
                           onChanged: (val) {
@@ -330,7 +326,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                               frequency = val;
                             });
                           },
-                          backgroundColor: tileColor,
                           secondaryColor: headerColor,
                         ),
                       ),
@@ -352,8 +347,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
               ],
             ),
             SettingsHeader(
-              headerColor: headerColor,
-              tileColor: tileColor,
               iosSubtitle: iosSubtitle,
               materialSubtitle: materialSubtitle,
               text: "Summary",

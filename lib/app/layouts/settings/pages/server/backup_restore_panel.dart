@@ -142,7 +142,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return Obx(() => SettingsScaffold(
         title: "Backup and Restore",
         initialHeader: fetching == false ? "Settings Backups" : null,
         iosSubtitle: iosSubtitle,
@@ -599,8 +599,6 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                 ),
               if (fetching == false)
                 SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Theme Backups",
@@ -942,6 +940,6 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
             ]),
           ),
         ]
-    );
+    ));
   }
 }

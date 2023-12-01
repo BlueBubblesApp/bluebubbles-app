@@ -134,8 +134,6 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
               ),
             if (oneTime.isNotEmpty)
               SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "One-Time Messages",
@@ -180,8 +178,6 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
               ),
             if (recurring.isNotEmpty)
               SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Recurring Messages",
@@ -227,8 +223,6 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
               ),
             if (oneTimeCompleted.isNotEmpty)
               SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
                 text: "Completed Messages",

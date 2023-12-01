@@ -6,7 +6,6 @@ import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
 // TODO(abarth): These constants probably belong somewhere more general.
@@ -1011,7 +1010,7 @@ class _ActionButtonParentDataWidget extends ParentDataWidget<_ActionButtonParent
       parentData.isPressed = isPressed;
 
       // Force a repaint.
-      final AbstractNode? targetParent = renderObject.parent;
+      final RenderObject? targetParent = renderObject.parent;
       if (targetParent is RenderObject) {
         targetParent.markNeedsPaint();
       }

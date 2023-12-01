@@ -52,12 +52,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
   void initState() {
     super.initState();
 
-    eventDispatcher.stream.listen((event) {
-      if (event.item1 == 'theme-update') {
-        setState(() {});
-      }
-    });
-
     if (showAltLayoutContextless) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         ns.pushAndRemoveSettingsUntil(
@@ -238,8 +232,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                           ),
                         if (!kIsWeb)
                           SettingsHeader(
-                              headerColor: headerColor,
-                              tileColor: tileColor,
                               iosSubtitle: iosSubtitle,
                               materialSubtitle: materialSubtitle,
                               text: "Server & Message Management"),
@@ -383,8 +375,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                           ],
                         ),
                         SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
                             iosSubtitle: iosSubtitle,
                             materialSubtitle: materialSubtitle,
                             text: "Appearance"),
@@ -411,8 +401,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                           ],
                         ),
                         SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
                             iosSubtitle: iosSubtitle,
                             materialSubtitle: materialSubtitle,
                             text: "Application Settings"),
@@ -555,8 +543,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                           ],
                         ),
                         SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
                             iosSubtitle: iosSubtitle,
                             materialSubtitle: materialSubtitle,
                             text: "Advanced"),
@@ -641,8 +627,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                           ],
                         ),
                         SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
                             iosSubtitle: iosSubtitle,
                             materialSubtitle: materialSubtitle,
                             text: "About"),
@@ -669,8 +653,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                           ],
                         ),
                         SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
                             iosSubtitle: iosSubtitle,
                             materialSubtitle: materialSubtitle,
                             text: "Backup and Reset"),

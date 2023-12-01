@@ -59,7 +59,9 @@
           serviceWorkerVersion: serviceWorkerVersion,
         }
       }).then(function(engineInitializer) {
-        return engineInitializer.initializeEngine();
+        return engineInitializer.initializeEngine({
+          useColorEmoji: true,
+        });
       }).then(function(appRunner) {
         return appRunner.runApp();
       });

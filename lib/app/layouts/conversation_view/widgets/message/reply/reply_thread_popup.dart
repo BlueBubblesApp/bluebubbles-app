@@ -90,24 +90,34 @@ void _buildThreadView(List<Message> _messages, int? originatorPart, Conversation
                                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                                 child: Center(
                                   child: SingleChildScrollView(
-                                      controller: controller,
-                                      child: Column(
-                                        children: _messages
-                                            .mapIndexed((index, e) => AbsorbPointer(
+                                    controller: controller,
+                                    child: Column(
+                                      children: _messages.mapIndexed((index, e) => GestureDetector(
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          if (originatorPart == null && ss.settings.skin.value != Skins.Material) {
+                                            // pop twice to remove convo details page
+                                            Navigator.of(context).pop();
+                                          }
+                                          ms(cvController.chat.guid).jumpToMessage.call(e.guid!);
+                                        },
+                                        child: AbsorbPointer(
                                           absorbing: true,
                                           child: Padding(
-                                            padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                                            child: MessageHolder(
-                                              cvController: cvController,
-                                              message: _messages[index],
-                                              oldMessageGuid: index > 0 ? _messages[index - 1].guid : null,
-                                              newMessageGuid: index < _messages.length - 1 ? _messages[index + 1].guid : null,
-                                              isReplyThread: true,
-                                              replyPart: index == 0 ? originatorPart : null,
-                                            ),
+                                              padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                                              child: MessageHolder(
+                                                cvController: cvController,
+                                                message: _messages[index],
+                                                oldMessageGuid: index > 0 ? _messages[index - 1].guid : null,
+                                                newMessageGuid: index < _messages.length - 1 ? _messages[index + 1].guid : null,
+                                                isReplyThread: true,
+                                                replyPart: index == 0 ? originatorPart : null,
+                                              ),
                                           ),
-                                        )).toList(),
-                                      )),
+                                        ),
+                                      )).toList(),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

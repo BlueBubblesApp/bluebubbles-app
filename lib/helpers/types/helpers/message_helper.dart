@@ -5,6 +5,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -138,6 +139,9 @@ class MessageHelper {
     if (message.isGroupEvent) return message.groupEventText;
     if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
       return "Message sent with Invisible Ink";
+    }
+    if (kIsWeb && !message.isFromMe! && message.handle == null) {
+      message.handle = message.getHandle();
     }
     String sender = !withSender ? "" : "${message.isFromMe! ? "You: " : (message.handle?.displayName ?? "Someone")}: ";
 

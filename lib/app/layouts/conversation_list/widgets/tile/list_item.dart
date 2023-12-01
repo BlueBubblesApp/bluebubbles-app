@@ -47,7 +47,7 @@ class ListItem extends StatelessWidget {
                   : action == MaterialSwipeAction.alerts
                   ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                   : action == MaterialSwipeAction.delete
-                  ? Icons.delete_forever
+                  ? Icons.delete_forever_outlined
                   : action == MaterialSwipeAction.mark_read
                   ? (chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread)
                   : (chat.isArchived! ? Icons.unarchive : Icons.archive),
