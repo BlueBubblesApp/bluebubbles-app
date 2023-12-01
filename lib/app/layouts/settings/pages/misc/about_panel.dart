@@ -469,7 +469,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                                                           style: context.theme.textTheme.bodyLarge),
                                                     if (kIsDesktop)
                                                       Text(
-                                                        "${fs.packageInfo.version}_${Platform.operatingSystem.capitalizeFirst!}",
+                                                        "${fs.packageInfo.version}_${Platform.operatingSystem.capitalizeFirst!}${isSnap ? "_Snap" : ""}",
                                                         style: context.theme.textTheme.bodyLarge,
                                                       ),
                                                   ],
