@@ -104,7 +104,7 @@ android {
         prod {
             getIsDefault().set(true)
             dimension "app"
-            resValue "string", "app_name", "BlueBubbles"
+            resValue "string", "app_name_en", "BlueBubbles"
             resValue "color", "ic_launcher_background", "#4990de"
             resValue "string", "file_provider", "com.bluebubbles.messaging.fileprovider"
             applicationId "com.bluebubbles.messaging"
