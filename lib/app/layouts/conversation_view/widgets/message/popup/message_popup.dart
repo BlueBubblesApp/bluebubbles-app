@@ -448,14 +448,14 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     GestureDetector(
                       onTap: popDetails,
                       child: iOS
-                          ? BackdropFilter(
+                          ? (ss.settings.highPerfMode.value ? Container(color: context.theme.colorScheme.background.withOpacity(0.8)) : BackdropFilter(
                               filter: ImageFilter.blur(
                                   sigmaX: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30,
                                   sigmaY: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30),
                               child: Container(
                                 color: context.theme.colorScheme.properSurface.withOpacity(0.3),
                               ),
-                            )
+                            ))
                           : null,
                     ),
                     if (iOS)

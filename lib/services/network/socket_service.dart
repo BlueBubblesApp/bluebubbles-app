@@ -53,7 +53,7 @@ class SocketService extends GetxService {
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": password})
         .setTransports(['websocket', 'polling'])
-        .setExtraHeaders(ss.settings.customHeaders)
+        .setExtraHeaders(http.headers)
         // Disable so that we can create the listeners first
         .disableAutoConnect()
         .enableReconnection();
@@ -81,6 +81,7 @@ class SocketService extends GetxService {
       socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
       socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
       socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
+      socket.on("incoming-facetime", (data) => handleCustomEvent("incoming-facetime", jsonDecode(data)));
       socket.on("ft-call-status-changed", (data) => handleCustomEvent("ft-call-status-changed", data));
       socket.on("answer-facetime", (data) => handleCustomEvent("answer-facetime", data));
     }
@@ -237,6 +238,10 @@ class SocketService extends GetxService {
           final controller = cvc(chat);
           controller.showTypingIndicator.value = data["display"];
         }
+        return;
+      case "incoming-facetime":
+        Logger.info("Received legacy incoming FaceTime call");
+        await ActionHandler().handleIncomingFaceTimeCallLegacy(data);
         return;
       case "ft-call-status-changed":
         Logger.info("Received FaceTime call status change");

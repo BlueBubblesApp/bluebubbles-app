@@ -103,8 +103,6 @@ public class IncomingFaceTimeNotification implements Handler {
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 // Set the priority to high since it's a message they should see
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-                // Sets the intent for when it's clicked
-                .setContentIntent(openIntent)
                 // Set the content for the notification
                 .setContentTitle(title)
                 .setContentText(body)
@@ -113,6 +111,11 @@ public class IncomingFaceTimeNotification implements Handler {
                 .addExtras(extras)
                 // Set the color. This is the blue primary color
                 .setColor(4888294);
+
+        if (callUuid != null) {
+            // Sets the intent for when it's clicked
+            notificationBuilder.setContentIntent(openIntent);
+        }
 
         Log.d(TAG, "Creating notification for FaceTime: " + callUuid);
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);

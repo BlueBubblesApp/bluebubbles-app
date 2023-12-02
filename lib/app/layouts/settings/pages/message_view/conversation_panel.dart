@@ -351,6 +351,13 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         title: "Send/Receve Sound Volume",
                         subtitle: "Controls the volume of the send and receive sounds",
                       ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                       Obx(() => SettingsSlider(
                         startingVal: ss.settings.soundVolume.value.toDouble(),
                         min: 0,

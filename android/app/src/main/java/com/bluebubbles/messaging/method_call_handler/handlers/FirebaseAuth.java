@@ -60,22 +60,26 @@ public class FirebaseAuth implements Handler {
                 .addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
                     public void onComplete(@NonNull Task<String> task) {
-                        if (task.getResult() == null || !task.isSuccessful()) {
-                            Log.d(TAG, "getInstanceId failed", task.getException());
-                            try {
-
-                                result.error("Failed to authenticate", "getInstanceId failed", task.getException());
-                            } catch (IllegalStateException e) {
-
-                            }
-                            return;
-                        }
-
-                        String token = task.getResult();
-                        Log.d("FCM", "token: " + token);
                         try {
-                            result.success(token);
-                        } catch (IllegalStateException e) {
+                            if (task.getResult() == null || !task.isSuccessful()) {
+                                Log.d(TAG, "getInstanceId failed", task.getException());
+                                try {
+
+                                    result.error("Failed to authenticate", "getInstanceId failed", task.getException());
+                                } catch (IllegalStateException e) {
+
+                                }
+                                return;
+                            }
+
+                            String token = task.getResult();
+                            Log.d("FCM", "token: " + token);
+                            try {
+                                result.success(token);
+                            } catch (IllegalStateException e) {
+                            }
+                        } catch (Exception e) {
+                            result.error("Failed to authenticate", "FCM not available!", "");
                         }
                     }
                 });
