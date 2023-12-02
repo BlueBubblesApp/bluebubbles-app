@@ -1213,6 +1213,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       mapController: mapController,
       options: MapOptions(
         zoom: 5.0,
+        minZoom: 1.0,
         maxZoom: 18.0,
         center: location == null ? null : LatLng(location!.latitude, location!.longitude),
         onTap: (_, __) => popupController.hideAllPopups(),
