@@ -26,6 +26,7 @@ import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:latlong2/latlong.dart';
 import 'package:sliding_up_panel2/sliding_up_panel2.dart';
+import 'package:universal_io/io.dart';
 
 class FindMyPage extends StatefulWidget {
   const FindMyPage({Key? key}) : super(key: key);
@@ -120,19 +121,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             anchorPos: AnchorPos.align(AnchorAlign.top),
           );
         }
-        LocationPermission granted = await Geolocator.checkPermission();
-        if (granted == LocationPermission.denied) {
-          granted = await Geolocator.requestPermission();
-        }
-        if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
-          location = await Geolocator.getCurrentPosition();
-          buildLocationMarker(location!);
-          locationSub = Geolocator.getPositionStream().listen((event) {
-            setState(() {
-              buildLocationMarker(event);
+        if (!(Platform.isLinux && !kIsWeb)) {
+          LocationPermission granted = await Geolocator.checkPermission();
+          if (granted == LocationPermission.denied) {
+            granted = await Geolocator.requestPermission();
+          }
+          if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
+            location = await Geolocator.getCurrentPosition();
+            buildLocationMarker(location!);
+            locationSub = Geolocator.getPositionStream().listen((event) {
+              setState(() {
+                buildLocationMarker(event);
+              });
             });
-          });
-          mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+            mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+          }
         }
         setState(() {
           fetching = false;
