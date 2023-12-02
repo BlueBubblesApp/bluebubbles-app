@@ -78,7 +78,7 @@ public class FirebaseAuth implements Handler {
                                 result.success(token);
                             } catch (IllegalStateException e) {
                             }
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             result.error("Failed to authenticate", "FCM not available!", "");
                         }
                     }
