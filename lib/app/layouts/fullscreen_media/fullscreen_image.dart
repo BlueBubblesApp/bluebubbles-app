@@ -233,6 +233,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
                 errorBuilder: (context, object, stacktrace) => Center(
                   child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)
                 ),
+                filterQuality: FilterQuality.high,
               ),
             ) : hasError ? Center(
                 child: Text("Failed to load image", style: context.theme.textTheme.bodyLarge)

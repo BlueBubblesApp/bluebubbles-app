@@ -56,7 +56,7 @@
         android:allowBackup="false"
         android:name=".Application"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="@string/app_name_en"
         android:appCategory="social"
         android:requestLegacyExternalStorage="true"
         android:debuggable="false"

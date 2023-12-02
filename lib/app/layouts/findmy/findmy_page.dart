@@ -26,6 +26,7 @@ import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:latlong2/latlong.dart';
 import 'package:sliding_up_panel2/sliding_up_panel2.dart';
+import 'package:universal_io/io.dart';
 
 class FindMyPage extends StatefulWidget {
   const FindMyPage({Key? key}) : super(key: key);
@@ -120,19 +121,21 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             anchorPos: AnchorPos.align(AnchorAlign.top),
           );
         }
-        LocationPermission granted = await Geolocator.checkPermission();
-        if (granted == LocationPermission.denied) {
-          granted = await Geolocator.requestPermission();
-        }
-        if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
-          location = await Geolocator.getCurrentPosition();
-          buildLocationMarker(location!);
-          locationSub = Geolocator.getPositionStream().listen((event) {
-            setState(() {
-              buildLocationMarker(event);
+        if (!(Platform.isLinux && !kIsWeb)) {
+          LocationPermission granted = await Geolocator.checkPermission();
+          if (granted == LocationPermission.denied) {
+            granted = await Geolocator.requestPermission();
+          }
+          if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
+            location = await Geolocator.getCurrentPosition();
+            buildLocationMarker(location!);
+            locationSub = Geolocator.getPositionStream().listen((event) {
+              setState(() {
+                buildLocationMarker(event);
+              });
             });
-          });
-          mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+            mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+          }
         }
         setState(() {
           fetching = false;
@@ -690,12 +693,12 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             if (context.isPhone) {
               return buildNormal(context, devicesBodySlivers, friendsBodySlivers);
             }
-            return buildDesktop(context, devicesBodySlivers, friendsBodySlivers);
+            return buildTabletLayout(context, devicesBodySlivers, friendsBodySlivers);
           },
         ));
   }
 
-  Widget buildDesktop(BuildContext context, List<SliverList> devicesBodySlivers, List<SliverList> friendsBodySlivers) {
+  Widget buildTabletLayout(BuildContext context, List<SliverList> devicesBodySlivers, List<SliverList> friendsBodySlivers) {
     return Obx(
       () => Scaffold(
         backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
@@ -742,23 +745,24 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                             ),
                           ),
                         ),
-                      SizedBox(
-                        height: appWindow.titleBarHeight,
-                        child: AbsorbPointer(
-                          child: Row(children: [
-                            Expanded(child: Container()),
-                            ClipRect(
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
-                                child: Container(
-                                    height: appWindow.titleBarHeight,
-                                    width: appWindow.titleBarButtonSize.width * 3,
-                                    color: context.theme.colorScheme.properSurface.withOpacity(0.5)),
+                      if (kIsDesktop)
+                        SizedBox(
+                          height: appWindow.titleBarHeight,
+                          child: AbsorbPointer(
+                            child: Row(children: [
+                              Expanded(child: Container()),
+                              ClipRect(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
+                                  child: Container(
+                                      height: appWindow.titleBarHeight,
+                                      width: appWindow.titleBarButtonSize.width * 3,
+                                      color: context.theme.colorScheme.properSurface.withOpacity(0.5)),
+                                ),
                               ),
-                            ),
-                          ]),
+                            ]),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -1209,6 +1213,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       mapController: mapController,
       options: MapOptions(
         zoom: 5.0,
+        minZoom: 1.0,
         maxZoom: 18.0,
         center: location == null ? null : LatLng(location!.latitude, location!.longitude),
         onTap: (_, __) => popupController.hideAllPopups(),

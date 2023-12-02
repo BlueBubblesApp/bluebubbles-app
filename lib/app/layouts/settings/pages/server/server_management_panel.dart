@@ -716,6 +716,14 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           },
                         )),
                   if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
                     Obx(() => ss.settings.localhostPort.value != null
                         ? SettingsSwitch(
                             initialVal: ss.settings.useLocalIpv6.value,

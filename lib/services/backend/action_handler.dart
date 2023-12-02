@@ -323,4 +323,21 @@ class ActionHandler extends GetxService {
       await notif.createIncomingFaceTimeNotification(callUuid, caller, chatIcon, isAudio);
     }
   }
+
+  Future<void> handleIncomingFaceTimeCallLegacy(Map<String, dynamic> data) async {
+    Logger.info("Handling incoming FaceTime call (legacy)");
+    await cs.init();
+    String? address = data["caller"];
+    String? caller = address;
+    Uint8List? chatIcon;
+
+    // Find the contact info for the caller
+    // Load the contact's avatar & name
+    if (address != null) {
+      Contact? contact = cs.getContact(address);
+      chatIcon = contact?.avatar;
+      caller = contact?.displayName ?? caller;
+      await notif.createIncomingFaceTimeNotification(null, caller!, chatIcon, false);
+    }
+  }
 }
