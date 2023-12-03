@@ -318,9 +318,13 @@ class ActionHandler extends GetxService {
       caller = contact?.displayName ?? caller;
     }
 
-    await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
     if (!ls.isAlive) {
+      if (kIsDesktop) {
+        await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
+      }
       await notif.createIncomingFaceTimeNotification(callUuid, caller, chatIcon, isAudio);
+    } else {
+      await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
     }
   }
 

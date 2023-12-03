@@ -105,13 +105,43 @@ class IntentsService extends GetxService {
   }
 
   Future<void> answerFaceTime(String callUuid) async {
-    final call = await http.answerFaceTime(callUuid);
-    final link = call.data?["data"]?["link"];
+    if (Get.context != null) {
+      showDialog(
+          context: Get.context!,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: context.theme.colorScheme.properSurface,
+              title: Text(
+                "Generating link for call...",
+                style: context.theme.textTheme.titleLarge,
+              ),
+              content: Container(
+                height: 70,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                  ),
+                ),
+              ),
+            );
+          }
+      );
+      hideFaceTimeOverlay(callUuid);
+    }
+
+    String? link;
+    try {
+      final call = await http.answerFaceTime(callUuid);
+      link = call.data?["data"]?["link"];
+    } catch (_) {}
     if (link == null) {
+      if (Get.context != null) {
+        Navigator.of(Get.context!).pop();
+      }
       return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
     }
 
-    hideFaceTimeOverlay(callUuid);
     if (kIsDesktop) {
       await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
     } else if (kIsWeb) {
