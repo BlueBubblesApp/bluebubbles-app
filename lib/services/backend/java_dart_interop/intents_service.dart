@@ -101,7 +101,12 @@ class IntentsService extends GetxService {
           ls.isBubble = bubble;
           await openChat(guid);
         } else if (intent.extra?["callUuid"] != null) {
-          await answerFaceTime(intent.extra?["callUuid"]!);
+          await uiStartup.future;
+          if (intent.extra?["answer"] == "true") {
+            await answerFaceTime(intent.extra?["callUuid"]!);
+          } else {
+            await showFaceTimeOverlay(intent.extra?["callUuid"], intent.extra?["caller"], null, false);
+          }
         }
     }
   }
@@ -137,10 +142,10 @@ class IntentsService extends GetxService {
       final call = await http.answerFaceTime(callUuid);
       link = call.data?["data"]?["link"];
     } catch (_) {}
+    if (Get.context != null) {
+      Navigator.of(Get.context!).pop();
+    }
     if (link == null) {
-      if (Get.context != null) {
-        Navigator.of(Get.context!).pop();
-      }
       return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
     }
 

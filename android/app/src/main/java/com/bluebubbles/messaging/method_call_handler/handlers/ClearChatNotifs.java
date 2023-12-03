@@ -33,8 +33,14 @@ public class ClearChatNotifs implements Handler {
     @Override
     public void Handle() {
         String chatGuid = (String) call.argument("chatGuid");
-        Log.d(TAG, "Clearing notifications for chat: " + chatGuid);
-        HelperUtils.tryCancelNotifications(context, null, chatGuid);
+        Integer existingId = (Integer) call.argument("id");
+        if (existingId != null) {
+            Log.d(TAG, "Clearing notifications for id: " + existingId.toString());
+            HelperUtils.tryCancelNotifications(context, existingId, null);
+        } else {
+            Log.d(TAG, "Clearing notifications for chat: " + chatGuid);
+            HelperUtils.tryCancelNotifications(context, null, chatGuid);
+        }
         result.success("");
     }
 }

@@ -298,6 +298,8 @@ class ActionHandler extends GetxService {
     final int statusId = data["status_id"] as int;
     if (statusId == 4) {
       await ActionHandler().handleIncomingFaceTimeCall(data);
+    } else if (statusId == 6 && data["uuid"] != null) {
+      hideFaceTimeOverlay(data["uuid"]!);
     }
   }
 
