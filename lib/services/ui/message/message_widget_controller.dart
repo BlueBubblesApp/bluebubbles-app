@@ -143,11 +143,12 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       if (existingPart != null) {
         final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
+        final currentLength = existingPart.text?.length ?? 0;
         existingPart.text = (existingPart.text ?? "") + newText;
         if (e.hasMention) {
           existingPart.mentions.add(Mention(
             mentionedAddress: e.attributes?.mention,
-            range: [existingPart.text!.indexOf(newText), existingPart.text!.indexOf(newText) + e.range.last],
+            range: [currentLength, currentLength + e.range.last],
           ));
           existingPart.mentions.sort((a, b) => a.range.first.compareTo(b.range.first));
         }

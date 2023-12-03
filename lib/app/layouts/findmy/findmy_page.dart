@@ -25,6 +25,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:latlong2/latlong.dart';
+import 'package:maps_launcher/maps_launcher.dart';
 import 'package:sliding_up_panel2/sliding_up_panel2.dart';
 import 'package:universal_io/io.dart';
 
@@ -322,6 +323,25 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                 mapController.move(LatLng(item.location!.latitude!, item.location!.longitude!), 10);
                               }
                             : null,
+                        trailing: item.location?.latitude != null && item.location?.longitude != null ? ButtonTheme(
+                          minWidth: 1,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              shape: const CircleBorder(),
+                              backgroundColor: context.theme.colorScheme.primaryContainer,
+                            ),
+                            onPressed: () async {
+                              if ((item.address?.label ?? item.address?.mapItemFullAddress) == null) {
+                                return showSnackbar("Error", "Could not find an address to launch!");
+                              }
+                              await MapsLauncher.launchQuery((item.address?.label ?? item.address?.mapItemFullAddress)!);
+                            },
+                            child: const Icon(
+                                Icons.directions,
+                                size: 20
+                            ),
+                          ),
+                        ) : null,
                         onLongPress: () async {
                           const encoder = JsonEncoder.withIndent("     ");
                           final str = encoder.convert(item.toJson());
@@ -383,6 +403,25 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       return ListTile(
                         title: Text(item.name ?? "Unknown Device"),
                         subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                        trailing: item.location?.latitude != null && item.location?.longitude != null ? ButtonTheme(
+                          minWidth: 1,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              shape: const CircleBorder(),
+                              backgroundColor: context.theme.colorScheme.primaryContainer,
+                            ),
+                            onPressed: () async {
+                              if ((item.address?.label ?? item.address?.mapItemFullAddress) == null) {
+                                return showSnackbar("Error", "Could not find an address to launch!");
+                              }
+                              await MapsLauncher.launchQuery((item.address?.label ?? item.address?.mapItemFullAddress)!);
+                            },
+                            child: const Icon(
+                                Icons.directions,
+                                size: 20
+                            ),
+                          ),
+                        ) : null,
                         onTap: item.location?.latitude != null && item.location?.longitude != null
                             ? () async {
                                 await panelController.close();
@@ -560,6 +599,25 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
                         subtitle: Text(item.longAddress ?? "No location found"),
+                        trailing: ButtonTheme(
+                          minWidth: 1,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              shape: const CircleBorder(),
+                              backgroundColor: context.theme.colorScheme.primaryContainer,
+                            ),
+                            onPressed: () async {
+                              if (item.longAddress == null) {
+                                return showSnackbar("Error", "Could not find an address to launch!");
+                              }
+                              await MapsLauncher.launchQuery(item.longAddress!);
+                            },
+                            child: const Icon(
+                                Icons.directions,
+                                size: 20
+                            ),
+                          ),
+                        ),
                         onTap: () async {
                           if (context.isPhone) {
                             await panelController.close();
