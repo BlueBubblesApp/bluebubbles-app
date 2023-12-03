@@ -100,24 +100,59 @@ class IntentsService extends GetxService {
           final bubble = intent.extra!["bubble"] == "true";
           ls.isBubble = bubble;
           await openChat(guid);
+        } else if (intent.extra?["callUuid"] != null) {
+          await uiStartup.future;
+          if (intent.extra?["answer"] == "true") {
+            await answerFaceTime(intent.extra?["callUuid"]!);
+          } else {
+            await showFaceTimeOverlay(intent.extra?["callUuid"], intent.extra?["caller"], null, false);
+          }
         }
     }
   }
 
   Future<void> answerFaceTime(String callUuid) async {
-    final call = await http.answerFaceTime(callUuid);
-    final link = call.data?["data"]?["link"];
+    if (Get.context != null) {
+      showDialog(
+          context: Get.context!,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: context.theme.colorScheme.properSurface,
+              title: Text(
+                "Generating link for call...",
+                style: context.theme.textTheme.titleLarge,
+              ),
+              content: Container(
+                height: 70,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                  ),
+                ),
+              ),
+            );
+          }
+      );
+      hideFaceTimeOverlay(callUuid);
+    }
+
+    String? link;
+    try {
+      final call = await http.answerFaceTime(callUuid);
+      link = call.data?["data"]?["link"];
+    } catch (_) {}
+    if (Get.context != null) {
+      Navigator.of(Get.context!).pop();
+    }
     if (link == null) {
       return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
     }
 
-    hideFaceTimeOverlay(callUuid);
-    if (kIsDesktop) {
+    if (!kIsWeb) {
       await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
     } else if (kIsWeb) {
       // TODO: Implement web FaceTime
-    } else {
-      mcs.invokeMethod("open-link", {"link": link, "forceBrowser": true});
     }
   }
 

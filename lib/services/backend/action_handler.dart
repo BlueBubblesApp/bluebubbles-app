@@ -298,6 +298,8 @@ class ActionHandler extends GetxService {
     final int statusId = data["status_id"] as int;
     if (statusId == 4) {
       await ActionHandler().handleIncomingFaceTimeCall(data);
+    } else if (statusId == 6 && data["uuid"] != null) {
+      hideFaceTimeOverlay(data["uuid"]!);
     }
   }
 
@@ -318,9 +320,13 @@ class ActionHandler extends GetxService {
       caller = contact?.displayName ?? caller;
     }
 
-    await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
     if (!ls.isAlive) {
+      if (kIsDesktop) {
+        await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
+      }
       await notif.createIncomingFaceTimeNotification(callUuid, caller, chatIcon, isAudio);
+    } else {
+      await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
     }
   }
 

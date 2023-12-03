@@ -82,9 +82,8 @@ class SocketService extends GetxService {
       socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
       socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
       socket.on("incoming-facetime", (data) => handleCustomEvent("incoming-facetime", jsonDecode(data)));
-      socket.on("ft-call-status-changed", (data) => handleCustomEvent("ft-call-status-changed", data));
-      socket.on("answer-facetime", (data) => handleCustomEvent("answer-facetime", data));
     }
+    socket.on("ft-call-status-changed", (data) => handleCustomEvent("ft-call-status-changed", data));
     socket.on("new-message", (data) => handleCustomEvent("new-message", data));
     socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
     socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
@@ -246,10 +245,6 @@ class SocketService extends GetxService {
       case "ft-call-status-changed":
         Logger.info("Received FaceTime call status change");
         await ActionHandler().handleFaceTimeStatusChange(data);
-        return;
-      case "answer-facetime":
-        Logger.info("Answering FaceTime call");
-        await intents.answerFaceTime(data["callUuid"]);
         return;
       default:
         return;

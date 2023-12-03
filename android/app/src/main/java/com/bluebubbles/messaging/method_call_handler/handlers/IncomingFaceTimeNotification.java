@@ -43,7 +43,7 @@ import java.util.Arrays;
 
 public class IncomingFaceTimeNotification implements Handler {
     public static String TAG = "incoming-facetime-notification";
-    public static String notificationTag = "incoming-facetime";
+    public static String notificationTag = "message";
 
     private Context context;
     private MethodCall call;
@@ -85,14 +85,44 @@ public class IncomingFaceTimeNotification implements Handler {
         Bundle extras = new Bundle();
         extras.putString("callUuid", callUuid);
 
-        // Create intent for opening the conversation in the app
-        PendingIntent openIntent = PendingIntent.getBroadcast(
+        // Create intent when notification is tapped
+        PendingIntent tapIntent = PendingIntent.getActivity(
+                context,
+                notificationId,
+                new Intent(context, MainActivity.class)
+                        .putExtra("callUuid", callUuid)
+                        .putExtra("answer", "false")
+                        .putExtra("caller", caller)
+                        .setType("NotificationOpen"),
+                PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
+
+        // Create intent for opening the facetime link
+        PendingIntent openIntent = PendingIntent.getActivity(
             context,
             notificationId,
-            new Intent(context, ReplyReceiver.class)
+            new Intent(context, MainActivity.class)
                 .putExtra("callUuid", callUuid)
-                .setType("answerFaceTime"),
-            PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                .putExtra("answer", "true")
+                .putExtra("caller", caller)
+                .setType("AnswerFaceTime"),
+            PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
+
+        // Create intent for dismissing the notification (mark as read)
+        PendingIntent dismissIntent = PendingIntent.getBroadcast(
+                context,
+                notificationId,
+                new Intent(context, ReplyReceiver.class)
+                        .putExtra("id", notificationId)
+                        .setType("swipeAway"),
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Ignore", dismissIntent)
+                .setShowsUserInterface(false)
+                .build();
+
+        NotificationCompat.Action answerAction = new NotificationCompat.Action.Builder(0, "Answer", openIntent)
+                .setShowsUserInterface(true)
+                .build();
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
                 // Set the status bar notification icon
@@ -114,7 +144,11 @@ public class IncomingFaceTimeNotification implements Handler {
 
         if (callUuid != null) {
             // Sets the intent for when it's clicked
-            notificationBuilder.setContentIntent(openIntent);
+            notificationBuilder.setContentIntent(tapIntent);
+            notificationBuilder.addAction(dismissAction);
+            notificationBuilder.addAction(answerAction);
+            // clear after 30 seconds in case we didn't get an event from the server
+            notificationBuilder.setTimeoutAfter(30000);
         }
 
         Log.d(TAG, "Creating notification for FaceTime: " + callUuid);
