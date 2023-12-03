@@ -130,12 +130,15 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
             location = await Geolocator.getCurrentPosition();
             buildLocationMarker(location!);
-            locationSub = Geolocator.getPositionStream().listen((event) {
-              setState(() {
-                buildLocationMarker(event);
-              });
-            });
             mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+
+            if (!kIsDesktop) {
+              locationSub = Geolocator.getPositionStream().listen((event) {
+                setState(() {
+                  buildLocationMarker(event);
+                });
+              });
+            }
           }
         }
         setState(() {
