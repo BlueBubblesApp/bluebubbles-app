@@ -149,6 +149,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
       textStyle.apply(fontWeightDelta: 2),
     ));
   }
+  linkIndexMatches.sort((a, b) => a.item2.first.compareTo(b.item2.first));
   // render rich content if needed
   if (linkIndexMatches.isNotEmpty) {
     linkIndexMatches.forEachIndexed((i, e) {
