@@ -100,6 +100,8 @@ class IntentsService extends GetxService {
           final bubble = intent.extra!["bubble"] == "true";
           ls.isBubble = bubble;
           await openChat(guid);
+        } else if (intent.extra?["callUuid"] != null) {
+          await answerFaceTime(intent.extra?["callUuid"]!);
         }
     }
   }
@@ -142,12 +144,10 @@ class IntentsService extends GetxService {
       return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
     }
 
-    if (kIsDesktop) {
+    if (!kIsWeb) {
       await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
     } else if (kIsWeb) {
       // TODO: Implement web FaceTime
-    } else {
-      mcs.invokeMethod("open-link", {"link": link, "forceBrowser": true});
     }
   }
 

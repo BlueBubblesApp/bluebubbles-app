@@ -201,6 +201,7 @@ class MethodChannelService extends GetxService {
         await ActionHandler().handleIncomingFaceTimeCallLegacy(data);
         return true;
       case "ft-call-status-changed":
+        if (ls.isAlive) return;
         await storeStartup.future;
         Logger.info("Received facetime call status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);

@@ -86,13 +86,13 @@ public class IncomingFaceTimeNotification implements Handler {
         extras.putString("callUuid", callUuid);
 
         // Create intent for opening the conversation in the app
-        PendingIntent openIntent = PendingIntent.getBroadcast(
+        PendingIntent openIntent = PendingIntent.getActivity(
             context,
             notificationId,
-            new Intent(context, ReplyReceiver.class)
+            new Intent(context, MainActivity.class)
                 .putExtra("callUuid", callUuid)
-                .setType("answerFaceTime"),
-            PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                .setType("NotificationOpen"),
+            PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
                 // Set the status bar notification icon
