@@ -16,6 +16,7 @@ import 'package:get/get.dart';
 import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
 import 'package:path/path.dart';
 import 'package:record/record.dart';
+import 'package:system_info2/system_info2.dart';
 import 'package:universal_io/io.dart';
 
 class TextFieldSuffix extends StatefulWidget {
@@ -58,6 +59,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
               widget.subjectTextController.text.isNotEmpty ||
               (widget.controller?.pickedAttachments.isNotEmpty ?? false.obs.value);
           bool showRecording = (widget.controller?.showRecording.value ?? false.obs.value) && widget.recorderController != null;
+          bool isLinuxArm64 = kIsDesktop && Platform.isLinux && SysInfo.kernelArchitecture == ProcessorArchitecture.arm64;
           return Padding(
             padding: const EdgeInsets.all(3.0),
             child: AnimatedCrossFade(
@@ -78,7 +80,8 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   minimumSize: const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: !isChatCreator && !showRecording
+                child: isLinuxArm64 ? const SizedBox(height: 40) :
+                  !isChatCreator && !showRecording
                   ? CupertinoIconWrapper(icon: Icon(
                     iOS ? CupertinoIcons.mic : Icons.mic_none,
                     color: iOS ? context.theme.colorScheme.outline : context.theme.colorScheme.properOnSurface,

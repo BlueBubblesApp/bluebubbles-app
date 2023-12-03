@@ -693,12 +693,12 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             if (context.isPhone) {
               return buildNormal(context, devicesBodySlivers, friendsBodySlivers);
             }
-            return buildDesktop(context, devicesBodySlivers, friendsBodySlivers);
+            return buildTabletLayout(context, devicesBodySlivers, friendsBodySlivers);
           },
         ));
   }
 
-  Widget buildDesktop(BuildContext context, List<SliverList> devicesBodySlivers, List<SliverList> friendsBodySlivers) {
+  Widget buildTabletLayout(BuildContext context, List<SliverList> devicesBodySlivers, List<SliverList> friendsBodySlivers) {
     return Obx(
       () => Scaffold(
         backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
@@ -745,23 +745,24 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                             ),
                           ),
                         ),
-                      SizedBox(
-                        height: appWindow.titleBarHeight,
-                        child: AbsorbPointer(
-                          child: Row(children: [
-                            Expanded(child: Container()),
-                            ClipRect(
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
-                                child: Container(
-                                    height: appWindow.titleBarHeight,
-                                    width: appWindow.titleBarButtonSize.width * 3,
-                                    color: context.theme.colorScheme.properSurface.withOpacity(0.5)),
+                      if (kIsDesktop)
+                        SizedBox(
+                          height: appWindow.titleBarHeight,
+                          child: AbsorbPointer(
+                            child: Row(children: [
+                              Expanded(child: Container()),
+                              ClipRect(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaY: 2, sigmaX: 2),
+                                  child: Container(
+                                      height: appWindow.titleBarHeight,
+                                      width: appWindow.titleBarButtonSize.width * 3,
+                                      color: context.theme.colorScheme.properSurface.withOpacity(0.5)),
+                                ),
                               ),
-                            ),
-                          ]),
+                            ]),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -1212,6 +1213,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       mapController: mapController,
       options: MapOptions(
         zoom: 5.0,
+        minZoom: 1.0,
         maxZoom: 18.0,
         center: location == null ? null : LatLng(location!.latitude, location!.longitude),
         onTap: (_, __) => popupController.hideAllPopups(),
