@@ -125,7 +125,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
             ? "Unknown"
             : "Messages";
 
-    if (!ss.settings.reachedConversationList.value || ss.prefs.getBool('private-api-enable-tip') != true) {
+    if (!ss.settings.reachedConversationList.value) {
       Timer.periodic(const Duration(seconds: 1), (Timer t) {
         bool notInSettings = ns.isTabletMode(context)
             ? !Get.keys.containsKey(3) || Get.keys[3]?.currentContext == null
