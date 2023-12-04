@@ -110,106 +110,108 @@ class SettingsService extends GetxService {
           settings.save();
         }
 
-        if (settings.enablePrivateAPI.value) {
-          await prefs.setBool('private-api-enable-tip', true);
-        } else if (settings.serverPrivateAPI.value == true && prefs.getBool('private-api-enable-tip') != true) {
-          final ScrollController controller = ScrollController();
-          await showDialog(
-            context: Get.context!,
-            barrierDismissible: false,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text("Private API Features"),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: min(context.height / 3, Get.context!.height - 300)),
-                      child: ScrollbarWrapper(
-                        controller: controller,
-                        showScrollbar: true,
-                        child: SingleChildScrollView(
+        if (settings.finishedSetup.value) {
+          if (settings.enablePrivateAPI.value) {
+            await prefs.setBool('private-api-enable-tip', true);
+          } else if (settings.serverPrivateAPI.value == true && prefs.getBool('private-api-enable-tip') != true) {
+            final ScrollController controller = ScrollController();
+            await showDialog(
+              context: Get.context!,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Private API Features"),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: min(context.height / 3, Get.context!.height - 300)),
+                        child: ScrollbarWrapper(
                           controller: controller,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("You've enabled Private API Features on your server!"),
-                              const SizedBox(height: 10),
-                              const Text("Private API features give you the ability to:"),
-                              const Text(" - Send & Receive typing indicators"),
-                              const Text(" - Send tapbacks, effects, and mentions"),
-                              const Text(" - Send messages with subject lines"),
-                              if (isMinBigSurSync) const Text(" - Send replies"),
-                              if (isMinVenturaSync) const Text(" - Edit & Unsend messages"),
-                              const SizedBox(height: 10),
-                              const Text(" - Mark chats read on the Mac server"),
-                              if (isMinVenturaSync) const Text(" - Mark chats as unread on the Mac server"),
-                              const SizedBox(height: 10),
-                              const Text(" - Rename group chats"),
-                              const Text(" - Add & remove people from group chats"),
-                              if (isMinBigSurSync) const Text(" - Change the group chat photo"),
-                              if (isMinBigSurSync) const SizedBox(height: 10),
-                              if (isMinMontereySync) const Text(" - View Focus statuses"),
-                              if (isMinBigSurSync) const Text(" - Use Find My Friends"),
-                              if (isMinBigSurSync) const Text(" - Be notified of incoming FaceTime calls"),
-                              if (isMinVenturaSync) const Text(" - Answer FaceTime calls (experimental)"),
-                              const SizedBox(height: 10),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              await prefs.setBool('private-api-enable-tip', true);
-                              Navigator.of(context).pop();
-                              ns.closeSettings(context);
-                              ns.closeAllConversationView(context);
-                              await cm.setAllInactive();
-                              await Navigator.of(Get.context!).push(
-                                ThemeSwitcher.buildPageRoute(
-                                  builder: (BuildContext context) {
-                                    return SettingsPage(
-                                      initialPage: PrivateAPIPanel(enablePrivateAPIonInit: true,),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Text(
-                                "Enable Private API Features",
-                                textScaleFactor: 1.2,
-                              ),
+                          showScrollbar: true,
+                          child: SingleChildScrollView(
+                            controller: controller,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("You've enabled Private API Features on your server!"),
+                                const SizedBox(height: 10),
+                                const Text("Private API features give you the ability to:"),
+                                const Text(" - Send & Receive typing indicators"),
+                                const Text(" - Send tapbacks, effects, and mentions"),
+                                const Text(" - Send messages with subject lines"),
+                                if (isMinBigSurSync) const Text(" - Send replies"),
+                                if (isMinVenturaSync) const Text(" - Edit & Unsend messages"),
+                                const SizedBox(height: 10),
+                                const Text(" - Mark chats read on the Mac server"),
+                                if (isMinVenturaSync) const Text(" - Mark chats as unread on the Mac server"),
+                                const SizedBox(height: 10),
+                                const Text(" - Rename group chats"),
+                                const Text(" - Add & remove people from group chats"),
+                                if (isMinBigSurSync) const Text(" - Change the group chat photo"),
+                                if (isMinBigSurSync) const SizedBox(height: 10),
+                                if (isMinMontereySync) const Text(" - View Focus statuses"),
+                                if (isMinBigSurSync) const Text(" - Use Find My Friends"),
+                                if (isMinBigSurSync) const Text(" - Be notified of incoming FaceTime calls"),
+                                if (isMinVenturaSync) const Text(" - Answer FaceTime calls (experimental)"),
+                                const SizedBox(height: 10),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.center,
-                          child: TextButton(
-                            onPressed: () async {
-                              await prefs.setBool('private-api-enable-tip', true);
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text("Don't ask again"),
+                      ),
+                      const SizedBox(height: 20),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Align(
+                            alignment: Alignment.center,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await prefs.setBool('private-api-enable-tip', true);
+                                Navigator.of(context).pop();
+                                ns.closeSettings(context);
+                                ns.closeAllConversationView(context);
+                                await cm.setAllInactive();
+                                await Navigator.of(Get.context!).push(
+                                  ThemeSwitcher.buildPageRoute(
+                                    builder: (BuildContext context) {
+                                      return SettingsPage(
+                                        initialPage: PrivateAPIPanel(enablePrivateAPIonInit: true,),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  "Enable Private API Features",
+                                  textScaleFactor: 1.2,
+                                ),
+                              ),
+                            ),
                           ),
-                        )
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.center,
+                            child: TextButton(
+                              onPressed: () async {
+                                await prefs.setBool('private-api-enable-tip', true);
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text("Don't ask again"),
+                            ),
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
         }
 
         final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
