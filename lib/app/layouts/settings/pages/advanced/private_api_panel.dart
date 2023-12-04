@@ -130,7 +130,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                           onChanged: (bool val) async {
                             ss.settings.enablePrivateAPI.value = val;
                             saveSettings();
-                            await ss.prefs.remove('private-api-enable-tip');
                           },
                           initialVal: ss.settings.enablePrivateAPI.value,
                           title: "Enable Private API Features",
