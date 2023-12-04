@@ -135,7 +135,9 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 buildLocationMarker(event);
               });
             });
-            mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+            if (!refresh) {
+              mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+            }
           }
         }
         setState(() {
