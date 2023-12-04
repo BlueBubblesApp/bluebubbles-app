@@ -165,6 +165,15 @@ class NavigatorService extends GetxService {
     }
   }
 
+  void closeSettings(BuildContext context) {
+    if (Get.keys.containsKey(3) && Get.keys[3]?.currentContext != null && isTabletMode(context)) {
+      Get.until((route) => route.isFirst, id: 3);
+      Get.back(closeOverlays: true);
+    } else {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  }
+
   /// Remember to call `await cm.setAllInactive()` after calling this function
   void closeAllConversationView(BuildContext context) {
     if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && ns.isTabletMode(context)) {
