@@ -1,5 +1,9 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/settings/pages/advanced/private_api_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
+import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -48,8 +52,7 @@ class SettingsService extends GetxService {
         DeviceOrientation.landscapeRight,
         DeviceOrientation.landscapeLeft,
         DeviceOrientation.portraitUp,
-        if (settings.allowUpsideDownRotation.value)
-          DeviceOrientation.portraitDown,
+        if (settings.allowUpsideDownRotation.value) DeviceOrientation.portraitDown,
       ]);
     }
     // launch at startup
@@ -97,9 +100,116 @@ class SettingsService extends GetxService {
     if (refresh) {
       final response = await http.serverInfo();
       if (response.statusCode == 200) {
-        if (ss.settings.iCloudAccount.isEmpty && response.data['data']['detected_icloud'] is String) {
-          ss.settings.iCloudAccount.value = response.data['data']['detected_icloud'];
-          ss.settings.save();
+        if (settings.iCloudAccount.isEmpty && response.data['data']['detected_icloud'] is String) {
+          settings.iCloudAccount.value = response.data['data']['detected_icloud'];
+          settings.save();
+        }
+
+        if (response.data['data']['private_api'] is bool) {
+          settings.serverPrivateAPI.value = response.data['data']['private_api'];
+          settings.save();
+        }
+
+        if (settings.enablePrivateAPI.value) {
+          await prefs.setBool('private-api-enable-tip', true);
+        } else if (settings.serverPrivateAPI.value == true && prefs.getBool('private-api-enable-tip') != true) {
+          final ScrollController controller = ScrollController();
+          await showDialog(
+            context: Get.context!,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text("Private API Features"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: min(context.height / 3, Get.context!.height - 300)),
+                      child: ScrollbarWrapper(
+                        controller: controller,
+                        showScrollbar: true,
+                        child: SingleChildScrollView(
+                          controller: controller,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text("You've enabled Private API Features on your server!"),
+                              const SizedBox(height: 10),
+                              const Text("Private API features give you the ability to:"),
+                              const Text(" - Send & Receive typing indicators"),
+                              const Text(" - Send tapbacks, effects, and mentions"),
+                              const Text(" - Send messages with subject lines"),
+                              if (isMinBigSurSync) const Text(" - Send replies"),
+                              if (isMinVenturaSync) const Text(" - Edit & Unsend messages"),
+                              const SizedBox(height: 10),
+                              const Text(" - Mark chats read on the Mac server"),
+                              if (isMinVenturaSync) const Text(" - Mark chats as unread on the Mac server"),
+                              const SizedBox(height: 10),
+                              const Text(" - Rename group chats"),
+                              const Text(" - Add & remove people from group chats"),
+                              if (isMinBigSurSync) const Text(" - Change the group chat photo"),
+                              if (isMinBigSurSync) const SizedBox(height: 10),
+                              if (isMinMontereySync) const Text(" - View Focus statuses"),
+                              if (isMinBigSurSync) const Text(" - Use Find My Friends"),
+                              if (isMinBigSurSync) const Text(" - Be notified of incoming FaceTime calls"),
+                              if (isMinVenturaSync) const Text(" - Answer FaceTime calls (experimental)"),
+                              const SizedBox(height: 10),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await prefs.setBool('private-api-enable-tip', true);
+                              Navigator.of(context).pop();
+                              ns.closeSettings(context);
+                              ns.closeAllConversationView(context);
+                              await cm.setAllInactive();
+                              await Navigator.of(Get.context!).push(
+                                ThemeSwitcher.buildPageRoute(
+                                  builder: (BuildContext context) {
+                                    return SettingsPage(
+                                      initialPage: PrivateAPIPanel(enablePrivateAPIonInit: true,),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Text(
+                                "Enable Private API Features",
+                                textScaleFactor: 1.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.center,
+                          child: TextButton(
+                            onPressed: () async {
+                              await prefs.setBool('private-api-enable-tip', true);
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text("Don't ask again"),
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
         }
 
         final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
@@ -120,8 +230,8 @@ class SettingsService extends GetxService {
     }
   }
 
-  Tuple4<int, int, String, int> serverDetailsSync() =>
-      Tuple4(prefs.getInt("macos-version") ?? 11, prefs.getInt("macos-minor-version") ?? 0, prefs.getString("server-version") ?? "0.0.0", prefs.getInt("server-version-code") ?? 0);
+  Tuple4<int, int, String, int> serverDetailsSync() => Tuple4(prefs.getInt("macos-version") ?? 11, prefs.getInt("macos-minor-version") ?? 0,
+      prefs.getString("server-version") ?? "0.0.0", prefs.getInt("server-version-code") ?? 0);
 
   Future<bool> get isMinSierra async {
     final val = await getServerDetails();
@@ -195,7 +305,9 @@ class SettingsService extends GetxService {
                 height: 15.0,
               ),
               if (metadata.isNotEmpty)
-                Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}\n\nWarning: Installing the update will briefly disconnect you.", style: context.theme.textTheme.bodyLarge)
+                Text(
+                    "Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}\n\nWarning: Installing the update will briefly disconnect you.",
+                    style: context.theme.textTheme.bodyLarge)
             ],
           ),
           actions: [
@@ -246,7 +358,8 @@ class SettingsService extends GetxService {
             const SizedBox(
               height: 15.0,
             ),
-            Text("Version: $version\nRelease Date: ${buildDate(release.createdAt)}\nRelease Name: ${release.name}", style: context.theme.textTheme.bodyLarge)
+            Text("Version: $version\nRelease Date: ${buildDate(release.createdAt)}\nRelease Name: ${release.name}",
+                style: context.theme.textTheme.bodyLarge)
           ],
         ),
         actions: [

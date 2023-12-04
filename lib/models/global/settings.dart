@@ -84,6 +84,7 @@ class Settings {
   // final RxString emojiFontFamily;
 
   // Private API features
+  final RxnBool serverPrivateAPI = RxnBool();
   final RxBool enablePrivateAPI = false.obs;
   final RxBool privateSendTypingIndicators = false.obs;
   final RxBool privateMarkChatAsRead = false.obs;

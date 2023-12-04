@@ -37,7 +37,12 @@ import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
 
 class SettingsPage extends StatefulWidget {
-  SettingsPage({Key? key}) : super(key: key);
+  SettingsPage({
+    Key? key,
+    this.initialPage,
+  }) : super(key: key);
+
+  final Widget? initialPage;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -56,8 +61,15 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         ns.pushAndRemoveSettingsUntil(
           context,
-          ServerManagementPanel(),
+          widget.initialPage ?? ServerManagementPanel(),
               (route) => route.isFirst,
+        );
+      });
+    } else if (widget.initialPage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        ns.pushSettings(
+          context,
+          widget.initialPage!,
         );
       });
     }
@@ -553,7 +565,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               backgroundColor: tileColor,
                               title: "Private API Features",
                               subtitle:
-                              "Private API ${ss.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
+                              "Private API ${ss.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}${ss.settings.enablePrivateAPI.value && ss.settings.serverPrivateAPI.value == false ? " but not set up!" : ""}",
                               trailing: nextIcon,
                               onTap: () async {
                                 ns.pushAndRemoveSettingsUntil(
@@ -566,7 +578,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                 iosIcon: CupertinoIcons.exclamationmark_shield,
                                 materialIcon: Icons.gpp_maybe,
                                 containerColor: getIndicatorColor(ss.settings.enablePrivateAPI.value
-                                    ? SocketState.connected
+                                    ? ss.settings.serverPrivateAPI.value == false ? SocketState.error : SocketState.connected
                                     : SocketState.connecting),
                               ),
                             )),
