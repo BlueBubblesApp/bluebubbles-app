@@ -232,9 +232,10 @@ class NotificationsService extends GetxService {
     } else if (kIsDesktop) {
       _lock.synchronized(() async => await showPersistentDesktopFaceTimeNotif(callUuid, caller, chatIcon, isAudio));
     } else {
+      final numeric = callUuid?.numericOnly();
       await mcs.invokeMethod("incoming-facetime-notification", {
         "CHANNEL_ID": FACETIME_CHANNEL,
-        "notificationId": Random().nextInt(9998) + 1,
+        "notificationId": numeric != null ? int.parse(numeric.substring(0, min(8, numeric.length))) : Random().nextInt(9998) + 1,
         "title": title,
         "body": text,
         "avatar": chatIcon,
@@ -247,6 +248,9 @@ class NotificationsService extends GetxService {
   Future<void> clearFaceTimeNotification(String callUuid) async {
     if (kIsDesktop) {
       await clearDesktopFaceTimeNotif(callUuid);
+    } else if (!kIsWeb) {
+      final numeric = callUuid.numericOnly();
+      mcs.invokeMethod("clear-chat-notifs", {"id": int.parse(numeric.substring(0, min(8, numeric.length)))});
     }
   }
 

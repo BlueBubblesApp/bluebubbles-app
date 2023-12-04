@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
@@ -95,29 +97,48 @@ class ConversationListController extends StatefulController {
 }
 
 class ConversationList extends CustomStateful<ConversationListController> {
-  ConversationList({
-    Key? key,
-    required bool showArchivedChats,
-    required bool showUnknownSenders
-  }) : super(key: key, parentController: Get.put(ConversationListController(
-    showArchivedChats: showArchivedChats,
-    showUnknownSenders: showUnknownSenders,
-  ), tag: showArchivedChats ? "Archived" : showUnknownSenders ? "Unknown" : "Messages"));
+  ConversationList({Key? key, required bool showArchivedChats, required bool showUnknownSenders})
+      : super(
+            key: key,
+            parentController: Get.put(
+                ConversationListController(
+                  showArchivedChats: showArchivedChats,
+                  showUnknownSenders: showUnknownSenders,
+                ),
+                tag: showArchivedChats
+                    ? "Archived"
+                    : showUnknownSenders
+                        ? "Unknown"
+                        : "Messages"));
 
   @override
   State<StatefulWidget> createState() => _ConversationListState();
 }
 
 class _ConversationListState extends CustomState<ConversationList, void, ConversationListController> {
-
   @override
   void initState() {
     super.initState();
     tag = controller.showArchivedChats
         ? "Archived"
         : controller.showUnknownSenders
-        ? "Unknown"
-        : "Messages";
+            ? "Unknown"
+            : "Messages";
+
+    if (!ss.settings.reachedConversationList.value) {
+      Timer.periodic(const Duration(seconds: 1), (Timer t) {
+        bool notInSettings = ns.isTabletMode(context)
+            ? !Get.keys.containsKey(3) || Get.keys[3]?.currentContext == null
+            : Get.rawRoute?.settings.name == "/";
+        // This only runs once
+        if (notInSettings) {
+          ss.settings.reachedConversationList.value = true;
+          ss.saveSettings();
+          ss.getServerDetails(refresh: true);
+          t.cancel();
+        }
+      });
+    }
 
     // Extra safety check to make sure Android doesn't open the last chat when opening the app
     if (kIsDesktop || kIsWeb) {
@@ -132,9 +153,9 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
           ns.pushAndRemoveUntil(
             context,
             ConversationView(
-              chat: kIsWeb
-                  ? (await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat')))!
-                  : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))!),
+                chat: kIsWeb
+                    ? (await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat')))!
+                    : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))!),
             (route) => route.isFirst,
           );
         });
@@ -154,8 +175,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: ss.settings.immersiveMode.value
-            ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: brightness.opposite,
@@ -166,54 +186,54 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         minRatio: kIsDesktop || kIsWeb ? 0.1 : 0.33,
         maxRatio: 0.5,
         allowResize: true,
-        left: !showAltLayout ? child : LayoutBuilder(
-          builder: (context, constraints) {
-            ns.maxWidthLeft = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
-                Get.until((route) {
-                  bool id2result = false;
-                  // check if we should pop the left side first
-                  Get.until((route) {
-                    if (route.settings.name != "initial") {
-                      Get.back(id: 2);
-                      id2result = true;
-                    }
-                    if (!(Get.global(2).currentState?.canPop() ?? true)) {
-                      if (cm.activeChat != null) {
-                        cvc(cm.activeChat!.chat).close();
+        left: !showAltLayout
+            ? child
+            : LayoutBuilder(builder: (context, constraints) {
+                ns.maxWidthLeft = constraints.maxWidth;
+                return WillPopScope(
+                  onWillPop: () async {
+                    Get.until((route) {
+                      bool id2result = false;
+                      // check if we should pop the left side first
+                      Get.until((route) {
+                        if (route.settings.name != "initial") {
+                          Get.back(id: 2);
+                          id2result = true;
+                        }
+                        if (!(Get.global(2).currentState?.canPop() ?? true)) {
+                          if (cm.activeChat != null) {
+                            cvc(cm.activeChat!.chat).close();
+                          }
+                          eventDispatcher.emit('update-highlight', null);
+                        }
+                        return true;
+                      }, id: 2);
+                      if (!id2result) {
+                        if (route.settings.name == "initial") {
+                          SystemNavigator.pop();
+                        } else {
+                          Get.back(id: 1);
+                        }
                       }
-                      eventDispatcher.emit('update-highlight', null);
-                    }
-                    return true;
-                  }, id: 2);
-                  if (!id2result) {
-                    if (route.settings.name == "initial") {
-                      SystemNavigator.pop();
-                    } else {
-                      Get.back(id: 1);
-                    }
-                  }
-                  return true;
-                }, id: 1);
-                return false;
-              },
-              child: Navigator(
-                key: Get.nestedKey(1),
-                requestFocus: false,
-                onPopPage: (route, _) {
-                  return false;
-                },
-                pages: [
-                  CupertinoPage(
-                    name: "initial",
-                    child: child,
-                  )
-                ],
-              ),
-            );
-          }
-        ),
+                      return true;
+                    }, id: 1);
+                    return false;
+                  },
+                  child: Navigator(
+                    key: Get.nestedKey(1),
+                    requestFocus: false,
+                    onPopPage: (route, _) {
+                      return false;
+                    },
+                    pages: [
+                      CupertinoPage(
+                        name: "initial",
+                        child: child,
+                      )
+                    ],
+                  ),
+                );
+              }),
         right: LayoutBuilder(
           builder: (context, constraints) {
             ns.maxWidthRight = constraints.maxWidth;

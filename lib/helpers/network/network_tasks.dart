@@ -18,8 +18,8 @@ class NetworkTasks {
         socket.sendMessage("update-typing-status", {"chatGuid": cm.activeChat!.chat.guid});
       }
       await fcm.registerDevice();
-      await sync.startIncrementalSync();
       await ss.getServerDetails(refresh: true);
+      await sync.startIncrementalSync();
 
       try {
         ss.checkServerUpdate();

@@ -348,7 +348,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                               ),
                       ),
                       const SettingsTile(
-                        title: "Send/Receve Sound Volume",
+                        title: "Send/Receive Sound Volume",
                         subtitle: "Controls the volume of the send and receive sounds",
                       ),
                       Container(
