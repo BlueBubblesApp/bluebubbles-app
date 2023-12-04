@@ -28,6 +28,7 @@ class SettingsService extends GetxService {
   late Settings settings;
   late FCMData fcmData;
   bool _canAuthenticate = false;
+  bool _showingPapiPopup = false;
   late final SharedPreferences prefs;
 
   bool get canAuthenticate => _canAuthenticate && (Platform.isWindows || (fs.androidInfo?.version.sdkInt ?? 0) > 28);
@@ -110,11 +111,23 @@ class SettingsService extends GetxService {
           settings.save();
         }
 
-        if (settings.finishedSetup.value) {
+        final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
+        final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
+        final serverVersion = response.data['data']['server_version'];
+        final code = Version.parse(serverVersion ?? "0.0.0");
+        final versionCode = code.major * 100 + code.minor * 21 + code.patch;
+        if (version != null) await prefs.setInt("macos-version", version);
+        if (minorVersion != null) await prefs.setInt("macos-minor-version", minorVersion);
+        if (serverVersion != null) await prefs.setString("server-version", serverVersion);
+        await prefs.setInt("server-version-code", versionCode);
+
+        if (settings.finishedSetup.value && settings.reachedConversationList.value) {
           if (settings.enablePrivateAPI.value) {
             await prefs.setBool('private-api-enable-tip', true);
           } else if (settings.serverPrivateAPI.value == true && prefs.getBool('private-api-enable-tip') != true) {
             final ScrollController controller = ScrollController();
+            if (_showingPapiPopup) Navigator.of(Get.context!).pop();
+            _showingPapiPopup = true;
             await showDialog(
               context: Get.context!,
               barrierDismissible: false,
@@ -211,18 +224,10 @@ class SettingsService extends GetxService {
                 );
               },
             );
+            _showingPapiPopup = false;
           }
         }
 
-        final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
-        final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
-        final serverVersion = response.data['data']['server_version'];
-        final code = Version.parse(serverVersion ?? "0.0.0");
-        final versionCode = code.major * 100 + code.minor * 21 + code.patch;
-        if (version != null) await prefs.setInt("macos-version", version);
-        if (minorVersion != null) await prefs.setInt("macos-minor-version", minorVersion);
-        if (serverVersion != null) await prefs.setString("server-version", serverVersion);
-        await prefs.setInt("server-version-code", versionCode);
         return Tuple4(version ?? 11, minorVersion ?? 0, serverVersion, versionCode);
       } else {
         return const Tuple4(11, 0, "0.0.0", 0);

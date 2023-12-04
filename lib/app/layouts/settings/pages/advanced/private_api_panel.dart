@@ -45,9 +45,13 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      await ss.getServerDetails(refresh: true);
       if (widget.enablePrivateAPIonInit && ss.settings.serverPrivateAPI.value == true) {
         ss.settings.enablePrivateAPI.value = true;
+        http.serverInfo().then((response) {
+          final String serverVersion = response.data['data']['server_version'] ?? "0.0.1";
+          Version version = Version.parse(serverVersion);
+          controller.serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
+        });
       }
     });
   }
