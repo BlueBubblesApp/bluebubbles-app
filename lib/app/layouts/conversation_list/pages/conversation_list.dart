@@ -133,7 +133,6 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         // This only runs once
         if (notInSettings) {
           ss.settings.reachedConversationList.value = true;
-          ss.prefs.remove('private-api-enable-tip');
           ss.saveSettings();
           ss.getServerDetails(refresh: true);
           t.cancel();
