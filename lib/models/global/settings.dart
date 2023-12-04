@@ -16,6 +16,7 @@ class Settings {
   final RxString serverAddress = "".obs;
   final RxMap<String, String> customHeaders = <String, String>{}.obs;
   final RxBool finishedSetup = false.obs;
+  final RxBool reachedConversationList = false.obs;
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
   final RxBool autoSave = false.obs;
@@ -84,6 +85,7 @@ class Settings {
   // final RxString emojiFontFamily;
 
   // Private API features
+  final RxnBool serverPrivateAPI = RxnBool();
   final RxBool enablePrivateAPI = false.obs;
   final RxBool privateSendTypingIndicators = false.obs;
   final RxBool privateMarkChatAsRead = false.obs;
@@ -295,6 +297,7 @@ class Settings {
         'serverAddress': serverAddress.value,
         'customHeaders': customHeaders,
         'finishedSetup': finishedSetup.value,
+        'reachedConversationList': reachedConversationList.value,
         'colorsFromMedia': colorsFromMedia.value,
         'monetTheming': monetTheming.value.index,
         'userAvatarPath': userAvatarPath.value,

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -151,7 +152,9 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                     Navigator.of(Get.context!).push(
                       ThemeSwitcher.buildPageRoute(
                         builder: (BuildContext context) {
-                          return BackupRestorePanel();
+                          return SettingsPage(
+                              initialPage: BackupRestorePanel(),
+                          );
                         },
                       ),
                     );
