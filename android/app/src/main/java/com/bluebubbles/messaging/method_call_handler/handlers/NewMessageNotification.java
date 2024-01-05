@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -153,7 +154,10 @@ public class NewMessageNotification implements Handler {
             Log.d(TAG, "Notification already exists, appending...");
             style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(existingNotification);
         } else {
-            style = new NotificationCompat.MessagingStyle(group.build());
+            // Build a person for "me"
+            SharedPreferences mPrefs = context.getSharedPreferences("FlutterSharedPreferences", 0);
+            Person.Builder me = new Person.Builder().setName(mPrefs.getString("flutter.userName", "You"));
+            style = new NotificationCompat.MessagingStyle(me.build());
         }
 
         // Set whether the chat is a group conversation
