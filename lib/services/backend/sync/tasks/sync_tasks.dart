@@ -46,6 +46,7 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
       Map<String, List<String>> chatHandles = {};
       Map<String, Chat> chatsToSave = {};
       for (final chat in inputChats) {
+        chat.dbOnlyLatestMessageDate = chat.latestMessage.dateCreated;
         chatsToSave[chat.guid] = chat;
         for (final p in chat.participants) {
           if (!handlesToSave.containsKey(p.uniqueAddressAndService)) {
@@ -258,7 +259,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
     // If we still want to update the info, do so
     if (didUpdate) {
       chat.latestMessage = lastMessage;
-      
+      chat.dbOnlyLatestMessageDate = lastMessage.dateCreated;
       // Mark the chat as unread if we updated the last message & it's not from us
       if (toggleUnread && !(lastMessage.isFromMe ?? false)) {
         chat.toggleHasUnread(true);

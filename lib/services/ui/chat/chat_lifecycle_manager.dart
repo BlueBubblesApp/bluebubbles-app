@@ -16,14 +16,20 @@ class ChatLifecycleManager {
   ConversationViewController? controller;
 
   ChatLifecycleManager(this.chat) {
-    if (!kIsWeb) {
+
+    if (!kIsWeb && !ss.settings.turboMode.value) {
       final chatQuery = chatBox.query(Chat_.guid.equals(chat.guid)).watch();
       sub = chatQuery.listen((Query<Chat> query) async{
+        if (ss.settings.turboMode.value) return;
         final _chat = await runAsync(() {
           return chatBox.get(chat.id!);
         });
         if (_chat != null) {
-          bool shouldSort = chat.latestMessage.dateCreated != _chat.latestMessage.dateCreated;
+          bool shouldSort = false;
+          if (_chat.dbOnlyLatestMessageDate != null && chat.dbOnlyLatestMessageDate != null) {
+            shouldSort =
+                chat.dbOnlyLatestMessageDate != _chat.dbOnlyLatestMessageDate;
+          }
           chats.updateChat(_chat, shouldSort: shouldSort);
           chat = _chat.merge(chat);
         }

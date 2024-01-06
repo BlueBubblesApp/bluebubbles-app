@@ -82,6 +82,7 @@ class Settings {
   final RxBool scrollToLastUnread = false.obs;
   final RxString userName = "You".obs;
   final RxnString userAvatarPath = RxnString();
+  final RxBool turboMode = true.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -289,6 +290,7 @@ class Settings {
       'windowEffectCustomOpacityLight': windowEffectCustomOpacityLight.value,
       'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
       'useWindowsAccent': useWindowsAccent.value,
+      'turboMode' : turboMode.value,
     };
     if (includeAll) {
       map.addAll({
@@ -413,6 +415,7 @@ class Settings {
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
+    ss.settings.turboMode.value = map['turboMode'] ?? true;
     ss.settings.save();
 
     eventDispatcher.emit("theme-update", null);
@@ -537,6 +540,7 @@ class Settings {
     s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
     s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
+    s.turboMode.value = map['turboMode'] ?? true;
     return s;
   }
 }

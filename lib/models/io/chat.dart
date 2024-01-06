@@ -312,6 +312,7 @@ class Chat {
       dateCreated: DateTime.fromMillisecondsSinceEpoch(0),
       guid: guid,
     );
+    dbOnlyLatestMessageDate = _latestMessage?.dateCreated;
     return _latestMessage!;
   }
   Message get dbLatestMessage {
@@ -319,9 +320,13 @@ class Chat {
       dateCreated: DateTime.fromMillisecondsSinceEpoch(0),
       guid: guid,
     );
+    dbOnlyLatestMessageDate = _latestMessage?.dateCreated;
     return _latestMessage!;
   }
-  set latestMessage(Message m) => _latestMessage = m;
+  set latestMessage(Message m){
+    _latestMessage = m;
+    dbOnlyLatestMessageDate = _latestMessage?.dateCreated;
+  }
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
@@ -372,6 +377,7 @@ class Chat {
     if (textFieldAttachments.isEmpty) textFieldAttachments = [];
     _participants = participants ?? [];
     _latestMessage = latestMessage;
+    dbOnlyLatestMessageDate = _latestMessage?.dateCreated;
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
@@ -703,6 +709,7 @@ class Chat {
           || (message.guid != latest.guid && message.dateCreated == latest.dateCreated);
       if (isNewer) {
         _latestMessage = message;
+        dbOnlyLatestMessageDate = message.dateCreated;
         if (dateDeleted != null) {
           dateDeleted = null;
           save(updateDateDeleted: true);
@@ -742,7 +749,7 @@ class Chat {
     if (message.isParticipantEvent && checkForMessageText) {
       serverSyncParticipants();
     }
-
+    chats.updateChat(this, shouldSort: isNewer);
     // Return the current chat instance (with updated vals)
     return this;
   }
@@ -999,9 +1006,10 @@ class Chat {
     // Compare when one is pinned and the other isn't
     if (!a.isPinned! && b.isPinned!) return 1;
     if (a.isPinned! && !b.isPinned!) return -1;
-
+    if (a.dbOnlyLatestMessageDate == null) return 1;
+    if (b.dbOnlyLatestMessageDate == null) return -1;
     // Compare the last message dates
-    return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
+    return -(a.dbOnlyLatestMessageDate)!.compareTo(b.dbOnlyLatestMessageDate!);
   }
 
   static Future<void> getIcon(Chat c, {bool force = false}) async {
