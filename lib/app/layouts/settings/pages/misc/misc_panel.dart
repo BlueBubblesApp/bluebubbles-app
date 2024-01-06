@@ -245,19 +245,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       return const SizedBox.shrink();
                     }
                   }),
-                  Obx(() =>
-                      SettingsSwitch(
-                        onChanged: (bool val) {
-                          ss.settings.turboMode.value = val;
-                          chats.init(force: true);
-                          saveSettings();
-                        },
-                        initialVal: ss.settings.turboMode.value,
-                        title: "(Experimental) Turbo Mode",
-                        subtitle: "Reduces processing to minimize CPU and battery life (might lead to random issues with sorting, chat list updates).",
-                        isThreeLine: true,
-                        backgroundColor: tileColor,
-                      )),
                 ],
               ),
               SettingsHeader(

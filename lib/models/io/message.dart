@@ -215,7 +215,6 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
           isNewer = first.dateCreated!.isAfter(inputChat.latestMessage.dateCreated!);
           if (isNewer) {
             inputChat.latestMessage = first;
-            inputChat.dbOnlyLatestMessageDate = first.dateCreated;
             if (!first.isFromMe! && !cm.isChatActive(inputChat.guid)) {
               inputChat.toggleHasUnread(true);
             }
