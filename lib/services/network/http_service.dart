@@ -305,12 +305,12 @@ class HttpService extends GetxService {
   /// response or how to query the DB.
   ///
   /// [withQuery] options: `"participants"`, `"lastmessage"`, `"sms"`, `"archived"`
-  Future<Response> chats({List<String> withQuery = const [], int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
+  Future<Response> chats({List<String> withQuery = const [], int offset = 0, int limit = 100, String? sort, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/chat/query",
           queryParameters: buildQueryParams(),
-          data: {"with": withQuery, "offset": offset, "limit": limit},
+          data: {"with": withQuery, "offset": offset, "limit": limit, "sort": sort},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
