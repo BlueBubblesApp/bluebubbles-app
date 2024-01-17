@@ -126,6 +126,7 @@ class ChatsService extends GetxService {
 
         final address = uri.path;
         final handle = Handle.findOne(addressAndService: Tuple2(address, "iMessage"));
+        ns.closeSettings(Get.context!);
         await ns.pushAndRemoveUntil(
           Get.context!,
           ChatCreator(

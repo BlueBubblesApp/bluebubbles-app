@@ -2,6 +2,20 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.12.6
+
+This is a hotfix update bringing bug fixes to recent issues,
+
+### Changes
+
+- Fixes issue with detecting and showing FaceTime notifications.
+- Fixes issue where name would appear as "App Killer Manager" on French devices.
+- Fixes issue where images would be pixelated when zooming in.
+- Removes blurred background for message popups when on High Performance Mode.
+- Fixes some issues with Firebase causing app crashes.
+- Adds `ngrok-skip-browser-warning` header and custom User-Agent to fix Ngrok Tunnel compatibility issues.
+- Fixes FindMy Friends issues for tablets and large-screen devices
+
 ## v1.12.5
 
 This update fixes bugs (especially on Desktop) and brings some of the latest server's features to the client apps.
