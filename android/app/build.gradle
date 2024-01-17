@@ -33,7 +33,7 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     namespace "com.bluebubbles.messaging"
-    compileSdkVersion 33
+    compileSdkVersion 34
 
     lintOptions {
         checkReleaseBuilds false

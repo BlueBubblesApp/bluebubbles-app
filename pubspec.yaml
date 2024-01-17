@@ -116,7 +116,7 @@ dependencies:
   media_kit_libs_linux: ^1.1.2                   # GNU/Linux dependency package.
   metadata_fetch: ^0.4.1
   mime_type: ^1.0.0
-  mobile_scanner: ^3.4.1 # no desktop support
+  mobile_scanner: ^3.5.5 # no desktop support
   msix: ^3.9.2
   multi_value_listenable_builder: ^0.0.2
   network_info_plus: ^4.0.2
@@ -134,7 +134,7 @@ dependencies:
   pdf: ^3.9.0
   permission_handler: ^10.4.3 # mobile only
   phone_numbers_parser: ^8.0.0
-  photo_manager: ^2.7.1 # only mobile
+  photo_manager: ^3.0.0-dev.2 # only mobile
   photo_view: ^0.14.0
   printing: ^5.10.4
   qr_flutter:
