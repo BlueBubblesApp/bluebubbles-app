@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ThemeSwitcher extends StatefulWidget {
-  ThemeSwitcher({Key? key, required this.iOSSkin, required this.materialSkin, this.samsungSkin}) : super(key: key);
+  ThemeSwitcher({super.key, required this.iOSSkin, required this.materialSkin, this.samsungSkin});
   final Widget iOSSkin;
   final Widget materialSkin;
   final Widget? samsungSkin;

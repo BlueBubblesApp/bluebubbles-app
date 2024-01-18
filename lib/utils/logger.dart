@@ -178,7 +178,7 @@ class BaseLogger extends GetxService {
 
   String _buildLog(LogLevel level, String name, String? tag, dynamic log) {
     final time = DateTime.now().toLocal().toString();
-    String theLog = "[$time][${describeEnum(level).toUpperCase()}]${ls.isBubble ? "[Bubbled]" : ""}";
+    String theLog = "[$time][${level.name.toUpperCase()}]${ls.isBubble ? "[Bubbled]" : ""}";
 
     // If we have a name, add the name
     if (name.isNotEmpty) {

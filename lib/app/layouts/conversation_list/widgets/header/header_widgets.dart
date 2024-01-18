@@ -146,8 +146,8 @@ class OverflowMenu extends StatelessWidget {
                       await ss.prefs.clear();
                       await ss.prefs.setString("selected-dark", "OLED Dark");
                       await ss.prefs.setString("selected-light", "Bright White");
-                      Get.offAll(() => WillPopScope(
-                        onWillPop: () async => false,
+                      Get.offAll(() => PopScope(
+                        canPop: false,
                         child: TitleBarWrapper(child: SetupView()),
                       ), duration: Duration.zero, transition: Transition.noTransition);
                     },

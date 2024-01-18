@@ -36,11 +36,11 @@ class SelectedContact {
 
 class ChatCreator extends StatefulWidget {
   const ChatCreator({
-    Key? key,
+    super.key,
     this.initialText = "",
     this.initialAttachments = const [],
     this.initialSelected = const [],
-  }) : super(key: key);
+  });
 
   final String? initialText;
   final List<PlatformFile> initialAttachments;

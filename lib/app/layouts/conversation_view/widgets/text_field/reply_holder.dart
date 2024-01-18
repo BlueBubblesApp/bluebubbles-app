@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ReplyHolder extends StatefulWidget {
-  const ReplyHolder({Key? key, required this.controller}) : super(key: key);
+  const ReplyHolder({super.key, required this.controller});
 
   final ConversationViewController controller;
 

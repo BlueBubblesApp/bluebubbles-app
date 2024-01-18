@@ -16,10 +16,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 class InteractiveHolder extends CustomStateful<MessageWidgetController> {
   InteractiveHolder({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.message,
-  }) : super(key: key);
+  });
 
   final MessagePart message;
 

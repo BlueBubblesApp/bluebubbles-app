@@ -18,7 +18,7 @@ class TabletModeWrapper extends StatefulWidget {
   final double? minWidthLeft;
   final double? maxWidthLeft;
 
-  const TabletModeWrapper({Key? key,
+  const TabletModeWrapper({super.key,
     required this.left,
     required this.right,
     this.initialRatio = 0.5,
@@ -29,8 +29,7 @@ class TabletModeWrapper extends StatefulWidget {
     this.minWidthLeft,
     this.maxWidthLeft
   }) : assert(initialRatio >= 0),
-        assert(initialRatio <= 1),
-        super(key: key);
+        assert(initialRatio <= 1);
 
   @override
   State<TabletModeWrapper> createState() => _TabletModeWrapperState();

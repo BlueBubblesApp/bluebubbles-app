@@ -12,10 +12,10 @@ class SupportedInteractive extends StatefulWidget {
   final Message message;
 
   SupportedInteractive({
-    Key? key,
+    super.key,
     required this.data,
     required this.message,
-  }) : super(key: key);
+  });
 
   @override
   OptimizedState createState() => _SupportedInteractiveState();

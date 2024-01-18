@@ -89,7 +89,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
       return "Android (${androidInfo.model})";
     } else if (kIsWeb) {
       WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
-      return "Web (${describeEnum(webInfo.browserName)})";
+      return "Web (${webInfo.browserName.name})";
     } else if (Platform.isWindows) {
       WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
       return "Windows (${windowsInfo.computerName})";
@@ -621,7 +621,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               title: Text(item["name"]),
                               subtitle: !item.containsKey('data')
                                   ? Text("Incompatible backup!", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.error))
-                                  : Text("${describeEnum(Brightness.values[data["colorScheme"]["brightness"]]).capitalizeFirst!} theme"),
+                                  : Text("${Brightness.values[data["colorScheme"]["brightness"]].name.capitalizeFirst!} theme"),
                               leading: !item.containsKey('data') ? null : Column(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,

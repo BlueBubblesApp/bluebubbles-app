@@ -7,9 +7,9 @@ import 'package:flutter/rendering.dart';
 
 class Laser extends LeafRenderObjectWidget {
   Laser({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final LaserController controller;
 

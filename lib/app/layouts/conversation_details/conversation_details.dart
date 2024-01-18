@@ -26,7 +26,7 @@ import 'package:url_launcher/url_launcher.dart';
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
 
-  ConversationDetails({Key? key, required this.chat}) : super(key: key);
+  ConversationDetails({super.key, required this.chat});
 
   @override
   State<ConversationDetails> createState() => _ConversationDetailsState();

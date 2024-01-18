@@ -21,14 +21,14 @@ import 'package:universal_io/io.dart';
 
 class TextFieldSuffix extends StatefulWidget {
   const TextFieldSuffix({
-    Key? key,
+    super.key,
     required this.subjectTextController,
     required this.textController,
     required this.controller,
     required this.recorderController,
     required this.sendMessage,
     this.isChatCreator = false,
-  }) : super(key: key);
+  });
 
   final TextEditingController subjectTextController;
   final MentionTextEditingController textController;
@@ -97,7 +97,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   if (widget.controller!.showRecording.value) {
                     if (kIsDesktop) {
                       File temp = File(join(fs.appDocDir.path, "temp", "recorder", "${widget.controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a"));
-                      await RecordPlatform.instance.start(bitRate: 320000, path: temp.path);
+                      await RecordPlatform.instance.start(widget.controller!.chat.guid, const RecordConfig(bitRate: 320000), path: temp.path);
                       return;
                     }
                     await widget.recorderController!.record(
@@ -108,7 +108,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     late final String? path;
                     late final PlatformFile file;
                     if (kIsDesktop) {
-                      path = await RecordPlatform.instance.stop();
+                      path = await RecordPlatform.instance.stop(widget.controller!.chat.guid);
                       if (path == null) return;
                       final _file = File(path);
                       file = PlatformFile(

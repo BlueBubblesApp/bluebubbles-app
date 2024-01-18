@@ -696,10 +696,10 @@ class Skin extends InheritedWidget {
   final Skins skin;
 
   const Skin({
-    Key? key,
-    required Widget child,
+    super.key,
+    required super.child,
     required this.skin,
-  }) : super(key: key, child: child);
+  });
 
   static Skin? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<Skin>();

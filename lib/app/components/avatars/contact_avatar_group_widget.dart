@@ -15,12 +15,12 @@ import 'package:universal_io/io.dart';
 
 class ContactAvatarGroupWidget extends StatefulWidget {
   ContactAvatarGroupWidget({
-    Key? key,
+    super.key,
     required this.chat,
     this.size = 40,
     this.editable = true,
     this.onTap,
-  }) : super(key: key);
+  });
   final Chat chat;
   final double size;
   final bool editable;

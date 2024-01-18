@@ -97,9 +97,8 @@ class ConversationListController extends StatefulController {
 }
 
 class ConversationList extends CustomStateful<ConversationListController> {
-  ConversationList({Key? key, required bool showArchivedChats, required bool showUnknownSenders})
+  ConversationList({super.key, required bool showArchivedChats, required bool showUnknownSenders})
       : super(
-            key: key,
             parentController: Get.put(
                 ConversationListController(
                   showArchivedChats: showArchivedChats,
@@ -190,8 +189,9 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
             ? child
             : LayoutBuilder(builder: (context, constraints) {
                 ns.maxWidthLeft = constraints.maxWidth;
-                return WillPopScope(
-                  onWillPop: () async {
+                return PopScope(
+                  canPop: false,
+                  onPopInvoked: (_) async {
                     Get.until((route) {
                       bool id2result = false;
                       // check if we should pop the left side first
@@ -217,7 +217,6 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                       }
                       return true;
                     }, id: 1);
-                    return false;
                   },
                   child: Navigator(
                     key: Get.nestedKey(1),
@@ -237,10 +236,10 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         right: LayoutBuilder(
           builder: (context, constraints) {
             ns.maxWidthRight = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
+            return PopScope(
+              canPop: false,
+              onPopInvoked: (_) async {
                 Get.back(id: 2);
-                return false;
               },
               child: Navigator(
                 key: Get.nestedKey(2),

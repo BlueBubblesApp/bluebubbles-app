@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
 import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 
 enum PayloadEncoding {
   JSON_OBJECT,
@@ -66,11 +65,11 @@ class ServerPayload {
     originalJson: json,
     data: json["data"] ?? json,
     isLegacy: json.containsKey("type"),
-    type: PayloadType.values.firstWhereOrNull((element) => describeEnum(element) == json["type"]) ?? PayloadType.OTHER,
+    type: PayloadType.values.firstWhereOrNull((element) => element.name == json["type"]) ?? PayloadType.OTHER,
     subtype: json["subtype"],
     isEncrypted: json["encrypted"] ?? false,
     isPartial: json["partial"] ?? false,
-    encoding: PayloadEncoding.values.firstWhereOrNull((element) => describeEnum(element) == json["encoding"]) ?? PayloadEncoding.JSON_OBJECT,
-    encryptionType: EncryptionType.values.firstWhereOrNull((element) => describeEnum(element) == json["encryptionType"]) ?? EncryptionType.AES_PB,
+    encoding: PayloadEncoding.values.firstWhereOrNull((element) => element.name == json["encoding"]) ?? PayloadEncoding.JSON_OBJECT,
+    encryptionType: EncryptionType.values.firstWhereOrNull((element) => element.name == json["encryptionType"]) ?? EncryptionType.AES_PB,
   );
 }

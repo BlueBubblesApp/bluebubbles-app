@@ -17,12 +17,12 @@ class IncomingItem extends QueueItem {
   String? tempGuid;
 
   IncomingItem._({
-    required QueueType type,
-    Completer<void>? completer,
+    required super.type,
+    super.completer,
     required this.chat,
     required this.message,
     this.tempGuid,
-  }) : super(type: type, completer: completer);
+  });
 
   factory IncomingItem.fromMap(QueueType t, Map<String, dynamic> m, [Completer<void>? c]) {
     return IncomingItem._(
@@ -43,12 +43,12 @@ class OutgoingItem extends QueueItem {
   Map<String, dynamic>? customArgs;
 
   OutgoingItem({
-    required QueueType type,
-    Completer<void>? completer,
+    required super.type,
+    super.completer,
     required this.chat,
     required this.message,
     this.selected,
     this.reaction,
     this.customArgs,
-  }) : super(type: type, completer: completer);
+  });
 }

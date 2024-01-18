@@ -34,6 +34,7 @@ import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
+import 'package:network_tools/network_tools.dart';
 import 'package:on_exit/init.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
@@ -149,6 +150,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
   HttpOverrides.global = BadCertOverride();
   dynamic exception;
   StackTrace? stacktrace;
+  await configureNetworkTools('build', enableDebugging: kDebugMode);
 
   /* ----- APPDATA MIGRATION ----- */
   if ((Platform.isLinux || Platform.isWindows) && kIsDesktop) {
@@ -509,7 +511,7 @@ class Main extends StatelessWidget {
   final ThemeData darkTheme;
   final ThemeData lightTheme;
 
-  const Main({Key? key, required this.lightTheme, required this.darkTheme}) : super(key: key);
+  const Main({super.key, required this.lightTheme, required this.darkTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -670,7 +672,7 @@ class Main extends StatelessWidget {
 }
 
 class Home extends StatefulWidget {
-  Home({Key? key}) : super(key: key);
+  Home({super.key});
 
   @override
   State<Home> createState() => _HomeState();
@@ -910,8 +912,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                       showUnknownSenders: false,
                     );
                   } else {
-                    return WillPopScope(
-                      onWillPop: () async => false,
+                    return PopScope(
+                      canPop: false,
                       child: TitleBarWrapper(child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
                     );
                   }

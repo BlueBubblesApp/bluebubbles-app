@@ -19,7 +19,7 @@ import 'package:printing/printing.dart';
 import 'package:universal_io/io.dart';
 
 class ChatOptions extends StatefulWidget {
-  const ChatOptions({Key? key, required this.chat}) : super(key: key);
+  const ChatOptions({super.key, required this.chat});
 
   final Chat chat;
 

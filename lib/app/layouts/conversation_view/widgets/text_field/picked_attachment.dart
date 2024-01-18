@@ -15,11 +15,11 @@ import 'package:universal_io/io.dart';
 
 class PickedAttachment extends StatefulWidget {
   PickedAttachment({
-    Key? key,
+    super.key,
     required this.data,
     required this.controller,
     required this.onRemove,
-  }) : super(key: key);
+  });
   final PlatformFile data;
   final ConversationViewController? controller;
   final Function(PlatformFile) onRemove;

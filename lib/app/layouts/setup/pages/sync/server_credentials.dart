@@ -183,7 +183,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                       padding: const EdgeInsets.all(24),
                       child: const Text(
                         "No Firebase Projects found!\n\nMake sure you're signed in to the same Google account that you used on your server!",
-                        textScaleFactor: 1.1,
+                        textScaler: TextScaler.linear(1.1),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -645,10 +645,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return WillPopScope(
-          onWillPop: () async {
-            return false;
-          },
+        return PopScope(
+          canPop: false,
           child: AlertDialog(
             title: Text(
               "Fetching server info...",

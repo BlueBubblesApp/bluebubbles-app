@@ -38,9 +38,9 @@ import 'package:universal_io/io.dart';
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({
-    Key? key,
+    super.key,
     this.initialPage,
-  }) : super(key: key);
+  });
 
   final Widget? initialPage;
 
@@ -841,8 +841,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                               await ss.prefs.setString("selected-light", "Bright White");
                                               themeBox.putMany(ts.defaultThemes);
                                               await ts.changeTheme(context);
-                                              Get.offAll(() => WillPopScope(
-                                                onWillPop: () async => false,
+                                              Get.offAll(() => PopScope(
+                                                canPop: false,
                                                 child: TitleBarWrapper(child: SetupView()),
                                               ), duration: Duration.zero, transition: Transition.noTransition);
                                             },
@@ -891,8 +891,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
             ),
             right: LayoutBuilder(builder: (context, constraints) {
               ns.maxWidthSettings = constraints.maxWidth;
-              return WillPopScope(
-                onWillPop: () async {
+              return PopScope(
+                canPop: false,
+                onPopInvoked: (_) async {
                   Get.until((route) {
                     if (route.settings.name == "initial") {
                       Get.back();
@@ -901,7 +902,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                     }
                     return true;
                   }, id: 3);
-                  return false;
                 },
                 child: Navigator(
                   key: Get.nestedKey(3),

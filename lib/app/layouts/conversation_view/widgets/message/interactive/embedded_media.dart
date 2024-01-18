@@ -14,10 +14,10 @@ import 'package:universal_io/io.dart';
 
 class EmbeddedMedia extends CustomStateful<MessageWidgetController> {
   EmbeddedMedia({
-    Key? key,
+    super.key,
     required this.message,
     required super.parentController,
-  }) : super(key: key);
+  });
 
   final Message message;
 

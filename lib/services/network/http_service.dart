@@ -515,6 +515,18 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Delete a message by [guid]
+  Future<Response> deleteMessage(String guid, String messageGuid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+          "$apiRoot/chat/$guid/$messageGuid",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get the number of messages in the server iMessage DB
   Future<Response> messageCount(
       {bool updated = false, bool onlyMe = false, DateTime? after, DateTime? before, CancelToken? cancelToken}) async {
@@ -1311,7 +1323,7 @@ class ApiInterceptor extends Interceptor {
         }
       }, requestOptions: err.requestOptions, statusCode: err.response!.statusCode));
     }
-    if (describeEnum(err.type).contains("Timeout")) {
+    if (err.type.name.contains("Timeout")) {
       return handler.resolve(Response(data: {
         'status': 500,
         'error': {

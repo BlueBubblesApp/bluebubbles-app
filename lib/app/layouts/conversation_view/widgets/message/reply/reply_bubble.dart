@@ -13,12 +13,12 @@ import 'package:get/get.dart';
 
 class ReplyBubble extends CustomStateful<MessageWidgetController> {
   ReplyBubble({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.part,
     required this.showAvatar,
     required this.cvController,
-  }) : super(key: key);
+  });
 
   final int part;
   final bool showAvatar;

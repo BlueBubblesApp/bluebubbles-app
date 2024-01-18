@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class MessageSender extends StatelessWidget {
-  const MessageSender({Key? key, required this.message, required this.olderMessage}) : super(key: key);
+  const MessageSender({super.key, required this.message, required this.olderMessage});
 
   final Message message;
   final Message? olderMessage;

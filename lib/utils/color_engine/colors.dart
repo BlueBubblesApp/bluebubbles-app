@@ -134,7 +134,7 @@ abstract class Lch {
 }
 
 class Oklab extends Lab implements Color {
-  const Oklab(double l, double a, double b) : super(l, a, b);
+  const Oklab(super.l, super.a, super.b);
 
   @override
   LinearSrgb toLinearSrgb() {
@@ -160,7 +160,7 @@ class Oklab extends Lab implements Color {
 }
 
 class Oklch extends Lch implements Color {
-  const Oklch(double l, double c, [double h = 0.0]) : super(l, c, h);
+  const Oklch(super.l, super.c, [super.h = 0.0]);
 
   @override
   LinearSrgb toLinearSrgb() => toOklab().toLinearSrgb();
@@ -205,7 +205,7 @@ class CieXyz extends Color {
 }
 
 class CieLab extends Lab {
-  const CieLab(double l, double a, double b) : super(l, a, b);
+  const CieLab(super.l, super.a, super.b);
 
   CieXyz toCieXyz() {
     final double lp = (l + 16.0) / 116.0;
@@ -232,7 +232,7 @@ class CieLab extends Lab {
 }
 
 class CieLch extends Lch {
-  const CieLch(double l, double c, double h) : super(l, c, h);
+  const CieLch(super.l, super.c, super.h);
 
   CieLab toCieLab() {
     final List<double> values = toLab();

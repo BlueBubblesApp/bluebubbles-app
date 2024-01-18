@@ -16,45 +16,45 @@ version: 1.12.7+61
 publish_to: none
 
 environment:
-  sdk: ">=2.19.0 <3.0.0"
+  sdk: '>=3.1.3 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  adaptive_theme: ^3.3.0
+  adaptive_theme: ^3.5.0
   animated_size_and_fade: ^3.0.1
-  animations: ^2.0.7
-  app_links: ^3.4.2
-  async_task: ^1.0.20
+  animations: ^2.0.11
+  app_links: ^3.5.0
+  async_task: ^1.1.1
   audio_waveforms: ^1.0.3
   auto_size_text: ^3.0.0
-  bitsdojo_window: ^0.1.5
-  chewie: ^1.7.0 # no desktop support, todo desktop
+  bitsdojo_window: ^0.1.6
+  chewie: ^1.7.4 # no desktop support (using VLC)
   chunked_stream: ^1.4.1
   collection: ^1.18.0
   confetti: ^0.7.0
-  connectivity_plus: ^4.0.2
+  connectivity_plus: ^5.0.2
   crop_your_image: ^0.7.5
   csslib: ^1.0.0
-  cupertino_icons: ^1.0.5
+  cupertino_icons: ^1.0.6
   defer_pointer: ^0.0.2
-  desktop_drop: ^0.4.3
+  desktop_drop: ^0.4.4
   desktop_webview_auth:
     git:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
       ref: 607c1f01c8a9e9302539bb9ec35acd83ae24842b
-  device_info_plus: ^9.0.3
+  device_info_plus: ^9.1.1
   dio: ^5.3.2
-  disable_battery_optimization: ^1.1.0+1
+  disable_battery_optimization: ^1.1.1
   # todo linux
-  dynamic_color: ^1.6.6
+  dynamic_color: ^1.6.9
   easy_debounce: ^2.0.3
   emojis: ^0.9.9
-  encrypt: ^5.0.1
-  exif: ^3.1.2
+  encrypt: ^5.0.3
+  exif: ^3.3.0
   faker: ^2.1.0
-  fast_contacts: ^3.0.3 # mobile only
-  file_picker: ^5.3.4
+  fast_contacts: ^3.1.3 # mobile only
+  file_picker: ^6.1.1
   firebase_dart:
     git:
       url: https://github.com/appsup-dart/firebase_dart.git
@@ -68,87 +68,84 @@ dependencies:
   flutter_contacts: ^1.1.7+1
   flutter_displaymode: ^0.6.0 # android only
   flutter_dotenv: ^5.1.0
-  flutter_foreground_task: ^6.1.1
+  flutter_foreground_task: ^6.1.2
   flutter_improved_scrolling: ^0.0.3
   flutter_isolate: ^2.0.3
-  flutter_keyboard_visibility: ^5.4.0 # no desktop support
-  flutter_local_notifications: ^15.1.1 # mobile only
-  flutter_map: ^5.0.0
-  flutter_map_marker_popup: ^5.1.0
-  flutter_markdown: ^0.6.17+1
+  flutter_keyboard_visibility: ^6.0.0 # no desktop support
+  flutter_local_notifications: ^16.3.0 # mobile only
+  flutter_map: ^6.1.0
+  flutter_map_marker_popup: ^6.1.2
+  flutter_markdown: ^0.6.18+3
   flutter_native_image: ^0.0.6+1 # mobile only
-  flutter_slidable: ^3.0.0
+  flutter_slidable: ^3.0.1
   flutter_staggered_grid_view: ^0.7.0
-  flutter_svg: ^2.0.7
-  flutter_timezone: ^1.0.7 # no desktop support
+  flutter_svg: ^2.0.9
+  flutter_timezone: ^1.0.8 # no desktop support
   geolocator:
     git:
       url: https://github.com/BlueBubblesApp/flutter-geolocator.git
       path: geolocator
       ref: 223195b3746686790ca188deac6260d901d30c51
   gesture_x_detector: ^1.1.1
-  get: ^4.6.5
-  giphy_get: ^3.5.0
-  github: ^9.17.0
-  google_fonts: ^5.1.0
-  google_ml_kit: ^0.16.2 # mobile only
+  get: ^4.6.6
+  giphy_get: ^3.5.4
+  github: ^9.22.0
+  google_fonts: ^6.1.0
+  google_ml_kit: ^0.16.3 # mobile only
   google_sign_in: ^6.1.4
-  hand_signature: ^3.0.1
-  idb_shim: ^2.3.0+2
+  hand_signature: ^3.0.2
+  idb_shim: ^2.3.2
   image: ^4.0.15
   image_gallery_saver: ^2.0.3 # mobile only
-  image_picker: ^1.0.2
+  image_picker: ^1.0.7
   image_size_getter: ^2.1.2
-  intl: ^0.18.0
-  js: ^0.6.7
+  intl: ^0.19.0
+  js: ^0.7.0
   launch_at_startup: ^0.2.2
-  local_auth: ^2.1.6
+  local_auth: ^2.1.8
   local_notifier:
     git:
       url: https://github.com/BlueBubblesApp/local_notifier.git
       ref: a8fbca6a7805487df725fbd2487e719202fcd209
   maps_launcher: ^2.2.0
   material_color_utilities: ^0.8.0
-  media_kit: ^1.1.6                              # Primary package.
-  media_kit_video: ^1.1.6                        # For video rendering.
-  media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
-  media_kit_libs_windows_video: ^1.0.8           # Windows package for video native libraries.
-  media_kit_libs_linux: ^1.1.2                   # GNU/Linux dependency package.
+  media_kit: ^1.1.10+1                           # Primary package.
+  media_kit_video: ^1.2.4                        # For video rendering.
+  media_kit_native_event_loop: ^1.0.8            # Support for higher number of concurrent instances & better performance.
+  media_kit_libs_windows_video: ^1.0.9           # Windows package for video native libraries.
+  media_kit_libs_linux: ^1.1.3                   # GNU/Linux dependency package.
   metadata_fetch: ^0.4.1
   mime_type: ^1.0.0
-  mobile_scanner: ^3.5.5 # no desktop support
-  msix: ^3.9.2
+  mobile_scanner: ^3.5.6 # no desktop support
+  msix: ^3.16.7
   multi_value_listenable_builder: ^0.0.2
-  network_info_plus: ^4.0.2
-  network_tools: ^3.2.1
+  network_info_plus: ^4.1.0
+  network_tools: ^4.0.2
   numberpicker: ^2.1.1
-  objectbox: ^2.2.1
+  objectbox: ^2.4.0
   objectbox_flutter_libs: any
   on_exit: ^1.0.0
-  open_filex: ^4.3.2
-  package_info_plus: ^4.0.2
+  open_filex: ^4.3.4
+  package_info_plus: ^5.0.1
   particles_flutter: ^0.1.4
   pasteboard: ^0.2.0
-  path: ^1.8.3
-  path_provider: ^2.0.15 # no web support
-  pdf: ^3.9.0
-  permission_handler: ^10.4.3 # mobile only
-  phone_numbers_parser: ^8.0.0
-  photo_manager: ^3.0.0-dev.2 # only mobile
+  path: ^1.9.0
+  path_provider: ^2.1.2 # no web support
+  pdf: ^3.10.7
+  permission_handler: ^11.2.0 # mobile only
+  phone_numbers_parser: ^8.1.0
+  photo_manager: ^3.0.0-dev.5 # only mobile
   photo_view: ^0.14.0
-  printing: ^5.10.4
-  qr_flutter:
-    git:
-      url: https://github.com/theyakka/qr.flutter
-      ref: ffbb276ec6ec2830ca50841a7aab9cfb4b7fb26b
-  receive_intent: ^0.2.3 # mobile only
-  record: ^4.4.4
+  printing: ^5.11.1
+  qr_flutter: ^4.1.0
+  receive_intent: ^0.2.5 # mobile only
+  record: ^5.0.4
   reorderables: ^0.6.0
-  screen_retriever: ^0.1.6
+  screen_retriever: ^0.1.9
   scroll_to_index: ^3.0.1
   secure_application: ^3.8.0 # no linux support
-  share_plus: ^7.1.0 # sharing files not supported on Windows & Linux, todo desktop
-  shared_preferences: ^2.2.0
+  share_plus: ^7.2.1 # sharing files not supported on Windows & Linux, todo desktop
+  shared_preferences: ^2.2.2
   shimmer: ^3.0.0
   simple_animations: ^5.0.2
   sliding_up_panel2: ^3.2.0+2
@@ -157,30 +154,30 @@ dependencies:
   socket_io_client: ^2.0.3+1
   sprung: ^3.0.1
   store_checker: ^1.4.0
-  synchronized: ^3.0.1
+  synchronized: ^3.1.0+1
   supercharged: ^2.1.1
   system_info2: ^4.0.0
   system_tray: ^2.0.3
   tuple: ^2.0.2
-  universal_html: ^2.2.3 # cross-platform dart:html implementation
+  universal_html: ^2.2.4 # cross-platform dart:html implementation
   universal_io: ^2.2.2 # cross-platform dart:io implementation
-  url_launcher: ^6.1.12
+  url_launcher: ^6.2.3
   version: ^3.0.2
-  video_player: ^2.7.0
+  video_player: ^2.8.2
   video_thumbnail: ^0.5.3 # mobile only
-  window_manager: ^0.3.5
-  windows_taskbar: ^1.1.1
+  window_manager: ^0.3.7
+  windows_taskbar: ^1.1.2
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions
-  collection: ^1.18.0 # flutter test SDK
   material_color_utilities: ^0.8.0 # flutter test SDK
-  intl: ^0.18.1 # network_tools
+  intl: ^0.19.0 # firebase_dart
+  js: ^0.7.0 # flutter_native_splash
   rxdart: ^0.27.7 # secure_application
-  package_info_plus: ^4.0.2 # BB geolocator
-  win32: ^5.0.6 # bitsdojo
-  csslib: ^1.0.0 # universal_html
+  package_info_plus: ^5.0.1 # BB geolocator
+  path: ^1.9.0 # flutter test SDK
   http: ^1.0.0 # metadata_fetch
+  permission_handler_platform_interface: ^4.1.0 # BB permission_handler_windows
   permission_handler_windows:
     git:
       url: https://github.com/BlueBubblesApp/flutter-permission-handler.git

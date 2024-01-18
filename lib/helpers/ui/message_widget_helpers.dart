@@ -200,7 +200,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
                   final TrackingCarrier c = data!.first;
                   final String number = data.last;
                   Clipboard.setData(ClipboardData(text: number));
-                  await launchUrl(Uri.parse("https://www.google.com/search?q=${describeEnum(c)} $number"), mode: LaunchMode.externalApplication);
+                  await launchUrl(Uri.parse("https://www.google.com/search?q=${c.name} $number"), mode: LaunchMode.externalApplication);
                 } else if (type == "flight") {
                   final String c = data!.first;
                   final String number = data.last;

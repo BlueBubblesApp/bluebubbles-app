@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class SelectCheckbox extends StatelessWidget {
-  const SelectCheckbox({Key? key, required this.message, required this.controller}) : super(key: key);
+  const SelectCheckbox({super.key, required this.message, required this.controller});
 
   final Message message;
   final ConversationViewController controller;

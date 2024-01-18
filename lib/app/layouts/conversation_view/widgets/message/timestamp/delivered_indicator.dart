@@ -8,10 +8,10 @@ import 'package:get/get.dart';
 
 class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
   DeliveredIndicator({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.forceShow,
-  }) : super(key: key);
+  });
 
   final bool forceShow;
 

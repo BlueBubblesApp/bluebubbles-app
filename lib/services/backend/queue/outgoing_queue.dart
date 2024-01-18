@@ -2,7 +2,6 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/backend/queue/queue_impl.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 OutgoingQueue outq = Get.isRegistered<OutgoingQueue>() ? Get.find<OutgoingQueue>() : Get.put(OutgoingQueue());
@@ -20,7 +19,7 @@ class OutgoingQueue extends Queue {
       case QueueType.sendAttachment:
         return await ah.prepAttachment(item.chat, item.message);
       default:
-        Logger.info("Unhandled queue event: ${describeEnum(item.type)}");
+        Logger.info("Unhandled queue event: ${item.type.name}");
         break;
     }
   }
@@ -42,7 +41,7 @@ class OutgoingQueue extends Queue {
         await ah.sendAttachment(item.chat, item.message, item.customArgs?['audio'] ?? false);
         break;
       default:
-        Logger.info("Unhandled queue event: ${describeEnum(item.type)}");
+        Logger.info("Unhandled queue event: ${item.type.name}");
         break;
     }
   }

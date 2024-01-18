@@ -154,7 +154,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         eventDispatcher.emit('theme-update', null);
                       },
                       options: Skins.values,
-                      textProcessing: (val) => describeEnum(val),
+                      textProcessing: (val) => val.name,
                       capitalize: false,
                       title: "App Skin",
                       secondaryColor: headerColor,

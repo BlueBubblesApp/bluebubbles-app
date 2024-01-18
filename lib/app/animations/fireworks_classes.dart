@@ -191,8 +191,8 @@ abstract class FireworkObjectWithTrail {
 /// Inspired by https://codepen.io/whqet/pen/Auzch.
 class FireworkParticle extends FireworkObjectWithTrail {
   FireworkParticle({
-    required Random random,
-    required Point<double> position,
+    required super.random,
+    required super.position,
     required double hueBaseValue,
     this.saturation,
     bool isCelebration = false,
@@ -204,8 +204,6 @@ class FireworkParticle extends FireworkObjectWithTrail {
         alphaDecay = random.nextDouble() * .007 + .013,
         super(
         trailCount: isCelebration ? 2 : size.toInt() * 2,
-        position: position,
-        random: random,
         size: isCelebration ? random.nextDouble() * 10 : size,
       );
 
@@ -244,19 +242,17 @@ class FireworkParticle extends FireworkObjectWithTrail {
 /// Inspired by https://codepen.io/whqet/pen/Auzch.
 class FireworkRocket extends FireworkObjectWithTrail {
   FireworkRocket({
-    required Random random,
+    required super.random,
     required this.start,
     required this.target,
     required this.hue,
-    required double size,
+    required super.size,
   })   : targetDistance = target.distanceTo(start),
         angle = atan2(target.y - start.y, target.x - start.x),
         brightness = .5 + random.nextDouble() * .2,
         super(
         trailCount: 2,
         position: start,
-        random: random,
-        size: size,
       );
 
   final Point<double> start;

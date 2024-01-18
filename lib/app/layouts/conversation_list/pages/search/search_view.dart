@@ -25,8 +25,8 @@ class SearchResult {
 
 class SearchView extends StatefulWidget {
   SearchView({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   SearchViewState createState() => SearchViewState();

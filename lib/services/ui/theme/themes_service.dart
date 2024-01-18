@@ -123,11 +123,10 @@ class ThemesService extends GetxService {
         .where((e) => e != FlexScheme.custom)
         .map((e) => [
       ThemeStruct(
-        name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
+        name: "${e.name.split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
         themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40).copyWith(
             textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
             splashFactory: InkSparkle.splashFactory,
-            useMaterial3: true,
             extensions: [
               BubbleText(
                 bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
@@ -139,12 +138,11 @@ class ThemesService extends GetxService {
         ),
       ),
       ThemeStruct(
-        name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
+        name: "${e.name.split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
         themeData: FlexThemeData.dark(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
             .copyWith(
             textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
             splashFactory: InkSparkle.splashFactory,
-            useMaterial3: true,
             extensions: [
               BubbleText(
                 bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(

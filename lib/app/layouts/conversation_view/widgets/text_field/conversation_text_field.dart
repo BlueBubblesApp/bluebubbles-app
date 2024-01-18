@@ -38,9 +38,9 @@ import 'package:universal_io/io.dart';
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
   ConversationTextField({
-    Key? key,
+    super.key,
     required super.parentController,
-  }) : super(key: key);
+  });
 
   static ConversationTextFieldState? of(BuildContext context) {
     return context.findAncestorStateOfType<ConversationTextFieldState>();
@@ -768,7 +768,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
 class TextFieldComponent extends StatelessWidget {
   const TextFieldComponent({
-    Key? key,
+    super.key,
     required this.subjectTextController,
     required this.textController,
     required this.controller,
@@ -776,7 +776,7 @@ class TextFieldComponent extends StatelessWidget {
     required this.sendMessage,
     this.focusNode,
     this.initialAttachments = const [],
-  }) : super(key: key);
+  });
 
   final TextEditingController subjectTextController;
   final MentionTextEditingController textController;

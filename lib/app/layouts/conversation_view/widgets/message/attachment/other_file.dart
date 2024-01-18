@@ -20,10 +20,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 class OtherFile extends StatelessWidget {
   OtherFile({
-    Key? key,
+    super.key,
     required this.attachment,
     required this.file,
-  }) : super(key: key);
+  });
   final Attachment attachment;
   final PlatformFile file;
 

@@ -40,7 +40,7 @@ class ConversationPeekView extends StatefulWidget {
   final Chat chat;
   final List<Message> messages;
 
-  const ConversationPeekView({Key? key, required this.position, required this.chat, required this.messages}) : super(key: key);
+  const ConversationPeekView({super.key, required this.position, required this.chat, required this.messages});
 
   @override
   State<StatefulWidget> createState() => _ConversationPeekViewState();

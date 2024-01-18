@@ -20,10 +20,10 @@ import 'package:universal_io/io.dart';
 
 class AdvancedThemingContent extends StatefulWidget {
   AdvancedThemingContent({
-    Key? key,
+    super.key,
     required this.isDarkMode,
     required this.controller
-  }) : super(key: key);
+  });
   final bool isDarkMode;
   final StreamController controller;
 

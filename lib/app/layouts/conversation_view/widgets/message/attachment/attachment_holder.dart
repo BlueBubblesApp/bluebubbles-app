@@ -21,10 +21,10 @@ import 'package:tuple/tuple.dart';
 
 class AttachmentHolder extends CustomStateful<MessageWidgetController> {
   AttachmentHolder({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.message,
-  }) : super(key: key);
+  });
 
   final MessagePart message;
 

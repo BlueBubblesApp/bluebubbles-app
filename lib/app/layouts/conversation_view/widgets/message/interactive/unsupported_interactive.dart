@@ -10,10 +10,10 @@ import 'package:universal_io/io.dart';
 
 class UnsupportedInteractive extends StatefulWidget {
   UnsupportedInteractive({
-    Key? key,
+    super.key,
     required this.message,
     required this.payloadData,
-  }) : super(key: key);
+  });
 
   final Message message;
   final iMessageAppData? payloadData;

@@ -5,9 +5,9 @@ import 'package:flutter/rendering.dart';
 
 class Love extends LeafRenderObjectWidget {
   Love({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final LoveController controller;
 

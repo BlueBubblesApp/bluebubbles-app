@@ -30,7 +30,7 @@ import 'package:sliding_up_panel2/sliding_up_panel2.dart';
 import 'package:universal_io/io.dart';
 
 class FindMyPage extends StatefulWidget {
-  const FindMyPage({Key? key}) : super(key: key);
+  const FindMyPage({super.key});
 
   @override
   State<StatefulWidget> createState() => _FindMyPageState();
@@ -92,7 +92,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             point: LatLng(e.location!.latitude!, e.location!.longitude!),
             width: 30,
             height: 35,
-            builder: (_) => ClipShadowPath(
+            child: ClipShadowPath(
               clipper: const FindMyPinClipper(),
               shadow: const BoxShadow(
                 color: Colors.black,
@@ -119,7 +119,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 ),
               ),
             ),
-            anchorPos: AnchorPos.align(AnchorAlign.top),
+            alignment: Alignment.topCenter,
           );
         }
         if (!(Platform.isLinux && !kIsWeb)) {
@@ -174,7 +174,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             point: LatLng(e.latitude!, e.longitude!),
             width: 35,
             height: 35,
-            builder: (_) => Container(
+            child: Container(
               decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
               child: Center(
                 child: Padding(
@@ -184,7 +184,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                 ),
               ),
             ),
-            anchorPos: AnchorPos.align(AnchorAlign.top),
+            alignment: Alignment.topCenter,
           );
         }
         setState(() {
@@ -214,7 +214,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       point: LatLng(pos.latitude, pos.longitude),
       width: 25,
       height: 55,
-      builder: (_) => Stack(
+      child: Stack(
         alignment: Alignment.center,
         children: [
           if (pos.heading.isFinite)
@@ -252,7 +252,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           ),
         ],
       ),
-      anchorPos: AnchorPos.align(AnchorAlign.center),
+      alignment: Alignment.topCenter,
     );
   }
 
@@ -1274,14 +1274,16 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     return FlutterMap(
       mapController: mapController,
       options: MapOptions(
-        zoom: 5.0,
+        initialZoom: 5.0,
         minZoom: 1.0,
         maxZoom: 18.0,
-        center: location == null ? null : LatLng(location!.latitude, location!.longitude),
+        initialCenter: location == null ? const LatLng(0, 0) : LatLng(location!.latitude, location!.longitude),
         onTap: (_, __) => popupController.hideAllPopups(),
         // Hide popup when the map is tapped.
         keepAlive: true,
-        interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        ),
         onMapReady: () {
           if (!completer.isCompleted) {
             completer.complete();

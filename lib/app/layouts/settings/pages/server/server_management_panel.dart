@@ -153,7 +153,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   const TextSpan(text: "\n\n"),
                                   const TextSpan(text: "Socket Connection: "),
                                   TextSpan(
-                                      text: describeEnum(socket.state.value).toUpperCase(),
+                                      text: socket.state.value.name.toUpperCase(),
                                       style: TextStyle(color: getIndicatorColor(socket.state.value))),
                                   // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
                                   //   const TextSpan(text: "\n"),

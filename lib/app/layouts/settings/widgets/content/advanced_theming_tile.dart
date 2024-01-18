@@ -8,8 +8,7 @@ import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 
 class AdvancedThemingTile extends StatefulWidget {
-  AdvancedThemingTile({Key? key, required this.currentTheme, required this.tuple, required this.editable})
-      : super(key: key);
+  AdvancedThemingTile({super.key, required this.currentTheme, required this.tuple, required this.editable});
   final ThemeStruct currentTheme;
   final Tuple2<MapEntry<String, Color>, MapEntry<String, Color>?> tuple;
   final bool editable;

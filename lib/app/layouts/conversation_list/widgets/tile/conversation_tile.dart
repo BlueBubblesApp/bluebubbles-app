@@ -94,13 +94,13 @@ class ConversationTileController extends StatefulController {
 
 class ConversationTile extends CustomStateful<ConversationTileController> {
   ConversationTile({
-    Key? key,
+    super.key,
     required Chat chat,
     required ConversationListController controller,
     Function(bool)? onSelect,
     bool inSelectMode = false,
     Widget? subtitle,
-  }) : super(key: key, parentController: !inSelectMode && Get.isRegistered<ConversationTileController>(tag: chat.guid)
+  }) : super(parentController: !inSelectMode && Get.isRegistered<ConversationTileController>(tag: chat.guid)
       ? Get.find<ConversationTileController>(tag: chat.guid)
       : Get.put(ConversationTileController(
         chat: chat,

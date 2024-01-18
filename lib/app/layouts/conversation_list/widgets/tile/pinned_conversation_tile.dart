@@ -19,11 +19,10 @@ import 'package:get/get.dart';
 
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   PinnedConversationTile({
-    Key? key,
+    super.key,
     required Chat chat,
     required ConversationListController controller,
   }) : super(
-            key: key,
             parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
                 ? Get.find<ConversationTileController>(tag: chat.guid)
                 : Get.put(

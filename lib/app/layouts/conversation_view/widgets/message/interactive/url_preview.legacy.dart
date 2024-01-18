@@ -14,9 +14,9 @@ class LegacyUrlPreview extends StatefulWidget {
   final Message message;
 
   LegacyUrlPreview({
-    Key? key,
+    super.key,
     required this.message,
-  }) : super(key: key);
+  });
 
   @override
   OptimizedState createState() => _LegacyUrlPreviewState();

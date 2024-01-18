@@ -7,10 +7,10 @@ import 'package:get/get.dart';
 
 class SendButton extends StatefulWidget {
   const SendButton({
-    Key? key,
+    super.key,
     required this.onLongPress,
     required this.sendMessage,
-  }) : super(key: key);
+  });
 
   final Function() onLongPress;
   final Function() sendMessage;

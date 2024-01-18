@@ -15,7 +15,7 @@ import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 
 class SendAnimation extends CustomStateful<ConversationViewController> {
-  const SendAnimation({Key? key, required super.parentController}) : super(key: key);
+  const SendAnimation({super.key, required super.parentController});
 
   @override
   CustomState createState() => _SendAnimationState();

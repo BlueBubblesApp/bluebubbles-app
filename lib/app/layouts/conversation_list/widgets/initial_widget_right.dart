@@ -5,7 +5,7 @@ import 'package:flutter_acrylic/window_effect.dart';
 import 'package:get/get.dart';
 
 class InitialWidgetRight extends StatefulWidget {
-  const InitialWidgetRight({Key? key}) : super(key: key);
+  const InitialWidgetRight({super.key});
 
   @override
   State<StatefulWidget> createState() => _InitialWidgetRightState();

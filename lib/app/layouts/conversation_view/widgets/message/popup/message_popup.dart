@@ -47,7 +47,7 @@ class MessagePopup extends StatefulWidget {
   final BuildContext? Function() widthContext;
 
   const MessagePopup({
-    Key? key,
+    super.key,
     required this.childPosition,
     required this.size,
     required this.child,
@@ -57,7 +57,7 @@ class MessagePopup extends StatefulWidget {
     required this.serverDetails,
     required this.sendTapback,
     required this.widthContext,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => _MessagePopupState();
@@ -1554,9 +1554,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
 class ReactionDetails extends StatelessWidget {
   const ReactionDetails({
-    Key? key,
+    super.key,
     required this.reactions,
-  }) : super(key: key);
+  });
 
   final List<Message> reactions;
 

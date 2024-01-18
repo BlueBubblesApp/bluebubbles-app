@@ -13,11 +13,11 @@ class AudioPlayer extends StatefulWidget {
   final Attachment? attachment;
 
   AudioPlayer({
-    Key? key,
+    super.key,
     required this.file,
     required this.attachment,
     this.controller,
-  }) : super(key: key);
+  });
 
   final ConversationViewController? controller;
 

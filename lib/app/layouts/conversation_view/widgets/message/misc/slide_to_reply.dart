@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class SlideToReply extends StatelessWidget {
-  const SlideToReply({Key? key, required this.width, required this.isFromMe}) : super(key: key);
+  const SlideToReply({super.key, required this.width, required this.isFromMe});
   
   final double width;
   final bool isFromMe;

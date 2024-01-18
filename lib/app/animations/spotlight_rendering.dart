@@ -7,9 +7,9 @@ import 'package:flutter/rendering.dart';
 
 class Spotlight extends LeafRenderObjectWidget {
   Spotlight({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final SpotlightController controller;
 

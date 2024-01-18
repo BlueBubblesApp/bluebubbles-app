@@ -280,7 +280,7 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                         padding: const EdgeInsets.all(24),
                         child: const Text(
                           "No Firebase Projects found!\n\nMake sure you're signed in to the same Google account that you used on your server!",
-                          textScaleFactor: 1.1,
+                          textScaler: TextScaler.linear(1.1),
                           textAlign: TextAlign.center,
                         ),
                       ),

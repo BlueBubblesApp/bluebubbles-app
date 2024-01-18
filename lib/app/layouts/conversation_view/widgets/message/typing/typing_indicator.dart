@@ -10,11 +10,11 @@ import 'package:get/get.dart';
 
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({
-    Key? key,
+    super.key,
     this.visible,
     this.controller,
     this.scale = 1.0,
-  }) : super(key: key);
+  });
 
   final bool? visible;
   final ConversationViewController? controller;

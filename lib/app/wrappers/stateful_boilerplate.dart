@@ -18,7 +18,7 @@ class StatefulController extends GetxController {
 /// [StatefulWidget] with support for optimized state management and a built-in
 /// [GetxController]
 abstract class CustomStateful<T extends StatefulController> extends StatefulWidget {
-  const CustomStateful({Key? key, required this.parentController}) : super(key: key);
+  const CustomStateful({super.key, required this.parentController});
 
   final T parentController;
 }

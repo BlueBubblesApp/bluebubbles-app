@@ -44,7 +44,7 @@ class SetupViewController extends StatefulController {
 }
 
 class SetupView extends StatefulWidget {
-  SetupView({Key? key}) : super(key: key);
+  SetupView({super.key});
 
   @override
   State<SetupView> createState() => _SetupViewState();
@@ -82,8 +82,8 @@ class _SetupViewState extends OptimizedState<SetupView> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         backgroundColor: ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background,
         body: SafeArea(

@@ -17,11 +17,11 @@ import 'package:get/get.dart';
 
 class FullscreenMediaHolder extends StatefulWidget {
   FullscreenMediaHolder({
-    Key? key,
+    super.key,
     required this.attachment,
     required this.showInteractions,
     this.currentChat,
-  }) : super(key: key);
+  });
 
   final ChatLifecycleManager? currentChat;
   final Attachment attachment;

@@ -10,7 +10,7 @@ import 'package:universal_io/io.dart';
 
 class ContactAvatarWidget extends StatefulWidget {
   ContactAvatarWidget({
-    Key? key,
+    super.key,
     this.size,
     this.fontSize,
     this.borderThickness = 2.0,
@@ -21,7 +21,7 @@ class ContactAvatarWidget extends StatefulWidget {
     this.scaleSize = true,
     this.preferHighResAvatar = false,
     this.padding = EdgeInsets.zero
-  }) : super(key: key);
+  });
   final Handle? handle;
   final Contact? contact;
   final double? size;

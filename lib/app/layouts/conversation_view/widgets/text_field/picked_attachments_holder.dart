@@ -14,12 +14,12 @@ import 'package:get/get.dart';
 
 class PickedAttachmentsHolder extends StatefulWidget {
   const PickedAttachmentsHolder({
-    Key? key,
+    super.key,
     required this.subjectTextController,
     required this.textController,
     required this.controller,
     this.initialAttachments = const [],
-  }) : super(key: key);
+  });
 
   final ConversationViewController? controller;
   final TextEditingController subjectTextController;

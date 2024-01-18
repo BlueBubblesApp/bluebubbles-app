@@ -16,7 +16,7 @@ import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
 class ChatInfo extends StatefulWidget {
-  const ChatInfo({Key? key, required this.chat}) : super(key: key);
+  const ChatInfo({super.key, required this.chat});
 
   final Chat chat;
   
@@ -306,7 +306,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 child: Text(
                   "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
                   style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.primaryColor),
-                  textScaleFactor: 1.15,
+                  textScaler: const TextScaler.linear(1.15),
                 ),
                 onPressed: () async {
                   bool? papi = false;

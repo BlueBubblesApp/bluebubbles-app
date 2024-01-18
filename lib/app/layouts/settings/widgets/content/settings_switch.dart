@@ -4,14 +4,14 @@ import 'package:get/get.dart';
 
 class SettingsSwitch extends StatelessWidget {
   SettingsSwitch({
-    Key? key,
+    super.key,
     required this.initialVal,
     required this.onChanged,
     required this.title,
     this.backgroundColor,
     this.subtitle,
     this.isThreeLine = false,
-  }) : super(key: key);
+  });
   final bool initialVal;
   final Function(bool) onChanged;
   final String title;

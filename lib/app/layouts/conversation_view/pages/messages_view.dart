@@ -28,10 +28,10 @@ class MessagesView extends StatefulWidget {
   final ConversationViewController controller;
 
   MessagesView({
-    Key? key,
+    super.key,
     this.customService,
     required this.controller,
-  }) : super(key: key);
+  });
 
   @override
   MessagesViewState createState() => MessagesViewState();

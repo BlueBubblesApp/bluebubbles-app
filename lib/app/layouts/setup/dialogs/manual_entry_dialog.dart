@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 
 class ManualEntryDialog extends StatefulWidget {
-  ManualEntryDialog({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
+  ManualEntryDialog({super.key, required this.onConnect, required this.onClose});
   final Function() onConnect;
   final Function() onClose;
 

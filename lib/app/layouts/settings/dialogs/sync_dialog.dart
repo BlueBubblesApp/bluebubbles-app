@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key? key, required this.manager}) : super(key: key);
+  SyncDialog({super.key, required this.manager});
 
   final IncrementalSyncManager manager;
 

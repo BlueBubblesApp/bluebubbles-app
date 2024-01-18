@@ -10,7 +10,7 @@ import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'package:window_manager/window_manager.dart';
 
 class TitleBarWrapper extends StatelessWidget {
-  TitleBarWrapper({Key? key, required this.child}) : super(key: key);
+  TitleBarWrapper({super.key, required this.child});
 
   final Widget child;
 
@@ -59,7 +59,7 @@ class TitleBarWrapper extends StatelessWidget {
 }
 
 class TitleBar extends StatelessWidget {
-  const TitleBar({Key? key}) : super(key: key);
+  const TitleBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +77,7 @@ class TitleBar extends StatelessWidget {
 }
 
 class WindowButtons extends StatelessWidget {
-  const WindowButtons({Key? key}) : super(key: key);
+  const WindowButtons({super.key});
 
   @override
   Widget build(BuildContext context) {

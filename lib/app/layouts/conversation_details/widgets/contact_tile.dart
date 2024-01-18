@@ -21,11 +21,11 @@ class ContactTile extends StatelessWidget {
   Contact? get contact => handle.contact;
 
   ContactTile({
-    Key? key,
+    super.key,
     required this.handle,
     required this.chat,
     required this.canBeRemoved,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
