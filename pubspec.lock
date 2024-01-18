@@ -501,10 +501,10 @@ packages:
     dependency: "direct main"
     description:
       name: desktop_drop
-      sha256: d55a010fe46c8e8fcff4ea4b451a9ff84a162217bdb3b2a0aa1479776205e15d
+      sha256: ebba9c9cb0b54385998a977d741cc06fd8324878c08d5a36e9da61cd56b04cc6
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.4"
+    version: "0.4.3"
   desktop_webview_auth:
     dependency: "direct main"
     description:
@@ -1050,13 +1050,13 @@ packages:
     source: git
     version: "0.1.2"
   geolocator_platform_interface:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: geolocator_platform_interface
-      sha256: "6c8d494d6948757c56720b778af742f6973f31fca1f702a7539b8917e4a2468a"
+      sha256: b2a0c09d2cfe8ad6a8cc44fada5c1092c49286e8c30922914dfe2b23799a682f
       url: "https://pub.dev"
     source: hosted
-    version: "4.2.0"
+    version: "4.0.8"
   geolocator_web:
     dependency: transitive
     description:

@@ -38,7 +38,7 @@ dependencies:
   csslib: ^1.0.0
   cupertino_icons: ^1.0.6
   defer_pointer: ^0.0.2
-  desktop_drop: ^0.4.4
+  desktop_drop: 0.4.3 # pinned due to Kotlin version issue
   desktop_webview_auth:
     git:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
@@ -171,6 +171,7 @@ dependencies:
 dependency_overrides:
   # overrides for packages stuck on outdated versions
   material_color_utilities: ^0.8.0 # flutter test SDK
+  geolocator_platform_interface: 4.0.8 # BB geolocator
   intl: ^0.19.0 # firebase_dart
   js: ^0.7.0 # flutter_native_splash
   rxdart: ^0.27.7 # secure_application
