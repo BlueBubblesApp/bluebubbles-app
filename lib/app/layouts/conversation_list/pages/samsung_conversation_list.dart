@@ -54,7 +54,6 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
           controller.clearSelectedChats();
           return;
         }
-        Navigator.of(context).pop();
       },
       child: Scaffold(
         backgroundColor: backgroundColor,

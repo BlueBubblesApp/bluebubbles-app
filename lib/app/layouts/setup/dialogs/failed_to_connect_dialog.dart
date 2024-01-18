@@ -10,7 +10,8 @@ class FailedToConnectDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) async {
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
         onDismiss();
         Navigator.of(context).pop();
       },

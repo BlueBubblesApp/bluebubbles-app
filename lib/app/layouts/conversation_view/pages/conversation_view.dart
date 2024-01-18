@@ -71,7 +71,8 @@ class ConversationViewState extends OptimizedState<ConversationView> {
         ),
         child: PopScope(
           canPop: false,
-          onPopInvoked: (_) async {
+          onPopInvoked: (didPop) async {
+            if (didPop) return;
             if (controller.inSelectMode.value) {
               controller.inSelectMode.value = false;
               controller.selected.clear();
@@ -87,6 +88,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
             }
             controller.close();
             if (ls.isBubble) return;
+            print(didPop);
             return Navigator.of(context).pop();
           },
           child: SafeArea(

@@ -48,7 +48,6 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           controller.clearSelectedChats();
           return;
         }
-        Navigator.of(context).pop();
       },
       child: Container(
         color: backgroundColor,
