@@ -150,7 +150,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
   HttpOverrides.global = BadCertOverride();
   dynamic exception;
   StackTrace? stacktrace;
-  await configureNetworkTools('build', enableDebugging: kDebugMode);
+  await configureNetworkTools(fs.appDocDir.path, enableDebugging: kDebugMode);
 
   /* ----- APPDATA MIGRATION ----- */
   if ((Platform.isLinux || Platform.isWindows) && kIsDesktop) {

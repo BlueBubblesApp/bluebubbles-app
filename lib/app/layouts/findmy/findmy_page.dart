@@ -1292,8 +1292,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: const ['a', 'b', 'c'],
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.bluebubbles.app',
         ),
         PopupMarkerLayer(
           options: PopupMarkerLayerOptions(
