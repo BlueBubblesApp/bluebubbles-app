@@ -12,6 +12,7 @@ import androidx.annotation.RequiresApi;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -67,12 +68,6 @@ public class NotificationWorker extends Worker implements DartWorker {
             getBackgroundChannel();
             invokeMethod();
 
-            // We don't want to finish this worker until we know the backgroundChannel is finished
-            // The backgroundChannel is manually closed through dart code
-            // we don't close the background channel when replying because we can't await all
-            // the functions due to the socket connection required to send the message
-            while (backgroundChannel != null && !isStopped()) {
-            }
             return Result.success();
         } else {
             return Result.failure();
@@ -186,8 +181,9 @@ public class NotificationWorker extends Worker implements DartWorker {
                                 .putAll(data)
                                 .build()
                 )
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .addTag(TAG)
                 .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(TAG, ExistingWorkPolicy.APPEND_OR_REPLACE, notificationWork);
+        WorkManager.getInstance(context).enqueue(notificationWork);
     }
 }
