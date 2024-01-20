@@ -43,6 +43,7 @@ class ServerManagementPanelController extends StatefulController {
   final RxnDouble timeSync = RxnDouble();
   final RxMap<String, dynamic> stats = RxMap({});
   final RxList<String> accountAliases = RxList();
+  final RxBool hasAccountInfo = RxBool(false);
 
   // Restart trackers
   int? lastRestart;
@@ -103,6 +104,8 @@ class ServerManagementPanelController extends StatefulController {
               accountAliases.clear();
               final aliases = ((response.data['data']['vetted_aliases'] ?? []) as List<dynamic>).map((a) => a['Alias'] as String);
               accountAliases.addAll(aliases);
+            
+              hasAccountInfo.value = true;
             }
           })
           .catchError((e) { Logger.debug("Failed to get account info $e"); })
@@ -224,9 +227,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   if (controller.iCloudAccount.value != null) const TextSpan(text: "\n\n"),
                                   if (controller.iCloudAccount.value != null)
                                     TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
-                                  if (controller.privateAPIStatus.value) const TextSpan(text: "\n\n"),
-                                  if (controller.privateAPIStatus.value) 
-                                    TextSpan(text: "IMessage Aliases (${controller.accountAliases.length}):\n\t ${redact ? "Redacted" : controller.accountAliases.join("\n\t")}"),
                                   if (controller.proxyService.value != null) const TextSpan(text: "\n\n"),
                                   if (controller.proxyService.value != null)
                                     TextSpan(text: "Proxy Service: ${controller.proxyService.value!.capitalizeFirst}"),
@@ -302,6 +302,55 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             )
                           ],
                         ))),
+                        Obx(() => AnimatedSizeAndFade.showHide(
+                          show: controller.hasAccountInfo.value,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SettingsTile(
+                                title: "Show Account Info",
+                                subtitle: "View iMessage account info",
+                                leading: const SettingsLeadingIcon(
+                                  iosIcon: CupertinoIcons.person,
+                                  materialIcon: Icons.person,
+                                ),
+                                onTap: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            backgroundColor: context.theme.colorScheme.properSurface,
+                                            content: Padding(
+                                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                                              child: SelectableText.rich(
+                                                TextSpan(children: [
+                                                  TextSpan(text: "Vetted Aliases (${controller.accountAliases.length}):\n\t ${ss.settings.redactedMode.value ? "Redacted" : controller.accountAliases.join("\n\t")}"),
+                                                ]),
+                                                style: context.theme.textTheme.bodyLarge,
+                                              ),
+                                            ),
+                                            title: Text("Account Info", style: context.theme.textTheme.titleLarge),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                child: Text("Dismiss",
+                                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
+                                          )
+                                    );
+                                  },
+                              ),
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 65.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              )
+                            ],
+                          ))),
                     if (!ss.fcmData.isNull)
                       SettingsTile(
                         title: "Show QR Code",
