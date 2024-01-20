@@ -113,8 +113,6 @@ class ServerManagementPanelController extends StatefulController {
       }
 
       Future.wait(subsequentRequests)
-        .then((value) {})
-        .catchError((_) { })
         .whenComplete(() => opacity.value = 1.0);
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
