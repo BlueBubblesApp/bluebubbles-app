@@ -1081,6 +1081,17 @@ class HttpService extends GetxService {
     });
   }
 
+  Future<Response> getAccountInfo({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$apiRoot/icloud/account",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   Future<Response> downloadFromUrl(String url, {Function(int, int)? progress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(

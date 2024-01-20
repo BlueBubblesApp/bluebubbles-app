@@ -28,6 +28,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
+import 'package:bluebubbles/utils/logger.dart';
 
 class ServerManagementPanelController extends StatefulController {
   final RxnInt latency = RxnInt();
@@ -41,6 +42,7 @@ class ServerManagementPanelController extends StatefulController {
   final RxnString proxyService = RxnString();
   final RxnDouble timeSync = RxnDouble();
   final RxMap<String, dynamic> stats = RxMap({});
+  final RxList<String> accountAliases = RxList();
 
   // Restart trackers
   int? lastRestart;
@@ -77,20 +79,40 @@ class ServerManagementPanelController extends StatefulController {
       timeSync.value = response.data['data']['macos_time_sync'];
       hasCheckedStats.value = true;
 
-      http.serverStatTotals().then((response) {
-        if (response.data['status'] == 200) {
-          stats.addAll(response.data['data'] ?? {});
-          http.serverStatMedia().then((response) {
+      final subsequentRequests = <Future>[];
+
+      subsequentRequests.add(  
+        http.serverStatTotals().then((response) {
+          if (response.data['status'] == 200) {
+            stats.addAll(response.data['data'] ?? {});
+            http.serverStatMedia().then((response) {
+              if (response.data['status'] == 200) {
+                stats.addAll(response.data['data'] ?? {});
+              }
+            });
+          }
+        }).catchError((_) {
+          showSnackbar("Error", "Failed to load server statistics!");
+        })
+      );
+
+      if (privateAPIStatus.value) {
+        subsequentRequests.add(
+          http.getAccountInfo().then((response) {
             if (response.data['status'] == 200) {
-              stats.addAll(response.data['data'] ?? {});
+              accountAliases.clear();
+              final aliases = ((response.data['data']['vetted_aliases'] ?? []) as List<dynamic>).map((a) => a['Alias'] as String);
+              accountAliases.addAll(aliases);
             }
-          });
-        }
-        opacity.value = 1.0;
-      }).catchError((_) {
-        showSnackbar("Error", "Failed to load server statistics!");
-        opacity.value = 1.0;
-      });
+          })
+          .catchError((e) { Logger.debug("Failed to get account info $e"); })
+        );
+      }
+
+      Future.wait(subsequentRequests)
+        .then((value) {})
+        .catchError((_) { })
+        .whenComplete(() => opacity.value = 1.0);
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
       hasCheckedStats.value = null;
@@ -202,6 +224,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   if (controller.iCloudAccount.value != null) const TextSpan(text: "\n\n"),
                                   if (controller.iCloudAccount.value != null)
                                     TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
+                                  if (controller.privateAPIStatus.value) const TextSpan(text: "\n\n"),
+                                  if (controller.privateAPIStatus.value) 
+                                    TextSpan(text: "IMessage Aliases (${controller.accountAliases.length}):\n\t ${redact ? "Redacted" : controller.accountAliases.join("\n\t")}"),
                                   if (controller.proxyService.value != null) const TextSpan(text: "\n\n"),
                                   if (controller.proxyService.value != null)
                                     TextSpan(text: "Proxy Service: ${controller.proxyService.value!.capitalizeFirst}"),
