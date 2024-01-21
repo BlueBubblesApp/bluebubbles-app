@@ -92,8 +92,8 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
-        <!--<service
-            android:name=".services.FirebaseMessagingService"
+        <service
+            android:name=".services.firebase.BlueBubblesFirebaseMessagingService"
             android:directBootAware="true"
             android:exported="false"
             android:stopWithTask="false">
@@ -103,11 +103,6 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </service>
-
-        <service
-            android:name=".services.FlutterFirebaseMessagingBackgroundService"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="false"/>-->
 
         <service android:name=".services.notifications.NotificationListener"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"

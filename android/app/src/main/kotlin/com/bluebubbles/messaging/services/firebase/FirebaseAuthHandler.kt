@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
@@ -30,6 +32,12 @@ class FirebaseAuthHandler: MethodCallHandlerImpl() {
     ) {
         // Don't auth multiple times
         if (firebaseApp != null) result.success(null)
+        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
+            val error = "Google Play Services is not available!"
+            Log.e(Constants.logTag, error)
+            result.error("500", error, null)
+            return
+        }
 
         val projectId: String? = call.argument("project_id")
         val storageBucket: String? = call.argument("storage_bucket")

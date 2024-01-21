@@ -26,11 +26,6 @@ class MethodChannelService extends GetxService {
     background = headless;
     channel = const MethodChannel('com.bluebubbles.messaging');
     channel.setMethodCallHandler(_callHandler);
-    if (!kIsWeb && !kIsDesktop && headless) {
-      try {
-        await channel.invokeMethod('MessagingBackground#initialized');
-      } catch (_) {}
-    }
     if (!kIsWeb && !kIsDesktop && !headless) {
       try {
         if (ss.settings.colorsFromMedia.value) {
@@ -63,28 +58,28 @@ class MethodChannelService extends GetxService {
       case "new-message":
         await storeStartup.future;
         Logger.info("Received new message from FCM");
-        Map<String, dynamic>? data = jsonDecode(call.arguments);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
           final payload = ServerPayload.fromJson(data!);
           final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
           if (ls.isAlive) {
-            inq.queue(item);
+            await inq.queue(item);
           } else {
-            ah.handleNewMessage(item.chat, item.message, item.tempGuid);
+            await ah.handleNewMessage(item.chat, item.message, item.tempGuid);
           }
         }
         return true;
       case "updated-message":
         await storeStartup.future;
         Logger.info("Received updated message from FCM");
-        Map<String, dynamic>? data = jsonDecode(call.arguments);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
           final payload = ServerPayload.fromJson(data!);
           final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
           if (ls.isAlive) {
-            inq.queue(item);
+            await inq.queue(item);
           } else {
-            ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);
+            await ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);
           }
         }
         return true;
@@ -94,35 +89,35 @@ class MethodChannelService extends GetxService {
       case "participant-left":
         await storeStartup.future;
         Logger.info("Received ${call.method} from FCM");
-        Map<String, dynamic>? data = jsonDecode(call.arguments);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
           final item = IncomingItem.fromMap(QueueType.updatedMessage, data!);
-          ah.handleNewOrUpdatedChat(item.chat);
+          await ah.handleNewOrUpdatedChat(item.chat);
         }
         return true;
       case "group-icon-changed":
         await storeStartup.future;
         Logger.info("Received group icon change from FCM");
-        Map<String, dynamic>? data = jsonDecode(call.arguments);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
           final guid = data!["chats"].first["guid"];
           final chat = Chat.findOne(guid: guid);
           if (chat != null) {
-            Chat.getIcon(chat);
+            await Chat.getIcon(chat);
           }
         }
         return true;
       case "scheduled-message-error":
         Logger.info("Received scheduled message error from FCM");
-        Map<String, dynamic> data = jsonDecode(call.arguments) ?? {};
+        Map<String, dynamic> data = call.arguments?.cast<String, Object>() ?? {};
         Chat? chat = Chat.findOne(guid: data["payload"]["chatGuid"]);
         if (chat != null) {
-          notif.createFailedToSend(chat, scheduled: true);
+          await notif.createFailedToSend(chat, scheduled: true);
         }
         return true;
       case "ReplyChat":
         await storeStartup.future;
-        Logger.info("Received reply to message from FCM");
+        Logger.info("Received reply to message from Kotlin");
         final data = call.arguments as Map?;
         if (data == null) return false;
         // check and make sure that we aren't sending a duplicate reply
@@ -155,7 +150,7 @@ class MethodChannelService extends GetxService {
       case "MarkChatRead":
         if (ls.isAlive) return true;
         await storeStartup.future;
-        Logger.info("Received markAsRead from Java");
+        Logger.info("Received markAsRead from Kotlin");
         final data = call.arguments as Map?;
         if (data != null) {
           Chat? chat = Chat.findOne(guid: data["chatGuid"]);
@@ -169,13 +164,17 @@ class MethodChannelService extends GetxService {
         if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received chat status change from FCM");
-        Map<String, dynamic> data = jsonDecode(call.arguments);
-        Chat? chat = Chat.findOne(guid: data["chatGuid"]);
-        if (chat == null || (data["read"] != true && data["read"] != false)) {
-          return false;
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+        if (!isNullOrEmpty(data)!) {
+          Chat? chat = Chat.findOne(guid: data!["chatGuid"]);
+          if (chat == null || (data["read"] != true && data["read"] != false)) {
+            return false;
+          } else {
+            chat.toggleHasUnread(!data["read"]!, privateMark: false);
+            return true;
+          }
         } else {
-          chat.toggleHasUnread(!data["read"]!, privateMark: false);
-          return true;
+          return false;
         }
       case "MediaColors":
         await storeStartup.future;
@@ -189,15 +188,19 @@ class MethodChannelService extends GetxService {
       case "incoming-facetime":
         await storeStartup.future;
         Logger.info("Received legacy incoming facetime from FCM");
-        Map<String, dynamic> data = jsonDecode(call.arguments.toString().replaceAll('\\"', '<').replaceAll('"', '').replaceAll('<', '"'));
-        await ActionHandler().handleIncomingFaceTimeCallLegacy(data);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+        if (!isNullOrEmpty(data)!) {
+          await ActionHandler().handleIncomingFaceTimeCallLegacy(data!);
+        }
         return true;
       case "ft-call-status-changed":
         if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received facetime call status change from FCM");
-        Map<String, dynamic> data = jsonDecode(call.arguments);
-        await ActionHandler().handleFaceTimeStatusChange(data);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+        if (!isNullOrEmpty(data)!) {
+          await ActionHandler().handleFaceTimeStatusChange(data!);
+        }
         return true;
       case "answer-facetime":
         Logger.info("Answering FaceTime call");
@@ -210,7 +213,7 @@ class MethodChannelService extends GetxService {
 
   Future<dynamic> invokeMethod(String method, [dynamic arguments]) async {
     if (kIsWeb || kIsDesktop) return;
-
+    Logger.info("Sending method $method to Kotlin");
     return await channel.invokeMethod(method, arguments);
   }
 }

@@ -2,9 +2,6 @@ package com.bluebubbles.messaging.services.backend_ui_interop
 
 import android.content.Context
 import android.util.Log
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.ActivityResultRegistry
-import androidx.activity.result.contract.ActivityResultContracts
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.MainActivity.Companion.engine
 import com.bluebubbles.messaging.services.filesystem.GetContentUriPathHandler
@@ -28,7 +25,7 @@ import com.bluebubbles.messaging.services.system.StartGoogleDuoRequestHandler
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-class MethodCallHandler() {
+class MethodCallHandler {
     companion object {
         var getNotificationListenerResult: MethodChannel.Result? = null
 

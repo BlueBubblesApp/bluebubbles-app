@@ -9,6 +9,9 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.bluebubbles.messaging.Constants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object DartWorkManager {
     fun createWorker(context: Context, method: String, arguments: HashMap<String, Any?>, callback: () -> (Unit)) {
@@ -28,9 +31,14 @@ object DartWorkManager {
             if (workInfo.state.isFinished) {
                 Log.d(Constants.logTag, "Running callback after worker with method $method completed")
                 callback()
-                WorkManager.getInstance(context).getWorkInfoByIdLiveData(work.id).removeObserver(observer)
+                CoroutineScope(Dispatchers.Main).launch {
+                    WorkManager.getInstance(context).getWorkInfoByIdLiveData(work.id).removeObserver(observer)
+                }
             }
         }
-        WorkManager.getInstance(context).getWorkInfoByIdLiveData(work.id).observeForever(observer)
+        // Cannot observe unless running on main thread
+        CoroutineScope(Dispatchers.Main).launch {
+            WorkManager.getInstance(context).getWorkInfoByIdLiveData(work.id).observeForever(observer)
+        }
     }
 }
