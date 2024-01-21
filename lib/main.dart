@@ -474,9 +474,27 @@ class BadCertOverride extends HttpOverrides {
       // If there is a bad certificate callback, override it if the host is part of
       // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        String serverUrl = sanitizeServerAddress() ?? "";
-        hasBadCert = serverUrl.contains(host);
-        return hasBadCert;
+        // Always save that this cert is bad
+        hasBadCert = true;
+
+        // Parse the common name from the certificate.
+        // Strip www. from the hostnames for easier matching
+        String certCommonName = cert.subject.split("CN=")[1].split(",")[0];
+        String hostname = host.startsWith('www.') ? host.substring(4) : host;
+
+        // Ensure that the hostname matches the certificate's subject hostname, otherwise return false.
+        // Account for wildcards by removing the wildcard and checking if the host ends with the serverUrlHost
+        // Pass if:
+        //    - host: 1234.customdomain.com, cert: customdomain.com
+        //    - host: 1234.customdomain.com, cert: *.customdomain.com
+        bool shouldTrust = false;
+        if (hostname.endsWith(certCommonName)) {
+          shouldTrust = true;
+        } else if (certCommonName.startsWith("*.") && hostname.endsWith(certCommonName.substring(2))) {
+          shouldTrust = true;
+        }
+
+        return shouldTrust;
       };
   }
 }
