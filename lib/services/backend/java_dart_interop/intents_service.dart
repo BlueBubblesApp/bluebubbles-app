@@ -97,7 +97,7 @@ class IntentsService extends GetxService {
           }
         } else if (intent.extra?["chatGuid"] != null) {
           final guid = intent.extra!["chatGuid"]!;
-          final bubble = intent.extra!["bubble"] == "true";
+          final bubble = intent.extra!["bubble"] == true;
           ls.isBubble = bubble;
           await openChat(guid);
         } else if (intent.extra?["callUuid"] != null) {
