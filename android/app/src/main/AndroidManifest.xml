@@ -2,8 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.bluebubbles.messaging">
-    <uses-sdk android:minSdkVersion="21"
-        android:targetSdkVersion="33" />
     <!--
      io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
@@ -55,17 +53,18 @@
     <application
         tools:replace="android:label"
         android:allowBackup="false"
-        android:name=".Application"
+        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name_en"
         android:appCategory="social"
         android:requestLegacyExternalStorage="true"
         android:debuggable="false"
         android:usesCleartextTraffic="true">
-        <receiver android:name=".services.ReplyReceiver" />
+
+        <receiver android:name=".services.intents.InternalIntentReceiver" />
 
         <receiver
-            android:name=".services.ExternalIntentReceiver"
+            android:name=".services.intents.ExternalIntentReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.bluebubbles.external.GET_SERVER_URL" />
@@ -93,7 +92,7 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
-        <service
+        <!--<service
             android:name=".services.FirebaseMessagingService"
             android:directBootAware="true"
             android:exported="false"
@@ -108,9 +107,9 @@
         <service
             android:name=".services.FlutterFirebaseMessagingBackgroundService"
             android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="false"/>
+            android:exported="false"/>-->
 
-        <service android:name=".services.CustomNotificationListenerService"
+        <service android:name=".services.notifications.NotificationListener"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="false">
             <intent-filter>

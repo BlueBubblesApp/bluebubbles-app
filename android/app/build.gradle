@@ -46,7 +46,7 @@ android {
 
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 33
         versionCode 20002000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -154,6 +154,9 @@ dependencies {
     implementation "androidx.core:core:1.10.1"
     implementation 'androidx.core:core-google-shortcuts:1.1.0'
     implementation "androidx.sharetarget:sharetarget:1.2.0"
+    implementation 'androidx.browser:browser:1.7.0'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
 
     //for location sending
     implementation "com.google.android.gms:play-services-location:21.0.1"
@@ -180,4 +183,9 @@ dependencies {
 
     // Why won't it fucking compile
     implementation 'com.google.guava:guava:27.0.1-android'
+
+    // kotlin coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3"
 }

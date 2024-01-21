@@ -93,7 +93,7 @@ class DatabaseService extends GetxService {
       } else {
         // First, try to auth with FCM with the current data
         Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
-        await mcs.invokeMethod('auth', ss.fcmData.toMap());
+        await mcs.invokeMethod('firebase-auth', ss.fcmData.toMap());
         url = sanitizeServerAddress(address: await mcs.invokeMethod("get-server-url"));
       }
       // Update the address of the copied settings

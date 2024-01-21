@@ -405,7 +405,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             await mcs.invokeMethod("request-notif-permission");
                             if (val) {
                               try {
-                                await mcs.invokeMethod("start-notif-listener");
+                                await mcs.invokeMethod("start-notification-listener");
                                 // disable monet theming if music theme enabled
                                 ss.settings.monetTheming.value = Monet.none;
                                 saveSettings();
@@ -447,7 +447,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       ),
                     if (!kIsWeb && !kIsDesktop)
                       const SettingsSubtitle(
-                        subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme.",
+                        unlimitedSpace: true,
+                        subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme. Media art with mostly blacks or whites may not produce any change in theming.",
                       ),
                     if (!kIsWeb && !kIsDesktop)
                       Container(

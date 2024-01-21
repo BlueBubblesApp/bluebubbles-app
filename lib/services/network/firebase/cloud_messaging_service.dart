@@ -80,7 +80,7 @@ class CloudMessagingService extends GetxService {
     try {
       // First, try to auth with FCM with the current data
       Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
-      result = await mcs.invokeMethod('auth', ss.fcmData.toMap());
+      result = await mcs.invokeMethod('firebase-auth', ss.fcmData.toMap());
     } on PlatformException catch (ex) {
       Logger.error('Failed to perform initial FCM authentication: ${ex.toString()}', tag: 'FCM-Auth');
 
@@ -103,7 +103,7 @@ class CloudMessagingService extends GetxService {
           // Parse and save new FCM data, then retry auth with FCM
           FCMData fcmData = FCMData.fromMap(fcmMeta);
           ss.saveFCMData(fcmData);
-          result = await mcs.invokeMethod('auth', fcmData.toMap());
+          result = await mcs.invokeMethod('firebase-auth', fcmData.toMap());
         } on PlatformException catch (e) {
           // If we fail a second time, error out
           Logger.error("Failed to register with FCM: $e", tag: 'FCM-Auth');

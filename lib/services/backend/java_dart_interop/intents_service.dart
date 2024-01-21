@@ -58,7 +58,7 @@ class IntentsService extends GetxService {
           if (data is List) {
             for (String? s in data) {
               if (s == null) continue;
-              final path = await mcs.invokeMethod("get-content-path", {"uri": s});
+              final path = await mcs.invokeMethod("get-content-uri-path", {"uri": s});
               final bytes = await File(path).readAsBytes();
               files.add(PlatformFile(
                 path: path,
@@ -68,7 +68,7 @@ class IntentsService extends GetxService {
               ));
             }
           } else if (data != null) {
-            final path = await mcs.invokeMethod("get-content-path", {"uri": data});
+            final path = await mcs.invokeMethod("get-content-uri-path", {"uri": data});
             final bytes = await File(path).readAsBytes();
             files.add(PlatformFile(
               path: path,

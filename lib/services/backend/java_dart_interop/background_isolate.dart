@@ -10,7 +10,7 @@ import 'package:universal_io/io.dart';
 class BackgroundIsolate {
   static void initialize() {
     CallbackHandle callbackHandle = PluginUtilities.getCallbackHandle(backgroundIsolateEntrypoint)!;
-    mcs.invokeMethod("initialize-background-handle", {"handle": callbackHandle.toRawHandle()});
+    ss.prefs.setInt("backgroundCallbackHandle", callbackHandle.toRawHandle());
   }
 }
 

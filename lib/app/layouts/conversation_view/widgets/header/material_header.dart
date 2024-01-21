@@ -71,7 +71,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
             final contact = handle.contact;
             if (contact == null) {
               await mcs.invokeMethod("open-contact-form",
-                  {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+                  {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
             } else {
               await mcs.invokeMethod("view-contact-form", {'id': contact.id});
             }

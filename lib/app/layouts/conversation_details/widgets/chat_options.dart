@@ -59,10 +59,9 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     ),
                     isThreeLine: true,
                     onTap: () async {
-                      await mcs.invokeMethod("open-convo-notif-settings", {
-                        "parentId": NotificationsService.NEW_MESSAGE_CHANNEL,
-                        "id": chat.guid,
-                        "displayName": chat.getTitle()
+                      await mcs.invokeMethod("open-conversation-notification-settings", {
+                        "channel_id": chat.guid,
+                        "display_name": chat.getTitle()
                       });
                     },
                   ),

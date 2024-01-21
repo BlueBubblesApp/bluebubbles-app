@@ -19,8 +19,6 @@ class MethodChannelService extends GetxService {
   // music theme
   bool isRunning = false;
   Color? previousPrimary;
-  Color? previousLightBg;
-  Color? previousDarkBg;
 
   Future<void> init({bool headless = false}) async {
     if (kIsWeb || kIsDesktop) return;
@@ -36,7 +34,7 @@ class MethodChannelService extends GetxService {
     if (!kIsWeb && !kIsDesktop && !headless) {
       try {
         if (ss.settings.colorsFromMedia.value) {
-          await mcs.invokeMethod("start-notif-listener");
+          await mcs.invokeMethod("start-notification-listener");
         }
         if (!ls.isBubble) {
           BackgroundIsolate.initialize();
@@ -46,12 +44,12 @@ class MethodChannelService extends GetxService {
     }
   }
 
-  Future<dynamic> _callHandler(MethodCall call) async {
+  Future<bool> _callHandler(MethodCall call) async {
     switch (call.method) {
-      case "new-server":
+      case "NewServerUrl":
         await storeStartup.future;
         // remove brackets from URL
-        String address = call.arguments.toString().replaceAll("[", "").replaceAll("]", "");
+        String address = call.arguments["server_url"];
         String sanitized = sanitizeServerAddress(address: address)!;
         if (sanitized != ss.settings.serverAddress.value) {
           ss.settings.serverAddress.value = sanitizeServerAddress(address: address)!;
@@ -122,18 +120,18 @@ class MethodChannelService extends GetxService {
           notif.createFailedToSend(chat, scheduled: true);
         }
         return true;
-      case "reply":
+      case "ReplyChat":
         await storeStartup.future;
         Logger.info("Received reply to message from FCM");
         final data = call.arguments as Map?;
-        if (data == null) return;
+        if (data == null) return false;
         // check and make sure that we aren't sending a duplicate reply
         final recentReplyGuid = ss.prefs.getString("recent-reply")?.split("/").first;
         final recentReplyText = ss.prefs.getString("recent-reply")?.split("/").last;
-        if (recentReplyGuid == data["guid"] && recentReplyText == data["text"]) return;
-        await ss.prefs.setString("recent-reply", "${data["guid"]}/${data["text"]}");
+        if (recentReplyGuid == data["messageGuid"] && recentReplyText == data["text"]) return false;
+        await ss.prefs.setString("recent-reply", "${data["messageGuid"]}/${data["text"]}");
         Logger.info("Updated recent reply cache to ${ss.prefs.getString("recent-reply")}");
-        Chat? chat = Chat.findOne(guid: data["chat"]);
+        Chat? chat = Chat.findOne(guid: data["chatGuid"]);
         if (chat == null) {
           return false;
         } else {
@@ -154,13 +152,13 @@ class MethodChannelService extends GetxService {
           await completer.future;
           return true;
         }
-      case "markAsRead":
-        if (ls.isAlive) return;
+      case "MarkChatRead":
+        if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received markAsRead from Java");
         final data = call.arguments as Map?;
         if (data != null) {
-          Chat? chat = Chat.findOne(guid: data["chat"]);
+          Chat? chat = Chat.findOne(guid: data["chatGuid"]);
           if (chat != null) {
             chat.toggleHasUnread(false);
             return true;
@@ -168,7 +166,7 @@ class MethodChannelService extends GetxService {
         }
         return false;
       case "chat-read-status-changed":
-        if (ls.isAlive) return;
+        if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received chat status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);
@@ -179,18 +177,12 @@ class MethodChannelService extends GetxService {
           chat.toggleHasUnread(!data["read"]!, privateMark: false);
           return true;
         }
-      case "media-colors":
+      case "MediaColors":
         await storeStartup.future;
         if (!ss.settings.colorsFromMedia.value) return false;
         final Color primary = Color(call.arguments['primary']);
-        final Color lightBg = Color(call.arguments['lightBg']);
-        final Color darkBg = Color(call.arguments['darkBg']);
-        final double primaryPercent = call.arguments['primaryPercent'];
-        final double lightBgPercent = call.arguments['lightBgPercent'];
-        final double darkBgPercent = call.arguments['darkBgPercent'];
-        if (Get.context != null &&
-            (!isRunning || primary != previousPrimary || lightBg != previousLightBg || darkBg != previousDarkBg)) {
-          ts.updateMusicTheme(Get.context!, primary, lightBg, darkBg, primaryPercent, lightBgPercent, darkBgPercent);
+        if (Get.context != null && (!isRunning || primary != previousPrimary)) {
+          ts.updateMusicTheme(Get.context!, primary);
           isRunning = false;
         }
         return true;
@@ -201,7 +193,7 @@ class MethodChannelService extends GetxService {
         await ActionHandler().handleIncomingFaceTimeCallLegacy(data);
         return true;
       case "ft-call-status-changed":
-        if (ls.isAlive) return;
+        if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received facetime call status change from FCM");
         Map<String, dynamic> data = jsonDecode(call.arguments);

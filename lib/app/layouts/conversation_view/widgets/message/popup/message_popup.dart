@@ -677,7 +677,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void openLink() {
     String? url = part.url;
-    mcs.invokeMethod("open-link", {"link": url ?? part.text, "forceBrowser": true});
+    mcs.invokeMethod("open-browser", {"link": url ?? part.text});
     popDetails();
   }
 
@@ -881,8 +881,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void createContact() async {
     popDetails();
-    await mcs
-        .invokeMethod("open-contact-form", {'address': message.handle!.address, 'addressType': message.handle!.address.isEmail ? 'email' : 'phone'});
+    await mcs.invokeMethod("open-contact-form", {'address': message.handle!.address, 'address_type': message.handle!.address.isEmail ? 'email' : 'phone'});
   }
 
   void showThread() {

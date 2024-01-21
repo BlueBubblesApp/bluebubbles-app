@@ -136,16 +136,16 @@ class NotificationsService extends GetxService {
   }
 
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
-    await mcs.invokeMethod("create-notif-channel", {
+    await mcs.invokeMethod("create-notification-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
-      "CHANNEL_ID": channelID,
+      "channel_id": channelID,
     });
   }
 
   Future<void> createReminder(Chat? chat, Message? message, DateTime time, {String? chatTitle, String? messageText}) async {
     await flnp.zonedSchedule(
-      Random().nextInt(9998) + 1,
+      Random().nextInt(9998) + 50000,
       chatTitle ?? 'Reminder: ${chat!.getTitle()}',
       messageText ?? (hideContent ? "iMessage" : MessageHelper.getNotificationText(message!)),
       TZDateTime.from(time, local),
@@ -197,21 +197,19 @@ class NotificationsService extends GetxService {
     } else if (kIsDesktop) {
       _lock.synchronized(() async => await showDesktopNotif(message, text, chat, guid, title, contactName, isGroup, isReaction));
     } else {
-      await mcs.invokeMethod("new-message-notification", {
-        "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
-        "CHANNEL_NAME": "New Messages",
-        "notificationId": Random().nextInt(9998) + 1,
-        "summaryId": chat.id,
-        "chatGuid": guid,
-        "chatIsGroup": isGroup,
-        "chatTitle": title,
-        "chatIcon": isGroup ? chatIcon : contactIcon,
-        "contactName": contactName,
-        "contactAvatar": contactIcon,
-        "messageGuid": message.guid!,
-        "messageText": text,
-        "messageDate": message.dateCreated!.millisecondsSinceEpoch,
-        "messageIsFromMe": false,
+      await mcs.invokeMethod("create-incoming-message-notification", {
+        "channel_id": NEW_MESSAGE_CHANNEL,
+        "chat_id": chat.id,
+        "chat_guid": guid,
+        "chat_is_group": isGroup,
+        "chat_title": title,
+        "chat_icon": isGroup ? chatIcon : contactIcon,
+        "contact_name": contactName,
+        "contact_avatar": contactIcon,
+        "message_guid": message.guid!,
+        "message_text": text,
+        "message_date": message.dateCreated!.millisecondsSinceEpoch,
+        "message_is_from_me": false,
       });
     }
   }
@@ -233,14 +231,14 @@ class NotificationsService extends GetxService {
       _lock.synchronized(() async => await showPersistentDesktopFaceTimeNotif(callUuid, caller, chatIcon, isAudio));
     } else {
       final numeric = callUuid?.numericOnly();
-      await mcs.invokeMethod("incoming-facetime-notification", {
-        "CHANNEL_ID": FACETIME_CHANNEL,
-        "notificationId": numeric != null ? int.parse(numeric.substring(0, min(8, numeric.length))) : Random().nextInt(9998) + 1,
+      await mcs.invokeMethod("create-incoming-facetime-notification", {
+        "channel_id": FACETIME_CHANNEL,
+        "notification_id": numeric != null ? int.parse(numeric.substring(0, min(8, numeric.length))) : Random().nextInt(9998) + 1,
         "title": title,
         "body": text,
-        "avatar": chatIcon,
+        "caller_avatar": chatIcon,
         "caller": caller,
-        "callUuid": callUuid
+        "call_uuid": callUuid
       });
     }
   }
@@ -250,7 +248,7 @@ class NotificationsService extends GetxService {
       await clearDesktopFaceTimeNotif(callUuid);
     } else if (!kIsWeb) {
       final numeric = callUuid.numericOnly();
-      mcs.invokeMethod("clear-chat-notifs", {"id": int.parse(numeric.substring(0, min(8, numeric.length)))});
+      mcs.invokeMethod("delete-notification", {"notification_id": int.parse(numeric.substring(0, min(8, numeric.length)))});
     }
   }
 
@@ -690,7 +688,7 @@ class NotificationsService extends GetxService {
       return;
     }
     await flnp.show(
-      chat.id! * (scheduled ? -1 : 1),
+      (chat.id!  + 75000) * (scheduled ? -1 : 1),
       title,
       subtitle,
       NotificationDetails(
