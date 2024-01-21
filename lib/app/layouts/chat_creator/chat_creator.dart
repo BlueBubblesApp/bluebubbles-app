@@ -95,8 +95,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
           final _contacts = contacts
               .where((e) =>
                   e.displayName.toLowerCase().contains(query) ||
-                  e.phones.firstWhereOrNull((e) => cleansePhoneNumber(e.toLowerCase()).contains(query)) != null ||
-                  e.emails.firstWhereOrNull((e) => e.toLowerCase().contains(query)) != null)
+                  e.phoneNumbers.firstWhereOrNull((e) => cleansePhoneNumber(e.address.toLowerCase()).contains(query)) != null ||
+                  e.emailAddresses.firstWhereOrNull((e) => e.address.toLowerCase().contains(query)) != null)
               .toList();
           final ids = _contacts.map((e) => e.id);
           final _chats = existingChats.where((e) =>
@@ -253,11 +253,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         address: text,
       ));
     } else if (filteredContacts.length == 1) {
-      final possibleAddresses = [...filteredContacts.first.phones, ...filteredContacts.first.emails];
+      final possibleAddresses = [...filteredContacts.first.phoneNumbers, ...filteredContacts.first.emailAddresses];
       if (possibleAddresses.length == 1) {
         addSelected(SelectedContact(
           displayName: filteredContacts.first.displayName,
-          address: possibleAddresses.first,
+          address: possibleAddresses.first.address,
         ));
       }
     }
@@ -579,38 +579,38 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 final contact = filteredContacts[index];
-                                contact.phones = getUniqueNumbers(contact.phones);
-                                contact.emails = getUniqueEmails(contact.emails);
+                                contact.phoneNumbers = getUniqueNumbers(contact.phoneNumbers);
+                                contact.emailAddresses = getUniqueEmails(contact.emailAddresses);
                                 final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
                                 return Column(
                                   key: ValueKey(contact.id),
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    ...contact.phones.map((e) => Material(
+                                    ...contact.phoneNumbers.map((e) => Material(
                                           color: Colors.transparent,
                                           child: InkWell(
                                             onTap: () {
-                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                              addSelected(SelectedContact(displayName: contact.displayName, address: e));
+                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e.address) != null) return;
+                                              addSelected(SelectedContact(displayName: contact.displayName, address: e.address));
                                             },
                                             child: ChatCreatorTile(
                                               title: hideInfo ? "Contact" : contact.displayName,
-                                              subtitle: hideInfo ? "" : e,
+                                              subtitle: hideInfo ? "" : e.address,
                                               contact: contact,
                                               format: true,
                                             ),
                                           ),
                                         )),
-                                    ...contact.emails.map((e) => Material(
+                                    ...contact.emailAddresses.map((e) => Material(
                                           color: Colors.transparent,
                                           child: InkWell(
                                             onTap: () {
-                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                              addSelected(SelectedContact(displayName: contact.displayName, address: e));
+                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e.address) != null) return;
+                                              addSelected(SelectedContact(displayName: contact.displayName, address: e.address));
                                             },
                                             child: ChatCreatorTile(
                                               title: hideInfo ? "Contact" : contact.displayName,
-                                              subtitle: hideInfo ? "" : e,
+                                              subtitle: hideInfo ? "" : e.address,
                                               contact: contact,
                                             ),
                                           ),

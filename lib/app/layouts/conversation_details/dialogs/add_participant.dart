@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
@@ -28,21 +29,21 @@ void showAddParticipant(BuildContext context, Chat chat) {
               }
 
               for (Contact contact in cs.contacts) {
-                for (String phone in contact.phones) {
-                  String cleansed = slugText(phone);
+                for (ContactAddress phone in contact.phoneNumbers) {
+                  String cleansed = slugText(phone.address);
 
                   if (!cache.contains(cleansed)) {
                     cache.add(cleansed);
-                    contacts.add(Tuple2(phone, contact.displayName));
+                    contacts.add(Tuple2(phone.address, contact.displayName));
                   }
                 }
 
-                for (String email in contact.emails) {
-                  String emailVal = slugText.call(email);
+                for (ContactAddress email in contact.emailAddresses) {
+                  String emailVal = slugText.call(email.address);
 
                   if (!cache.contains(emailVal)) {
                     cache.add(emailVal);
-                    contacts.add(Tuple2(email, contact.displayName));
+                    contacts.add(Tuple2(email.address, contact.displayName));
                   }
                 }
               }

@@ -329,7 +329,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
                 children: intersperse(const SizedBox(width: 5), [
                   if (!kIsWeb && !kIsDesktop && !chat.chatIdentifier!.startsWith("urn:biz")
-                      && ((chat.participants.first.contact?.phones.isNotEmpty ?? false)
+                      && ((chat.participants.first.contact?.phoneNumbers.isNotEmpty ?? false)
                           || !chat.participants.first.address.contains("@")))
                     Expanded(
                       child: Row(
@@ -404,7 +404,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                         ],
                       ),
                     ),
-                  if ((chat.participants.first.contact?.emails.isNotEmpty ?? false) || chat.participants.first.address.contains("@"))
+                  if ((chat.participants.first.contact?.emailAddresses.isNotEmpty ?? false) || chat.participants.first.address.contains("@"))
                     Expanded(
                       child: Material(
                         borderRadius: BorderRadius.circular(15),

@@ -696,7 +696,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(17, 2547083341603323785),
       name: 'Contact',
-      lastPropertyId: const IdUid(10, 3612117664568604198),
+      lastPropertyId: const IdUid(12, 544213732131908222),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -734,13 +734,29 @@ final _entities = <ModelEntity>[
             id: const IdUid(10, 3612117664568604198),
             name: 'dbStructuredName',
             type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(11, 4530820325333210275),
+            name: 'dbPhones',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(12, 544213732131908222),
+            name: 'dbEmails',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[])
 ];
 
-/// Open an ObjectBox store with the model declared in this file.
+/// Shortcut for [Store.new] that passes [getObjectBoxModel] and for Flutter
+/// apps by default a [directory] using `defaultStoreDirectory()` from the
+/// ObjectBox Flutter library.
+///
+/// Note: for desktop apps it is recommended to specify a unique [directory].
+///
+/// See [Store.new] for an explanation of all parameters.
 Future<Store> openStore(
         {String? directory,
         int? maxDBSizeInKB,
@@ -756,7 +772,8 @@ Future<Store> openStore(
         queriesCaseSensitiveDefault: queriesCaseSensitiveDefault,
         macosApplicationGroup: macosApplicationGroup);
 
-/// ObjectBox model definition, pass it to [Store] - Store(getObjectBoxModel())
+/// Returns the ObjectBox model definition for this project for use with
+/// [Store.new].
 ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
@@ -919,30 +936,46 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final originalROWIDParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 6);
+          final guidParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 8);
+          final utiParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 10);
+          final mimeTypeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 12);
+          final isOutgoingParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 16);
+          final transferNameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 18);
+          final totalBytesParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 20);
+          final heightParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28);
+          final widthParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30);
+          final webUrlParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 34);
+          final hasLivePhotoParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 40, false);
           final object = Attachment(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              originalROWID: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              guid: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 8),
-              uti: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 10),
-              mimeType: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 12),
-              isOutgoing: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 16),
-              transferName: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 18),
-              totalBytes: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 20),
-              height:
-                  const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
-              width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
-              webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
-              hasLivePhoto: const fb.BoolReader().vTableGet(buffer, rootOffset, 40, false))
-            ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 38);
+              id: idParam,
+              originalROWID: originalROWIDParam,
+              guid: guidParam,
+              uti: utiParam,
+              mimeType: mimeTypeParam,
+              isOutgoing: isOutgoingParam,
+              transferName: transferNameParam,
+              totalBytes: totalBytesParam,
+              height: heightParam,
+              width: widthParam,
+              webUrl: webUrlParam,
+              hasLivePhoto: hasLivePhotoParam)
+            ..dbMetadata = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 38);
           object.message.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 36, 0);
           object.message.attach(store);
@@ -1024,34 +1057,68 @@ ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 26);
           final dateDeletedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 50);
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final guidParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final chatIdentifierParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 12);
+          final isArchivedParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 14);
+          final isPinnedParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 22);
+          final muteTypeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 18);
+          final muteArgsParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 20);
+          final hasUnreadMessageParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 24);
+          final displayNameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 34);
+          final autoSendReadReceiptsParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42);
+          final autoSendTypingIndicatorsParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44);
+          final textFieldTextParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 46);
+          final textFieldAttachmentsParam = const fb.ListReader<String>(
+                  fb.StringReader(asciiOptimization: true),
+                  lazy: false)
+              .vTableGet(buffer, rootOffset, 48, []);
+          final dateDeletedParam = dateDeletedValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue);
+          final styleParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52);
+          final lockChatNameParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 54, false);
+          final lockChatIconParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 56, false);
+          final lastReadMessageGuidParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 58);
           final object = Chat(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              guid: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 8, ''),
-              chatIdentifier: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 12),
-              isArchived: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 14),
-              isPinned: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 22),
-              muteType: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 18),
-              muteArgs: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 20),
-              hasUnreadMessage: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 24),
-              displayName:
-                  const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
-              autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
-              autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
-              textFieldText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 46),
-              textFieldAttachments: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false).vTableGet(buffer, rootOffset, 48, []),
-              dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
-              style: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52),
-              lockChatName: const fb.BoolReader().vTableGet(buffer, rootOffset, 54, false),
-              lockChatIcon: const fb.BoolReader().vTableGet(buffer, rootOffset, 56, false),
-              lastReadMessageGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 58))
+              id: idParam,
+              guid: guidParam,
+              chatIdentifier: chatIdentifierParam,
+              isArchived: isArchivedParam,
+              isPinned: isPinnedParam,
+              muteType: muteTypeParam,
+              muteArgs: muteArgsParam,
+              hasUnreadMessage: hasUnreadMessageParam,
+              displayName: displayNameParam,
+              autoSendReadReceipts: autoSendReadReceiptsParam,
+              autoSendTypingIndicators: autoSendTypingIndicatorsParam,
+              textFieldText: textFieldTextParam,
+              textFieldAttachments: textFieldAttachmentsParam,
+              dateDeleted: dateDeletedParam,
+              style: styleParam,
+              lockChatName: lockChatNameParam,
+              lockChatIcon: lockChatIconParam,
+              lastReadMessageGuid: lastReadMessageGuidParam)
             ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
                 ? null
                 : DateTime.fromMillisecondsSinceEpoch(
@@ -1060,7 +1127,8 @@ ModelDefinition getObjectBoxModel() {
                 .vTableGetNullable(buffer, rootOffset, 32)
             ..customAvatarPath = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 38)
-            ..pinIndex = const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 40);
+            ..pinIndex = const fb.Int64Reader()
+                .vTableGetNullable(buffer, rootOffset, 40);
           InternalToManyAccess.setRelInfo<Chat>(
               object.handles, store, RelInfo<Chat>.toMany(1, object.id!));
           InternalToManyAccess.setRelInfo<Chat>(
@@ -1110,22 +1178,31 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final projectIDParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 6);
+          final storageBucketParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 8);
+          final apiKeyParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 10);
+          final firebaseURLParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 12);
+          final clientIDParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 14);
+          final applicationIDParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 16);
           final object = FCMData(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              projectID: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              storageBucket: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 8),
-              apiKey: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 10),
-              firebaseURL: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 12),
-              clientID: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14),
-              applicationID: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 16));
+              id: idParam,
+              projectID: projectIDParam,
+              storageBucket: storageBucketParam,
+              apiKey: apiKeyParam,
+              firebaseURL: firebaseURLParam,
+              clientID: clientIDParam,
+              applicationID: applicationIDParam);
 
           return object;
         }),
@@ -1173,27 +1250,40 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final originalROWIDParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 6);
+          final addressParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final formattedAddressParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 20);
+          final serviceParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 28, '');
+          final uniqueAddressAndServiceParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 26, '');
+          final countryParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 10);
+          final defaultEmailParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 18);
+          final defaultPhoneParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 14);
           final object = Handle(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              originalROWID: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              address: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 8, ''),
-              formattedAddress: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 20),
-              service: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 28, ''),
-              uniqueAddressAndService: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 26, ''),
-              country: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 10),
-              defaultEmail: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 18),
-              defaultPhone:
-                  const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 14))
-            ..color = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 12);
+              id: idParam,
+              originalROWID: originalROWIDParam,
+              address: addressParam,
+              formattedAddress: formattedAddressParam,
+              service: serviceParam,
+              uniqueAddressAndService: uniqueAddressAndServiceParam,
+              country: countryParam,
+              defaultEmail: defaultEmailParam,
+              defaultPhone: defaultPhoneParam)
+            ..color = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 12);
           object.contactRelation.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
           object.contactRelation.attach(store);
@@ -1227,20 +1317,25 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final themeIdParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 6);
+          final nameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 8);
+          final isFontParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 10);
+          final fontSizeParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
+          final fontWeightParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 16);
           final object = ThemeEntry(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              themeId: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              name: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 8),
-              isFont: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 10),
-              fontSize: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 12),
-              fontWeight: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 16))
+              id: idParam,
+              themeId: themeIdParam,
+              name: nameParam,
+              isFont: isFontParam,
+              fontSize: fontSizeParam,
+              fontWeight: fontWeightParam)
             ..dbColor = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 14);
           object.themeObject.targetId =
@@ -1363,51 +1458,118 @@ ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 70);
           final dateEditedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 88);
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final originalROWIDParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 6);
+          final guidParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 8);
+          final handleIdParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10);
+          final otherHandleParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
+          final textParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 14);
+          final subjectParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 16);
+          final countryParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 18);
+          final errorParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0);
+          final dateCreatedParam = dateCreatedValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(dateCreatedValue);
+          final dateReadParam = dateReadValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(dateReadValue);
+          final dateDeliveredParam = dateDeliveredValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue);
+          final isFromMeParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 26);
+          final hasDdResultsParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 40);
+          final datePlayedParam = datePlayedValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(datePlayedValue);
+          final itemTypeParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 48);
+          final groupTitleParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 50);
+          final groupActionTypeParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52);
+          final balloonBundleIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 56);
+          final associatedMessageGuidParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 58);
+          final associatedMessagePartParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 84);
+          final associatedMessageTypeParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 60);
+          final expressiveSendStyleIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 62);
+          final hasAttachmentsParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 66, false);
+          final hasReactionsParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 68, false);
+          final dateDeletedParam = dateDeletedValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue);
+          final threadOriginatorGuidParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 72);
+          final threadOriginatorPartParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 74);
+          final hasApplePayloadDataParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 86, false);
+          final dateEditedParam = dateEditedValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(dateEditedValue);
+          final wasDeliveredQuietlyParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 96, false);
+          final didNotifyRecipientParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 98, false);
+          final isBookmarkedParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 100, false);
           final object = Message(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              originalROWID: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              guid: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 8),
-              handleId: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 10),
-              otherHandle: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 12),
-              text: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14),
-              subject: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 16),
-              country: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 18),
-              error:
-                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0),
-              dateCreated: dateCreatedValue == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(dateCreatedValue),
-              dateRead: dateReadValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateReadValue),
-              dateDelivered: dateDeliveredValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue),
-              isFromMe: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 26),
-              hasDdResults: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 40),
-              datePlayed: datePlayedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(datePlayedValue),
-              itemType: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 48),
-              groupTitle: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 50),
-              groupActionType: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52),
-              balloonBundleId: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 56),
-              associatedMessageGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 58),
-              associatedMessagePart: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 84),
-              associatedMessageType: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 60),
-              expressiveSendStyleId: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 62),
-              hasAttachments: const fb.BoolReader().vTableGet(buffer, rootOffset, 66, false),
-              hasReactions: const fb.BoolReader().vTableGet(buffer, rootOffset, 68, false),
-              dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
-              threadOriginatorGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 72),
-              threadOriginatorPart: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 74),
-              hasApplePayloadData: const fb.BoolReader().vTableGet(buffer, rootOffset, 86, false),
-              dateEdited: dateEditedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateEditedValue),
-              wasDeliveredQuietly: const fb.BoolReader().vTableGet(buffer, rootOffset, 96, false),
-              didNotifyRecipient: const fb.BoolReader().vTableGet(buffer, rootOffset, 98, false),
-              isBookmarked: const fb.BoolReader().vTableGet(buffer, rootOffset, 100, false))
+              id: idParam,
+              originalROWID: originalROWIDParam,
+              guid: guidParam,
+              handleId: handleIdParam,
+              otherHandle: otherHandleParam,
+              text: textParam,
+              subject: subjectParam,
+              country: countryParam,
+              error: errorParam,
+              dateCreated: dateCreatedParam,
+              dateRead: dateReadParam,
+              dateDelivered: dateDeliveredParam,
+              isFromMe: isFromMeParam,
+              hasDdResults: hasDdResultsParam,
+              datePlayed: datePlayedParam,
+              itemType: itemTypeParam,
+              groupTitle: groupTitleParam,
+              groupActionType: groupActionTypeParam,
+              balloonBundleId: balloonBundleIdParam,
+              associatedMessageGuid: associatedMessageGuidParam,
+              associatedMessagePart: associatedMessagePartParam,
+              associatedMessageType: associatedMessageTypeParam,
+              expressiveSendStyleId: expressiveSendStyleIdParam,
+              hasAttachments: hasAttachmentsParam,
+              hasReactions: hasReactionsParam,
+              dateDeleted: dateDeletedParam,
+              threadOriginatorGuid: threadOriginatorGuidParam,
+              threadOriginatorPart: threadOriginatorPartParam,
+              hasApplePayloadData: hasApplePayloadDataParam,
+              dateEdited: dateEditedParam,
+              wasDeliveredQuietly: wasDeliveredQuietlyParam,
+              didNotifyRecipient: didNotifyRecipientParam,
+              isBookmarked: isBookmarkedParam)
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
             ..dbAttributedBody = const fb.StringReader(asciiOptimization: true)
@@ -1417,7 +1579,8 @@ ModelDefinition getObjectBoxModel() {
                     .vTableGetNullable(buffer, rootOffset, 90)
             ..dbPayloadData = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 92)
-            ..dbMetadata = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 94);
+            ..dbMetadata = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 94);
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
           object.chat.attach(store);
@@ -1457,22 +1620,28 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final nameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 6);
+          final selectedLightThemeParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false);
+          final selectedDarkThemeParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 10, false);
+          final gradientBgParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 12, false);
+          final previousLightThemeParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 14, false);
+          final previousDarkThemeParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 16, false);
           final object = ThemeObject(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              name: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 6),
-              selectedLightTheme:
-                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false),
-              selectedDarkTheme: const fb.BoolReader()
-                  .vTableGet(buffer, rootOffset, 10, false),
-              gradientBg: const fb.BoolReader()
-                  .vTableGet(buffer, rootOffset, 12, false),
-              previousLightTheme: const fb.BoolReader()
-                  .vTableGet(buffer, rootOffset, 14, false),
-              previousDarkTheme: const fb.BoolReader()
-                  .vTableGet(buffer, rootOffset, 16, false));
+              id: idParam,
+              name: nameParam,
+              selectedLightTheme: selectedLightThemeParam,
+              selectedDarkTheme: selectedDarkThemeParam,
+              gradientBg: gradientBgParam,
+              previousLightTheme: previousLightThemeParam,
+              previousDarkTheme: previousDarkThemeParam);
           InternalToManyAccess.setRelInfo<ThemeObject>(
               object.themeEntries,
               store,
@@ -1504,16 +1673,19 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final nameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final gradientBgParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false);
+          final googleFontParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 12, '');
           final object = ThemeStruct(
-              id: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              name: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 6, ''),
-              gradientBg:
-                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false),
-              googleFont: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 12, ''))
+              id: idParam,
+              name: nameParam,
+              gradientBg: gradientBgParam,
+              googleFont: googleFontParam)
             ..dbThemeData = const fb.StringReader(asciiOptimization: true)
                 .vTableGet(buffer, rootOffset, 10, '');
 
@@ -1539,7 +1711,9 @@ ModelDefinition getObjectBoxModel() {
           final dbStructuredNameOffset = object.dbStructuredName == null
               ? null
               : fbb.writeString(object.dbStructuredName!);
-          fbb.startTable(11);
+          final dbPhonesOffset = fbb.writeString(object.dbPhones);
+          final dbEmailsOffset = fbb.writeString(object.dbEmails);
+          fbb.startTable(13);
           fbb.addInt64(0, object.dbId ?? 0);
           fbb.addOffset(1, idOffset);
           fbb.addOffset(2, displayNameOffset);
@@ -1547,30 +1721,44 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(5, emailsOffset);
           fbb.addOffset(7, avatarOffset);
           fbb.addOffset(9, dbStructuredNameOffset);
+          fbb.addOffset(10, dbPhonesOffset);
+          fbb.addOffset(11, dbEmailsOffset);
           fbb.finish(fbb.endTable());
           return object.dbId ?? 0;
         },
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-
+          final dbIdParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final idParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final displayNameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 8, '');
+          final phonesParam = const fb.ListReader<String>(
+                  fb.StringReader(asciiOptimization: true),
+                  lazy: false)
+              .vTableGet(buffer, rootOffset, 10, []);
+          final emailsParam = const fb.ListReader<String>(
+                  fb.StringReader(asciiOptimization: true),
+                  lazy: false)
+              .vTableGet(buffer, rootOffset, 14, []);
+          final avatarParam = const fb.Uint8ListReader(lazy: false)
+              .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?;
           final object = Contact(
-              dbId: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 4),
-              id: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 6, ''),
-              displayName: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 8, ''),
-              phones:
-                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
-                      .vTableGet(buffer, rootOffset, 10, []),
-              emails:
-                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
-                      .vTableGet(buffer, rootOffset, 14, []),
-              avatar: const fb.Uint8ListReader(lazy: false)
-                  .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?)
+              dbId: dbIdParam,
+              id: idParam,
+              displayName: displayNameParam,
+              phones: phonesParam,
+              emails: emailsParam,
+              avatar: avatarParam)
             ..dbStructuredName = const fb.StringReader(asciiOptimization: true)
-                .vTableGetNullable(buffer, rootOffset, 22);
+                .vTableGetNullable(buffer, rootOffset, 22)
+            ..dbPhones = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 24, '')
+            ..dbEmails = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 26, '');
 
           return object;
         })
@@ -2074,4 +2262,12 @@ class Contact_ {
   /// see [Contact.dbStructuredName]
   static final dbStructuredName =
       QueryStringProperty<Contact>(_entities[8].properties[6]);
+
+  /// see [Contact.dbPhones]
+  static final dbPhones =
+      QueryStringProperty<Contact>(_entities[8].properties[7]);
+
+  /// see [Contact.dbEmails]
+  static final dbEmails =
+      QueryStringProperty<Contact>(_entities[8].properties[8]);
 }

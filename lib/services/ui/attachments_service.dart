@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:isolate';
 
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -103,8 +104,8 @@ class AttachmentsService extends GetxService {
     return Contact(
       id: contact.id,
       displayName: contact.displayName,
-      phones: contact.phones.map((e) => e.number).toList(),
-      emails: contact.emails.map((e) => e.address).toList(),
+      phoneNumbers: contact.phones.map((e) => ContactAddress(type: ContactAddressType.phone, address: e.number, label: e.label.name)).toList(),
+      emailAddresses: contact.emails.map((e) => ContactAddress(type: ContactAddressType.email, address: e.address, label: e.label.name)).toList(),
       structuredName: StructuredName(
         namePrefix: contact.name.prefix,
         familyName: contact.name.last,

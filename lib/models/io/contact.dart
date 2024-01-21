@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +19,8 @@ class Contact {
     required this.displayName,
     this.phones = const [],
     this.emails = const [],
+    this.phoneNumbers = const [],
+    this.emailAddresses = const [],
     this.structuredName,
     this.avatar,
   });
@@ -27,8 +30,6 @@ class Contact {
   @Index()
   String id;
   String displayName;
-  List<String> phones;
-  List<String> emails;
   StructuredName? structuredName;
   Uint8List? avatar;
 
@@ -36,6 +37,20 @@ class Contact {
       ? null : jsonEncode(structuredName!.toMap());
   set dbStructuredName(String? json) => structuredName = json == null
       ? null : StructuredName.fromMap(jsonDecode(json));
+
+  @Deprecated('Use phoneNumbers instead')
+  List<String> phones;
+  @Deprecated('Use emailAddresses instead')
+  List<String> emails;
+
+  List<ContactAddress> phoneNumbers;
+  List<ContactAddress> emailAddresses;
+
+  String get dbPhones => jsonEncode(phoneNumbers.map((e) => e.toMap()).toList());
+  set dbPhones(String json) => (jsonDecode(json) as List<dynamic>).map((e) => ContactAddress.fromMap(e)).toList();
+
+  String get dbEmails => jsonEncode(emailAddresses.map((e) => e.toMap()).toList());
+  set dbEmails(String json) => (jsonDecode(json) as List<dynamic>).map((e) => ContactAddress.fromMap(e)).toList();
 
   String? get initials {
     String initials = (structuredName?.givenName.characters.firstOrNull ?? "") + (structuredName?.familyName.characters.firstOrNull ?? "");
@@ -88,8 +103,8 @@ class Contact {
       'dbId': dbId,
       'id': id,
       'displayName': displayName,
-      'phoneNumbers': getUniqueNumbers(phones),
-      'emails': getUniqueEmails(emails),
+      'phoneNumbers': getUniqueNumbers(phoneNumbers),
+      'emails': getUniqueEmails(emailAddresses),
       'structuredName': structuredName?.toMap(),
       'avatar': avatar == null ? null : base64Encode(avatar!),
     };
@@ -113,10 +128,10 @@ class Contact {
       (other is Contact &&
           runtimeType == other.runtimeType &&
           displayName == other.displayName &&
-          listEquals(getUniqueNumbers(phones), getUniqueNumbers(other.phones)) &&
-          listEquals(getUniqueEmails(emails), getUniqueEmails(other.emails)) &&
+          listEquals(getUniqueNumbers(phoneNumbers), getUniqueNumbers(other.phoneNumbers)) &&
+          listEquals(getUniqueEmails(emailAddresses), getUniqueEmails(other.emailAddresses)) &&
           avatar?.length == other.avatar?.length);
 
   @override
-  int get hashCode => Object.hashAllUnordered([displayName, avatar?.length, ...getUniqueNumbers(phones), ...getUniqueEmails(emails)]);
+  int get hashCode => Object.hashAllUnordered([displayName, avatar?.length, ...getUniqueNumbers(phoneNumbers), ...getUniqueEmails(emailAddresses)]);
 }

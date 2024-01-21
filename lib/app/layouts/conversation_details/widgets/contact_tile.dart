@@ -66,14 +66,14 @@ class ContactTile extends StatelessWidget {
           handle: handle,
           borderThickness: 0.1,
         ),
-        trailing: kIsWeb || (kIsDesktop && !isEmail) || (!isEmail && (contact?.phones.isEmpty ?? true))
+        trailing: kIsWeb || (kIsDesktop && !isEmail) || (!isEmail && (contact?.phoneNumbers.isEmpty ?? true))
             ? Container(width: 2)
             : FittedBox(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             mainAxisSize: MainAxisSize.max,
             children: <Widget>[
-              if ((contact == null && isEmail) || (contact?.emails.length ?? 0) > 0)
+              if ((contact == null && isEmail) || (contact?.emailAddresses.length ?? 0) > 0)
                 ButtonTheme(
                   minWidth: 1,
                   child: TextButton(
@@ -92,7 +92,7 @@ class ContactTile extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (((contact == null && !isEmail) || (contact?.phones.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
+              if (((contact == null && !isEmail) || (contact?.phoneNumbers.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
                 ButtonTheme(
                   minWidth: 1,
                   child: TextButton(
@@ -113,7 +113,7 @@ class ContactTile extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (((contact == null && !isEmail) || (contact?.phones.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
+              if (((contact == null && !isEmail) || (contact?.phoneNumbers.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
                 ButtonTheme(
                   minWidth: 1,
                   child: TextButton(

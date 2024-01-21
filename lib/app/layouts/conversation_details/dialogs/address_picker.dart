@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -22,9 +23,9 @@ void showAddressPicker(Contact? contact, Handle handle, BuildContext context, {b
   if (contact == null) {
     launchIntent(video, handle.address);
   } else {
-    List<String> items = isEmail ? getUniqueEmails(contact.emails) : getUniqueNumbers(contact.phones);
+    List<ContactAddress> items = isEmail ? getUniqueEmails(contact.emailAddresses) : getUniqueNumbers(contact.phoneNumbers);
     if (items.length == 1) {
-      launchIntent(video, items.first);
+      launchIntent(video, items.first.address);
     } else if (!isEmail && handle.defaultPhone != null && !isLongPressed) {
       launchIntent(video, handle.defaultPhone!);
     } else if (isEmail && handle.defaultEmail != null && !isLongPressed) {
@@ -45,21 +46,21 @@ void showAddressPicker(Contact? contact, Handle handle, BuildContext context, {b
                 for (int i = 0; i < items.length; i++)
                   TextButton(
                     child: Text(
-                      items[i],
+                      items[i].address,
                       style: context.theme.textTheme.bodyLarge,
                       textAlign: TextAlign.start,
                     ),
                     onPressed: () {
                       if (data.value) {
                         if (isEmail) {
-                          handle.defaultEmail = items[i];
-                          handle.updateDefaultEmail(items[i]);
+                          handle.defaultEmail = items[i].address;
+                          handle.updateDefaultEmail(items[i].address);
                         } else {
-                          handle.defaultPhone = items[i];
-                          handle.updateDefaultPhone(items[i]);
+                          handle.defaultPhone = items[i].address;
+                          handle.updateDefaultPhone(items[i].address);
                         }
                       }
-                      launchIntent(video, items[i]);
+                      launchIntent(video, items[i].address);
                       Navigator.of(context).pop();
                     },
                   ),

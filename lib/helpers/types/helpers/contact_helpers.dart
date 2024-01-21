@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:get/get.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
@@ -30,12 +31,12 @@ Future<String> formatPhoneNumber(dynamic item) async {
   return formatted ?? address;
 }
 
-List<String> getUniqueNumbers(Iterable<String> numbers) {
-  List<String> phones = [];
-  for (String phone in numbers) {
+List<ContactAddress> getUniqueNumbers(Iterable<ContactAddress> numbers) {
+  List<ContactAddress> phones = [];
+  for (ContactAddress phone in numbers) {
     bool exists = false;
-    for (String current in phones) {
-      if (phone.numericOnly() == current.numericOnly()) {
+    for (ContactAddress current in phones) {
+      if (phone.address.numericOnly() == current.address.numericOnly()) {
         exists = true;
         break;
       }
@@ -49,12 +50,12 @@ List<String> getUniqueNumbers(Iterable<String> numbers) {
   return phones;
 }
 
-List<String> getUniqueEmails(Iterable<String> list) {
-  List<String> emails = [];
-  for (String email in list) {
+List<ContactAddress> getUniqueEmails(Iterable<ContactAddress> list) {
+  List<ContactAddress> emails = [];
+  for (ContactAddress email in list) {
     bool exists = false;
-    for (String current in emails) {
-      if (email.trim() == current.trim()) {
+    for (ContactAddress current in emails) {
+      if (email.address.trim() == current.address.trim()) {
         exists = true;
         break;
       }

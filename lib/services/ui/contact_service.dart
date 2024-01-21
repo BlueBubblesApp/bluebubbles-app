@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -152,11 +153,11 @@ class ContactsService extends GetxService {
     } else {
       _contacts.addAll((await FastContacts.getAllContacts(
         fields: List<ContactField>.from(ContactField.values)
-          ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription, ContactField.emailLabels, ContactField.phoneLabels].contains(e))
+          ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription].contains(e))
       )).map((e) => Contact(
         displayName: e.displayName,
-        emails: e.emails.map((e) => e.address).toList(),
-        phones: e.phones.map((e) => e.number).toList(),
+        emailAddresses: e.emails.map((e) => ContactAddress(type: ContactAddressType.phone, address: e.address, label: e.label)).toList(),
+        phoneNumbers: e.phones.map((e) => ContactAddress(type: ContactAddressType.email, address: e.number, label: e.label)).toList(),
         structuredName: e.structuredName == null ? null : StructuredName(
           namePrefix: e.structuredName!.namePrefix,
           givenName: e.structuredName!.givenName,
@@ -197,13 +198,13 @@ class ContactsService extends GetxService {
   }
 
   List<Handle> matchContactToHandles(Contact c, List<Handle> handles) {
-    final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
+    final numericPhones = c.phoneNumbers.map((e) => e.address.numericOnly()).toList();
     List<Handle> handleMatches = [];
     // multiply phones by 3 because a phone can be matched to iMessage / SMS / Android SMS
-    int maxResults = c.phones.length * 3 + c.emails.length;
+    int maxResults = c.phoneNumbers.length * 3 + c.emailAddresses.length;
     for (Handle h in handles) {
       // Match emails
-      if (h.address.contains("@") && c.emails.contains(h.address)) {
+      if (h.address.contains("@") && ContactAddress.listContainsAddress(c.emailAddresses, h.address)) {
         handleMatches.add(h);
         continue;
       }
@@ -211,7 +212,7 @@ class ContactsService extends GetxService {
       final numericAddress = h.address.numericOnly();
 
       // Match phone numbers (exact)
-      if (c.phones.contains(numericAddress)) {
+      if (ContactAddress.listContainsAddress(c.phoneNumbers, numericAddress)) {
         handleMatches.add(h);
         continue;
       }
@@ -239,13 +240,13 @@ class ContactsService extends GetxService {
     Contact? contact;
     final numericAddress = h.address.numericOnly();
     for (Contact c in contacts) {
-      final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
-      if (h.address.contains("@") && c.emails.contains(h.address)) {
+      final numericPhones = c.phoneNumbers.map((e) => e.address.numericOnly()).toList();
+      if (h.address.contains("@") && ContactAddress.listContainsAddress(c.emailAddresses, h.address)) {
         contact = c;
         break;
       } else {
         // if address is direct match
-        if (c.phones.contains(numericAddress)) {
+        if (ContactAddress.listContainsAddress(c.phoneNumbers, numericAddress)) {
           contact = c;
           break;
         }
@@ -289,8 +290,8 @@ class ContactsService extends GetxService {
             networkContacts.add(Contact(
               id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
               displayName: displayName,
-              emails: emails,
-              phones: phones,
+              emailAddresses: emails.map((e) => ContactAddress(type: ContactAddressType.email, address: e)).toList(),
+              phoneNumbers: phones.map((e) => ContactAddress(type: ContactAddressType.phone, address: e)).toList()
             ));
           }
         } else {
@@ -335,13 +336,13 @@ class ContactsService extends GetxService {
               // Ensure contact first name matches to avoid issues with shared numbers (landlines)
               if (!match && map['firstName'] != null && !contact.displayName.startsWith(map['firstName'])) continue;
 
-              List<String> addresses = [...contact.phones, ...contact.emails];
+              List<ContactAddress> addresses = [...contact.phoneNumbers, ...contact.emailAddresses];
               List<String> _addresses = [...phones, ...emails];
-              for (String a in addresses) {
+              for (ContactAddress a in addresses) {
                 if (match) {
                   break;
                 }
-                String? formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(a));
+                String? formatA = a.address.contains("@") ? a.address.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(a.address));
                 if (formatA.isEmpty) continue;
                 for (String _a in _addresses) {
                   String? _formatA = _a.contains("@") ? _a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(_a));
@@ -380,8 +381,8 @@ class ContactsService extends GetxService {
             networkContacts.add(Contact(
               id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
               displayName: displayName,
-              emails: emails,
-              phones: phones,
+              emailAddresses: emails.map((e) => ContactAddress(type: ContactAddressType.email, address: e)).toList(),
+              phoneNumbers: phones.map((e) => ContactAddress(type: ContactAddressType.phone, address: e)).toList(),
               avatar: !isNullOrEmpty(map['avatar'])! ? base64Decode(map['avatar'].toString()) : null,
             ));
           }

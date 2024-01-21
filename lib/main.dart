@@ -9,6 +9,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -50,7 +51,7 @@ import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
 
-const databaseVersion = 4;
+const databaseVersion = 5;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -327,6 +328,17 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
               ss.getFcmData();
               ss.fcmData.save();
               version = 4;
+              migrate.call();
+              return;
+            case 5:
+              List<Contact> contacts = contactBox.getAll();
+              for (Contact c in contacts) {
+                c.phoneNumbers = c.phones.map((e) => ContactAddress(type: ContactAddressType.phone, address: e)).toList();
+                c.emailAddresses = c.emails.map((e) => ContactAddress(type: ContactAddressType.email, address: e)).toList();
+              }
+
+              contactBox.putMany(contacts, mode: PutMode.update);
+              version = 5;
               migrate.call();
               return;
             default:

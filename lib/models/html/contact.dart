@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +21,8 @@ class Contact {
   int? dbId;
   String id;
   String displayName;
-  List<String> phones;
-  List<String> emails;
+  List<ContactAddress> phones;
+  List<ContactAddress> emails;
   StructuredName? structuredName;
   Uint8List? avatar;
 
