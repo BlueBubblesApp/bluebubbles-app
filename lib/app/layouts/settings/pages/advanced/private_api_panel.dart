@@ -47,6 +47,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       if (widget.enablePrivateAPIonInit && ss.settings.serverPrivateAPI.value == true) {
         ss.settings.enablePrivateAPI.value = true;
+        ss.settings.privateAPISend.value = true;
         http.serverInfo().then((response) {
           final String serverVersion = response.data['data']['server_version'] ?? "0.0.1";
           Version version = Version.parse(serverVersion);
