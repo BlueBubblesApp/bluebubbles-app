@@ -148,7 +148,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
             Intent(context, BubbleActivity::class.java)
                 .putExtras(extras)
                 .putExtra("notificationId", notificationId)
-                .putExtra("bubble", false)
+                .putExtra("bubble", true)
                 .setType("OpenChat"),
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
