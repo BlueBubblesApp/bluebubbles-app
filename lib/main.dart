@@ -36,7 +36,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:network_tools/network_tools.dart';
 import 'package:on_exit/init.dart';
-import 'package:path/path.dart' show basename, dirname, join;
+import 'package:path/path.dart' show basename, join;
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screen_retriever/screen_retriever.dart';
@@ -151,55 +151,6 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
   dynamic exception;
   StackTrace? stacktrace;
   await configureNetworkTools(fs.appDocDir.path, enableDebugging: kDebugMode);
-
-  /* ----- APPDATA MIGRATION ----- */
-  if ((Platform.isLinux || Platform.isWindows) && kIsDesktop) {
-    //ignore: unnecessary_cast, we need this as a workaround
-    Directory appData = fs.appDocDir as Directory;
-    if (!await Directory(join(appData.path, "objectbox")).exists()) {
-      // Migrate to new appdata location if this function returns the new place and we still have the old place
-      if (basename(appData.absolute.path) == "bluebubbles") {
-        Directory oldAppData = Platform.isWindows
-            ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"))
-            : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
-        bool storeApp = basename(dirname(dirname(appData.absolute.path))) != "Roaming";
-        if (await oldAppData.exists()) {
-          Logger.info("Copying appData to new directory");
-          copyDirectory(oldAppData, appData);
-          Logger.info("Finished migrating appData");
-        } else if (Platform.isWindows) {
-          // Find the other appdata.
-          String appDataRoot = p.joinAll(p.split(appData.absolute.path).slice(0, 4));
-          if (storeApp) {
-            // If current app is store, we first look for new location nonstore appdata in case people are installing
-            // diff versions
-            oldAppData = Directory(join(appDataRoot, "Roaming", "BlueBubbles", "bluebubbles"));
-            // If that doesn't exist, we look in the old non-store location
-            if (!await oldAppData.exists()) {
-              oldAppData = Directory(join(appDataRoot, "Roaming", "com.bluebubbles", "bluebubbles_app"));
-            }
-            if (await oldAppData.exists()) {
-              Logger.info("Copying appData from NONSTORE location to new directory");
-              copyDirectory(oldAppData, appData);
-              Logger.info("Finished migrating appData");
-            }
-          } else {
-            oldAppData = Directory(join(appDataRoot, "Local", "Packages", "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw", "LocalCache", "Roaming",
-                "BlueBubbles", "bluebubbles"));
-            if (!await oldAppData.exists()) {
-              oldAppData = Directory(join(appDataRoot, "Local", "Packages", "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw", "LocalCache", "Roaming",
-                  "com.bluebubbles", "bluebubbles_app"));
-            }
-            if (await oldAppData.exists()) {
-              Logger.info("Copying appData from STORE location to new directory");
-              copyDirectory(oldAppData, appData);
-              Logger.info("Finished migrating appData");
-            }
-          }
-        }
-      }
-    }
-  }
 
   try {
     /* ----- OBJECTBOX DB INITIALIZATION ----- */
