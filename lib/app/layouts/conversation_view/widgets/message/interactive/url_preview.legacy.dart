@@ -31,7 +31,7 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
   void initState() {
     super.initState();
     updateObx(() async {
-      if (metadata == null) {
+      if (metadata != null) {
         try {
           metadata = await MetadataHelper.fetchMetadata(message);
         } catch (ex) {
@@ -101,7 +101,7 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  !isNullOrEmpty(metadata?.title)!
+                  !isNullOrEmpty(metadata?.title)! && metadata?.title != "www"
                       ? metadata!.title!
                       : !isNullOrEmpty(siteText)!
                       ? siteText! : message.text!,
