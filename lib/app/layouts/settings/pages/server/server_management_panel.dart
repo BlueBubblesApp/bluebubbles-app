@@ -29,6 +29,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
+import 'package:bluebubbles/utils/logger.dart';
 
 class ServerManagementPanelController extends StatefulController {
   final RxnInt latency = RxnInt();
@@ -42,6 +43,8 @@ class ServerManagementPanelController extends StatefulController {
   final RxnString proxyService = RxnString();
   final RxnDouble timeSync = RxnDouble();
   final RxMap<String, dynamic> stats = RxMap({});
+  final RxList<String> accountAliases = RxList();
+  final RxBool hasAccountInfo = RxBool(false);
 
   // Restart trackers
   int? lastRestart;
@@ -78,20 +81,40 @@ class ServerManagementPanelController extends StatefulController {
       timeSync.value = response.data['data']['macos_time_sync'];
       hasCheckedStats.value = true;
 
-      http.serverStatTotals().then((response) {
-        if (response.data['status'] == 200) {
-          stats.addAll(response.data['data'] ?? {});
-          http.serverStatMedia().then((response) {
+      final subsequentRequests = <Future>[];
+
+      subsequentRequests.add(  
+        http.serverStatTotals().then((response) {
+          if (response.data['status'] == 200) {
+            stats.addAll(response.data['data'] ?? {});
+            http.serverStatMedia().then((response) {
+              if (response.data['status'] == 200) {
+                stats.addAll(response.data['data'] ?? {});
+              }
+            });
+          }
+        }).catchError((_) {
+          showSnackbar("Error", "Failed to load server statistics!");
+        })
+      );
+
+      if (privateAPIStatus.value) {
+        subsequentRequests.add(
+          http.getAccountInfo().then((response) {
             if (response.data['status'] == 200) {
-              stats.addAll(response.data['data'] ?? {});
+              accountAliases.clear();
+              final aliases = ((response.data['data']['vetted_aliases'] ?? []) as List<dynamic>).map((a) => a['Alias'] as String);
+              accountAliases.addAll(aliases);
+            
+              hasAccountInfo.value = true;
             }
-          });
-        }
-        opacity.value = 1.0;
-      }).catchError((_) {
-        showSnackbar("Error", "Failed to load server statistics!");
-        opacity.value = 1.0;
-      });
+          })
+          .catchError((e) { Logger.debug("Failed to get account info $e"); })
+        );
+      }
+
+      Future.wait(subsequentRequests)
+        .whenComplete(() => opacity.value = 1.0);
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
       hasCheckedStats.value = null;
@@ -278,6 +301,55 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             )
                           ],
                         ))),
+                        Obx(() => AnimatedSizeAndFade.showHide(
+                          show: controller.hasAccountInfo.value,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SettingsTile(
+                                title: "Show Account Info",
+                                subtitle: "View iMessage account info",
+                                leading: const SettingsLeadingIcon(
+                                  iosIcon: CupertinoIcons.person,
+                                  materialIcon: Icons.person,
+                                ),
+                                onTap: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            backgroundColor: context.theme.colorScheme.properSurface,
+                                            content: Padding(
+                                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                                              child: SelectableText.rich(
+                                                TextSpan(children: [
+                                                  TextSpan(text: "Vetted Aliases (${controller.accountAliases.length}):\n\t ${ss.settings.redactedMode.value ? "Redacted" : controller.accountAliases.join("\n\t")}"),
+                                                ]),
+                                                style: context.theme.textTheme.bodyLarge,
+                                              ),
+                                            ),
+                                            title: Text("Account Info", style: context.theme.textTheme.titleLarge),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                child: Text("Dismiss",
+                                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
+                                          )
+                                    );
+                                  },
+                              ),
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 65.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              )
+                            ],
+                          ))),
                     if (!ss.fcmData.isNull)
                       SettingsTile(
                         title: "Show QR Code",
