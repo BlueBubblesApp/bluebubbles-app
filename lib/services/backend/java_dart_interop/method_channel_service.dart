@@ -18,7 +18,7 @@ class MethodChannelService extends GetxService {
 
   // music theme
   bool isRunning = false;
-  Color? previousPrimary;
+  Uint8List? previousArt;
 
   Future<void> init({bool headless = false}) async {
     if (kIsWeb || kIsDesktop) return;
@@ -179,9 +179,9 @@ class MethodChannelService extends GetxService {
       case "MediaColors":
         await storeStartup.future;
         if (!ss.settings.colorsFromMedia.value) return false;
-        final Color primary = Color(call.arguments['primary']);
-        if (Get.context != null && (!isRunning || primary != previousPrimary)) {
-          ts.updateMusicTheme(Get.context!, primary);
+        final Uint8List art = call.arguments["albumArt"];
+        if (Get.context != null && (!isRunning || art != previousArt)) {
+          ts.updateMusicTheme(Get.context!, art);
           isRunning = false;
         }
         return true;

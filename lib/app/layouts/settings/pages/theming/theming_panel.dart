@@ -402,7 +402,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       Obx(
                             () => SettingsSwitch(
                           onChanged: (bool val) async {
-                            await mcs.invokeMethod("request-notif-permission");
+                            await mcs.invokeMethod("request-notification-listener-permission");
                             if (val) {
                               try {
                                 await mcs.invokeMethod("start-notification-listener");

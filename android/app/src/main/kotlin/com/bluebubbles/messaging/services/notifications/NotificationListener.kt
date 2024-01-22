@@ -2,19 +2,21 @@ package com.bluebubbles.messaging.services.notifications
 
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.service.notification.NotificationListenerService
 import android.util.Log
-import androidx.palette.graphics.Palette
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
+
+import java.io.ByteArrayOutputStream
 
 /// Class used to listen for media notifications and fetch album art to update app theming
 class NotificationListener: NotificationListenerService() {
     companion object {
-        private var hasInit: Boolean = false;
+        private var hasInit: Boolean = false
 
         fun init(context: Context) {
             if (hasInit) return
@@ -22,7 +24,7 @@ class NotificationListener: NotificationListenerService() {
             val sessionListener = MediaSessionListener()
             sessionListener.init(context)
             manager.addOnActiveSessionsChangedListener(sessionListener, ComponentName(context, this::class.java))
-            hasInit = true;
+            hasInit = true
         }
     }
 }
@@ -65,14 +67,12 @@ class MediaControllerCallback: MediaController.Callback() {
         val albumArt = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
 
         if (art != null || albumArt != null) {
-            Log.d(Constants.logTag, "Fetching palette for new media")
-            Palette.from((art ?: albumArt)!!).generate {palette ->
-                val vibrant = palette?.vibrantSwatch?.rgb;
-                if (vibrant != null) {
-                    Log.d(Constants.logTag, "Sending primary color to Dart")
-                    MethodCallHandler.invokeMethod("MediaColors", hashMapOf("primary" to vibrant))
-                }
-            }
+            Log.d(Constants.logTag, "Sending album art to Dart")
+            val stream = ByteArrayOutputStream()
+            (art ?: albumArt)!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            val byteArray = stream.toByteArray()
+            MethodCallHandler.invokeMethod("MediaColors", hashMapOf("albumArt" to byteArray))
+            stream.flush()
         }
     }
 }

@@ -195,11 +195,11 @@ class ThemesService extends GetxService {
     _loadTheme(context);
   }
 
-  void updateMusicTheme(BuildContext context, Color primary) async {
+  void updateMusicTheme(BuildContext context, Uint8List art) async {
     final darkTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme 🌙");
     final lightTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme ☀");
-    final lightScheme = ColorScheme.fromSeed(seedColor: primary, brightness: Brightness.light);
-    final darkScheme = ColorScheme.fromSeed(seedColor: primary, brightness: Brightness.dark);
+    final lightScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(art), brightness: Brightness.light);
+    final darkScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(art), brightness: Brightness.dark);
     lightTheme.data = lightTheme.data.copyWith(
       colorScheme: lightScheme
     );
