@@ -37,32 +37,19 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     // Check if the URL is valid
     bool isValid = url.isURL;
     if (url.contains(":") && !isValid) {
-      if (":"
-          .allMatches(url)
-          .length == 2) {
-        final newUrl = url.split(":")[1]
-            .split("/")
-            .last;
-        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      // port applied to URL
+      if (":".allMatches(url).length == 2) {
+        final newUrl = url.split(":")[1].split("/").last;
+        isValid = "https://${(newUrl.split(".")..removeLast()).join(".")}.com".isURL || newUrl.isIPv6 || newUrl.isIPv4;
       } else {
-        final newUrl = url
-            .split(":")
-            .first;
+        final newUrl = url.split(":").first;
         isValid = newUrl.isIPv6 || newUrl.isIPv4;
       }
     }
     // the getx regex only allows extensions up to 6 characters in length
     // this is a workaround for that
-    if (!isValid && url
-        .split(".")
-        .last
-        .isAlphabetOnly && url
-        .split(".")
-        .last
-        .length > 6) {
-      final newUrl = url.split(".").sublist(0, url
-          .split(".")
-          .length - 1).join(".");
+    if (!isValid && url.split(".").last.isAlphabetOnly && url.split(".").last.length > 6) {
+      final newUrl = (url.split(".")..removeLast()).join(".");
       isValid = ("$newUrl.com").isURL;
     }
 
