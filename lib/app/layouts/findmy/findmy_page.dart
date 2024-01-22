@@ -335,10 +335,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                               backgroundColor: context.theme.colorScheme.primaryContainer,
                             ),
                             onPressed: () async {
-                              if ((item.address?.label ?? item.address?.mapItemFullAddress) == null) {
-                                return showSnackbar("Error", "Could not find an address to launch!");
-                              }
-                              await MapsLauncher.launchQuery((item.address?.label ?? item.address?.mapItemFullAddress)!);
+                              await MapsLauncher.launchCoordinates(item.location!.latitude!, item.location!.longitude!);
                             },
                             child: const Icon(
                                 Icons.directions,
@@ -415,10 +412,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                               backgroundColor: context.theme.colorScheme.primaryContainer,
                             ),
                             onPressed: () async {
-                              if ((item.address?.label ?? item.address?.mapItemFullAddress) == null) {
-                                return showSnackbar("Error", "Could not find an address to launch!");
-                              }
-                              await MapsLauncher.launchQuery((item.address?.label ?? item.address?.mapItemFullAddress)!);
+                              await MapsLauncher.launchCoordinates(item.location!.latitude!, item.location!.longitude!);
                             },
                             child: const Icon(
                                 Icons.directions,
@@ -603,7 +597,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
                         subtitle: Text(item.longAddress ?? "No location found"),
-                        trailing: ButtonTheme(
+                        trailing: item.latitude != null && item.longitude != null ? ButtonTheme(
                           minWidth: 1,
                           child: TextButton(
                             style: TextButton.styleFrom(
@@ -611,17 +605,14 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                               backgroundColor: context.theme.colorScheme.primaryContainer,
                             ),
                             onPressed: () async {
-                              if (item.longAddress == null) {
-                                return showSnackbar("Error", "Could not find an address to launch!");
-                              }
-                              await MapsLauncher.launchQuery(item.longAddress!);
+                              await MapsLauncher.launchCoordinates(item.latitude!, item.longitude!);
                             },
                             child: const Icon(
                                 Icons.directions,
                                 size: 20
                             ),
                           ),
-                        ),
+                        ) : null,
                         onTap: () async {
                           if (context.isPhone) {
                             await panelController.close();
