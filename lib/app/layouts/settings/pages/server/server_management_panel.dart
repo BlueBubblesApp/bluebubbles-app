@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.d
 import 'package:bluebubbles/app/layouts/settings/pages/server/oauth_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -919,28 +920,32 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         ),
                         onTap: () async {
                           if (controller.isRestarting.value) return;
-
                           controller.isRestarting.value = true;
 
                           // Prevent restarting more than once every 30 seconds
                           int now = DateTime.now().toUtc().millisecondsSinceEpoch;
                           if (controller.lastRestart != null && now - controller.lastRestart! < 1000 * 30) return;
-
                           // Save the last time we restarted
                           controller.lastRestart = now;
 
                           // Perform the restart
                           try {
-                            if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
-                              if (kIsDesktop || kIsWeb) {
+                            if (Platform.isAndroid) {
+                              try {
+                                await mcs.invokeMethod("set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
+                              } catch (e, s) {
+                                Logger.error(e);
+                                Logger.error(s);
+                                showSnackbar("Error", "Something went wrong when updating Firebase Database!");
+                              }
+                            } else {
+                              if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
                                 var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
                                 var ref = db.reference().child('config').child('nextRestart');
                                 await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
                               } else {
-                                await mcs.invokeMethod("set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
+                                await http.setRestartDateCF(ss.fcmData.projectID!);
                               }
-                            } else {
-                              await http.setRestartDateCF(ss.fcmData.projectID!);
                             }
                           } finally {
                             controller.isRestarting.value = false;

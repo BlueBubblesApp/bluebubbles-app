@@ -46,10 +46,13 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
           if (kIsDesktop || kIsWeb) return;
           final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
           if (handle?.contact == null && handle != null) {
-            await mcs.invokeMethod("open-contact-form",
-                {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
+            await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
           } else if (handle?.contact != null) {
-            await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+            try {
+              await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+            } catch (_) {
+              showSnackbar("Error", "Failed to find contact on device!");
+            }
           }
         }
       ));
@@ -169,10 +172,13 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
             if (kIsDesktop || kIsWeb) return;
             final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == data!.first);
             if (handle?.contact == null && handle != null) {
-              await mcs.invokeMethod("open-contact-form",
-                  {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
+              await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
             } else if (handle?.contact != null) {
-              await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+              try {
+                await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+              } catch (_) {
+                showSnackbar("Error", "Failed to find contact on device!");
+              }
             }
           }
         ));

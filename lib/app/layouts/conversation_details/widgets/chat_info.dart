@@ -448,10 +448,13 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                             final contact = chat.participants.first.contact;
                             final handle = chat.participants.first;
                             if (contact == null) {
-                              await mcs.invokeMethod("open-contact-form",
-                                  {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
+                              await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
                             } else {
-                              await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+                              try {
+                                await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+                              } catch (_) {
+                                showSnackbar("Error", "Failed to find contact on device!");
+                              }
                             }
                           },
                           borderRadius: BorderRadius.circular(15),

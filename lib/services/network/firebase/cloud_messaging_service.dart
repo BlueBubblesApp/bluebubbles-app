@@ -82,6 +82,8 @@ class CloudMessagingService extends GetxService {
       Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
       result = await mcs.invokeMethod('firebase-auth', ss.fcmData.toMap());
     } on PlatformException catch (ex) {
+      // Don't try to re-auth if device is de-Googled
+      if (ex.toString().contains("Google Play Services is not available")) return;
       Logger.error('Failed to perform initial FCM authentication: ${ex.toString()}', tag: 'FCM-Auth');
 
       // If the first try fails, let's try again with new FCM data from the server

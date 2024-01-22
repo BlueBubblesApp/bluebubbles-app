@@ -399,11 +399,10 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
-                      Obx(
-                            () => SettingsSwitch(
+                      Obx(() => SettingsSwitch(
                           onChanged: (bool val) async {
-                            await mcs.invokeMethod("request-notification-listener-permission");
                             if (val) {
+                              await mcs.invokeMethod("request-notification-listener-permission");
                               try {
                                 await mcs.invokeMethod("start-notification-listener");
                                 // disable monet theming if music theme enabled

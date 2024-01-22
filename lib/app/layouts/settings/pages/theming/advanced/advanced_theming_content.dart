@@ -182,8 +182,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                         ss.settings.colorsFromMedia.value = true;
                         ss.saveSettings(ss.settings);
                       } catch (e) {
-                        showSnackbar("Error",
-                            "Something went wrong, please ensure you granted the permission correctly!");
+                        showSnackbar("Error", "Something went wrong, please ensure you granted the permission correctly!");
                         return;
                       }
                     } else {

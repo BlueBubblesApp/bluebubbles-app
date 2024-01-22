@@ -1,5 +1,6 @@
 package com.bluebubbles.messaging
 
+import android.app.Activity
 import android.content.Intent
 import androidx.activity.ComponentActivity
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
@@ -28,7 +29,7 @@ class MainActivity : FlutterFragmentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Constants.notificationListenerRequestCode) {
-            MethodCallHandler.getNotificationListenerResult?.success(null)
+            MethodCallHandler.getNotificationListenerResult?.success(resultCode == Activity.RESULT_OK)
         }
     }
 }
