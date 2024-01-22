@@ -647,6 +647,12 @@ class Main extends StatelessWidget {
                                             options: const AuthenticationOptions(stickyAuth: true));
                                         if (didAuthenticate) {
                                           controller!.authSuccess(unlock: true);
+                                          if (kIsDesktop) {
+                                            Future.delayed(Duration.zero, () {
+                                              chats.init();
+                                              socket;
+                                            });
+                                          }
                                         }
                                       },
                                     ),
