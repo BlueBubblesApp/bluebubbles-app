@@ -46,6 +46,9 @@ class NotificationChannelHandler: MethodCallHandlerImpl() {
             }
             channel.setBypassDnd(true)
             channel.setShowBadge(true)
+        // set 'Foreground Service' channel to low importance (avoid heads-up notification)
+        } else if (channelId == "com.bluebubbles.foreground_service") {
+            channel.importance = NotificationManager.IMPORTANCE_LOW
         }
         // create the channel
         notificationManager.createNotificationChannel(channel)
