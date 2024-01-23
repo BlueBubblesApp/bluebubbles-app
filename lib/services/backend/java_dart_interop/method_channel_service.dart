@@ -207,11 +207,14 @@ class MethodChannelService extends GetxService {
         await intents.answerFaceTime(call.arguments["callUuid"]);
         return true;
       case "imessage-alias-removed":
-        Map<String, dynamic> data = jsonDecode(call.arguments);
-        final addrLst = ((data['address'] ?? []) as List).map((a) => a as String).toList();
-        Logger.info("Alias(es) removed $addrLst");
-
-        await notif.createAliasesRemovedNotification(addrLst);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+        if (!isNullOrEmpty(data)!) {
+          final payload = ServerPayload.fromJson(data!);
+          Logger.info("Alias(es) removed ${payload.data["address"]}");
+          await notif.createAliasesRemovedNotification((payload.data["address"] as List).cast<String>());
+        } else {
+          Logger.warn("Aliases removed data empty or null");
+        }
 
         return true;
 
