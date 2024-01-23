@@ -649,6 +649,44 @@ class NotificationsService extends GetxService {
     }
   }
 
+  Future<void> createAliasesRemovedNotification(List<String> aliases) async {
+    const title = "iMessage alias deregistered!";
+    final text = aliases.length == 1 ? "${aliases[0]} has been deregistered!" : "The following aliases have been deregistered:\n${aliases.join("\n")}";
+
+    if (kIsDesktop) {
+      final aliasesToast = LocalNotification(
+        title: title,
+        body: text,
+        actions: [],
+      );
+
+      aliasesToast.onClick = () async {
+        await windowManager.show();
+      };
+
+      await aliasesToast.show();
+    } else {
+        await flnp.show(
+          -3,
+          title,
+          text,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              ERROR_CHANNEL,
+              'Errors',
+              channelDescription: 'Displays message send failures, connection failures, and more',
+              priority: Priority.max,
+              importance: Importance.max,
+              color: HexColor("4990de"),
+              ongoing: false,
+              onlyAlertOnce: true,
+              styleInformation: const BigTextStyleInformation('')
+            ),
+          ),
+        );
+    }
+  }
+
   Future<void> createFailedToSend(Chat chat, {bool scheduled = false}) async {
     final title = 'Failed to send${scheduled ? " scheduled" : ""} message';
     final subtitle = scheduled ? 'Tap to open scheduled messages list' : 'Tap to see more details or retry';
