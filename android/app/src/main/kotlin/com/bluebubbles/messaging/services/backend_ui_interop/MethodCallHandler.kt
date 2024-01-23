@@ -33,8 +33,6 @@ class MethodCallHandler {
         fun invokeMethod(method: String, arguments: Map<String, Any>) {
             if (engine != null) {
                 MethodChannel(engine!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, arguments)
-            } else {
-                throw Exception("Engine not initialized!")
             }
         }
     }
