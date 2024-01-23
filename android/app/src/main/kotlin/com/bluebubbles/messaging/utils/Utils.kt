@@ -35,20 +35,8 @@ object Utils {
         return IconCompat.createWithAdaptiveBitmap(adaptiveBitmap)
     }
 
-    fun getServerUrl(context: Context, password: String, result: MethodChannel.Result) {
-        val prefs = context.getSharedPreferences("FlutterSharedPreferences", 0)
-        val storedPassword = prefs.getString("flutter.guidAuthKey", "")
-        if (password != storedPassword) return
-
-        val fcmData = HashMap<String, String?>()
-        fcmData["project_id"] = prefs.getString("flutter.projectID", "")
-        fcmData["storage_bucket"] = prefs.getString("flutter.storageBucket", "")
-        fcmData["api_key"] = prefs.getString("flutter.apiKey", "")
-        fcmData["firebase_url"] = prefs.getString("flutter.firebaseURL", "")
-        fcmData["client_id"] = prefs.getString("flutter.clientID", "")
-        fcmData["application_id"] = prefs.getString("flutter.applicationID", "")
-        val map: Map<String, String?> = HashMap(fcmData)
-        FirebaseAuthHandler().handleMethodCall(MethodCall("", map), object : MethodChannel.Result {
+    fun getServerUrl(context: Context, result: MethodChannel.Result) {
+        FirebaseAuthHandler().handleMethodCall(MethodCall("", null), object : MethodChannel.Result {
             override fun success(temp: Any?) {
                 ServerUrlRequestHandler().handleMethodCall(MethodCall("", null), result, context)
             }

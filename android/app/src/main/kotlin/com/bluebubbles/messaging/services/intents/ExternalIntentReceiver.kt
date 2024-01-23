@@ -18,9 +18,11 @@ class ExternalIntentReceiver: BroadcastReceiver() {
             "com.bluebubbles.external.GET_SERVER_URL" -> {
                 val password = intent.extras?.getString("password")
                 val identifier = intent.extras?.getString("id")
+                val prefs = context.getSharedPreferences("FlutterSharedPreferences", 0)
+                val storedPassword = prefs.getString("flutter.guidAuthKey", "")
 
-                if (password != null) {
-                    Utils.getServerUrl(context, password, object : MethodChannel.Result {
+                if (password == storedPassword) {
+                    Utils.getServerUrl(context, object : MethodChannel.Result {
                         override fun success(result: Any?) {
                             Log.d(Constants.logTag, "Got URL: $result - sending to Tasker...")
                             val intent = Intent()

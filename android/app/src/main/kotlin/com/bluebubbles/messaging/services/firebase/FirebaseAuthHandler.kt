@@ -6,18 +6,12 @@ import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
-import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.messaging.FirebaseMessaging
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class FirebaseAuthHandler: MethodCallHandlerImpl() {
     companion object {
@@ -39,12 +33,14 @@ class FirebaseAuthHandler: MethodCallHandlerImpl() {
             return
         }
 
-        val projectId: String? = call.argument("project_id")
-        val storageBucket: String? = call.argument("storage_bucket")
-        val apiKey: String = call.argument("api_key")!!
-        val databaseUrl: String? = call.argument("firebase_url")
-        val gcmSenderId: String? = call.argument("client_id")
-        val applicationId: String = call.argument("application_id")!!
+        // Fetch Firebase details directly from preferences
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", 0)
+        val projectId: String? = prefs.getString("flutter.projectID", null)
+        val storageBucket: String? = prefs.getString("flutter.storageBucket", null)
+        val apiKey: String = prefs.getString("flutter.apiKey", null)!!
+        val databaseUrl: String? = prefs.getString("flutter.firebaseURL", null)
+        val gcmSenderId: String? = prefs.getString("flutter.clientID", null)
+        val applicationId: String = prefs.getString("flutter.applicationID", null)!!
 
         Log.d(Constants.logTag, "Authenticating client $applicationId with Firebase...")
         // Get a FirebaseApp (manually provide config since we fetch it dynamically)
@@ -58,27 +54,15 @@ class FirebaseAuthHandler: MethodCallHandlerImpl() {
             .build()
         )
 
-        Log.d(Constants.logTag, "Fetching FCM token...")
-        // Attempt to get an FCM registration token to pass to the server
-        val tokenTask: Task<String> = FirebaseMessaging.getInstance().token;
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                val fcmToken: String = tokenTask.await()
-                result.success(fcmToken)
-            } catch (exception: Exception) {
-                val error = "Failed to get FCM token!"
-                Log.e(Constants.logTag, error)
-                result.error("500", error, exception)
-            }
-
-            // Set up Firestore / Realtime DB listeners for server URL changes
-            // databaseUrl null indicates Cloud Firestore setup
-            Log.d(Constants.logTag, "Setting Firebase database listeners...")
-            if (databaseUrl == null) {
-                FirebaseFirestore.getInstance().collection("server").document("config").addSnapshotListener(FirestoreDatabaseListener())
-            } else {
-                FirebaseDatabase.getInstance().getReference("config").addValueEventListener(RealtimeDatabaseListener())
-            }
+        // Set up Firestore / Realtime DB listeners for server URL changes
+        // databaseUrl null indicates Cloud Firestore setup
+        Log.d(Constants.logTag, "Setting Firebase database listeners...")
+        if (databaseUrl == null) {
+            FirebaseFirestore.getInstance().collection("server").document("config").addSnapshotListener(FirestoreDatabaseListener())
+        } else {
+            FirebaseDatabase.getInstance().getReference("config").addValueEventListener(RealtimeDatabaseListener())
         }
+
+        FirebaseCloudMessagingTokenHandler().getToken(result)
     }
 }
