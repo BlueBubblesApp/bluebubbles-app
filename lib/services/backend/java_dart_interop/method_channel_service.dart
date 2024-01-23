@@ -91,7 +91,8 @@ class MethodChannelService extends GetxService {
         Logger.info("Received ${call.method} from FCM");
         Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
-          final item = IncomingItem.fromMap(QueueType.updatedMessage, data!);
+          final payload = ServerPayload.fromJson(data!);
+          final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
           await ah.handleNewOrUpdatedChat(item.chat);
         }
         return true;
@@ -100,7 +101,8 @@ class MethodChannelService extends GetxService {
         Logger.info("Received group icon change from FCM");
         Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
-          final guid = data!["chats"].first["guid"];
+          final payload = ServerPayload.fromJson(data!);
+          final guid = payload.data["chats"].first["guid"];
           final chat = Chat.findOne(guid: guid);
           if (chat != null) {
             await Chat.getIcon(chat);
@@ -109,8 +111,10 @@ class MethodChannelService extends GetxService {
         return true;
       case "scheduled-message-error":
         Logger.info("Received scheduled message error from FCM");
-        Map<String, dynamic> data = call.arguments?.cast<String, Object>() ?? {};
-        Chat? chat = Chat.findOne(guid: data["payload"]["chatGuid"]);
+        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+        if (data == null) return true;
+        final payload = ServerPayload.fromJson(data);
+        Chat? chat = Chat.findOne(guid: payload.data["payload"]["chatGuid"]);
         if (chat != null) {
           await notif.createFailedToSend(chat, scheduled: true);
         }
@@ -166,11 +170,12 @@ class MethodChannelService extends GetxService {
         Logger.info("Received chat status change from FCM");
         Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
-          Chat? chat = Chat.findOne(guid: data!["chatGuid"]);
-          if (chat == null || (data["read"] != true && data["read"] != false)) {
+          final payload = ServerPayload.fromJson(data!);
+          Chat? chat = Chat.findOne(guid: payload.data["chatGuid"]);
+          if (chat == null || (payload.data["read"] != true && payload.data["read"] != false)) {
             return false;
           } else {
-            chat.toggleHasUnread(!data["read"]!, privateMark: false);
+            chat.toggleHasUnread(!payload.data["read"]!, privateMark: false);
             return true;
           }
         } else {
@@ -190,7 +195,8 @@ class MethodChannelService extends GetxService {
         Logger.info("Received legacy incoming facetime from FCM");
         Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
-          await ActionHandler().handleIncomingFaceTimeCallLegacy(data!);
+          final payload = ServerPayload.fromJson(data!);
+          await ActionHandler().handleIncomingFaceTimeCallLegacy(payload.data);
         }
         return true;
       case "ft-call-status-changed":
@@ -199,7 +205,8 @@ class MethodChannelService extends GetxService {
         Logger.info("Received facetime call status change from FCM");
         Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
-          await ActionHandler().handleFaceTimeStatusChange(data!);
+          final payload = ServerPayload.fromJson(data!);
+          await ActionHandler().handleFaceTimeStatusChange(payload.data);
         }
         return true;
       case "answer-facetime":
@@ -217,7 +224,6 @@ class MethodChannelService extends GetxService {
         }
 
         return true;
-
       default:
         return true;
     }
