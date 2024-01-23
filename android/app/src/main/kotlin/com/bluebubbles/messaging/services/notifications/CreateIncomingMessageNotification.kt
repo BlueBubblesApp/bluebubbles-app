@@ -202,7 +202,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
             .setColor(4888294)
 
         notificationManager.notify(Constants.newMessageNotificationTag, notificationId, notificationBuilder.build())
-        notificationManager.notify(0, summaryNotificationBuilder.build())
+        notificationManager.notify(Constants.newMessageNotificationTag, 0, summaryNotificationBuilder.build())
         result.success(null)
     }
 }

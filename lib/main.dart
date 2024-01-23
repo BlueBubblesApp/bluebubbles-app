@@ -426,7 +426,12 @@ class BadCertOverride extends HttpOverrides {
       // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
-        hasBadCert = serverUrl.contains(host);
+        if (host.startsWith("*")) {
+          final regex = RegExp("^((\\*|[\\w\\d]+(-[\\w\\d]+)*)\\.)*(${host.split(".").reversed.take(2).toList().reversed.join(".")})\$");
+          hasBadCert = regex.hasMatch(serverUrl);
+        } else {
+          hasBadCert = serverUrl.endsWith(host);
+        }
         return hasBadCert;
       };
   }

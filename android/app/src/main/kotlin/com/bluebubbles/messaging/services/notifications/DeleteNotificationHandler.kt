@@ -37,7 +37,7 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
             // cancel the summary if needed
             if (notificationManager.activeNotifications.size == 1 && notificationManager.activeNotifications.first().id == 0) {
                 Log.d(Constants.logTag, "Cancelling notification summary")
-                notificationManager.cancel(0)
+                notificationManager.cancel(Constants.newMessageNotificationTag, 0)
             }
             true
         } catch (exception: Exception) {
