@@ -78,7 +78,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
     setState(() {
       themes.removeWhere((element) => element["name"] == name);
     });
-    http.deleteTheme("BlueBubbles Custom Theme - $name");
+    http.deleteTheme(name);
   }
 
   Future<String> defaultName() async {
@@ -802,8 +802,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           if (method) {
                             bool errored = false;
                             for (ThemeStruct e in allThemes) {
-                              String name = "BlueBubbles Custom Theme - ${e.name}";
-                              var response = await http.setTheme(name, e.toMap());
+                              var response = await http.setTheme(e.name.characters.take(50), e.toMap());
                               if (response.statusCode != 200) {
                                 errored = true;
                               }
