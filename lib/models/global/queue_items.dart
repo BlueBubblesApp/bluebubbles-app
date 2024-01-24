@@ -28,7 +28,7 @@ class IncomingItem extends QueueItem {
     return IncomingItem._(
       type: t,
       completer: c,
-      chat: Chat.fromMap(m['chats'].first),
+      chat: Chat.fromMap(m['chats'].first.cast<String, Object>()),
       message: Message.fromMap(m),
       tempGuid: m['tempGuid'],
     );

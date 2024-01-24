@@ -13,6 +13,10 @@ import com.bluebubbles.messaging.MainActivity.Companion.engine
 import com.bluebubbles.messaging.R
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
+import com.google.gson.reflect.TypeToken
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.loader.ApplicationInfoLoader
@@ -34,6 +38,7 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
 
     override fun startWork(): ListenableFuture<Result> {
         val method = inputData.getString("method")!!
+        val data = inputData.getString("data")!!
        if (engine == null && workerEngine == null) {
            Log.d(Constants.logTag, "Initializing engine for worker with method $method")
            initNewEngine()
@@ -47,7 +52,10 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         return CallbackToFutureAdapter.getFuture { completer ->
             runBlocking {
                 Log.d(Constants.logTag, "Sending method $method to Dart")
-                MethodChannel((engine ?: workerEngine)!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, inputData.keyValueMap, object : MethodChannel.Result {
+                val gson = GsonBuilder()
+                    .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+                    .create()
+                MethodChannel((engine ?: workerEngine)!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.get(HashMap::class.java)), object : MethodChannel.Result {
                     override fun success(result: Any?) {
                         Log.d(Constants.logTag, "Worker with method $method completed successfully")
                         completer.set(Result.success())

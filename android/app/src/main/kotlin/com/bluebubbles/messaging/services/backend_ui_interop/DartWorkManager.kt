@@ -9,6 +9,8 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.bluebubbles.messaging.Constants
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,11 +18,14 @@ import kotlinx.coroutines.launch
 object DartWorkManager {
     fun createWorker(context: Context, method: String, arguments: HashMap<String, Any?>, callback: () -> (Unit)) {
         Log.d(Constants.logTag, "Creating new ${Constants.dartWorkerTag} for method $method")
+        val gson = GsonBuilder()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .create()
         val work = OneTimeWorkRequest.Builder(DartWorker::class.java)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(Data.Builder()
                 .putString("method", method)
-                .putAll(arguments).build())
+                .putString("data", gson.toJson(arguments).toString()).build())
             .addTag(Constants.dartWorkerTag)
             .build()
         WorkManager.getInstance(context).enqueue(work)
