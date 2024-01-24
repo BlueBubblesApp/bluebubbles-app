@@ -213,12 +213,12 @@ class MethodChannelService extends GetxService {
         Logger.info("Answering FaceTime call");
         await intents.answerFaceTime(call.arguments["callUuid"]);
         return true;
-      case "imessage-alias-removed":
+      case "imessage-aliases-removed":
         Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
         if (!isNullOrEmpty(data)!) {
           final payload = ServerPayload.fromJson(data!);
-          Logger.info("Alias(es) removed ${payload.data["address"]}");
-          await notif.createAliasesRemovedNotification((payload.data["address"] as List).cast<String>());
+          Logger.info("Alias(es) removed ${payload.data["aliases"]}");
+          await notif.createAliasesRemovedNotification((payload.data["aliases"] as List).cast<String>());
         } else {
           Logger.warn("Aliases removed data empty or null");
         }

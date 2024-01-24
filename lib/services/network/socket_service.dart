@@ -88,6 +88,7 @@ class SocketService extends GetxService {
     socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
     socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
     socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-changed", data));
+    socket.on("imessage-aliases-removed", (data) => handleCustomEvent("imessage-aliases-removed", data));
 
     socket.connect();
   }
@@ -245,6 +246,10 @@ class SocketService extends GetxService {
       case "ft-call-status-changed":
         Logger.info("Received FaceTime call status change");
         await ActionHandler().handleFaceTimeStatusChange(data);
+        return;
+      case "imessage-aliases-removed":
+        Logger.info("Alias(es) removed ${data["aliases"]}");
+        await notif.createAliasesRemovedNotification((data["aliases"] as List).cast<String>());
         return;
       default:
         return;
