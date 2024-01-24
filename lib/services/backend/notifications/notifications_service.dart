@@ -683,7 +683,7 @@ class NotificationsService extends GetxService {
         }
 
         await flnp.show(
-          -3,
+          notifId,
           title,
           text,
           NotificationDetails(
