@@ -101,7 +101,7 @@ void _buildThreadView(List<Message> _messages, int? originatorPart, Conversation
                                       children: _messages.mapIndexed((index, e) => GestureDetector(
                                         onTap: () {
                                           Navigator.of(context).pop();
-                                          if (originatorPart == null && ss.settings.skin.value != Skins.Material) {
+                                          if (originatorPart == null && ss.settings.skin.value == Skins.iOS) {
                                             // pop twice to remove convo details page
                                             Navigator.of(context).pop();
                                           }
