@@ -27,6 +27,12 @@ void showBookmarksThread(ConversationViewController cvController, BuildContext c
   if (_messages.isEmpty) {
     return showSnackbar("Error", "There are no bookmarked messages in this chat!");
   }
+  for (Message m in _messages) {
+    m.realAttachments;
+    m.fetchAssociatedMessages();
+    m.handle = m.getHandle();
+  }
+  _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   _buildThreadView(_messages, null, cvController, context);
 }
 
