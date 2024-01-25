@@ -471,7 +471,6 @@ class ChatLeadingState extends OptimizedState<ChatLeading> {
                   chat: widget.controller.chat,
                   size: 40,
                   editable: false,
-                  onTap: () => widget.controller.onTap(context),
                 ),
               ),
               if (showTypingIndicator)

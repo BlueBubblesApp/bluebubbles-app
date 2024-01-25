@@ -131,7 +131,6 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                                   chat: controller.chat,
                                   size: maxWidth,
                                   editable: false,
-                                  onTap: () => controller.onTap(context),
                                 ),
                                 UnreadIcon(width: maxWidth, parentController: controller),
                                 MuteIcon(width: maxWidth, parentController: controller),

@@ -390,7 +390,6 @@ class SearchViewState extends OptimizedState<SearchView> {
                       chat: chat,
                       size: 40,
                       editable: false,
-                      onTap: () {},
                     ),
                     trailing: Text(
                       buildDate(message.dateCreated),

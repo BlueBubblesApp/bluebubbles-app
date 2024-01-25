@@ -19,12 +19,10 @@ class ContactAvatarGroupWidget extends StatefulWidget {
     required this.chat,
     this.size = 40,
     this.editable = true,
-    this.onTap,
   });
   final Chat chat;
   final double size;
   final bool editable;
-  final Function()? onTap;
 
   @override
   State<ContactAvatarGroupWidget> createState() => _ContactAvatarGroupWidgetState();
@@ -57,7 +55,6 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
         handle: Handle(address: ''),
         size: widget.size * ss.settings.avatarScale.value,
         editable: false,
-        onTap: widget.onTap,
         scaleSize: false,
       );
     }
@@ -146,7 +143,6 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                               borderThickness: avatarSize * 0.01,
                               fontSize: adjustedWidth * 0.3,
                               editable: false,
-                              onTap: widget.onTap,
                               scaleSize: false,
                             ),
                           );
@@ -162,7 +158,6 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                         size: avatarSize * materialGeneration[min(participants.length, 4)][0],
                         fontSize: avatarSize * materialGeneration[min(participants.length, 4)][1],
                         editable: widget.editable,
-                        onTap: widget.onTap,
                         scaleSize: false,
                       ),
                     )),
@@ -175,7 +170,6 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                   preferHighResAvatar: true,
                   fontSize: avatarSize * 0.5,
                   editable: widget.editable,
-                  onTap: widget.onTap,
                   scaleSize: false,
                 ),
         );

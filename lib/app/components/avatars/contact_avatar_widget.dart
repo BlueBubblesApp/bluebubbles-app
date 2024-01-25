@@ -15,7 +15,6 @@ class ContactAvatarWidget extends StatefulWidget {
     this.fontSize,
     this.borderThickness = 2.0,
     this.editable = true,
-    this.onTap,
     required this.handle,
     this.contact,
     this.scaleSize = true,
@@ -28,7 +27,6 @@ class ContactAvatarWidget extends StatefulWidget {
   final double? fontSize;
   final double borderThickness;
   final bool editable;
-  final Function? onTap;
   final bool scaleSize;
   final bool preferHighResAvatar;
   final EdgeInsets padding;
@@ -53,14 +51,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
   }
 
   void onAvatarTap() async {
-    if (widget.onTap != null) {
-      widget.onTap!.call();
-      return;
-    }
-
-    if (!widget.editable
-        || (!ss.settings.colorfulAvatars.value && !ss.settings.colorfulBubbles.value)
-        || widget.handle == null) return;
+    if (!ss.settings.colorfulAvatars.value && !ss.settings.colorfulBubbles.value) return;
 
     bool didReset = false;
     final Color color = await showColorPickerDialog(
@@ -146,7 +137,14 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           || !ss.settings.colorfulAvatars.value
           || widget.handle == null ? MouseCursor.defer : SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: !widget.editable && widget.onTap == null ? null : onAvatarTap,
+        onTap: !widget.editable || (widget.handle == null && contact == null) ? null : () async {
+          if (contact != null) {
+            await mcs.invokeMethod("view-contact-form", {'id': contact!.id});
+          } else {
+            await mcs.invokeMethod("open-contact-form", {'address': widget.handle!.address, 'address_type': widget.handle!.address.isEmail ? 'email' : 'phone'});
+          }
+        },
+        onLongPress: !widget.editable || widget.handle == null ? null : onAvatarTap,
         child: Container(
           key: Key("$keyPrefix-avatar-container"),
           width: size,

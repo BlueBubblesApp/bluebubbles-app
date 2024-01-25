@@ -800,7 +800,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
         child: CircleAvatar(
           radius: 20,
           backgroundColor: theme.colorScheme.secondary,
-          child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false, onTap: () {}),
+          child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false),
         ),
       ),
     );

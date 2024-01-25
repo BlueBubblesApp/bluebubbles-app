@@ -180,7 +180,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                         chat: chat,
                         size: 35,
                         editable: false,
-                        onTap: () {},
                       ),
                       Expanded(
                         child: Padding(
