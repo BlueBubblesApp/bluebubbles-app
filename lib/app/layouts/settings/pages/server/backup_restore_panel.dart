@@ -802,7 +802,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           if (method) {
                             bool errored = false;
                             for (ThemeStruct e in allThemes) {
-                              var response = await http.setTheme(e.name.characters.take(50), e.toMap());
+                              var response = await http.setTheme(e.name.characters.take(50).string, e.toMap());
                               if (response.statusCode != 200) {
                                 errored = true;
                               }
