@@ -148,6 +148,7 @@ dependencies:
   shared_preferences: ^2.2.2
   shimmer: ^3.0.0
   simple_animations: ^5.0.2
+  skeletonizer: ^1.0.1
   sliding_up_panel2: ^3.2.0+2
   slugify: ^2.0.0
   smooth_page_indicator: ^1.0.1
