@@ -92,115 +92,122 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
       );
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      child: Transform.scale(
-        scale: 0.8,
-        alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: () {
-              showReplyThread(context, message, part, ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid), widget.cvController);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: IgnorePointer(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (widget.showAvatar)
-                    ContactAvatarWidget(
-                      handle: message.handle,
-                      size: 30,
-                      fontSize: context.theme.textTheme.bodyLarge!.fontSize!,
-                      borderThickness: 0.1,
-                    ),
-                  ClipPath(
-                    clipper: TailClipper(
-                      isFromMe: message.isFromMe!,
-                      showTail: true,
-                      connectUpper: false,
-                      connectLower: false,
-                    ),
-                    child: controller.parts.length <= widget.part ? Container(
-                      constraints: BoxConstraints(
-                        maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
-                        minHeight: 30,
-                      ),
-                      child: CustomPaint(
-                        painter: TailPainter(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+      child: SizeTransition(
+        sizeFactor: const AlwaysStoppedAnimation<double>(0.8),
+        axisAlignment: 0,
+        child: Align(
+          alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+          child: Transform.scale(
+            scale: 0.8,
+            alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {
+                  showReplyThread(context, message, part, ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid), widget.cvController);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: IgnorePointer(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (widget.showAvatar)
+                        ContactAvatarWidget(
+                          handle: message.handle,
+                          size: 30,
+                          fontSize: context.theme.textTheme.bodyLarge!.fontSize!,
+                          borderThickness: 0.1,
+                        ),
+                      ClipPath(
+                        clipper: TailClipper(
                           isFromMe: message.isFromMe!,
                           showTail: true,
-                          color: context.theme.colorScheme.errorContainer,
+                          connectUpper: false,
+                          connectLower: false,
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
-                          child: Text(
-                            "Failed to parse thread parts!",
-                            style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
-                              color: context.theme.colorScheme.onErrorContainer,
+                        child: controller.parts.length <= widget.part ? Container(
+                          constraints: BoxConstraints(
+                            maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
+                            minHeight: 30,
+                          ),
+                          child: CustomPaint(
+                            painter: TailPainter(
+                              isFromMe: message.isFromMe!,
+                              showTail: true,
+                              color: context.theme.colorScheme.errorContainer,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
+                              child: Text(
+                                "Failed to parse thread parts!",
+                                style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
+                                  color: context.theme.colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ) : message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 100),
+                          child: ReplyScope(
+                            child: InteractiveHolder(
+                              parentController: controller,
+                              message: part,
+                            ),
+                          ),
+                        ) : part.attachments.isEmpty ? Container(
+                          constraints: BoxConstraints(
+                            maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
+                            minHeight: 30,
+                          ),
+                          child: CustomPaint(
+                            painter: TailPainter(
+                              isFromMe: message.isFromMe!,
+                              showTail: true,
+                              color: message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor(),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
+                              child: FutureBuilder<List<InlineSpan>>(
+                                future: buildEnrichedMessageSpans(
+                                  context,
+                                  part,
+                                  message,
+                                  colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).themeLightenOrDarken(context, 30),
+                                ),
+                                initialData: buildMessageSpans(
+                                  context,
+                                  part,
+                                  message,
+                                  colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).themeLightenOrDarken(context, 30),
+                                ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.data != null) {
+                                    return RichText(
+                                      text: TextSpan(
+                                        children: snapshot.data!,
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }
+                              ),
+                            ),
+                          ),
+                        ) : ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 100),
+                          child: ReplyScope(
+                            child: AttachmentHolder(
+                              parentController: controller,
+                              message: part,
                             ),
                           ),
                         ),
                       ),
-                    ) : message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 100),
-                      child: ReplyScope(
-                        child: InteractiveHolder(
-                          parentController: controller,
-                          message: part,
-                        ),
-                      ),
-                    ) : part.attachments.isEmpty ? Container(
-                      constraints: BoxConstraints(
-                        maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
-                        minHeight: 30,
-                      ),
-                      child: CustomPaint(
-                        painter: TailPainter(
-                          isFromMe: message.isFromMe!,
-                          showTail: true,
-                          color: message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor(),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
-                          child: FutureBuilder<List<InlineSpan>>(
-                            future: buildEnrichedMessageSpans(
-                              context,
-                              part,
-                              message,
-                              colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).themeLightenOrDarken(context, 30),
-                            ),
-                            initialData: buildMessageSpans(
-                              context,
-                              part,
-                              message,
-                              colorOverride: (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor()).themeLightenOrDarken(context, 30),
-                            ),
-                            builder: (context, snapshot) {
-                              if (snapshot.data != null) {
-                                return RichText(
-                                  text: TextSpan(
-                                    children: snapshot.data!,
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            }
-                          ),
-                        ),
-                      ),
-                    ) : ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 100),
-                      child: ReplyScope(
-                        child: AttachmentHolder(
-                          parentController: controller,
-                          message: part,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
