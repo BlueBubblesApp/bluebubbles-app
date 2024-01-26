@@ -136,24 +136,31 @@ flutter {
 }
 
 dependencies {
+    // Android native functions
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "androidx.core:core-ktx:1.12.0"
     implementation "androidx.sharetarget:sharetarget:1.2.0"
     implementation 'androidx.browser:browser:1.7.0'
     implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation "androidx.work:work-runtime:2.9.0"
 
-    // Add the SDK for Firebase Cloud Messaging
+    // Firebase items
     implementation 'com.google.firebase:firebase-messaging:23.4.0'
     implementation 'com.google.firebase:firebase-database:20.3.0'
     implementation 'com.google.firebase:firebase-messaging-directboot:23.4.0'
     implementation 'com.google.firebase:firebase-iid:21.1.0'
     implementation 'com.google.firebase:firebase-firestore:24.10.1'
 
-    // for workmanager
-    implementation "androidx.work:work-runtime:2.9.0"
-
-    // kotlin coroutines
+    // Kotlin Coroutines (async)
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3"
+
+    // Socket IO
+    implementation ('io.socket:socket.io-client:2.0.0') {
+        exclude group: 'org.json', module: 'json'
+    }
+
+    // JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
