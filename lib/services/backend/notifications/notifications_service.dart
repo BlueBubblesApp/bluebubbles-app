@@ -41,6 +41,7 @@ class NotificationsService extends GetxService {
   static LocalNotification? allToast;
   static LocalNotification? failedToast;
   static LocalNotification? socketToast;
+  static LocalNotification? aliasesToast;
   static Map<String, List<LocalNotification>> notifications = {};
   static Map<String, LocalNotification> facetimeNotifications = {};
   static Map<String, int> notificationCounts = {};
@@ -651,23 +652,38 @@ class NotificationsService extends GetxService {
 
   Future<void> createAliasesRemovedNotification(List<String> aliases) async {
     const title = "iMessage alias deregistered!";
+    const notifId = -3;
     final text = aliases.length == 1 ? "${aliases[0]} has been deregistered!" : "The following aliases have been deregistered:\n${aliases.join("\n")}";
 
     if (kIsDesktop) {
-      final aliasesToast = LocalNotification(
+      if (aliasesToast?.body == text) {
+        return;
+      } else {
+        await aliasesToast?.close();
+      }
+
+      aliasesToast = LocalNotification(
         title: title,
         body: text,
         actions: [],
       );
 
-      aliasesToast.onClick = () async {
+      aliasesToast!.onClick = () async {
+        aliasesToast = null;
         await windowManager.show();
       };
 
-      await aliasesToast.show();
+      await aliasesToast!.show();
     } else {
+        final notifs = await flnp.getActiveNotifications();
+
+        //Already have this notification
+        if (notifs.firstWhereOrNull((n) => n.id == notifId && n.body == text) != null) {
+          return;
+        }
+
         await flnp.show(
-          -3,
+          notifId,
           title,
           text,
           NotificationDetails(
@@ -679,7 +695,7 @@ class NotificationsService extends GetxService {
               importance: Importance.max,
               color: HexColor("4990de"),
               ongoing: false,
-              onlyAlertOnce: true,
+              onlyAlertOnce: false,
               styleInformation: const BigTextStyleInformation('')
             ),
           ),
