@@ -59,7 +59,8 @@
         android:appCategory="social"
         android:requestLegacyExternalStorage="true"
         android:debuggable="false"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:extractNativeLibs="true">
 
         <receiver android:name=".services.intents.InternalIntentReceiver" />
 
