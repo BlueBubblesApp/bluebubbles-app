@@ -351,6 +351,32 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                             ),
                           ));
                       }),
+                      if (accountInfo['active_alias'] != null)
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 15.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                          ),
+                        ),
+                      if (accountInfo['active_alias'] != null)
+                        SettingsOptions<String>(
+                          title: "Start Chats Using",
+                          initial: accountInfo['active_alias'],
+                          clampWidth: false,
+                          options: accountInfo['vetted_aliases'].map((e) => e['Alias'].toString()).toList().cast<String>(),
+                          secondaryColor: headerColor,
+                          useCupertino: false,
+                          textProcessing: (str) => str,
+                          capitalize: false,
+                          onChanged: (value) async {
+                            if (value == null) return;
+                            accountInfo['active_alias'] = value;
+                            setState(() {});
+                            await http.setAccountAlias(value);
+
+                          },
+                        ),
                     ],
                   ),
                 if (accountContact.isNotEmpty)

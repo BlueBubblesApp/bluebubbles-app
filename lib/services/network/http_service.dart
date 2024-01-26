@@ -1115,10 +1115,11 @@ class HttpService extends GetxService {
     });
   }
 
-  Future<Response> setAccountAlias({CancelToken? cancelToken}) async {
+  Future<Response> setAccountAlias(String alias, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
         "$apiRoot/icloud/account/alias",
+        data: {"alias": alias},
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken,
       );
