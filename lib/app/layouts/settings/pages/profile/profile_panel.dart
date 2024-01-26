@@ -382,19 +382,19 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                         ),
                     ],
                   ),
-                if (accountContact.isNotEmpty)
+                if (!isNullOrEmpty(accountContact['name'])!)
                   SettingsHeader(
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "iMessage Contact Card"),
-                if (accountContact.isNotEmpty)
+                if (!isNullOrEmpty(accountContact['name'])!)
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
                         leading: ContactAvatarWidget(
                           handle: null,
-                          contact: Contact(id: randomString(9), displayName: "", avatar: base64Decode(accountContact['avatar'])),
+                          contact: isNullOrEmpty(accountContact['avatar'])! ? null : Contact(id: randomString(9), displayName: "", avatar: base64Decode(accountContact['avatar'])),
                         ),
                         title: accountContact['name'],
                         subtitle: "Your sharable iMessage contact card",
