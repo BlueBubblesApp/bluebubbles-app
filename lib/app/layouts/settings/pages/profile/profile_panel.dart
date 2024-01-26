@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
@@ -339,7 +340,10 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                                       style: TextStyle(color: getIndicatorColor(accountInfo['sms_forwarding_capable'] == true ? SocketState.connected : SocketState.disconnected))),
                                   const TextSpan(text: "\n\n"),
                                   const TextSpan(text: "VETTED ALIASES\n", style: TextStyle(fontWeight: FontWeight.w700)),
-                                  ...accountInfo['vetted_aliases'].map((e) => TextSpan(text: redact ? "Alias" : "${e['Alias']}${e['Status'] == 3 ? " - Active" : ""}\n")),
+                                  ...(accountInfo['vetted_aliases'] as List<dynamic>).map((e) => [
+                                    TextSpan(text: "⬤  ", style: TextStyle(color: getIndicatorColor(e['Status'] == 3 ? SocketState.connected : SocketState.disconnected))),
+                                    TextSpan(text: redact ? "Alias" : "${e['Alias']}\n")
+                                  ]).toList().flattened,
                                   const TextSpan(text: "\n"),
                                   const TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                 ]),
@@ -374,7 +378,6 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                             accountInfo['active_alias'] = value;
                             setState(() {});
                             await http.setAccountAlias(value);
-
                           },
                         ),
                     ],
