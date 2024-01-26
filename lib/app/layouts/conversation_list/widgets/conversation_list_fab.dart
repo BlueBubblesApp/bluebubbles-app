@@ -84,7 +84,10 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
               color: context.theme.colorScheme.onPrimary,
               size: 25
             ),
-            onPressed: () => controller.openNewChatCreator(context)
+            onPressed: () async {
+              await cs.refreshContacts();
+              controller.openNewChatCreator(context);
+            }
           ),
         ),
       ],
@@ -162,7 +165,10 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(17),
                       ),
-                      onPressed: () => controller.openNewChatCreator(context),
+                      onPressed: () async {
+                        await cs.refreshContacts();
+                        controller.openNewChatCreator(context);
+                      }
                     ),
                   ),
                 ),

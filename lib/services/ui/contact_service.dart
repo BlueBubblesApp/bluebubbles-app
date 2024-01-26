@@ -51,6 +51,8 @@ class ContactsService extends GetxService {
   Future<List<List<int>>> refreshContacts() async {
     if (!(await hasContactAccess)) return [];
 
+    Logger.debug("CONTACTS LOAD REFRESH");
+
     // Check if the user is on v1.5.2 or newer
     int serverVersion = (await ss.getServerDetails()).item4;
     // 100(major) + 21(minor) + 1(bug)
@@ -136,6 +138,7 @@ class ContactsService extends GetxService {
     }
 
     final endTime = DateTime.now().millisecondsSinceEpoch;
+    Logger.debug("CONTACTS LOAD FIN 0");
     Logger.debug("Contact refresh took ${endTime - startTime} ms");
 
     // only return contacts if things changed (or on web)
@@ -145,31 +148,46 @@ class ContactsService extends GetxService {
   Future<List<Contact>> fetchAllContacts() async {
     final _contacts = <Contact>[];
 
+    Logger.debug("CONTACTS LOAD FETCH ALL");
+
     int startTime = DateTime.now().millisecondsSinceEpoch;
     if (kIsWeb || kIsDesktop) {
       _contacts.addAll(await fetchNetworkContacts());
       int endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("CONTACTS LOAD FIN 0");
       Logger.debug("Contacts fetched in ${endTime - startTime} ms");
+      Logger.debug("CONTACTS LOAD FIN AFTER 0");
     } else {
+      Logger.info("CONTACTS LOAD GET ALL CONTACTS");
       _contacts.addAll((await FastContacts.getAllContacts(
         fields: List<ContactField>.from(ContactField.values)
           ..removeWhere((e) => [ContactField.company, ContactField.department, ContactField.jobDescription].contains(e))
-      )).map((e) => Contact(
-        displayName: e.displayName,
-        emailAddresses: e.emails.map((e) => ContactAddress(type: ContactAddressType.phone, address: e.address, label: e.label)).toList(),
-        phoneNumbers: e.phones.map((e) => ContactAddress(type: ContactAddressType.email, address: e.number, label: e.label)).toList(),
-        structuredName: e.structuredName == null ? null : StructuredName(
-          namePrefix: e.structuredName!.namePrefix,
-          givenName: e.structuredName!.givenName,
-          middleName: e.structuredName!.middleName,
-          familyName: e.structuredName!.familyName,
-          nameSuffix: e.structuredName!.nameSuffix,
-        ),
-        id: e.id,
-      )));
+      )).map((e) {
+          final c = Contact(
+            displayName: e.displayName,
+            emailAddresses: e.emails.map((e) => ContactAddress(type: ContactAddressType.phone, address: e.address, label: e.label)).toList(),
+            phoneNumbers: e.phones.map((e) => ContactAddress(type: ContactAddressType.email, address: e.number, label: e.label)).toList(),
+            structuredName: e.structuredName == null ? null : StructuredName(
+              namePrefix: e.structuredName!.namePrefix,
+              givenName: e.structuredName!.givenName,
+              middleName: e.structuredName!.middleName,
+              familyName: e.structuredName!.familyName,
+              nameSuffix: e.structuredName!.nameSuffix,
+            ),
+            id: e.id,
+          );
+
+          Logger.debug(e.displayName);
+          Logger.debug(c.phoneNumbers);
+
+          return c;
+        }
+      ));
 
       int endTime = DateTime.now().millisecondsSinceEpoch;
+      Logger.debug("CONTACTS LOAD FIN 1");
       Logger.debug("Contacts fetched in ${endTime - startTime} ms");
+      Logger.debug("CONTACTS LOAD FIN AFTER 1");
 
       // get avatars
       startTime = DateTime.now().millisecondsSinceEpoch;

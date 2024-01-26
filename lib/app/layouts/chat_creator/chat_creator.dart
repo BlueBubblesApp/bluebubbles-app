@@ -122,6 +122,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       if (widget.initialAttachments.isEmpty && !kIsWeb) {
         final query = (contactBox.query()..order(Contact_.displayName)).build();
         contacts = query.find().toSet().toList();
+        print("ONLOAD");
+        print(contacts.length);
+        for (Contact c in contacts) {
+          print("${c.displayName} - ${c.dbPhones}");
+        }
+
         filteredContacts = List<Contact>.from(contacts);
       }
       if (chats.loadedAllChats.isCompleted) {
@@ -582,6 +588,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                 contact.phoneNumbers = getUniqueNumbers(contact.phoneNumbers);
                                 contact.emailAddresses = getUniqueEmails(contact.emailAddresses);
                                 final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                                print("${contact.displayName} - ${contact.phoneNumbers.length} - ${contact.emailAddresses.length}");
                                 return Column(
                                   key: ValueKey(contact.id),
                                   mainAxisSize: MainAxisSize.min,
@@ -597,6 +604,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                               title: hideInfo ? "Contact" : contact.displayName,
                                               subtitle: hideInfo ? "" : e.address,
                                               contact: contact,
+                                              contactAddress: e,
                                               format: true,
                                             ),
                                           ),
@@ -611,6 +619,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                             child: ChatCreatorTile(
                                               title: hideInfo ? "Contact" : contact.displayName,
                                               subtitle: hideInfo ? "" : e.address,
+                                              contactAddress: e,
                                               contact: contact,
                                             ),
                                           ),

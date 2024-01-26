@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.d
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/global/contact_address.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
@@ -16,6 +17,7 @@ class ChatCreatorTile extends StatefulWidget {
     required this.subtitle,
     this.chat,
     this.contact,
+    this.contactAddress,
     this.format = false,
   });
 
@@ -23,6 +25,7 @@ class ChatCreatorTile extends StatefulWidget {
   final String subtitle;
   final Chat? chat;
   final Contact? contact;
+  final ContactAddress? contactAddress;
   final bool format;
 
   @override
@@ -37,6 +40,9 @@ class _ChatCreatorTileState extends OptimizedState<ChatCreatorTile> with Automat
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    print("CONTACT 1234");
+    print("CONTACT");
+    print("CONTACT ADDRESS: ${widget.contactAddress?.address} (${widget.contactAddress?.label})");
     return ListTile(
       mouseCursor: MouseCursor.defer,
       enableFeedback: true,
@@ -57,7 +63,7 @@ class _ChatCreatorTileState extends OptimizedState<ChatCreatorTile> with Automat
         initialData: widget.subtitle,
         builder: (context, snapshot) {
           return Text(
-            snapshot.data ?? "",
+            "${snapshot.data ?? ""}----------'}",
             style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
           );
         },

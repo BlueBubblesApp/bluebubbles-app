@@ -1711,8 +1711,12 @@ ModelDefinition getObjectBoxModel() {
           final dbStructuredNameOffset = object.dbStructuredName == null
               ? null
               : fbb.writeString(object.dbStructuredName!);
-          final dbPhonesOffset = fbb.writeString(object.dbPhones);
-          final dbEmailsOffset = fbb.writeString(object.dbEmails);
+          final dbPhonesOffset = object.dbPhones == null
+              ? null
+              : fbb.writeString(object.dbPhones!);
+          final dbEmailsOffset = object.dbEmails == null
+              ? null
+              : fbb.writeString(object.dbEmails!);
           fbb.startTable(13);
           fbb.addInt64(0, object.dbId ?? 0);
           fbb.addOffset(1, idOffset);
@@ -1756,9 +1760,9 @@ ModelDefinition getObjectBoxModel() {
             ..dbStructuredName = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 22)
             ..dbPhones = const fb.StringReader(asciiOptimization: true)
-                .vTableGet(buffer, rootOffset, 24, '')
+                .vTableGetNullable(buffer, rootOffset, 24)
             ..dbEmails = const fb.StringReader(asciiOptimization: true)
-                .vTableGet(buffer, rootOffset, 26, '');
+                .vTableGetNullable(buffer, rootOffset, 26);
 
           return object;
         })

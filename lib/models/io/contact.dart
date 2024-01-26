@@ -46,11 +46,11 @@ class Contact {
   List<ContactAddress> phoneNumbers;
   List<ContactAddress> emailAddresses;
 
-  String get dbPhones => jsonEncode(phoneNumbers.map((e) => e.toMap()).toList());
-  set dbPhones(String json) => (jsonDecode(json) as List<dynamic>).map((e) => ContactAddress.fromMap(e)).toList();
+  String? get dbPhones => jsonEncode(phoneNumbers.map((e) => e.toMap()).toList());
+  set dbPhones(String? json) => (json == null) ? [] : (jsonDecode(json) as List<dynamic>).map((e) => ContactAddress.fromMap(e)).toList();
 
-  String get dbEmails => jsonEncode(emailAddresses.map((e) => e.toMap()).toList());
-  set dbEmails(String json) => (jsonDecode(json) as List<dynamic>).map((e) => ContactAddress.fromMap(e)).toList();
+  String? get dbEmails => jsonEncode(emailAddresses.map((e) => e.toMap()).toList());
+  set dbEmails(String? json) => (json == null) ? [] : (jsonDecode(json) as List<dynamic>).map((e) => ContactAddress.fromMap(e)).toList();
 
   String? get initials {
     String initials = (structuredName?.givenName.characters.firstOrNull ?? "") + (structuredName?.familyName.characters.firstOrNull ?? "");
