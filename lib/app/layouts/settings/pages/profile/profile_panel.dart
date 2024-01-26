@@ -1,5 +1,6 @@
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
@@ -12,6 +13,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:universal_io/io.dart';
 
 class ProfilePanel extends StatefulWidget {
@@ -304,13 +306,13 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                       ),
                     ),
                   ) : const SizedBox.shrink()),
-                if (accountInfo.isNotEmpty)
-                  SettingsHeader(
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "iCloud Account Info"),
-                if (accountInfo.isNotEmpty)
-                  SettingsSection(
+                SettingsHeader(
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "iCloud Account Info"),
+                Skeletonizer(
+                  enabled: accountInfo.isEmpty,
+                  child: SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       Obx(() {
@@ -324,12 +326,12 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                               child: SelectableText.rich(
                                 TextSpan(children: [
                                   TextSpan(text: redact ? "Account Name - Apple ID" : "${accountInfo['account_name']} - ${accountInfo['apple_id']}"),
-                                  const TextSpan(text: "\n\n"),
-                                  const TextSpan(text: "iMessage Status: "),
+                                  const TextSpan(text: "\n"),
+                                  const TextSpan(text: "iMessage Status: ", style: TextStyle(height: 3.0)),
                                   TextSpan(
-                                      text: accountInfo['login_status_message'].toUpperCase(),
+                                      text: accountInfo['login_status_message']?.toUpperCase(),
                                       style: TextStyle(color: getIndicatorColor(accountInfo['login_status_message'] == "Connected" ? SocketState.connected : SocketState.disconnected))),
-                                  const TextSpan(text: "\n\n"),
+                                  const TextSpan(text: "\n"),
                                   const TextSpan(text: "SMS Forwarding Status: "),
                                   TextSpan(
                                       text: accountInfo['sms_forwarding_enabled'] == true ? "ENABLED" : "DISABLED",
@@ -338,9 +340,9 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                                   TextSpan(
                                       text: accountInfo['sms_forwarding_capable'] == true ? "CAPABLE" : "INCAPABLE",
                                       style: TextStyle(color: getIndicatorColor(accountInfo['sms_forwarding_capable'] == true ? SocketState.connected : SocketState.disconnected))),
-                                  const TextSpan(text: "\n\n"),
-                                  const TextSpan(text: "VETTED ALIASES\n", style: TextStyle(fontWeight: FontWeight.w700)),
-                                  ...(accountInfo['vetted_aliases'] as List<dynamic>).map((e) => [
+                                  const TextSpan(text: "\n"),
+                                  const TextSpan(text: "VETTED ALIASES\n", style: TextStyle(fontWeight: FontWeight.w700, height: 3.0)),
+                                  ...((accountInfo['vetted_aliases'] as List<dynamic>? ?? [])).map((e) => [
                                     TextSpan(text: "⬤  ", style: TextStyle(color: getIndicatorColor(e['Status'] == 3 ? SocketState.connected : SocketState.disconnected))),
                                     TextSpan(text: redact ? "Alias" : "${e['Alias']}\n")
                                   ]).toList().flattened,
@@ -382,19 +384,21 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                         ),
                     ],
                   ),
-                if (accountContact.isNotEmpty)
-                  SettingsHeader(
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "iMessage Contact Card"),
-                if (accountContact.isNotEmpty)
-                  SettingsSection(
+                ),
+                SettingsHeader(
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "iMessage Contact Card"),
+                Skeletonizer(
+                  enabled: accountContact.isEmpty,
+                  
+                  child: SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
-                        leading: ContactAvatarWidget(
+                        leading: (accountContact['avatar'] == null) ? const CircleAvatar() : ContactAvatarWidget(
                           handle: null,
-                          contact: Contact(id: randomString(9), displayName: "", avatar: base64Decode(accountContact['avatar'])),
+                          contact: Contact(id: randomString(9), displayName: "", avatar: (accountContact['avatar'] == null) ? Uint8List(0) : base64Decode(accountContact['avatar'])),
                         ),
                         title: accountContact['name'],
                         subtitle: "Your sharable iMessage contact card",
@@ -402,6 +406,7 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                       const SettingsSubtitle(subtitle: "Visit iMessage settings on your Mac to update.")
                     ],
                   ),
+                )
               ],
           ),
         ),
