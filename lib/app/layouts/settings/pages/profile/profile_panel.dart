@@ -1,6 +1,4 @@
-
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
@@ -383,7 +381,7 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                           },
                         ),
                     ],
-                  ),
+                  )),
                 if (!isNullOrEmpty(accountContact['name'])!)
                   SettingsHeader(
                       iosSubtitle: iosSubtitle,
@@ -404,7 +402,6 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                       const SettingsSubtitle(subtitle: "Visit iMessage settings on your Mac to update.")
                     ],
                   ),
-                )
               ],
           ),
         ),
