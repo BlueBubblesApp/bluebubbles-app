@@ -135,6 +135,14 @@ flutter {
     source '../..'
 }
 
+// For Cloud Firestore okio error
+configurations.all {
+    resolutionStrategy {
+        force 'com.squareup.okhttp:okhttp:2.7.5'
+        force 'com.squareup.okio:okio:1.17.5'
+    }
+}
+
 dependencies {
     // Android native functions
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"

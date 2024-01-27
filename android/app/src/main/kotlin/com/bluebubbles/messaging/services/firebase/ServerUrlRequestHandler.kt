@@ -42,7 +42,7 @@ class ServerUrlRequestHandler: MethodCallHandlerImpl() {
         if (firebaseApp.options.databaseUrl == null) {
             CoroutineScope(Dispatchers.Main).launch {
                 val serverUrlTask: Task<DocumentSnapshot> = FirebaseFirestore.getInstance().collection("server").document("config").get()
-                val serverUrl: String? = serverUrlTask.await().get("serverUrl", String::class.java)
+                val serverUrl: String? = serverUrlTask.await().data?.get("serverUrl") as String?
                 submitData(serverUrl, result)
             }
         } else {
