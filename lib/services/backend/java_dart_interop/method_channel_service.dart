@@ -57,29 +57,41 @@ class MethodChannelService extends GetxService {
       case "new-message":
         await storeStartup.future;
         Logger.info("Received new message from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
-          if (ls.isAlive) {
-            await inq.queue(item);
-          } else {
-            await ah.handleNewMessage(item.chat, item.message, item.tempGuid);
+        try {
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
+            if (ls.isAlive) {
+              await inq.queue(item);
+            } else {
+              await ah.handleNewMessage(item.chat, item.message, item.tempGuid);
+            }
           }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return true;
       case "updated-message":
         await storeStartup.future;
         Logger.info("Received updated message from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
-          if (ls.isAlive) {
-            await inq.queue(item);
-          } else {
-            await ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);
+        try {
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
+            if (ls.isAlive) {
+              await inq.queue(item);
+            } else {
+              await ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);
+            }
           }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return true;
       case "group-name-change":
@@ -87,35 +99,53 @@ class MethodChannelService extends GetxService {
       case "participant-added":
       case "participant-left":
         await storeStartup.future;
-        Logger.info("Received ${call.method} from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
-          await ah.handleNewOrUpdatedChat(item.chat);
+        try {
+          Logger.info("Received ${call.method} from FCM");
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
+            await ah.handleNewOrUpdatedChat(item.chat);
+          }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return true;
       case "group-icon-changed":
         await storeStartup.future;
-        Logger.info("Received group icon change from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          final guid = payload.data["chats"].first["guid"];
-          final chat = Chat.findOne(guid: guid);
-          if (chat != null) {
-            await Chat.getIcon(chat);
+        try {
+          Logger.info("Received group icon change from FCM");
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            final guid = payload.data["chats"].first["guid"];
+            final chat = Chat.findOne(guid: guid);
+            if (chat != null) {
+              await Chat.getIcon(chat);
+            }
           }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return true;
       case "scheduled-message-error":
         Logger.info("Received scheduled message error from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (data == null) return true;
-        final payload = ServerPayload.fromJson(data);
-        Chat? chat = Chat.findOne(guid: payload.data["payload"]["chatGuid"]);
-        if (chat != null) {
-          await notif.createFailedToSend(chat, scheduled: true);
+        try {
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (data == null) return true;
+          final payload = ServerPayload.fromJson(data);
+          Chat? chat = Chat.findOne(guid: payload.data["payload"]["chatGuid"]);
+          if (chat != null) {
+            await notif.createFailedToSend(chat, scheduled: true);
+          }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return true;
       case "ReplyChat":
@@ -154,31 +184,43 @@ class MethodChannelService extends GetxService {
         if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received markAsRead from Kotlin");
-        final data = call.arguments as Map?;
-        if (data != null) {
-          Chat? chat = Chat.findOne(guid: data["chatGuid"]);
-          if (chat != null) {
-            chat.toggleHasUnread(false);
-            return true;
+        try {
+          final data = call.arguments as Map?;
+          if (data != null) {
+            Chat? chat = Chat.findOne(guid: data["chatGuid"]);
+            if (chat != null) {
+              chat.toggleHasUnread(false);
+              return true;
+            }
           }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return false;
       case "chat-read-status-changed":
         if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received chat status change from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          Chat? chat = Chat.findOne(guid: payload.data["chatGuid"]);
-          if (chat == null || (payload.data["read"] != true && payload.data["read"] != false)) {
-            return false;
+        try {
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            Chat? chat = Chat.findOne(guid: payload.data["chatGuid"]);
+            if (chat == null || (payload.data["read"] != true && payload.data["read"] != false)) {
+              return false;
+            } else {
+              chat.toggleHasUnread(!payload.data["read"]!, privateMark: false);
+              return true;
+            }
           } else {
-            chat.toggleHasUnread(!payload.data["read"]!, privateMark: false);
-            return true;
+            return false;
           }
-        } else {
-          return false;
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
       case "MediaColors":
         await storeStartup.future;
@@ -192,20 +234,32 @@ class MethodChannelService extends GetxService {
       case "incoming-facetime":
         await storeStartup.future;
         Logger.info("Received legacy incoming facetime from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          await ActionHandler().handleIncomingFaceTimeCallLegacy(payload.data);
+        try {
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            await ActionHandler().handleIncomingFaceTimeCallLegacy(payload.data);
+          }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return true;
       case "ft-call-status-changed":
         if (ls.isAlive) return true;
         await storeStartup.future;
         Logger.info("Received facetime call status change from FCM");
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          await ActionHandler().handleFaceTimeStatusChange(payload.data);
+        try {
+          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            await ActionHandler().handleFaceTimeStatusChange(payload.data);
+          }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
         return true;
       case "answer-facetime":
@@ -214,14 +268,19 @@ class MethodChannelService extends GetxService {
         return true;
       case "imessage-aliases-removed":
         Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data!);
-          Logger.info("Alias(es) removed ${payload.data["aliases"]}");
-          await notif.createAliasesRemovedNotification((payload.data["aliases"] as List).cast<String>());
-        } else {
-          Logger.warn("Aliases removed data empty or null");
+        try {
+          if (!isNullOrEmpty(data)!) {
+            final payload = ServerPayload.fromJson(data!);
+            Logger.info("Alias(es) removed ${payload.data["aliases"]}");
+            await notif.createAliasesRemovedNotification((payload.data["aliases"] as List).cast<String>());
+          } else {
+            Logger.warn("Aliases removed data empty or null");
+          }
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
-
         return true;
       default:
         return true;
