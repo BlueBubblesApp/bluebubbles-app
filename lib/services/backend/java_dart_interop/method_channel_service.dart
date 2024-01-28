@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -39,11 +40,13 @@ class MethodChannelService extends GetxService {
   }
 
   Future<bool> _callHandler(MethodCall call) async {
+    final Map<String, dynamic>? arguments = call.arguments is String ? jsonDecode(call.arguments) : call.arguments?.cast<String, Object>();
     switch (call.method) {
       case "NewServerUrl":
+        if (arguments == null) return false;
         await storeStartup.future;
         // remove brackets from URL
-        String address = call.arguments["server_url"];
+        String address = arguments["server_url"];
         String sanitized = sanitizeServerAddress(address: address)!;
         if (sanitized != ss.settings.serverAddress.value) {
           ss.settings.serverAddress.value = sanitizeServerAddress(address: address)!;
@@ -58,7 +61,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         Logger.info("Received new message from FCM");
         try {
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);
             final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
@@ -78,7 +81,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         Logger.info("Received updated message from FCM");
         try {
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);
             final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
@@ -101,7 +104,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         try {
           Logger.info("Received ${call.method} from FCM");
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);
             final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
@@ -117,7 +120,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         try {
           Logger.info("Received group icon change from FCM");
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);
             final guid = payload.data["chats"].first["guid"];
@@ -135,7 +138,7 @@ class MethodChannelService extends GetxService {
       case "scheduled-message-error":
         Logger.info("Received scheduled message error from FCM");
         try {
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (data == null) return true;
           final payload = ServerPayload.fromJson(data);
           Chat? chat = Chat.findOne(guid: payload.data["payload"]["chatGuid"]);
@@ -151,7 +154,7 @@ class MethodChannelService extends GetxService {
       case "ReplyChat":
         await storeStartup.future;
         Logger.info("Received reply to message from Kotlin");
-        final data = call.arguments as Map?;
+        final Map<String, dynamic>? data = arguments;
         if (data == null) return false;
         // check and make sure that we aren't sending a duplicate reply
         final recentReplyGuid = ss.prefs.getString("recent-reply")?.split("/").first;
@@ -185,7 +188,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         Logger.info("Received markAsRead from Kotlin");
         try {
-          final data = call.arguments as Map?;
+          final Map<String, dynamic>? data = arguments;
           if (data != null) {
             Chat? chat = Chat.findOne(guid: data["chatGuid"]);
             if (chat != null) {
@@ -204,7 +207,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         Logger.info("Received chat status change from FCM");
         try {
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);
             Chat? chat = Chat.findOne(guid: payload.data["chatGuid"]);
@@ -235,7 +238,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         Logger.info("Received legacy incoming facetime from FCM");
         try {
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);
             await ActionHandler().handleIncomingFaceTimeCallLegacy(payload.data);
@@ -251,7 +254,7 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         Logger.info("Received facetime call status change from FCM");
         try {
-          Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+          Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);
             await ActionHandler().handleFaceTimeStatusChange(payload.data);
@@ -264,10 +267,12 @@ class MethodChannelService extends GetxService {
         return true;
       case "answer-facetime":
         Logger.info("Answering FaceTime call");
-        await intents.answerFaceTime(call.arguments["callUuid"]);
+        final Map<String, dynamic>? data = arguments;
+        if (data == null) return false;
+        await intents.answerFaceTime(data["callUuid"]);
         return true;
       case "imessage-aliases-removed":
-        Map<String, dynamic>? data = call.arguments?.cast<String, Object>();
+        Map<String, dynamic>? data = arguments;
         try {
           if (!isNullOrEmpty(data)!) {
             final payload = ServerPayload.fromJson(data!);

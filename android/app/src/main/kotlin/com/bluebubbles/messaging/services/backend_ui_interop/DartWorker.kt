@@ -13,7 +13,6 @@ import com.bluebubbles.messaging.MainActivity.Companion.engine
 import com.bluebubbles.messaging.R
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
@@ -55,7 +54,7 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
                 val gson = GsonBuilder()
                     .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
                     .create()
-                MethodChannel((engine ?: workerEngine)!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.get(HashMap::class.java)), object : MethodChannel.Result {
+                MethodChannel((engine ?: workerEngine)!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.getParameterized(HashMap::class.java, String::class.java, Any::class.java).type), object : MethodChannel.Result {
                     override fun success(result: Any?) {
                         Log.d(Constants.logTag, "Worker with method $method completed successfully")
                         completer.set(Result.success())
