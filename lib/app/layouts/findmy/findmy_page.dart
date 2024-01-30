@@ -55,20 +55,127 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   bool refreshing = false;
   bool? fetching2 = true;
   bool refreshing2 = false;
+  bool canRefresh = false;
 
   @override
   void initState() {
     super.initState();
     getLocations();
+
+    socket.socket.on("new-findmy-location", (data) {
+      try {
+        final friend = FindMyFriend.fromJson(data);
+        Logger.info("Received new location for ${friend.handle?.address}");
+        final existingFriendIndex = friends.indexWhere((e) => e.handle?.uniqueAddressAndService == friend.handle?.uniqueAddressAndService);
+        final existingFriend = existingFriendIndex == -1 ? null : friends[existingFriendIndex];
+        if (existingFriend == null || existingFriend.status == null || friend.locatingInProgress || LocationStatus.values.indexOf(existingFriend.status!) <= LocationStatus.values.indexOf(friend.status ?? LocationStatus.legacy)) {
+          Logger.info("Updating map for ${friend.handle?.address}");
+          friends[existingFriendIndex] = friend;
+          buildFriendMarker(friend);
+          setState(() {});
+        }
+      } catch (_) {}
+    });
+
+    // Allow users to refresh after 30sec
+    Future.delayed(const Duration(seconds: 30), () {
+      if (mounted) {
+        setState(() {
+          canRefresh = true;
+        });
+      }
+    });
   }
 
   void getLocations({bool refresh = false}) async {
+    if (!(Platform.isLinux && !kIsWeb)) {
+      LocationPermission granted = await Geolocator.checkPermission();
+      if (granted == LocationPermission.denied) {
+        granted = await Geolocator.requestPermission();
+      }
+      if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
+        Geolocator.getCurrentPosition().then((loc) {
+          location = loc;
+          buildLocationMarker(location!);
+          if (!kIsDesktop) {
+            locationSub = Geolocator.getPositionStream().listen((event) {
+              setState(() {
+                buildLocationMarker(event);
+              });
+            });
+          }
+          if (!refresh) {
+            mapController.move(LatLng(location!.latitude, location!.longitude), 10);
+          }
+        });
+      }
+    }
+
+    final response2 = refresh
+        ? await http.refreshFindMyFriends().catchError((_) async {
+      setState(() {
+        refreshing2 = false;
+      });
+      showSnackbar("Error", "Something went wrong refreshing FindMy Friends data!");
+      return Response(requestOptions: RequestOptions(path: ''));
+    })
+        : await http.findMyFriends().catchError((_) async {
+      setState(() {
+        fetching2 = null;
+      });
+      return Response(requestOptions: RequestOptions(path: ''));
+    });
+    if (response2.statusCode == 200 && response2.data['data'] != null) {
+      try {
+        friends = (response2.data['data'] as List)
+            .map((e) => FindMyFriend.fromJson(e))
+            .toList()
+            .cast<FindMyFriend>();
+        for (FindMyFriend e in friends.where((e) => (e.latitude ?? 0) != 0 && (e.longitude ?? 0) != 0)) {
+          markers[e.handle?.uniqueAddressAndService ?? randomString(6)] = Marker(
+            key: ValueKey('friend-${e.handle?.uniqueAddressAndService ?? randomString(6)}'),
+            point: LatLng(e.latitude!, e.longitude!),
+            width: 35,
+            height: 35,
+            child: Container(
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child:
+                  ContactAvatarWidget(editable: false, handle: e.handle ?? Handle(address: e.title ?? "Unknown")),
+                ),
+              ),
+            ),
+            alignment: Alignment.topCenter,
+          );
+        }
+        setState(() {
+          fetching2 = false;
+          refreshing2 = false;
+        });
+      } catch (e, s) {
+        Logger.error(e);
+        Logger.error(s);
+        setState(() {
+          fetching2 = null;
+          refreshing2 = false;
+        });
+        return;
+      }
+    } else {
+      setState(() {
+        fetching2 = false;
+        refreshing2 = false;
+      });
+    }
+
     final response = refresh
         ? await http.refreshFindMyDevices().catchError((_) async {
             setState(() {
               refreshing = false;
             });
-            showSnackbar("Error", "Something went wrong refreshing FindMy data!");
+            showSnackbar("Error", "Something went wrong refreshing FindMy Devices data!");
             return Response(requestOptions: RequestOptions(path: ''));
           })
         : await http.findMyDevices().catchError((_) async {
@@ -77,12 +184,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             });
             return Response(requestOptions: RequestOptions(path: ''));
           });
-    final response2 = await http.findMyFriends().catchError((_) async {
-      setState(() {
-        fetching2 = null;
-      });
-      return Response(requestOptions: RequestOptions(path: ''));
-    });
     if (response.statusCode == 200 && response.data['data'] != null) {
       try {
         devices = (response.data['data'] as List).map((e) => FindMyDevice.fromJson(e)).toList().cast<FindMyDevice>();
@@ -122,26 +223,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             alignment: Alignment.topCenter,
           );
         }
-        if (!(Platform.isLinux && !kIsWeb)) {
-          LocationPermission granted = await Geolocator.checkPermission();
-          if (granted == LocationPermission.denied) {
-            granted = await Geolocator.requestPermission();
-          }
-          if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
-            location = await Geolocator.getCurrentPosition();
-            buildLocationMarker(location!);
-            if (!kIsDesktop) {
-              locationSub = Geolocator.getPositionStream().listen((event) {
-                setState(() {
-                  buildLocationMarker(event);
-                });
-              });
-            }
-            if (!refresh) {
-              mapController.move(LatLng(location!.latitude, location!.longitude), 10);
-            }
-          }
-        }
         setState(() {
           fetching = false;
           refreshing = false;
@@ -162,50 +243,42 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       });
     }
 
-    if (response2.statusCode == 200 && response2.data['data'] != null) {
-      try {
-        friends = (response2.data['data']['locations'] as List)
-            .map((e) => FindMyFriend.fromJson(e))
-            .toList()
-            .cast<FindMyFriend>();
-        for (FindMyFriend e in friends.where((e) => (e.latitude ?? 0) != 0 && (e.longitude ?? 0) != 0)) {
-          markers[randomString(6)] = Marker(
-            key: ValueKey('friend-${randomString(6)}'),
-            point: LatLng(e.latitude!, e.longitude!),
-            width: 35,
-            height: 35,
-            child: Container(
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child:
-                      ContactAvatarWidget(editable: false, handle: e.handle ?? Handle(address: e.title ?? "Unknown")),
-                ),
-              ),
-            ),
-            alignment: Alignment.topCenter,
-          );
-        }
-        setState(() {
-          fetching2 = false;
-          refreshing2 = false;
-        });
-      } catch (e, s) {
-        Logger.error(e);
-        Logger.error(s);
-        setState(() {
-          fetching2 = null;
-          refreshing2 = false;
-        });
-        return;
-      }
+    // Call the FindMy Friends refresh anyways so that new data comes through the socket
+    if (!refresh) {
+      http.refreshFindMyFriends();
     } else {
       setState(() {
-        fetching2 = false;
-        refreshing2 = false;
+        canRefresh = false;
+      });
+      // Allow users to refresh after 30sec
+      Future.delayed(const Duration(seconds: 30), () {
+        if (mounted) {
+          setState(() {
+            canRefresh = true;
+          });
+        }
       });
     }
+  }
+
+  void buildFriendMarker(FindMyFriend friend) {
+    markers[friend.handle?.uniqueAddressAndService ?? randomString(6)] = Marker(
+      key: ValueKey('friend-${friend.handle?.uniqueAddressAndService ?? randomString(6)}'),
+      point: LatLng(friend.latitude!, friend.longitude!),
+      width: 35,
+      height: 35,
+      child: Container(
+        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(3),
+            child:
+            ContactAvatarWidget(editable: false, handle: friend.handle ?? Handle(address: friend.title ?? "Unknown")),
+          ),
+        ),
+      ),
+      alignment: Alignment.topCenter,
+    );
   }
 
   void buildLocationMarker(Position pos) {
@@ -259,6 +332,10 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   @override
   void dispose() {
     locationSub?.cancel();
+    mapController.dispose();
+    popupController.dispose();
+    tabController.dispose();
+    socket.socket.off("new-findmy-location");
     super.dispose();
   }
 
@@ -310,6 +387,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   child: ListView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
+                    padding: EdgeInsets.zero,
                     itemBuilder: (context, i) {
                       final item = devicesWithLocation[i];
                       return ListTile(
@@ -399,6 +477,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   child: ListView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
+                    padding: EdgeInsets.zero,
                     itemBuilder: (context, i) {
                       final item = itemsWithLocation[i];
                       return ListTile(
@@ -558,7 +637,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     final friendsBodySlivers = [
       SliverList(
         delegate: SliverChildListDelegate([
-          if (fetching == null || fetching == true || (fetching == false && devices.isEmpty))
+          if (fetching2 == null || fetching2 == true || (fetching2 == false && friends.isEmpty))
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(top: 100),
@@ -567,15 +646,15 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        fetching == null
+                        fetching2 == null
                             ? "Something went wrong!"
-                            : fetching == false
+                            : fetching2 == false
                                 ? "You have no friends."
                                 : "Getting FindMy data...",
                         style: context.theme.textTheme.labelLarge,
                       ),
                     ),
-                    if (fetching == true) buildProgressIndicator(context, size: 15),
+                    if (fetching2 == true) buildProgressIndicator(context, size: 15),
                   ],
                 ),
               ),
@@ -591,27 +670,37 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   child: ListView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
+                    padding: EdgeInsets.zero,
                     itemBuilder: (context, i) {
                       final item = friendsWithLocation[i];
                       return ListTile(
                         leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
-                        subtitle: Text(item.longAddress ?? "No location found"),
-                        trailing: item.latitude != null && item.longitude != null ? ButtonTheme(
-                          minWidth: 1,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              shape: const CircleBorder(),
-                              backgroundColor: context.theme.colorScheme.primaryContainer,
+                        subtitle: Text("${item.shortAddress ?? "No location found"}${item.lastUpdated == null || item.status == LocationStatus.live ? "" : "\nLast updated ${buildDate(item.lastUpdated)}"}"),
+                        trailing: item.latitude != null && item.longitude != null ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (item.status == LocationStatus.live)
+                              const Icon(CupertinoIcons.largecircle_fill_circle),
+                            if (item.locatingInProgress)
+                              buildProgressIndicator(context),
+                            ButtonTheme(
+                              minWidth: 1,
+                              child: TextButton(
+                                style: TextButton.styleFrom(
+                                  shape: const CircleBorder(),
+                                  backgroundColor: context.theme.colorScheme.primaryContainer,
+                                ),
+                                onPressed: () async {
+                                  await MapsLauncher.launchCoordinates(item.latitude!, item.longitude!);
+                                },
+                                child: const Icon(
+                                    Icons.directions,
+                                    size: 20
+                                ),
+                              ),
                             ),
-                            onPressed: () async {
-                              await MapsLauncher.launchCoordinates(item.latitude!, item.longitude!);
-                            },
-                            child: const Icon(
-                                Icons.directions,
-                                size: 20
-                            ),
-                          ),
+                          ],
                         ) : null,
                         onTap: () async {
                           if (context.isPhone) {
@@ -769,7 +858,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   child: Stack(
                     children: [
                       buildMap(),
-                      if (!samsung)
+                      if (!samsung && canRefresh)
                         Positioned(
                           top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
                           right: 20,
@@ -782,7 +871,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                             ),
                             child: Container(
                               width: 48,
-                              child: refreshing
+                              child: refreshing || refreshing2
                                   ? buildProgressIndicator(context)
                                   : IconButton(
                                       iconSize: 22,
@@ -791,6 +880,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                       onPressed: () {
                                         setState(() {
                                           refreshing = true;
+                                          refreshing2 = true;
                                         });
                                         getLocations(refresh: true);
                                       },
@@ -1081,7 +1171,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       color: Theme.of(context).colorScheme.properSurface.withOpacity(0.9),
                     ),
                   )),
-            if (!samsung)
+            if (!samsung && canRefresh)
               Positioned(
                 top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
                 right: 20,
@@ -1094,7 +1184,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                   ),
                   child: Container(
                     width: 48,
-                    child: refreshing
+                    child: refreshing || refreshing2
                         ? buildProgressIndicator(context)
                         : IconButton(
                             iconSize: 22,
@@ -1103,6 +1193,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                             onPressed: () {
                               setState(() {
                                 refreshing = true;
+                                refreshing2 = true;
                               });
                               getLocations(refresh: true);
                             },
@@ -1144,7 +1235,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             ),
           ],
           onDestinationSelected: (page) {
-            if (fetching != false) return;
             index.value = page;
             tabController.animateTo(page);
             panelController.open();
@@ -1156,27 +1246,29 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
 
   Widget buildSamsungAppBar(BuildContext context, String title) {
     final actions = [
-      Container(
-        width: 48,
-        height: 48,
-        child: Container(
+      if (canRefresh)
+        Container(
           width: 48,
-          margin: const EdgeInsets.only(right: 8),
-          child: refreshing
-              ? buildProgressIndicator(context)
-              : IconButton(
-                  iconSize: 22,
-                  icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh,
-                      color: context.theme.colorScheme.onBackground, size: 22),
-                  onPressed: () {
-                    setState(() {
-                      refreshing = true;
-                    });
-                    getLocations(refresh: true);
-                  },
-                ),
+          height: 48,
+          child: Container(
+            width: 48,
+            margin: const EdgeInsets.only(right: 8),
+            child: refreshing || refreshing2
+                ? buildProgressIndicator(context)
+                : IconButton(
+                    iconSize: 22,
+                    icon: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.refresh,
+                        color: context.theme.colorScheme.onBackground, size: 22),
+                    onPressed: () {
+                      setState(() {
+                        refreshing = true;
+                        refreshing2 = true;
+                      });
+                      getLocations(refresh: true);
+                    },
+                  ),
+          ),
         ),
-      ),
     ];
 
     return SliverAppBar(
@@ -1334,6 +1426,10 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                           Text(item.handle?.displayName ?? item.title ?? "Unknown Friend",
                               style: context.theme.textTheme.labelLarge),
                           Text(item.longAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
+                          if (item.lastUpdated != null && item.status != LocationStatus.live)
+                            Text("Last updated ${buildDate(item.lastUpdated)}", style: context.theme.textTheme.bodySmall),
+                          if (item.status != null)
+                            Text("${item.status!.name.capitalize!} Location", style: context.theme.textTheme.bodySmall),
                         ],
                       ),
                     ),

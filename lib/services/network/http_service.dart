@@ -1093,6 +1093,18 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Refresh FindMy friends on server
+  Future<Response> refreshFindMyFriends({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$apiRoot/icloud/findmy/friends/refresh",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   Future<Response> getAccountInfo({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
