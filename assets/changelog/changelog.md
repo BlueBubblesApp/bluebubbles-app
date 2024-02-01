@@ -2,7 +2,7 @@
 
 Below are the last few BlueBubbles App release changelogs
 
-## v1.12.7
+## v1.12.8
 
 This update sgnificantly overhauls the underlying Java code for the Android app, bringing better stability, fixing bugs, and more features.
 
@@ -53,6 +53,20 @@ This update sgnificantly overhauls the underlying Java code for the Android app,
 
 - Upgraded to Flutter 3.16
 - Updated dependencies
+
+## v1.12.7
+
+This update brings a handful of bug fixes & improvements, as well as some experimental features around better supporting FaceTime (Monterey+)!
+
+### Changes
+
+- Implements (experimental) ability to answer FaceTime calls
+    - **This requires macOS Monterey+ and the Private API to be enabled for FaceTime.**
+    - **This also requires the BlueBubbles Server v1.9.2 update**
+- Fixes some issues parsing mentions in messages
+- Adds button to open a FindMy Friends location in Google Maps
+- Adds notice when the Private API is enabled on the server, but not on the client side
+- Fixes to FaceTime call notifications
 
 ## v1.12.6
 
