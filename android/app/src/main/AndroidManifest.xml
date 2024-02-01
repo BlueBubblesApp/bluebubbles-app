@@ -49,6 +49,7 @@
 
     <!-- Permission added by external package - remove it here -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
     <application
         tools:replace="android:label"
