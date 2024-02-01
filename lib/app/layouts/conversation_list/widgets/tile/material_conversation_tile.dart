@@ -289,7 +289,7 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
                 if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
                   Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
                   if (show != Indicator.NONE) {
-                    indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+                    indicatorText = show.name.toLowerCase().capitalizeFirst!;
                   }
                 }
 

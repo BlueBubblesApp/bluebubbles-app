@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class SplashScreen extends StatefulWidget {
-  SplashScreen({Key? key, required this.shouldNavigate}) : super(key: key);
+  SplashScreen({super.key, required this.shouldNavigate});
 
   final bool shouldNavigate;
 

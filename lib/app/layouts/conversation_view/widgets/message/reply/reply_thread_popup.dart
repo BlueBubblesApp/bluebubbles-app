@@ -27,6 +27,12 @@ void showBookmarksThread(ConversationViewController cvController, BuildContext c
   if (_messages.isEmpty) {
     return showSnackbar("Error", "There are no bookmarked messages in this chat!");
   }
+  for (Message m in _messages) {
+    m.realAttachments;
+    m.fetchAssociatedMessages();
+    m.handle = m.getHandle();
+  }
+  _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   _buildThreadView(_messages, null, cvController, context);
 }
 
@@ -95,7 +101,7 @@ void _buildThreadView(List<Message> _messages, int? originatorPart, Conversation
                                       children: _messages.mapIndexed((index, e) => GestureDetector(
                                         onTap: () {
                                           Navigator.of(context).pop();
-                                          if (originatorPart == null && ss.settings.skin.value != Skins.Material) {
+                                          if (originatorPart == null && ss.settings.skin.value == Skins.iOS) {
                                             // pop twice to remove convo details page
                                             Navigator.of(context).pop();
                                           }

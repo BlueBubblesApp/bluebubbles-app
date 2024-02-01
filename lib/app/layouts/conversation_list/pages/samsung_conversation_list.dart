@@ -47,13 +47,13 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (_) async {
         if (controller.selectedChats.isNotEmpty) {
           controller.clearSelectedChats();
-          return false;
+          return;
         }
-        return true;
       },
       child: Scaffold(
         backgroundColor: backgroundColor,

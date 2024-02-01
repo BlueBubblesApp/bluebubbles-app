@@ -46,10 +46,13 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
           if (kIsDesktop || kIsWeb) return;
           final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
           if (handle?.contact == null && handle != null) {
-            await mcs.invokeMethod("open-contact-form",
-                {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+            await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
           } else if (handle?.contact != null) {
-            await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+            try {
+              await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+            } catch (_) {
+              showSnackbar("Error", "Failed to find contact on device!");
+            }
           }
         }
       ));
@@ -169,10 +172,13 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
             if (kIsDesktop || kIsWeb) return;
             final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == data!.first);
             if (handle?.contact == null && handle != null) {
-              await mcs.invokeMethod("open-contact-form",
-                  {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+              await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
             } else if (handle?.contact != null) {
-              await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+              try {
+                await mcs.invokeMethod("view-contact-form", {'id': handle!.contact!.id});
+              } catch (_) {
+                showSnackbar("Error", "Failed to find contact on device!");
+              }
             }
           }
         ));
@@ -200,7 +206,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
                   final TrackingCarrier c = data!.first;
                   final String number = data.last;
                   Clipboard.setData(ClipboardData(text: number));
-                  await launchUrl(Uri.parse("https://www.google.com/search?q=${describeEnum(c)} $number"), mode: LaunchMode.externalApplication);
+                  await launchUrl(Uri.parse("https://www.google.com/search?q=${c.name} $number"), mode: LaunchMode.externalApplication);
                 } else if (type == "flight") {
                   final String c = data!.first;
                   final String number = data.last;

@@ -16,11 +16,11 @@ import 'package:get/get.dart';
 
 class ConversationView extends StatefulWidget {
   ConversationView({
-    Key? key,
+    super.key,
     required this.chat,
     this.customService,
     this.fromChatCreator = false,
-  }) : super(key: key);
+  });
 
   final Chat chat;
   final MessagesService? customService;
@@ -69,23 +69,27 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
           ),
         ),
-        child: WillPopScope(
-          onWillPop: () async {
+        child: PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) async {
+            if (didPop) return;
             if (controller.inSelectMode.value) {
               controller.inSelectMode.value = false;
               controller.selected.clear();
-              return false;
+              return;
             }
             if (controller.showAttachmentPicker) {
               controller.showAttachmentPicker = false;
               controller.updateWidgets<ConversationTextField>(null);
-              return false;
+              return;
             }
             if (ls.isBubble) {
               SystemNavigator.pop();
             }
             controller.close();
-            return !ls.isBubble;
+            if (ls.isBubble) return;
+            print(didPop);
+            return Navigator.of(context).pop();
           },
           child: SafeArea(
             top: false,

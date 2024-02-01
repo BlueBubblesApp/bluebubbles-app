@@ -19,7 +19,7 @@ import 'package:printing/printing.dart';
 import 'package:universal_io/io.dart';
 
 class ChatOptions extends StatefulWidget {
-  const ChatOptions({Key? key, required this.chat}) : super(key: key);
+  const ChatOptions({super.key, required this.chat});
 
   final Chat chat;
 
@@ -59,10 +59,9 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     ),
                     isThreeLine: true,
                     onTap: () async {
-                      await mcs.invokeMethod("open-convo-notif-settings", {
-                        "parentId": NotificationsService.NEW_MESSAGE_CHANNEL,
-                        "id": chat.guid,
-                        "displayName": chat.getTitle()
+                      await mcs.invokeMethod("open-conversation-notification-settings", {
+                        "channel_id": chat.guid,
+                        "display_name": chat.getTitle()
                       });
                     },
                   ),

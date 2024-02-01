@@ -23,9 +23,9 @@ import 'package:photo_manager/photo_manager.dart';
 
 class AttachmentPicker extends StatefulWidget {
   AttachmentPicker({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
   final ConversationViewController controller;
 
   @override

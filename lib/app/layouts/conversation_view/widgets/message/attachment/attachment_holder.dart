@@ -21,10 +21,10 @@ import 'package:tuple/tuple.dart';
 
 class AttachmentHolder extends CustomStateful<MessageWidgetController> {
   AttachmentHolder({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.message,
-  }) : super(key: key);
+  });
 
   final MessagePart message;
 
@@ -274,11 +274,22 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                       _controller.subjectFocusNode.unfocus();
                                       openContainer();
                                     },
-                                    child: ImageViewer(
-                                      file: _content,
-                                      attachment: attachment,
-                                      isFromMe: message.isFromMe!,
-                                      controller: controller.cvController,
+                                    child: Container(
+                                      color: context.theme.colorScheme.properSurface,
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: ns.width(context) * 0.5,
+                                          maxHeight: context.height * 0.6,
+                                          minHeight: 40,
+                                          minWidth: 100,
+                                        ),
+                                        child: ImageViewer(
+                                          file: _content,
+                                          attachment: attachment,
+                                          isFromMe: message.isFromMe!,
+                                          controller: controller.cvController,
+                                        ),
+                                      ),
                                     ),
                                   );
                                 }

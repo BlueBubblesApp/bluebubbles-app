@@ -33,14 +33,14 @@ import 'package:universal_io/io.dart';
 
 class MessageHolder extends CustomStateful<MessageWidgetController> {
   MessageHolder({
-    Key? key,
+    super.key,
     required this.cvController,
     this.oldMessageGuid,
     this.newMessageGuid,
     required this.message,
     this.isReplyThread = false,
     this.replyPart,
-  }) : super(key: key, parentController: getActiveMwc(message.guid!) ?? mwc(message));
+  }) : super(parentController: getActiveMwc(message.guid!) ?? mwc(message));
 
   final Message message;
   final String? oldMessageGuid;

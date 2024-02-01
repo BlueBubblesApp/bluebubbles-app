@@ -7,10 +7,10 @@ import 'package:tuple/tuple.dart';
 
 class TimestampSeparator extends StatelessWidget {
   const TimestampSeparator({
-    Key? key,
+    super.key,
     required this.olderMessage,
     required this.message,
-  }) : super(key: key);
+  });
   final Message? olderMessage;
   final Message message;
 

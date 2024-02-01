@@ -14,8 +14,7 @@ class SettingsSlider extends StatelessWidget {
         required this.divisions,
         this.leading,
         this.backgroundColor,
-        Key? key})
-      : super(key: key);
+        super.key});
 
   final double startingVal;
   final Function(double val)? update;

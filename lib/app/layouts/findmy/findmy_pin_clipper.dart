@@ -31,11 +31,11 @@ class ClipShadowPath extends StatelessWidget {
   final Widget child;
 
   const ClipShadowPath({
-    Key? key,
+    super.key,
     required this.shadow,
     required this.clipper,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -167,7 +167,10 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           ss.settings.keepAppAlive.value = val;
                           saveSettings();
                           if (!val) {
+                            await mcs.invokeMethod("stop-socket-service");
                             FlutterForegroundTask.stopService();
+                          } else {
+                            await mcs.invokeMethod("start-socket-service");
                           }
                         },
                         initialVal: ss.settings.keepAppAlive.value,

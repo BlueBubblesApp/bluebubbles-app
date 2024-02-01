@@ -36,7 +36,7 @@ Future<String> getDeviceName() async {
       items.addAll([androidInfo.brand, androidInfo.model, androidInfo.id]);
     } else if (kIsWeb) {
       WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
-      items.addAll([describeEnum(webInfo.browserName), webInfo.platform!]);
+      items.addAll([webInfo.browserName.name, webInfo.platform!]);
     } else if (Platform.isWindows) {
       WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
       items.addAll([windowsInfo.computerName]);

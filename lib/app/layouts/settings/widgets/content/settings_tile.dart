@@ -6,7 +6,7 @@ import 'package:universal_html/html.dart' as html;
 
 class SettingsTile extends StatelessWidget {
   const SettingsTile({
-    Key? key,
+    super.key,
     this.onTap,
     this.onLongPress,
     this.title,
@@ -15,7 +15,7 @@ class SettingsTile extends StatelessWidget {
     this.subtitle,
     this.backgroundColor,
     this.isThreeLine = false,
-  }) : super(key: key);
+  });
 
   final Function? onTap;
   final Function? onLongPress;

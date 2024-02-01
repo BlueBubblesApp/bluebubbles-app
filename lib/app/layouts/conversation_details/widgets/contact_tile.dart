@@ -21,11 +21,11 @@ class ContactTile extends StatelessWidget {
   Contact? get contact => handle.contact;
 
   ContactTile({
-    Key? key,
+    super.key,
     required this.handle,
     required this.chat,
     required this.canBeRemoved,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +41,13 @@ class ContactTile extends StatelessWidget {
       },
       onTap: () async {
         if (contact == null) {
-          await mcs.invokeMethod("open-contact-form",
-              {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+          await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
         } else {
-          await mcs.invokeMethod("view-contact-form", {'id': contact!.id});
+          try {
+            await mcs.invokeMethod("view-contact-form", {'id': contact!.id});
+          } catch (_) {
+            showSnackbar("Error", "Failed to find contact on device!");
+          }
         }
       },
       child: ListTile(

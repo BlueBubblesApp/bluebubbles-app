@@ -24,7 +24,7 @@ class VideoPlayer extends StatefulWidget {
   final Attachment attachment;
   final bool isFromMe;
 
-  VideoPlayer({Key? key, required this.file, required this.attachment, required this.controller, required this.isFromMe}) : super(key: key);
+  VideoPlayer({super.key, required this.file, required this.attachment, required this.controller, required this.isFromMe});
 
   final ConversationViewController? controller;
 
@@ -225,7 +225,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
 }
 
 class PlayPauseButton extends StatelessWidget {
-  const PlayPauseButton({Key? key, required this.showPlayPauseOverlay, required this.controller, this.customOnTap}) : super(key: key);
+  const PlayPauseButton({super.key, required this.showPlayPauseOverlay, required this.controller, this.customOnTap});
 
   final RxBool showPlayPauseOverlay;
   final VideoPlayerController? controller;
@@ -284,8 +284,7 @@ class PlayPauseButton extends StatelessWidget {
 }
 
 class MuteButton extends StatelessWidget {
-  const MuteButton({Key? key, required this.showPlayPauseOverlay, required this.muted, required this.controller, required this.isFromMe})
-      : super(key: key);
+  const MuteButton({super.key, required this.showPlayPauseOverlay, required this.muted, required this.controller, required this.isFromMe});
 
   final RxBool showPlayPauseOverlay;
   final RxBool muted;
@@ -516,12 +515,12 @@ class _DesktopVideoPlayerState extends OptimizedState<VideoPlayer> with Automati
 
 class DesktopPlayPauseButton extends StatelessWidget {
   DesktopPlayPauseButton({
-    Key? key,
+    super.key,
     required this.showPlayPauseOverlay,
     required this.controller,
     this.customOnTap,
     this.hover,
-  }) : super(key: key);
+  });
 
   final RxBool showPlayPauseOverlay;
   final Player? controller;
@@ -601,7 +600,7 @@ class DesktopPlayPauseButton extends StatelessWidget {
 }
 
 class DesktopMuteButton extends StatelessWidget {
-  const DesktopMuteButton({Key? key, required this.muted, required this.controller, required this.isFromMe}) : super(key: key);
+  const DesktopMuteButton({super.key, required this.muted, required this.controller, required this.isFromMe});
 
   final RxBool muted;
   final Player? controller;
@@ -649,7 +648,7 @@ class DesktopMuteButton extends StatelessWidget {
 }
 
 class FullscreenButton extends StatelessWidget {
-  const FullscreenButton({Key? key, required this.attachment, required this.isFromMe}) : super(key: key);
+  const FullscreenButton({super.key, required this.attachment, required this.isFromMe});
 
   final Attachment attachment;
   final bool isFromMe;

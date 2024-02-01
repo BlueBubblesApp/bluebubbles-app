@@ -1,10 +1,9 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
-import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -38,9 +37,9 @@ import 'package:universal_io/io.dart';
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({
-    Key? key,
+    super.key,
     this.initialPage,
-  }) : super(key: key);
+  });
 
   final Widget? initialPage;
 
@@ -120,125 +119,22 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                 backgroundColor: tileColor,
                                 title: ss.settings.redactedMode.value && ss.settings.hideContactInfo.value
                                     ? "User Name" : ss.settings.userName.value,
-                                subtitle: ss.settings.redactedMode.value && ss.settings.hideContactInfo.value
-                                    ? "User iCloud"
-                                    : ss.settings.iCloudAccount.isEmpty
-                                    ? "Unknown iCloud account"
-                                    : ss.settings.iCloudAccount.value,
+                                subtitle: "Tap to view more details",
                                 onTap: () {
-                                  final nameController = TextEditingController(text: ss.settings.userName.value);
-                                  done() {
-                                    if (nameController.text.isEmpty) {
-                                      showSnackbar("Error", "Enter a name!");
-                                      return;
-                                    }
-                                    Get.back();
-                                    ss.settings.userName.value = nameController.text;
-                                    ss.settings.save();
-                                  }
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) {
-                                      return AlertDialog(
-                                        actions: [
-                                          TextButton(
-                                            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                            onPressed: () => Get.back(),
-                                          ),
-                                          TextButton(
-                                            child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                            onPressed: () async {
-                                              done.call();
-                                            },
-                                          ),
-                                        ],
-                                        content: TextField(
-                                          controller: nameController,
-                                          onSubmitted: (_) => done.call(),
-                                          autofocus: true,
-                                          decoration: const InputDecoration(
-                                            labelText: "Name",
-                                            border: OutlineInputBorder(),
-                                          ),
-                                        ),
-                                        title: Text("User Profile Name", style: context.theme.textTheme.titleLarge),
-                                        backgroundColor: context.theme.colorScheme.properSurface,
-                                      );
-                                    }
+                                  ns.pushAndRemoveSettingsUntil(
+                                    context,
+                                    ProfilePanel(),
+                                        (route) => route.isFirst,
                                   );
                                 },
-                                leading: GestureDetector(
-                                  onTap: () {
-                                    final path = ss.settings.userAvatarPath.value;
-                                    if (path != null) {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                              backgroundColor: context.theme.colorScheme.properSurface,
-                                              title: Text(
-                                                  "Profile Avatar",
-                                                  style: context.theme.textTheme.titleLarge
-                                              ),
-                                              content: Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                mainAxisSize: MainAxisSize.min,
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    "You already have a profile avatar set. What would you like to do?",
-                                                    style: context.theme.textTheme.bodyLarge,
-                                                  ),
-                                                ],
-                                              ),
-                                              actions: <Widget>[
-                                                TextButton(
-                                                  child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                                TextButton(
-                                                  child: Text("Reset", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                                  onPressed: () {
-                                                    File file = File(path);
-                                                    file.delete();
-                                                    ss.settings.userAvatarPath.value = null;
-                                                    ss.saveSettings();
-                                                    Get.back();
-                                                  },
-                                                ),
-                                                TextButton(
-                                                  child: Text("Set New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                    Navigator.of(context).push(
-                                                      ThemeSwitcher.buildPageRoute(
-                                                        builder: (context) => AvatarCrop(),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ]
-                                          );
-                                        },
-                                      );
-                                    } else {
-                                      Navigator.of(context).push(
-                                        ThemeSwitcher.buildPageRoute(
-                                          builder: (context) => AvatarCrop(),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: ContactAvatarWidget(
-                                    handle: null,
-                                    borderThickness: 0.1,
-                                    editable: false,
-                                    fontSize: 22,
-                                    size: 50,
-                                  ),
+                                leading: ContactAvatarWidget(
+                                  handle: null,
+                                  borderThickness: 0.1,
+                                  editable: false,
+                                  fontSize: 22,
+                                  size: 50,
                                 ),
+                                trailing: nextIcon,
                               ),
                             ],
                           ),
@@ -841,8 +737,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                               await ss.prefs.setString("selected-light", "Bright White");
                                               themeBox.putMany(ts.defaultThemes);
                                               await ts.changeTheme(context);
-                                              Get.offAll(() => WillPopScope(
-                                                onWillPop: () async => false,
+                                              Get.offAll(() => PopScope(
+                                                canPop: false,
                                                 child: TitleBarWrapper(child: SetupView()),
                                               ), duration: Duration.zero, transition: Transition.noTransition);
                                             },
@@ -891,8 +787,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
             ),
             right: LayoutBuilder(builder: (context, constraints) {
               ns.maxWidthSettings = constraints.maxWidth;
-              return WillPopScope(
-                onWillPop: () async {
+              return PopScope(
+                canPop: false,
+                onPopInvoked: (_) async {
                   Get.until((route) {
                     if (route.settings.name == "initial") {
                       Get.back();
@@ -901,7 +798,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                     }
                     return true;
                   }, id: 3);
-                  return false;
                 },
                 child: Navigator(
                   key: Get.nestedKey(3),

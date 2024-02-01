@@ -696,10 +696,10 @@ class Skin extends InheritedWidget {
   final Skins skin;
 
   const Skin({
-    Key? key,
-    required Widget child,
+    super.key,
+    required super.child,
     required this.skin,
-  }) : super(key: key, child: child);
+  });
 
   static Skin? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<Skin>();
@@ -800,7 +800,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
         child: CircleAvatar(
           radius: 20,
           backgroundColor: theme.colorScheme.secondary,
-          child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false, onTap: () {}),
+          child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false),
         ),
       ),
     );

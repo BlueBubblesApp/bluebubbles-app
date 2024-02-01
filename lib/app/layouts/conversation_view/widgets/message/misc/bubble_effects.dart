@@ -14,13 +14,13 @@ import 'package:supercharged/supercharged.dart';
 
 class BubbleEffects extends StatefulWidget {
   BubbleEffects({
-    Key? key,
+    super.key,
     required this.child,
     required this.message,
     required this.part,
     required this.globalKey,
     required this.showTail,
-  }) : super(key: key);
+  });
 
   final Widget child;
   final Message message;

@@ -180,7 +180,6 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                         chat: chat,
                         size: 35,
                         editable: false,
-                        onTap: () {},
                       ),
                       Expanded(
                         child: Padding(
@@ -209,7 +208,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                     minLines: 1,
                     selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                    textInputAction: TextInputAction.done,
+                    textInputAction: TextInputAction.newline,
                     cursorColor: context.theme.colorScheme.primary,
                     cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
                     decoration: InputDecoration(

@@ -183,7 +183,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                       padding: const EdgeInsets.all(24),
                       child: const Text(
                         "No Firebase Projects found!\n\nMake sure you're signed in to the same Google account that you used on your server!",
-                        textScaleFactor: 1.1,
+                        textScaler: TextScaler.linear(1.1),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -609,9 +609,10 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     // Check if the URL is valid
     bool isValid = url.isURL;
     if (url.contains(":") && !isValid) {
+      // port applied to URL
       if (":".allMatches(url).length == 2) {
         final newUrl = url.split(":")[1].split("/").last;
-        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+        isValid = "https://${(newUrl.split(".")..removeLast()).join(".")}.com".isURL || newUrl.isIPv6 || newUrl.isIPv4;
       } else {
         final newUrl = url.split(":").first;
         isValid = newUrl.isIPv6 || newUrl.isIPv4;
@@ -620,7 +621,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     // the getx regex only allows extensions up to 6 characters in length
     // this is a workaround for that
     if (!isValid && url.split(".").last.isAlphabetOnly && url.split(".").last.length > 6) {
-      final newUrl = url.split(".").sublist(0, url.split(".").length - 1).join(".");
+      final newUrl = (url.split(".")..removeLast()).join(".");
       isValid = ("$newUrl.com").isURL;
     }
 
@@ -645,10 +646,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return WillPopScope(
-          onWillPop: () async {
-            return false;
-          },
+        return PopScope(
+          canPop: false,
           child: AlertDialog(
             title: Text(
               "Fetching server info...",

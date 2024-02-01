@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.d
 import 'package:bluebubbles/app/layouts/settings/pages/server/oauth_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -41,6 +42,7 @@ class ServerManagementPanelController extends StatefulController {
   final RxnString proxyService = RxnString();
   final RxnDouble timeSync = RxnDouble();
   final RxMap<String, dynamic> stats = RxMap({});
+  final RxBool hasAccountInfo = RxBool(false);
 
   // Restart trackers
   int? lastRestart;
@@ -77,20 +79,25 @@ class ServerManagementPanelController extends StatefulController {
       timeSync.value = response.data['data']['macos_time_sync'];
       hasCheckedStats.value = true;
 
-      http.serverStatTotals().then((response) {
-        if (response.data['status'] == 200) {
-          stats.addAll(response.data['data'] ?? {});
-          http.serverStatMedia().then((response) {
-            if (response.data['status'] == 200) {
-              stats.addAll(response.data['data'] ?? {});
-            }
-          });
-        }
-        opacity.value = 1.0;
-      }).catchError((_) {
-        showSnackbar("Error", "Failed to load server statistics!");
-        opacity.value = 1.0;
-      });
+      final subsequentRequests = <Future>[];
+
+      subsequentRequests.add(  
+        http.serverStatTotals().then((response) {
+          if (response.data['status'] == 200) {
+            stats.addAll(response.data['data'] ?? {});
+            http.serverStatMedia().then((response) {
+              if (response.data['status'] == 200) {
+                stats.addAll(response.data['data'] ?? {});
+              }
+            });
+          }
+        }).catchError((_) {
+          showSnackbar("Error", "Failed to load server statistics!");
+        })
+      );
+
+      Future.wait(subsequentRequests)
+        .whenComplete(() => opacity.value = 1.0);
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
       hasCheckedStats.value = null;
@@ -153,7 +160,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   const TextSpan(text: "\n\n"),
                                   const TextSpan(text: "Socket Connection: "),
                                   TextSpan(
-                                      text: describeEnum(socket.state.value).toUpperCase(),
+                                      text: socket.state.value.name.toUpperCase(),
                                       style: TextStyle(color: getIndicatorColor(socket.state.value))),
                                   // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
                                   //   const TextSpan(text: "\n"),
@@ -919,28 +926,32 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         ),
                         onTap: () async {
                           if (controller.isRestarting.value) return;
-
                           controller.isRestarting.value = true;
 
                           // Prevent restarting more than once every 30 seconds
                           int now = DateTime.now().toUtc().millisecondsSinceEpoch;
                           if (controller.lastRestart != null && now - controller.lastRestart! < 1000 * 30) return;
-
                           // Save the last time we restarted
                           controller.lastRestart = now;
 
                           // Perform the restart
                           try {
-                            if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
-                              if (kIsDesktop || kIsWeb) {
+                            if (Platform.isAndroid) {
+                              try {
+                                await mcs.invokeMethod("set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
+                              } catch (e, s) {
+                                Logger.error(e);
+                                Logger.error(s);
+                                showSnackbar("Error", "Something went wrong when updating Firebase Database!");
+                              }
+                            } else {
+                              if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
                                 var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
                                 var ref = db.reference().child('config').child('nextRestart');
                                 await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
                               } else {
-                                await mcs.invokeMethod("set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
+                                await http.setRestartDateCF(ss.fcmData.projectID!);
                               }
-                            } else {
-                              await http.setRestartDateCF(ss.fcmData.projectID!);
                             }
                           } finally {
                             controller.isRestarting.value = false;

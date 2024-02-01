@@ -15,7 +15,7 @@ import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 
 class SendAnimation extends CustomStateful<ConversationViewController> {
-  const SendAnimation({Key? key, required super.parentController}) : super(key: key);
+  const SendAnimation({super.key, required super.parentController});
 
   @override
   CustomState createState() => _SendAnimationState();
@@ -54,13 +54,14 @@ class _SendAnimationState
     if (ss.settings.sendSoundPath.value != null && !(isNullOrEmptyString(text) && isNullOrEmptyString(subject) && controller.pickedAttachments.isEmpty)) {
       if (kIsDesktop) {
         Player player = Player();
+        await player.setVolume(ss.settings.soundVolume.value.toDouble());
         await player.open(Media(ss.settings.sendSoundPath.value!));
         player.stream.completed
             .firstWhere((completed) => completed)
             .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
       } else {
         PlayerController controller = PlayerController();
-        controller.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: 1.0).then((_) => controller.startPlayer());
+        controller.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: ss.settings.soundVolume.value / 100).then((_) => controller.startPlayer());
       }
     }
     for (int i = 0; i < attachments.length; i++) {

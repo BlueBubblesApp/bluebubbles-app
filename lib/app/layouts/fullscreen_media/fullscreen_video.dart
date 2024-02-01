@@ -23,11 +23,11 @@ import 'package:video_player/video_player.dart';
 
 class FullscreenVideo extends StatefulWidget {
   FullscreenVideo({
-    Key? key,
+    super.key,
     required this.file,
     required this.attachment,
     required this.showInteractions,
-  }) : super(key: key);
+  });
 
   final PlatformFile file;
   final Attachment attachment;

@@ -13,13 +13,13 @@ import 'package:universal_html/html.dart' as html;
 
 class MessagePopupHolder extends StatefulWidget {
   MessagePopupHolder({
-    Key? key,
+    super.key,
     required this.child,
     required this.part,
     required this.controller,
     required this.cvController,
     required this.isEditing,
-  }) : super(key: key);
+  });
 
   final Widget child;
   final MessagePart part;

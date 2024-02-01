@@ -10,11 +10,11 @@ import 'package:supercharged/supercharged.dart';
 
 class TextBubble extends CustomStateful<MessageWidgetController> {
   TextBubble({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.message,
     this.subjectOnly = false,
-  }) : super(key: key);
+  });
 
   final MessagePart message;
   final bool subjectOnly;

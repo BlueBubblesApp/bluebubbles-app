@@ -7,9 +7,9 @@ import 'package:flutter/rendering.dart';
 
 class Balloons extends LeafRenderObjectWidget {
   Balloons({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final BalloonController controller;
 

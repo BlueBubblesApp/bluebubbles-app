@@ -20,7 +20,7 @@ class CustomCupertinoPageTransition extends StatelessWidget {
   ///  * `linearTransition` is whether to perform the transitions linearly.
   ///    Used to precisely track back gesture drags.
   CustomCupertinoPageTransition({
-    Key? key,
+    super.key,
     required Animation<double> primaryRouteAnimation,
     required this.child,
     required bool linearTransition,
@@ -46,8 +46,7 @@ class CustomCupertinoPageTransition extends StatelessWidget {
           parent: primaryRouteAnimation,
           curve: Curves.linearToEaseOut,
         )
-        ).drive(_CupertinoEdgeShadowDecoration.kTween),
-        super(key: key);
+        ).drive(_CupertinoEdgeShadowDecoration.kTween);
 
   // When this page is coming in to cover another page.
   final Animation<Offset> _primaryPositionAnimation;

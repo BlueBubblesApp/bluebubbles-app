@@ -11,11 +11,11 @@ import 'package:get/get.dart';
 
 class MessageProperties extends CustomStateful<MessageWidgetController> {
   MessageProperties({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.part,
     this.globalKey,
-  }) : super(key: key);
+  });
 
   final MessagePart part;
   final GlobalKey? globalKey;

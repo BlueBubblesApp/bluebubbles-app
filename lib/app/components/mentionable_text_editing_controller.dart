@@ -30,7 +30,7 @@ class Mentionable {
 
 
 class MentionTextEditingController extends TextEditingController {
-  MentionTextEditingController({String? text, this.mentionables=const <Mentionable>[]}) : super(text: text);
+  MentionTextEditingController({super.text, this.mentionables=const <Mentionable>[]});
   static const escapingChar = "￼";
   static const zeroWidthSpace = "​";
   static final escapingRegex = RegExp('$escapingChar\\d+$escapingChar');

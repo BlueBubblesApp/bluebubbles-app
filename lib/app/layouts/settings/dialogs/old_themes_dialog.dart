@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
 class OldThemesDialog extends StatelessWidget {
-  OldThemesDialog(this.oldThemes, this.clearOld, {Key? key}) : super(key: key);
+  OldThemesDialog(this.oldThemes, this.clearOld, {super.key});
   // ignore: deprecated_member_use_from_same_package
   final List<ThemeObject> oldThemes;
   final Function() clearOld;

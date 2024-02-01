@@ -17,12 +17,12 @@ class ImageViewer extends StatefulWidget {
   final bool isFromMe;
 
   ImageViewer({
-    Key? key,
+    super.key,
     required this.file,
     required this.attachment,
     required this.isFromMe,
     this.controller,
-  }) : super(key: key);
+  });
 
   final ConversationViewController? controller;
 

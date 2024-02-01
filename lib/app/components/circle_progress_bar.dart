@@ -11,12 +11,12 @@ class CircleProgressBar extends StatefulWidget {
   final double value;
 
   const CircleProgressBar({
-    Key? key,
+    super.key,
     this.animationDuration,
     required this.backgroundColor,
     required this.foregroundColor,
     required this.value,
-  }) : super(key: key);
+  });
 
   @override
   CircleProgressBarState createState() {

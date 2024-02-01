@@ -361,15 +361,15 @@ class Message {
   }
 
   factory Message.fromMap(Map<String, dynamic> json) {
-    final attachments = (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList();
+    final attachments = (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a!.cast<String, Object>())).toList();
 
     List<AttributedBody> attributedBody = [];
     if (json["attributedBody"] != null) {
       if (json['attributedBody'] is Map) {
-        json['attributedBody'] = [json['attributedBody']];
+        json['attributedBody'] = [json['attributedBody']!.cast<String, Object>()];
       }
       try {
-        attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+        attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a!.cast<String, Object>())).toList();
       } catch (e) {
         Logger.error('Failed to parse attributed body! $e');
       }
@@ -382,20 +382,20 @@ class Message {
           metadata = jsonDecode(json["metadata"]);
         } catch (_) {}
       } else {
-        metadata = json["metadata"];
+        metadata = json["metadata"]?.cast<String, Object>();
       }
     }
 
     List<MessageSummaryInfo> msi = [];
     try {
-      msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e)).toList();
+      msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e!.cast<String, Object>())).toList();
     } catch (e) {
       Logger.error('Failed to parse summary info! $e');
     }
 
     PayloadData? payloadData;
     try {
-      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
+      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']!.cast<String, Object>());
     } catch (e) {
       Logger.error('Failed to parse payload data! $e');
     }
@@ -424,9 +424,9 @@ class Message {
       associatedMessagePart: json["associatedMessagePart"] ?? int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
       associatedMessageType: json["associatedMessageType"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
-      handle: json['handle'] != null ? Handle.fromMap(json['handle']) : null,
+      handle: json['handle'] != null ? Handle.fromMap(json['handle']!.cast<String, Object>()) : null,
       hasAttachments: attachments.isNotEmpty || json['hasAttachments'] == true,
-      attachments: (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList(),
+      attachments: (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a!.cast<String, Object>())).toList(),
       hasReactions: json['hasReactions'] == true,
       dateDeleted: parseDate(json["dateDeleted"]),
       metadata: metadata is String ? null : metadata,

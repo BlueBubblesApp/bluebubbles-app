@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 
 class SettingsOptions<T extends Object> extends StatelessWidget {
   SettingsOptions({
-    Key? key,
+    super.key,
     required this.onChanged,
     required this.options,
     this.cupertinoCustomWidgets,
@@ -21,7 +21,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.secondaryColor,
     this.useCupertino = true,
     this.clampWidth = true,
-  }) : super(key: key);
+  });
   final String title;
   final void Function(T?) onChanged;
   final List<T> options;

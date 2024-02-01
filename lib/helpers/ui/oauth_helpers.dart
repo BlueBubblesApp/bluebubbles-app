@@ -53,6 +53,7 @@ Future<String?> googleOAuth(BuildContext context) async {
       final account = await gsi.signIn();
       if (account != null) {
         // get access token
+        await account.clearAuthCache();
         final auth = await account.authentication;
         token = auth.accessToken;
         // make sure scopes were granted on web

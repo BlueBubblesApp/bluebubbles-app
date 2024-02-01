@@ -45,6 +45,10 @@ class ManualMarkState extends OptimizedState<ManualMark> {
                   ? context.theme.colorScheme.primary
                   : context.theme.colorScheme.outline,
             ),
+            tooltip: widget.controller.inSelectMode.value ? "Delete"
+              : marking ? null
+              : marked ? "Mark Unread"
+              : "Mark Read",
             onPressed: () async {
               if (widget.controller.inSelectMode.value) {
                 for (Message m in widget.controller.selected) {

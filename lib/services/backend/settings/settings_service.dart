@@ -201,7 +201,7 @@ class SettingsService extends GetxService {
                                 padding: EdgeInsets.symmetric(vertical: 8),
                                 child: Text(
                                   "Enable Private API Features",
-                                  textScaleFactor: 1.2,
+                                  textScaler: TextScaler.linear(1.2),
                                 ),
                               ),
                             ),

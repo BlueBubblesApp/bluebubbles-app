@@ -86,7 +86,7 @@ class SetupPageTemplate extends StatelessWidget {
 
 class PageContent extends StatelessWidget {
   const PageContent({
-    Key? key,
+    super.key,
     required this.aboveTitle,
     required this.customTitle,
     required this.title,
@@ -96,7 +96,7 @@ class PageContent extends StatelessWidget {
     this.titleWrapper,
     this.subtitleWrapper,
     this.contentWrapper,
-  }) : super(key: key);
+  });
 
   final Widget? aboveTitle;
   final Widget? customTitle;
@@ -166,11 +166,11 @@ class PageContent extends StatelessWidget {
 
 class PageButtons extends StatelessWidget {
   PageButtons({
-    Key? key,
+    super.key,
     required this.title,
     required this.customButton,
     required this.onNextPressed,
-  }) : super(key: key);
+  });
 
   final String title;
   final Widget? customButton;

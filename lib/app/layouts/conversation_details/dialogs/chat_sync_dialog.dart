@@ -7,12 +7,12 @@ import 'package:get/get.dart';
 
 class ChatSyncDialog extends StatefulWidget {
   ChatSyncDialog({
-    Key? key,
+    super.key,
     required this.chat,
     this.initialMessage,
     this.withOffset = false,
     this.limit = 100
-  }) : super(key: key);
+  });
 
   final Chat chat;
   final String? initialMessage;

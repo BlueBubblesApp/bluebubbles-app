@@ -78,7 +78,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
     setState(() {
       themes.removeWhere((element) => element["name"] == name);
     });
-    http.deleteTheme("BlueBubbles Custom Theme - $name");
+    http.deleteTheme(name);
   }
 
   Future<String> defaultName() async {
@@ -89,7 +89,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
       return "Android (${androidInfo.model})";
     } else if (kIsWeb) {
       WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
-      return "Web (${describeEnum(webInfo.browserName)})";
+      return "Web (${webInfo.browserName.name})";
     } else if (Platform.isWindows) {
       WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
       return "Windows (${windowsInfo.computerName})";
@@ -621,7 +621,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                               title: Text(item["name"]),
                               subtitle: !item.containsKey('data')
                                   ? Text("Incompatible backup!", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.error))
-                                  : Text("${describeEnum(Brightness.values[data["colorScheme"]["brightness"]]).capitalizeFirst!} theme"),
+                                  : Text("${Brightness.values[data["colorScheme"]["brightness"]].name.capitalizeFirst!} theme"),
                               leading: !item.containsKey('data') ? null : Column(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -802,8 +802,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                           if (method) {
                             bool errored = false;
                             for (ThemeStruct e in allThemes) {
-                              String name = "BlueBubbles Custom Theme - ${e.name}";
-                              var response = await http.setTheme(name, e.toMap());
+                              var response = await http.setTheme(e.name.characters.take(50).string, e.toMap());
                               if (response.statusCode != 200) {
                                 errored = true;
                               }

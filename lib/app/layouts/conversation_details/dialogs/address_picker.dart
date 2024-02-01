@@ -11,7 +11,11 @@ void launchIntent(bool video, String address) async {
     launchUrl(Uri(scheme: "mailto", path: address));
   } else if (await Permission.phone.request().isGranted) {
     if (video) {
-      await mcs.invokeMethod("google-duo", {"number": address});
+      try {
+        await mcs.invokeMethod("google-duo", {"number": address});
+      } catch (_) {
+        showSnackbar("Error", "Something went wrong, Google Duo may not be installed!");
+      }
     } else {
       launchUrl(Uri(scheme: "tel", path: address));
     }

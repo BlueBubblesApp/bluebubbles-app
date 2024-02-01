@@ -47,7 +47,7 @@ class MessagePopup extends StatefulWidget {
   final BuildContext? Function() widthContext;
 
   const MessagePopup({
-    Key? key,
+    super.key,
     required this.childPosition,
     required this.size,
     required this.child,
@@ -57,7 +57,7 @@ class MessagePopup extends StatefulWidget {
     required this.serverDetails,
     required this.sendTapback,
     required this.widthContext,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => _MessagePopupState();
@@ -677,7 +677,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void openLink() {
     String? url = part.url;
-    mcs.invokeMethod("open-link", {"link": url ?? part.text, "forceBrowser": true});
+    mcs.invokeMethod("open-browser", {"link": url ?? part.text});
     popDetails();
   }
 
@@ -881,8 +881,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void createContact() async {
     popDetails();
-    await mcs
-        .invokeMethod("open-contact-form", {'address': message.handle!.address, 'addressType': message.handle!.address.isEmail ? 'email' : 'phone'});
+    await mcs.invokeMethod("open-contact-form", {'address': message.handle!.address, 'address_type': message.handle!.address.isEmail ? 'email' : 'phone'});
   }
 
   void showThread() {
@@ -1554,9 +1553,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
 class ReactionDetails extends StatelessWidget {
   const ReactionDetails({
-    Key? key,
+    super.key,
     required this.reactions,
-  }) : super(key: key);
+  });
 
   final List<Message> reactions;
 

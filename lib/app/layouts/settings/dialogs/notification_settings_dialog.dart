@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class NotificationSettingsDialog extends StatelessWidget {
-  NotificationSettingsDialog(this.chat, this.updateParent, {Key? key}) : super(key: key);
+  NotificationSettingsDialog(this.chat, this.updateParent, {super.key});
   final Chat chat;
   final VoidCallback updateParent;
 
@@ -213,7 +213,7 @@ class NotificationSettingsDialog extends StatelessWidget {
 }
 
 class TextDetectionDialog extends StatelessWidget {
-  TextDetectionDialog(this.controller, {Key? key}) : super(key: key);
+  TextDetectionDialog(this.controller, {super.key});
   final TextEditingController controller;
 
   @override

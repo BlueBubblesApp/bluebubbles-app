@@ -4,11 +4,11 @@ import 'package:get/get.dart';
 
 class SettingsSubtitle extends StatelessWidget {
   const SettingsSubtitle({
-    Key? key,
+    super.key,
     this.subtitle,
     this.unlimitedSpace = false,
     this.bottomPadding = true,
-  }) : super(key: key);
+  });
 
   final String? subtitle;
   final bool unlimitedSpace;

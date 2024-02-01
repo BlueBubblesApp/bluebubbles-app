@@ -28,10 +28,10 @@ class MessagesView extends StatefulWidget {
   final ConversationViewController controller;
 
   MessagesView({
-    Key? key,
+    super.key,
     this.customService,
     required this.controller,
-  }) : super(key: key);
+  });
 
   @override
   MessagesViewState createState() => MessagesViewState();
@@ -241,7 +241,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
   }
 
-  void handleNewMessage(Message message) {
+  void handleNewMessage(Message message) async {
     _messages.add(message);
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final insertIndex = _messages.indexOf(message);
@@ -268,10 +268,11 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         player.stream.completed
             .firstWhere((completed) => completed)
             .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
-        player.open(Media(ss.settings.receiveSoundPath.value!));
+        await player.setVolume(ss.settings.soundVolume.value.toDouble());
+        await player.open(Media(ss.settings.receiveSoundPath.value!));
       } else {
         PlayerController controller = PlayerController();
-        controller.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: 1.0).then((_) => controller.startPlayer());
+        await controller.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: ss.settings.soundVolume.value / 100).then((_) => controller.startPlayer());
       }
     }
   }
