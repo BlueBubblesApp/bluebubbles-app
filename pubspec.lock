@@ -1077,10 +1077,11 @@ packages:
   gesture_x_detector:
     dependency: "direct main"
     description:
-      name: gesture_x_detector
-      sha256: "777855ee4e1fa4d677c40d6a44b9106696ef6745879027c8871e334cee8cde1e"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: "7de6e023ff68f67af1d83f7c1303d8b973f84944"
+      resolved-ref: "7de6e023ff68f67af1d83f7c1303d8b973f84944"
+      url: "https://github.com/BlueBubblesApp/xgesture_flutter.git"
+    source: git
     version: "1.1.1"
   get:
     dependency: "direct main"

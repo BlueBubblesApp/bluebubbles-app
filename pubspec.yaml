@@ -86,7 +86,10 @@ dependencies:
       url: https://github.com/BlueBubblesApp/flutter-geolocator.git
       path: geolocator
       ref: 223195b3746686790ca188deac6260d901d30c51
-  gesture_x_detector: ^1.1.1
+  gesture_x_detector:
+    git:
+      url: https://github.com/BlueBubblesApp/xgesture_flutter.git
+      ref: 7de6e023ff68f67af1d83f7c1303d8b973f84944
   get: ^4.6.6
   giphy_get: ^3.5.4
   github: ^9.22.0
