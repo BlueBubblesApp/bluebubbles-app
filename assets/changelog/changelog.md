@@ -2,7 +2,7 @@
 
 Below are the last few BlueBubbles App release changelogs
 
-## v1.12.8
+## v1.13.0
 
 This update sgnificantly overhauls the underlying Java code for the Android app, bringing better stability, fixing bugs, and more features.
 
