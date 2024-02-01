@@ -2,6 +2,72 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.13.0
+
+This update sgnificantly overhauls the underlying Java code for the Android app, bringing better stability, fixing bugs, and more features.
+
+### The Big Stuff
+
+**New Stuff**
+
+- Android backend is completely rewritten from Java to Kotlin, enabling some of the features and bug fixes in this list
+- Notification when phone number deregisters
+
+**Important Bug Fixes**
+
+- Replying from the notification shade or in-car via Android Auto should now send much more reliably
+- Firebase authentication detects if Google Services are available to avoid crashes on de-googled ROMs
+- (Mostly) Fixes issue where the incorrect chat will be opened when opening from a notification
+
+### The Nitty Gritty
+
+#### Enhancements
+
+- Replying from a notification will now confirm the reply only once it has sent from the client side (otherwise the loading animation still shows)
+- Media colors now generates a Material You theme based on the album art itself
+- "Open In Browser" now opens links in Android's Custom Tabs, which supports all default browsers, not just Chrome
+- Improved Kotlin worker process for processing incoming items when the app is backgrounded or closed - Dart VM should be correctly cleaned up and all processes should be killed which improves battery life
+- Changed FindMy to open exact coordinates in Maps app rather than the address
+- FindMy Friends shows last location update
+- FindMy Friends shows location status
+- Faster FindMy load and refresh
+- Added tooltip to manual mark unread/read button to make it more clear
+- Allow adding newlines in text when creating a scheduled message
+- Notification when phone number deregisters
+- New profile screen to view/manage all iMessage account related tasks
+
+#### Fixes
+
+- Fixed issues with opening a contact's page or creating a new contact
+- Creating a new contact from an unknown number allows you to add the number to an existing contact first
+- Firebase authentication detects if Google Services are available to avoid crashes on de-googled ROMs
+- Fixed quick reply actions not consistently showing in notifications
+- Fixed legacy URL preview titles showing just "www"
+- Fixed URL previews too condensed in tablet mode
+- Fixed app not accepting URLs with port in manual entry
+- Fixed send and receive sound volume not following the preference set in settings
+- Fixed chat list not loading on Windows if Secure App is enabled and initial authentication is canceled.
+- Fixed custom themes with long names not uploading to server
+
+### For Developers
+
+- Upgraded to Flutter 3.16
+- Updated dependencies
+
+## v1.12.7
+
+This update brings a handful of bug fixes & improvements, as well as some experimental features around better supporting FaceTime (Monterey+)!
+
+### Changes
+
+- Implements (experimental) ability to answer FaceTime calls
+    - **This requires macOS Monterey+ and the Private API to be enabled for FaceTime.**
+    - **This also requires the BlueBubbles Server v1.9.2 update**
+- Fixes some issues parsing mentions in messages
+- Adds button to open a FindMy Friends location in Google Maps
+- Adds notice when the Private API is enabled on the server, but not on the client side
+- Fixes to FaceTime call notifications
+
 ## v1.12.6
 
 This is a hotfix update bringing bug fixes to recent issues,
