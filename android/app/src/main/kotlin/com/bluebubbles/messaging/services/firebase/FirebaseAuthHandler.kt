@@ -25,7 +25,13 @@ class FirebaseAuthHandler: MethodCallHandlerImpl() {
         context: Context
     ) {
         // Don't auth multiple times
-        if (firebaseApp != null) result.success(null)
+        try {
+            FirebaseApp.getInstance()
+            Log.d(Constants.logTag, "Firebase has already been initialized!")
+            result.success(null)
+            return
+        } catch (_: IllegalStateException) {}
+        // Make sure Google Services are available
         if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
             val error = "Google Play Services is not available!"
             Log.e(Constants.logTag, error)
