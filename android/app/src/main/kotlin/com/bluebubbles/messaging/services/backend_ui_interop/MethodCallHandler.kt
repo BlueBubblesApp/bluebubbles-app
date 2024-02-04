@@ -8,6 +8,7 @@ import com.bluebubbles.messaging.services.filesystem.GetContentUriPathHandler
 import com.bluebubbles.messaging.services.firebase.FirebaseAuthHandler
 import com.bluebubbles.messaging.services.firebase.ServerUrlRequestHandler
 import com.bluebubbles.messaging.services.firebase.UpdateNextRestartHandler
+import com.bluebubbles.messaging.services.notifications.ConnectionErrorNotification
 import com.bluebubbles.messaging.services.notifications.CreateIncomingFaceTimeNotification
 import com.bluebubbles.messaging.services.notifications.CreateIncomingMessageNotification
 import com.bluebubbles.messaging.services.notifications.DeleteNotificationHandler
@@ -16,6 +17,7 @@ import com.bluebubbles.messaging.services.notifications.NotificationListenerPerm
 import com.bluebubbles.messaging.services.notifications.StartNotificationListenerHandler
 import com.bluebubbles.messaging.services.system.BrowserLaunchRequestHandler
 import com.bluebubbles.messaging.services.system.CheckChromeOsHandler
+import com.bluebubbles.messaging.services.system.HealthCheckHandler
 import com.bluebubbles.messaging.services.system.NewContactFormRequestHandler
 import com.bluebubbles.messaging.services.system.OpenCalendarRequestHandler
 import com.bluebubbles.messaging.services.system.OpenConversationNotificationSettingsHandler
@@ -61,6 +63,8 @@ class MethodCallHandler {
             CreateIncomingMessageNotification.tag -> CreateIncomingMessageNotification().handleMethodCall(call, result, context)
             CreateIncomingFaceTimeNotification.tag -> CreateIncomingFaceTimeNotification().handleMethodCall(call, result, context)
             DeleteNotificationHandler.tag -> DeleteNotificationHandler().handleMethodCall(call, result, context)
+            HealthCheckHandler.tag -> HealthCheckHandler().handleMethodCall(call, result, context)
+            ConnectionErrorNotification.tag -> ConnectionErrorNotification().handleMethodCall(call, result, context)
             else -> {
                 val error = "Could not find method call handler for ${call.method}!"
                 Log.d(Constants.logTag, error)
