@@ -4,7 +4,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:universal_io/io.dart';
@@ -37,65 +37,14 @@ class MetadataHelper {
     if (!url.startsWith("http")) {
       url = "https://$url";
     }
-    final newUrl = MetadataHelper._reformatUrl(url);
-
-    // Handle specific cases
-    bool alreadyManual = false;
-    if (newUrl.contains('https://youtube.com/oembed')) {
-      final response = await http.dio.get(newUrl);
-      if (isNullOrEmpty(response.data)!) {
-        completer.complete(null);
-        return completer.future;
-      }
-
-      data = Metadata();
-      data.image = response.data["thumbnail_url"];
-      data.title = response.data["title"];
-      data.description = "User: ${response.data["author_name"] ?? "Unknown"}";
-      data.url = url;
-    } else if (newUrl.contains("https://publish.twitter.com/oembed")) {
-      final response = await http.dio.get(newUrl);
-      if (isNullOrEmpty(response.data)!) {
-        completer.complete(null);
-        return completer.future;
-      }
-
-      data = Metadata();
-      data.title = response.data["author_name"];
-      data.description = response.data["html"] != null
-          ? stripHtmlTags(response.data["html"].replaceAll("<br>", "\n")).trim()
-          : "";
-      data.url = url;
-    } else if (newUrl.contains("redd.it/")) {
-      final response = await http.dio.get(newUrl);
-      if (isNullOrEmpty(response.data)!) {
-        completer.complete(null);
-        return completer.future;
-      }
-      final document = parser.parse(response.data);
-
-      // Since this is a short-URL, we need to get the actual URL out
-      String? href = document.head?.children
-          .where((e) => e.localName == "link")
-          .map((e) => e.attributes.entries).flattened
-          .firstWhereOrNull((e) => e.key == "href" && e.value.contains("reddit.com") && !e.value.contains("amp"))?.value;
-      if (href != null) {
-        data = await MetadataHelper._manuallyGetMetadata(href);
-        alreadyManual = true;
-      }
-    } else if (url.contains("linkedin.com/posts/")) {
-      data = await MetadataHelper._manuallyGetMetadata(url);
-      alreadyManual = true;
-    } else {
-      try {
-        data = await MetadataFetch.extract(url);
-      } catch (ex) {
-        Logger.error('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
-      }
+    try {
+      data = await MetadataFetch.extract(url);
+    } catch (ex) {
+      Logger.error('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
     }
 
-    // If the data or title was null, try to manually parse
-    if (!alreadyManual && isNullOrEmpty(data?.title)!) {
+    // If the everything in the metadata is null or empty, try to manually parse
+    if (data?.toMap().values.where((e) => !isNullOrEmpty(e)!).isEmpty ?? true) {
       data = await MetadataHelper._manuallyGetMetadata(url);
     }
 
@@ -112,6 +61,9 @@ class MetadataHelper {
       data?.image = null;
     } else if (imageData.startsWith('//')) {
       data?.image = 'https:$imageData';
+    // In case the image is just a relative URL path
+    } else if (imageData.startsWith('/')) {
+      data?.image = '$url$imageData';
     }
 
     // Remove title or description if either are the "null" string
@@ -133,22 +85,15 @@ class MetadataHelper {
     return completer.future;
   }
 
-  static String _reformatUrl(String url) {
-    if (url.contains('youtube.com/') || url.contains("youtu.be/")) {
-      return "https://youtube.com/oembed?url=$url";
-    } else if (url.contains("twitter.com") && url.contains("/status/")) {
-      return "https://publish.twitter.com/oembed?url=$url";
-    } else {
-      return url;
-    }
-  }
-
   /// Manually tries to parse out metadata from a given [url]
   static Future<Metadata> _manuallyGetMetadata(String url) async {
     Metadata meta = Metadata();
 
     try {
-      final response = await http.dio.get(url);
+      final response = await http.dio.get(url, options: Options(headers: {
+        // pretend to be a social media crawler
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; rv:6.0) Gecko/20110814 Firefox/6.0 Google (+https://developers.google.com/+/web/snippet/)"
+      }));
       if (response.headers.value('content-type')?.startsWith("image/") ?? false) {
         meta.image = url;
       }
