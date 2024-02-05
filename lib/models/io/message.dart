@@ -396,8 +396,8 @@ class Message {
     PayloadData? payloadData;
     try {
       payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']!.cast<String, Object>());
-    } catch (e) {
-      Logger.error('Failed to parse payload data! $e');
+    } catch (e, s) {
+      Logger.error('Failed to parse payload data! $e\n$s');
     }
 
     return Message(
