@@ -310,6 +310,9 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
 
+    /* ----- MEDIAKIT INITIALIZATION ----- */
+    MediaKit.ensureInitialized();
+
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
     if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(MaterialApp(
@@ -336,9 +339,6 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
 
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
     if (kIsDesktop) {
-      /* ----- MEDIAKIT INITIALIZATION ----- */
-      MediaKit.ensureInitialized();
-
       /* ----- WINDOW INITIALIZATION ----- */
       await windowManager.ensureInitialized();
       await windowManager.setTitle('BlueBubbles');
