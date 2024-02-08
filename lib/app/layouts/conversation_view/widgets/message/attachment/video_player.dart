@@ -237,6 +237,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
       if (completed) {
         await player.pause();
         await player.seek(Duration.zero);
+        await player.pause();
         showPlayPauseOverlay.value = true;
         showPlayPauseOverlay.refresh();
       }
