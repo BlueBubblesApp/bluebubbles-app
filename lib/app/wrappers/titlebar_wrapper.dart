@@ -16,17 +16,6 @@ class TitleBarWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (chromeOS) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 50),
-        child: Stack(
-          children: <Widget>[
-            child,
-            if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
-          ],
-        ),
-      );
-    }
     if (!kIsDesktop) {
       return Stack(
         children: <Widget>[
