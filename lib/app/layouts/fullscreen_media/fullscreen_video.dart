@@ -204,7 +204,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
                       Video(controller: videoController, controls: (state) => Padding(
                         padding: EdgeInsets.all(!kIsWeb && !kIsDesktop ? 0 : 20).copyWith(bottom: !kIsWeb && !kIsDesktop ? 10 : 0),
                         child: media_kit_video_controls.AdaptiveVideoControls(state),
-                      )),
+                      ), filterQuality: FilterQuality.medium),
                       if (kIsWeb || kIsDesktop)
                         Obx(() {
                         return MouseRegion(
