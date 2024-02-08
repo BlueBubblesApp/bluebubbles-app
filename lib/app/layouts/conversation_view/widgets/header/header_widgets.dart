@@ -83,7 +83,7 @@ class ManualMarkState extends OptimizedState<ManualMark> {
               onPressed: () async {
                 List<PlatformFile> attachments = [];
                 String text = "";
-                widget.controller.selected.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+                widget.controller.selected.sort((a, b) => Message.sort(a, b, descending: false));
                 for (Message m in widget.controller.selected) {
                   final _attachments = m.attachments
                       .where((e) => as.getContent(e!, autoDownload: false) is PlatformFile)

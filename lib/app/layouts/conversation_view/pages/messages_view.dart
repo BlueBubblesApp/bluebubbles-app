@@ -96,7 +96,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         await messageService.loadChunk(0, controller);
       }
       _messages = messageService.struct.messages;
-      _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      _messages.sort(Message.sort);
       setState(() {});
       _messages.forEachIndexed((i, m) {
         final c = mwc(m);
@@ -227,7 +227,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
     final oldLength = _messages.length;
     _messages = messageService.struct.messages;
-    _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+    _messages.sort(Message.sort);
     fetching = false;
     _messages.sublist(max(oldLength - 1, 0)).forEachIndexed((i, m) {
       if (!mounted) return;
@@ -243,7 +243,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
   void handleNewMessage(Message message) async {
     _messages.add(message);
-    _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+    _messages.sort(Message.sort);
     final insertIndex = _messages.indexOf(message);
 
     if (listKey.currentState != null) {

@@ -16,7 +16,7 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service, ConversationViewController cvController) {
   final originatorPart = message.threadOriginatorGuid != null ? message.normalizedThreadPart : part.part;
   final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!, originatorPart);
-  _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+  _messages.sort((a, b) => Message.sort(a, b, descending: false));
   _buildThreadView(_messages, originatorPart, cvController, context);
 }
 
@@ -32,7 +32,7 @@ void showBookmarksThread(ConversationViewController cvController, BuildContext c
     m.fetchAssociatedMessages();
     m.handle = m.getHandle();
   }
-  _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+  _messages.sort((a, b) => Message.sort(a, b, descending: false));
   _buildThreadView(_messages, null, cvController, context);
 }
 

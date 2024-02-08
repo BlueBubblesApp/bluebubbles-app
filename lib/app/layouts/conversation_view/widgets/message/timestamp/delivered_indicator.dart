@@ -35,7 +35,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     if ((!message.isFromMe! && iOS) || (controller.parts.lastOrNull?.isUnsent ?? false)) return false;
     final messages = ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.messages
         .where((e) => (!iOS ? !e.isFromMe! : false) || (e.isFromMe! && (e.dateDelivered != null || e.dateRead != null)))
-        .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+        .toList()..sort(Message.sort);
     final index = messages.indexWhere((e) => e.guid == message.guid);
     if (index == 0) return true;
     if (index == 1 && message.isFromMe!) {
