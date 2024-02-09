@@ -89,7 +89,7 @@ class ChatMessages {
   }
 
   Message? getPreviousReply(String threadGuid, int threadPart, String messageGuid) {
-    final thread = threads(threadGuid, threadPart)..sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+    final thread = threads(threadGuid, threadPart)..sort((a, b) => Message.sort(a, b, descending: false));
     final index = thread.indexWhere((element) => element.guid == messageGuid);
     if (index > 0) {
       return thread[index - 1];
