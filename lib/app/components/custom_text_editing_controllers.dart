@@ -1,9 +1,7 @@
 import "package:bluebubbles/helpers/helpers.dart";
 import "package:bluebubbles/models/models.dart";
-import "package:bluebubbles/services/ui/navigator/navigator_service.dart";
 import "package:collection/collection.dart";
 import "package:flutter/foundation.dart";
-import "package:flutter/gestures.dart";
 import "package:flutter/material.dart";
 import "package:get/get.dart";
 import "package:languagetool_textfield/core/enums/mistake_type.dart";
@@ -49,9 +47,6 @@ class SpellCheckTextEditingController extends TextEditingController {
   int _selectedMistakeIndex = -1;
 
   Mistake? get selectedMistake => _selectedMistakeIndex == -1 ? null : _mistakes.elementAtOrNull(_selectedMistakeIndex);
-
-  /// Overlay entry for the mistake popup
-  OverlayEntry? _overlayEntry;
 
   Object? _fetchError;
 
