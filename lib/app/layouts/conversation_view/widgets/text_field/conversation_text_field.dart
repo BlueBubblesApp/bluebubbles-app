@@ -880,7 +880,6 @@ class TextFieldComponent extends StatelessWidget {
                       final start = editableTextState.textEditingValue.selection.start;
 
                       Mistake? mistake = controller?.subjectTextController.selectedMistake;
-                      print(mistake);
                       return AdaptiveTextSelectionToolbar.editableText(
                         editableTextState: editableTextState,
                       )..buttonItems?.addAllIf(

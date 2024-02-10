@@ -547,7 +547,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                   final start = editableTextState.textEditingValue.selection.start;
 
                                                                                   Mistake? mistake = editStuff.item3.selectedMistake;
-                                                                                  print(mistake);
                                                                                   return AdaptiveTextSelectionToolbar.editableText(
                                                                                     editableTextState: editableTextState,
                                                                                   )..buttonItems?.addAllIf(
