@@ -697,7 +697,11 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           if (await temp.exists()) await temp.delete(recursive: true);
 
           /* ----- BADGE ICON LISTENER ----- */
-          await WindowsTaskbar.resetOverlayIcon();
+          try {
+            await WindowsTaskbar.resetOverlayIcon();
+          } catch (ex) {
+            Logger.error("Error resetting overlay icon: $ex");
+          }
           int count = 0;
           final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
           unreadQuery.listen((Query<Chat> query) async {
