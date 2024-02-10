@@ -104,6 +104,7 @@ dependencies:
   image_size_getter: ^2.1.2
   intl: ^0.19.0
   js: ^0.7.0
+  languagetool_textfield: ^0.0.6
   launch_at_startup: ^0.2.2
   local_auth: ^2.1.8
   local_notifier:

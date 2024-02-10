@@ -1,5 +1,5 @@
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';

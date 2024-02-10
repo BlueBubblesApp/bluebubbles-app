@@ -40,6 +40,8 @@ class NavigatorService extends GetxService {
     return context.width;
   }
 
+  double leftWidthIfSplit(BuildContext context) => isTabletMode(context) ? _widthChatListLeft ?? 0 : 0;
+
   double ratio(BuildContext context) => (_widthChatListLeft ?? context.width) / context.width;
   
   bool isAvatarOnly(BuildContext context) => (kIsDesktop || kIsWeb) && isTabletMode(context) && (_widthChatListLeft ?? context.width) < 300;

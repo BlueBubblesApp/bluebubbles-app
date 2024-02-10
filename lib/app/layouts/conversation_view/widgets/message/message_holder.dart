@@ -28,6 +28,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:languagetool_textfield/domain/mistake.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
@@ -542,8 +543,27 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 keyboardType: TextInputType.multiline,
                                                                                 maxLines: 14,
                                                                                 minLines: 1,
-                                                                                selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
-                                                                                autofocus: kIsDesktop || kIsWeb,
+                                                                                contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
+                                                                                  final start = editableTextState.textEditingValue.selection.start;
+
+                                                                                  Mistake? mistake = editStuff.item3.selectedMistake;
+                                                                                  print(mistake);
+                                                                                  return AdaptiveTextSelectionToolbar.editableText(
+                                                                                    editableTextState: editableTextState,
+                                                                                  )..buttonItems?.addAllIf(
+                                                                                    mistake != null,
+                                                                                    mistake!.replacements.take(3).map((replacement) {
+                                                                                      return ContextMenuButtonItem(
+                                                                                        onPressed: () {
+                                                                                          editStuff.item3.replaceMistake(mistake, replacement);
+                                                                                          editStuff.item3.selection = TextSelection.collapsed(offset: start + replacement.length);
+                                                                                          editableTextState.hideToolbar();
+                                                                                        },
+                                                                                        label: replacement,
+                                                                                      );
+                                                                                    }),
+                                                                                  );
+                                                                                },
                                                                                 enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                                                                                 textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                                                                                     ? TextInputAction.send

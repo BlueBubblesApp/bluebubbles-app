@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
@@ -989,7 +990,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void edit() async {
     final node = FocusNode();
-    cvController.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
+    cvController.editing.add(Tuple4(message, part, SpellCheckTextEditingController(text: part.text!), node));
     popDetails();
   }
 
