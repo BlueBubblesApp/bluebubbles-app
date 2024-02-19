@@ -1042,6 +1042,9 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               ),
               minHeight: 50,
               maxHeight: MediaQuery.of(context).size.height * 0.75,
+              disableDraggableOnScrolling: true,
+              backdropEnabled: true,
+              parallaxEnabled: true,
               header: SizedBox(
                 width: MediaQuery.of(context).size.width,
                 child: Padding(
@@ -1236,7 +1239,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           onDestinationSelected: (page) {
             index.value = page;
             tabController.animateTo(page);
-            panelController.open();
+            if (index.value == page && panelController.isPanelOpen) {
+              panelController.close();
+            } else {
+              panelController.open();
+            }
           },
         ),
       ),
