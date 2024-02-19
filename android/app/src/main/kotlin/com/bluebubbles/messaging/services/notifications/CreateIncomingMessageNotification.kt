@@ -65,7 +65,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
             .setIcon(contactBitmap)
             .setImportant(true)
             .build()
-        PushShareTargetsHandler().pushShareTarget(context, chatTitle, chatTitle, chatIcon)
+        PushShareTargetsHandler().pushShareTarget(context, chatTitle, chatGuid, chatIcon)
 
         // get or create a messaging style
         val style = if (chatNotification != null) NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(chatNotification.notification)!! else NotificationCompat.MessagingStyle(Person.Builder().setName("You").build())
