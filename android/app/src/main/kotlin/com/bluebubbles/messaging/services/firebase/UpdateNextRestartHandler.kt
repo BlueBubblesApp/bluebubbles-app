@@ -35,7 +35,7 @@ class UpdateNextRestartHandler: MethodCallHandlerImpl() {
         // null databaseUrl indicates Cloud Firestore setup
         if (firebaseApp.options.databaseUrl == null) {
             val newData = hashMapOf("nextRestart" to nextRestart)
-            FirebaseFirestore.getInstance().collection("server").document("config").set(newData, SetOptions.merge())
+            FirebaseFirestore.getInstance().collection("server").document("commands").set(newData, SetOptions.merge())
         } else {
             FirebaseDatabase.getInstance().getReference("config").child("nextRestart").setValue(nextRestart)
         }
