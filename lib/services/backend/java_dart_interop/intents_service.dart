@@ -102,7 +102,7 @@ class IntentsService extends GetxService {
           await openChat(guid);
         } else if (intent.extra?["callUuid"] != null) {
           await uiStartup.future;
-          if (intent.extra?["answer"] == "true") {
+          if (intent.extra?["answer"] == true) {
             await answerFaceTime(intent.extra?["callUuid"]!);
           } else {
             await showFaceTimeOverlay(intent.extra?["callUuid"], intent.extra?["caller"], null, false);

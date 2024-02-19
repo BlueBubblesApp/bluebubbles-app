@@ -74,6 +74,9 @@ class CreateIncomingFaceTimeNotification: MethodCallHandlerImpl() {
                 .setType("AnswerFaceTime"),
             PendingIntent.FLAG_IMMUTABLE
         )
+        val answerAction = NotificationCompat.Action.Builder(0, "Answer", answerIntent)
+            .setShowsUserInterface(false)
+            .build()
 
         // Create intent for declining the facetime
         val declineIntent = PendingIntent.getBroadcast(
@@ -84,10 +87,14 @@ class CreateIncomingFaceTimeNotification: MethodCallHandlerImpl() {
                 .setType("DeleteNotification"),
             PendingIntent.FLAG_IMMUTABLE
         )
+        val declineAction = NotificationCompat.Action.Builder(0, "Ignore", declineIntent)
+            .setShowsUserInterface(false)
+            .build()
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_stat_icon)
             .setAutoCancel(true)
+            .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setContentTitle(title)
@@ -95,12 +102,14 @@ class CreateIncomingFaceTimeNotification: MethodCallHandlerImpl() {
             .addExtras(extras)
             .addPerson(caller)
             .setColor(4888294)
+            .addAction(answerAction)
+            .addAction(declineAction)
+            .extend(NotificationCompat.WearableExtender().addAction(answerAction).addAction(declineAction))
         if (callerBitmap != null) {
             notificationBuilder.setLargeIcon(callerBitmap)
         }
         if (callUuid != null) {
             notificationBuilder.setContentIntent(openSummaryIntent);
-            notificationBuilder.setStyle(NotificationCompat.CallStyle.forIncomingCall(caller, declineIntent, answerIntent).setIsVideo(true))
             // clear after 30 seconds in case we didn't get an event from the server
             notificationBuilder.setTimeoutAfter(30000);
         }
