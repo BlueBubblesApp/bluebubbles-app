@@ -66,6 +66,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       try {
         final friend = FindMyFriend.fromJson(data);
         Logger.info("Received new location for ${friend.handle?.address}");
+        if ((friend.latitude ?? 0) == 0 && (friend.longitude ?? 0) == 0) return;
         final existingFriendIndex = friends.indexWhere((e) => e.handle?.uniqueAddressAndService == friend.handle?.uniqueAddressAndService);
         final existingFriend = existingFriendIndex == -1 ? null : friends[existingFriendIndex];
         if (existingFriend == null || existingFriend.status == null || friend.locatingInProgress || LocationStatus.values.indexOf(existingFriend.status!) <= LocationStatus.values.indexOf(friend.status ?? LocationStatus.legacy)) {
