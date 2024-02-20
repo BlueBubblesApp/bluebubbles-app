@@ -1045,13 +1045,13 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               disableDraggableOnScrolling: true,
               backdropEnabled: true,
               parallaxEnabled: true,
-              header: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10.0),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ForceDraggableWidget(
+              header: ForceDraggableWidget(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10.0, bottom: 40),
+                    child: Align(
+                      alignment: Alignment.topCenter,
                       child: Container(
                         width: 50,
                         height: 5,
