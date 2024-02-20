@@ -31,7 +31,7 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
   void initState() {
     super.initState();
     updateObx(() async {
-      if (metadata != null) {
+      if (metadata == null) {
         try {
           metadata = await MetadataHelper.fetchMetadata(message);
         } catch (ex) {

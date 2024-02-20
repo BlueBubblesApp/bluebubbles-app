@@ -707,7 +707,7 @@ class Message {
 
   // first condition is for macOS < 11 and second condition is for macOS >= 11
   bool get isLegacyUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
-      || (hasDdResults! && (text ?? "").trim().isURL);
+      || ((hasDdResults! || isFromMe!) && (text ?? "").trim().isURL);
 
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
 
