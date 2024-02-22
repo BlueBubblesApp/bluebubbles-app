@@ -52,7 +52,7 @@ This update sgnificantly overhauls the underlying Java code for the Android app,
 
 ### For Developers
 
-- Upgraded to Flutter 3.16
+- Upgraded to Flutter 3.19
 - Updated dependencies
 
 ## v1.12.7
