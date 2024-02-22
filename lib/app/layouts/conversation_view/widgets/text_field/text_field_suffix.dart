@@ -76,8 +76,8 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                       : context.theme.colorScheme.primary,
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
-                  maximumSize: const Size(32, 32),
-                  minimumSize: const Size(32, 32),
+                  maximumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
+                  minimumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: isLinuxArm64 ? const SizedBox(height: 40) :
