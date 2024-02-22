@@ -48,10 +48,11 @@ This update sgnificantly overhauls the underlying Java code for the Android app,
 - Fixed send and receive sound volume not following the preference set in settings
 - Fixed chat list not loading on Windows if Secure App is enabled and initial authentication is canceled.
 - Fixed custom themes with long names not uploading to server
+- Fixed issue displaying URL previews
 
 ### For Developers
 
-- Upgraded to Flutter 3.16
+- Upgraded to Flutter 3.19
 - Updated dependencies
 
 ## v1.12.7

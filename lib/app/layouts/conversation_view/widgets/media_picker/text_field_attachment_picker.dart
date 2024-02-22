@@ -47,6 +47,11 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
     if (kIsDesktop || kIsWeb) return;
     // wait for opening animation to complete
     await Future.delayed(const Duration(milliseconds: 250));
+    final PermissionState ps = await PhotoManager.requestPermissionExtend();
+    if (!ps.hasAccess) {
+      showSnackbar("Error", "Storage permission not granted!");
+      return;
+    }
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
     if (list.isNotEmpty) {
       _images = await list.first.getAssetListRange(start: 0, end: 24);
