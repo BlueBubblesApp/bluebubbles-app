@@ -22,6 +22,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
@@ -310,6 +311,9 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
 
+    /* ----- MEDIAKIT INITIALIZATION ----- */
+    MediaKit.ensureInitialized();
+
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
     if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(MaterialApp(
@@ -336,9 +340,6 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
 
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
     if (kIsDesktop) {
-      /* ----- MEDIAKIT INITIALIZATION ----- */
-      MediaKit.ensureInitialized();
-
       /* ----- WINDOW INITIALIZATION ----- */
       await windowManager.ensureInitialized();
       await windowManager.setTitle('BlueBubbles');
@@ -481,9 +482,12 @@ class Main extends StatelessWidget {
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
         darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
         navigatorKey: ns.key,
-        // Specifically for GNU/Linux & Android-x86 family, where touch isn't interpreted as a drag device by Flutter apparently.
-        scrollBehavior:
-            const MaterialScrollBehavior().copyWith(dragDevices: Platform.isLinux || Platform.isAndroid ? PointerDeviceKind.values.toSet() : null),
+        scrollBehavior: const MaterialScrollBehavior().copyWith(
+          // Specifically for GNU/Linux & Android-x86 family, where touch isn't interpreted as a drag device by Flutter apparently.
+          dragDevices: Platform.isLinux || Platform.isAndroid ? PointerDeviceKind.values.toSet() : null,
+          // Prevent scrolling with multiple fingers accelerating the scrolling
+          multitouchDragStrategy: MultitouchDragStrategy.latestPointer,
+        ),
         home: Home(),
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),

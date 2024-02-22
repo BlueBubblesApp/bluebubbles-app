@@ -16,7 +16,6 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
-import 'package:video_player/video_player.dart';
 
 ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
 ? Get.find<ConversationViewController>(tag: tag ?? chat.guid) : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
@@ -37,8 +36,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final List<Tuple4<Attachment, PlatformFile, BuildContext, Completer<Uint8List>>> imageCacheQueue = [];
   final Map<String, Map<String, Uint8List>> stickerData = {};
   final Map<String, Metadata> legacyUrlPreviews = {};
-  final Map<String, VideoPlayerController> videoPlayers = {};
-  final Map<String, VideoController> videoPlayersDesktop = {};
+  final Map<String, VideoController> videoPlayers = {};
   final Map<String, PlayerController> audioPlayers = {};
   final Map<String, Player> audioPlayersDesktop = {};
   final Map<String, List<EntityAnnotation>> mlKitParsedText = {};
@@ -142,9 +140,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   @override
   void onClose() {
-    for (VideoPlayerController v in videoPlayers.values) {
-      v.dispose();
-    }
     for (PlayerController a in audioPlayers.values) {
       a.pausePlayer();
       a.dispose();

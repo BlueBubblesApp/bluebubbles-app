@@ -35,13 +35,13 @@ class MessagesService extends GetxController {
   String? method;
 
   Message? get mostRecentSent => (struct.messages.where((e) => e.isFromMe!).toList()
-      ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
+      ..sort(Message.sort)).firstOrNull;
 
   Message? get mostRecent => (struct.messages.toList()
-    ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
+    ..sort(Message.sort)).firstOrNull;
 
   Message? get mostRecentReceived => (struct.messages.where((e) => !e.isFromMe!).toList()
-    ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
+    ..sort(Message.sort)).firstOrNull;
 
   void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage, Function(String) jumpToMessageFunc) {
     chat = c;
@@ -207,7 +207,7 @@ class MessagesService extends GetxController {
     if (method == SearchMethod.local) {
       _messages = await Chat.getMessagesAsync(chat, searchAround: around.dateCreated!.millisecondsSinceEpoch);
       _messages.add(around);
-      _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      _messages.sort(Message.sort);
       struct.addMessages(_messages);
     } else {
       final beforeResponse = await cm.getMessages(
@@ -223,7 +223,7 @@ class MessagesService extends GetxController {
       );
       beforeResponse.addAll(afterResponse);
       _messages = beforeResponse.map((e) => Message.fromMap(e)).toList();
-      _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      _messages.sort(Message.sort);
       for (Message message in _messages) {
         if (message.handle != null) {
           message.handle!.contactRelation.target = cs.matchHandleToContact(message.handle!);

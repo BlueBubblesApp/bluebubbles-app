@@ -37,7 +37,7 @@ class FindMyFriend {
     shortAddress: json["short_address"],
     title: json["title"],
     subtitle: json["subtitle"],
-    handle: json["handle"] == null ? null : Handle.findOne(addressAndService: Tuple2(json["handle"], "iMessage")),
+    handle: json["handle"] == null && json["title"] == null ? null : Handle.findOne(addressAndService: Tuple2(json["handle"] ?? json["title"], "iMessage")),
     lastUpdated: (json["last_updated"] ?? 0) == 0 ? null : DateTime.fromMillisecondsSinceEpoch(json["last_updated"]),
     status: LocationStatus.values.firstWhereOrNull((e) => e.name == json["status"]),
     locatingInProgress: json["is_locating_in_progress"] ?? false,

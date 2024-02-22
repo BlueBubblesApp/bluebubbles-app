@@ -66,6 +66,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       try {
         final friend = FindMyFriend.fromJson(data);
         Logger.info("Received new location for ${friend.handle?.address}");
+        if ((friend.latitude ?? 0) == 0 && (friend.longitude ?? 0) == 0) return;
         final existingFriendIndex = friends.indexWhere((e) => e.handle?.uniqueAddressAndService == friend.handle?.uniqueAddressAndService);
         final existingFriend = existingFriendIndex == -1 ? null : friends[existingFriendIndex];
         if (existingFriend == null || existingFriend.status == null || friend.locatingInProgress || LocationStatus.values.indexOf(existingFriend.status!) <= LocationStatus.values.indexOf(friend.status ?? LocationStatus.legacy)) {
@@ -392,8 +393,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       final item = devicesWithLocation[i];
                       return ListTile(
                         mouseCursor: MouseCursor.defer,
-                        title: Text(item.name ?? "Unknown Device"),
-                        subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                        title: Text(ss.settings.redactedMode.value ? "Device" : (item.name ?? "Unknown Device")),
+                        subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found")),
                         onTap: item.location?.latitude != null && item.location?.longitude != null
                             ? () async {
                                 await panelController.close();
@@ -481,8 +482,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     itemBuilder: (context, i) {
                       final item = itemsWithLocation[i];
                       return ListTile(
-                        title: Text(item.name ?? "Unknown Device"),
-                        subtitle: Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                        title: Text(ss.settings.redactedMode.value ? "Item" : (item.name ?? "Unknown Item")),
+                        subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found")),
                         trailing: item.location?.latitude != null && item.location?.longitude != null ? ButtonTheme(
                           minWidth: 1,
                           child: TextButton(
@@ -568,9 +569,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       title: const Text("Devices without locations"),
                       children: withoutLocation
                           .map((item) => ListTile(
-                                title: Text(item.name ?? "Unknown Device"),
-                                subtitle: Text(
-                                    item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                                title: Text(ss.settings.redactedMode.value ? "Device" : (item.name ?? "Unknown Device")),
+                                subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found")),
                                 onTap: item.location?.latitude != null && item.location?.longitude != null
                                     ? () async {
                                         await panelController.close();
@@ -676,7 +676,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                       return ListTile(
                         leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
-                        subtitle: Text("${item.shortAddress ?? "No location found"}${item.lastUpdated == null || item.status == LocationStatus.live ? "" : "\nLast updated ${buildDate(item.lastUpdated)}"}"),
+                        subtitle: Text(ss.settings.redactedMode.value ? "Location" : ("${item.shortAddress ?? "No location found"}${item.lastUpdated == null || item.status == LocationStatus.live ? "" : "\nLast updated ${buildDate(item.lastUpdated)}"}")),
                         trailing: item.latitude != null && item.longitude != null ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -773,7 +773,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                 mouseCursor: MouseCursor.defer,
                                 leading: ContactAvatarWidget(handle: item.handle),
                                 title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
-                                subtitle: Text(item.longAddress ?? "No location found"),
+                                subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.longAddress ?? "No location found")),
                                 onLongPress: () async {
                                   const encoder = JsonEncoder.withIndent("     ");
                                   final str = encoder.convert(item.toJson());
@@ -1043,13 +1043,16 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               ),
               minHeight: 50,
               maxHeight: MediaQuery.of(context).size.height * 0.75,
-              header: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10.0),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ForceDraggableWidget(
+              disableDraggableOnScrolling: true,
+              backdropEnabled: true,
+              parallaxEnabled: true,
+              header: ForceDraggableWidget(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10.0, bottom: 40),
+                    child: Align(
+                      alignment: Alignment.topCenter,
                       child: Container(
                         width: 50,
                         height: 5,
@@ -1237,7 +1240,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           onDestinationSelected: (page) {
             index.value = page;
             tabController.animateTo(page);
-            panelController.open();
+            if (index.value == page && panelController.isPanelOpen) {
+              panelController.close();
+            } else {
+              panelController.open();
+            }
           },
         ),
       ),
@@ -1401,8 +1408,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.name ?? "Unknown Device", style: context.theme.textTheme.labelLarge),
-                          Text(item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found",
+                          Text(ss.settings.redactedMode.value ? "Device" : (item.name ?? "Unknown Device"), style: context.theme.textTheme.labelLarge),
+                          Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
                               style: context.theme.textTheme.bodySmall),
                         ],
                       ),
@@ -1425,7 +1432,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         children: [
                           Text(item.handle?.displayName ?? item.title ?? "Unknown Friend",
                               style: context.theme.textTheme.labelLarge),
-                          Text(item.longAddress ?? "No location found", style: context.theme.textTheme.bodySmall),
+                          Text(ss.settings.redactedMode.value ? "Location" : (item.longAddress ?? "No location found"), style: context.theme.textTheme.bodySmall),
                           if (item.lastUpdated != null && item.status != LocationStatus.live)
                             Text("Last updated ${buildDate(item.lastUpdated)}", style: context.theme.textTheme.bodySmall),
                           if (item.status != null)

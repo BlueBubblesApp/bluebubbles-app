@@ -204,7 +204,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       // 11. Update the associated chat's last message
-      messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      messages.sort(Message.sort);
       bool isNewer = false;
 
       // If the message was saved correctly, update this chat's latestMessage info,
@@ -395,9 +395,9 @@ class Message {
 
     PayloadData? payloadData;
     try {
-      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']!.cast<String, Object>());
-    } catch (e) {
-      Logger.error('Failed to parse payload data! $e');
+      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
+    } catch (e, s) {
+      Logger.error('Failed to parse payload data! $e\n$s');
     }
 
     return Message(
@@ -684,11 +684,30 @@ class Message {
     toDelete?.save();
   }
 
+  /// This is purely because some Macs incorrectly report the dateCreated time
+  static int sort(Message a, Message b, {bool descending = true}) {
+    late DateTime aDateToUse;
+    if (a.dateDelivered == null) {
+      aDateToUse = a.dateCreated!;
+    } else {
+      aDateToUse = a.dateCreated!.isBefore(a.dateDelivered!) ? a.dateCreated! : a.dateDelivered!;
+    }
+
+    late DateTime bDateToUse;
+    if (b.dateDelivered == null) {
+      bDateToUse = b.dateCreated!;
+    } else {
+      bDateToUse = b.dateCreated!.isBefore(b.dateDelivered!) ? b.dateCreated! : b.dateDelivered!;
+    }
+
+    return descending ? bDateToUse.compareTo(aDateToUse) : aDateToUse.compareTo(bDateToUse);
+  }
+
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
 
   // first condition is for macOS < 11 and second condition is for macOS >= 11
   bool get isLegacyUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
-      || (hasDdResults! && (text ?? "").trim().isURL);
+      || ((hasDdResults! || isFromMe!) && (text ?? "").trim().isURL);
 
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
 
