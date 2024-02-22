@@ -726,7 +726,9 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           eventDispatcher.stream.listen((event) async {
             if (event.item1 == 'theme-update') {
               EasyDebounce.debounce('window-effect', const Duration(milliseconds: 500), () async {
-                await WindowEffects.setEffect(color: context.theme.colorScheme.background);
+                if (mounted) {
+                  await WindowEffects.setEffect(color: context.theme.colorScheme.background);
+                }
               });
             }
           });
