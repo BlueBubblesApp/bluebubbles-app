@@ -799,7 +799,7 @@ class TextFieldComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: focusNode,
-      onKey: (_, ev) => handleKey(_, ev, context, isChatCreator),
+      onKeyEvent: (_, ev) => handleKey(_, ev, context, isChatCreator),
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
         child: Container(
@@ -1036,70 +1036,27 @@ class TextFieldComponent extends StatelessWidget {
     }
   }
 
-  KeyEventResult handleKey(FocusNode _, RawKeyEvent ev, BuildContext context, bool isChatCreator) {
-    if (ev is! RawKeyDownEvent) return KeyEventResult.ignored;
-    RawKeyEventDataWindows? windowsData;
-    RawKeyEventDataLinux? linuxData;
-    RawKeyEventDataWeb? webData;
-    RawKeyEventDataAndroid? androidData;
-    if (ev.data is RawKeyEventDataWindows) {
-      windowsData = ev.data as RawKeyEventDataWindows;
-    } else if (ev.data is RawKeyEventDataLinux) {
-      linuxData = ev.data as RawKeyEventDataLinux;
-    } else if (ev.data is RawKeyEventDataWeb) {
-      webData = ev.data as RawKeyEventDataWeb;
-    } else if (ev.data is RawKeyEventDataAndroid) {
-      androidData = ev.data as RawKeyEventDataAndroid;
+  KeyEventResult handleKey(FocusNode _, KeyEvent ev, BuildContext context, bool isChatCreator) {
+    if (ev is! KeyDownEvent) return KeyEventResult.ignored;
+    
+    if ((kIsWeb || Platform.isWindows || Platform.isLinux) && (ev.physicalKey == PhysicalKeyboardKey.keyV || ev.logicalKey == LogicalKeyboardKey.keyV) && HardwareKeyboard.instance.isControlPressed) {
+      Pasteboard.image.then((image) {
+        if (image != null) {
+          controller!.pickedAttachments.add(PlatformFile(
+            name: "${randomString(8)}.png",
+            bytes: image,
+            size: image.length,
+          ));
+        }
+      });
     }
 
-    if (windowsData != null) {
-      if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV || windowsData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (linuxData != null) {
-      if ((linuxData.physicalKey == PhysicalKeyboardKey.keyV || linuxData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (webData != null) {
-      if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (ev.isMetaPressed || ev.isControlPressed || ev.isAltPressed) {
+    if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isAltPressed) {
       return KeyEventResult.ignored;
     }
 
     if (isChatCreator) {
-      if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+      if (ev.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
         sendMessage();
         return KeyEventResult.handled;
       }
@@ -1111,10 +1068,7 @@ class TextFieldComponent extends StatelessWidget {
     int downMovementIndex = maxShown * 2 ~/ 3;
 
     // Down arrow
-    if (windowsData?.keyCode == 40 ||
-        linuxData?.keyCode == 65364 ||
-        webData?.code == "ArrowDown" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
+    if (ev.logicalKey == LogicalKeyboardKey.arrowDown) {
       if (controller!.mentionSelectedIndex.value < controller!.mentionMatches.length - 1) {
         controller!.mentionSelectedIndex.value++;
         if (controller!.mentionSelectedIndex.value >= downMovementIndex &&
@@ -1136,10 +1090,7 @@ class TextFieldComponent extends StatelessWidget {
     }
 
     // Up arrow
-    if (windowsData?.keyCode == 38 ||
-        linuxData?.keyCode == 65362 ||
-        webData?.code == "ArrowUp" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
+    if (ev.logicalKey == LogicalKeyboardKey.arrowUp) {
       if (chat != null && controller!.lastFocusedTextController.text.isEmpty && ss.settings.editLastSentMessageOnUpArrow.value && ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148) {
         final message = ms(chat!.guid).mostRecentSent;
         if (message != null) {
@@ -1174,14 +1125,7 @@ class TextFieldComponent extends StatelessWidget {
     }
 
     // Tab or Enter
-    if (windowsData?.keyCode == 9 ||
-        linuxData?.keyCode == 65289 ||
-        webData?.code == "Tab" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.tab ||
-        windowsData?.keyCode == 13 ||
-        linuxData?.keyCode == 65293 ||
-        webData?.code == "Enter" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.enter) {
+    if (ev.logicalKey == LogicalKeyboardKey.tab || ev.logicalKey == LogicalKeyboardKey.enter) {
       if (controller!.focusNode.hasPrimaryFocus && controller!.mentionMatches.length > controller!.mentionSelectedIndex.value) {
         int index = controller!.mentionSelectedIndex.value;
         TextEditingController textField =
@@ -1223,16 +1167,13 @@ class TextFieldComponent extends StatelessWidget {
         return KeyEventResult.handled;
       }
       if (ss.settings.privateSubjectLine.value) {
-        if (windowsData?.keyCode == 9 ||
-            linuxData?.keyCode == 65289 ||
-            webData?.code == "Tab" ||
-            androidData?.physicalKey == PhysicalKeyboardKey.tab) {
+        if (ev.logicalKey == LogicalKeyboardKey.tab) {
           // Tab to switch between text fields
-          if (!ev.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
+          if (!HardwareKeyboard.instance.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
             controller!.focusNode.requestFocus();
             return KeyEventResult.handled;
           }
-          if (ev.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
+          if (HardwareKeyboard.instance.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
             controller!.subjectFocusNode.requestFocus();
             return KeyEventResult.handled;
           }
@@ -1241,10 +1182,7 @@ class TextFieldComponent extends StatelessWidget {
     }
 
     // Escape
-    if (windowsData?.keyCode == 27 ||
-        linuxData?.keyCode == 65307 ||
-        webData?.code == "Escape" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+    if (ev.logicalKey == LogicalKeyboardKey.escape) {
       if (controller!.mentionMatches.isNotEmpty) {
         controller!.mentionMatches.value = <Mentionable>[];
         return KeyEventResult.handled;
@@ -1259,7 +1197,7 @@ class TextFieldComponent extends StatelessWidget {
       }
     }
 
-    if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+    if ((kIsDesktop || kIsWeb) && ev.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
       sendMessage();
       controller!.focusNode.requestFocus();
       return KeyEventResult.handled;

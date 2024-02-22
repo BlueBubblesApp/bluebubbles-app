@@ -504,26 +504,13 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                             padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
                                                                             child: Focus(
                                                                               focusNode: FocusNode(),
-                                                                              onKey: (_, ev) {
-                                                                                if (ev is! RawKeyDownEvent) return KeyEventResult.ignored;
-                                                                                RawKeyEventDataWindows? windowsData;
-                                                                                RawKeyEventDataLinux? linuxData;
-                                                                                RawKeyEventDataWeb? webData;
-                                                                                RawKeyEventDataAndroid? androidData;
-                                                                                if (ev.data is RawKeyEventDataWindows) {
-                                                                                  windowsData = ev.data as RawKeyEventDataWindows;
-                                                                                } else if (ev.data is RawKeyEventDataLinux) {
-                                                                                  linuxData = ev.data as RawKeyEventDataLinux;
-                                                                                } else if (ev.data is RawKeyEventDataWeb) {
-                                                                                  webData = ev.data as RawKeyEventDataWeb;
-                                                                                } else if (ev.data is RawKeyEventDataAndroid) {
-                                                                                  androidData = ev.data as RawKeyEventDataAndroid;
-                                                                                }
-                                                                                if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+                                                                              onKeyEvent: (_, ev) {
+                                                                                if (ev is! KeyDownEvent) return KeyEventResult.ignored;
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
                                                                                   completeEdit(editStuff.item3.text, e.part);
                                                                                   return KeyEventResult.handled;
                                                                                 }
-                                                                                if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.escape) {
                                                                                   widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
                                                                                   widget.cvController.lastFocusedNode.requestFocus();
                                                                                   return KeyEventResult.handled;

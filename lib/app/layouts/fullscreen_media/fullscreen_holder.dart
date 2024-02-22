@@ -126,24 +126,24 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
               child: Focus(
                 focusNode: focusNode,
                 autofocus: true,
-                onKey: (node, event) {
+                onKeyEvent: (node, event) {
                   Logger.info(
-                    "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                    "Got device label ${event.deviceType.label}, physical key ${event.physicalKey.toString()}, logical key ${event.logicalKey.toString()}",
                     tag: "RawKeyboardListener"
                   );
-                  if (event.data.physicalKey.debugName == "Arrow Right") {
+                  if (event.physicalKey.debugName == "Arrow Right") {
                     if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
                       controller.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
                     } else {
                       controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
                     }
-                  } else if (event.data.physicalKey.debugName == "Arrow Left") {
+                  } else if (event.physicalKey.debugName == "Arrow Left") {
                     if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.LEFT) {
                       controller.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
                     } else {
                       controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
                     }
-                  } else if (event.data.physicalKey.debugName == "Escape") {
+                  } else if (event.physicalKey.debugName == "Escape") {
                     Navigator.of(context).pop();
                     return KeyEventResult.handled;
                   }

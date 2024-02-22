@@ -26,11 +26,11 @@ class ScrollbarWrapper extends StatelessWidget {
   Widget build(BuildContext context) => !kIsDesktop && !kIsWeb
       ? child
       : Focus(
-                onKey: (node, event) {
-                  if (!event.isAltPressed &&
-                      !event.isControlPressed &&
-                      !event.isMetaPressed &&
-                      !event.isShiftPressed &&
+                onKeyEvent: (node, event) {
+                  if (!HardwareKeyboard.instance.isAltPressed &&
+                      !HardwareKeyboard.instance.isControlPressed &&
+                      !HardwareKeyboard.instance.isMetaPressed &&
+                      !HardwareKeyboard.instance.isShiftPressed &&
                       event.physicalKey == PhysicalKeyboardKey.tab) {
                     if (cm.activeChat != null) {
                       cvc(cm.activeChat!.chat).lastFocusedNode.requestFocus();

@@ -403,15 +403,15 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             ConstrainedBox(
                               constraints: BoxConstraints(maxWidth: ns.width(context) - 50),
                               child: Focus(
-                                onKey: (node, event) {
-                                  if (event is RawKeyDownEvent) {
+                                onKeyEvent: (node, event) {
+                                  if (event is KeyDownEvent) {
                                     if (event.logicalKey == LogicalKeyboardKey.backspace &&
                                         (addressController.selection.start == 0 || addressController.text.isEmpty)) {
                                       if (selectedContacts.isNotEmpty) {
                                         removeSelected(selectedContacts.last);
                                       }
                                       return KeyEventResult.handled;
-                                    } else if (!event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                    } else if (!HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                                       messageNode.requestFocus();
                                       return KeyEventResult.handled;
                                     }
@@ -651,8 +651,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                     ),
                   ),
                   child: Focus(
-                    onKey: (node, event) {
-                      if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                    onKeyEvent: (node, event) {
+                      if (event is KeyDownEvent && HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                         addressNode.requestFocus();
                         return KeyEventResult.handled;
                       }
