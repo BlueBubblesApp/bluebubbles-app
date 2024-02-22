@@ -882,9 +882,8 @@ class TextFieldComponent extends StatelessWidget {
                       Mistake? mistake = controller?.subjectTextController.selectedMistake;
                       return AdaptiveTextSelectionToolbar.editableText(
                         editableTextState: editableTextState,
-                      )..buttonItems?.addAllIf(
-                          mistake != null,
-                          mistake!.replacements.take(3).map((replacement) {
+                      )..buttonItems?.addAll(
+                          mistake?.replacements.take(3).map((replacement) {
                             return ContextMenuButtonItem(
                               onPressed: () {
                                 controller!.subjectTextController.replaceMistake(mistake, replacement);
@@ -893,7 +892,7 @@ class TextFieldComponent extends StatelessWidget {
                               },
                               label: replacement,
                             );
-                          }),
+                          }) ?? [],
                         );
                     },
                     cursorColor: context.theme.colorScheme.primary,

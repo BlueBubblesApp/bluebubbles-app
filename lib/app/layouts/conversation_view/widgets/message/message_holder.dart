@@ -549,9 +549,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                   Mistake? mistake = editStuff.item3.selectedMistake;
                                                                                   return AdaptiveTextSelectionToolbar.editableText(
                                                                                     editableTextState: editableTextState,
-                                                                                  )..buttonItems?.addAllIf(
-                                                                                    mistake != null,
-                                                                                    mistake!.replacements.take(3).map((replacement) {
+                                                                                  )..buttonItems?.addAll(
+                                                                                    mistake?.replacements.take(3).map((replacement) {
                                                                                       return ContextMenuButtonItem(
                                                                                         onPressed: () {
                                                                                           editStuff.item3.replaceMistake(mistake, replacement);
@@ -560,7 +559,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                         },
                                                                                         label: replacement,
                                                                                       );
-                                                                                    }),
+                                                                                    }) ?? [],
                                                                                   );
                                                                                 },
                                                                                 enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
