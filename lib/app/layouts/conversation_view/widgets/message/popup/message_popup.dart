@@ -989,7 +989,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   void edit() async {
-    cvController.editing.add(Tuple3(message, part, SpellCheckTextEditingController(text: part.text!)));
+    cvController.editing.add(Tuple4(message, part, SpellCheckTextEditingController(text: part.text!), kIsDesktop || kIsWeb ? FocusNode() : null));
     popDetails();
   }
 

@@ -1161,7 +1161,9 @@ class TextFieldComponent extends StatelessWidget {
           final parts = mwc(message).parts;
           final part = parts.filter((p) => p.text?.isNotEmpty ?? false).lastOrNull;
           if (part != null) {
-            controller!.editing.add(Tuple3(message, part, SpellCheckTextEditingController(text: part.text!)));
+            final FocusNode? node = kIsDesktop || kIsWeb ? FocusNode() : null;
+            controller!.editing.add(Tuple4(message, part, SpellCheckTextEditingController(text: part.text!), node));
+            node?.requestFocus();
             return KeyEventResult.handled;
           }
         }
