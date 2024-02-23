@@ -1094,12 +1094,10 @@ class TextFieldComponent extends StatelessWidget {
       if (chat != null && controller!.lastFocusedTextController.text.isEmpty && ss.settings.editLastSentMessageOnUpArrow.value && ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148) {
         final message = ms(chat!.guid).mostRecentSent;
         if (message != null) {
-          final node = FocusNode();
           final parts = mwc(message).parts;
           final part = parts.filter((p) => p.text?.isNotEmpty ?? false).lastOrNull;
           if (part != null) {
-            controller!.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
-            node.requestFocus();
+            controller!.editing.add(Tuple3(message, part, TextEditingController(text: part.text!)));
             return KeyEventResult.handled;
           }
         }

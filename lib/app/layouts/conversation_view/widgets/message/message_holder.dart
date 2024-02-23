@@ -520,7 +520,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                               child: TextField(
                                                                                 textCapitalization: TextCapitalization.sentences,
                                                                                 autocorrect: true,
-                                                                                focusNode: editStuff.item4,
                                                                                 controller: editStuff.item3,
                                                                                 scrollPhysics: const CustomBouncingScrollPhysics(),
                                                                                 style: context.theme.extension<BubbleText>()!.bubbleText.apply(
@@ -530,7 +529,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 maxLines: 14,
                                                                                 minLines: 1,
                                                                                 selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
-                                                                                autofocus: kIsDesktop || kIsWeb,
+                                                                                autofocus: true,
                                                                                 enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                                                                                 textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                                                                                     ? TextInputAction.send

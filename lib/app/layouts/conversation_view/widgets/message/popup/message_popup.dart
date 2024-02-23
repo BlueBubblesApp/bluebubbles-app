@@ -988,8 +988,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   void edit() async {
-    final node = FocusNode();
-    cvController.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
+    cvController.editing.add(Tuple3(message, part, TextEditingController(text: part.text!)));
     popDetails();
   }
 
