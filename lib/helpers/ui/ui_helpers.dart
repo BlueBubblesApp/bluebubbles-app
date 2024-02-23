@@ -25,6 +25,7 @@ class BackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return XGestureDetector(
+      supportTouch: true,
       onTap: !kIsDesktop ? null : (details) {
         final result = onPressed?.call() ?? false;
         if (!result) {
@@ -61,6 +62,7 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
         padding: padding,
         width: 48,
         child: XGestureDetector(
+          supportTouch: true,
           onTap: !kIsDesktop ? null : (details) {
             final result = callback?.call() ?? true;
             if (result) {

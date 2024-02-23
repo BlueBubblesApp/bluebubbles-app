@@ -701,7 +701,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           if (await temp.exists()) await temp.delete(recursive: true);
 
           /* ----- BADGE ICON LISTENER ----- */
-          await WindowsTaskbar.resetOverlayIcon();
           int count = 0;
           final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
           unreadQuery.listen((Query<Chat> query) async {
@@ -722,7 +721,9 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           eventDispatcher.stream.listen((event) async {
             if (event.item1 == 'theme-update') {
               EasyDebounce.debounce('window-effect', const Duration(milliseconds: 500), () async {
-                await WindowEffects.setEffect(color: context.theme.colorScheme.background);
+                if (mounted) {
+                  await WindowEffects.setEffect(color: context.theme.colorScheme.background);
+                }
               });
             }
           });

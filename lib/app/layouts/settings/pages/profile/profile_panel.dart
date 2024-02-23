@@ -342,7 +342,7 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                                   const TextSpan(text: "VETTED ALIASES\n", style: TextStyle(fontWeight: FontWeight.w700, height: 3.0)),
                                   ...((accountInfo['vetted_aliases'] as List<dynamic>? ?? [])).map((e) => [
                                     TextSpan(text: "⬤  ", style: TextStyle(color: getIndicatorColor(e['Status'] == 3 ? SocketState.connected : SocketState.disconnected))),
-                                    TextSpan(text: redact ? "Alias" : "${e['Alias']}\n")
+                                    TextSpan(text: redact ? "Alias\n" : "${e['Alias']}\n")
                                   ]).toList().flattened,
                                   const TextSpan(text: "\n"),
                                   const TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),

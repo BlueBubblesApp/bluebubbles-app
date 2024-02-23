@@ -1077,10 +1077,11 @@ packages:
   gesture_x_detector:
     dependency: "direct main"
     description:
-      name: gesture_x_detector
-      sha256: "777855ee4e1fa4d677c40d6a44b9106696ef6745879027c8871e334cee8cde1e"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: "7de6e023ff68f67af1d83f7c1303d8b973f84944"
+      resolved-ref: "7de6e023ff68f67af1d83f7c1303d8b973f84944"
+      url: "https://github.com/BlueBubblesApp/xgesture_flutter.git"
+    source: git
     version: "1.1.1"
   get:
     dependency: "direct main"
@@ -1570,6 +1571,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.8.1"
+  languagetool_textfield:
+    dependency: "direct main"
+    description:
+      name: languagetool_textfield
+      sha256: f9f12309f1c6a0c8123402f29392614bcbfcea6ec7b18c73fa5d979b46496cc8
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.6"
   latlong2:
     dependency: transitive
     description:
@@ -2785,6 +2794,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.9"
+  throttling:
+    dependency: transitive
+    description:
+      name: throttling
+      sha256: "0b328adb283db092373b2835574fbcdf7d0e472d24f0455717c836ef9824def9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   timezone:
     dependency: transitive
     description:

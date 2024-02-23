@@ -43,6 +43,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: XGestureDetector(
+                    supportTouch: true,
                     onTap: !kIsDesktop ? null : (details) {
                       if (controller.inSelectMode.value) {
                         controller.inSelectMode.value = false;
@@ -88,6 +89,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                 Align(
                   alignment: Alignment.center,
                   child: XGestureDetector(
+                    supportTouch: true,
                     onTap: !kIsDesktop ? null : (details) {
                       Navigator.of(context).push(
                         ThemeSwitcher.buildPageRoute(

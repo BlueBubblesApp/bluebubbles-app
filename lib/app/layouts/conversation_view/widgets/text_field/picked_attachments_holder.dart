@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -22,7 +22,7 @@ class PickedAttachmentsHolder extends StatefulWidget {
   });
 
   final ConversationViewController? controller;
-  final TextEditingController subjectTextController;
+  final SpellCheckTextEditingController subjectTextController;
   final MentionTextEditingController textController;
   final List<PlatformFile> initialAttachments;
 
