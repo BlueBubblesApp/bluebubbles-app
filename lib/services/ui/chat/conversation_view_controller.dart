@@ -94,10 +94,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     super.onInit();
 
     textController.mentionables = mentionables;
-    FocusManager.instance.addListener(() {
-      print("Focus changed\n----------------------");
-      print(FocusManager.instance.primaryFocus?.toStringDeep());
-    });
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       keyboardOpen = visible;
       if (scrollController.hasClients) {
