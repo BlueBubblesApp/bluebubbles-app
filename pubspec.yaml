@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 1.13.0+63
+version: 1.13.0+64
 publish_to: none
 
 environment:
@@ -86,7 +86,10 @@ dependencies:
       url: https://github.com/BlueBubblesApp/flutter-geolocator.git
       path: geolocator
       ref: 223195b3746686790ca188deac6260d901d30c51
-  gesture_x_detector: ^1.1.1
+  gesture_x_detector:
+    git:
+      url: https://github.com/BlueBubblesApp/xgesture_flutter.git
+      ref: 7de6e023ff68f67af1d83f7c1303d8b973f84944
   get: ^4.6.6
   giphy_get: ^3.5.4
   github: ^9.22.0
@@ -101,6 +104,7 @@ dependencies:
   image_size_getter: ^2.1.2
   intl: ^0.19.0
   js: ^0.7.0
+  languagetool_textfield: ^0.0.6
   launch_at_startup: ^0.2.2
   local_auth: ^2.1.8
   local_notifier:
@@ -296,7 +300,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.12.7.0
+  msix_version: 1.12.100.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

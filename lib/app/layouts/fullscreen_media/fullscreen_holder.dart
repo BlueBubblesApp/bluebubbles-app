@@ -96,6 +96,7 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
           child: Scaffold(
             appBar: !iOS ? null : AppBar(
               leading: XGestureDetector(
+                supportTouch: true,
                 onTap: !kIsDesktop ? null : (details) {
                   Navigator.of(context).pop();
                 },

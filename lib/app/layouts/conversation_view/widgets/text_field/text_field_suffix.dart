@@ -1,6 +1,6 @@
 
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
@@ -30,7 +30,7 @@ class TextFieldSuffix extends StatefulWidget {
     this.isChatCreator = false,
   });
 
-  final TextEditingController subjectTextController;
+  final SpellCheckTextEditingController subjectTextController;
   final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
@@ -76,8 +76,8 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                       : context.theme.colorScheme.primary,
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
-                  maximumSize: const Size(32, 32),
-                  minimumSize: const Size(32, 32),
+                  maximumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
+                  minimumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: isLinuxArm64 ? const SizedBox(height: 40) :
