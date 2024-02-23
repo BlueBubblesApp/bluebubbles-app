@@ -486,6 +486,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                   if (message.isFromMe!)
                                                                     Obx(() {
                                                                       final editStuff = widget.cvController.editing.firstWhereOrNull((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
+                                                                      final desktopFocusNode = kIsDesktop || kIsWeb ? FocusNode() : null;
+                                                                      desktopFocusNode?.requestFocus();
                                                                       return AnimatedSize(
                                                                         duration: const Duration(milliseconds: 250),
                                                                         alignment: Alignment.centerRight,
@@ -522,6 +524,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 textCapitalization: TextCapitalization.sentences,
                                                                                 autocorrect: true,
                                                                                 controller: editStuff.item3,
+                                                                                focusNode: desktopFocusNode,
                                                                                 scrollPhysics: const CustomBouncingScrollPhysics(),
                                                                                 style: context.theme.extension<BubbleText>()!.bubbleText.apply(
                                                                                   fontSizeFactor: message.isBigEmoji ? 3 : 1,
