@@ -473,8 +473,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Focus(
-                                      onKey: (node, event) {
-                                        if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                      onKeyEvent: (node, event) {
+                                        if (event is KeyDownEvent && !HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                                           node.nextFocus();
                                           return KeyEventResult.handled;
                                         }
@@ -499,8 +499,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                     ),
                                     const SizedBox(height: 10),
                                     Focus(
-                                      onKey: (node, event) {
-                                        if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                      onKeyEvent: (node, event) {
+                                        if (event is KeyDownEvent && HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                                           node.previousFocus();
                                           node.previousFocus(); // This is intentional. Should probably figure out why it's needed
                                           return KeyEventResult.handled;

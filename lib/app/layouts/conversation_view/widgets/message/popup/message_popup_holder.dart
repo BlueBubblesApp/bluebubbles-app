@@ -103,11 +103,6 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
         widget.cvController.focusNode.requestFocus();
       }
     }
-    if (widget.cvController.editing.isNotEmpty) {
-      // there needs to be a delay here for some random reason, otherwise the keyboard is put down again immediately
-      await Future.delayed(const Duration(milliseconds: 500));
-      widget.cvController.editing.first.item4.requestFocus();
-    }
   }
 
   void sendTapback([String? type, int? part]) {

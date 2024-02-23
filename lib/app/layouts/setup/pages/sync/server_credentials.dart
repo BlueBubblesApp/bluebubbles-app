@@ -372,8 +372,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                             width: context.width * 2 / 3,
                             child: Focus(
                               focusNode: focusNode,
-                              onKey: (node, event) {
-                                if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                              onKeyEvent: (node, event) {
+                                if (event is KeyDownEvent && !HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                                   node.nextFocus();
                                   return KeyEventResult.handled;
                                 }
@@ -400,8 +400,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                           Container(
                             width: context.width * 2 / 3,
                             child: Focus(
-                              onKey: (node, event) {
-                                if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                              onKeyEvent: (node, event) {
+                                if (event is KeyDownEvent && HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                                   node.previousFocus();
                                   node.previousFocus(); // This is intentional. Should probably figure out why it's needed
                                   return KeyEventResult.handled;

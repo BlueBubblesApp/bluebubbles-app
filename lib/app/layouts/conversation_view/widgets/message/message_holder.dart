@@ -505,37 +505,37 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                             padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
                                                                             child: Focus(
                                                                               focusNode: FocusNode(),
-                                                                              onKey: (_, ev) {
-                                                                                if (ev is! RawKeyDownEvent) return KeyEventResult.ignored;
-                                                                                RawKeyEventDataWindows? windowsData;
-                                                                                RawKeyEventDataLinux? linuxData;
-                                                                                RawKeyEventDataWeb? webData;
-                                                                                RawKeyEventDataAndroid? androidData;
-                                                                                if (ev.data is RawKeyEventDataWindows) {
-                                                                                  windowsData = ev.data as RawKeyEventDataWindows;
-                                                                                } else if (ev.data is RawKeyEventDataLinux) {
-                                                                                  linuxData = ev.data as RawKeyEventDataLinux;
-                                                                                } else if (ev.data is RawKeyEventDataWeb) {
-                                                                                  webData = ev.data as RawKeyEventDataWeb;
-                                                                                } else if (ev.data is RawKeyEventDataAndroid) {
-                                                                                  androidData = ev.data as RawKeyEventDataAndroid;
+                                                                              skipTraversal: true,
+                                                                              onKeyEvent: (_, ev) {
+                                                                                if (ev is! KeyDownEvent) {
+                                                                                  if (ev.logicalKey == LogicalKeyboardKey.tab) { // Absorb tab
+                                                                                    return KeyEventResult.skipRemainingHandlers;
+                                                                                  }
+                                                                                  return KeyEventResult.ignored;
                                                                                 }
-                                                                                if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
                                                                                   completeEdit(editStuff.item3.text, e.part);
                                                                                   return KeyEventResult.handled;
                                                                                 }
-                                                                                if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.escape) {
                                                                                   widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
-                                                                                  widget.cvController.lastFocusedNode.requestFocus();
+                                                                                  if (widget.cvController.editing.isEmpty) {
+                                                                                    widget.cvController.lastFocusedNode.requestFocus();
+                                                                                  } else {
+                                                                                    widget.cvController.editing.last.item4?.requestFocus();
+                                                                                  }
                                                                                   return KeyEventResult.handled;
+                                                                                }
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.tab) { // Absorb tab
+                                                                                  return KeyEventResult.skipRemainingHandlers;
                                                                                 }
                                                                                 return KeyEventResult.ignored;
                                                                               },
                                                                               child: TextField(
                                                                                 textCapitalization: TextCapitalization.sentences,
                                                                                 autocorrect: true,
-                                                                                focusNode: editStuff.item4,
                                                                                 controller: editStuff.item3,
+                                                                                focusNode: editStuff.item4,
                                                                                 scrollPhysics: const CustomBouncingScrollPhysics(),
                                                                                 style: context.theme.extension<BubbleText>()!.bubbleText.apply(
                                                                                   fontSizeFactor: message.isBigEmoji ? 3 : 1,
@@ -562,6 +562,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                     }) ?? [],
                                                                                   );
                                                                                 },
+                                                                                autofocus: true,
                                                                                 enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                                                                                 textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                                                                                     ? TextInputAction.send

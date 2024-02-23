@@ -47,7 +47,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxDouble timestampOffset = 0.0.obs;
   final RxBool inSelectMode = false.obs;
   final RxList<Message> selected = <Message>[].obs;
-  final RxList<Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode>> editing = <Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode>>[].obs;
+  final RxList<Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode?>> editing = <Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode?>>[].obs;
   final GlobalKey focusInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
   bool showingOverlays = false;
@@ -94,7 +94,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     super.onInit();
 
     textController.mentionables = mentionables;
-
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       keyboardOpen = visible;
       if (scrollController.hasClients) {
