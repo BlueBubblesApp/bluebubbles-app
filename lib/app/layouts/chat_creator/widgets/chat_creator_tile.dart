@@ -11,13 +11,13 @@ import 'package:get/get.dart';
 
 class ChatCreatorTile extends StatefulWidget {
   const ChatCreatorTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     this.chat,
     this.contact,
     this.format = false,
-  }) : super(key: key);
+  });
 
   final String title;
   final String subtitle;

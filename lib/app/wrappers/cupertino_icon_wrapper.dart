@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
 
 class CupertinoIconWrapper extends StatelessWidget {
-  const CupertinoIconWrapper({Key? key, required Icon this.icon}) : super(key: key);
+  const CupertinoIconWrapper({super.key, required Icon this.icon});
 
   final Widget icon;
 

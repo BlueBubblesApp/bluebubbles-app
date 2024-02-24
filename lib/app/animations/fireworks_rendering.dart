@@ -4,9 +4,9 @@ import 'package:flutter/widgets.dart';
 
 class Fireworks extends LeafRenderObjectWidget {
   Fireworks({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   /// The controller that manages the fireworks and tells the render box what
   /// and when to paint.

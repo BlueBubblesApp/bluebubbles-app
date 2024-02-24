@@ -305,12 +305,12 @@ class HttpService extends GetxService {
   /// response or how to query the DB.
   ///
   /// [withQuery] options: `"participants"`, `"lastmessage"`, `"sms"`, `"archived"`
-  Future<Response> chats({List<String> withQuery = const [], int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
+  Future<Response> chats({List<String> withQuery = const [], int offset = 0, int limit = 100, String? sort, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/chat/query",
           queryParameters: buildQueryParams(),
-          data: {"with": withQuery, "offset": offset, "limit": limit},
+          data: {"with": withQuery, "offset": offset, "limit": limit, "sort": sort},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -508,6 +508,18 @@ class HttpService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.delete(
           "$apiRoot/chat/$guid",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Delete a message by [guid]
+  Future<Response> deleteMessage(String guid, String messageGuid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+          "$apiRoot/chat/$guid/$messageGuid",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -1081,6 +1093,52 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Refresh FindMy friends on server
+  Future<Response> refreshFindMyFriends({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$apiRoot/icloud/findmy/friends/refresh",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  Future<Response> getAccountInfo({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$apiRoot/icloud/account",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  Future<Response> getAccountContact({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$apiRoot/icloud/contact",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  Future<Response> setAccountAlias(String alias, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$apiRoot/icloud/account/alias",
+        data: {"alias": alias},
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   Future<Response> downloadFromUrl(String url, {Function(int, int)? progress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
@@ -1311,7 +1369,7 @@ class ApiInterceptor extends Interceptor {
         }
       }, requestOptions: err.requestOptions, statusCode: err.response!.statusCode));
     }
-    if (describeEnum(err.type).contains("Timeout")) {
+    if (err.type.name.contains("Timeout")) {
       return handler.resolve(Response(data: {
         'status': 500,
         'error': {

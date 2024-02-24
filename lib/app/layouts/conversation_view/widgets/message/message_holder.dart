@@ -28,19 +28,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:languagetool_textfield/domain/mistake.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
 class MessageHolder extends CustomStateful<MessageWidgetController> {
   MessageHolder({
-    Key? key,
+    super.key,
     required this.cvController,
     this.oldMessageGuid,
     this.newMessageGuid,
     required this.message,
     this.isReplyThread = false,
     this.replyPart,
-  }) : super(key: key, parentController: getActiveMwc(message.guid!) ?? mwc(message));
+  }) : super(parentController: getActiveMwc(message.guid!) ?? mwc(message));
 
   final Message message;
   final String? oldMessageGuid;
@@ -504,37 +505,37 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                             padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
                                                                             child: Focus(
                                                                               focusNode: FocusNode(),
-                                                                              onKey: (_, ev) {
-                                                                                if (ev is! RawKeyDownEvent) return KeyEventResult.ignored;
-                                                                                RawKeyEventDataWindows? windowsData;
-                                                                                RawKeyEventDataLinux? linuxData;
-                                                                                RawKeyEventDataWeb? webData;
-                                                                                RawKeyEventDataAndroid? androidData;
-                                                                                if (ev.data is RawKeyEventDataWindows) {
-                                                                                  windowsData = ev.data as RawKeyEventDataWindows;
-                                                                                } else if (ev.data is RawKeyEventDataLinux) {
-                                                                                  linuxData = ev.data as RawKeyEventDataLinux;
-                                                                                } else if (ev.data is RawKeyEventDataWeb) {
-                                                                                  webData = ev.data as RawKeyEventDataWeb;
-                                                                                } else if (ev.data is RawKeyEventDataAndroid) {
-                                                                                  androidData = ev.data as RawKeyEventDataAndroid;
+                                                                              skipTraversal: true,
+                                                                              onKeyEvent: (_, ev) {
+                                                                                if (ev is! KeyDownEvent) {
+                                                                                  if (ev.logicalKey == LogicalKeyboardKey.tab) { // Absorb tab
+                                                                                    return KeyEventResult.skipRemainingHandlers;
+                                                                                  }
+                                                                                  return KeyEventResult.ignored;
                                                                                 }
-                                                                                if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
                                                                                   completeEdit(editStuff.item3.text, e.part);
                                                                                   return KeyEventResult.handled;
                                                                                 }
-                                                                                if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.escape) {
                                                                                   widget.cvController.editing.removeWhere((e2) => e2.item1.guid == message.guid! && e2.item2.part == e.part);
-                                                                                  widget.cvController.lastFocusedNode.requestFocus();
+                                                                                  if (widget.cvController.editing.isEmpty) {
+                                                                                    widget.cvController.lastFocusedNode.requestFocus();
+                                                                                  } else {
+                                                                                    widget.cvController.editing.last.item4?.requestFocus();
+                                                                                  }
                                                                                   return KeyEventResult.handled;
+                                                                                }
+                                                                                if (ev.logicalKey == LogicalKeyboardKey.tab) { // Absorb tab
+                                                                                  return KeyEventResult.skipRemainingHandlers;
                                                                                 }
                                                                                 return KeyEventResult.ignored;
                                                                               },
                                                                               child: TextField(
                                                                                 textCapitalization: TextCapitalization.sentences,
                                                                                 autocorrect: true,
-                                                                                focusNode: editStuff.item4,
                                                                                 controller: editStuff.item3,
+                                                                                focusNode: editStuff.item4,
                                                                                 scrollPhysics: const CustomBouncingScrollPhysics(),
                                                                                 style: context.theme.extension<BubbleText>()!.bubbleText.apply(
                                                                                   fontSizeFactor: message.isBigEmoji ? 3 : 1,
@@ -542,8 +543,26 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 keyboardType: TextInputType.multiline,
                                                                                 maxLines: 14,
                                                                                 minLines: 1,
-                                                                                selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
-                                                                                autofocus: kIsDesktop || kIsWeb,
+                                                                                contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
+                                                                                  final start = editableTextState.textEditingValue.selection.start;
+
+                                                                                  Mistake? mistake = editStuff.item3.selectedMistake;
+                                                                                  return AdaptiveTextSelectionToolbar.editableText(
+                                                                                    editableTextState: editableTextState,
+                                                                                  )..buttonItems?.addAll(
+                                                                                    mistake?.replacements.take(3).map((replacement) {
+                                                                                      return ContextMenuButtonItem(
+                                                                                        onPressed: () {
+                                                                                          editStuff.item3.replaceMistake(mistake, replacement);
+                                                                                          editStuff.item3.selection = TextSelection.collapsed(offset: start + replacement.length);
+                                                                                          editableTextState.hideToolbar();
+                                                                                        },
+                                                                                        label: replacement,
+                                                                                      );
+                                                                                    }) ?? [],
+                                                                                  );
+                                                                                },
+                                                                                autofocus: true,
                                                                                 enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                                                                                 textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                                                                                     ? TextInputAction.send

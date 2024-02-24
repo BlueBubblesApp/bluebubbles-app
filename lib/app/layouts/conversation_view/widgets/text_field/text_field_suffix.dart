@@ -1,6 +1,6 @@
 
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
@@ -21,16 +21,16 @@ import 'package:universal_io/io.dart';
 
 class TextFieldSuffix extends StatefulWidget {
   const TextFieldSuffix({
-    Key? key,
+    super.key,
     required this.subjectTextController,
     required this.textController,
     required this.controller,
     required this.recorderController,
     required this.sendMessage,
     this.isChatCreator = false,
-  }) : super(key: key);
+  });
 
-  final TextEditingController subjectTextController;
+  final SpellCheckTextEditingController subjectTextController;
   final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
@@ -76,8 +76,8 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                       : context.theme.colorScheme.primary,
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
-                  maximumSize: const Size(32, 32),
-                  minimumSize: const Size(32, 32),
+                  maximumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
+                  minimumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: isLinuxArm64 ? const SizedBox(height: 40) :
@@ -97,7 +97,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   if (widget.controller!.showRecording.value) {
                     if (kIsDesktop) {
                       File temp = File(join(fs.appDocDir.path, "temp", "recorder", "${widget.controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a"));
-                      await RecordPlatform.instance.start(bitRate: 320000, path: temp.path);
+                      await RecordPlatform.instance.start(widget.controller!.chat.guid, const RecordConfig(bitRate: 320000), path: temp.path);
                       return;
                     }
                     await widget.recorderController!.record(
@@ -108,7 +108,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     late final String? path;
                     late final PlatformFile file;
                     if (kIsDesktop) {
-                      path = await RecordPlatform.instance.stop();
+                      path = await RecordPlatform.instance.stop(widget.controller!.chat.guid);
                       if (path == null) return;
                       final _file = File(path);
                       file = PlatformFile(

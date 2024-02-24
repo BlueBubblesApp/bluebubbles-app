@@ -28,10 +28,10 @@ class MessagesView extends StatefulWidget {
   final ConversationViewController controller;
 
   MessagesView({
-    Key? key,
+    super.key,
     this.customService,
     required this.controller,
-  }) : super(key: key);
+  });
 
   @override
   MessagesViewState createState() => MessagesViewState();
@@ -96,7 +96,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         await messageService.loadChunk(0, controller);
       }
       _messages = messageService.struct.messages;
-      _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      _messages.sort(Message.sort);
       setState(() {});
       _messages.forEachIndexed((i, m) {
         final c = mwc(m);
@@ -179,7 +179,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   }
 
   void updateReplies({bool updateConversation = true}) async {
-    if (!showSmartReplies || isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop) return;
+    if (!showSmartReplies || isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop || !mounted || !ls.isAlive) return;
 
     if (updateConversation) {
       _messages.reversed.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).skip(max(_messages.length - 5, 0)).forEach((message) {
@@ -227,7 +227,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
     final oldLength = _messages.length;
     _messages = messageService.struct.messages;
-    _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+    _messages.sort(Message.sort);
     fetching = false;
     _messages.sublist(max(oldLength - 1, 0)).forEachIndexed((i, m) {
       if (!mounted) return;
@@ -241,9 +241,9 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
   }
 
-  void handleNewMessage(Message message) {
+  void handleNewMessage(Message message) async {
     _messages.add(message);
-    _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+    _messages.sort(Message.sort);
     final insertIndex = _messages.indexOf(message);
 
     if (listKey.currentState != null) {
@@ -268,10 +268,11 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         player.stream.completed
             .firstWhere((completed) => completed)
             .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
-        player.open(Media(ss.settings.receiveSoundPath.value!));
+        await player.setVolume(ss.settings.soundVolume.value.toDouble());
+        await player.open(Media(ss.settings.receiveSoundPath.value!));
       } else {
         PlayerController controller = PlayerController();
-        controller.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: 1.0).then((_) => controller.startPlayer());
+        await controller.preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: ss.settings.soundVolume.value / 100).then((_) => controller.startPlayer());
       }
     }
   }

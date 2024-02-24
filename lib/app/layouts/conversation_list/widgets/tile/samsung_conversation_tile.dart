@@ -18,7 +18,9 @@ class SamsungConversationTile extends CustomStateful<ConversationTileController>
 
 class _SamsungConversationTileState extends CustomState<SamsungConversationTile, void, ConversationTileController> {
   bool get shouldPartialHighlight => controller.shouldPartialHighlight.value;
+
   bool get shouldHighlight => controller.shouldHighlight.value;
+
   bool get hoverHighlight => controller.hoverHighlight.value;
 
   @override
@@ -41,29 +43,27 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
         onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
         onLongPress: controller.onLongPress,
         child: Obx(() => ListTile(
-          mouseCursor: MouseCursor.defer,
-          dense: ss.settings.denseChatTiles.value,
-          visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
-          minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
-          title: Obx(() => ChatTitle(
-            parentController: controller,
-            style: context.theme.textTheme.bodyMedium!.copyWith(
-              fontWeight: controller.shouldHighlight.value
-                  ? FontWeight.w600
-                  : null,
-            ),
-          )),
-          subtitle: controller.subtitle ?? Obx(() => ChatSubtitle(
-            parentController: controller,
-            style: context.theme.textTheme.bodySmall!.copyWith(
-              color: controller.shouldHighlight.value
-                  ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
-              height: 1.5,
-            ),
-          )),
-          leading: leading,
-          trailing: SamsungTrailing(parentController: controller),
-        )),
+              mouseCursor: MouseCursor.defer,
+              dense: ss.settings.denseChatTiles.value,
+              visualDensity: ss.settings.denseChatTiles.value ? VisualDensity.compact : null,
+              minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
+              title: Obx(() => ChatTitle(
+                    parentController: controller,
+                    style: context.theme.textTheme.bodyMedium!.copyWith(
+                      fontWeight: controller.shouldHighlight.value ? FontWeight.w600 : null,
+                    ),
+                  )),
+              subtitle: controller.subtitle ??
+                  Obx(() => ChatSubtitle(
+                        parentController: controller,
+                        style: context.theme.textTheme.bodySmall!.copyWith(
+                          color: controller.shouldHighlight.value ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
+                          height: 1.5,
+                        ),
+                      )),
+              leading: leading,
+              trailing: SamsungTrailing(parentController: controller),
+            )),
       ),
     );
 
@@ -75,16 +75,26 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
           color: controller.isSelected
               ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
               : shouldPartialHighlight
-              ? context.theme.colorScheme.properSurface
-              : shouldHighlight
-              ? context.theme.colorScheme.primaryContainer
-              : hoverHighlight ? context.theme.colorScheme.properSurface.withOpacity(0.5) : null,
+                  ? context.theme.colorScheme.properSurface
+                  : shouldHighlight
+                      ? context.theme.colorScheme.primaryContainer
+                      : hoverHighlight
+                          ? context.theme.colorScheme.properSurface.withOpacity(0.5)
+                          : null,
         ),
         duration: const Duration(milliseconds: 100),
-        child: ns.isAvatarOnly(context) ? Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
-          child: Center(child: leading),
-        ) : child,
+        child: ns.isAvatarOnly(context)
+            ? InkWell(
+                mouseCursor: MouseCursor.defer,
+                onTap: () => controller.onTap(context),
+                onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
+                onLongPress: controller.onLongPress,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
+                  child: Center(child: leading),
+                ),
+              )
+            : child,
       );
     });
   }
@@ -120,17 +130,17 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
     if (!kIsWeb) {
       updateObx(() {
         final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
-          ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-          ..order(Message_.dateCreated, flags: Order.descending))
+              ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
+              ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
 
         sub = latestMessageQuery.listen((Query<Message> query) async {
           final message = await runAsync(() {
             return query.findFirst();
           });
-          if (message != null
-              && ss.settings.statusIndicatorsOnChats.value
-              && (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
+          if (message != null &&
+              ss.settings.statusIndicatorsOnChats.value &&
+              (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
             setState(() {});
           }
           cachedLatestMessage = message;
@@ -145,14 +155,15 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
           cachedLatestMessageGuid = message?.guid;
         });
 
-        final unreadQuery = chatBox.query((Chat_.hasUnreadMessage.equals(true)
-            .or(Chat_.muteType.equals("mute")))
-            .and(Chat_.guid.equals(controller.chat.guid)))
+        final unreadQuery = chatBox
+            .query((Chat_.hasUnreadMessage.equals(true).or(Chat_.muteType.equals("mute"))).and(Chat_.guid.equals(controller.chat.guid)))
             .watch();
         sub2 = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
-          });
+          final chat = controller.chat.id == null
+              ? null
+              : await runAsync(() {
+                  return chatBox.get(controller.chat.id!);
+                });
           final newUnread = chat?.hasUnreadMessage ?? false;
           final newMute = chat?.muteType ?? "";
           if (chat != null && unread != newUnread) {
@@ -219,42 +230,33 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
             if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
               Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
               if (show != Indicator.NONE) {
-                indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+                indicatorText = show.name.toLowerCase().capitalizeFirst!;
               }
             }
 
             return Text(
-              (cachedLatestMessage?.error ?? 0) > 0
-                  ? "Error"
-                  : "${indicatorText.isNotEmpty ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
+              (cachedLatestMessage?.error ?? 0) > 0 ? "Error" : "${indicatorText.isNotEmpty ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
               textAlign: TextAlign.right,
               style: context.theme.textTheme.bodySmall!.copyWith(
                 color: (cachedLatestMessage?.error ?? 0) > 0
                     ? context.theme.colorScheme.error
                     : controller.shouldHighlight.value || unread
-                    ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
-                fontWeight: controller.shouldHighlight.value
-                    ? FontWeight.w500 : null,
+                        ? context.theme.colorScheme.onBackground
+                        : context.theme.colorScheme.outline,
+                fontWeight: controller.shouldHighlight.value ? FontWeight.w500 : null,
               ),
               overflow: TextOverflow.clip,
             );
           }),
-          if (controller.chat.isPinned!)
-            const SizedBox(width: 5.0),
-          if (controller.chat.isPinned!)
-            Icon(
-                Icons.star,
-                size: 15, color: context.theme.colorScheme.tertiary
-            ),
-          if (muteType == "mute")
-            const SizedBox(width: 5.0),
+          if (controller.chat.isPinned!) const SizedBox(width: 5.0),
+          if (controller.chat.isPinned!) Icon(Icons.star, size: 15, color: context.theme.colorScheme.tertiary),
+          if (muteType == "mute") const SizedBox(width: 5.0),
           if (muteType == "mute")
             Obx(() => Icon(
-              Icons.notifications_off,
-              color: controller.shouldHighlight.value || unread
-                  ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
-              size: 15,
-            )),
+                  Icons.notifications_off,
+                  color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
+                  size: 15,
+                )),
         ],
       ),
     );
@@ -282,12 +284,13 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     unread = controller.chat.hasUnreadMessage ?? false;
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-            .watch();
+        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
-          });
+          final chat = controller.chat.id == null
+              ? null
+              : await runAsync(() {
+                  return chatBox.get(controller.chat.id!);
+                });
           if (chat == null) return;
           if (chat.hasUnreadMessage != unread) {
             setState(() {
@@ -317,13 +320,15 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
 
   @override
   Widget build(BuildContext context) {
-    return (unread) ? Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: context.theme.colorScheme.primary,
-      ),
-      width: 15,
-      height: 15,
-    ) : const SizedBox(width: 10, height: 10);
+    return (unread)
+        ? Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: context.theme.colorScheme.primary,
+            ),
+            width: 15,
+            height: 15,
+          )
+        : const SizedBox(width: 10, height: 10);
   }
 }

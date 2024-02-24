@@ -375,7 +375,7 @@ class Chat {
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
-    final message = json['lastMessage'] != null ? Message.fromMap(json['lastMessage']) : null;
+    final message = json['lastMessage'] != null ? Message.fromMap(json['lastMessage']!.cast<String, Object>()) : null;
     return Chat(
       id: json["ROWID"] ?? json["id"],
       guid: json["guid"],
@@ -389,7 +389,7 @@ class Chat {
       displayName: json["displayName"],
       customAvatar: json['_customAvatarPath'],
       pinnedIndex: json['_pinIndex'],
-      participants: (json['participants'] as List? ?? []).map((e) => Handle.fromMap(e)).toList(),
+      participants: (json['participants'] as List? ?? []).map((e) => Handle.fromMap(e!.cast<String, Object>())).toList(),
       autoSendReadReceipts: json["autoSendReadReceipts"],
       autoSendTypingIndicators: json["autoSendTypingIndicators"],
       dateDeleted: parseDate(json["dateDeleted"]),
@@ -651,7 +651,7 @@ class Chat {
 
     try {
       if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
-        mcs.invokeMethod("clear-chat-notifs", {"chatGuid": guid});
+        mcs.invokeMethod("delete-notification", {"notification_id": id});
       }
       if (privateMark && ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
         if (!hasUnread) {

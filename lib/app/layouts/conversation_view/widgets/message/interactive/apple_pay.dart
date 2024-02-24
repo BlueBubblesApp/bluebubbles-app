@@ -8,10 +8,10 @@ class ApplePay extends StatefulWidget {
   final Message message;
 
   ApplePay({
-    Key? key,
+    super.key,
     required this.data,
     required this.message,
-  }) : super(key: key);
+  });
 
   @override
   OptimizedState createState() => _ApplePayState();

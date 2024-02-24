@@ -146,7 +146,7 @@ class ChatManager extends GetxService {
     if (withParticipants) withQuery.add("participants");
     if (withLastMessage) withQuery.add("lastmessage");
 
-    final response = await http.chats(withQuery: withQuery, offset: offset, limit: limit).catchError((err) {
+    final response = await http.chats(withQuery: withQuery, offset: offset, limit: limit, sort: withLastMessage ? "lastmessage" : null).catchError((err) {
       if (err is! Response) {
         Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
         return err;

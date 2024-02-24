@@ -17,11 +17,11 @@ import 'package:get/get.dart';
 
 class ReactionWidget extends StatefulWidget {
   const ReactionWidget({
-    Key? key,
+    super.key,
     required this.message,
     required this.reaction,
     this.reactions,
-  }) : super(key: key);
+  });
 
   final Message? message;
   final Message reaction;

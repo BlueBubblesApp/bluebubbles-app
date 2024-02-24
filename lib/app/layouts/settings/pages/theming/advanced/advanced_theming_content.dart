@@ -20,10 +20,10 @@ import 'package:universal_io/io.dart';
 
 class AdvancedThemingContent extends StatefulWidget {
   AdvancedThemingContent({
-    Key? key,
+    super.key,
     required this.isDarkMode,
     required this.controller
-  }) : super(key: key);
+  });
   final bool isDarkMode;
   final StreamController controller;
 
@@ -176,14 +176,13 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                       // disable monet theming if music theme enabled
                       ss.settings.monetTheming.value = Monet.none;
                       ss.saveSettings(ss.settings);
-                      await mcs.invokeMethod("request-notif-permission");
+                      await mcs.invokeMethod("request-notification-listener-permission");
                       try {
-                        await mcs.invokeMethod("start-notif-listener");
+                        await mcs.invokeMethod("start-notification-listener");
                         ss.settings.colorsFromMedia.value = true;
                         ss.saveSettings(ss.settings);
                       } catch (e) {
-                        showSnackbar("Error",
-                            "Something went wrong, please ensure you granted the permission correctly!");
+                        showSnackbar("Error", "Something went wrong, please ensure you granted the permission correctly!");
                         return;
                       }
                     } else {

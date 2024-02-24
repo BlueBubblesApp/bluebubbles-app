@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 
 class ManualEntryDialog extends StatefulWidget {
-  ManualEntryDialog({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
+  ManualEntryDialog({super.key, required this.onConnect, required this.onClose});
   final Function() onConnect;
   final Function() onClose;
 
@@ -37,32 +37,19 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     // Check if the URL is valid
     bool isValid = url.isURL;
     if (url.contains(":") && !isValid) {
-      if (":"
-          .allMatches(url)
-          .length == 2) {
-        final newUrl = url.split(":")[1]
-            .split("/")
-            .last;
-        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      // port applied to URL
+      if (":".allMatches(url).length == 2) {
+        final newUrl = url.split(":")[1].split("/").last;
+        isValid = "https://${(newUrl.split(".")..removeLast()).join(".")}.com".isURL || newUrl.isIPv6 || newUrl.isIPv4;
       } else {
-        final newUrl = url
-            .split(":")
-            .first;
+        final newUrl = url.split(":").first;
         isValid = newUrl.isIPv6 || newUrl.isIPv4;
       }
     }
     // the getx regex only allows extensions up to 6 characters in length
     // this is a workaround for that
-    if (!isValid && url
-        .split(".")
-        .last
-        .isAlphabetOnly && url
-        .split(".")
-        .last
-        .length > 6) {
-      final newUrl = url.split(".").sublist(0, url
-          .split(".")
-          .length - 1).join(".");
+    if (!isValid && url.split(".").last.isAlphabetOnly && url.split(".").last.length > 6) {
+      final newUrl = (url.split(".")..removeLast()).join(".");
       isValid = ("$newUrl.com").isURL;
     }
 
@@ -127,8 +114,8 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Focus(
-                onKey: (node, event) {
-                  if (event is RawKeyDownEvent && !event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent && !HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                     node.nextFocus();
                     return KeyEventResult.handled;
                   }
@@ -154,8 +141,8 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
               ),
               const SizedBox(height: 10),
               Focus(
-                onKey: (node, event) {
-                  if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent && HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                     node.previousFocus();
                     node.previousFocus(); // This is intentional. Should probably figure out why it's needed
                     return KeyEventResult.handled;

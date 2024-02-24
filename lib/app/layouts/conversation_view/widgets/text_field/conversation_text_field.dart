@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
@@ -29,6 +29,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:languagetool_textfield/domain/mistake.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
@@ -38,9 +39,9 @@ import 'package:universal_io/io.dart';
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
   ConversationTextField({
-    Key? key,
+    super.key,
     required super.parentController,
-  }) : super(key: key);
+  });
 
   static ConversationTextFieldState? of(BuildContext context) {
     return context.findAncestorStateOfType<ConversationTextFieldState>();
@@ -165,7 +166,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       if (nText.length < oText.length) {
         // Search for the new state in the old state starting from the old selection's end
         String textSearchPart = oText.substring(oldTextFieldSelection.end);
-        int indexInNew = textSearchPart == "" ? nText.length : nText.indexOf(textSearchPart, controller.textController.selection.end);
+        int indexInNew = textSearchPart == "" || controller.textController.selection.end == -1
+            ? nText.length
+            : nText.indexOf(textSearchPart, controller.textController.selection.end);
         if (indexInNew == -1) {
           // This means that the cursor was behind the deleted portion (user used delete key probably)
           textSearchPart = oText.substring(0, oldTextFieldSelection.start);
@@ -173,7 +176,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           indexInNew += textSearchPart.length;
         }
 
-        if (indexInNew != -1) { // Just in case
+        if (indexInNew != -1) {
+          // Just in case
           bool deletingBadMention = false;
 
           String textPart1 = nText.substring(0, indexInNew);
@@ -193,7 +197,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           if (deletingBadMention) {
             oldTextFieldText = textPart1 + textPart2;
             oldTextFieldSelection = TextSelection.collapsed(offset: textPart1.length);
-            controller.textController.value = TextEditingValue(text: textPart1 + textPart2, selection: TextSelection.collapsed(offset: textPart1.length));
+            controller.textController.value =
+                TextEditingValue(text: textPart1 + textPart2, selection: TextSelection.collapsed(offset: textPart1.length));
             controller.textController.processMentions();
             return;
           }
@@ -277,8 +282,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       _debounceTyping?.cancel();
       oldText = newText;
       // don't send a bunch of duplicate events for every typing change
-      if (ss.settings.enablePrivateAPI.value &&
-          (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
+      if (ss.settings.enablePrivateAPI.value && (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
         if (_debounceTyping == null) {
           socket.sendMessage("started-typing", {"chatGuid": chatGuid});
         }
@@ -306,7 +310,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
             allMatches = [Emoji.byShortName(emojiName)!];
             // We can replace the :emoji: with the actual emoji here
             String _text = newEmojiText.substring(0, match.start) + allMatches.first.char + newEmojiText.substring(match.end);
-            _controller.value = TextEditingValue(text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length)));
+            _controller.value = TextEditingValue(
+                text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length)));
             allMatches.clear();
           } else {
             allMatches = Emoji.byKeyword(emojiName).toList();
@@ -352,12 +357,26 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           allMatches = controller.mentionables;
         } else if (newEmojiText[match.end - 1] == "@") {
           mentionName = newEmojiText.substring(match.start + 1, match.end - 1).toLowerCase();
-          allMatches = controller.mentionables.where((e) => e.address.toLowerCase().startsWith(mentionName.toLowerCase()) || e.displayName.toLowerCase().startsWith(mentionName.toLowerCase())).toList();
-          allMatches.addAll(controller.mentionables.where((e) => !allMatches.contains(e) && (e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName))).toList());
+          allMatches = controller.mentionables
+              .where((e) =>
+                  e.address.toLowerCase().startsWith(mentionName.toLowerCase()) || e.displayName.toLowerCase().startsWith(mentionName.toLowerCase()))
+              .toList();
+          allMatches.addAll(controller.mentionables
+              .where((e) =>
+                  !allMatches.contains(e) &&
+                  (e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName)))
+              .toList());
         } else if (match.end >= _controller.selection.start) {
           mentionName = newEmojiText.substring(match.start + 1, match.end).toLowerCase();
-          allMatches = controller.mentionables.where((e) => e.address.toLowerCase().startsWith(mentionName.toLowerCase()) || e.displayName.toLowerCase().startsWith(mentionName.toLowerCase())).toList();
-          allMatches.addAll(controller.mentionables.where((e) => !allMatches.contains(e) && (e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName))).toList());
+          allMatches = controller.mentionables
+              .where((e) =>
+                  e.address.toLowerCase().startsWith(mentionName.toLowerCase()) || e.displayName.toLowerCase().startsWith(mentionName.toLowerCase()))
+              .toList();
+          allMatches.addAll(controller.mentionables
+              .where((e) =>
+                  !allMatches.contains(e) &&
+                  (e.address.isCaseInsensitiveContains(mentionName) || e.displayName.isCaseInsensitiveContains(mentionName)))
+              .toList());
         }
         Logger.info("${allMatches.length} matches found for: $mentionName");
       }
@@ -405,7 +424,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
       if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
-      if (controller.textController.text.contains(MentionTextEditingController.escapingChar)) return showSnackbar("Error", "Mentions are not allowed in scheduled messages!");
+      if (controller.textController.text.contains(MentionTextEditingController.escapingChar)) {
+        return showSnackbar("Error", "Mentions are not allowed in scheduled messages!");
+      }
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -493,10 +514,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   Future<void> openFullCamera({String type = 'camera'}) async {
     bool granted = (await Permission.camera.request()).isGranted;
     if (!granted) {
-      showSnackbar(
-        "Error",
-        "Camera access was denied!"
-      );
+      showSnackbar("Error", "Camera access was denied!");
       return;
     }
 
@@ -534,17 +552,16 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                     openFullCamera(type: 'video');
                   },
                   child: IconButton(
-                    padding: const EdgeInsets.only(left: 10),
-                    icon: Icon(
-                      CupertinoIcons.camera_fill,
-                      color: context.theme.colorScheme.outline,
-                      size: 28,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      openFullCamera();
-                    }
-                  ),
+                      padding: const EdgeInsets.only(left: 10),
+                      icon: Icon(
+                        CupertinoIcons.camera_fill,
+                        color: context.theme.colorScheme.outline,
+                        size: 28,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        openFullCamera();
+                      }),
                 ),
               IconButton(
                 icon: Icon(
@@ -696,10 +713,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                                     padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
                                                     width: textFieldSize.width - (samsung ? 0 : 80),
                                                     height: textFieldSize.height - 15,
-                                                    child: Center(child: AnimatedOpacity(
-                                                      duration: const Duration(seconds: 1),
-                                                      opacity: (elapsed.inMilliseconds ~/ 1200 % 2 + 0.5).clamp(0, 1),
-                                                      child: Text("Recording... (${prettyDuration(elapsed)})", style: context.textTheme.titleMedium),),),
+                                                    child: Center(
+                                                      child: AnimatedOpacity(
+                                                        duration: const Duration(seconds: 1),
+                                                        opacity: (elapsed.inMilliseconds ~/ 1200 % 2 + 0.5).clamp(0, 1),
+                                                        child:
+                                                            Text("Recording... (${prettyDuration(elapsed)})", style: context.textTheme.titleMedium),
+                                                      ),
+                                                    ),
                                                     decoration: BoxDecoration(
                                                       border: Border.fromBorderSide(BorderSide(
                                                         color: context.theme.colorScheme.outline,
@@ -768,7 +789,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
 class TextFieldComponent extends StatelessWidget {
   const TextFieldComponent({
-    Key? key,
+    super.key,
     required this.subjectTextController,
     required this.textController,
     required this.controller,
@@ -776,9 +797,9 @@ class TextFieldComponent extends StatelessWidget {
     required this.sendMessage,
     this.focusNode,
     this.initialAttachments = const [],
-  }) : super(key: key);
+  });
 
-  final TextEditingController subjectTextController;
+  final SpellCheckTextEditingController subjectTextController;
   final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
@@ -799,7 +820,7 @@ class TextFieldComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: focusNode,
-      onKey: (_, ev) => handleKey(_, ev, context, isChatCreator),
+      onKeyEvent: (_, ev) => handleKey(_, ev, context, isChatCreator),
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
         child: Container(
@@ -828,7 +849,7 @@ class TextFieldComponent extends StatelessWidget {
                   PickedAttachmentsHolder(
                     controller: controller,
                     textController: textController,
-                    subjectTextController: controller?.subjectTextController ?? TextEditingController(),
+                    subjectTextController: controller?.subjectTextController ?? SpellCheckTextEditingController(),
                     initialAttachments: initialAttachments,
                   ),
                 if (!isChatCreator)
@@ -853,9 +874,27 @@ class TextFieldComponent extends StatelessWidget {
                     keyboardType: TextInputType.multiline,
                     maxLines: 14,
                     minLines: 1,
-                    selectionControls: iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                     textInputAction: TextInputAction.next,
+                    contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
+                      final start = editableTextState.textEditingValue.selection.start;
+
+                      Mistake? mistake = controller?.subjectTextController.selectedMistake;
+                      return AdaptiveTextSelectionToolbar.editableText(
+                        editableTextState: editableTextState,
+                      )..buttonItems?.addAll(
+                          mistake?.replacements.take(3).map((replacement) {
+                            return ContextMenuButtonItem(
+                              onPressed: () {
+                                controller!.subjectTextController.replaceMistake(mistake, replacement);
+                                controller!.subjectTextController.selection = TextSelection.collapsed(offset: start + replacement.length);
+                                editableTextState.hideToolbar();
+                              },
+                              label: replacement,
+                            );
+                          }) ?? [],
+                        );
+                    },
                     cursorColor: context.theme.colorScheme.primary,
                     cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
                     decoration: InputDecoration(
@@ -938,63 +977,88 @@ class TextFieldComponent extends StatelessWidget {
                     final start = editableTextState.textEditingValue.selection.start;
                     final end = editableTextState.textEditingValue.selection.end;
                     final text = editableTextState.textEditingValue.text;
-                    final selected = editableTextState.textEditingValue.text.substring((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length));
+                    final selected = editableTextState.textEditingValue.text
+                        .substring((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length));
+
+                    Mistake? mistake = controller?.textController.selectedMistake;
+                    if (mistake != null) {
+                      return AdaptiveTextSelectionToolbar.editableText(
+                        editableTextState: editableTextState,
+                      )..buttonItems?.addAll(
+                          mistake.replacements.take(3).map((replacement) {
+                            return ContextMenuButtonItem(
+                              onPressed: () {
+                                controller!.textController.replaceMistake(mistake, replacement);
+                                controller!.textController.selection = TextSelection.collapsed(offset: start + replacement.length);
+                                editableTextState.hideToolbar();
+                              },
+                              label: replacement,
+                            );
+                          }),
+                        );
+                    }
+
                     return AdaptiveTextSelectionToolbar.editableText(
                       editableTextState: editableTextState,
                     )..buttonItems?.addAllIf(
-                      MentionTextEditingController.escapingRegex.allMatches(selected).length == 1,
-                      [
-                        ContextMenuButtonItem(
-                          onPressed: () {
-                            final TextSelection selection = editableTextState.textEditingValue.selection;
-                            if (selection.isCollapsed) {
-                              return;
-                            }
-                            String text = editableTextState.textEditingValue.text;
-                            final textPart = text.substring(0, (end + 1).clamp(1, text.length));
-                            final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
-                            if (mentionMatch == null) return; // Shouldn't happen
-                            final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
-                            int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
-                            if (mentionIndex == null) return; // Shouldn't happen
-                            final mention = controller?.mentionables[mentionIndex];
-                            final replacement = mention != null ? "@${mention.displayName}" : "";
-                            text = editableTextState.textEditingValue.text.replaceRange((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length), replacement);
-                            final checkSpace = end + replacement.length - 1;
-                            final spaceAfter = checkSpace < text.length && text.substring(end + replacement.length - 1, end + replacement.length) == " ";
-                            controller?.textController.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
-                            editableTextState.hideToolbar();
-                          },
-                          label: "Remove Mention",
-                        ),
-                        ContextMenuButtonItem(
-                          onPressed: () async {
-                            final text = editableTextState.textEditingValue.text;
-                            final textPart = text.substring(0, (end + 1).clamp(1, text.length));
-                            final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
-                            if (mentionMatch == null) return; // Shouldn't happen
-                            final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
-                            int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
-                            if (mentionIndex == null) return; // Shouldn't happen
-                            final mention = controller?.mentionables[mentionIndex];
-                            if (kIsDesktop || kIsWeb) {
-                              controller?.showingOverlays = true;
-                            }
-                            final changed = await showCustomMentionDialog(context, mention);
-                            if (kIsDesktop || kIsWeb) {
-                              controller?.showingOverlays = false;
-                            }
-                            if (!isNullOrEmpty(changed)! && mention != null) {
-                              mention.customDisplayName = changed!;
-                            }
-                            final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
-                            controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
-                            editableTextState.hideToolbar();
-                          },
-                          label: "Custom Mention"
-                        ),
-                      ],
-                    );
+                        MentionTextEditingController.escapingRegex.allMatches(selected).length == 1,
+                        [
+                          ContextMenuButtonItem(
+                            onPressed: () {
+                              final TextSelection selection = editableTextState.textEditingValue.selection;
+                              if (selection.isCollapsed) {
+                                return;
+                              }
+                              String text = editableTextState.textEditingValue.text;
+                              final textPart = text.substring(0, (end + 1).clamp(1, text.length));
+                              final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
+                              if (mentionMatch == null) return; // Shouldn't happen
+                              final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
+                              int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
+                              if (mentionIndex == null) return; // Shouldn't happen
+                              final mention = controller?.mentionables[mentionIndex];
+                              final replacement = mention != null ? "@${mention.displayName}" : "";
+                              text = editableTextState.textEditingValue.text
+                                  .replaceRange((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length), replacement);
+                              final checkSpace = end + replacement.length - 1;
+                              final spaceAfter =
+                                  checkSpace < text.length && text.substring(end + replacement.length - 1, end + replacement.length) == " ";
+                              controller?.textController.value = TextEditingValue(
+                                  text: text,
+                                  selection: TextSelection.fromPosition(
+                                      TextPosition(offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
+                              editableTextState.hideToolbar();
+                            },
+                            label: "Remove Mention",
+                          ),
+                          ContextMenuButtonItem(
+                            onPressed: () async {
+                              final text = editableTextState.textEditingValue.text;
+                              final textPart = text.substring(0, (end + 1).clamp(1, text.length));
+                              final mentionMatch = MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
+                              if (mentionMatch == null) return; // Shouldn't happen
+                              final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
+                              int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
+                              if (mentionIndex == null) return; // Shouldn't happen
+                              final mention = controller?.mentionables[mentionIndex];
+                              if (kIsDesktop || kIsWeb) {
+                                controller?.showingOverlays = true;
+                              }
+                              final changed = await showCustomMentionDialog(context, mention);
+                              if (kIsDesktop || kIsWeb) {
+                                controller?.showingOverlays = false;
+                              }
+                              if (!isNullOrEmpty(changed)! && mention != null) {
+                                mention.customDisplayName = changed!;
+                              }
+                              final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
+                              controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
+                              editableTextState.hideToolbar();
+                            },
+                            label: "Custom Mention",
+                          ),
+                        ],
+                      );
                   },
                   onTap: () {
                     HapticFeedback.selectionClick();
@@ -1036,70 +1100,27 @@ class TextFieldComponent extends StatelessWidget {
     }
   }
 
-  KeyEventResult handleKey(FocusNode _, RawKeyEvent ev, BuildContext context, bool isChatCreator) {
-    if (ev is! RawKeyDownEvent) return KeyEventResult.ignored;
-    RawKeyEventDataWindows? windowsData;
-    RawKeyEventDataLinux? linuxData;
-    RawKeyEventDataWeb? webData;
-    RawKeyEventDataAndroid? androidData;
-    if (ev.data is RawKeyEventDataWindows) {
-      windowsData = ev.data as RawKeyEventDataWindows;
-    } else if (ev.data is RawKeyEventDataLinux) {
-      linuxData = ev.data as RawKeyEventDataLinux;
-    } else if (ev.data is RawKeyEventDataWeb) {
-      webData = ev.data as RawKeyEventDataWeb;
-    } else if (ev.data is RawKeyEventDataAndroid) {
-      androidData = ev.data as RawKeyEventDataAndroid;
+  KeyEventResult handleKey(FocusNode _, KeyEvent ev, BuildContext context, bool isChatCreator) {
+    if (ev is! KeyDownEvent) return KeyEventResult.ignored;
+
+    if ((kIsWeb || Platform.isWindows || Platform.isLinux) && (ev.physicalKey == PhysicalKeyboardKey.keyV || ev.logicalKey == LogicalKeyboardKey.keyV) && HardwareKeyboard.instance.isControlPressed) {
+      Pasteboard.image.then((image) {
+        if (image != null) {
+          controller!.pickedAttachments.add(PlatformFile(
+            name: "${randomString(8)}.png",
+            bytes: image,
+            size: image.length,
+          ));
+        }
+      });
     }
 
-    if (windowsData != null) {
-      if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV || windowsData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (linuxData != null) {
-      if ((linuxData.physicalKey == PhysicalKeyboardKey.keyV || linuxData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (webData != null) {
-      if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) && (ev.isControlPressed)) {
-        Pasteboard.image.then((image) {
-          if (image != null) {
-            controller!.pickedAttachments.add(PlatformFile(
-              name: "${randomString(8)}.png",
-              bytes: image,
-              size: image.length,
-            ));
-          }
-        });
-      }
-    }
-
-    if (ev.isMetaPressed || ev.isControlPressed || ev.isAltPressed) {
+    if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isAltPressed) {
       return KeyEventResult.ignored;
     }
 
     if (isChatCreator) {
-      if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+      if (ev.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
         sendMessage();
         return KeyEventResult.handled;
       }
@@ -1111,10 +1132,7 @@ class TextFieldComponent extends StatelessWidget {
     int downMovementIndex = maxShown * 2 ~/ 3;
 
     // Down arrow
-    if (windowsData?.keyCode == 40 ||
-        linuxData?.keyCode == 65364 ||
-        webData?.code == "ArrowDown" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
+    if (ev.logicalKey == LogicalKeyboardKey.arrowDown) {
       if (controller!.mentionSelectedIndex.value < controller!.mentionMatches.length - 1) {
         controller!.mentionSelectedIndex.value++;
         if (controller!.mentionSelectedIndex.value >= downMovementIndex &&
@@ -1136,19 +1154,16 @@ class TextFieldComponent extends StatelessWidget {
     }
 
     // Up arrow
-    if (windowsData?.keyCode == 38 ||
-        linuxData?.keyCode == 65362 ||
-        webData?.code == "ArrowUp" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
+    if (ev.logicalKey == LogicalKeyboardKey.arrowUp) {
       if (chat != null && controller!.lastFocusedTextController.text.isEmpty && ss.settings.editLastSentMessageOnUpArrow.value && ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148) {
         final message = ms(chat!.guid).mostRecentSent;
         if (message != null) {
-          final node = FocusNode();
           final parts = mwc(message).parts;
           final part = parts.filter((p) => p.text?.isNotEmpty ?? false).lastOrNull;
           if (part != null) {
-            controller!.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
-            node.requestFocus();
+            final FocusNode? node = kIsDesktop || kIsWeb ? FocusNode() : null;
+            controller!.editing.add(Tuple4(message, part, SpellCheckTextEditingController(text: part.text!), node));
+            node?.requestFocus();
             return KeyEventResult.handled;
           }
         }
@@ -1174,14 +1189,7 @@ class TextFieldComponent extends StatelessWidget {
     }
 
     // Tab or Enter
-    if (windowsData?.keyCode == 9 ||
-        linuxData?.keyCode == 65289 ||
-        webData?.code == "Tab" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.tab ||
-        windowsData?.keyCode == 13 ||
-        linuxData?.keyCode == 65293 ||
-        webData?.code == "Enter" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.enter) {
+    if (ev.logicalKey == LogicalKeyboardKey.tab || ev.logicalKey == LogicalKeyboardKey.enter) {
       if (controller!.focusNode.hasPrimaryFocus && controller!.mentionMatches.length > controller!.mentionSelectedIndex.value) {
         int index = controller!.mentionSelectedIndex.value;
         TextEditingController textField =
@@ -1223,16 +1231,13 @@ class TextFieldComponent extends StatelessWidget {
         return KeyEventResult.handled;
       }
       if (ss.settings.privateSubjectLine.value) {
-        if (windowsData?.keyCode == 9 ||
-            linuxData?.keyCode == 65289 ||
-            webData?.code == "Tab" ||
-            androidData?.physicalKey == PhysicalKeyboardKey.tab) {
+        if (ev.logicalKey == LogicalKeyboardKey.tab) {
           // Tab to switch between text fields
-          if (!ev.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
+          if (!HardwareKeyboard.instance.isShiftPressed && controller!.subjectFocusNode.hasPrimaryFocus) {
             controller!.focusNode.requestFocus();
             return KeyEventResult.handled;
           }
-          if (ev.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
+          if (HardwareKeyboard.instance.isShiftPressed && controller!.focusNode.hasPrimaryFocus) {
             controller!.subjectFocusNode.requestFocus();
             return KeyEventResult.handled;
           }
@@ -1241,10 +1246,7 @@ class TextFieldComponent extends StatelessWidget {
     }
 
     // Escape
-    if (windowsData?.keyCode == 27 ||
-        linuxData?.keyCode == 65307 ||
-        webData?.code == "Escape" ||
-        androidData?.physicalKey == PhysicalKeyboardKey.escape) {
+    if (ev.logicalKey == LogicalKeyboardKey.escape) {
       if (controller!.mentionMatches.isNotEmpty) {
         controller!.mentionMatches.value = <Mentionable>[];
         return KeyEventResult.handled;
@@ -1259,7 +1261,7 @@ class TextFieldComponent extends StatelessWidget {
       }
     }
 
-    if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
+    if ((kIsDesktop || kIsWeb) && ev.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
       sendMessage();
       controller!.focusNode.requestFocus();
       return KeyEventResult.handled;

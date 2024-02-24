@@ -105,9 +105,22 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
               controller.shouldHighlight.value || controller.shouldPartialHighlight.value || controller.hoverHighlight.value ? 8 : 0),
         ),
         child: ns.isAvatarOnly(context)
-            ? Padding(
-                padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: (ns.width(context) - 100) / 2).add(const EdgeInsets.only(right: 15)),
-                child: leading,
+            ? InkWell(
+                mouseCursor: MouseCursor.defer,
+                onTap: () => controller.onTap(context),
+                onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
+                onLongPress: kIsDesktop || kIsWeb
+                    ? null
+                    : () async {
+                        await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+                      },
+                onTapDown: (details) {
+                  longPressPosition = details.globalPosition;
+                },
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: (ns.width(context) - 100) / 2).add(const EdgeInsets.only(right: 15)),
+                  child: leading,
+                ),
               )
             : child,
       );
@@ -150,9 +163,9 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
           final message = await runAsync(() {
             return query.findFirst();
           });
-          if (message != null
-              && ss.settings.statusIndicatorsOnChats.value
-              && (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
+          if (message != null &&
+              ss.settings.statusIndicatorsOnChats.value &&
+              (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
             setState(() {});
           }
           cachedLatestMessage = message;
@@ -200,7 +213,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
             if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
               Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
               if (show != Indicator.NONE) {
-                indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+                indicatorText = show.name.toLowerCase().capitalizeFirst!;
               }
             }
 

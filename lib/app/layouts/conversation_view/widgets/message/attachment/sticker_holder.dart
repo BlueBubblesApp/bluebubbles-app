@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 
 class StickerHolder extends StatefulWidget {
-  StickerHolder({Key? key, required this.stickerMessages, required this.controller}) : super(key: key);
+  StickerHolder({super.key, required this.stickerMessages, required this.controller});
   final Iterable<Message> stickerMessages;
   final ConversationViewController controller;
 

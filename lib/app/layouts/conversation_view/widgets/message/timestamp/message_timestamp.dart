@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class MessageTimestamp extends StatelessWidget {
-  const MessageTimestamp({Key? key, required this.controller, required this.cvController}) : super(key: key);
+  const MessageTimestamp({super.key, required this.controller, required this.cvController});
 
   final MessageWidgetController controller;
   final ConversationViewController cvController;

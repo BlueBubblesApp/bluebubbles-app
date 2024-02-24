@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 /// ```dart
 /// CustomBouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics())
 /// ```
-/// (@end-tool}
+/// {@end-tool}
 ///
 /// See also:
 ///
@@ -30,7 +30,7 @@ import 'package:flutter/material.dart';
 ///    of different types to get the desired scroll physics.
 class CustomBouncingScrollPhysics extends ScrollPhysics {
   /// Creates scroll physics that bounce back from the edge.
-  const CustomBouncingScrollPhysics({ScrollPhysics? parent}) : super(parent: parent);
+  const CustomBouncingScrollPhysics({super.parent});
   static const double kMinFlingVelocity = 50.0; // Logical pixels / second
 
   @override

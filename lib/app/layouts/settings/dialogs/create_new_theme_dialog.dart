@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CreateNewThemeDialog extends StatelessWidget {
-  CreateNewThemeDialog(this._context, this.isDarkMode, this.currentTheme, this.onComplete, {Key? key}) : super(key: key);
+  CreateNewThemeDialog(this._context, this.isDarkMode, this.currentTheme, this.onComplete, {super.key});
   final BuildContext _context;
   final bool isDarkMode;
   final ThemeStruct currentTheme;

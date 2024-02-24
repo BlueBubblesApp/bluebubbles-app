@@ -120,10 +120,8 @@ class AttachmentDownloadController extends GetxController {
       bytes = response.data;
     }
     if (!kIsWeb && !kIsDesktop) {
-      await mcs.invokeMethod("download-file", {
-        "data": bytes,
-        "path": attachment.path,
-      });
+      File _file = await File(attachment.path).create(recursive: true);
+      await _file.writeAsBytes(bytes);
     }
     attachment.webUrl = response.requestOptions.path;
     Logger.info("Finished fetching attachment");

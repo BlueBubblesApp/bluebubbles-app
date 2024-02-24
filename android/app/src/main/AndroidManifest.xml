@@ -2,8 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.bluebubbles.messaging">
-    <uses-sdk android:minSdkVersion="21"
-        android:targetSdkVersion="33" />
     <!--
      io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
@@ -31,6 +29,7 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!-- Location -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -50,23 +49,38 @@
 
     <!-- Permission added by external package - remove it here -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
     <application
         tools:replace="android:label"
         android:allowBackup="false"
-        android:name=".Application"
+        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name_en"
         android:appCategory="social"
         android:requestLegacyExternalStorage="true"
         android:debuggable="false"
-        android:usesCleartextTraffic="true">
-        <receiver android:name=".services.ReplyReceiver" />
+        android:usesCleartextTraffic="true"
+        android:extractNativeLibs="true">
+
+        <receiver android:name=".services.intents.InternalIntentReceiver" />
+
         <receiver
-            android:name=".services.ExternalIntentReceiver"
+            android:name=".services.intents.ExternalIntentReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.bluebubbles.external.GET_SERVER_URL" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
 
@@ -81,7 +95,7 @@
         </provider>
 
         <service
-            android:name=".services.FirebaseMessagingService"
+            android:name=".services.firebase.BlueBubblesFirebaseMessagingService"
             android:directBootAware="true"
             android:exported="false"
             android:stopWithTask="false">
@@ -92,12 +106,7 @@
             </intent-filter>
         </service>
 
-        <service
-            android:name=".services.FlutterFirebaseMessagingBackgroundService"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="false"/>
-
-        <service android:name=".services.CustomNotificationListenerService"
+        <service android:name=".services.notifications.NotificationListener"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="false">
             <intent-filter>

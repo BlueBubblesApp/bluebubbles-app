@@ -2,13 +2,12 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/app/animations/fireworks_classes.dart';
-import 'package:flutter/scheduler.dart';
 
 class CelebrationController extends FireworkController {
   CelebrationController({
-    required TickerProvider vsync,
-    required Size windowSize,
-  }) : super(vsync: vsync, windowSize: windowSize);
+    required super.vsync,
+    required super.windowSize,
+  });
 
   @override
   void start() {

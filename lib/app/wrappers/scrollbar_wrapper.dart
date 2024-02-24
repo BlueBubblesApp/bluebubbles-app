@@ -8,12 +8,12 @@ import 'package:get/get.dart';
 
 class ScrollbarWrapper extends StatelessWidget {
   ScrollbarWrapper({
-    Key? key,
+    super.key,
     required this.child,
     this.showScrollbar = false,
     this.reverse = false,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final Widget child;
   final bool showScrollbar;
@@ -26,11 +26,11 @@ class ScrollbarWrapper extends StatelessWidget {
   Widget build(BuildContext context) => !kIsDesktop && !kIsWeb
       ? child
       : Focus(
-                onKey: (node, event) {
-                  if (!event.isAltPressed &&
-                      !event.isControlPressed &&
-                      !event.isMetaPressed &&
-                      !event.isShiftPressed &&
+                onKeyEvent: (node, event) {
+                  if (!HardwareKeyboard.instance.isAltPressed &&
+                      !HardwareKeyboard.instance.isControlPressed &&
+                      !HardwareKeyboard.instance.isMetaPressed &&
+                      !HardwareKeyboard.instance.isShiftPressed &&
                       event.physicalKey == PhysicalKeyboardKey.tab) {
                     if (cm.activeChat != null) {
                       cvc(cm.activeChat!.chat).lastFocusedNode.requestFocus();

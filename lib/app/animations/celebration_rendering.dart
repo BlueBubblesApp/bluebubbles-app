@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 
 class Celebration extends LeafRenderObjectWidget {
   Celebration({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
 
   final CelebrationController controller;
 

@@ -11,10 +11,10 @@ class GamePigeon extends StatefulWidget {
   final Message message;
 
   GamePigeon({
-    Key? key,
+    super.key,
     required this.data,
     required this.message,
-  }) : super(key: key);
+  });
 
   @override
   OptimizedState createState() => _GamePigeonState();

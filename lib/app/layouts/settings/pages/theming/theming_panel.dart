@@ -154,7 +154,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         eventDispatcher.emit('theme-update', null);
                       },
                       options: Skins.values,
-                      textProcessing: (val) => describeEnum(val),
+                      textProcessing: (val) => val.name,
                       capitalize: false,
                       title: "App Skin",
                       secondaryColor: headerColor,
@@ -399,13 +399,12 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
-                      Obx(
-                            () => SettingsSwitch(
+                      Obx(() => SettingsSwitch(
                           onChanged: (bool val) async {
-                            await mcs.invokeMethod("request-notif-permission");
                             if (val) {
+                              await mcs.invokeMethod("request-notification-listener-permission");
                               try {
-                                await mcs.invokeMethod("start-notif-listener");
+                                await mcs.invokeMethod("start-notification-listener");
                                 // disable monet theming if music theme enabled
                                 ss.settings.monetTheming.value = Monet.none;
                                 saveSettings();
@@ -447,7 +446,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       ),
                     if (!kIsWeb && !kIsDesktop)
                       const SettingsSubtitle(
-                        subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme.",
+                        unlimitedSpace: true,
+                        subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme. Media art with mostly blacks or whites may not produce any change in theming.",
                       ),
                     if (!kIsWeb && !kIsDesktop)
                       Container(

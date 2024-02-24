@@ -204,7 +204,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       // 11. Update the associated chat's last message
-      messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      messages.sort(Message.sort);
       bool isNewer = false;
 
       // If the message was saved correctly, update this chat's latestMessage info,
@@ -361,15 +361,15 @@ class Message {
   }
 
   factory Message.fromMap(Map<String, dynamic> json) {
-    final attachments = (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList();
+    final attachments = (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a!.cast<String, Object>())).toList();
 
     List<AttributedBody> attributedBody = [];
     if (json["attributedBody"] != null) {
       if (json['attributedBody'] is Map) {
-        json['attributedBody'] = [json['attributedBody']];
+        json['attributedBody'] = [json['attributedBody']!.cast<String, Object>()];
       }
       try {
-        attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+        attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a!.cast<String, Object>())).toList();
       } catch (e) {
         Logger.error('Failed to parse attributed body! $e');
       }
@@ -382,13 +382,13 @@ class Message {
           metadata = jsonDecode(json["metadata"]);
         } catch (_) {}
       } else {
-        metadata = json["metadata"];
+        metadata = json["metadata"]?.cast<String, Object>();
       }
     }
 
     List<MessageSummaryInfo> msi = [];
     try {
-      msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e)).toList();
+      msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e!.cast<String, Object>())).toList();
     } catch (e) {
       Logger.error('Failed to parse summary info! $e');
     }
@@ -396,8 +396,8 @@ class Message {
     PayloadData? payloadData;
     try {
       payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
-    } catch (e) {
-      Logger.error('Failed to parse payload data! $e');
+    } catch (e, s) {
+      Logger.error('Failed to parse payload data! $e\n$s');
     }
 
     return Message(
@@ -424,9 +424,9 @@ class Message {
       associatedMessagePart: json["associatedMessagePart"] ?? int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
       associatedMessageType: json["associatedMessageType"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
-      handle: json['handle'] != null ? Handle.fromMap(json['handle']) : null,
+      handle: json['handle'] != null ? Handle.fromMap(json['handle']!.cast<String, Object>()) : null,
       hasAttachments: attachments.isNotEmpty || json['hasAttachments'] == true,
-      attachments: (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList(),
+      attachments: (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a!.cast<String, Object>())).toList(),
       hasReactions: json['hasReactions'] == true,
       dateDeleted: parseDate(json["dateDeleted"]),
       metadata: metadata is String ? null : metadata,
@@ -684,11 +684,30 @@ class Message {
     toDelete?.save();
   }
 
+  /// This is purely because some Macs incorrectly report the dateCreated time
+  static int sort(Message a, Message b, {bool descending = true}) {
+    late DateTime aDateToUse;
+    if (a.dateDelivered == null) {
+      aDateToUse = a.dateCreated!;
+    } else {
+      aDateToUse = a.dateCreated!.isBefore(a.dateDelivered!) ? a.dateCreated! : a.dateDelivered!;
+    }
+
+    late DateTime bDateToUse;
+    if (b.dateDelivered == null) {
+      bDateToUse = b.dateCreated!;
+    } else {
+      bDateToUse = b.dateCreated!.isBefore(b.dateDelivered!) ? b.dateCreated! : b.dateDelivered!;
+    }
+
+    return descending ? bDateToUse.compareTo(aDateToUse) : aDateToUse.compareTo(bDateToUse);
+  }
+
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
 
   // first condition is for macOS < 11 and second condition is for macOS >= 11
   bool get isLegacyUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
-      || (hasDdResults! && (text ?? "").trim().isURL);
+      || ((hasDdResults! || isFromMe!) && (text ?? "").trim().isURL);
 
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
 

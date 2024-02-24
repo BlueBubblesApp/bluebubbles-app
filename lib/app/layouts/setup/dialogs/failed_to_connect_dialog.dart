@@ -3,15 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class FailedToConnectDialog extends StatelessWidget {
-  const FailedToConnectDialog({Key? key, required this.onDismiss}) : super(key: key);
+  const FailedToConnectDialog({super.key, required this.onDismiss});
   final Function() onDismiss;
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
         onDismiss();
-        return true;
+        Navigator.of(context).pop();
       },
       child: AlertDialog(
         backgroundColor: context.theme.colorScheme.properSurface,

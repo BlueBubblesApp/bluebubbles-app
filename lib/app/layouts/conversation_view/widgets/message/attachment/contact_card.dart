@@ -16,10 +16,10 @@ import 'package:universal_io/io.dart';
 
 class ContactCard extends StatefulWidget {
   ContactCard({
-    Key? key,
+    super.key,
     required this.file,
     required this.attachment,
-  }) : super(key: key);
+  });
   final PlatformFile file;
   final Attachment attachment;
 

@@ -33,7 +33,7 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     namespace "com.bluebubbles.messaging"
-    compileSdkVersion 33
+    compileSdk 34
 
     lintOptions {
         checkReleaseBuilds false
@@ -46,7 +46,7 @@ android {
 
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 33
         versionCode 20002000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -70,7 +70,7 @@ android {
         }
     }
 
-    flavorDimensions "app"
+    flavorDimensions = ["app"]
 
     productFlavors {
         joel {
@@ -135,7 +135,7 @@ flutter {
     source '../..'
 }
 
-// for cloud firestore okio error
+// For Cloud Firestore okio error
 configurations.all {
     resolutionStrategy {
         force 'com.squareup.okhttp:okhttp:2.7.5'
@@ -144,40 +144,31 @@ configurations.all {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'com.google.firebase:firebase-analytics:21.3.0'
+    // Android native functions
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.core:core:1.10.1"
-    implementation 'androidx.core:core-google-shortcuts:1.1.0'
+    implementation "androidx.core:core-ktx:1.12.0"
     implementation "androidx.sharetarget:sharetarget:1.2.0"
+    implementation 'androidx.browser:browser:1.7.0'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation "androidx.work:work-runtime:2.9.0"
 
-    //for location sending
-    implementation "com.google.android.gms:play-services-location:21.0.1"
-
-    // for album art color
-    implementation 'androidx.palette:palette:1.0.0'
-
-    // Add the SDK for Firebase Cloud Messaging
-    implementation 'com.google.firebase:firebase-messaging:23.2.1'
-    implementation 'com.google.firebase:firebase-analytics:21.3.0'
-    implementation 'com.google.firebase:firebase-database:20.2.2'
-    implementation 'com.google.firebase:firebase-messaging-directboot:23.2.1'
+    // Firebase items
+    implementation 'com.google.firebase:firebase-messaging:23.4.0'
+    implementation 'com.google.firebase:firebase-database:20.3.0'
+    implementation 'com.google.firebase:firebase-messaging-directboot:23.4.0'
     implementation 'com.google.firebase:firebase-iid:21.1.0'
-    implementation 'com.google.firebase:firebase-firestore:24.7.0'
+    implementation 'com.google.firebase:firebase-firestore:24.10.1'
 
-    //for json string to map
-    implementation 'com.google.code.gson:gson:2.9.0'
+    // Kotlin Coroutines (async)
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3"
 
-    implementation 'com.google.mlkit:smart-reply:17.0.2'
-    implementation 'com.google.mlkit:entity-extraction:16.0.0-beta4'
+    // Socket IO
+    implementation ('io.socket:socket.io-client:2.0.0') {
+        exclude group: 'org.json', module: 'json'
+    }
 
-    // for workmanager
-    implementation "androidx.work:work-runtime:2.7.1"
-
-    // Why won't it fucking compile
-    implementation 'com.google.guava:guava:27.0.1-android'
+    // JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
 }

@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 
 class ReactionHolder extends StatefulWidget {
   ReactionHolder({
-    Key? key,
+    super.key,
     required this.reactions,
     required this.message,
-  }) : super(key: key);
+  });
   final Iterable<Message> reactions;
   final Message message;
 

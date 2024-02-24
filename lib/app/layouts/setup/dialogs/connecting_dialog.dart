@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ConnectingDialog extends StatefulWidget {
-  ConnectingDialog({Key? key, required this.onConnect}) : super(key: key);
+  ConnectingDialog({super.key, required this.onConnect});
   final Function(bool) onConnect;
 
   @override
@@ -41,10 +41,8 @@ class _ConnectingDialogState extends OptimizedState<ConnectingDialog> {
         onDismiss: () => Navigator.of(context).pop(),
       );
     } else {
-      return WillPopScope(
-        onWillPop: () async {
-          return false;
-        },
+      return PopScope(
+        canPop: false,
         child: AlertDialog(
           title: Text(
             "Connecting...",

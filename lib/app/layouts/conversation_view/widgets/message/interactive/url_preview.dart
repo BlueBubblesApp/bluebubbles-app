@@ -21,11 +21,11 @@ class UrlPreview extends StatefulWidget {
   final PlatformFile? file;
 
   UrlPreview({
-    Key? key,
+    super.key,
     required this.data,
     required this.message,
     this.file,
-  }) : super(key: key);
+  });
 
   @override
   OptimizedState createState() => _UrlPreviewState();

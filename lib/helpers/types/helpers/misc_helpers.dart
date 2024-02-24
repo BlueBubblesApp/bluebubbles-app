@@ -81,8 +81,6 @@ bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMac
 
 bool get isSnap => !kIsWeb && Platform.isLinux && Platform.environment['SNAP'] != null;
 
-bool chromeOS = false;
-
 /// From https://github.com/modulovalue/dart_intersperse/blob/master/lib/src/intersperse.dart
 Iterable<T> intersperse<T>(T element, Iterable<T> iterable) sync* {
   final iterator = iterable.iterator;

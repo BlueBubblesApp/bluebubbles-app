@@ -16,10 +16,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 class InteractiveHolder extends CustomStateful<MessageWidgetController> {
   InteractiveHolder({
-    Key? key,
+    super.key,
     required super.parentController,
     required this.message,
-  }) : super(key: key);
+  });
 
   final MessagePart message;
 
@@ -88,7 +88,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
               color: iOS ? context.theme.colorScheme.properSurface : null,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: ns.width(context) * (ns.isTabletMode(context) ? 0.3 : 0.6),
+                  maxWidth: ns.width(context) * (ns.isTabletMode(context) ? 0.5 : 0.6),
                   maxHeight: context.height * 0.6,
                   minHeight: 40,
                   minWidth: 40,

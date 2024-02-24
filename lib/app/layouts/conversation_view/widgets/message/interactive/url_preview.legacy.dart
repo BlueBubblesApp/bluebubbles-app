@@ -14,9 +14,9 @@ class LegacyUrlPreview extends StatefulWidget {
   final Message message;
 
   LegacyUrlPreview({
-    Key? key,
+    super.key,
     required this.message,
-  }) : super(key: key);
+  });
 
   @override
   OptimizedState createState() => _LegacyUrlPreviewState();
@@ -101,7 +101,7 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  !isNullOrEmpty(metadata?.title)!
+                  !isNullOrEmpty(metadata?.title)! && metadata?.title != "www"
                       ? metadata!.title!
                       : !isNullOrEmpty(siteText)!
                       ? siteText! : message.text!,

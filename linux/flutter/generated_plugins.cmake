@@ -9,6 +9,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
   file_selector_linux
   flutter_acrylic
+  gtk
   local_notifier
   maps_launcher
   media_kit_libs_linux

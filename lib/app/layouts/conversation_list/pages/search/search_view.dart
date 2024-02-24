@@ -25,8 +25,8 @@ class SearchResult {
 
 class SearchView extends StatefulWidget {
   SearchView({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   SearchViewState createState() => SearchViewState();
@@ -390,7 +390,6 @@ class SearchViewState extends OptimizedState<SearchView> {
                       chat: chat,
                       size: 40,
                       editable: false,
-                      onTap: () {},
                     ),
                     trailing: Text(
                       buildDate(message.dateCreated),

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/components/mentionable_text_editing_controller.dart';
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
@@ -36,11 +36,11 @@ class SelectedContact {
 
 class ChatCreator extends StatefulWidget {
   const ChatCreator({
-    Key? key,
+    super.key,
     this.initialText = "",
     this.initialAttachments = const [],
     this.initialSelected = const [],
-  }) : super(key: key);
+  });
 
   final String? initialText;
   final List<PlatformFile> initialAttachments;
@@ -53,7 +53,7 @@ class ChatCreator extends StatefulWidget {
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
   late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
-  final TextEditingController subjectController = TextEditingController();
+  final SpellCheckTextEditingController subjectController = SpellCheckTextEditingController();
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -403,15 +403,15 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             ConstrainedBox(
                               constraints: BoxConstraints(maxWidth: ns.width(context) - 50),
                               child: Focus(
-                                onKey: (node, event) {
-                                  if (event is RawKeyDownEvent) {
+                                onKeyEvent: (node, event) {
+                                  if (event is KeyDownEvent) {
                                     if (event.logicalKey == LogicalKeyboardKey.backspace &&
                                         (addressController.selection.start == 0 || addressController.text.isEmpty)) {
                                       if (selectedContacts.isNotEmpty) {
                                         removeSelected(selectedContacts.last);
                                       }
                                       return KeyEventResult.handled;
-                                    } else if (!event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                    } else if (!HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                                       messageNode.requestFocus();
                                       return KeyEventResult.handled;
                                     }
@@ -651,8 +651,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                     ),
                   ),
                   child: Focus(
-                    onKey: (node, event) {
-                      if (event is RawKeyDownEvent && event.data.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                    onKeyEvent: (node, event) {
+                      if (event is KeyDownEvent && HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
                         addressNode.requestFocus();
                         return KeyEventResult.handled;
                       }

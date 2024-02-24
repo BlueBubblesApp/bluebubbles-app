@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class FailedToScanDialog extends StatelessWidget {
-  const FailedToScanDialog({Key? key, required this.exception, required this.title}) : super(key: key);
+  const FailedToScanDialog({super.key, required this.exception, required this.title});
   final dynamic exception;
   final String title;
 

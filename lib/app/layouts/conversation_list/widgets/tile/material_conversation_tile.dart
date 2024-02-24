@@ -145,9 +145,19 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
         ),
         duration: const Duration(milliseconds: 100),
         child: ns.isAvatarOnly(context)
-            ? Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                child: Center(child: leading),
+            ? InkWell(
+                mouseCursor: MouseCursor.defer,
+                onTap: () => controller.onTap(context),
+                onSecondaryTapUp: (details) => controller.onSecondaryTap(Get.context!, details),
+                onLongPress: controller.onLongPress,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                  child: Center(child: leading),
+                ),
               )
             : child,
       );
@@ -193,9 +203,9 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
           final message = await runAsync(() {
             return query.findFirst();
           });
-          if (message != null
-              && ss.settings.statusIndicatorsOnChats.value
-              && (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
+          if (message != null &&
+              ss.settings.statusIndicatorsOnChats.value &&
+              (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
             setState(() {});
           }
           cachedLatestMessage = message;
@@ -289,7 +299,7 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
                 if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
                   Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
                   if (show != Indicator.NONE) {
-                    indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
+                    indicatorText = show.name.toLowerCase().capitalizeFirst!;
                   }
                 }
 

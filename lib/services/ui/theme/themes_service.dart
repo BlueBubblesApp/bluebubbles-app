@@ -1,12 +1,9 @@
-import 'dart:math';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/color_engine/engine.dart' as engine;
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -123,11 +120,10 @@ class ThemesService extends GetxService {
         .where((e) => e != FlexScheme.custom)
         .map((e) => [
       ThemeStruct(
-        name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
+        name: "${e.name.split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
         themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40).copyWith(
             textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
             splashFactory: InkSparkle.splashFactory,
-            useMaterial3: true,
             extensions: [
               BubbleText(
                 bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
@@ -139,12 +135,11 @@ class ThemesService extends GetxService {
         ),
       ),
       ThemeStruct(
-        name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
+        name: "${e.name.split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
         themeData: FlexThemeData.dark(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
             .copyWith(
             textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
             splashFactory: InkSparkle.splashFactory,
-            useMaterial3: true,
             extensions: [
               BubbleText(
                 bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
@@ -197,103 +192,17 @@ class ThemesService extends GetxService {
     _loadTheme(context);
   }
 
-  void updateMusicTheme(BuildContext context, Color primary, Color lightBg, Color darkBg, double primaryPercent, double lightBgPercent, double darkBgPercent) async {
+  void updateMusicTheme(BuildContext context, Uint8List art) async {
     final darkTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme 🌙");
     final lightTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme ☀");
-    final engine.ColorScheme scheme = engine.DynamicColorScheme(
-      targetColors: const engine.TargetColors(),
-      primaryColor: engine.Srgb.fromColor(primary),
-    );
-    final engine.MonetColors colors = scheme.asColors;
+    final lightScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(art), brightness: Brightness.light);
+    final darkScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(art), brightness: Brightness.dark);
     lightTheme.data = lightTheme.data.copyWith(
-      colorScheme: lightTheme.data.colorScheme.copyWith(
-        primary: colors.accent1.shade700,
-        onPrimary: colors.accent1.shade100,
-        primaryContainer: colors.accent1.shade100,
-        onPrimaryContainer: colors.accent1.shade900,
-        secondary: colors.accent2.shade600,
-        onSecondary: colors.accent2.shade50,
-        secondaryContainer: colors.accent2.shade100,
-        onSecondaryContainer: colors.accent2.shade900,
-        tertiary: colors.accent3.shade600,
-        onTertiary: colors.accent3.shade50,
-        tertiaryContainer: colors.accent3.shade100,
-        onTertiaryContainer: colors.accent3.shade900,
-        background: colors.neutral1.shade10,
-        onBackground: colors.neutral1.shade900,
-        surface: colors.neutral1.shade10,
-        onSurface: colors.neutral1.shade900,
-        surfaceVariant: colors.neutral2.shade100,
-        onSurfaceVariant: colors.neutral2.shade700,
-        outline: colors.neutral1.shade500,
-        shadow: colors.neutral1.shade1000,
-        inverseSurface: colors.neutral1.shade800,
-        onInverseSurface: colors.neutral1.shade50,
-        inversePrimary: colors.accent1.shade200,
-      ),
+      colorScheme: lightScheme
     );
     darkTheme.data = darkTheme.data.copyWith(
-      colorScheme: darkTheme.data.colorScheme.copyWith(
-        primary: colors.accent1.shade800,
-        onPrimary: colors.accent1.shade200,
-        primaryContainer: colors.accent1.shade700,
-        onPrimaryContainer: colors.accent1.shade100,
-        secondary: colors.accent2.shade200,
-        onSecondary: colors.accent2.shade800,
-        secondaryContainer: colors.accent2.shade700,
-        onSecondaryContainer: colors.accent2.shade100,
-        tertiary: colors.accent3.shade200,
-        onTertiary: colors.accent3.shade800,
-        tertiaryContainer: colors.accent3.shade700,
-        onTertiaryContainer: colors.accent3.shade100,
-        background: colors.neutral1.shade900,
-        onBackground: colors.neutral1.shade100,
-        surface: colors.neutral1.shade900,
-        onSurface: colors.neutral1.shade100,
-        surfaceVariant: colors.neutral2.shade700,
-        onSurfaceVariant: colors.neutral2.shade200,
-        outline: colors.neutral1.shade400,
-        shadow: colors.neutral1.shade1000,
-        inverseSurface: colors.neutral1.shade100,
-        onInverseSurface: colors.neutral1.shade800,
-        inversePrimary: colors.accent1.shade600,
-      ),
+      colorScheme: darkScheme
     );
-    if (inDarkMode(context)) {
-      if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
-        double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
-        Tween<double> color1 = Tween<double>(begin: 0, end: difference);
-        Tween<double> color2 = Tween<double>(begin: 1 - difference, end: 1);
-        gradientTween.value = MovieTween()
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color1", color1)
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color2", color2);
-      } else {
-        gradientTween.value = MovieTween()
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color1", Tween<double>(begin: 0, end: 0.2))
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color2", Tween<double>(begin: 0.8, end: 1));
-      }
-    } else {
-      if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
-        double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
-        Tween<double> color1 = Tween<double>(begin: 0.0, end: difference);
-        Tween<double> color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
-        gradientTween.value = MovieTween()
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color1", color1)
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color2", color2);
-      } else {
-        gradientTween.value = MovieTween()
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color1", Tween<double>(begin: 0, end: 0.2))
-          ..scene(begin: Duration.zero, duration: const Duration(seconds: 3))
-              .tween("color2", Tween<double>(begin: 0.8, end: 1));
-      }
-    }
     changeTheme(Get.context!, light: lightTheme, dark: darkTheme);
   }
 

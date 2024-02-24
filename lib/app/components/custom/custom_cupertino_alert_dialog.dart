@@ -123,7 +123,7 @@ class CupertinoAlertDialog extends StatelessWidget {
   ///
   /// The [actions] must not be null.
   const CupertinoAlertDialog({
-    Key? key,
+    super.key,
     this.title,
     this.backgroundColor = _kDialogColor,
     this.content,
@@ -132,7 +132,7 @@ class CupertinoAlertDialog extends StatelessWidget {
     this.actionScrollController,
     this.insetAnimationDuration = const Duration(milliseconds: 100),
     this.insetAnimationCurve = Curves.decelerate,
-  }) : super(key: key);
+  });
 
   final Color backgroundColor;
 
@@ -233,7 +233,7 @@ class CupertinoAlertDialog extends StatelessWidget {
       child: MediaQuery(
         data: MediaQuery.of(context).copyWith(
           // iOS does not shrink dialog content below a 1.0 scale factor
-          textScaleFactor: math.max(textScaleFactor, 1.0),
+          textScaler: TextScaler.linear(math.max(textScaleFactor, 1.0)),
         ),
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
@@ -293,10 +293,10 @@ class CupertinoAlertDialog extends StatelessWidget {
 class CupertinoPopupSurface extends StatelessWidget {
   /// Creates an iOS-style rounded rectangle popup surface.
   const CupertinoPopupSurface({
-    Key? key,
+    super.key,
     this.isSurfacePainted = true,
     this.child,
-  }) : super(key: key);
+  });
 
   /// Whether or not to paint a translucent white on top of this surface's
   /// blurred background. [isSurfacePainted] should be true for a typical popup
@@ -332,10 +332,9 @@ class CupertinoPopupSurface extends StatelessWidget {
 // See [_RenderCupertinoDialog] for specific layout policy details.
 class _CupertinoDialogRenderWidget extends RenderObjectWidget {
   const _CupertinoDialogRenderWidget({
-    Key? key,
     required this.contentSection,
     required this.actionsSection,
-  }) : super(key: key);
+  });
 
   final Widget contentSection;
   final Widget actionsSection;
@@ -363,7 +362,7 @@ class _CupertinoDialogRenderWidget extends RenderObjectWidget {
 }
 
 class _CupertinoDialogRenderElement extends RenderObjectElement {
-  _CupertinoDialogRenderElement(_CupertinoDialogRenderWidget widget) : super(widget);
+  _CupertinoDialogRenderElement(_CupertinoDialogRenderWidget super.widget);
 
   Element? _contentElement;
   Element? _actionsElement;
@@ -808,11 +807,10 @@ enum _AlertDialogSections {
 // a SingleChildScrollView with a zero-sized Container.
 class _CupertinoAlertContentSection extends StatelessWidget {
   const _CupertinoAlertContentSection({
-    Key? key,
     this.title,
     this.content,
     this.scrollController,
-  }) : super(key: key);
+  });
 
   // The (optional) title of the dialog is displayed in a large font at the top
   // of the dialog.
@@ -842,7 +840,6 @@ class _CupertinoAlertContentSection extends StatelessWidget {
       );
     }
 
-    final double textScaleFactor = MediaQuery.of(context).textScaleFactor;
     final List<Widget> titleContentGroup = <Widget>[
       if (title != null)
         Padding(
@@ -850,7 +847,7 @@ class _CupertinoAlertContentSection extends StatelessWidget {
             left: _kEdgePadding,
             right: _kEdgePadding,
             bottom: content == null ? _kEdgePadding : 1.0,
-            top: _kEdgePadding * textScaleFactor,
+            top: MediaQuery.of(context).textScaler.scale(_kEdgePadding),
           ),
           child: DefaultTextStyle(
             style: _kCupertinoDialogTitleStyle.copyWith(
@@ -865,7 +862,7 @@ class _CupertinoAlertContentSection extends StatelessWidget {
           padding: EdgeInsets.only(
             left: _kEdgePadding,
             right: _kEdgePadding,
-            bottom: _kEdgePadding * textScaleFactor,
+            bottom: MediaQuery.of(context).textScaler.scale(_kEdgePadding),
             top: title == null ? _kEdgePadding : 1.0,
           ),
           child: DefaultTextStyle(
@@ -897,10 +894,9 @@ class _CupertinoAlertContentSection extends StatelessWidget {
 // and layout.
 class _CupertinoAlertActionSection extends StatefulWidget {
   const _CupertinoAlertActionSection({
-    Key? key,
     required this.children,
     this.scrollController,
-  }) : super(key: key);
+  });
 
   final List<Widget> children;
 
@@ -995,10 +991,9 @@ class _PressableActionButtonState extends State<_PressableActionButton> {
 // incoming [isPressed] property.
 class _ActionButtonParentDataWidget extends ParentDataWidget<_ActionButtonParentData> {
   const _ActionButtonParentDataWidget({
-    Key? key,
     required this.isPressed,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   final bool isPressed;
 
@@ -1038,13 +1033,13 @@ class _ActionButtonParentData extends MultiChildLayoutParentData {
 class CupertinoDialogAction extends StatelessWidget {
   /// Creates an action for an iOS-style dialog.
   const CupertinoDialogAction({
-    Key? key,
+    super.key,
     this.onPressed,
     this.isDefaultAction = false,
     this.isDestructiveAction = false,
     this.textStyle,
     required this.child,
-  }) : super(key: key);
+  });
 
   /// The callback that is called when the button is tapped or otherwise
   /// activated.
@@ -1088,7 +1083,7 @@ class CupertinoDialogAction extends StatelessWidget {
   bool get enabled => onPressed != null;
 
   double _calculatePadding(BuildContext context) {
-    return 8.0 * MediaQuery.textScaleFactorOf(context);
+    return MediaQuery.of(context).textScaler.scale(8.0);
   }
 
   // Dialog action content shrinks to fit, up to a certain point, and if it still
@@ -1102,12 +1097,11 @@ class CupertinoDialogAction extends StatelessWidget {
   }) {
     final bool isInAccessibilityMode = _isInAccessibilityMode(context);
     final double dialogWidth = isInAccessibilityMode ? _kAccessibilityCupertinoDialogWidth : _kCupertinoDialogWidth;
-    final double textScaleFactor = MediaQuery.textScaleFactorOf(context);
     // The fontSizeRatio is the ratio of the current text size (including any
     // iOS scale factor) vs the minimum text size that we allow in action
     // buttons. This ratio information is used to automatically scale down action
     // button text to fit the available space.
-    final double fontSizeRatio = (textScaleFactor * textStyle.fontSize!) / _kMinButtonFontSize;
+    final double fontSizeRatio = MediaQuery.of(context).textScaler.scale(textStyle.fontSize!) / _kMinButtonFontSize;
     final double padding = _calculatePadding(context);
 
     return IntrinsicHeight(
@@ -1212,11 +1206,10 @@ class CupertinoDialogAction extends StatelessWidget {
 // See [_RenderCupertinoDialogActions] for specific layout policy details.
 class _CupertinoDialogActionsRenderWidget extends MultiChildRenderObjectWidget {
   _CupertinoDialogActionsRenderWidget({
-    Key? key,
     required List<Widget> actionButtons,
     double dividerThickness = 0.0,
   })  : _dividerThickness = dividerThickness,
-        super(key: key, children: actionButtons);
+        super(children: actionButtons);
 
   final double _dividerThickness;
 

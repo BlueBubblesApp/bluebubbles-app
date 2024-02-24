@@ -12,11 +12,11 @@ import 'package:photo_manager/photo_manager.dart';
 
 class AttachmentPickerFile extends StatefulWidget {
   AttachmentPickerFile({
-    Key? key,
+    super.key,
     required this.onTap,
     required this.data,
     required this.controller,
-  }) : super(key: key);
+  });
   final AssetEntity data;
   final Function() onTap;
   final ConversationViewController controller;

@@ -18,7 +18,7 @@ import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class MediaGalleryCard extends StatefulWidget {
-  MediaGalleryCard({Key? key, required this.attachment}) : super(key: key);
+  MediaGalleryCard({super.key, required this.attachment});
   final Attachment attachment;
 
   @override
@@ -224,11 +224,11 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
 
 class ImageDisplay extends StatelessWidget {
   const ImageDisplay({
-    Key? key,
+    super.key,
     required this.attachment,
     required this.image,
     this.duration,
-  }) : super(key: key);
+  });
 
   final Attachment attachment;
   final Uint8List image;

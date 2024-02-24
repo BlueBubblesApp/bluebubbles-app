@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
@@ -47,7 +48,7 @@ class MessagePopup extends StatefulWidget {
   final BuildContext? Function() widthContext;
 
   const MessagePopup({
-    Key? key,
+    super.key,
     required this.childPosition,
     required this.size,
     required this.child,
@@ -57,7 +58,7 @@ class MessagePopup extends StatefulWidget {
     required this.serverDetails,
     required this.sendTapback,
     required this.widthContext,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => _MessagePopupState();
@@ -677,7 +678,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void openLink() {
     String? url = part.url;
-    mcs.invokeMethod("open-link", {"link": url ?? part.text, "forceBrowser": true});
+    mcs.invokeMethod("open-browser", {"link": url ?? part.text});
     popDetails();
   }
 
@@ -881,8 +882,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void createContact() async {
     popDetails();
-    await mcs
-        .invokeMethod("open-contact-form", {'address': message.handle!.address, 'addressType': message.handle!.address.isEmail ? 'email' : 'phone'});
+    await mcs.invokeMethod("open-contact-form", {'address': message.handle!.address, 'address_type': message.handle!.address.isEmail ? 'email' : 'phone'});
   }
 
   void showThread() {
@@ -989,8 +989,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   void edit() async {
-    final node = FocusNode();
-    cvController.editing.add(Tuple4(message, part, TextEditingController(text: part.text!), node));
+    cvController.editing.add(Tuple4(message, part, SpellCheckTextEditingController(text: part.text!), kIsDesktop || kIsWeb ? FocusNode() : null));
     popDetails();
   }
 
@@ -1554,9 +1553,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
 class ReactionDetails extends StatelessWidget {
   const ReactionDetails({
-    Key? key,
+    super.key,
     required this.reactions,
-  }) : super(key: key);
+  });
 
   final List<Message> reactions;
 

@@ -18,12 +18,12 @@ import 'package:universal_io/io.dart';
 
 class FullscreenImage extends StatefulWidget {
   FullscreenImage({
-    Key? key,
+    super.key,
     required this.file,
     required this.attachment,
     required this.showInteractions,
     required this.updatePhysics,
-  }) : super(key: key);
+  });
 
   final PlatformFile file;
   final Attachment attachment;

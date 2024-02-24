@@ -1,0 +1,433 @@
+import "package:bluebubbles/helpers/helpers.dart";
+import "package:bluebubbles/models/models.dart";
+import "package:collection/collection.dart";
+import "package:flutter/foundation.dart";
+import "package:flutter/material.dart";
+import "package:get/get.dart";
+import "package:languagetool_textfield/core/enums/mistake_type.dart";
+import 'package:languagetool_textfield/languagetool_textfield.dart';
+import "package:languagetool_textfield/utils/closed_range.dart";
+import "package:languagetool_textfield/utils/keep_latest_response_service.dart";
+
+class Mentionable {
+  Mentionable({required this.handle});
+
+  final Handle handle;
+  String? customDisplayName;
+
+  String get displayName => customDisplayName ?? handle.displayName;
+
+  String get address => handle.address;
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is Mentionable && runtimeType == other.runtimeType && address == other.address;
+
+  @override
+  int get hashCode => address.hashCode;
+
+  @override
+  String toString() => displayName;
+}
+
+class SpellCheckTextEditingController extends TextEditingController {
+  SpellCheckTextEditingController({super.text}) {
+    _languageCheckService = DebounceLangToolService(LangToolService(LanguageToolClient()), const Duration(milliseconds: 500));
+    if (text.isNotEmpty) {
+      _processMistakes(text);
+    }
+  }
+
+  /// Language tool configs
+  final HighlightStyle highlightStyle = const HighlightStyle();
+  final _latestResponseService = KeepLatestResponseService();
+  late final LanguageCheckService _languageCheckService;
+
+  /// List which contains Mistake objects spans are built from
+  List<Mistake> _mistakes = [];
+  int _selectedMistakeIndex = -1;
+
+  Mistake? get selectedMistake => _selectedMistakeIndex == -1 ? null : _mistakes.elementAtOrNull(_selectedMistakeIndex);
+
+  Object? _fetchError;
+
+  /// An error that may have occurred during the API fetch.
+  Object? get fetchError => _fetchError;
+
+  @override
+  set value(TextEditingValue newValue) {
+    if (kIsDesktop || kIsWeb) {
+      _handleTextChange(newValue.text);
+    }
+    super.value = newValue;
+  }
+
+  @override
+  set selection(TextSelection newSelection) {
+    if (kIsDesktop || kIsWeb) {
+      _handleSelectionChange(newSelection);
+    }
+    super.selection = newSelection;
+  }
+
+  @override
+  void dispose() {
+    _languageCheckService.dispose();
+    super.dispose();
+  }
+
+  /// Replaces mistake with given replacement
+  void replaceMistake(Mistake mistake, String replacement) {
+    final mistakes = List<Mistake>.from(_mistakes);
+    mistakes.remove(mistake);
+    _mistakes = mistakes;
+    text = text.replaceRange(mistake.offset, mistake.endOffset, replacement);
+    Future.microtask.call(() {
+      final newOffset = mistake.offset + replacement.length;
+      selection = TextSelection.fromPosition(TextPosition(offset: newOffset));
+    });
+  }
+
+  /// Clear mistakes list when text mas modified and get a new list of mistakes
+  /// via API
+  Future<void> _handleTextChange(String newText) async {
+    ///set value triggers each time, even when cursor changes its location
+    ///so this check avoid cleaning Mistake list when text wasn't really changed
+    if (newText == text || newText.isEmpty) return;
+
+    await _processMistakes(newText);
+  }
+
+  Future<void> _handleSelectionChange(TextSelection newSelection) async {
+    if (newSelection.baseOffset == newSelection.extentOffset) {
+      _selectedMistakeIndex = -1;
+      return;
+    }
+    final mistakeIndex = _mistakes.indexWhere((e) => (e.offset == newSelection.baseOffset) && (e.endOffset == newSelection.extentOffset));
+    if (mistakeIndex != -1) {
+      _selectedMistakeIndex = mistakeIndex;
+    } else {
+      _selectedMistakeIndex = -1;
+    }
+  }
+
+  Future<void> _processMistakes(String newText) async {
+    final filteredMistakes = _filterMistakesOnChanged(newText);
+    _mistakes = filteredMistakes.toList();
+
+    final mistakesWrapper = await _latestResponseService.processLatestOperation(
+      () => _languageCheckService.findMistakes(newText),
+    );
+    if (mistakesWrapper == null || !mistakesWrapper.hasResult) return;
+
+    final mistakes = mistakesWrapper.result();
+    _fetchError = mistakesWrapper.error;
+
+    _mistakes = mistakes;
+    notifyListeners();
+  }
+
+  /// Filters the list of mistakes based on the changes
+  /// in the text when it is changed.
+  Iterable<Mistake> _filterMistakesOnChanged(String newText) sync* {
+    final isSelectionRangeEmpty = selection.end == selection.start;
+    final lengthDiscrepancy = newText.length - text.length;
+
+    for (final mistake in _mistakes) {
+      Mistake? newMistake;
+
+      newMistake = isSelectionRangeEmpty
+          ? _adjustMistakeOffsetWithCaretCursor(
+              mistake: mistake,
+              lengthDiscrepancy: lengthDiscrepancy,
+            )
+          : _adjustMistakeOffsetWithSelectionRange(
+              mistake: mistake,
+              lengthDiscrepancy: lengthDiscrepancy,
+            );
+
+      if (newMistake != null) yield newMistake;
+    }
+  }
+
+  /// Adjusts the mistake offset when the selection is a caret cursor.
+  Mistake? _adjustMistakeOffsetWithCaretCursor({
+    required Mistake mistake,
+    required int lengthDiscrepancy,
+  }) {
+    final mistakeRange = ClosedRange(mistake.offset, mistake.endOffset);
+    final caretLocation = selection.base.offset;
+
+    // Don't highlight mistakes on changed text
+    // until we get an update from the API.
+    final isCaretOnMistake = mistakeRange.contains(caretLocation);
+    if (isCaretOnMistake) return null;
+
+    final shouldAdjustOffset = mistakeRange.isBeforeOrAt(caretLocation);
+    if (!shouldAdjustOffset) return mistake;
+
+    final newOffset = mistake.offset + lengthDiscrepancy;
+
+    return mistake.copyWith(offset: newOffset);
+  }
+
+  /// Adjusts the mistake offset when the selection is a range.
+  Mistake? _adjustMistakeOffsetWithSelectionRange({
+    required Mistake mistake,
+    required int lengthDiscrepancy,
+  }) {
+    final selectionRange = ClosedRange(selection.start, selection.end);
+    final mistakeRange = ClosedRange(mistake.offset, mistake.endOffset);
+
+    final hasSelectedTextChanged = selectionRange.overlapsWith(mistakeRange);
+    if (hasSelectedTextChanged) return null;
+
+    final shouldAdjustOffset = selectionRange.isAfterOrAt(mistake.offset);
+    if (!shouldAdjustOffset) return mistake;
+
+    final newOffset = mistake.offset + lengthDiscrepancy;
+
+    return mistake.copyWith(offset: newOffset);
+  }
+
+  /// Returns color for mistake TextSpan style
+  Color _getMistakeColor(MistakeType type) {
+    switch (type) {
+      case MistakeType.misspelling:
+        return highlightStyle.misspellingMistakeColor;
+      case MistakeType.typographical:
+        return highlightStyle.typographicalMistakeColor;
+      case MistakeType.grammar:
+        return highlightStyle.grammarMistakeColor;
+      case MistakeType.uncategorized:
+        return highlightStyle.uncategorizedMistakeColor;
+      case MistakeType.nonConformance:
+        return highlightStyle.nonConformanceMistakeColor;
+      case MistakeType.style:
+        return highlightStyle.styleMistakeColor;
+      case MistakeType.other:
+        return highlightStyle.otherMistakeColor;
+    }
+  }
+
+  /// Builds a TextSpan with mistakes highlighted
+  /// [chunk] - the text chunk to build TextSpan for
+  /// [offset] - the offset of the chunk in the whole text
+  /// [endOffset] - the end offset of the chunk in the whole text
+  /// [style] - the style to apply to the text
+  TextSpan buildMistakeTextSpans({
+    required BuildContext context,
+    required String chunk,
+    required int offset,
+    TextStyle? style,
+  }) {
+    // Only spellcheck on desktop/web
+    if (kIsDesktop || kIsWeb) {
+      // Check if there are mistakes in this chunk
+      int endOffset = offset + chunk.length;
+      final mistakes = _mistakes.where((e) => e.offset >= offset && e.endOffset <= endOffset).toList();
+      List<InlineSpan> spans = [];
+      if (mistakes.isNotEmpty) {
+        // Split text into mistakes and nonmistakes
+        for (int i = 0; i < mistakes.length; i++) {
+          final mistake = mistakes[i];
+          final mistakeStart = mistake.offset - offset;
+          final mistakeEnd = mistake.endOffset - offset;
+          final mistakeText = chunk.substring(mistakeStart, mistakeEnd);
+          final mistakeStyle = (style ?? const TextStyle()).copyWith(
+            backgroundColor: _getMistakeColor(mistake.type).withOpacity(highlightStyle.backgroundOpacity),
+            decoration: highlightStyle.decoration,
+            decorationColor: _getMistakeColor(mistake.type),
+            decorationThickness: highlightStyle.mistakeLineThickness,
+          );
+
+          final prevMistakeEnd = i == 0 ? 0 : mistakes[i - 1].endOffset - offset;
+          final leadingNonMistakeText = chunk.substring(prevMistakeEnd, mistakeStart);
+          if (leadingNonMistakeText.isNotEmpty) spans.add(TextSpan(text: leadingNonMistakeText, style: style));
+
+          spans.add(
+            TextSpan(
+              text: mistakeText,
+              style: mistakeStyle,
+            ),
+          );
+
+          if (i == mistakes.length - 1) {
+            final nextMistakeStart = i == mistakes.length - 1 ? chunk.length : mistakes[i + 1].offset - offset;
+            final trailingNonMistakeText = chunk.substring(mistakeEnd, nextMistakeStart);
+            if (trailingNonMistakeText.isNotEmpty) spans.add(TextSpan(text: trailingNonMistakeText, style: style));
+          }
+        }
+        return TextSpan(children: spans);
+      }
+    }
+    return TextSpan(text: chunk, style: style);
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    return buildMistakeTextSpans(context: context, chunk: text, offset: 0, style: style);
+  }
+}
+
+class MentionTextEditingController extends SpellCheckTextEditingController {
+  MentionTextEditingController({
+    super.text,
+    this.mentionables = const <Mentionable>[],
+  });
+
+  static const escapingChar = "￼";
+  static const zeroWidthSpace = "​";
+  static final escapingRegex = RegExp('$escapingChar\\d+$escapingChar');
+
+  List<Mentionable> mentionables;
+
+  // mention cache
+  Iterable<int> mentionedIndices = <int>[];
+
+  void processMentions() {
+    final matches = escapingRegex.allMatches(text);
+    mentionedIndices = matches.map((m) => int.tryParse(text.substring(m.start + 1, m.end - 1))).whereNotNull();
+    mentionables.forEachIndexed((i, m) {
+      if (!mentionedIndices.contains(i)) {
+        m.customDisplayName = null;
+      }
+    });
+  }
+
+  void addMention(String candidate, Mentionable mentionable) {
+    final indexSelection = selection.base.offset;
+    final atIndex = text.substring(0, indexSelection).lastIndexOf("@");
+    final index = mentionables.indexOf(mentionable);
+    if (index == -1 || atIndex == -1) return;
+    List<String> textParts = [text.substring(0, atIndex), text.substring(atIndex, indexSelection), text.substring(indexSelection)];
+    final addSpace = !textParts[2].startsWith(" ");
+    final replacement = "$escapingChar$index$escapingChar${addSpace ? " " : ""}";
+    text = textParts[0] + textParts[1].replaceFirst(candidate, replacement) + textParts[2];
+    selection = TextSelection.collapsed(offset: indexSelection - candidate.length + replacement.length);
+    processMentions();
+  }
+
+  String get cleansedText {
+    final res = escapingRegex.allMatches(text);
+    List<String> textSplit = <String>[];
+    int start = 0;
+    int end = 0;
+    int index = 0;
+    while (index < res.length) {
+      RegExpMatch elem = res.elementAt(index++);
+      end = elem.start;
+      if (start != end) {
+        textSplit.add(text.substring(start, end));
+      }
+      textSplit.add(text.substring(elem.start, elem.start + 1));
+      textSplit.add(text.substring(elem.start + 1, elem.end - 1));
+      textSplit.add(text.substring(elem.end - 1, elem.end));
+      start = elem.end;
+    }
+    if (start < text.length) {
+      textSplit.add(text.substring(start));
+    }
+    bool flag = false;
+    return textSplit.map((word) {
+      if (word == escapingChar) {
+        flag = !flag;
+        return "";
+      }
+      int? index = flag ? int.tryParse(word) : null;
+      if (index != null) {
+        final mention = mentionables[index];
+        return mention.displayName;
+      }
+      return word;
+    }).join();
+  }
+
+  static List<String> splitText(String text) {
+    final res = escapingRegex.allMatches(text);
+    List<String> textSplit = <String>[];
+    int start = 0;
+    int end = 0;
+    int index = 0;
+    while (index < res.length) {
+      RegExpMatch elem = res.elementAt(index++);
+      end = elem.start;
+      if (start != end) {
+        textSplit.add(text.substring(start, end));
+      }
+      textSplit.add(text.substring(elem.start, elem.start + 1));
+      textSplit.add(text.substring(elem.start + 1, elem.end - 1));
+      textSplit.add(text.substring(elem.end - 1, elem.end));
+      start = elem.end;
+    }
+    if (start < text.length) {
+      textSplit.add(text.substring(start));
+    }
+    return textSplit;
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final textSplit = splitText(text);
+    bool flag = false;
+    int mentionIndexLength = 0;
+    return TextSpan(
+      children: textSplit.mapIndexed((idx, word) {
+        int offset = textSplit.slice(0, idx).join("").length;
+
+        if (word == escapingChar) flag = !flag;
+        int? index = flag ? int.tryParse(word) : null;
+        if (index != null) {
+          final mention = mentionables[index];
+          mentionIndexLength = "$index".length;
+          // Mandatory WidgetSpan so that it takes the appropriate char number.
+          return WidgetSpan(
+            child: Listener(
+              onPointerDown: (PointerDownEvent e) {
+                if (selection.isCollapsed && e.buttons == 2) {
+                  // Right click
+                  selection = TextSelection(baseOffset: offset - 1, extentOffset: offset + word.length + 1);
+                }
+              },
+              child: ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: <Color>[context.theme.colorScheme.primary.darkenPercent(20), context.theme.colorScheme.primary.lightenPercent(20)],
+                ).createShader(
+                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                ),
+                child: Text(
+                  mention.displayName,
+                  style: style!.copyWith(fontWeight: FontWeight.bold).apply(heightFactor: 1.1),
+                ),
+              ),
+            ),
+          );
+        }
+        if (word == escapingChar) {
+          String text = zeroWidthSpace;
+          if (mentionIndexLength > 1) {
+            text = List.filled(mentionIndexLength, zeroWidthSpace).join();
+            mentionIndexLength = 0;
+          }
+          return TextSpan(text: text, style: style);
+        }
+
+        // Anything beyond this point is not a mention. So fallback to original style.
+        return buildMistakeTextSpans(
+          context: context,
+          chunk: word.replaceAll(escapingChar, zeroWidthSpace),
+          offset: offset,
+          style: style,
+        );
+      }).toList(),
+    );
+  }
+}

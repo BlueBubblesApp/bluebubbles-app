@@ -9,10 +9,10 @@ import 'package:intl/intl.dart';
 
 class ChatEvent extends StatelessWidget {
   ChatEvent({
-    Key? key,
+    super.key,
     required this.part,
     required this.message,
-  }) : super(key: key);
+  });
 
   final MessagePart part;
   final Message message;

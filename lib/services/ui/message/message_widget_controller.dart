@@ -187,7 +187,7 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
       // update the latest 2 messages in case their indicators need to go away
       final messages = ms(chat).struct.messages
           .where((e) => e.isFromMe! && (e.dateDelivered != null || e.dateRead != null))
-          .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+          .toList()..sort(Message.sort);
       for (Message m in messages.take(2)) {
         getActiveMwc(m.guid!)?.updateWidgets<DeliveredIndicator>(null);
       }

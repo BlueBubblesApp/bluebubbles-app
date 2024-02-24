@@ -16,7 +16,7 @@ import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
 class ChatInfo extends StatefulWidget {
-  const ChatInfo({Key? key, required this.chat}) : super(key: key);
+  const ChatInfo({super.key, required this.chat});
 
   final Chat chat;
   
@@ -306,7 +306,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 child: Text(
                   "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
                   style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.primaryColor),
-                  textScaleFactor: 1.15,
+                  textScaler: const TextScaler.linear(1.15),
                 ),
                 onPressed: () async {
                   bool? papi = false;
@@ -448,10 +448,13 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                             final contact = chat.participants.first.contact;
                             final handle = chat.participants.first;
                             if (contact == null) {
-                              await mcs.invokeMethod("open-contact-form",
-                                  {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+                              await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
                             } else {
-                              await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+                              try {
+                                await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+                              } catch (_) {
+                                showSnackbar("Error", "Failed to find contact on device!");
+                              }
                             }
                           },
                           borderRadius: BorderRadius.circular(15),

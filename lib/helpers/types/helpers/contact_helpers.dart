@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
@@ -25,7 +24,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   String? formatted;
   try {
     final parsed = PhoneNumber.parse(address);
-    formatted = parsed.getFormattedNsn(isoCode: IsoCode.values.firstWhereOrNull((element) => describeEnum(element) == cc));
+    formatted = parsed.getFormattedNsn(isoCode: IsoCode.values.firstWhereOrNull((element) => element.name == cc));
   } catch (_) {}
 
   return formatted ?? address;
