@@ -628,25 +628,7 @@ class NotificationsService extends GetxService {
       await socketToast!.show();
       return;
     } else {
-      final notifs = await flnp.getActiveNotifications();
-      if (notifs.firstWhereOrNull((element) => element.id == -2) != null) return;
-      await flnp.show(
-        -2,
-        title,
-        subtitle,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            ERROR_CHANNEL,
-            'Errors',
-            channelDescription: 'Displays message send failures, connection failures, and more',
-            priority: Priority.max,
-            importance: Importance.max,
-            color: HexColor("4990de"),
-            ongoing: true,
-            onlyAlertOnce: true,
-          ),
-        ),
-      );
+          await mcs.invokeMethod("connection-error-notification", {"operation": "create"});
     }
   }
 
@@ -765,7 +747,7 @@ class NotificationsService extends GetxService {
       socketToast = null;
       return;
     }
-    await flnp.cancel(-2);
+    await mcs.invokeMethod("connection-error-notification", {"operation": "clear"});
   }
 
   Future<void> clearFailedToSend(int id) async {

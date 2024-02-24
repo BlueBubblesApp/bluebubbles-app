@@ -75,6 +75,7 @@ class Settings {
   final RxnString receiveSoundPath = RxnString();
   final RxInt soundVolume = 100.obs;
   final RxBool syncContactsAutomatically = false.obs;
+  final RxBool backgroundServerPinging = false.obs;
   final RxBool scrollToBottomOnSend = true.obs;
   final RxBool sendEventsToTasker = false.obs;
   final RxBool keepAppAlive = false.obs;
@@ -248,6 +249,7 @@ class Settings {
       'receiveSoundPath': receiveSoundPath.value,
       'soundVolume': soundVolume.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
+      'backgroundServerPinging': backgroundServerPinging.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
       'sendEventsToTasker': sendEventsToTasker.value,
       'keepAppAlive': keepAppAlive.value,
@@ -364,6 +366,7 @@ class Settings {
     ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
     ss.settings.soundVolume.value = map['soundVolume'] ?? 100;
     ss.settings.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
+    ss.settings.backgroundServerPinging.value = map['backgroundServerPinging'] ?? false;
     ss.settings.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     ss.settings.sendEventsToTasker.value = map['sendEventsToTasker'] ?? true;
     ss.settings.keepAppAlive.value = map['keepAppAlive'] ?? false;
@@ -487,6 +490,7 @@ class Settings {
     s.receiveSoundPath.value = map['receiveSoundPath'];
     s.soundVolume.value = map['soundVolume'] ?? 100;
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
+    s.backgroundServerPinging.value = map['backgroundServerPinging'] ?? false;
     s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
     s.keepAppAlive.value = map['keepAppAlive'] ?? false;

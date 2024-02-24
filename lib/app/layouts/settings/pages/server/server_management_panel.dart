@@ -29,6 +29,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
+import 'package:bluebubbles/services/network/health_service.dart';
 
 class ServerManagementPanelController extends StatefulController {
   final RxnInt latency = RxnInt();
@@ -581,6 +582,18 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           backgroundColor: tileColor,
                           onChanged: (bool val) async {
                             ss.settings.syncContactsAutomatically.value = val;
+                            ss.saveSettings();
+                          },
+                        )),
+                  if (Platform.isAndroid)
+                    Obx(() => SettingsSwitch(
+                          initialVal: ss.settings.backgroundServerPinging.value,
+                          title: "Background Server Pinging",
+                          subtitle: "Periodically pings your server in the background to check that it's still running (could impact battery life)",
+                          backgroundColor: tileColor,
+                          onChanged: (bool val) async {
+                            ss.settings.backgroundServerPinging.value = val;
+                            healthService.setBackgroundPingingState(val);
                             ss.saveSettings();
                           },
                         )),

@@ -151,6 +151,7 @@ dependencies {
     implementation 'androidx.browser:browser:1.7.0'
     implementation 'androidx.activity:activity-ktx:1.8.2'
     implementation "androidx.work:work-runtime:2.9.0"
+    implementation "androidx.work:work-runtime-ktx:2.9.0"
 
     // Firebase items
     implementation 'com.google.firebase:firebase-messaging:23.4.0'

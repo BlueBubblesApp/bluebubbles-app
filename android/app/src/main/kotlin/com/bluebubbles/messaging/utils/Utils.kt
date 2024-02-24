@@ -11,6 +11,8 @@ import com.bluebubbles.messaging.services.firebase.ServerUrlRequestHandler
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
+data class BBServerInfo(val url: String?, val guid: String?)
+
 object Utils {
     fun getAdaptiveIconFromByteArray(data: ByteArray): IconCompat {
         val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
@@ -44,5 +46,14 @@ object Utils {
             override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {}
             override fun notImplemented() {}
         }, context)
+    }
+
+    fun getBBServerUrl(context: Context): BBServerInfo {
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", 0)
+
+        return BBServerInfo(
+            prefs.getString("flutter.serverAddress", null),
+            prefs.getString("flutter.guidAuthKey", null)
+        )
     }
 }
