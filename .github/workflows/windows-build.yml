@@ -1,0 +1,66 @@
+# This workflow was built using the build instructions found at 
+# https://docs.bluebubbles.app/client/build-yourself-contribution-guide
+name: Windows Build
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  flutter-build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      
+      - name: Comment Out ContentCommit issues
+        run: |
+          # Find `onContentCommitted` in blue_bubbles_text_field.dart
+          # and insert `//` at the beginning of the line to comment it out.
+          sed -i -e 's|^.*onContentCommitted.*|// &|' ./lib/layouts/conversation_view/text_field/blue_bubbles_text_field.dart
+          # The same thing in custom_cupertino_text_field.dart
+          sed -i -e 's|^.*onContentCommitted.*|// &|' ./lib/layouts/widgets/custom_cupertino_text_field.dart
+          # Find `final ValueChanged<CommittedContent>? onContentCommitted` in custom_cupertino_text_field.dart
+          # and insert `//` before it to comment it out.
+          sed -i "s|final ValueChanged<CommittedContent>? onContentCommitted.*|//&|g" ./lib/layouts/widgets/custom_cupertino_text_field.dart
+          # Find `void onContentCommit(CommittedContent content) async {` in blue_bubbles_text_field.dart
+          # and replace it with `void onContentCommit(dynamic content) async {`
+          sed -i "s|void onContentCommit(CommittedContent content) async {|void onContentCommit(dynamic content) async {|g" ./lib/layouts/conversation_view/text_field/blue_bubbles_text_field.dart
+        shell: bash
+
+      - name: Create .env File
+        run: touch \.env
+        shell: bash
+
+      - name: Build
+        run: |
+          flutter build windows
+      # TODO - Figure out how to pass this as an artifact to the next step.
+
+  build-exe-installer:
+    needs: flutter-build
+    runs-on: windows-latest
+    steps:
+      - name: Install InnoSetup
+        run: choco install innosetup
+      
+      - name: Create EXE Installer
+        run: |
+          # TODO - Run inno setup, passing it windows/exe-installer.iss
+        
+      - name: Zip EXE Installer
+        uses: papeloto/action-zip@v1
+        with:
+          files: build\windows\runner\Release\ dist\bluebubbles_installer_windows_x64.exe
+          dest: bluebubbles-installer-windows-x64.zip
+          recursive: false
+
+      - name: Upload EXE Installer
+        uses: softprops/action-gh-release@v0.1.14
+        with: 
+          files: bluebubbles-windows-x64.zip
