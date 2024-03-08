@@ -1,12 +1,10 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:flutter/cupertino.dart';
 
 const Color _iOSWavesColor = CupertinoDynamicColor.withBrightness(
   color: Color(0xFFFF1B30),

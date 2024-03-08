@@ -774,7 +774,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   }
 }
 
-class TextFieldComponent extends StatelessWidget {
+class TextFieldComponent extends StatefulWidget {
   const TextFieldComponent({
     super.key,
     required this.subjectTextController,
@@ -795,6 +795,47 @@ class TextFieldComponent extends StatelessWidget {
 
   final List<PlatformFile> initialAttachments;
 
+  @override
+  State<StatefulWidget> createState() => TextFieldComponentState();
+}
+
+
+class TextFieldComponentState extends State<TextFieldComponent> {
+  late final ConversationViewController? controller;
+  late final FocusNode? focusNode;
+  late final RecorderController? recorderController;
+  late final List<PlatformFile> initialAttachments;
+  late final MentionTextEditingController textController;
+  late final SpellCheckTextEditingController subjectTextController;
+  late final sendMessage;
+
+  late final ValueNotifier<bool> isRecordingNotifier;
+  TextFieldComponentState() : isRecordingNotifier = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    controller = widget.controller;
+    focusNode = widget.focusNode;
+    recorderController = widget.recorderController;
+    initialAttachments = widget.initialAttachments;
+    textController = widget.textController;
+    subjectTextController = widget.subjectTextController;
+    sendMessage = widget.sendMessage;
+
+    // add a listener to recorderController to update isRecordingNotifier
+    recorderController?.addListener(() {
+      isRecordingNotifier.value = recorderController?.isRecording ?? false;
+    });
+  }
+
+  @override
+  void dispose() {
+    // dispose of the ValueNotifier when the state is disposed
+    isRecordingNotifier.dispose();
+    super.dispose();
+  }
+
   bool get iOS => ss.settings.skin.value == Skins.iOS;
 
   bool get samsung => ss.settings.skin.value == Skins.Samsung;
@@ -803,8 +844,6 @@ class TextFieldComponent extends StatelessWidget {
 
   bool get isChatCreator => focusNode != null;
 
-  bool get isRecording => recorderController?.isRecording ?? false;
-
   @override
   Widget build(BuildContext context) {
     return Focus(
@@ -812,7 +851,10 @@ class TextFieldComponent extends StatelessWidget {
       onKeyEvent: (_, ev) => handleKey(_, ev, context, isChatCreator),
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
-        child: Container(
+        child: ValueListenableBuilder<bool>(
+        valueListenable: isRecordingNotifier,
+        builder: (context, isRecording, child) {
+        return Container(
           decoration: iOS
               ? BoxDecoration(
                   border: Border.fromBorderSide(BorderSide(
@@ -945,8 +987,8 @@ class TextFieldComponent extends StatelessWidget {
                     enabledBorder: InputBorder.none,
                     border: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    filled: isRecording,
-                    fillColor: isRecording ? Color(0xFF1C0606) : Colors.transparent,
+                    filled: isRecordingNotifier.value,
+                    fillColor: isRecordingNotifier.value ? Color(0xFF1C0606) : Colors.transparent,
                     hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     suffixIconConstraints: const BoxConstraints(minHeight: 0),
                     suffixIcon: samsung && !isChatCreator
@@ -1063,6 +1105,8 @@ class TextFieldComponent extends StatelessWidget {
               ],
             ),
           ),
+        );
+        }
         ),
       ),
     );
