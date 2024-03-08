@@ -10,6 +10,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_a
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/voice_message_recorder.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -19,6 +20,7 @@ import 'package:bluebubbles/utils/share.dart';
 import 'package:chunked_stream/chunked_stream.dart';
 import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
+import 'package:faker/faker.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
@@ -566,7 +568,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
               IconButton(
                 icon: Icon(
                   iOS
-                      ? CupertinoIcons.square_arrow_up_on_square_fill
+                      ? CupertinoIcons.add_circled_solid
                       : material
                           ? Icons.add_circle_outline
                           : Icons.add,
@@ -731,27 +733,12 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                                     ),
                                                   );
                                                 })
-                                            : AudioWaveforms(
-                                                size: Size(textFieldSize.width - (samsung ? 0 : 80), textFieldSize.height - 15),
-                                                recorderController: recorderController!,
-                                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                                                waveStyle: const WaveStyle(
-                                                  waveColor: Colors.white,
-                                                  waveCap: StrokeCap.square,
-                                                  spacing: 4.0,
-                                                  showBottom: true,
-                                                  extendWaveform: true,
-                                                  showMiddleLine: false,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  border: Border.fromBorderSide(BorderSide(
-                                                    color: context.theme.colorScheme.outline,
-                                                    width: 1,
-                                                  )),
-                                                  borderRadius: BorderRadius.circular(20),
-                                                  color: context.theme.colorScheme.properSurface,
-                                                ),
-                                              );
+                                            : VoiceMessageRecorder(
+                                              recorderController: recorderController,
+                                              textFieldSize: textFieldSize,
+                                              iOS: iOS,
+                                              samsung: samsung,
+                                        );
                                       }),
                               ))),
                     SendAnimation(parentController: controller),
@@ -816,6 +803,8 @@ class TextFieldComponent extends StatelessWidget {
 
   bool get isChatCreator => focusNode != null;
 
+  bool get isRecording => recorderController?.isRecording ?? false;
+
   @override
   Widget build(BuildContext context) {
     return Focus(
@@ -827,7 +816,7 @@ class TextFieldComponent extends StatelessWidget {
           decoration: iOS
               ? BoxDecoration(
                   border: Border.fromBorderSide(BorderSide(
-                    color: context.theme.colorScheme.properSurface,
+                    color: isRecording ? Color(0xFF1C0606) : context.theme.colorScheme.properSurface,
                     width: 1.5,
                   )),
                   borderRadius: BorderRadius.circular(20),
@@ -956,13 +945,14 @@ class TextFieldComponent extends StatelessWidget {
                     enabledBorder: InputBorder.none,
                     border: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    fillColor: Colors.transparent,
+                    filled: isRecording,
+                    fillColor: isRecording ? Color(0xFF1C0606) : Colors.transparent,
                     hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     suffixIconConstraints: const BoxConstraints(minHeight: 0),
                     suffixIcon: samsung && !isChatCreator
                         ? null
                         : Padding(
-                            padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
+                            padding: EdgeInsets.only(right: 5.0),
                             child: TextFieldSuffix(
                               subjectTextController: subjectTextController,
                               textController: textController,

@@ -115,9 +115,9 @@ android {
         release {
             productFlavors.joel.signingConfig signingConfigs.debug
             productFlavors.tanay.signingConfig signingConfigs.debug
-            productFlavors.alpha.signingConfig signingConfigs.release
-            productFlavors.beta.signingConfig signingConfigs.release
-            productFlavors.prod.signingConfig signingConfigs.release
+            productFlavors.alpha.signingConfig signingConfigs.debug
+            productFlavors.beta.signingConfig signingConfigs.debug
+            productFlavors.prod.signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }

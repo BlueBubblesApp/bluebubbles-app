@@ -1,5 +1,6 @@
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/components/custom/custom_waveform_icon.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
@@ -73,7 +74,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                       ? null
                       : !isChatCreator && !showRecording
                       ? context.theme.colorScheme.outline
-                      : context.theme.colorScheme.primary,
+                      : Color(0xFF7E1116),
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
                   maximumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
@@ -83,12 +84,12 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                 child: isLinuxArm64 ? const SizedBox(height: 40) :
                   !isChatCreator && !showRecording
                   ? CupertinoIconWrapper(icon: Icon(
-                    iOS ? CupertinoIcons.mic : Icons.mic_none,
-                    color: iOS ? context.theme.colorScheme.outline : context.theme.colorScheme.properOnSurface,
-                    size: 20,
+                    iOS ? WaveformIconData(0xe800) : Icons.mic_none,
+                    color: iOS ? Color(0xFFff6f61) : context.theme.colorScheme.properOnSurface,
+                    size: iOS ? 17 : 20,
                   )) : CupertinoIconWrapper(icon: Icon(
                     iOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
-                    color: iOS ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface,
+                    color: iOS ? Color(0xFFFF1B30) : context.theme.colorScheme.properOnSurface,
                     size: 15,
                   )),
                 onPressed: () async {
