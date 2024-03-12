@@ -47,10 +47,10 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
           children: [
             AudioWaveforms(
               size: Size(
-                  widget.textFieldSize.width - (widget.samsung ? 0 : 105),
+                  widget.textFieldSize.width - getWidth(widget.iOS, widget.samsung),
                   widget.textFieldSize.height - 15),
               recorderController: widget.recorderController!,
-              padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+              padding: EdgeInsets.symmetric(vertical: 5, horizontal: widget.iOS ? 10 : 15), // need extra spacing in case of iOS for recording duration
               waveStyle: WaveStyle(
                 waveColor: widget.iOS ? iOSWavesColor : Colors.white,
                 waveCap: StrokeCap.square,
@@ -72,7 +72,9 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
                     : context.theme.colorScheme.properSurface,
               ),
             ),
-            Center(
+            Visibility(
+              visible: widget.iOS,
+              child: Center(
               child: StreamBuilder<Duration>(
                 stream: recordingDurationStream,
                 builder: (context, snapshot) {
@@ -93,7 +95,19 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
                 },
               ),
             ),
+          ),
           ],
         ));
+  }
+
+  int getWidth(bool iOS, bool samsung){
+    if (samsung){
+      // width for samsung style
+      return 0;
+    } else if (iOS){
+      return 105;
+    }
+    // for material
+    return 80;
   }
 }
