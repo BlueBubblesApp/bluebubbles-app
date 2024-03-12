@@ -1,21 +1,12 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/colors/voice_message_recorder_colors.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-const Color _iOSWavesColor = CupertinoDynamicColor.withBrightness(
-  color: Color(0xFFFF1B30),
-  darkColor: Color(0xFFFF1B30),
-);
-
-const Color _iOSVoiceRecorderBackgroundColor =
-    CupertinoDynamicColor.withBrightness(
-  color: Color(0xFF1C0606),
-  darkColor: Color(0xFF1C0606),
-);
 
 class VoiceMessageRecorder extends StatefulWidget {
   const VoiceMessageRecorder({
@@ -61,7 +52,7 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
               recorderController: widget.recorderController!,
               padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
               waveStyle: WaveStyle(
-                waveColor: widget.iOS ? _iOSWavesColor : Colors.white,
+                waveColor: widget.iOS ? iOSWavesColor : Colors.white,
                 waveCap: StrokeCap.square,
                 spacing: 4.0,
                 showBottom: true,
@@ -71,13 +62,13 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
               decoration: BoxDecoration(
                 border: Border.fromBorderSide(BorderSide(
                   color: widget.iOS
-                      ? _iOSVoiceRecorderBackgroundColor
+                      ? CupertinoDynamicColor.resolve(iOSVoiceRecorderBackgroundColor, context)
                       : context.theme.colorScheme.outline,
                   width: 1,
                 )),
                 borderRadius: BorderRadius.circular(20),
                 color: widget.iOS
-                    ? _iOSVoiceRecorderBackgroundColor
+                    ? CupertinoDynamicColor.resolve(iOSVoiceRecorderBackgroundColor, context)
                     : context.theme.colorScheme.properSurface,
               ),
             ),

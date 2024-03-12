@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart'
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/colors/voice_message_recorder_colors.dart';
 import 'package:bluebubbles/app/wrappers/cupertino_icon_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -74,7 +75,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                       ? null
                       : !isChatCreator && !showRecording
                       ? context.theme.colorScheme.outline
-                      : Color(0xFF7E1116),
+                      : CupertinoDynamicColor.resolve(iOSStopIconBackground, context),
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
                   maximumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
@@ -85,11 +86,11 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   !isChatCreator && !showRecording
                   ? CupertinoIconWrapper(icon: Icon(
                     iOS ? WaveformIconData(0xe800) : Icons.mic_none,
-                    color: iOS ? Color(0xFFff6f61) : context.theme.colorScheme.properOnSurface,
+                    color: iOS ? CupertinoDynamicColor.resolve(iOSStopIconColor, context) : context.theme.colorScheme.properOnSurface,
                     size: iOS ? 17 : 20,
                   )) : CupertinoIconWrapper(icon: Icon(
                     iOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
-                    color: iOS ? Color(0xFFFF1B30) : context.theme.colorScheme.properOnSurface,
+                    color: iOS ? CupertinoDynamicColor.resolve(iOSWavesColor, context) : context.theme.colorScheme.properOnSurface,
                     size: 15,
                   )),
                 onPressed: () async {
