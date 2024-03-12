@@ -228,10 +228,10 @@ flutter_native_splash:
 
 # The following section is specific to Flutter.
 flutter:
-  # fonts:
-  # - family: AppleColorEmoji
-  #   fonts:
-  #     - asset: assets/fonts/AppleColorEmoji.ttf
+  fonts:
+  - family: WaveformIcon
+    fonts:
+      - asset: assets/fonts/WaveformIcon.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
