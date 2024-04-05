@@ -11,6 +11,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.da
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:dio/dio.dart';
@@ -72,7 +73,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
 
   final messageNode = FocusNode();
 
-  bool canCreateGroupChats = ss.canCreateGroupChatSync();
+  bool canCreateGroupChats = backend.canCreateGroupChats();
 
   @override
   void initState() {
@@ -147,8 +148,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   void addSelected(SelectedContact c) async {
     selectedContacts.add(c);
     try {
-      final response = await http.handleiMessageState(c.address);
-      c.iMessage.value = response.data["data"]["available"];
+      c.iMessage.value = await backend.handleiMessageState(c.address);
     } catch (_) {}
     addressController.text = "";
     findExistingChat();
@@ -450,59 +450,60 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
-                child: ToggleButtons(
-                  constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
-                  fillColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
-                  splashColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
-                  children: [
-                    const Row(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text("iMessage"),
-                        ),
-                        Icon(CupertinoIcons.chat_bubble, size: 16),
-                      ],
-                    ),
-                    const Row(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text("SMS Forwarding"),
-                        ),
-                        Icon(Icons.messenger_outline, size: 16),
-                      ],
-                    ),
-                  ],
-                  borderRadius: BorderRadius.circular(20),
-                  selectedBorderColor: context.theme.colorScheme.bubble(context, iMessage),
-                  selectedColor: context.theme.colorScheme.bubble(context, iMessage),
-                  isSelected: [iMessage, sms],
-                  onPressed: (index) async {
-                    selectedContacts.clear();
-                    addressController.text = "";
-                    if (index == 0) {
-                      setState(() {
-                        iMessage = true;
-                        sms = false;
-                        filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
-                      });
-                      await cm.setAllInactive();
-                      fakeController.value = null;
-                    } else {
-                      setState(() {
-                        iMessage = false;
-                        sms = true;
-                        filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
-                      });
-                      await cm.setAllInactive();
-                      fakeController.value = null;
-                    }
-                  },
+              if (backend.supportsSmsForwarding())
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
+                  child: ToggleButtons(
+                    constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
+                    fillColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
+                    splashColor: context.theme.colorScheme.bubble(context, iMessage).withOpacity(0.2),
+                    children: [
+                      const Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text("iMessage"),
+                          ),
+                          Icon(CupertinoIcons.chat_bubble, size: 16),
+                        ],
+                      ),
+                      const Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text("SMS Forwarding"),
+                          ),
+                          Icon(Icons.messenger_outline, size: 16),
+                        ],
+                      ),
+                    ],
+                    borderRadius: BorderRadius.circular(20),
+                    selectedBorderColor: context.theme.colorScheme.bubble(context, iMessage),
+                    selectedColor: context.theme.colorScheme.bubble(context, iMessage),
+                    isSelected: [iMessage, sms],
+                    onPressed: (index) async {
+                      selectedContacts.clear();
+                      addressController.text = "";
+                      if (index == 0) {
+                        setState(() {
+                          iMessage = true;
+                          sms = false;
+                          filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
+                        });
+                        await cm.setAllInactive();
+                        fakeController.value = null;
+                      } else {
+                        setState(() {
+                          iMessage = false;
+                          sms = true;
+                          filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
+                        });
+                        await cm.setAllInactive();
+                        fakeController.value = null;
+                      }
+                    },
+                  ),
                 ),
-              ),
               Expanded(
                 child: Theme(
                   data: context.theme.copyWith(
@@ -669,10 +670,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                           addressOnSubmitted();
                           final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
                           bool existsOnServer = false;
-                          if (chat != null) {
+                          if (chat != null && backend.getRemoteService() != null) {
                             // if we don't error, then the chat exists
                             try {
-                              await http.singleChat(chat.guid);
+                              await backend.getRemoteService()!.singleChat(chat.guid);
                               existsOnServer = true;
                             } catch (_) {}
                           }
@@ -739,9 +740,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     ),
                                   );
                                 });
-                            http.createChat(participants, textController.text, method).then((response) async {
+                            backend.createChat(participants, textController.text, method).then((newChat) async {
                               // Load the chat data and save it to the DB
-                              Chat newChat = Chat.fromMap(response.data["data"]);
                               newChat = newChat.save();
 
                               // Fetch the newly saved chat data from the DB
@@ -756,8 +756,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               chats.updateChat(newChat);
 
                               // Fetch the last message for the chat and save it.
-                              final messageRes = await http.chatMessages(newChat.guid, limit: 1);
-                              if (messageRes.data["data"].length > 0) {
+                              final messageRes = await backend.getRemoteService()?.chatMessages(newChat.guid, limit: 1);
+                              if (messageRes != null && messageRes.data["data"].length > 0) {
                                 final messages = (messageRes.data["data"] as List<dynamic>).map((e) => Message.fromMap(e)).toList();
                                 await Chat.bulkSyncMessages(newChat, messages);
                               }

@@ -400,6 +400,14 @@ class Chat {
     );
   }
 
+  void removeProfilePhoto() {
+    try {
+      File file = File(customAvatarPath!);
+      file.delete();
+    } catch (_) {}
+    customAvatarPath = null;
+  }
+
   /// Save a chat to the DB
   Chat save({
     bool updateMuteType = false,
@@ -655,9 +663,9 @@ class Chat {
       }
       if (privateMark && ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
         if (!hasUnread) {
-          http.markChatRead(guid);
+          backend.markRead(this);
         } else if (hasUnread) {
-          http.markChatUnread(guid);
+          backend.getRemoteService()?.markChatUnread(guid);
         }
       }
     } catch (_) {}
@@ -873,7 +881,7 @@ class Chat {
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
     if (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value) {
-      http.markChatRead(guid);
+      backend.markRead(this);
     }
     return this;
   }
@@ -883,7 +891,7 @@ class Chat {
     this.autoSendTypingIndicators = autoSendTypingIndicators;
     save(updateAutoSendTypingIndicators: true);
     if (!(autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
-      socket.sendMessage("stopped-typing", {"chatGuid": guid});
+      backend.stoppedTyping(this);
     }
     return this;
   }
@@ -1004,9 +1012,13 @@ class Chat {
     return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
+  String getIconPath(int responseLength) {
+    return "${fs.appDocDir.path}/avatars/${guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-$responseLength.jpg";
+  }
+
   static Future<void> getIcon(Chat c, {bool force = false}) async {
-    if (!force && c.lockChatIcon) return;
-    final response = await http.getChatIcon(c.guid).catchError((err) async {
+    if ((!force && c.lockChatIcon) || backend.getRemoteService() == null) return;
+    final response = await backend.getRemoteService()!.getChatIcon(c.guid).catchError((err) async {
       Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
       return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
     });
@@ -1018,7 +1030,7 @@ class Chat {
       }
     } else {
       Logger.debug("Got chat icon for chat ${c.getTitle()}");
-      File file = File("${fs.appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${response.data.length}.jpg");
+      File file = File(c.getIconPath(response.data.length));
       if (!(await file.exists())) {
         await file.create(recursive: true);
       }

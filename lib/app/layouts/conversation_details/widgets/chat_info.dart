@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
@@ -88,7 +89,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
     if (result != null) {
       chat.customAvatarPath = result;
     }
-    if (papi && ss.settings.enablePrivateAPI.value && result != null && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
+    if (papi && ss.settings.enablePrivateAPI.value && result != null && await backend.canUploadGroupPhotos()) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -110,8 +111,8 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
             );
           }
       );
-      final response = await http.setChatIcon(chat.guid, chat.customAvatarPath!);
-      if (response.statusCode == 200) {
+      final response = await backend.setChatIcon(chat);
+      if (response) {
         Get.back();
         showSnackbar("Notice", "Updated group photo successfully!");
       } else {
@@ -127,15 +128,11 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
       papi = await showMethodDialog("Group Icon Deletion Method");
     }
     if (papi == null) return;
-    try {
-      File file = File(chat.customAvatarPath!);
-      file.delete();
-    } catch (_) {}
-    chat.customAvatarPath = null;
+    chat.removeProfilePhoto();
     chat.save(updateCustomAvatarPath: true);
-    if (papi && ss.settings.enablePrivateAPI.value && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
-      final response = await http.deleteChatIcon(chat.guid);
-      if (response.statusCode == 200) {
+    if (papi && ss.settings.enablePrivateAPI.value && await backend.canUploadGroupPhotos()) {
+      final response = await backend.deleteChatIcon(chat);
+      if (response) {
         showSnackbar("Notice", "Deleted group photo successfully!");
       } else {
         showSnackbar("Error", "Failed to delete group photo!");
@@ -328,7 +325,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
               child: Row(
                 mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
                 children: intersperse(const SizedBox(width: 5), [
-                  if (!kIsWeb && !kIsDesktop && !chat.chatIdentifier!.startsWith("urn:biz")
+                  if (!kIsWeb && !kIsDesktop && !(chat.chatIdentifier?.startsWith("urn:biz") ?? false)
                       && ((chat.participants.first.contact?.phones.isNotEmpty ?? false)
                           || !chat.participants.first.address.contains("@")))
                     Expanded(

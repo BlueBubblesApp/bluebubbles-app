@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
+import 'package:image/image.dart' as img;
 
 class AvatarCrop extends StatefulWidget {
   final int? index;
@@ -23,7 +24,9 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
   Uint8List? _imageData;
   bool _isLoading = true;
 
-  void onCropped(Uint8List croppedData) async {
+  void onCropped(Uint8List sizedData) async {
+    var image = img.copyResize(img.decodeImage(sizedData)!, width: 570, height: 570);
+    var croppedData = img.encodePng(image);
     String appDocPath = fs.appDocDir.path;
     if (widget.index == null && widget.chat == null) {
       File file = File("$appDocPath/avatars/you/avatar-${croppedData.length}.jpg");

@@ -10,10 +10,10 @@ class SetupService extends GetxService {
     sync.skipEmptyChats = skipEmptyChats;
     sync.saveToDownloads = saveToDownloads;
     await sync.startFullSync();
-    await _finishSetup();
+    await finishSetup();
   }
 
-  Future<void> _finishSetup() async {
+  Future<void> finishSetup() async {
     ss.settings.finishedSetup.value = true;
     await ss.saveSettings();
     await NetworkTasks.onConnect();

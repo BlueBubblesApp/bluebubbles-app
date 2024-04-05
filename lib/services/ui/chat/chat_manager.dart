@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -95,13 +97,18 @@ class ChatManager extends GetxService {
 
   /// Fetch chat information from the server
   Future<Chat?> fetchChat(String chatGuid, {withParticipants = true, withLastMessage = false}) async {
-    Logger.info("Fetching full chat metadata from server.", tag: "Fetch-Chat");
+    Logger.info("Fetching full chat metadata from server. ${StackTrace.current}", tag: "Fetch-Chat");
+
+    var remote = backend.getRemoteService();
+    if (remote == null) {
+      return Chat.findOne(guid: chatGuid);
+    }
 
     final withQuery = <String>[];
     if (withParticipants) withQuery.add("participants");
     if (withLastMessage) withQuery.add("lastmessage");
 
-    final response = await http.singleChat(chatGuid, withQuery: withQuery.join(",")).catchError((err) {
+    final response = await remote.singleChat(chatGuid, withQuery: withQuery.join(",")).catchError((err) {
       if (err is! Response) {
         Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
         return err;
@@ -174,7 +181,7 @@ class ChatManager extends GetxService {
     if (withAttachment) withQuery.add("attachment");
     if (withHandle) withQuery.add("handle");
 
-    http.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit, sort: sort, after: after, before: before).then((response) {
+    backend.getRemoteService()?.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit, sort: sort, after: after, before: before).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;
@@ -184,7 +191,7 @@ class ChatManager extends GetxService {
         error = err.toString();
       }
       if (!completer.isCompleted) completer.completeError(error);
-    });
+    }) ?? completer.complete([]);
 
     return completer.future;
   }
