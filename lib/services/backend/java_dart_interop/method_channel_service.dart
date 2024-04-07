@@ -26,6 +26,7 @@ class MethodChannelService extends GetxService {
     background = headless;
     channel = const MethodChannel('com.bluebubbles.messaging');
     channel.setMethodCallHandler(_callHandler);
+    channel.invokeMethod("ready");
     if (!kIsWeb && !kIsDesktop && !headless) {
       try {
         if (ss.settings.colorsFromMedia.value) {
