@@ -36,7 +36,7 @@ class SocketService extends GetxService {
     super.onInit();
     startSocket();
     Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.wifi && event != ConnectivityResult.ethernet && http.originOverride != null) {
+      if (!event.contains(ConnectivityResult.wifi) && !event.contains(ConnectivityResult.ethernet) && http.originOverride != null) {
         Logger.info("Detected switch off wifi, removing localhost address...");
         http.originOverride = null;
       }

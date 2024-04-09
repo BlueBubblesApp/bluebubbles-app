@@ -10,19 +10,20 @@ import 'package:exif/exif.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/flutter_contacts.dart' as fc;
-import 'package:flutter_native_image/flutter_native_image.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:saver_gallery/saver_gallery.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:vcf_dart/vcf_dart.dart';
+import 'package:video_thumb_getter/index.dart';
+import 'package:video_thumb_getter/video_thumbnail.dart';
 
 AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<AttachmentsService>() : Get.put(AttachmentsService());
 
@@ -99,21 +100,25 @@ class AttachmentsService extends GetxService {
   }
 
   Contact parseAppleContact(String appleContact) {
-    final contact = fc.Contact.fromVCard(appleContact);
-    return Contact(
-      id: contact.id,
-      displayName: contact.displayName,
-      phones: contact.phones.map((e) => e.number).toList(),
-      emails: contact.emails.map((e) => e.address).toList(),
+    final contact = VCardStack.fromData(appleContact).items.first;
+    final c = Contact(
+      id: randomString(8),
+      displayName: contact.findFirstProperty(VConstants.formattedName)?.values.firstOrNull ?? "Unknown",
+      phones: contact.findFirstProperty(VConstants.phone)?.values ?? [],
+      emails: contact.findFirstProperty(VConstants.email)?.values ?? [],
       structuredName: StructuredName(
-        namePrefix: contact.name.prefix,
-        familyName: contact.name.last,
-        givenName: contact.name.first,
-        middleName: contact.name.middle,
-        nameSuffix: contact.name.suffix,
+        namePrefix: contact.findFirstProperty(VConstants.name)?.values.elementAtOrNull(3) ?? "",
+        familyName: contact.findFirstProperty(VConstants.name)?.values.elementAtOrNull(0) ?? "",
+        givenName: contact.findFirstProperty(VConstants.name)?.values.elementAtOrNull(1) ?? "",
+        middleName: contact.findFirstProperty(VConstants.name)?.values.elementAtOrNull(2) ?? "",
+        nameSuffix: contact.findFirstProperty(VConstants.name)?.values.elementAtOrNull(4) ?? "",
       ),
-      avatar: contact.photo ?? contact.thumbnail,
     );
+    try {
+      // contact_card.dart does real avatar parsing since no plugins can parse the photo correctly when the base64 is multiline
+      c.avatar = (isNullOrEmpty(contact.findFirstProperty(VConstants.photo)?.values.firstOrNull)! ? null : [0]) as Uint8List?;
+    } catch (_) {}
+    return c;
   }
 
   Future<void> saveToDisk(PlatformFile file, {bool isAutoDownload = false}) async {
@@ -216,9 +221,9 @@ class AttachmentsService extends GetxService {
       } else {
         try {
           if (file.path == null && file.bytes != null) {
-            await ImageGallerySaver.saveImage(file.bytes!, quality: 100, name: file.name);
+            await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidExistNotSave: false);
           } else {
-            await ImageGallerySaver.saveFile(file.path!);
+            await SaverGallery.saveFile(file: file.path!, name: file.name, androidExistNotSave: false);
           }
           return showSnackbar('Success', 'Saved attachment to gallery!');
         } catch (_) {
@@ -245,8 +250,8 @@ class AttachmentsService extends GetxService {
       if (!ss.settings.onlyWifiDownload.value) {
         return true;
       } else {
-        ConnectivityResult status = await (Connectivity().checkConnectivity());
-        return status == ConnectivityResult.wifi;
+        List<ConnectivityResult> status = await (Connectivity().checkConnectivity());
+        return status.contains(ConnectivityResult.wifi);
       }
     }
   }
@@ -273,36 +278,11 @@ class AttachmentsService extends GetxService {
     ), tag: attachment.guid);
   }
 
-  Future<Size> getImageSizing(String filePath, {ImageProperties? properties, Uint8List? bytes}) async {
+  Future<Size> getImageSizing(String filePath, Attachment attachment) async {
     try {
-      double width = 0;
-      double height = 0;
-      if (!kIsWeb && !kIsDesktop) {
-        ImageProperties size = properties ?? await FlutterNativeImage.getImageProperties(filePath);
-        width = (size.width ?? 0).toDouble();
-        height = (size.height ?? 0).toDouble();
-      }
-
-      if (width == 0 || height == 0) {
-        return await _getImageSizingFallback(filePath, bytes: bytes);
-      }
-
-      return Size(width, height);
-    } catch (_) {
-      return await _getImageSizingFallback(filePath, bytes: bytes);
-    }
-  }
-
-  static Future<Size> _getImageSizingFallback(String filePath, {Uint8List? bytes}) async {
-    try {
-      if (!kIsWeb) {
-        dynamic file = File(filePath);
-        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(FileInput(file)));
-        return Size(size.width.toDouble(), size.height.toDouble());
-      } else {
-        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(isg.MemoryInput(bytes!)));
-        return Size(size.width.toDouble(), size.height.toDouble());
-      }
+      dynamic file = File(filePath);
+      isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(FileInput(file)));
+      return Size(size.needRotate ? size.height.toDouble() : size.width.toDouble(), size.needRotate ? size.height.toDouble() : size.width.toDouble());
     } catch (ex) {
       return const Size(0, 0);
     }
@@ -346,15 +326,19 @@ class AttachmentsService extends GetxService {
         originalFile = File("$filePath.jpg");
       } else {
         try {
-          final file = await FlutterNativeImage.compressImage(
+          final file = await FlutterImageCompress.compressAndGetFile(
             filePath,
-            percentage: 100,
+            "$filePath.jpg",
+            format: CompressFormat.jpeg,
+            keepExif: true,
             quality: 100,
           );
+          if (file == null) {
+            Logger.error("Failed to compress HEIC!");
+            throw Exception();
+          }
           if (onlyFetchData) return await file.readAsBytes();
-          final cacheFile = File("$filePath.jpg");
-          final bytes = await file.readAsBytes();
-          originalFile = await cacheFile.writeAsBytes(bytes);
+          originalFile = File("$filePath.jpg");
         } catch (_) {}
       }
     }
@@ -402,18 +386,7 @@ class AttachmentsService extends GetxService {
         }
       } else if (attachment.mimeStart == "image") {
         try {
-          ImageProperties? props;
-          if (!kIsDesktop) {
-            props = await FlutterNativeImage.getImageProperties(filePath);
-            String orientation = props.orientation.toString();
-            if (orientation == '0') {
-              attachment.metadata!['orientation'] = 'landscape';
-            } else if (orientation == '1') {
-              attachment.metadata!['orientation'] = 'portrait';
-            }
-          }
-
-          Size size = await getImageSizing(filePath, properties: props);
+          Size size = await getImageSizing(filePath, attachment);
           if (size.width != 0 && size.height != 0) {
             attachment.width = size.width.toInt();
             attachment.height = size.height.toInt();

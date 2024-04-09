@@ -49,8 +49,13 @@ class NetworkTasks {
   }
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) async {
-    ConnectivityResult status = await (Connectivity().checkConnectivity());
-    if ((status != ConnectivityResult.wifi && status != ConnectivityResult.ethernet) || ss.settings.localhostPort.value == null || kIsWeb) {
+    if (ss.settings.localhostPort.value == null || kIsWeb) {
+      http.originOverride = null;
+      return;
+    }
+
+    List<ConnectivityResult> status = await (Connectivity().checkConnectivity());
+    if (!status.contains(ConnectivityResult.wifi) && !status.contains(ConnectivityResult.ethernet)) {
       http.originOverride = null;
       return;
     }
@@ -115,7 +120,7 @@ class NetworkTasks {
     Logger.debug("Falling back to port scanning");
     final wifiIP = await NetworkInfo().getWifiIP();
     if (wifiIP != null) {
-      final stream = HostScanner.scanDevicesForSinglePort(
+      final stream = HostScannerService.instance.scanDevicesForSinglePort(
         wifiIP.substring(0, wifiIP.lastIndexOf('.')),
         int.parse(ss.settings.localhostPort.value!),
       );
