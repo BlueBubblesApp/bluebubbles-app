@@ -72,8 +72,8 @@ class NetworkTasks {
             for (String scheme in schemes) {
               String addr = "$scheme://[$ip]:${ss.settings.localhostPort.value!}";
               try {
-                Response response = await http.dio.get(addr);
-                if (response.data.toString().contains("BlueBubbles")) {
+                Response response = await http.ping(customUrl: addr);
+                if (response.data.toString().contains("pong")) {
                   address = addr;
                   break;
                 }
@@ -89,8 +89,8 @@ class NetworkTasks {
             for (String scheme in schemes) {
               String addr = "$scheme://$ip:${ss.settings.localhostPort.value!}";
               try {
-                final response = await http.dio.get(addr);
-                if (response.data.toString().contains("BlueBubbles")) {
+                final response = await http.ping(customUrl: addr);
+                if (response.data.toString().contains("pong")) {
                   address = addr;
                   break;
                 }
@@ -133,8 +133,8 @@ class NetworkTasks {
           for (String scheme in schemes) {
             String addr = "$scheme://${h.address}:${ss.settings.localhostPort.value!}";
             try {
-              Response response = await http.dio.get(addr);
-              if (response.data.toString().contains("BlueBubbles")) {
+              Response response = await http.ping(customUrl: addr);
+              if (response.data.toString().contains("pong")) {
                 address = addr;
                 break;
               }

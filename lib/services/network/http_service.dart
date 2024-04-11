@@ -77,10 +77,10 @@ class HttpService extends GetxService {
   }
 
   /// Check ping time for server
-  Future<Response> ping({CancelToken? cancelToken}) async {
+  Future<Response> ping({String? customUrl, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$apiRoot/ping",
+          customUrl != null ? "$customUrl/api/v1/ping" : "$apiRoot/ping",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
