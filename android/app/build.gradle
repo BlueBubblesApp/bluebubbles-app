@@ -160,6 +160,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.0"
 
     // Socket IO
     implementation ('io.socket:socket.io-client:2.0.0') {
