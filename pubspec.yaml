@@ -37,7 +37,7 @@ dependencies:
   csslib: ^1.0.0
   cupertino_icons: ^1.0.6
   defer_pointer: ^0.0.2
-  desktop_drop: ^0.4.4 # pinned due to Kotlin version issue
+  # todo desktop_drop: ^0.4.4 # pinned due to Kotlin version issue
   desktop_webview_auth:
     git:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
