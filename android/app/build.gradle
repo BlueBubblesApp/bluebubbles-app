@@ -44,7 +44,7 @@ android {
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 23
-        targetSdkVersion 33
+        targetSdkVersion 34
         versionCode 20002000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
