@@ -29,7 +29,7 @@ class BlueBubblesFirebaseMessagingService: FirebaseMessagingService() {
                 override fun success(result: Any?) {
                     Log.d(Constants.logTag, "Got URL: $result - sending to Tasker...")
                     val intent = Intent()
-                    intent.setAction("net.dinglisch.android.taskerm.BB_SERVER_URL")
+                    intent.setAction("net.dinglisch.android.taskerm.BB_EVENT")
                     intent.putExtra("url", result.toString())
                     intent.putExtra("event", type)
                     intent.putExtras(bundleOf(*message.data.toList().toTypedArray()))
