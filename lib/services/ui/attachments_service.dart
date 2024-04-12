@@ -121,7 +121,7 @@ class AttachmentsService extends GetxService {
     return c;
   }
 
-  Future<void> saveToDisk(PlatformFile file, {bool isAutoDownload = false}) async {
+  Future<void> saveToDisk(PlatformFile file, {bool isAutoDownload = false, bool isDocument = false}) async {
     if (kIsWeb) {
       final content = base64.encode(file.bytes!);
       // create a fake download element and "click" it
@@ -214,21 +214,22 @@ class AttachmentsService extends GetxService {
 
       if (ss.settings.askWhereToSave.value && !isAutoDownload) {
         savePath = await FilePicker.platform.getDirectoryPath(
-          initialDirectory: "/storage/emulated/0/Download/",
+          initialDirectory: ss.settings.autoSaveDocsLocation.value,
           dialogTitle: 'Choose a location to save this file',
           lockParentWindow: true,
         );
       } else {
-        try {
-          if (file.path == null && file.bytes != null) {
-            await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidExistNotSave: false);
-          } else {
-            await SaverGallery.saveFile(file: file.path!, name: file.name, androidRelativePath: "Pictures", androidExistNotSave: false);
-          }
-          return showSnackbar('Success', 'Saved attachment to gallery!');
-        } catch (_) {
-          savePath = "/storage/emulated/0/Download/";
+        if (!isDocument) {
+          try {
+            if (file.path == null && file.bytes != null) {
+              await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+            } else {
+              await SaverGallery.saveFile(file: file.path!, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+            }
+            return showSnackbar('Success', 'Saved attachment to gallery!');
+          } catch (_) {}
         }
+        savePath = ss.settings.autoSaveDocsLocation.value;
       }
 
       if (savePath != null) {

@@ -668,7 +668,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       }
       if (content is PlatformFile) {
         popDetails();
-        await as.saveToDisk(content);
+        await as.saveToDisk(content, isDocument: part.attachments.first.mimeStart != "image" && part.attachments.first.mimeStart != "video");
       }
     } catch (ex, trace) {
       Logger.error(trace.toString());
@@ -778,7 +778,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           size: response.data.length,
           bytes: response.data,
         );
-        await as.saveToDisk(file);
+        await as.saveToDisk(file, isDocument: element.mimeStart != "image" && element.mimeStart != "video");
       }
       progress.value = 1;
       downloadingAttachments.value = false;

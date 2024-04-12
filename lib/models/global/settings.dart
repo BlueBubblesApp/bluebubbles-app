@@ -20,6 +20,8 @@ class Settings {
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
   final RxBool autoSave = false.obs;
+  final RxString autoSavePicsLocation = "Pictures".obs;
+  final RxString autoSaveDocsLocation = "/storage/emulated/0/Download/".obs;
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
   final RxBool showIncrementalSync = false.obs;
@@ -190,6 +192,8 @@ class Settings {
       'autoDownload': autoDownload.value,
       'onlyWifiDownload': onlyWifiDownload.value,
       'autoSave': autoSave.value,
+      'autoSavePicsLocation': autoSavePicsLocation.value,
+      'autoSaveDocsLocation': autoSaveDocsLocation.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
       'showIncrementalSync': showIncrementalSync.value,
@@ -310,6 +314,8 @@ class Settings {
     ss.settings.autoDownload.value = map['autoDownload'] ?? true;
     ss.settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     ss.settings.autoSave.value = map['autoSave'] ?? false;
+    ss.settings.autoSavePicsLocation.value = map['autoSavePicsLocation'] ?? "Pictures";
+    ss.settings.autoSaveDocsLocation.value = map['autoSaveDocsLocation'] ?? "/storage/emulated/0/Download/";
     ss.settings.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     ss.settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     ss.settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
@@ -427,6 +433,8 @@ class Settings {
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
+    s.autoSavePicsLocation.value = map['autoSavePicsLocation'] ?? "Pictures";
+    s.autoSaveDocsLocation.value = map['autoSaveDocsLocation'] ?? "/storage/emulated/0/Download/";
     s.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
