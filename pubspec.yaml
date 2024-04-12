@@ -48,6 +48,7 @@ dependencies:
     git:
       url: https://github.com/BlueBubblesApp/Disable-Battery-Optimizations.git
       ref: master
+  dlibphonenumber: ^1.1.12 # phone number parsing
   # todo linux
   dynamic_color: ^1.7.0
   easy_debounce: ^2.0.3
@@ -146,7 +147,6 @@ dependencies:
   path_provider: ^2.1.2 # no web support
   pdf: ^3.10.8
   permission_handler: ^11.3.1 # mobile only
-  phone_numbers_parser: ^8.2.1
   photo_manager: ^3.0.0-dev.5 # only mobile
   photo_view: ^0.14.0
   printing: ^5.12.0

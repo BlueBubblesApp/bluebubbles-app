@@ -808,8 +808,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
   @override
   void didChangeDependencies() async {
-    Locale myLocale = Localizations.localeOf(context);
-    countryCode = myLocale.countryCode;
+    countryCode = Get.deviceLocale?.countryCode;
     super.didChangeDependencies();
   }
 

@@ -535,7 +535,6 @@ class HttpService extends GetxService {
     Map<String, dynamic> params = {};
     if (after != null) params['after'] = after.millisecondsSinceEpoch;
     if (before != null) params['before'] = before.millisecondsSinceEpoch;
-    print(params);
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/message/count${updated ? "/updated" : onlyMe ? "/me" : ""}",
