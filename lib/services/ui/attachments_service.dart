@@ -305,7 +305,7 @@ class AttachmentsService extends GetxService {
       return thumbnail;
     } else {
       if (useCachedFile) {
-        await cachedFile.writeAsBytes(thumbnail!);
+        await cachedFile.writeAsBytes(thumbnail);
       }
       return thumbnail;
     }
