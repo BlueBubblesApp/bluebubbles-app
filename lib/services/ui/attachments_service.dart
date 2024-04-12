@@ -282,7 +282,7 @@ class AttachmentsService extends GetxService {
     try {
       dynamic file = File(filePath);
       isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(FileInput(file)));
-      return Size(size.needRotate ? size.height.toDouble() : size.width.toDouble(), size.needRotate ? size.height.toDouble() : size.width.toDouble());
+      return Size(size.needRotate ? size.height.toDouble() : size.width.toDouble(), size.needRotate ? size.width.toDouble() : size.height.toDouble());
     } catch (ex) {
       return const Size(0, 0);
     }
