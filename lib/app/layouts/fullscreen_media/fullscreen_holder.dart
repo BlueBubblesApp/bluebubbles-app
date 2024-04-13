@@ -36,11 +36,13 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
   late final PageController controller;
   late final messageService = widget.currentChat == null ? null : ms(widget.currentChat!.chat.guid);
   late List<Attachment> attachments = widget.currentChat == null
-      ? [attachment] : messageService!.struct.attachments.where((e) => e.mimeStart == "image" || e.mimeStart == "video").toList();
+      ? [attachment]
+      : messageService!.struct.attachments.where((e) => e.mimeStart == "image" || e.mimeStart == "video").toList();
 
   int currentIndex = 0;
   ScrollPhysics? physics;
   Attachment get attachment => widget.attachment;
+  bool showAppBar = true;
   // bool showOverlay = true;
   // StreamSubscription<Tuple2<String, dynamic>>? overlaySub;
 
@@ -75,7 +77,7 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
     // if (overlaySub != null) {
     //   overlaySub!.cancel();
     // }
-  
+
     super.dispose();
   }
 
@@ -84,44 +86,54 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
     return TitleBarWrapper(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
-          systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+          systemNavigationBarColor: ss.settings.immersiveMode.value
+              ? Colors.transparent
+              : context.theme.colorScheme.background, // navigation bar color
           systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
           statusBarColor: Colors.transparent, // status bar color
-          statusBarIconBrightness: ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+          statusBarIconBrightness:
+              ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
         ),
         child: Actions(
           actions: {
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
-            appBar: !iOS ? null : AppBar(
-              leading: XGestureDetector(
-                supportTouch: true,
-                onTap: !kIsDesktop ? null : (details) {
-                  Navigator.of(context).pop();
-                },
-                child: TextButton(
-                  child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                  onPressed: () {
-                    if (kIsDesktop) return;
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ),
-              leadingWidth: 75,
-              title: Text(
-                kIsWeb || !widget.showInteractions || widget.currentChat == null
-                    ? "Media"
-                    : "${currentIndex + 1} of ${attachments.length}",
-                style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)
-              ),
-              centerTitle: iOS,
-              iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
-              backgroundColor: context.theme.colorScheme.properSurface,
-              systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
-                  ? SystemUiOverlayStyle.light
-                  : SystemUiOverlayStyle.dark,
-            ),
+            appBar: !iOS || !showAppBar
+                // AppBar placeholder to prevent shifting of content when toggling the app bar
+                ? PreferredSize(preferredSize: const Size.fromHeight(56), child: Container())
+                : AppBar(
+                    leading: XGestureDetector(
+                      supportTouch: true,
+                      onTap: !kIsDesktop
+                          ? null
+                          : (details) {
+                              Navigator.of(context).pop();
+                            },
+                      child: TextButton(
+                        child: Text("Done",
+                            style:
+                                context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          if (kIsDesktop) return;
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ),
+                    leadingWidth: 75,
+                    title: Text(
+                        kIsWeb || !widget.showInteractions || widget.currentChat == null
+                            ? "Media"
+                            : "${currentIndex + 1} of ${attachments.length}",
+                        style: context.theme.textTheme.titleLarge!
+                            .copyWith(color: context.theme.colorScheme.properOnSurface)),
+                    centerTitle: iOS,
+                    iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+                        ? SystemUiOverlayStyle.light
+                        : SystemUiOverlayStyle.dark,
+                  ),
             backgroundColor: Colors.black,
             body: FocusScope(
               child: Focus(
@@ -129,9 +141,8 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                 autofocus: true,
                 onKeyEvent: (node, event) {
                   Logger.info(
-                    "Got device label ${event.deviceType.label}, physical key ${event.physicalKey.toString()}, logical key ${event.logicalKey.toString()}",
-                    tag: "RawKeyboardListener"
-                  );
+                      "Got device label ${event.deviceType.label}, physical key ${event.physicalKey.toString()}, logical key ${event.logicalKey.toString()}",
+                      tag: "RawKeyboardListener");
                   if (event.physicalKey.debugName == "Arrow Right") {
                     if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
                       controller.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
@@ -151,7 +162,10 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                   return KeyEventResult.ignored;
                 },
                 child: PageView.builder(
-                  physics: physics ?? (attachments.length == 1 ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics()),
+                  physics: physics ??
+                      (attachments.length == 1
+                          ? const NeverScrollableScrollPhysics()
+                          : ThemeSwitcher.getScrollPhysics()),
                   reverse: ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
                   itemCount: attachments.length,
                   onPageChanged: (int val) {
@@ -162,7 +176,8 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                   controller: controller,
                   itemBuilder: (BuildContext context, int index) {
                     final attachment = attachments[index];
-                    dynamic content = as.getContent(attachment, path: attachment.guid == null ? attachment.transferName : null);
+                    dynamic content =
+                        as.getContent(attachment, path: attachment.guid == null ? attachment.transferName : null);
                     final key = attachment.guid ?? attachment.transferName ?? randomString(8);
 
                     if (content is PlatformFile) {
@@ -178,7 +193,14 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                                 physics = p;
                               });
                             }
-                          }
+                          },
+                          onOverlayToggle: (show) {
+                            if (showAppBar != show) {
+                              setState(() {
+                                showAppBar = show;
+                              });
+                            }
+                          },
                         );
                       } else if (attachment.mimeStart == "video") {
                         return FullscreenVideo(
@@ -209,20 +231,22 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                               height: 40,
                               width: 40,
                               child: Center(
-                                child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined, size: 30)
-                              ),
+                                  child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined,
+                                      size: 30)),
                             ),
                             const SizedBox(height: 5),
                             Text(
                               (_content.mimeType ?? ""),
-                              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                              style: context.theme.textTheme.bodyLarge!
+                                  .copyWith(color: context.theme.colorScheme.properOnSurface),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 10),
                             Text(
                               _content.getFriendlySize(),
-                              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                              style: context.theme.textTheme.bodyMedium!
+                                  .copyWith(color: context.theme.colorScheme.properOnSurface),
                               maxLines: 1,
                             ),
                           ],
@@ -254,16 +278,17 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                                     child: _content.error.value
                                         ? Icon(iOS ? CupertinoIcons.arrow_clockwise : Icons.refresh, size: 30)
                                         : CircleProgressBar(
-                                          value: _content.progress.value?.toDouble() ?? 0,
-                                          backgroundColor: context.theme.colorScheme.outline,
-                                          foregroundColor: context.theme.colorScheme.properOnSurface,
-                                        ),
+                                            value: _content.progress.value?.toDouble() ?? 0,
+                                            backgroundColor: context.theme.colorScheme.outline,
+                                            foregroundColor: context.theme.colorScheme.properOnSurface,
+                                          ),
                                   ),
                                 ),
                                 _content.error.value ? const SizedBox(height: 10) : const SizedBox(height: 5),
                                 Text(
                                   _content.error.value ? "Failed to download!" : (_content.attachment.mimeType ?? ""),
-                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                  style: context.theme.textTheme.bodyLarge!
+                                      .copyWith(color: context.theme.colorScheme.properOnSurface),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 )
