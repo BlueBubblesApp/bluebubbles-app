@@ -1,4 +1,6 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
+import 'package:bluebubbles/app/layouts/contact_selector_view/contact_selector_view.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
@@ -17,10 +19,16 @@ import 'package:tuple/tuple.dart';
 
 class SearchResult {
   final String search;
+  final String chatGuidFilter;
   final String method;
   final List<Tuple2<Chat, Message>> results;
 
-  SearchResult({required this.search, required this.method, required this.results});
+  SearchResult({
+    required this.search,
+    required this.method,
+    required this.results,
+    this.chatGuidFilter = "",
+  });
 }
 
 class SearchView extends StatefulWidget {
@@ -37,13 +45,8 @@ class SearchViewState extends OptimizedState<SearchView> {
   final TextEditingController textEditingController = TextEditingController();
   final ScrollController scrollController = ScrollController();
   final FocusNode focusNode = FocusNode();
-  final ConversationListController fakeController = Get.put(
-    ConversationListController(
-      showArchivedChats: false,
-      showUnknownSenders: false
-    ),
-    tag: "search-view"
-  );
+  final ConversationListController fakeController =
+      Get.put(ConversationListController(showArchivedChats: false, showUnknownSenders: false), tag: "search-view");
   final List<SearchResult> pastSearches = [];
 
   SearchResult? currentSearch;
@@ -52,6 +55,8 @@ class SearchViewState extends OptimizedState<SearchView> {
   String? currentSearchTerm;
   bool local = false;
   bool network = true;
+  Chat? selectedChat;
+  Contact? selectedContact;
 
   Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
       ? context.theme.colorScheme.background
@@ -76,8 +81,11 @@ class SearchViewState extends OptimizedState<SearchView> {
     currentSearchTerm = newSearch;
 
     // If we've already searched for the results and there are none, set no results and return
-    if (pastSearches.firstWhereOrNull(
-            (e) => e.search == newSearch && e.method == (local ? "local" : "network"))?.results.isEmpty ?? false) {
+    if (pastSearches
+            .firstWhereOrNull((e) => e.search == newSearch && e.method == (local ? "local" : "network"))
+            ?.results
+            .isEmpty ??
+        false) {
       return setState(() {
         noResults = true;
       });
@@ -94,11 +102,18 @@ class SearchViewState extends OptimizedState<SearchView> {
     );
 
     if (local) {
-      final query = (messageBox.query(Message_.text.contains(currentSearchTerm!)
+      QueryBuilder<Message> qBuilder = (messageBox.query(Message_.text
+          .contains(currentSearchTerm!, caseSensitive: false)
           .and(Message_.associatedMessageGuid.isNull())
           .and(Message_.dateDeleted.isNull())
           .and(Message_.dateCreated.notNull()))
-        ..order(Message_.dateCreated, flags: Order.descending)).build();
+        ..order(Message_.dateCreated, flags: Order.descending));
+
+      if (selectedChat != null) {
+        qBuilder = qBuilder..link(Message_.chat, Chat_.guid.equals(selectedChat!.guid));
+      }
+
+      final query = qBuilder.build();
       query.limit = 50;
       final results = query.find();
       query.close();
@@ -118,19 +133,28 @@ class SearchViewState extends OptimizedState<SearchView> {
         search.results.add(Tuple2(element, messages[index]));
       });
     } else {
+      final whereClause = [
+        {
+          'statement': 'message.text LIKE :term',
+          'args': {'term': "%$currentSearchTerm%"}
+        },
+        {'statement': 'message.associated_message_guid IS NULL', 'args': null}
+      ];
+
+      if (selectedChat != null) {
+        whereClause.add({
+          'statement': 'chat.guid = :guid',
+          'args': {'guid': selectedChat!.guid}
+        });
+      }
+
       final results = await MessagesService.getMessages(
         limit: 50,
         withChats: true,
         withHandles: true,
         withAttachments: true,
         withChatParticipants: true,
-        where: [
-          {
-            'statement': 'message.text LIKE :term',
-            'args': {'term': "%$currentSearchTerm%"}
-          },
-          {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-        ],
+        where: whereClause,
       );
       // we query chats from DB so we can get contact names
       // ignore: prefer_const_constructors
@@ -184,12 +208,11 @@ class SearchViewState extends OptimizedState<SearchView> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      "Enter at least 3 characters to begin a search",
-                      style: context.theme.textTheme.bodySmall!
-                          .copyWith(color: context.theme.colorScheme.properOnSurface),
-                    )
-                  ),
+                      child: Text(
+                    "Enter at least 3 characters to begin a search",
+                    style:
+                        context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                  )),
                 ],
               ),
             ),
@@ -205,8 +228,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                 controller: textEditingController,
                 placeholder: "Enter a search term...",
                 style: context.theme.textTheme.bodyLarge,
-                placeholderStyle: context.theme.textTheme.bodyLarge!
-                    .copyWith(color: context.theme.colorScheme.outline),
+                placeholderStyle: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.outline),
                 cursorColor: context.theme.colorScheme.primary,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
@@ -215,53 +237,52 @@ class SearchViewState extends OptimizedState<SearchView> {
                 maxLines: 1,
                 prefix: Padding(
                   padding: const EdgeInsets.only(left: 15),
-                  child: Icon(
-                    ss.settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
-                    color: context.theme.colorScheme.outline
-                  ),
+                  child: Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
+                      color: context.theme.colorScheme.outline),
                 ),
                 suffix: Padding(
                   padding: const EdgeInsets.only(right: 15),
-                  child: !isSearching ? InkWell(
-                      child: Icon(Icons.arrow_forward, color: context.theme.colorScheme.primary),
-                      onTap: () {
-                        search(textEditingController.text);
-                      }
-                    ) : Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: ss.settings.skin.value == Skins.iOS
-                        ? Theme(
-                            data: ThemeData(
-                              cupertinoOverrideTheme: CupertinoThemeData(
-                                brightness: ThemeData.estimateBrightnessForColor(
-                                  context.theme.colorScheme.background)
-                              ),
-                            ),
-                            child: const CupertinoActivityIndicator(),
-                          ) : Container(
-                            height: 20,
-                            width: 20,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                              ),
-                            ),
-                          ),
-                      ),
+                  child: !isSearching
+                      ? InkWell(
+                          child: Icon(Icons.arrow_forward, color: context.theme.colorScheme.primary),
+                          onTap: () {
+                            search(textEditingController.text);
+                          })
+                      : Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: ss.settings.skin.value == Skins.iOS
+                              ? Theme(
+                                  data: ThemeData(
+                                    cupertinoOverrideTheme: CupertinoThemeData(
+                                        brightness:
+                                            ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background)),
+                                  ),
+                                  child: const CupertinoActivityIndicator(),
+                                )
+                              : Container(
+                                  height: 20,
+                                  width: 20,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                    ),
+                                  ),
+                                ),
+                        ),
                 ),
                 suffixMode: OverlayVisibilityMode.editing,
               ),
             ),
             if (!kIsWeb)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
                 child: ToggleButtons(
                   constraints: BoxConstraints(minWidth: (ns.width(context) - 35) / 2),
                   fillColor: context.theme.colorScheme.primary.withOpacity(0.2),
                   splashColor: context.theme.colorScheme.primary.withOpacity(0.2),
                   children: [
-                    const  Row(
+                    const Row(
                       children: [
                         Padding(
                           padding: EdgeInsets.all(8.0),
@@ -304,12 +325,115 @@ class SearchViewState extends OptimizedState<SearchView> {
                   },
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: (ns.width(context) - 38) / 2),
+                      child: RawChip(
+                        tapEnabled: true,
+                        deleteIcon: const Icon(Icons.close, size: 16),
+                        side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.1)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        avatar: CircleAvatar(
+                          backgroundColor: context.theme.colorScheme.primaryContainer,
+                          child: Padding(
+                              padding: const EdgeInsets.only(left: 1, top: 1),
+                              child: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                color: context.theme.colorScheme.primary,
+                                size: 12,
+                              )),
+                        ),
+                        label: selectedChat != null
+                            ? Text(selectedChat!.getTitle(),
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+                                overflow: TextOverflow.ellipsis)
+                            : const Text('Filter by Chat',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+                        onDeleted: selectedChat == null
+                            ? null
+                            : () {
+                                setState(() {
+                                  selectedChat = null;
+                                  isSearching = false;
+                                  noResults = false;
+                                  currentSearch = null;
+                                });
+                              },
+                        onPressed: () {
+                          // Push a route that allows the user to select a chat
+                          ns.push(context, ChatSelectorView(
+                            onSelect: (chat) {
+                              setState(() {
+                                selectedChat = chat;
+                                isSearching = false;
+                                noResults = false;
+                                currentSearch = null;
+                              });
+                            },
+                          ));
+                        },
+                      )),
+                  ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: (ns.width(context) - 38) / 2),
+                      child: Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: RawChip(
+                            tapEnabled: true,
+                            deleteIcon: const Icon(Icons.close, size: 16),
+                            side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.1)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            avatar: CircleAvatar(
+                              backgroundColor: context.theme.colorScheme.primaryContainer,
+                              child: Padding(
+                                  padding: const EdgeInsets.only(left: 1),
+                                  child: Icon(
+                                    Icons.person_2_outlined,
+                                    color: context.theme.colorScheme.primary,
+                                    size: 12,
+                                  )),
+                            ),
+                            label: selectedContact != null
+                                ? Text(selectedContact!.displayName,
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+                                    overflow: TextOverflow.ellipsis)
+                                : const Text('Filter by Contact',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+                            onDeleted: selectedContact == null
+                                ? null
+                                : () {
+                                    setState(() {
+                                      selectedContact = null;
+                                      isSearching = false;
+                                      noResults = false;
+                                      currentSearch = null;
+                                    });
+                                  },
+                            onPressed: () {
+                              // Push a route that allows the user to select a chat
+                              ns.push(context, ContactSelectorView(
+                                onSelect: (contact) {
+                                  setState(() {
+                                    selectedContact = contact;
+                                    isSearching = false;
+                                    noResults = false;
+                                    currentSearch = null;
+                                  });
+                                },
+                              ));
+                            },
+                          )))
+                ],
+              ),
+            ),
             Divider(color: context.theme.colorScheme.outline),
             if (!isSearching && noResults)
               Padding(
-                padding: const EdgeInsets.only(top: 25.0),
-                child: Center(child: Text("No results found!", style: context.theme.textTheme.bodyLarge))
-              ),
+                  padding: const EdgeInsets.only(top: 25.0),
+                  child: Center(child: Text("No results found!", style: context.theme.textTheme.bodyLarge))),
           ]),
         ),
         if (!isSearching && currentSearch != null)
@@ -348,25 +472,27 @@ class SearchViewState extends OptimizedState<SearchView> {
                   // Add the search term (bolded with color)
                   spans.add(
                     TextSpan(
-                      text: subText.substring(termStart, termEnd),
-                      style: subtitleStyle.apply(color: context.theme.colorScheme.primary, fontWeightDelta: 2)
-                    ),
+                        text: subText.substring(termStart, termEnd),
+                        style: subtitleStyle.apply(color: context.theme.colorScheme.primary, fontWeightDelta: 2)),
                   );
 
                   // Add the ending string
-                  spans.add(TextSpan(text: subText.substring(termEnd, subText.length).trimRight(), style: subtitleStyle));
+                  spans.add(
+                      TextSpan(text: subText.substring(termEnd, subText.length).trimRight(), style: subtitleStyle));
                 } else {
                   spans.add(TextSpan(text: message.text, style: subtitleStyle));
                 }
 
                 return Container(
                   decoration: BoxDecoration(
-                    border: !ss.settings.hideDividers.value ? Border(
-                      bottom: BorderSide(
-                        color: context.theme.colorScheme.background.oppositeLightenOrDarken(15),
-                        width: 0.5,
-                      ),
-                    ) : null,
+                    border: !ss.settings.hideDividers.value
+                        ? Border(
+                            bottom: BorderSide(
+                              color: context.theme.colorScheme.background.oppositeLightenOrDarken(15),
+                              width: 0.5,
+                            ),
+                          )
+                        : null,
                   ),
                   child: ListTile(
                     mouseCursor: SystemMouseCursors.click,
@@ -384,7 +510,11 @@ class SearchViewState extends OptimizedState<SearchView> {
                         children: spans,
                       ),
                       overflow: TextOverflow.ellipsis,
-                      maxLines: ss.settings.denseChatTiles.value ? 1 : material ? 3 : 2,
+                      maxLines: ss.settings.denseChatTiles.value
+                          ? 1
+                          : material
+                              ? 3
+                              : 2,
                     ),
                     leading: ContactAvatarGroupWidget(
                       chat: chat,
