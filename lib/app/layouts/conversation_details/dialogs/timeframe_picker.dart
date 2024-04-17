@@ -46,7 +46,7 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
                 Container(
                   constraints: const BoxConstraints(minWidth: 20),
                 ),
-                Text(buildFullDate(tmpDate, includeTime: entry.value < 24, useTodayYesterday: useTodayYesterday),
+                Text(buildFullDate(tmpDate, includeTime: tmpDate.isToday(), useTodayYesterday: useTodayYesterday),
                     style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.secondary)),
               ],
             )));

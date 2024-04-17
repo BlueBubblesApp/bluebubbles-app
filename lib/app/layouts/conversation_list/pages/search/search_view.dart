@@ -708,8 +708,8 @@ class SearchViewState extends OptimizedState<SearchView> {
                                   ),
                                 ),
                                 label: sinceDate != null
-                                    // Show the date in the format of the user's locale (YYYY-MM-DD HH:MM:SS)
-                                    ? Text("Since ${buildDate(sinceDate!)}",
+                                    ? Text(
+                                        "Since ${buildFullDate(sinceDate!, includeTime: sinceDate!.isToday(), useTodayYesterday: true)}",
                                         style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.normal,
