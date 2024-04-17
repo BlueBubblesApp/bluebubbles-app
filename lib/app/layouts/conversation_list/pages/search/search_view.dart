@@ -148,7 +148,7 @@ class SearchViewState extends OptimizedState<SearchView> {
     } else {
       final whereClause = [
         {
-          'statement': 'message.text LIKE :term',
+          'statement': 'message.text LIKE :term COLLATE NOCASE',
           'args': {'term': "%$currentSearchTerm%"}
         },
         {'statement': 'message.associated_message_guid IS NULL', 'args': null}
@@ -215,6 +215,8 @@ class SearchViewState extends OptimizedState<SearchView> {
     if (selectedHandle != null) filterCount++;
     if (isFromMe) filterCount++;
     if (sinceDate != null) filterCount++;
+
+    bool showSenderFilter = !isFromMe && (selectedChat?.isGroup ?? true);
 
     return PopScope(
         canPop: false,
@@ -622,7 +624,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                                   ));
                                 },
                               ),
-                              if (!isFromMe)
+                              if (showSenderFilter)
                                 RawChip(
                                   tapEnabled: true,
                                   deleteIcon: const Icon(Icons.close, size: 16),
@@ -660,16 +662,19 @@ class SearchViewState extends OptimizedState<SearchView> {
                                         },
                                   onPressed: () {
                                     // Push a route that allows the user to select a chat
-                                    ns.push(context, HandleSelectorView(
-                                      onSelect: (handle) {
-                                        setState(() {
-                                          selectedHandle = handle;
-                                          isSearching = false;
-                                          noResults = false;
-                                          currentSearch = null;
-                                        });
-                                      },
-                                    ));
+                                    ns.push(
+                                        context,
+                                        HandleSelectorView(
+                                          forChat: selectedChat,
+                                          onSelect: (handle) {
+                                            setState(() {
+                                              selectedHandle = handle;
+                                              isSearching = false;
+                                              noResults = false;
+                                              currentSearch = null;
+                                            });
+                                          },
+                                        ));
                                   },
                                 ),
                               if (selectedHandle == null)

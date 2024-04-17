@@ -19,9 +19,11 @@ class HandleSelectorView extends StatefulWidget {
   const HandleSelectorView({
     super.key,
     required this.onSelect,
+    this.forChat,
   });
 
   final void Function(Handle) onSelect;
+  final Chat? forChat;
 
   @override
   HandleSelectorViewState createState() => HandleSelectorViewState();
@@ -80,6 +82,16 @@ class HandleSelectorViewState extends OptimizedState<HandleSelectorView> {
 
   Future<void> loadHandles() async {
     handles = handleBox.getAll();
+
+    // Sort alphabetically
+    handles.sort((a, b) => a.displayName.compareTo(b.displayName));
+
+    // If there is a chat & participants, filter by participants
+    if (widget.forChat != null && widget.forChat!.participants.isNotEmpty) {
+      final addresses = widget.forChat!.participants.map((e) => e.address);
+      handles = handles.where((element) => addresses.contains(element.address)).toList();
+    }
+
     loadedAllHandles.complete();
   }
 
