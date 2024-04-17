@@ -111,9 +111,9 @@ class SearchViewState extends OptimizedState<SearchView> {
           .and(Message_.dateCreated.notNull());
 
       if (isFromMe) {
-        condition = condition..and(Message_.isFromMe.equals(true));
+        condition = condition.and(Message_.isFromMe.equals(true));
       } else if (selectedHandle != null) {
-        condition = condition.and(Message_.handleId.equals(selectedHandle!.id!));
+        condition = condition.and(Message_.handleId.equals(selectedHandle!.originalROWID!));
       }
 
       if (sinceDate != null) {
