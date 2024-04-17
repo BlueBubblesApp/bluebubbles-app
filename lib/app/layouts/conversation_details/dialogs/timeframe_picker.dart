@@ -2,8 +2,78 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool showHourPicker = true, bool presetsAhead = false}) async {
+Map<String, int> timeframes = {"1 Hour": 1, "1 Day": 24, "1 Week": 168, "1 Month": 720};
+
+Future<DateTime?> showTimeframePicker(String title, BuildContext context,
+    {bool showHourPicker = true, bool presetsAhead = false, Map<String, int>? customTimeframes}) async {
   DateTime? finalDate;
+
+  // Create a list of row widgets where the left side of the row is the "relative" timeframe
+  // and the right side is the raw date range
+  List<Widget> selections = (customTimeframes ?? timeframes).entries.map((entry) {
+    late DateTime tmpDate;
+
+    if (presetsAhead) {
+      tmpDate = DateTime.now().toLocal().add(Duration(hours: entry.value));
+    } else {
+      tmpDate = DateTime.now().toLocal().subtract(Duration(hours: entry.value));
+    }
+
+    return InkWell(
+        onTap: () {
+          finalDate = tmpDate;
+          Navigator.of(context).pop();
+        },
+        child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
+            decoration:
+                BoxDecoration(border: Border(bottom: BorderSide(color: context.theme.dividerColor.withOpacity(0.2)))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(entry.key, style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w400)),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 20),
+                ),
+                Text(buildFullDate(tmpDate, includeTime: entry.value < 24),
+                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.secondary)),
+              ],
+            )));
+  }).toList();
+
+  // Add a custom date picker to the selections list
+  selections.add(InkWell(
+      onTap: () async {
+        finalDate = await showDatePicker(
+            context: context,
+            initialDate: DateTime.now().toLocal(),
+            firstDate: DateTime.now().toLocal().subtract(const Duration(days: 365)),
+            lastDate: DateTime.now().toLocal().add(const Duration(days: 365)));
+        if (showHourPicker && finalDate != null) {
+          final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+          if (messageTime != null) {
+            finalDate =
+                DateTime(finalDate!.year, finalDate!.month, finalDate!.day, messageTime.hour, messageTime.minute);
+            Navigator.of(context).pop();
+          } else {
+            finalDate = null;
+          }
+        }
+      },
+      child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Custom Date", style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w400)),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: context.theme.colorScheme.secondary,
+              )
+            ],
+          ))));
+
   await showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -12,82 +82,14 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context, {bool 
           title,
           style: context.theme.textTheme.titleLarge,
         ),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: [
-              TextButton(
-                child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text("1 Hour", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                onPressed: () {
-                  if (presetsAhead) {
-                    finalDate = DateTime.now().toLocal().add(const Duration(hours: 1));
-                  } else {
-                    finalDate = DateTime.now().toLocal().subtract(const Duration(hours: 1));
-                  }
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text("1 Day", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                onPressed: () {
-                  if (presetsAhead) {
-                    finalDate = DateTime.now().toLocal().add(const Duration(days: 1));
-                  } else {
-                    finalDate = DateTime.now().toLocal().subtract(const Duration(days: 1));
-                  }
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text("1 Week", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                onPressed: () {
-                  if (presetsAhead) {
-                    finalDate = DateTime.now().toLocal().add(const Duration(days: 7));
-                  } else {
-                    finalDate = DateTime.now().toLocal().subtract(const Duration(days: 7));
-                  }
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text("1 Month", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                onPressed: () {
-                  if (presetsAhead) {
-                    finalDate = DateTime.now().toLocal().add(const Duration(days: 30));
-                  } else {
-                    finalDate = DateTime.now().toLocal().subtract(const Duration(days: 30));
-                  }
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text("Custom", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                onPressed: () async {
-                  finalDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now().toLocal(),
-                      firstDate: DateTime.now().toLocal().subtract(const Duration(days: 365)),
-                      lastDate: DateTime.now().toLocal().add(const Duration(days: 365)));
-                  if (showHourPicker && finalDate != null) {
-                    final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                    if (messageTime != null) {
-                      finalDate = DateTime(finalDate!.year, finalDate!.month, finalDate!.day, messageTime.hour, messageTime.minute);
-                    } else {
-                      finalDate = null;
-                    }
-                  }
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          )
-        ]),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+        content: Scrollbar(
+            thumbVisibility: true,
+            radius: const Radius.circular(10.0),
+            child: SingleChildScrollView(
+                child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: selections)))),
         backgroundColor: context.theme.colorScheme.properSurface,
       );
     },
