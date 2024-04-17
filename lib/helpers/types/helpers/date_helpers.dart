@@ -72,11 +72,35 @@ String buildTime(DateTime? dateTime) {
   return time;
 }
 
-String buildFullDate(DateTime time, {bool includeTime = true}) {
+String buildFullDate(DateTime time, {bool includeTime = true, bool useTodayYesterday = true}) {
   if (time.millisecondsSinceEpoch == 0) return "";
+
+  late String date;
   if (includeTime) {
-    return DateFormat.yMd().add_jm().format(time);
+    if (useTodayYesterday) {
+      if (time.isToday()) {
+        date = "Today, ${DateFormat.jm().format(time)}";
+      } else if (time.isYesterday()) {
+        date = "Yesterday, ${DateFormat.jm().format(time)}";
+      } else {
+        date = DateFormat.yMd().add_jm().format(time);
+      }
+    } else {
+      date = DateFormat.yMd().add_jm().format(time);
+    }
   } else {
-    return DateFormat.yMd().format(time);
+    if (useTodayYesterday) {
+      if (time.isToday()) {
+        date = "Today";
+      } else if (time.isYesterday()) {
+        date = "Yesterday";
+      } else {
+        date = DateFormat.yMd().format(time);
+      }
+    } else {
+      date = DateFormat.yMd().format(time);
+    }
   }
+
+  return date;
 }

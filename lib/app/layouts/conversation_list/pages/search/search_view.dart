@@ -111,16 +111,14 @@ class SearchViewState extends OptimizedState<SearchView> {
           .and(Message_.dateCreated.notNull());
 
       if (isFromMe) {
-        condition.and(Message_.isFromMe.equals(true));
+        condition = condition..and(Message_.isFromMe.equals(true));
       } else if (selectedHandle != null) {
-        condition.and(Message_.handleId.equals(selectedHandle!.id!));
+        condition = condition.and(Message_.handleId.equals(selectedHandle!.id!));
       }
 
       if (sinceDate != null) {
-        condition.and(Message_.dateCreated.greaterOrEqual(sinceDate!.millisecondsSinceEpoch));
+        condition = condition.and(Message_.dateCreated.greaterOrEqual(sinceDate!.millisecondsSinceEpoch));
       }
-
-      print(sinceDate);
 
       QueryBuilder<Message> qBuilder = messageBox.query(condition);
 
@@ -140,7 +138,6 @@ class SearchViewState extends OptimizedState<SearchView> {
         e.realAttachments;
         e.fetchAssociatedMessages();
         e.handle = e.getHandle();
-        print("Comparing: $sinceDate to ${e.dateCreated}");
         return e;
       }).toList();
       chats = results.map((e) => e.chat.target!).toList();
@@ -734,14 +731,17 @@ class SearchViewState extends OptimizedState<SearchView> {
                                         });
                                       },
                                 onPressed: () async {
-                                  sinceDate = await showTimeframePicker("Since When?", context, customTimeframes: {
-                                    "1 Hour": 1,
-                                    "1 Day": 24,
-                                    "1 Week": 168,
-                                    "1 Month": 720,
-                                    "6 Months": 4320,
-                                    "1 Year": 8760,
-                                  });
+                                  sinceDate = await showTimeframePicker("Since When?", context,
+                                      customTimeframes: {
+                                        "1 Hour": 1,
+                                        "1 Day": 24,
+                                        "1 Week": 168,
+                                        "1 Month": 720,
+                                        "6 Months": 4320,
+                                        "1 Year": 8760,
+                                      },
+                                      selectionSuffix: "Ago",
+                                      useTodayYesterday: true);
                                   setState(() {
                                     isSearching = false;
                                     noResults = false;
