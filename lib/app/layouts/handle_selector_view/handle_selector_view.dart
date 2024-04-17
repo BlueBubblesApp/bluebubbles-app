@@ -83,8 +83,16 @@ class HandleSelectorViewState extends OptimizedState<HandleSelectorView> {
   Future<void> loadHandles() async {
     handles = handleBox.getAll();
 
-    // Sort alphabetically
-    handles.sort((a, b) => a.displayName.compareTo(b.displayName));
+    // Sort alphabetically, prioritizing handles with contact associations
+    handles.sort((a, b) {
+      if (a.contact != null && b.contact == null) {
+        return -1;
+      } else if (a.contact == null && b.contact != null) {
+        return 1;
+      } else {
+        return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+      }
+    });
 
     // If there is a chat & participants, filter by participants
     if (widget.forChat != null && widget.forChat!.participants.isNotEmpty) {
