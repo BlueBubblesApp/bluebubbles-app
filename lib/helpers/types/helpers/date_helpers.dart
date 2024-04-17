@@ -12,9 +12,7 @@ DateTime? parseDate(dynamic value) {
 
 String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = ss.settings.use24HrFormat.value
-      ? DateFormat.Hm().format(dateTime)
-      : DateFormat.jm().format(dateTime);
+  String time = ss.settings.use24HrFormat.value ? DateFormat.Hm().format(dateTime) : DateFormat.jm().format(dateTime);
   String date;
   if (ss.settings.skin.value != Skins.iOS && DateTime.now().difference(dateTime.toLocal()).inMinutes < 1) {
     date = "Just Now";
@@ -25,7 +23,8 @@ String buildDate(DateTime? dateTime) {
   } else if (ss.settings.skin.value == Skins.iOS && dateTime.isYesterday()) {
     date = "Yesterday";
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
-    date = "${DateFormat(ss.settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime)}${ss.settings.skin.value != Skins.iOS ? " $time" : ""}";
+    date =
+        "${DateFormat(ss.settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime)}${ss.settings.skin.value != Skins.iOS ? " $time" : ""}";
   } else if (ss.settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
     date = "${DateFormat.MMMd().format(dateTime)}, $time";
   } else if (ss.settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
@@ -69,13 +68,15 @@ String buildSeparatorDateSamsung(DateTime dateTime) {
 
 String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = ss.settings.use24HrFormat.value
-      ? DateFormat.Hm().format(dateTime)
-      : DateFormat.jm().format(dateTime);
+  String time = ss.settings.use24HrFormat.value ? DateFormat.Hm().format(dateTime) : DateFormat.jm().format(dateTime);
   return time;
 }
 
-String buildFullDate(DateTime time) {
-  return DateFormat.yMd().add_jm().format(time);
+String buildFullDate(DateTime time, {bool includeTime = true}) {
+  if (time.millisecondsSinceEpoch == 0) return "";
+  if (includeTime) {
+    return DateFormat.yMd().add_jm().format(time);
+  } else {
+    return DateFormat.yMd().format(time);
+  }
 }
-
