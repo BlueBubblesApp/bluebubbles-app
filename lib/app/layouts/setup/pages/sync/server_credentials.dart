@@ -119,13 +119,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                           try {
                                             await http.dio.get(usableProjects[index]['serverUrl']);
                                             reachable[index].value = true;
-                                            if (index == 0 && usableProjects.length == 1) {
-                                              requestPassword(context, usableProjects[index]['serverUrl'], connect);
-                                            }
                                           } catch (e) {
                                             reachable[index].value = false;
-                                          } finally {
-                                            connected[index].value = true;
                                           }
                                         });
                                       }
@@ -253,13 +248,25 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                       googlePicture = response.data['picture'];
                       fetchingFirebase = true;
                     });
-                    fetchFirebaseProjects(token!).then((List<Map> value) {
-                      setState(() {
-                        usableProjects = value;
-                        connected = List.generate(usableProjects.length, (i) => false.obs);
-                        reachable = List.generate(usableProjects.length, (i) => false.obs);
-                        fetchingFirebase = false;
-                      });
+                    fetchFirebaseProjects(token!).then((List<Map> value) async {
+                      if (value.length == 1) {
+                        setState(() {
+                          fetchingFirebase = false;
+                        });
+                        try {
+                          await http.dio.get(value.first['serverUrl']);
+                          await requestPassword(context, value.first['serverUrl'], connect);
+                        } catch (e) {
+                          showSnackbar("Error", "Found Firebase project but URL is not reachable!");
+                        }
+                      } else {
+                        setState(() {
+                          usableProjects = value;
+                          connected = List.generate(usableProjects.length, (i) => false.obs);
+                          reachable = List.generate(usableProjects.length, (i) => false.obs);
+                          fetchingFirebase = false;
+                        });
+                      }
                     });
                   }
                 },

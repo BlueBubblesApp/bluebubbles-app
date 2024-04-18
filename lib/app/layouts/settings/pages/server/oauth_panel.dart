@@ -1,12 +1,7 @@
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/helpers/network/network_helpers.dart';
-import 'package:bluebubbles/helpers/ui/oauth_helpers.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/services/backend/settings/settings_service.dart';
-import 'package:bluebubbles/services/network/http_service.dart';
-import 'package:bluebubbles/services/network/socket_service.dart';
-import 'package:bluebubbles/services/ui/navigator/navigator_service.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -210,16 +205,8 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                                             try {
                                               await http.dio.get(usableProjects[index]['serverUrl']);
                                               reachable[index].value = true;
-                                              if (index == 0 && usableProjects.length == 1) {
-                                                await requestPassword(context, usableProjects[index]['serverUrl'], connect);
-                                                if (error == "") {
-                                                  Navigator.of(context).pop();
-                                                }
-                                              }
                                             } catch (e) {
                                               reachable[index].value = false;
-                                            } finally {
-                                              connected[index].value = true;
                                             }
                                           });
                                         }
@@ -351,13 +338,28 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                         googlePicture = response.data['picture'];
                         fetchingFirebase = true;
                       });
-                      fetchFirebaseProjects(token!).then((List<Map> value) {
-                        setState(() {
-                          usableProjects = value;
-                          connected = List.generate(usableProjects.length, (i) => false.obs);
-                          reachable = List.generate(usableProjects.length, (i) => false.obs);
-                          fetchingFirebase = false;
-                        });
+                      fetchFirebaseProjects(token!).then((List<Map> value) async {
+                        if (value.length == 1) {
+                          setState(() {
+                            fetchingFirebase = false;
+                          });
+                          try {
+                            await http.dio.get(value.first['serverUrl']);
+                            await requestPassword(context, value.first['serverUrl'], connect);
+                            if (error == "") {
+                              Navigator.of(context).pop();
+                            }
+                          } catch (e) {
+                            showSnackbar("Error", "Found Firebase project but URL is not reachable!");
+                          }
+                        } else {
+                          setState(() {
+                            usableProjects = value;
+                            connected = List.generate(usableProjects.length, (i) => false.obs);
+                            reachable = List.generate(usableProjects.length, (i) => false.obs);
+                            fetchingFirebase = false;
+                          });
+                        }
                       });
                     }
                   },
