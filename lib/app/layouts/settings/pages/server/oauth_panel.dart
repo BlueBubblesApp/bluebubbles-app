@@ -26,7 +26,7 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
   String? googlePicture;
   String? googleName;
   List<Map> usableProjects = [];
-  List<RxBool> connected = [];
+  List<RxBool> triedConnecting = [];
   List<RxBool> reachable = [];
   bool fetchingFirebase = false;
 
@@ -200,7 +200,7 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                                     itemCount: usableProjects.length,
                                     itemBuilder: (context, index) {
                                       return Obx(() {
-                                        if (!connected[index].value) {
+                                        if (!triedConnecting[index].value) {
                                           Future(() async {
                                             try {
                                               await http.dio.get(usableProjects[index]['serverUrl']);
@@ -208,6 +208,7 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                                             } catch (e) {
                                               reachable[index].value = false;
                                             }
+                                            triedConnecting[index].value = true;
                                           });
                                         }
                                         return ClipRRect(
@@ -215,14 +216,14 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                                           borderRadius: BorderRadius.circular(20),
                                           child: ListTile(
                                             tileColor: context.theme.colorScheme.primaryContainer.withOpacity(0.3),
-                                            enabled: connected[index].value && reachable[index].value,
+                                            enabled: triedConnecting[index].value && reachable[index].value,
                                             title: Text.rich(TextSpan(children: [
                                               TextSpan(text: usableProjects[index]['displayName']),
                                               TextSpan(
-                                                text: " ${connected[index].value ? "${reachable[index].value ? "R" : "Unr"}eachable" : "Checking"}",
+                                                text: " ${triedConnecting[index].value ? "${reachable[index].value ? "R" : "Unr"}eachable" : "Checking"}",
                                                 style: TextStyle(
                                                     fontWeight: reachable[index].value ? FontWeight.bold : FontWeight.normal,
-                                                    color: connected[index].value
+                                                    color: triedConnecting[index].value
                                                         ? reachable[index].value
                                                             ? Colors.green
                                                             : Colors.red
@@ -250,8 +251,8 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                               if (!fetchingFirebase)
                                 ElevatedButton(
                                   onPressed: () {
-                                    for (int i = 0; i < connected.length; i++) {
-                                      connected[i].value = false;
+                                    for (int i = 0; i < triedConnecting.length; i++) {
+                                      triedConnecting[i].value = false;
                                     }
                                   },
                                   child: const Text("Retry Connections"),
@@ -339,27 +340,12 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                         fetchingFirebase = true;
                       });
                       fetchFirebaseProjects(token!).then((List<Map> value) async {
-                        if (value.length == 1) {
-                          setState(() {
-                            fetchingFirebase = false;
-                          });
-                          try {
-                            await http.dio.get(value.first['serverUrl']);
-                            await requestPassword(context, value.first['serverUrl'], connect);
-                            if (error == "") {
-                              Navigator.of(context).pop();
-                            }
-                          } catch (e) {
-                            showSnackbar("Error", "Found Firebase project but URL is not reachable!");
-                          }
-                        } else {
-                          setState(() {
-                            usableProjects = value;
-                            connected = List.generate(usableProjects.length, (i) => false.obs);
-                            reachable = List.generate(usableProjects.length, (i) => false.obs);
-                            fetchingFirebase = false;
-                          });
-                        }
+                        setState(() {
+                          usableProjects = value;
+                          triedConnecting = List.generate(usableProjects.length, (i) => false.obs);
+                          reachable = List.generate(usableProjects.length, (i) => false.obs);
+                          fetchingFirebase = false;
+                        });
                       });
                     }
                   },
