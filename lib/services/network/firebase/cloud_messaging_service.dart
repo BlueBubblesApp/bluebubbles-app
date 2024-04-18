@@ -11,8 +11,8 @@ import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
 
 /// Get an instance of our [CloudMessagingService]
-CloudMessagingService fcm = Get.isRegistered<CloudMessagingService>()
-    ? Get.find<CloudMessagingService>() : Get.put(CloudMessagingService());
+CloudMessagingService fcm =
+    Get.isRegistered<CloudMessagingService>() ? Get.find<CloudMessagingService>() : Get.put(CloudMessagingService());
 
 /// Manager for registering the client with the server FCM client (used for notifications)
 ///
@@ -113,7 +113,8 @@ class CloudMessagingService extends GetxService {
           return;
         }
       } else {
-        Logger.error('Failed to register with FCM - API error ${response.statusCode}: ${response.data}', tag: 'FCM-Auth');
+        Logger.error('Failed to register with FCM - API error ${response.statusCode}: ${response.data}',
+            tag: 'FCM-Auth');
         completer?.completeError("API Error ${response.statusCode}");
         return;
       }
