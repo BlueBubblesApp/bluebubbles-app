@@ -58,6 +58,7 @@ class SearchViewState extends OptimizedState<SearchView> {
   Chat? selectedChat;
   Handle? selectedHandle;
   bool isFromMe = false;
+  bool isNotFromMe = false;
   DateTime? sinceDate;
 
   Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
@@ -112,6 +113,8 @@ class SearchViewState extends OptimizedState<SearchView> {
 
       if (isFromMe) {
         condition = condition.and(Message_.isFromMe.equals(true));
+      } else if (isNotFromMe) {
+        condition = condition.and(Message_.isFromMe.equals(false));
       } else if (selectedHandle != null) {
         condition = condition.and(Message_.handleId.equals(selectedHandle!.originalROWID!));
       }
@@ -166,6 +169,11 @@ class SearchViewState extends OptimizedState<SearchView> {
           'statement': 'message.is_from_me = :isFromMe',
           'args': {'isFromMe': 1}
         });
+      } else if (isNotFromMe) {
+        whereClause.add({
+          'statement': 'message.is_from_me = :isFromMe',
+          'args': {'isFromMe': 0}
+        });
       } else if (selectedHandle != null) {
         whereClause.add({
           'statement': 'handle.id = :addr',
@@ -214,9 +222,10 @@ class SearchViewState extends OptimizedState<SearchView> {
     if (selectedChat != null) filterCount++;
     if (selectedHandle != null) filterCount++;
     if (isFromMe) filterCount++;
+    if (isNotFromMe) filterCount++;
     if (sinceDate != null) filterCount++;
 
-    bool showSenderFilter = !isFromMe && (selectedChat?.isGroup ?? true);
+    bool showSenderFilter = !isNotFromMe && !isFromMe && (selectedChat?.isGroup ?? true);
 
     return PopScope(
         canPop: false,
@@ -555,7 +564,7 @@ class SearchViewState extends OptimizedState<SearchView> {
             isDraggable: false,
             parallaxEnabled: true,
             minHeight: 0,
-            maxHeight: 200,
+            maxHeight: 225,
             panelBuilder: () {
               return Container(
                 padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20, top: 20),
@@ -573,6 +582,61 @@ class SearchViewState extends OptimizedState<SearchView> {
                             alignment: WrapAlignment.start,
                             spacing: 10,
                             children: [
+                              RawChip(
+                                tapEnabled: true,
+                                deleteIcon: const Icon(Icons.close, size: 16),
+                                side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.1)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                avatar: CircleAvatar(
+                                  backgroundColor: context.theme.colorScheme.primaryContainer,
+                                  child: Icon(
+                                    Icons.calendar_today_outlined,
+                                    color: context.theme.colorScheme.primary,
+                                    size: 12,
+                                  ),
+                                ),
+                                label: sinceDate != null
+                                    ? Text(
+                                        "Since ${buildFullDate(sinceDate!, includeTime: sinceDate!.isToday(), useTodayYesterday: true)}",
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.normal,
+                                            color: context.theme.colorScheme.onSurface),
+                                        overflow: TextOverflow.ellipsis)
+                                    : Text('Filter by Date',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.normal,
+                                            color: context.theme.colorScheme.onSurface)),
+                                onDeleted: sinceDate == null
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          sinceDate = null;
+                                          isSearching = false;
+                                          noResults = false;
+                                          currentSearch = null;
+                                        });
+                                      },
+                                onPressed: () async {
+                                  sinceDate = await showTimeframePicker("Since When?", context,
+                                      customTimeframes: {
+                                        "1 Hour": 1,
+                                        "1 Day": 24,
+                                        "1 Week": 168,
+                                        "1 Month": 720,
+                                        "6 Months": 4320,
+                                        "1 Year": 8760,
+                                      },
+                                      selectionSuffix: "Ago",
+                                      useTodayYesterday: true);
+                                  setState(() {
+                                    isSearching = false;
+                                    noResults = false;
+                                    currentSearch = null;
+                                  });
+                                },
+                              ),
                               RawChip(
                                 tapEnabled: true,
                                 deleteIcon: const Icon(Icons.close, size: 16),
@@ -677,7 +741,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                                         ));
                                   },
                                 ),
-                              if (selectedHandle == null)
+                              if (selectedHandle == null && !isNotFromMe)
                                 RawChip(
                                   tapEnabled: true,
                                   showCheckmark: true,
@@ -685,7 +749,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                                   checkmarkColor: context.theme.colorScheme.primary,
                                   side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.1)),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  label: Text('Is From You',
+                                  label: Text('From You',
                                       style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.normal,
@@ -699,61 +763,28 @@ class SearchViewState extends OptimizedState<SearchView> {
                                     });
                                   },
                                 ),
-                              RawChip(
-                                tapEnabled: true,
-                                deleteIcon: const Icon(Icons.close, size: 16),
-                                side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.1)),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                avatar: CircleAvatar(
-                                  backgroundColor: context.theme.colorScheme.primaryContainer,
-                                  child: Icon(
-                                    Icons.calendar_today_outlined,
-                                    color: context.theme.colorScheme.primary,
-                                    size: 12,
-                                  ),
+                              if (selectedHandle == null && !isFromMe)
+                                RawChip(
+                                  tapEnabled: true,
+                                  showCheckmark: true,
+                                  selected: isNotFromMe,
+                                  checkmarkColor: context.theme.colorScheme.primary,
+                                  side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.1)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  label: Text('Not From You',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                          color: context.theme.colorScheme.onSurface)),
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      isNotFromMe = selected;
+                                      isSearching = false;
+                                      noResults = false;
+                                      currentSearch = null;
+                                    });
+                                  },
                                 ),
-                                label: sinceDate != null
-                                    ? Text(
-                                        "Since ${buildFullDate(sinceDate!, includeTime: sinceDate!.isToday(), useTodayYesterday: true)}",
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.normal,
-                                            color: context.theme.colorScheme.onSurface),
-                                        overflow: TextOverflow.ellipsis)
-                                    : Text('Filter by Date',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.normal,
-                                            color: context.theme.colorScheme.onSurface)),
-                                onDeleted: sinceDate == null
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          sinceDate = null;
-                                          isSearching = false;
-                                          noResults = false;
-                                          currentSearch = null;
-                                        });
-                                      },
-                                onPressed: () async {
-                                  sinceDate = await showTimeframePicker("Since When?", context,
-                                      customTimeframes: {
-                                        "1 Hour": 1,
-                                        "1 Day": 24,
-                                        "1 Week": 168,
-                                        "1 Month": 720,
-                                        "6 Months": 4320,
-                                        "1 Year": 8760,
-                                      },
-                                      selectionSuffix: "Ago",
-                                      useTodayYesterday: true);
-                                  setState(() {
-                                    isSearching = false;
-                                    noResults = false;
-                                    currentSearch = null;
-                                  });
-                                },
-                              )
                             ],
                           ))),
                 ]),
