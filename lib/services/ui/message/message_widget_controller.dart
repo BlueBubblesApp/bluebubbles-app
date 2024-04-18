@@ -14,10 +14,11 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 MessageWidgetController mwc(Message message) => Get.isRegistered<MessageWidgetController>(tag: message.guid)
-    ? Get.find<MessageWidgetController>(tag: message.guid) : Get.put(MessageWidgetController(message), tag: message.guid);
+    ? Get.find<MessageWidgetController>(tag: message.guid)
+    : Get.put(MessageWidgetController(message), tag: message.guid);
 
-MessageWidgetController? getActiveMwc(String guid) => Get.isRegistered<MessageWidgetController>(tag: guid)
-    ? Get.find<MessageWidgetController>(tag: guid) : null;
+MessageWidgetController? getActiveMwc(String guid) =>
+    Get.isRegistered<MessageWidgetController>(tag: guid) ? Get.find<MessageWidgetController>(tag: guid) : null;
 
 class MessageWidgetController extends StatefulController with GetSingleTickerProviderStateMixin {
   final RxBool showEdits = false.obs;
@@ -29,7 +30,7 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
   String? newMessageGuid;
   ConversationViewController? cvController;
   late final String tag;
-  late final StreamSubscription sub;
+  late final StreamSubscription? sub;
   bool built = false;
 
   static const maxBubbleSizeFactor = 0.75;
@@ -38,8 +39,10 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
     tag = message.guid!;
   }
 
-  Message? get newMessage => newMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(newMessageGuid!);
-  Message? get oldMessage => oldMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(oldMessageGuid!);
+  Message? get newMessage =>
+      newMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(newMessageGuid!);
+  Message? get oldMessage =>
+      oldMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(oldMessageGuid!);
 
   @override
   void onInit() {
@@ -74,7 +77,7 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
 
   @override
   void onClose() {
-    sub.cancel();
+    sub?.cancel();
     super.onClose();
   }
 
@@ -96,7 +99,9 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
           existingPart.edits.addAll(edits
               .where((e) => e.text?.values.isNotEmpty ?? false)
               .map((e) => attributedBodyToMessagePart(e.text!.values.first).firstOrNull)
-              .where((e) => e != null).map((e) => e!).toList());
+              .where((e) => e != null)
+              .map((e) => e!)
+              .toList());
           if (existingPart.edits.isNotEmpty) {
             existingPart.edits.removeLast();
           }
@@ -117,11 +122,14 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
       }
     }
     if (parts.isEmpty) {
-      if (!message.hasApplePayloadData && !message.isLegacyUrlPreview && !message.isInteractive && !message.isGroupEvent) {
+      if (!message.hasApplePayloadData &&
+          !message.isLegacyUrlPreview &&
+          !message.isInteractive &&
+          !message.isGroupEvent) {
         parts.addAll(message.attachments.mapIndexed((index, e) => MessagePart(
-          attachments: [e!],
-          part: index,
-        )));
+              attachments: [e!],
+              part: index,
+            )));
       }
       if (message.fullText.isNotEmpty || message.isGroupEvent) {
         parts.add(MessagePart(
@@ -156,13 +164,22 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: e.isAttachment ? [
-            ms(cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.getAttachment(e.attributes!.attachmentGuid!) ?? Attachment.findOne(e.attributes!.attachmentGuid!)
-          ].where((e) => e != null).map((e) => e!).toList() : [],
-          mentions: !e.hasMention ? [] : [Mention(
-            mentionedAddress: e.attributes?.mention,
-            range: [0, e.range.last],
-          )],
+          attachments: e.isAttachment
+              ? [
+                  ms(cvController?.chat.guid ?? cm.activeChat!.chat.guid)
+                          .struct
+                          .getAttachment(e.attributes!.attachmentGuid!) ??
+                      Attachment.findOne(e.attributes!.attachmentGuid!)
+                ].where((e) => e != null).map((e) => e!).toList()
+              : [],
+          mentions: !e.hasMention
+              ? []
+              : [
+                  Mention(
+                    mentionedAddress: e.attributes?.mention,
+                    range: [0, e.range.last],
+                  )
+                ],
           part: e.attributes!.messagePart!,
         ));
       }
@@ -180,14 +197,19 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
       if (message.isFromMe! && message.attachments.isNotEmpty) {
         updateWidgets<AttachmentHolder>(null);
       }
-    } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead || newItem.didNotifyRecipient != message.didNotifyRecipient) {
+    } else if (newItem.dateDelivered != message.dateDelivered ||
+        newItem.dateRead != message.dateRead ||
+        newItem.didNotifyRecipient != message.didNotifyRecipient) {
       final edited = newItem.dateEdited != message.dateEdited;
       message = Message.merge(newItem, message);
       ms(chat).updateMessage(message);
       // update the latest 2 messages in case their indicators need to go away
-      final messages = ms(chat).struct.messages
+      final messages = ms(chat)
+          .struct
+          .messages
           .where((e) => e.isFromMe! && (e.dateDelivered != null || e.dateRead != null))
-          .toList()..sort(Message.sort);
+          .toList()
+        ..sort(Message.sort);
       for (Message m in messages.take(2)) {
         getActiveMwc(m.guid!)?.updateWidgets<DeliveredIndicator>(null);
       }
