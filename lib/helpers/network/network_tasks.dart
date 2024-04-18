@@ -117,18 +117,12 @@ class NetworkTasks {
 
     if (http.originOverride != null) return;
 
-    try {
-      // This was moved from main.dart to here because this is the only place we use it.
-      // This will also make an API call to a github file containing a mapping of MAC addresses
-      // to vendor information. That info is used to display metadata about an ActiveHost found
-      // on the network via a port scan. We don't want that API call to happen on first-boot, nor
-      // do we need it to.
-      await configureNetworkTools(fs.appDocDir.path, enableDebugging: kDebugMode);
-    } catch (ex) {
-      // If this fails, it will likely be due to a failed network request to github.
-      // It's not a critical failure, so we'll just log it and move on.
-      Logger.error("Failed to configure network tools (continuing): ${ex.toString()}");
-    }
+    // This was moved from main.dart to here because this is the only place we use it.
+    // This will also make an API call to a github file containing a mapping of MAC addresses
+    // to vendor information. That info is used to display metadata about an ActiveHost found
+    // on the network via a port scan. We don't want that API call to happen on first-boot, nor
+    // do we need it to.
+    await configureNetworkTools(fs.appDocDir.path, enableDebugging: kDebugMode);
 
     Logger.debug("Falling back to port scanning");
     final wifiIP = await NetworkInfo().getWifiIP();
