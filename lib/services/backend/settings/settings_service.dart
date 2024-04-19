@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -290,9 +291,9 @@ class SettingsService extends GetxService {
   }
 
   Future<void> checkServerUpdate() async {
-    final response = await http.checkUpdate();
-    if (response.statusCode == 200) {
-      bool available = response.data['data']['available'] ?? false;
+    final response = await backend.getRemoteService()?.checkUpdate();
+    if (response?.statusCode == 200) {
+      bool available = response!.data['data']['available'] ?? false;
       Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
       if (!available || prefs.getString("server-update-check") == metadata['version']) return;
       showDialog(

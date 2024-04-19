@@ -8,6 +8,13 @@ class MessageSummaryInfo {
     required this.editedParts,
   });
 
+  factory MessageSummaryInfo.empty() => MessageSummaryInfo(
+          retractedParts: [],
+          editedContent: {},
+          originalTextRange: {},
+          editedParts: []
+        );
+
   List<int> retractedParts;
   Map<String, List<EditedContent>> editedContent;
   Map<String, List<int>> originalTextRange;

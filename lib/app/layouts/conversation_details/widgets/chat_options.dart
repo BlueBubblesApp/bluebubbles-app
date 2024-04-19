@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -141,55 +142,58 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       onTap: () async {
                         showBookmarksThread(cvc(widget.chat), context);
                       }),
-                SettingsTile(
-                    title: "Fetch Chat Details",
-                    subtitle: "Get the latest chat title and participants from the server",
-                    backgroundColor: tileColor,
+                if (backend.getRemoteService() != null)
+                  SettingsTile(
+                      title: "Fetch Chat Details",
+                      subtitle: "Get the latest chat title and participants from the server",
+                      backgroundColor: tileColor,
+                      trailing: Padding(
+                        padding: const EdgeInsets.only(right: 15.0),
+                        child: Icon(iOS ? CupertinoIcons.chat_bubble : Icons.sms),
+                      ),
+                      onTap: () async {
+                        await cm.fetchChat(chat.guid);
+                        showSnackbar("Notice", "Fetched details!");
+                      }),
+                if (backend.getRemoteService() != null)
+                  SettingsTile(
+                    title: "Fetch More Messages",
+                    subtitle: "Fetches up to 100 messages after the last message stored locally",
+                    isThreeLine: true,
                     trailing: Padding(
                       padding: const EdgeInsets.only(right: 15.0),
-                      child: Icon(iOS ? CupertinoIcons.chat_bubble : Icons.sms),
+                      child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.file_download),
                     ),
                     onTap: () async {
-                      await cm.fetchChat(chat.guid);
-                      showSnackbar("Notice", "Fetched details!");
-                    }),
-                SettingsTile(
-                  title: "Fetch More Messages",
-                  subtitle: "Fetches up to 100 messages after the last message stored locally",
-                  isThreeLine: true,
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right: 15.0),
-                    child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.file_download),
+                      await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => ChatSyncDialog(
+                          chat: chat,
+                          withOffset: true,
+                          initialMessage: "Fetching more messages...",
+                          limit: 100,
+                        ),
+                      );
+                    },
                   ),
-                  onTap: () async {
-                    await showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) => ChatSyncDialog(
-                        chat: chat,
-                        withOffset: true,
-                        initialMessage: "Fetching more messages...",
-                        limit: 100,
-                      ),
-                    );
-                  },
-                ),
-                SettingsTile(
-                  title: "Sync Last 25 Messages",
-                  subtitle: "Resyncs the 25 most recent messages from the server",
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right: 15.0),
-                    child: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.replay),
+                if (backend.getRemoteService() != null)
+                  SettingsTile(
+                    title: "Sync Last 25 Messages",
+                    subtitle: "Resyncs the 25 most recent messages from the server",
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 15.0),
+                      child: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.replay),
+                    ),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            ChatSyncDialog(chat: chat, initialMessage: "Resyncing messages...", limit: 25),
+                      );
+                    },
                   ),
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) =>
-                          ChatSyncDialog(chat: chat, initialMessage: "Resyncing messages...", limit: 25),
-                    );
-                  },
-                ),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value) const SettingsDivider(),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
                   SettingsSwitch(

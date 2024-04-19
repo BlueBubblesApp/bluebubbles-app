@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -170,7 +171,7 @@ class ContactTile extends StatelessWidget {
                 }
               );
 
-              http.chatParticipant("remove", chat.guid, handle.address).then((response) async {
+              backend.chatParticipant(ParticipantOp.Remove, chat, handle.address).then((response) async {
                 Get.back();
                 Logger.info("Removed participant ${handle.address}");
                 showSnackbar("Notice", "Removed participant from chat!");

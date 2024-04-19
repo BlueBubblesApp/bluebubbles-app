@@ -100,6 +100,13 @@ class Handle {
     defaultEmail: json["defaultEmail"],
   );
 
+  @override
+  int get hashCode => Object.hash(address, service);
+
+  @override
+  bool operator== (Object other) =>
+    other is Handle && other.address == address && other.service == service;
+
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
   /// than iterating through them
   Handle save({bool updateColor = false, matchOnOriginalROWID = false}) {

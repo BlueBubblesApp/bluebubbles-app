@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -15,7 +16,7 @@ class NetworkTasks {
   static Future<void> onConnect() async {
     if (ss.settings.finishedSetup.value) {
       if (cm.activeChat != null) {
-        socket.sendMessage("update-typing-status", {"chatGuid": cm.activeChat!.chat.guid});
+          backend.updateTypingStatus(cm.activeChat!.chat);
       }
       await fcm.registerDevice();
       await ss.getServerDetails(refresh: true);

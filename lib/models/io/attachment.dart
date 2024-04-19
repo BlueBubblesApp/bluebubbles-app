@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/models/io/message.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -86,6 +87,10 @@ class Attachment {
       metadata: metadata is String ? null : metadata,
       hasLivePhoto: json["hasLivePhoto"] ?? false,
     );
+  }
+
+  PlatformFile getFile() {
+    return PlatformFile(name: transferName!, bytes: bytes, path: kIsWeb ? null : path, size: totalBytes ?? 0);
   }
 
   /// Save a new attachment or update an existing attachment on disk

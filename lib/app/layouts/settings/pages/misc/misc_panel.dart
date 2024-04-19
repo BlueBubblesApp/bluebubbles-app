@@ -1,3 +1,5 @@
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -250,10 +252,12 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                   }),
                 ],
               ),
+              if (backend.getRemoteService() != null)
               SettingsHeader(
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
                   text: "Networking"),
+              if (backend.getRemoteService() != null)
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [

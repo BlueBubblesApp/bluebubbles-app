@@ -16,7 +16,7 @@ class IncomingItem extends QueueItem {
   Message message;
   String? tempGuid;
 
-  IncomingItem._({
+  IncomingItem({
     required super.type,
     super.completer,
     required this.chat,
@@ -25,7 +25,7 @@ class IncomingItem extends QueueItem {
   });
 
   factory IncomingItem.fromMap(QueueType t, Map<String, dynamic> m, [Completer<void>? c]) {
-    return IncomingItem._(
+    return IncomingItem(
       type: t,
       completer: c,
       chat: Chat.fromMap(m['chats'].first.cast<String, Object>()),
