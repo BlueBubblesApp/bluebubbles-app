@@ -11,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_windows
   flutter_acrylic
   geolocator_windows
+  irondash_engine_context
   local_auth_windows
   local_notifier
   maps_launcher
@@ -25,7 +26,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   screen_retriever
   secure_application
   share_plus
-  system_tray
+  super_native_extensions
+  tray_manager
   url_launcher_windows
   window_manager
   windows_taskbar

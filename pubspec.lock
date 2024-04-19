@@ -457,6 +457,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
+  custom_text:
+    dependency: "direct main"
+    description:
+      name: custom_text
+      sha256: e0b9a4dd1f7857885a22b31fca64da8505f2e43845813c772618452b63014671
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
   dart_ping:
     dependency: transitive
     description:
@@ -1034,31 +1042,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.0"
-  geoclue:
-    dependency: transitive
-    description:
-      name: geoclue
-      sha256: c2a998c77474fc57aa00c6baa2928e58f4b267649057a1c76738656e9dbd2a7f
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.1"
   geolocator:
     dependency: "direct main"
     description:
-      path: geolocator
-      ref: "223195b3746686790ca188deac6260d901d30c51"
-      resolved-ref: "223195b3746686790ca188deac6260d901d30c51"
-      url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
-    source: git
-    version: "9.0.2"
+      name: geolocator
+      sha256: "694ec58afe97787b5b72b8a0ab78c1a9244811c3c10e72c4362ef3c0ceb005cd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "11.0.0"
   geolocator_android:
     dependency: transitive
     description:
       name: geolocator_android
-      sha256: "93906636752ea4d4e778afa981fdfe7409f545b3147046300df194330044d349"
+      sha256: f15d1536cd01b1399578f1da1eb5d566e7a718db6a3648f2c24d2e2f859f0692
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.1"
+    version: "4.5.4"
   geolocator_apple:
     dependency: transitive
     description:
@@ -1067,40 +1066,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.7"
-  geolocator_linux:
+  geolocator_platform_interface:
     dependency: transitive
     description:
-      path: geolocator_linux
-      ref: no_windows_streams
-      resolved-ref: "223195b3746686790ca188deac6260d901d30c51"
-      url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
-    source: git
-    version: "0.1.2"
-  geolocator_platform_interface:
-    dependency: "direct overridden"
-    description:
       name: geolocator_platform_interface
-      sha256: b2a0c09d2cfe8ad6a8cc44fada5c1092c49286e8c30922914dfe2b23799a682f
+      sha256: "009a21c4bc2761e58dccf07c24f219adaebe0ff707abdfd40b0a763d4003fab9"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.8"
+    version: "4.2.2"
   geolocator_web:
     dependency: transitive
     description:
       name: geolocator_web
-      sha256: "102e7da05b48ca6bf0a5bda0010f886b171d1a08059f01bfe02addd0175ebece"
+      sha256: "49d8f846ebeb5e2b6641fe477a7e97e5dd73f03cbfef3fd5c42177b7300fb0ed"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.1"
+    version: "3.0.0"
   geolocator_windows:
     dependency: transitive
     description:
-      path: geolocator_windows
-      ref: no_windows_streams
-      resolved-ref: "223195b3746686790ca188deac6260d901d30c51"
-      url: "https://github.com/BlueBubblesApp/flutter-geolocator.git"
-    source: git
-    version: "0.1.2"
+      name: geolocator_windows
+      sha256: "53da08937d07c24b0d9952eb57a3b474e29aae2abf9dd717f7e1230995f13f0e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.3"
   gesture_x_detector:
     dependency: "direct main"
     description:
@@ -1355,10 +1344,10 @@ packages:
     dependency: transitive
     description:
       name: googleapis_auth
-      sha256: "1401a9e55f9e0f565d3eebb18d990290f53a12d38a5f7f0230b112895778a85b"
+      sha256: befd71383a955535060acde8792e7efc11d2fccd03dd1d3ec434e85b68775938
       url: "https://pub.dev"
     source: hosted
-    version: "1.5.1"
+    version: "1.6.0"
   graphs:
     dependency: transitive
     description:
@@ -1367,14 +1356,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.1"
-  gsettings:
-    dependency: transitive
-    description:
-      name: gsettings
-      sha256: "1b0ce661f5436d2db1e51f3c4295a49849f03d304003a7ba177d01e3a858249c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.8"
   gtk:
     dependency: transitive
     description:
@@ -1559,6 +1540,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  irondash_engine_context:
+    dependency: transitive
+    description:
+      name: irondash_engine_context
+      sha256: "4f5e2629296430cce08cdff42e47cef07b8f74a64fdbdfb0525d147bc1a969a2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.2"
+  irondash_message_channel:
+    dependency: transitive
+    description:
+      name: irondash_message_channel
+      sha256: dd581214215dca054bd9873209d690ec3609288c28774cb509dbd86b21180cf8
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
   jose:
     dependency: transitive
     description:
@@ -1691,11 +1688,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: a8fbca6a7805487df725fbd2487e719202fcd209
-      resolved-ref: a8fbca6a7805487df725fbd2487e719202fcd209
+      ref: "7526556fe2beb5c61ddede34e1992726907cd7ae"
+      resolved-ref: "7526556fe2beb5c61ddede34e1992726907cd7ae"
       url: "https://github.com/BlueBubblesApp/local_notifier.git"
     source: git
-    version: "0.1.5"
+    version: "0.1.6"
   logger:
     dependency: transitive
     description:
@@ -1801,6 +1798,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.4"
+  menu_base:
+    dependency: transitive
+    description:
+      name: menu_base
+      sha256: "820368014a171bd1241030278e6c2617354f492f5c703d7b7d4570a6b8b84405"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   meta:
     dependency: transitive
     description:
@@ -2178,6 +2183,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.14.0"
+  pixel_snap:
+    dependency: transitive
+    description:
+      name: pixel_snap
+      sha256: "677410ea37b07cd37ecb6d5e6c0d8d7615a7cf3bd92ba406fd1ac57e937d1fb0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.5"
   platform:
     dependency: transitive
     description:
@@ -2587,6 +2600,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  shortid:
+    dependency: transitive
+    description:
+      name: shortid
+      sha256: d0b40e3dbb50497dad107e19c54ca7de0d1a274eb9b4404991e443dadb9ebedb
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   simple_animations:
     dependency: "direct main"
     description:
@@ -2753,6 +2774,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.0"
+  super_clipboard:
+    dependency: transitive
+    description:
+      name: super_clipboard
+      sha256: cf9ab12d00856318dcf84d5e16cfd7b53a34ee74ca55cf2c566f0cc9d2a66013
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.12"
+  super_drag_and_drop:
+    dependency: "direct main"
+    description:
+      name: super_drag_and_drop
+      sha256: "0a6fafc23ff5c82aa55847b725698d9f9c31a0aef7fb3ac7b4296cbff1d6a956"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.12"
+  super_native_extensions:
+    dependency: transitive
+    description:
+      name: super_native_extensions
+      sha256: "530a2118d032483b192713c68ed7105fe64418f22492165f87ed01f9b01d4965"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.12"
   supercharged:
     dependency: "direct main"
     description:
@@ -2785,14 +2830,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
-  system_tray:
-    dependency: "direct main"
-    description:
-      name: system_tray
-      sha256: "40444e5de8ed907822a98694fd031b8accc3cb3c0baa547634ce76189cf3d9cf"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.3"
   term_glyph:
     dependency: transitive
     description:
@@ -2825,6 +2862,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.9"
+  text_parser:
+    dependency: transitive
+    description:
+      name: text_parser
+      sha256: "4ff444f343de7dcb3dbbefedc30540eb21dc557ff18d8272a11166f31d0b12f1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
   throttling:
     dependency: transitive
     description:
@@ -2849,6 +2894,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  tray_manager:
+    dependency: "direct main"
+    description:
+      name: tray_manager
+      sha256: e0ac9a88b2700f366b8629b97e8663b6ef450a2f169560a685dc167bfe9c9c29
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2"
   try_catch:
     dependency: transitive
     description:
@@ -2978,13 +3031,13 @@ packages:
     source: hosted
     version: "3.1.1"
   uuid:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: uuid
-      sha256: "648e103079f7c64a36dc7d39369cabb358d377078a051d6ae2ad3aa539519313"
+      sha256: "814e9e88f21a176ae1359149021870e87f7cddaf633ab678a5d2b0bff7fd1ba8"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.7"
+    version: "4.4.0"
   vcf_dart:
     dependency: "direct main"
     description:

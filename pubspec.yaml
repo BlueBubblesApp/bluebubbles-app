@@ -37,7 +37,6 @@ dependencies:
   csslib: ^1.0.0
   cupertino_icons: ^1.0.6
   defer_pointer: ^0.0.2
-  # todo desktop_drop: ^0.4.4 # pinned due to Kotlin version issue
   desktop_webview_auth:
     git:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
@@ -88,11 +87,7 @@ dependencies:
   flutter_staggered_grid_view: ^0.7.0
   flutter_svg: ^2.0.10+1
   flutter_timezone: ^1.0.8 # no desktop support
-  geolocator:
-    git:
-      url: https://github.com/BlueBubblesApp/flutter-geolocator.git
-      path: geolocator
-      ref: 223195b3746686790ca188deac6260d901d30c51
+  geolocator: ^11.0.0
   gesture_x_detector:
     git:
       url: https://github.com/BlueBubblesApp/xgesture_flutter.git
@@ -116,7 +111,7 @@ dependencies:
   local_notifier:
     git:
       url: https://github.com/BlueBubblesApp/local_notifier.git
-      ref: a8fbca6a7805487df725fbd2487e719202fcd209
+      ref: 7526556fe2beb5c61ddede34e1992726907cd7ae
   maps_launcher: # gradle namespace issue
     git:
       url: https://github.com/pikaju/flutter-maps-launcher.git
@@ -175,6 +170,7 @@ dependencies:
     git:
       url: https://github.com/ravitejaavv/store_checker
       ref: master
+  super_drag_and_drop: ^0.8.11
   synchronized: ^3.1.0+1
   supercharged: ^2.1.1
   system_info2: ^4.0.0
@@ -196,10 +192,8 @@ dependencies:
 dependency_overrides:
   # overrides for packages stuck on outdated versions
   material_color_utilities: ^0.11.1 # flutter test SDK
-  geolocator_platform_interface: 4.0.8 # BB geolocator (pinned for now)
   intl: ^0.19.0 # firebase_dart
   js: ^0.7.1 # socket_io_client
-  package_info_plus: ^7.0.0 # BB geolocator
   http: ^1.2.1 # metadata_fetch
   permission_handler_platform_interface: ^4.2.1 # BB permission_handler_windows
   permission_handler_windows:
@@ -212,6 +206,7 @@ dependency_overrides:
       url: https://github.com/BlueBubblesApp/google_ml_kit_flutter.git
       ref: develop
       path: packages/google_mlkit_smart_reply
+  uuid: ^4.4.0 # firebase_dart
 
 dev_dependencies:
   build_runner: ^2.4.9
