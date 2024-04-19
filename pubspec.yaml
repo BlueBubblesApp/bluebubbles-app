@@ -178,7 +178,7 @@ dependencies:
   synchronized: ^3.1.0+1
   supercharged: ^2.1.1
   system_info2: ^4.0.0
-  system_tray: ^2.0.3
+  tray_manager: ^0.2.2
   tuple: ^2.0.2
   universal_html: ^2.2.4 # cross-platform dart:html implementation
   universal_io: ^2.2.2 # cross-platform dart:io implementation

@@ -41,9 +41,9 @@ import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
-import 'package:system_tray/system_tray.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:tray_manager/tray_manager.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -463,6 +463,18 @@ class DesktopWindowListener extends WindowListener {
     await ss.prefs.setDouble("window-x", offset.dx);
     await ss.prefs.setDouble("window-y", offset.dy);
   }
+
+  @override
+  void onWindowEvent(String eventName) async {
+    switch (eventName) {
+      case "hide":
+        await setSystemTrayContextMenu(windowHidden: true);
+        break;
+      case "show":
+        await setSystemTrayContextMenu(windowHidden: false);
+        break;
+    }
+  }
 }
 
 class Main extends StatelessWidget {
@@ -661,7 +673,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
+class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayListener {
   final ReceivePort port = ReceivePort();
   bool serverCompatible = true;
   bool fullyLoaded = false;
@@ -750,6 +762,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
         await initSystemTray();
+        trayManager.addListener(this);
 
         /* ----- NOTIFICATIONS INITIALIZATION ----- */
         await localNotifier.setup(appName: "BlueBubbles");
@@ -836,6 +849,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   void dispose() {
     // Clean up observer when app is fully closed
     WidgetsBinding.instance.removeObserver(this);
+    trayManager.removeListener(this);
     super.dispose();
   }
 
@@ -914,61 +928,59 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       ),
     );
   }
+
+  @override
+  void onTrayIconMouseDown() async {
+    await windowManager.show();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() async {
+    await trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) async {
+    switch (menuItem.key) {
+      case 'show_app':
+        await windowManager.show();
+        break;
+      case 'hide_app':
+        await windowManager.hide();
+        break;
+      case 'close_app':
+        await windowManager.close();
+        break;
+    }
+  }
 }
 
 Future<void> initSystemTray() async {
-  final systemTray = SystemTray();
   String path;
   if (Platform.isWindows) {
-    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.ico']);
-  } else if (Platform.isMacOS) {
-    path = p.joinAll(['AppIcon']);
-  } else {
+    path = 'assets/icon/icon.ico';
+  } else if (isFlatpak) {
+    path = '/app/share/icons/hicolor/128x128/apps/app.bluebubbles.BlueBubbles.png';
+  } else if (isSnap) {
     path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.png']);
+  } else {
+    path = 'assets/icon/icon.png';
   }
 
   // We first init the systray menu and then add the menu entries
-  await systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
+  await trayManager.setIcon(path);
+  await trayManager.setToolTip("BlueBubbles");
+  await setSystemTrayContextMenu(windowHidden: !appWindow.isVisible);
+}
 
-  final Menu menu = Menu();
-  await menu.buildFrom(
-    [
-      MenuItemLabel(
-        label: 'Open App',
-        onClicked: (_) async {
-          ls.open();
-          await windowManager.show();
-        },
-      ),
-      MenuItemLabel(
-        label: 'Hide App',
-        onClicked: (_) async {
-          ls.close();
-          await windowManager.hide();
-        },
-      ),
-      MenuItemLabel(
-        label: 'Close App',
-        onClicked: (_) async {
-          await windowManager.close();
-        },
-      ),
+Future<void> setSystemTrayContextMenu({bool windowHidden = false}) async {
+  await trayManager.setContextMenu(Menu(
+    items: [
+      MenuItem(label: windowHidden ? 'Show App' : 'Hide App', key: windowHidden ? 'show_app' : 'hide_app'),
+      MenuItem.separator(),
+      MenuItem(label: 'Close App', key: 'close_app'),
     ],
-  );
-
-  await systemTray.setContextMenu(menu);
-
-  // handle system tray event
-  systemTray.registerSystemTrayEventHandler((eventName) async {
-    switch (eventName) {
-      case 'click':
-        await windowManager.show();
-        break;
-      case "right-click":
-        await systemTray.popUpContextMenu();
-        break;
-    }
-  });
+  ));
 }
 
 void copyDirectory(Directory source, Directory destination) =>
