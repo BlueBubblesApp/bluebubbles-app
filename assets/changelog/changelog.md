@@ -34,6 +34,8 @@ This update includes a couple of new minor features as well as a bunch of QOL en
 
 - Increased target SDK to 34
 - Upgraded a ton of dependencies
+- iOS emoji pack now always links to the latest release
+    - This is so we don't need to update the app to push emoji font updates
 
 ## v1.13.0
 
