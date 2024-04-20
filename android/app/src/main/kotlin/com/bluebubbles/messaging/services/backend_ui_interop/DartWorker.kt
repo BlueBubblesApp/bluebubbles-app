@@ -24,46 +24,55 @@ import io.flutter.view.FlutterCallbackInformation
 import io.flutter.view.FlutterMain
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.Timer
 import kotlin.concurrent.schedule
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.guava.future
 
 class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWorker(context, workerParams) {
 
     companion object {
         var workerEngine: FlutterEngine? = null
+        var engineReady = Mutex()
     }
 
     override fun startWork(): ListenableFuture<Result> {
         val method = inputData.getString("method")!!
         val data = inputData.getString("data")!!
-       if (engine == null && workerEngine == null) {
-           Log.d(Constants.logTag, "Initializing engine for worker with method $method")
-           initNewEngine()
-       }
+        val gson = GsonBuilder()
+                .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+                .create()
 
         if (engine != null) {
             Log.d(Constants.logTag, "Using MainActivity engine to send to Dart")
         } else {
             Log.d(Constants.logTag, "Using DartWorker engine to send to Dart")
         }
-        return CallbackToFutureAdapter.getFuture { completer ->
-            runBlocking {
-                Log.d(Constants.logTag, "Sending method $method to Dart")
-                val gson = GsonBuilder()
-                    .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-                    .create()
+        return CoroutineScope(Dispatchers.Main).future {
+            engineReady.withLock {
+                if (engine == null && workerEngine == null) {
+                    Log.d(Constants.logTag, "Initializing engine for worker with method $method")
+                    initNewEngine()
+                }
+            }
+            Log.d(Constants.logTag, "Sending method $method to Dart")
+            suspendCoroutine { cont ->
                 MethodChannel((engine ?: workerEngine)!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.getParameterized(HashMap::class.java, String::class.java, Any::class.java).type), object : MethodChannel.Result {
                     override fun success(result: Any?) {
                         Log.d(Constants.logTag, "Worker with method $method completed successfully")
-                        completer.set(Result.success())
+                        cont.resume(Result.success())
                         closeEngineIfNeeded()
                     }
 
                     override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
                         Log.e(Constants.logTag, "Worker with method $method failed!")
-                        completer.set(Result.failure())
+                        cont.resume(Result.failure())
                         closeEngineIfNeeded()
                     }
 
@@ -74,7 +83,7 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
     }
 
     /// Code idea taken from https://github.com/flutter/flutter/wiki/Experimental:-Reuse-FlutterEngine-across-screens
-    private fun initNewEngine() {
+    private suspend fun initNewEngine() {
         Log.d(Constants.logTag, "Ensuring Flutter is initialized before creating engine")
         // We use the deprecated class here anyways, the new one doesn't work correctly using the same code
         FlutterMain.startInitialization(applicationContext)
@@ -83,15 +92,23 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         Log.d(Constants.logTag, "Loading callback info")
         val info = ApplicationInfoLoader.load(applicationContext)
         workerEngine = FlutterEngine(applicationContext)
-        // set up the method channel to receive events from Dart
-        MethodChannel(workerEngine!!.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
-            call, result -> MethodCallHandler().methodCallHandler(call, result, applicationContext)
-        }
-        val callbackInfo = FlutterCallbackInformation.lookupCallbackInformation(applicationContext.getSharedPreferences("FlutterSharedPreferences", 0).getLong("flutter.backgroundCallbackHandle", -1))
-        val callback = DartExecutor.DartCallback(applicationContext.assets, info.flutterAssetsDir, callbackInfo)
+        suspendCoroutine { cont ->
+            // set up the method channel to receive events from Dart
+            MethodChannel(workerEngine!!.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
+                call, result -> run {
+                    if (call.method == "ready") {
+                        cont.resume(Unit)
+                    } else {
+                        MethodCallHandler().methodCallHandler(call, result, applicationContext)
+                    }
+                }
+            }
+            val callbackInfo = FlutterCallbackInformation.lookupCallbackInformation(applicationContext.getSharedPreferences("FlutterSharedPreferences", 0).getLong("flutter.backgroundCallbackHandle", -1))
+            val callback = DartExecutor.DartCallback(applicationContext.assets, info.flutterAssetsDir, callbackInfo)
 
-        Log.d(Constants.logTag, "Executing Dart callback")
-        workerEngine!!.dartExecutor.executeDartCallback(callback)
+            Log.d(Constants.logTag, "Executing Dart callback")
+            workerEngine!!.dartExecutor.executeDartCallback(callback)
+        }
     }
 
     private fun closeEngineIfNeeded() {

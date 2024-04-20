@@ -27,7 +27,7 @@ class SocketService extends GetxService {
   RxString lastError = "".obs;
   Timer? _reconnectTimer;
   late Socket socket;
-  
+
   String get serverAddress => http.origin;
   String get password => ss.settings.guidAuthKey.value;
 
@@ -36,7 +36,9 @@ class SocketService extends GetxService {
     super.onInit();
     startSocket();
     Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.wifi && event != ConnectivityResult.ethernet && http.originOverride != null) {
+      if (!event.contains(ConnectivityResult.wifi) &&
+          !event.contains(ConnectivityResult.ethernet) &&
+          http.originOverride != null) {
         Logger.info("Detected switch off wifi, removing localhost address...");
         http.originOverride = null;
       }
@@ -48,7 +50,7 @@ class SocketService extends GetxService {
     closeSocket();
     super.onClose();
   }
-  
+
   void startSocket() {
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": password})
@@ -63,13 +65,13 @@ class SocketService extends GetxService {
 
     socket.onConnect((data) => handleStatusUpdate(SocketState.connected, data));
     socket.onReconnect((data) => handleStatusUpdate(SocketState.connected, data));
-    
+
     socket.onReconnectAttempt((data) => handleStatusUpdate(SocketState.connecting, data));
     socket.onReconnecting((data) => handleStatusUpdate(SocketState.connecting, data));
     socket.onConnecting((data) => handleStatusUpdate(SocketState.connecting, data));
-    
+
     socket.onDisconnect((data) => handleStatusUpdate(SocketState.disconnected, data));
-    
+
     socket.onConnectError((data) => handleStatusUpdate(SocketState.error, data));
     socket.onConnectTimeout((data) => handleStatusUpdate(SocketState.error, data));
     socket.onError((data) => handleStatusUpdate(SocketState.error, data));
@@ -100,7 +102,7 @@ class SocketService extends GetxService {
   }
 
   void reconnect() {
-    if (isNullOrEmpty(serverAddress)!) return;
+    if (state.value == SocketState.connected || isNullOrEmpty(serverAddress)!) return;
     state.value = SocketState.connecting;
     socket.connect();
   }
@@ -161,7 +163,7 @@ class SocketService extends GetxService {
         return;
       case SocketState.error:
         Logger.info("Socket connect error, fetching new URL...");
-        
+
         if (data is SocketException) {
           handleSocketException(data);
         }

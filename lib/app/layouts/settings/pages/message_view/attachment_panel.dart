@@ -2,6 +2,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -72,10 +73,86 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                             },
                             initialVal: ss.settings.autoSave.value,
                             title: "Auto-save Attachments",
-                            subtitle: "Automatically saves all attachments to gallery or downloads folder",
+                            subtitle: "Automatically saves all attachments to folders selected below",
                             backgroundColor: tileColor,
                             isThreeLine: true,
                           )),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() => SettingsTile(
+                        title: "Save Media Location",
+                        subtitle: "Saving images and videos to ${ss.settings.autoSavePicsLocation.value}",
+                        backgroundColor: tileColor,
+                        onTap: () async {
+                          final TextEditingController pathController = TextEditingController();
+                          await showDialog(
+                            context: context,
+                            builder: (_) {
+                              return AlertDialog(
+                                actions: [
+                                  TextButton(
+                                    child: Text("Cancel",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                    onPressed: () => Get.back(),
+                                  ),
+                                  TextButton(
+                                    child: Text("OK",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                    onPressed: () async {
+                                      if (pathController.text.isEmpty) {
+                                        Get.back();
+                                        ss.settings.autoSavePicsLocation.value = "Pictures";
+                                      } else {
+                                        final regex = RegExp(r"^[a-zA-Z0-9-_]+");
+                                        if (!regex.hasMatch(pathController.text) || pathController.text.endsWith("/")) {
+                                          showSnackbar("Error", "Enter a valid path!");
+                                          return;
+                                        }
+                                        Get.back();
+                                        ss.settings.autoSavePicsLocation.value = "Pictures/${pathController.text}";
+                                      }
+                                      saveSettings();
+                                    },
+                                  ),
+                                ],
+                                content: Row(
+                                  children: [
+                                    Text("Pictures/", style: context.theme.textTheme.titleMedium),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: pathController,
+                                        decoration: const InputDecoration(
+                                          labelText: "Relative Path",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                title: Text("Enter Relative Path", style: context.theme.textTheme.titleLarge),
+                                backgroundColor: context.theme.colorScheme.properSurface,
+                              );
+                            }
+                          );
+                        },
+                      )),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() => SettingsTile(
+                        title: "Save Documents Location",
+                        subtitle: "Saving documents and videos to ${ss.settings.autoSaveDocsLocation.value.replaceAll("/storage/emulated/0/", "")}",
+                        backgroundColor: tileColor,
+                        onTap: () async {
+                          final savePath = await FilePicker.platform.getDirectoryPath(
+                            initialDirectory: ss.settings.autoSaveDocsLocation.value,
+                            dialogTitle: 'Choose a location to auto-save documents',
+                            lockParentWindow: true,
+                          );
+                          if (savePath != null) {
+                            ss.settings.autoSaveDocsLocation.value = savePath;
+                            saveSettings();
+                          }
+                        },
+                      )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
