@@ -16,6 +16,7 @@ This update includes a couple of new minor features as well as a bunch of QOL en
 - Adds light haptic feedback when sending a message
 - App startup time is now slightly quicker
 - Location widgets now show the Apple Maps preview
+- Adds ability to switch linked Google Firebase projects
 
 ### Bug Fixes
 
