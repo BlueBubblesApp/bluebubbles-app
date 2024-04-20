@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_linux
-  desktop_drop
   desktop_webview_auth
   dynamic_color
   file_selector_linux

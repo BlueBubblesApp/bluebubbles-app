@@ -33,8 +33,8 @@ class ChatsService extends GetxService {
     super.onInit();
     if (!kIsWeb) {
       // watch for new chats
-      final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())
-        ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())..order(Chat_.id, flags: Order.descending))
+          .watch(triggerImmediately: true);
       countSub = countQuery.listen((event) async {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
@@ -61,10 +61,13 @@ class ChatsService extends GetxService {
   Future<void> init({bool force = false}) async {
     if (!force && !ss.settings.finishedSetup.value) return;
     Logger.info("Fetching chats...", tag: "ChatBloc");
-    currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
-      Logger.info("Error when fetching chat count!", tag: "ChatBloc");
-      return Response(requestOptions: RequestOptions(path: ''));
-    })).data['data']['total'] ?? 0;
+    currentCount = Chat.count() ??
+        (await http.chatCount().catchError((err) {
+          Logger.info("Error when fetching chat count!", tag: "ChatBloc");
+          return Response(requestOptions: RequestOptions(path: ''));
+        }))
+            .data['data']['total'] ??
+        0;
     loadedAllChats = Completer();
     if (currentCount != 0) {
       hasChats.value = true;
@@ -107,10 +110,7 @@ class ChatsService extends GetxService {
           await mcs.invokeMethod("push-share-targets", {
             "title": c.title,
             "guid": c.guid,
-            "icon": await avatarAsBytes(
-                chat: c,
-                quality: 256
-            ),
+            "icon": await avatarAsBytes(chat: c, quality: 256),
           });
         }
       });
@@ -121,7 +121,10 @@ class ChatsService extends GetxService {
       final _appLinks = AppLinks();
       _appLinks.allStringLinkStream.listen((String string) async {
         if (!string.startsWith("imessage://")) return;
-        final uri = Uri.tryParse(string.replaceFirst("imessage://", "imessage:").replaceFirst("&body=", "?body=").replaceFirst(RegExp(r'/$'), ''));
+        final uri = Uri.tryParse(string
+            .replaceFirst("imessage://", "imessage:")
+            .replaceFirst("&body=", "?body=")
+            .replaceFirst(RegExp(r'/$'), ''));
         if (uri == null) return;
 
         final address = uri.path;
@@ -133,7 +136,7 @@ class ChatsService extends GetxService {
             initialSelected: [SelectedContact(displayName: handle?.displayName ?? address, address: address)],
             initialText: uri.queryParameters['body'],
           ),
-              (route) => route.isFirst,
+          (route) => route.isFirst,
         );
       });
     }
@@ -151,7 +154,7 @@ class ChatsService extends GetxService {
     chats.sort(Chat.sort);
   }
 
-  void updateChat(Chat updated, {bool shouldSort = false, bool override = false}) {
+  bool updateChat(Chat updated, {bool shouldSort = false, bool override = false}) {
     final index = chats.indexWhere((e) => updated.guid == e.guid);
     if (index != -1) {
       final toUpdate = chats[index];
@@ -160,6 +163,8 @@ class ChatsService extends GetxService {
       chats.value[index] = override ? updated : updated.merge(toUpdate);
       if (shouldSort) sort();
     }
+
+    return index != -1;
   }
 
   Future<void> addChat(Chat toAdd) async {

@@ -102,8 +102,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
           final _chats = existingChats.where((e) =>
               ((iMessage && e.isIMessage) || (sms && !e.isIMessage)) &&
               ((e.title?.toLowerCase().contains(query) ?? false) ||
-                  e.participants.firstWhereOrNull(
-                          (e) => ids.contains(e.contact?.id) || e.address.contains(query) || e.displayName.toLowerCase().contains(query)) !=
+                  e.participants.firstWhereOrNull((e) =>
+                          ids.contains(e.contact?.id) ||
+                          e.address.contains(query) ||
+                          e.displayName.toLowerCase().contains(query)) !=
                       null));
           return Tuple2(_contacts, _chats);
         }, Priority.animation);
@@ -267,17 +269,23 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value
+            ? Colors.transparent
+            : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: ss.settings.windowEffect.value != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background,
+        backgroundColor: ss.settings.windowEffect.value != WindowEffect.disabled
+            ? Colors.transparent
+            : context.theme.colorScheme.background,
         appBar: PreferredSize(
           preferredSize: Size(ns.width(context), kIsDesktop ? 90 : 50),
           child: AppBar(
-            systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+            systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+                ? SystemUiOverlayStyle.light
+                : SystemUiOverlayStyle.dark,
             toolbarHeight: kIsDesktop ? 90 : 50,
             elevation: 0,
             scrolledUnderElevation: 3,
@@ -292,7 +300,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             actions: [
               if (!canCreateGroupChats)
                 IconButton(
-                  icon: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: context.theme.colorScheme.error),
+                  icon: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+                      color: context.theme.colorScheme.error),
                   onPressed: () {
                     showDialog(
                         barrierDismissible: false,
@@ -309,7 +318,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             backgroundColor: context.theme.colorScheme.properSurface,
                             actions: <Widget>[
                               TextButton(
-                                child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                child: Text("Close",
+                                    style: context.theme.textTheme.bodyLarge!
+                                        .copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
@@ -346,7 +357,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               curve: Curves.easeIn,
                               alignment: Alignment.centerLeft,
                               child: ConstrainedBox(
-                                constraints: BoxConstraints(maxHeight: context.theme.textTheme.bodyMedium!.fontSize! + 20),
+                                constraints:
+                                    BoxConstraints(maxHeight: context.theme.textTheme.bodyMedium!.fontSize! + 20),
                                 child: Obx(() => ListView.builder(
                                       itemCount: selectedContacts.length,
                                       shrinkWrap: true,
@@ -357,44 +369,44 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         return Padding(
                                           padding: const EdgeInsets.symmetric(horizontal: 2.5),
                                           child: Obx(() => Material(
-                                            key: ValueKey(e.address),
-                                            color: e.iMessage.value == true
-                                                ? context.theme.colorScheme.bubble(context, true).withOpacity(0.2)
-                                                : e.iMessage.value == false
-                                                ? context.theme.colorScheme.bubble(context, false).withOpacity(0.2)
-                                                : context.theme.colorScheme.properSurface,
-                                            borderRadius: BorderRadius.circular(5),
-                                            clipBehavior: Clip.antiAlias,
-                                            child: InkWell(
-                                              onTap: () {
-                                                removeSelected(e);
-                                              },
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.0),
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text(
-                                                      e.displayName,
-                                                      style: context.theme.textTheme.bodyMedium!.copyWith(
-                                                        color: e.iMessage.value == true
-                                                            ? context.theme.colorScheme.bubble(context, true)
-                                                            : e.iMessage.value == false
-                                                            ? context.theme.colorScheme.bubble(context, false)
-                                                            : context.theme.colorScheme.properOnSurface,
-                                                      )
+                                                key: ValueKey(e.address),
+                                                color: e.iMessage.value == true
+                                                    ? context.theme.colorScheme.bubble(context, true).withOpacity(0.2)
+                                                    : e.iMessage.value == false
+                                                        ? context.theme.colorScheme
+                                                            .bubble(context, false)
+                                                            .withOpacity(0.2)
+                                                        : context.theme.colorScheme.properSurface,
+                                                borderRadius: BorderRadius.circular(5),
+                                                clipBehavior: Clip.antiAlias,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    removeSelected(e);
+                                                  },
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.0),
+                                                    child: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.start,
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: <Widget>[
+                                                        Text(e.displayName,
+                                                            style: context.theme.textTheme.bodyMedium!.copyWith(
+                                                              color: e.iMessage.value == true
+                                                                  ? context.theme.colorScheme.bubble(context, true)
+                                                                  : e.iMessage.value == false
+                                                                      ? context.theme.colorScheme.bubble(context, false)
+                                                                      : context.theme.colorScheme.properOnSurface,
+                                                            )),
+                                                        const SizedBox(width: 5.0),
+                                                        Icon(
+                                                          iOS ? CupertinoIcons.xmark : Icons.close,
+                                                          size: 15.0,
+                                                        ),
+                                                      ],
                                                     ),
-                                                    const SizedBox(width: 5.0),
-                                                    Icon(
-                                                      iOS ? CupertinoIcons.xmark : Icons.close,
-                                                      size: 15.0,
-                                                    ),
-                                                  ],
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                          )),
+                                              )),
                                         );
                                       },
                                     )),
@@ -411,7 +423,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         removeSelected(selectedContacts.last);
                                       }
                                       return KeyEventResult.handled;
-                                    } else if (!HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                                    } else if (!HardwareKeyboard.instance.isShiftPressed &&
+                                        event.logicalKey == LogicalKeyboardKey.tab) {
                                       messageNode.requestFocus();
                                       return KeyEventResult.handled;
                                     }
@@ -425,7 +438,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                   controller: addressController,
                                   style: context.theme.textTheme.bodyMedium,
                                   maxLines: 1,
-                                  selectionControls: iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
+                                  selectionControls:
+                                      iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                                   autofocus: kIsWeb || kIsDesktop,
                                   enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                                   textInputAction: TextInputAction.done,
@@ -435,7 +449,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     border: InputBorder.none,
                                     fillColor: Colors.transparent,
                                     hintText: "Enter a name...",
-                                    hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+                                    hintStyle: context.theme.textTheme.bodyMedium!
+                                        .copyWith(color: context.theme.colorScheme.outline),
                                   ),
                                   onSubmitted: (String value) {
                                     addressOnSubmitted();
@@ -522,107 +537,121 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   child: Obx(() {
                     return AnimatedSwitcher(
                       duration: const Duration(milliseconds: 150),
-                      child: fakeController.value == null ? CustomScrollView(
-                        shrinkWrap: true,
-                        physics: ThemeSwitcher.getScrollPhysics(),
-                        slivers: <Widget>[
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate((context, index) {
-                              if (filteredChats.isEmpty) {
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        "Loading existing chats...",
-                                        style: context.theme.textTheme.labelLarge,
+                      child: fakeController.value == null
+                          ? CustomScrollView(
+                              shrinkWrap: true,
+                              physics: ThemeSwitcher.getScrollPhysics(),
+                              slivers: <Widget>[
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate((context, index) {
+                                    if (filteredChats.isEmpty) {
+                                      return Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              "Loading existing chats...",
+                                              style: context.theme.textTheme.labelLarge,
+                                            ),
+                                          ),
+                                          buildProgressIndicator(context, size: 15),
+                                        ],
+                                      );
+                                    }
+                                    final chat = filteredChats[index];
+                                    final hideInfo =
+                                        ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                                    String _title = chat.properTitle;
+                                    if (hideInfo) {
+                                      _title =
+                                          chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+                                    }
+                                    return Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          addSelectedList(chat.participants
+                                              .where((e) =>
+                                                  selectedContacts.firstWhereOrNull((c) => c.address == e.address) ==
+                                                  null)
+                                              .map((e) => SelectedContact(
+                                                    displayName: e.displayName,
+                                                    address: e.address,
+                                                    isIMessage: chat.isIMessage,
+                                                  )));
+                                        },
+                                        child: ChatCreatorTile(
+                                          key: ValueKey(chat.guid),
+                                          title: _title,
+                                          subtitle: hideInfo
+                                              ? ""
+                                              : !chat.isGroup
+                                                  ? (chat.participants.first.formattedAddress ??
+                                                      chat.participants.first.address)
+                                                  : chat.getChatCreatorSubtitle(),
+                                          chat: chat,
+                                        ),
                                       ),
-                                    ),
-                                    buildProgressIndicator(context, size: 15),
-                                  ],
-                                );
-                              }
-                              final chat = filteredChats[index];
-                              final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-                              String _title = chat.properTitle;
-                              if (hideInfo) {
-                                _title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
-                              }
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    addSelectedList(chat.participants
-                                        .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
-                                        .map((e) => SelectedContact(
-                                      displayName: e.displayName,
-                                      address: e.address,
-                                      isIMessage: chat.isIMessage,
-                                    )));
+                                    );
                                   },
-                                  child: ChatCreatorTile(
-                                    key: ValueKey(chat.guid),
-                                    title: _title,
-                                    subtitle: hideInfo
-                                        ? ""
-                                        : !chat.isGroup
-                                            ? (chat.participants.first.formattedAddress ?? chat.participants.first.address)
-                                            : chat.getChatCreatorSubtitle(),
-                                    chat: chat,
+                                      childCount: filteredChats.length
+                                          .clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity)
+                                          .toInt()),
+                                ),
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      final contact = filteredContacts[index];
+                                      contact.phones = getUniqueNumbers(contact.phones);
+                                      contact.emails = getUniqueEmails(contact.emails);
+                                      final hideInfo =
+                                          ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                                      return Column(
+                                        key: ValueKey(contact.id),
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          ...contact.phones.map((e) => Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    if (selectedContacts.firstWhereOrNull((c) => c.address == e) !=
+                                                        null) return;
+                                                    addSelected(
+                                                        SelectedContact(displayName: contact.displayName, address: e));
+                                                  },
+                                                  child: ChatCreatorTile(
+                                                    title: hideInfo ? "Contact" : contact.displayName,
+                                                    subtitle: hideInfo ? "" : e,
+                                                    contact: contact,
+                                                    format: true,
+                                                  ),
+                                                ),
+                                              )),
+                                          ...contact.emails.map((e) => Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    if (selectedContacts.firstWhereOrNull((c) => c.address == e) !=
+                                                        null) return;
+                                                    addSelected(
+                                                        SelectedContact(displayName: contact.displayName, address: e));
+                                                  },
+                                                  child: ChatCreatorTile(
+                                                    title: hideInfo ? "Contact" : contact.displayName,
+                                                    subtitle: hideInfo ? "" : e,
+                                                    contact: contact,
+                                                  ),
+                                                ),
+                                              )),
+                                        ],
+                                      );
+                                    },
+                                    childCount: filteredContacts.length,
                                   ),
                                 ),
-                              );
-                            }, childCount: filteredChats.length.clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity).toInt()),
-                          ),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final contact = filteredContacts[index];
-                                contact.phones = getUniqueNumbers(contact.phones);
-                                contact.emails = getUniqueEmails(contact.emails);
-                                final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-                                return Column(
-                                  key: ValueKey(contact.id),
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    ...contact.phones.map((e) => Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () {
-                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                              addSelected(SelectedContact(displayName: contact.displayName, address: e));
-                                            },
-                                            child: ChatCreatorTile(
-                                              title: hideInfo ? "Contact" : contact.displayName,
-                                              subtitle: hideInfo ? "" : e,
-                                              contact: contact,
-                                              format: true,
-                                            ),
-                                          ),
-                                        )),
-                                    ...contact.emails.map((e) => Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () {
-                                              if (selectedContacts.firstWhereOrNull((c) => c.address == e) != null) return;
-                                              addSelected(SelectedContact(displayName: contact.displayName, address: e));
-                                            },
-                                            child: ChatCreatorTile(
-                                              title: hideInfo ? "Contact" : contact.displayName,
-                                              subtitle: hideInfo ? "" : e,
-                                              contact: contact,
-                                            ),
-                                          ),
-                                        )),
-                                  ],
-                                );
-                              },
-                              childCount: filteredContacts.length,
-                            ),
-                          ),
-                        ],
-                      )
+                              ],
+                            )
                           : Container(
                               color: Colors.transparent,
                               child: MessagesView(
@@ -652,7 +681,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   ),
                   child: Focus(
                     onKeyEvent: (node, event) {
-                      if (event is KeyDownEvent && HardwareKeyboard.instance.isShiftPressed && event.logicalKey == LogicalKeyboardKey.tab) {
+                      if (event is KeyDownEvent &&
+                          HardwareKeyboard.instance.isShiftPressed &&
+                          event.logicalKey == LogicalKeyboardKey.tab) {
                         addressNode.requestFocus();
                         return KeyEventResult.handled;
                       }
@@ -667,7 +698,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
-                          final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
+                          final chat =
+                              fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
                           bool existsOnServer = false;
                           if (chat != null) {
                             // if we don't error, then the chat exists
@@ -685,9 +717,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               closeActiveChat: false,
                               // only used in non-tablet mode context
                               customRoute: PageRouteBuilder(
-                                pageBuilder: (_, __, ___) => TitleBarWrapper(
-                                  child: ConversationView(chat: chat, fromChatCreator: true)
-                                ),
+                                pageBuilder: (_, __, ___) =>
+                                    TitleBarWrapper(child: ConversationView(chat: chat, fromChatCreator: true)),
                                 transitionDuration: Duration.zero,
                               ),
                             );
@@ -702,7 +733,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               widget.initialAttachments,
                               textController.text,
                               subjectController.text,
-                              fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ?? fakeController.value!.replyToMessage?.item1.guid,
+                              fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ??
+                                  fakeController.value!.replyToMessage?.item1.guid,
                               fakeController.value!.replyToMessage?.item2,
                               effect,
                               false,
@@ -717,7 +749,9 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               Chat.deleteChat(chat);
                             }
                             createCompleter = Completer();
-                            final participants = selectedContacts.map((e) => e.address.isEmail ? e.address : cleansePhoneNumber(e.address)).toList();
+                            final participants = selectedContacts
+                                .map((e) => e.address.isEmail ? e.address : cleansePhoneNumber(e.address))
+                                .toList();
                             final method = iMessage ? "iMessage" : "SMS";
                             showDialog(
                                 context: context,
@@ -751,14 +785,19 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                 return showSnackbar("Error", "Failed to save chat!");
                               }
 
-                              // Update the chat in the chat list
+                              // Update the chat in the chat list.
+                              // If it wasn't existing, add it.
                               newChat = saved;
-                              chats.updateChat(newChat);
+                              bool updated = chats.updateChat(newChat);
+                              if (!updated) {
+                                await chats.addChat(newChat);
+                              }
 
                               // Fetch the last message for the chat and save it.
                               final messageRes = await http.chatMessages(newChat.guid, limit: 1);
                               if (messageRes.data["data"].length > 0) {
-                                final messages = (messageRes.data["data"] as List<dynamic>).map((e) => Message.fromMap(e)).toList();
+                                final messages =
+                                    (messageRes.data["data"] as List<dynamic>).map((e) => Message.fromMap(e)).toList();
                                 await Chat.bulkSyncMessages(newChat, messages);
                               }
 
@@ -807,7 +846,8 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                       actions: [
                                         TextButton(
                                           child: Text("OK",
-                                              style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                                              style: context.theme.textTheme.bodyLarge!
+                                                  .copyWith(color: Get.context!.theme.colorScheme.primary)),
                                           onPressed: () {
                                             Navigator.of(context).pop();
                                           },

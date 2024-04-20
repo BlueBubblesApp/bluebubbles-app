@@ -1,3 +1,9 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -12,11 +18,6 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
-def flutterRoot = localProperties.getProperty('flutter.sdk')
-if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
-}
-
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
     flutterVersionCode = '1'
@@ -26,10 +27,6 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName')
 if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
-
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     namespace "com.bluebubbles.messaging"
@@ -47,15 +44,16 @@ android {
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 23
-        targetSdkVersion 33
+        targetSdkVersion 34
         versionCode 20002000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     signingConfigs {
@@ -145,24 +143,24 @@ configurations.all {
 
 dependencies {
     // Android native functions
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "androidx.core:core-ktx:1.12.0"
     implementation "androidx.sharetarget:sharetarget:1.2.0"
-    implementation 'androidx.browser:browser:1.7.0'
+    implementation 'androidx.browser:browser:1.8.0'
     implementation 'androidx.activity:activity-ktx:1.8.2'
     implementation "androidx.work:work-runtime:2.9.0"
 
     // Firebase items
-    implementation 'com.google.firebase:firebase-messaging:23.4.0'
-    implementation 'com.google.firebase:firebase-database:20.3.0'
-    implementation 'com.google.firebase:firebase-messaging-directboot:23.4.0'
+    implementation 'com.google.firebase:firebase-messaging:23.4.1'
+    implementation 'com.google.firebase:firebase-database:20.3.1'
+    implementation 'com.google.firebase:firebase-messaging-directboot:23.4.1'
     implementation 'com.google.firebase:firebase-iid:21.1.0'
-    implementation 'com.google.firebase:firebase-firestore:24.10.1'
+    implementation 'com.google.firebase:firebase-firestore:24.11.0'
 
     // Kotlin Coroutines (async)
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.0"
 
     // Socket IO
     implementation ('io.socket:socket.io-client:2.0.0') {
@@ -171,4 +169,7 @@ dependencies {
 
     // JSON parsing
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // For AGP 7.4+ desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
