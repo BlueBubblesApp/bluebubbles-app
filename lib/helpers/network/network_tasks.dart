@@ -49,8 +49,13 @@ class NetworkTasks {
   }
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) async {
-    ConnectivityResult status = await (Connectivity().checkConnectivity());
-    if ((status != ConnectivityResult.wifi && status != ConnectivityResult.ethernet) || ss.settings.localhostPort.value == null || kIsWeb) {
+    if (ss.settings.localhostPort.value == null || kIsWeb) {
+      http.originOverride = null;
+      return;
+    }
+
+    List<ConnectivityResult> status = await (Connectivity().checkConnectivity());
+    if (!status.contains(ConnectivityResult.wifi) && !status.contains(ConnectivityResult.ethernet)) {
       http.originOverride = null;
       return;
     }
@@ -67,8 +72,8 @@ class NetworkTasks {
             for (String scheme in schemes) {
               String addr = "$scheme://[$ip]:${ss.settings.localhostPort.value!}";
               try {
-                Response response = await http.dio.get(addr);
-                if (response.data.toString().contains("BlueBubbles")) {
+                Response response = await http.ping(customUrl: addr);
+                if (response.data.toString().contains("pong")) {
                   address = addr;
                   break;
                 }
@@ -84,8 +89,8 @@ class NetworkTasks {
             for (String scheme in schemes) {
               String addr = "$scheme://$ip:${ss.settings.localhostPort.value!}";
               try {
-                final response = await http.dio.get(addr);
-                if (response.data.toString().contains("BlueBubbles")) {
+                final response = await http.ping(customUrl: addr);
+                if (response.data.toString().contains("pong")) {
                   address = addr;
                   break;
                 }
@@ -112,10 +117,17 @@ class NetworkTasks {
 
     if (http.originOverride != null) return;
 
+    // This was moved from main.dart to here because this is the only place we use it.
+    // This will also make an API call to a github file containing a mapping of MAC addresses
+    // to vendor information. That info is used to display metadata about an ActiveHost found
+    // on the network via a port scan. We don't want that API call to happen on first-boot, nor
+    // do we need it to.
+    await configureNetworkTools(fs.appDocDir.path, enableDebugging: kDebugMode);
+
     Logger.debug("Falling back to port scanning");
     final wifiIP = await NetworkInfo().getWifiIP();
     if (wifiIP != null) {
-      final stream = HostScanner.scanDevicesForSinglePort(
+      final stream = HostScannerService.instance.scanDevicesForSinglePort(
         wifiIP.substring(0, wifiIP.lastIndexOf('.')),
         int.parse(ss.settings.localhostPort.value!),
       );
@@ -128,8 +140,8 @@ class NetworkTasks {
           for (String scheme in schemes) {
             String addr = "$scheme://${h.address}:${ss.settings.localhostPort.value!}";
             try {
-              Response response = await http.dio.get(addr);
-              if (response.data.toString().contains("BlueBubbles")) {
+              Response response = await http.ping(customUrl: addr);
+              if (response.data.toString().contains("pong")) {
                 address = addr;
                 break;
               }

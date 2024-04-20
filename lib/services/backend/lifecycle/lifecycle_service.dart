@@ -36,7 +36,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (state != AppLifecycleState.resumed) {
+    if (state != AppLifecycleState.resumed && state != AppLifecycleState.inactive) {
       SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
         Logger.error("Error caught while hiding keyboard: ${e.toString()}");
       });

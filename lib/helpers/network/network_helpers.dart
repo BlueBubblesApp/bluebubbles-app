@@ -31,9 +31,18 @@ Future<String> getDeviceName() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     List<String> items = [];
 
+    // We need a unique identifier to be generated once per installation.
+    // Device Info Plus doesn't provide us with an idempotent identifier,
+    // so we'll have to generate one ourselves, and store it for future use.
+    int uniqueId = ss.settings.firstFcmRegisterDate.value;
+    if (uniqueId == 0) {
+      uniqueId = (DateTime.now().millisecondsSinceEpoch / 1000).round();
+      ss.settings.firstFcmRegisterDate.value = uniqueId;
+    }
+
     if (Platform.isAndroid) {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      items.addAll([androidInfo.brand, androidInfo.model, androidInfo.id]);
+      items.addAll([androidInfo.brand, androidInfo.model, uniqueId.toString()]);
     } else if (kIsWeb) {
       WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
       items.addAll([webInfo.browserName.name, webInfo.platform!]);
@@ -46,7 +55,7 @@ Future<String> getDeviceName() async {
     }
 
     if (items.isNotEmpty) {
-      deviceName = items.join("_").toLowerCase();
+      deviceName = items.join("_").toLowerCase().replaceAll(' ', '_');
     }
   } catch (ex) {
     Logger.error("Failed to get device name! Defaulting to 'bluebubbles-client'");

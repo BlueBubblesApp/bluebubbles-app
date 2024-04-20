@@ -59,10 +59,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                     ),
                     isThreeLine: true,
                     onTap: () async {
-                      await mcs.invokeMethod("open-conversation-notification-settings", {
-                        "channel_id": chat.guid,
-                        "display_name": chat.getTitle()
-                      });
+                      await mcs.invokeMethod("open-conversation-notification-settings",
+                          {"channel_id": chat.guid, "display_name": chat.getTitle()});
                     },
                   ),
                 if (!kIsWeb)
@@ -351,7 +349,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       child: Icon(iOS ? CupertinoIcons.doc_text : Icons.note_outlined),
                     ),
                     onTap: () async {
-                      final date = await showTimeframePicker("Select Timeframe", context);
+                      final date =
+                          await showTimeframePicker("Select Timeframe", context, additionalTimeframes: {"6 Hours": 6});
                       if (date == null) return;
                       showDialog(
                         context: context,
@@ -403,7 +402,8 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       showSnackbar("Success", "Saved transcript to the downloads folder");
                     },
                     onLongPress: () async {
-                      final date = await showTimeframePicker("Select Timeframe", context);
+                      final date =
+                          await showTimeframePicker("Select Timeframe", context, additionalTimeframes: {"6 Hours": 6});
                       if (date == null) return;
                       showDialog(
                         context: context,

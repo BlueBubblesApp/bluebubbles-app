@@ -58,8 +58,8 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     if (!kIsWeb) {
       updateObx(() {
         final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
-          ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-          ..order(Message_.dateCreated, flags: Order.descending))
+              ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
+              ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
 
         sub = latestMessageQuery.listen((Query<Message> query) async {
@@ -81,12 +81,13 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
           cachedLatestMessageGuid = message?.guid;
         });
 
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-            .watch();
+        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub2 = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
-          });
+          final chat = controller.chat.id == null
+              ? null
+              : await runAsync(() {
+                  return chatBox.get(controller.chat.id!);
+                });
           final newUnread = chat?.hasUnreadMessage ?? false;
           if (chat != null && unread != newUnread) {
             setState(() {
@@ -102,7 +103,8 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     } else {
       sub = WebListeners.newMessage.listen((tuple) {
         final message = tuple.item1;
-        if (tuple.item2?.guid == controller.chat.guid && (cachedDateCreated == null || message.dateCreated!.isAfter(cachedDateCreated!))) {
+        if (tuple.item2?.guid == controller.chat.guid &&
+            (cachedDateCreated == null || message.dateCreated!.isAfter(cachedDateCreated!))) {
           if (message.guid != cachedLatestMessageGuid) {
             String newSubtitle = MessageHelper.getNotificationText(message);
             if (newSubtitle != subtitle) {
@@ -137,7 +139,10 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   }
 
   List<Color> getBubbleColors() {
-    List<Color> bubbleColors = [context.theme.colorScheme.bubble(context, chat.isIMessage), context.theme.colorScheme.bubble(context, chat.isIMessage)];
+    List<Color> bubbleColors = [
+      context.theme.colorScheme.bubble(context, chat.isIMessage),
+      context.theme.colorScheme.bubble(context, chat.isIMessage)
+    ];
     if (lastMessage == null) return bubbleColors;
     if (!ss.settings.colorfulAvatars.value && ss.settings.colorfulBubbles.value && !lastMessage!.isFromMe!) {
       if (lastMessage!.handle?.color == null) {
@@ -157,26 +162,27 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
     String _subtitle = hideInfo ? fakeText : subtitle;
 
-    if (!unread
-        || lastMessage?.associatedMessageGuid != null
-        || lastMessage!.isFromMe!
-        || isNullOrEmpty(_subtitle)!) {
+    if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)!) {
       return const SizedBox.shrink();
     }
     final background = getBubbleColors().first.withOpacity(0.7);
     return Align(
-      alignment: showTail ? leftSide ? Alignment.centerLeft : Alignment.centerRight : Alignment.center,
+      alignment: showTail
+          ? leftSide
+              ? Alignment.centerLeft
+              : Alignment.centerRight
+          : Alignment.center,
       child: Padding(
         padding: EdgeInsets.only(
           left: showTail
               ? leftSide
-              ? size * 0.06
-              : size * 0.02
+                  ? size * 0.06
+                  : size * 0.02
               : size * 0.04,
           right: showTail
               ? leftSide
-              ? size * 0.02
-              : size * 0.06
+                  ? size * 0.02
+                  : size * 0.06
               : size * 0.04,
         ),
         child: Stack(
@@ -211,13 +217,13 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
                     child: Text(
                       _subtitle,
                       overflow: TextOverflow.ellipsis,
-                      maxLines: size ~/ 30,
+                      maxLines: clampDouble((size ~/ 30).toDouble(), 1, 3).toInt(),
                       textAlign: TextAlign.center,
                       style: context.theme.textTheme.bodySmall!.copyWith(
-                        fontSize: (size / 10).clamp(context.theme.textTheme.bodySmall!.fontSize!, double.infinity),
-                          color: context.theme.colorScheme.onBubble(context, chat.isIMessage)
-                              .withOpacity(ss.settings.colorfulBubbles.value ? 1 : 0.85)
-                      ),
+                          fontSize: (size / 10).clamp(context.theme.textTheme.bodySmall!.fontSize!, double.infinity),
+                          color: context.theme.colorScheme
+                              .onBubble(context, chat.isIMessage)
+                              .withOpacity(ss.settings.colorfulBubbles.value ? 1 : 0.85)),
                     ),
                   ),
                 ),

@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   bitsdojo_window_windows
   connectivity_plus
-  desktop_drop
   desktop_webview_auth
   dynamic_color
   file_selector_windows
