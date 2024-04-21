@@ -2165,11 +2165,12 @@ packages:
   photo_manager:
     dependency: "direct main"
     description:
-      name: photo_manager
-      sha256: df594f989f0c31cdb3ed48f3d49cb9ffadf11cc3700d2c3460b1912c93432621
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.0"
+      path: "."
+      ref: main
+      resolved-ref: "9108b49066c1bdb0f1dd68e4486308a9b0ffc586"
+      url: "https://github.com/fluttercandies/flutter_photo_manager.git"
+    source: git
+    version: "3.0.1"
   photo_view:
     dependency: "direct main"
     description:
