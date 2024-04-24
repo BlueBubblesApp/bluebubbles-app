@@ -7,7 +7,6 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
-import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -763,12 +762,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         Permission.notification.request();
       }
     });
-  }
-
-  @override
-  void didChangeDependencies() async {
-    countryCode = Get.deviceLocale?.countryCode;
-    super.didChangeDependencies();
   }
 
   @override

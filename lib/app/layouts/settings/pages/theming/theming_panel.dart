@@ -607,7 +607,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                       children: <Widget>[
                                         Obx(
                                               () => Text(
-                                              '${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)} (${((controller.progress.value ?? 0) * 100).floor()}%)',
+                                              '${controller.progress.value != null && controller.totalSize.value != null ? (controller.progress.value! * controller.totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((controller.totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()} (${((controller.progress.value ?? 0) * 100).floor()}%)',
                                               style: context.theme.textTheme.bodyLarge),
                                         ),
                                         const SizedBox(height: 10.0),
@@ -689,7 +689,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               }
                             },
                             title:
-                            kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
+                            kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? (controller.progress.value! * controller.totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((controller.totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
                             subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
                           );
                         } else {

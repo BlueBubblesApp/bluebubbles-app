@@ -1,19 +1,15 @@
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
-import 'package:video_player/video_player.dart';
 
-bool? isNullOrEmpty(dynamic input) {
+bool isNullOrEmpty(dynamic input) {
   if (input == null) return true;
   if (input is String) {
     input = input.trim();
   }
-
-  return GetUtils.isNullOrBlank(input);
+  return GetUtils.isNullOrBlank(input) ?? false;
 }
 
 bool isNullOrZero(dynamic input) {
@@ -46,35 +42,6 @@ Future<T?> createAsyncTask<T>(AsyncTask<List<dynamic>, T> task) async {
   executor.logger.enabledExecution = true;
   await executor.execute(task);
   return task.result;
-}
-
-PlayerStatus getControllerStatus(VideoPlayerController controller) {
-  Duration currentPos = controller.value.position;
-  if (controller.value.duration == currentPos) {
-    return PlayerStatus.ENDED;
-  } else if (!controller.value.isPlaying && currentPos.inMilliseconds == 0) {
-    return PlayerStatus.STOPPED;
-  } else if (!controller.value.isPlaying && currentPos.inMilliseconds != 0) {
-    return PlayerStatus.PAUSED;
-  } else if (controller.value.isPlaying) {
-    return PlayerStatus.PLAYING;
-  }
-
-  return PlayerStatus.NONE;
-}
-
-PlayerStatus getDesktopControllerStatus(Player controller) {
-  Duration currentPos = controller.state.position;
-  if (controller.state.completed) {
-    return PlayerStatus.ENDED;
-  }
-  if (!controller.state.playing && currentPos.inMilliseconds == 0) {
-    return PlayerStatus.STOPPED;
-  }
-  if (!controller.state.playing) {
-    return PlayerStatus.PAUSED;
-  }
-  return PlayerStatus.PLAYING;
 }
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;

@@ -4,7 +4,7 @@ import 'package:dlibphonenumber/dlibphonenumber.dart';
 import 'package:get/get.dart';
 
 Future<String> formatPhoneNumber(dynamic item) async {
-  String cc = countryCode ?? "US";
+  String cc = Get.deviceLocale?.countryCode ?? "US";
   String? address;
 
   // Set the address/country accordingly
