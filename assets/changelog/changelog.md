@@ -2,6 +2,23 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.13.3
+
+This is a hotfix release
+
+### Bug Fixes
+
+- Fixes issue with app unnecessarily re-registering device under a different FCM ID
+
+## v1.13.2
+
+This is a hotfix release, fixing some issues introduced in v1.13.1
+
+### Bug Fixes
+
+- Fixes crash when running BlueBubbles as a Foreground Service on Android 14
+- Fixes crash when using the photo picker on Android 10 and older
+
 ## v1.13.1
 
 This update includes a couple of new minor features as well as a bunch of QOL enhancements and bug fixes.
