@@ -38,7 +38,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   String? googleName;
   String? googlePicture;
   List<Map> usableProjects = [];
-  List<RxBool> connected = [];
+  List<RxBool> triedConnecting = [];
   List<RxBool> reachable = [];
   bool fetchingFirebase = false;
 
@@ -114,19 +114,15 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                   itemCount: usableProjects.length,
                                   itemBuilder: (context, index) {
                                     return Obx(() {
-                                      if (!connected[index].value) {
+                                      if (!triedConnecting[index].value) {
                                         Future(() async {
                                           try {
                                             await http.dio.get(usableProjects[index]['serverUrl']);
                                             reachable[index].value = true;
-                                            if (index == 0 && usableProjects.length == 1) {
-                                              requestPassword(context, usableProjects[index]['serverUrl'], connect);
-                                            }
                                           } catch (e) {
                                             reachable[index].value = false;
-                                          } finally {
-                                            connected[index].value = true;
                                           }
+                                          triedConnecting[index].value = true;
                                         });
                                       }
                                       return ClipRRect(
@@ -134,14 +130,14 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                         borderRadius: BorderRadius.circular(20),
                                         child: ListTile(
                                           tileColor: context.theme.colorScheme.primaryContainer.withOpacity(0.3),
-                                          enabled: connected[index].value && reachable[index].value,
+                                          enabled: triedConnecting[index].value && reachable[index].value,
                                           title: Text.rich(TextSpan(children: [
                                             TextSpan(text: usableProjects[index]['displayName']),
                                             TextSpan(
-                                              text: " ${connected[index].value ? "${reachable[index].value ? "R" : "Unr"}eachable" : "Checking"}",
+                                              text: " ${triedConnecting[index].value ? "${reachable[index].value ? "R" : "Unr"}eachable" : "Checking"}",
                                               style: TextStyle(
                                                   fontWeight: reachable[index].value ? FontWeight.bold : FontWeight.normal,
-                                                  color: connected[index].value
+                                                  color: triedConnecting[index].value
                                                       ? reachable[index].value
                                                           ? Colors.green
                                                           : Colors.red
@@ -166,8 +162,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                             if (!fetchingFirebase)
                               ElevatedButton(
                                 onPressed: () {
-                                  for (int i = 0; i < connected.length; i++) {
-                                    connected[i].value = false;
+                                  for (int i = 0; i < triedConnecting.length; i++) {
+                                    triedConnecting[i].value = false;
                                   }
                                 },
                                 child: const Text("Retry Connections"),
@@ -253,10 +249,10 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                       googlePicture = response.data['picture'];
                       fetchingFirebase = true;
                     });
-                    fetchFirebaseProjects(token!).then((List<Map> value) {
+                    fetchFirebaseProjects(token!).then((List<Map> value) async {
                       setState(() {
                         usableProjects = value;
-                        connected = List.generate(usableProjects.length, (i) => false.obs);
+                        triedConnecting = List.generate(usableProjects.length, (i) => false.obs);
                         reachable = List.generate(usableProjects.length, (i) => false.obs);
                         fetchingFirebase = false;
                       });

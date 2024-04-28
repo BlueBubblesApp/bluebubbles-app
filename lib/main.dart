@@ -35,7 +35,6 @@ import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
-import 'package:network_tools/network_tools.dart';
 import 'package:on_exit/init.dart';
 import 'package:path/path.dart' show basename, join;
 import 'package:path/path.dart' as p;
@@ -151,7 +150,6 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
   HttpOverrides.global = BadCertOverride();
   dynamic exception;
   StackTrace? stacktrace;
-  await configureNetworkTools(fs.appDocDir.path, enableDebugging: kDebugMode);
 
   try {
     /* ----- OBJECTBOX DB INITIALIZATION ----- */
@@ -320,7 +318,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           home: SplashScreen(shouldNavigate: false),
           theme: ThemeData(
             colorScheme: ColorScheme.fromSwatch(
-                backgroundColor: PlatformDispatcher.instance.platformBrightness == Brightness.dark ? Colors.black : Colors.white),
+                backgroundColor:
+                    PlatformDispatcher.instance.platformBrightness == Brightness.dark ? Colors.black : Colors.white),
           )));
     }
 
@@ -347,7 +346,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       if (Platform.isWindows) {
         await Window.hideWindowControls();
       } else if (Platform.isLinux) {
-        await windowManager.setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
+        await windowManager
+            .setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
       }
       windowManager.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
@@ -428,7 +428,8 @@ class BadCertOverride extends HttpOverrides {
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
         if (host.startsWith("*")) {
-          final regex = RegExp("^((\\*|[\\w\\d]+(-[\\w\\d]+)*)\\.)*(${host.split(".").reversed.take(2).toList().reversed.join(".")})\$");
+          final regex = RegExp(
+              "^((\\*|[\\w\\d]+(-[\\w\\d]+)*)\\.)*(${host.split(".").reversed.take(2).toList().reversed.join(".")})\$");
           hasBadCert = regex.hasMatch(serverUrl);
         } else {
           hasBadCert = serverUrl.endsWith(host);
@@ -473,8 +474,10 @@ class Main extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
-      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.colorScheme.primary)),
-      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.colorScheme.primary)),
+      light: lightTheme.copyWith(
+          textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.colorScheme.primary)),
+      dark:
+          darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.colorScheme.primary)),
       initial: AdaptiveThemeMode.system,
       builder: (theme, darkTheme) => GetMaterialApp(
         debugShowCheckedModeBanner: false,
@@ -492,24 +495,35 @@ class Main extends StatelessWidget {
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
           if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
           if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): const StartIncrementalSyncIntent(),
-          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation): const HeartRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at): const LikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign): const DislikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar): const LaughRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent): const EmphasizeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret): const QuestionRecentIntent(),
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
+                const StartIncrementalSyncIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
+              const HeartRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
+              const LikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
+              const DislikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
+              const LaughRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
+              const EmphasizeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
+              const QuestionRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
           if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
-          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab): const OpenPreviousChatIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
+                const OpenPreviousChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
@@ -523,7 +537,8 @@ class Main extends StatelessWidget {
             androidNotificationOptions: AndroidNotificationOptions(
               channelId: 'com.bluebubbles.foreground_service',
               channelName: 'Foreground Service',
-              channelDescription: 'Allows BlueBubbles to stay open in the background for notifications if FCM is not being used',
+              channelDescription:
+                  'Allows BlueBubbles to stay open in the background for notifications if FCM is not being used',
               channelImportance: NotificationChannelImportance.LOW,
               priority: NotificationPriority.LOW,
               iconData: const NotificationIconData(
@@ -598,8 +613,10 @@ class Main extends StatelessWidget {
                                   child: Material(
                                     color: context.theme.colorScheme.primary, // button color
                                     child: InkWell(
-                                      child:
-                                          SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                      child: SizedBox(
+                                          width: 60,
+                                          height: 60,
+                                          child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
                                       onTap: () async {
                                         final localAuth = LocalAuthentication();
                                         bool didAuthenticate = await localAuth.authenticate(
@@ -767,7 +784,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                               "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
                               style: context.theme.textTheme.bodyLarge),
                           Container(height: 5),
-                          Text("To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
+                          Text(
+                              "To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
                               style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
                           Container(height: 5),
                           Text("Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
@@ -777,7 +795,9 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                       backgroundColor: context.theme.colorScheme.properSurface,
                       actions: <Widget>[
                         TextButton(
-                          child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          child: Text("Close",
+                              style: context.theme.textTheme.bodyLarge!
+                                  .copyWith(color: context.theme.colorScheme.primary)),
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
@@ -808,8 +828,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
   @override
   void didChangeDependencies() async {
-    Locale myLocale = Localizations.localeOf(context);
-    countryCode = myLocale.countryCode;
+    countryCode = Get.deviceLocale?.countryCode;
     super.didChangeDependencies();
   }
 
@@ -839,7 +858,9 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+      systemNavigationBarColor: ss.settings.immersiveMode.value
+          ? Colors.transparent
+          : context.theme.colorScheme.background, // navigation bar color
       systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       statusBarColor: Colors.transparent, // status bar color
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -847,7 +868,9 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value
+            ? Colors.transparent
+            : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -881,7 +904,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                   } else {
                     return PopScope(
                       canPop: false,
-                      child: TitleBarWrapper(child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
+                      child: TitleBarWrapper(
+                          child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
                     );
                   }
                 },
@@ -947,7 +971,8 @@ Future<void> initSystemTray() async {
   });
 }
 
-void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) async {
+void copyDirectory(Directory source, Directory destination) =>
+    source.listSync(recursive: false).forEach((element) async {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
         newDirectory.createSync();

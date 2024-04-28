@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
 class Settings {
+  final RxInt firstFcmRegisterDate = 0.obs;
   final RxString iCloudAccount = "".obs;
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
@@ -20,6 +21,8 @@ class Settings {
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
   final RxBool autoSave = false.obs;
+  final RxString autoSavePicsLocation = "Pictures".obs;
+  final RxString autoSaveDocsLocation = "/storage/emulated/0/Download/".obs;
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
   final RxBool showIncrementalSync = false.obs;
@@ -138,7 +141,15 @@ class Settings {
 
   // Notification actions
   final RxList<int> selectedActionIndices = Platform.isWindows ? [0, 1, 2, 3, 4].obs : [0, 1, 2].obs;
-  final RxList<String> actionList = RxList.from(["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]);
+  final RxList<String> actionList = RxList.from([
+    "Mark Read",
+    ReactionTypes.LOVE,
+    ReactionTypes.LIKE,
+    ReactionTypes.LAUGH,
+    ReactionTypes.EMPHASIZE,
+    ReactionTypes.DISLIKE,
+    ReactionTypes.QUESTION
+  ]);
 
   // Linux settings
   final RxBool useCustomTitleBar = RxBool(true);
@@ -190,6 +201,8 @@ class Settings {
       'autoDownload': autoDownload.value,
       'onlyWifiDownload': onlyWifiDownload.value,
       'autoSave': autoSave.value,
+      'autoSavePicsLocation': autoSavePicsLocation.value,
+      'autoSaveDocsLocation': autoSaveDocsLocation.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
       'showIncrementalSync': showIncrementalSync.value,
@@ -301,6 +314,7 @@ class Settings {
         'colorsFromMedia': colorsFromMedia.value,
         'monetTheming': monetTheming.value.index,
         'userAvatarPath': userAvatarPath.value,
+        'firstFcmRegisterDate': firstFcmRegisterDate.value,
       });
     }
     return map;
@@ -310,6 +324,8 @@ class Settings {
     ss.settings.autoDownload.value = map['autoDownload'] ?? true;
     ss.settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     ss.settings.autoSave.value = map['autoSave'] ?? false;
+    ss.settings.autoSavePicsLocation.value = map['autoSavePicsLocation'] ?? "Pictures";
+    ss.settings.autoSaveDocsLocation.value = map['autoSaveDocsLocation'] ?? "/storage/emulated/0/Download/";
     ss.settings.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     ss.settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     ss.settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
@@ -407,12 +423,32 @@ class Settings {
     ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
-    ss.settings.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
-    ss.settings.windowEffect.value = kIsDesktop && Platform.isWindows ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled : WindowEffect.disabled;
+    ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String
+                ? jsonDecode(map['selectedActionIndices']) as List
+                : [0, 1, 2, 3, 4])
+            .cast<int>()
+            .splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3))
+            .firstOrNull ??
+        [];
+    ss.settings.actionList.value = (map['actionList']?.runtimeType == String
+            ? jsonDecode(map['actionList']) as List
+            : [
+                "Mark Read",
+                ReactionTypes.LOVE,
+                ReactionTypes.LIKE,
+                ReactionTypes.LAUGH,
+                ReactionTypes.EMPHASIZE,
+                ReactionTypes.DISLIKE,
+                ReactionTypes.QUESTION
+              ])
+        .cast<String>();
+    ss.settings.windowEffect.value = kIsDesktop && Platform.isWindows
+        ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled
+        : WindowEffect.disabled;
     ss.settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
+    ss.settings.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     ss.settings.save();
 
     eventDispatcher.emit("theme-update", null);
@@ -423,10 +459,13 @@ class Settings {
     s.iCloudAccount.value = map['iCloudAccount'] ?? "";
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
-    s.customHeaders.value = map['customHeaders'] is String ? jsonDecode(map['customHeaders']).cast<String, String>() : <String, String>{};
+    s.customHeaders.value =
+        map['customHeaders'] is String ? jsonDecode(map['customHeaders']).cast<String, String>() : <String, String>{};
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
+    s.autoSavePicsLocation.value = map['autoSavePicsLocation'] ?? "Pictures";
+    s.autoSaveDocsLocation.value = map['autoSaveDocsLocation'] ?? "/storage/emulated/0/Download/";
     s.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
@@ -531,12 +570,32 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>().splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3)).firstOrNull ?? [];
-    s.actionList.value = (map['actionList']?.runtimeType == String ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
-    s.windowEffect.value = (kIsDesktop && Platform.isWindows) ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled : WindowEffect.disabled;
+    s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String
+                ? jsonDecode(map['selectedActionIndices']) as List
+                : [0, 1, 2, 3, 4])
+            .cast<int>()
+            .splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3))
+            .firstOrNull ??
+        [];
+    s.actionList.value = (map['actionList']?.runtimeType == String
+            ? jsonDecode(map['actionList']) as List
+            : [
+                "Mark Read",
+                ReactionTypes.LOVE,
+                ReactionTypes.LIKE,
+                ReactionTypes.LAUGH,
+                ReactionTypes.EMPHASIZE,
+                ReactionTypes.DISLIKE,
+                ReactionTypes.QUESTION
+              ])
+        .cast<String>();
+    s.windowEffect.value = (kIsDesktop && Platform.isWindows)
+        ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled
+        : WindowEffect.disabled;
     s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
     s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
+    s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     return s;
   }
 }

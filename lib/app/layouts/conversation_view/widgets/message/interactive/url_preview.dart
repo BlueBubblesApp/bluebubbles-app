@@ -44,6 +44,7 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
   void initState() {
     super.initState();
     updateObx(() async {
+      // refers to a location widget
       if (widget.file != null) {
         String? _location;
         if (kIsWeb || widget.file!.path == null) {
@@ -62,10 +63,10 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
         final link = document.getElementsByClassName("sc-platter-cell").firstOrNull?.children.firstWhereOrNull((e) => e.localName == "a");
         final url = link?.attributes["href"];
         if (url != null) {
-          MetadataFetch.extract(url).then((metadata) {
+          MetadataFetch.extract(dataOverride!.url!).then((metadata) {
             if (metadata?.image != null) {
               dataOverride!.imageMetadata = MediaMetadata(size: const Size.square(1), url: metadata!.image);
-              dataOverride!.summary = metadata.title;
+              dataOverride!.summary = metadata.description ?? metadata.title;
               dataOverride!.url = url;
               setState(() {});
             }

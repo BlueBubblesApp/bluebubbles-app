@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:dlibphonenumber/dlibphonenumber.dart';
 import 'package:get/get.dart';
-import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
 Future<String> formatPhoneNumber(dynamic item) async {
   String cc = countryCode ?? "US";
@@ -23,8 +23,8 @@ Future<String> formatPhoneNumber(dynamic item) async {
 
   String? formatted;
   try {
-    final parsed = PhoneNumber.parse(address);
-    formatted = parsed.getFormattedNsn(isoCode: IsoCode.values.firstWhereOrNull((element) => element.name == cc));
+    final parsed = PhoneNumberUtil.instance.parse(address, address.startsWith("+") ? null : cc);
+    formatted = PhoneNumberUtil.instance.format(parsed, PhoneNumberFormat.international);
   } catch (_) {}
 
   return formatted ?? address;

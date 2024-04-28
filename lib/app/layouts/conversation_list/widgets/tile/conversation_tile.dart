@@ -362,7 +362,6 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       eventDispatcher.stream.listen((event) {
         if (event.item1 != 'update-contacts') return;
         if (event.item2.isNotEmpty) {
-          print('fired');
           String newSubtitle = MessageHelper.getNotificationText(controller.chat.latestMessage);
           if (newSubtitle != subtitle) {
             setState(() {

@@ -15,7 +15,6 @@ import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -339,8 +338,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   @override
   Widget build(BuildContext context) {
     const moonIcon = CupertinoIcons.moon_fill;
-    return DropTarget(
-      onDragEntered: (details) {
+    return Container(
+      /*onDragEntered: (details) {
         dragging.value = true;
       },
       onDragExited: (details) {
@@ -355,7 +354,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         )));
         controller.pickedAttachments.addAll(files);
         dragging.value = false;
-      },
+      },*/
       child: GestureDetector(
         behavior: HitTestBehavior.deferToChild,
         onHorizontalDragUpdate: (details) {

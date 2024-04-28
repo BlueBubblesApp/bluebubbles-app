@@ -67,8 +67,7 @@ class _MessageRemindersPanelState extends OptimizedState<MessageRemindersPanel> 
                             style: context.theme.textTheme.labelLarge,
                           ),
                         ),
-                        if (fetching == true)
-                          buildProgressIndicator(context, size: 15),
+                        if (fetching == true) buildProgressIndicator(context, size: 15),
                       ],
                     ),
                   ),
@@ -88,17 +87,25 @@ class _MessageRemindersPanelState extends OptimizedState<MessageRemindersPanel> 
                           title: Text(item.body!, maxLines: 2, overflow: TextOverflow.ellipsis),
                           subtitle: int.tryParse(item.payload!) == null
                               ? Text(item.title!.replaceAll("Reminder: ", ""))
-                              : Text("${item.title!.replaceAll("Reminder: ", "")}\n${buildFullDate(DateTime.fromMillisecondsSinceEpoch(int.parse(item.payload!)))}"),
+                              : Text(
+                                  "${item.title!.replaceAll("Reminder: ", "")}\n${buildFullDate(DateTime.fromMillisecondsSinceEpoch(int.parse(item.payload!)))}"),
                           isThreeLine: int.tryParse(item.payload!) == null ? false : true,
                           onTap: () async {
-                            final finalDate = await showTimeframePicker("Select Reminder Time", context, presetsAhead: true);
+                            final finalDate = await showTimeframePicker("Select Reminder Time", context,
+                                presetsAhead: true,
+                                additionalTimeframes: {
+                                  "3 Hours": 3,
+                                  "6 Hours": 6,
+                                },
+                                useTodayYesterday: true);
                             if (finalDate != null) {
                               if (!finalDate.isAfter(DateTime.now().toLocal())) {
                                 showSnackbar("Error", "Select a date in the future");
                                 return;
                               }
                               deleteMessage(item);
-                              await notif.createReminder(null, null, finalDate, chatTitle: item.title, messageText: item.body);
+                              await notif.createReminder(null, null, finalDate,
+                                  chatTitle: item.title, messageText: item.body);
                               showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
                               getExistingMessages();
                             }
@@ -116,7 +123,6 @@ class _MessageRemindersPanelState extends OptimizedState<MessageRemindersPanel> 
               ),
             ]),
           ),
-        ]
-    );
+        ]);
   }
 }

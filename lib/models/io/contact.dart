@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
+import 'package:slugify/slugify.dart';
 
 @Entity()
 class Contact {
@@ -32,13 +33,12 @@ class Contact {
   StructuredName? structuredName;
   Uint8List? avatar;
 
-  String? get dbStructuredName => structuredName == null
-      ? null : jsonEncode(structuredName!.toMap());
-  set dbStructuredName(String? json) => structuredName = json == null
-      ? null : StructuredName.fromMap(jsonDecode(json));
+  String? get dbStructuredName => structuredName == null ? null : jsonEncode(structuredName!.toMap());
+  set dbStructuredName(String? json) => structuredName = json == null ? null : StructuredName.fromMap(jsonDecode(json));
 
   String? get initials {
-    String initials = (structuredName?.givenName.characters.firstOrNull ?? "") + (structuredName?.familyName.characters.firstOrNull ?? "");
+    String initials = (structuredName?.givenName.characters.firstOrNull ?? "") +
+        (structuredName?.familyName.characters.firstOrNull ?? "");
     // If the initials are empty, get them from the display name
     if (initials.trim().isEmpty) {
       initials = displayName.characters.firstOrNull ?? "";
@@ -74,13 +74,20 @@ class Contact {
       query.close();
       return result;
     } else if (address != null) {
-      final query = contactBox.query(Contact_.phones.containsElement(address) | Contact_.emails.containsElement(address)).build();
+      final query =
+          contactBox.query(Contact_.phones.containsElement(address) | Contact_.emails.containsElement(address)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
     }
     return null;
+  }
+
+  bool hasMatchingAddress(String search) {
+    String term = slugify(search, delimiter: "");
+    return phones.any((element) => slugify(element, delimiter: "").contains(term)) ||
+        emails.any((element) => slugify(element, delimiter: "").contains(term));
   }
 
   Map<String, dynamic> toMap() {
@@ -118,5 +125,6 @@ class Contact {
           avatar?.length == other.avatar?.length);
 
   @override
-  int get hashCode => Object.hashAllUnordered([displayName, avatar?.length, ...getUniqueNumbers(phones), ...getUniqueEmails(emails)]);
+  int get hashCode =>
+      Object.hashAllUnordered([displayName, avatar?.length, ...getUniqueNumbers(phones), ...getUniqueEmails(emails)]);
 }
