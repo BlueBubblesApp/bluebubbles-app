@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 1.13.2+66
+version: 1.13.3+67
 publish_to: none
 
 environment:
@@ -253,10 +253,10 @@ flutter_native_splash:
 
 # The following section is specific to Flutter.
 flutter:
-  fonts:
-  - family: WaveformIcon
-    fonts:
-      - asset: assets/fonts/WaveformIcon.ttf
+  # fonts:
+  # - family: AppleColorEmoji
+  #   fonts:
+  #     - asset: assets/fonts/AppleColorEmoji.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

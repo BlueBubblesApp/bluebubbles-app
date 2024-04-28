@@ -1,6 +1,5 @@
 
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:bluebubbles/app/components/custom/custom_waveform_icon.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
@@ -85,12 +84,12 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                 child: isLinuxArm64 ? const SizedBox(height: 40) :
                   !isChatCreator && !showRecording
                   ? CupertinoIconWrapper(icon: Icon(
-                    iOS ? WaveformIconData(0xe800) : Icons.mic_none,
+                    iOS ? CupertinoIcons.waveform : Icons.mic_none,
                     color: iOS ? CupertinoDynamicColor.resolve(iOSStopIconColor, context) : context.theme.colorScheme.properOnSurface,
-                    size: iOS ? 17 : 20,
+                    size: iOS ? 24 : 20, // Waveform icon appears smaller, using size 24
                   )) : CupertinoIconWrapper(icon: Icon(
                     iOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
-                    color: iOS ? CupertinoDynamicColor.resolve(iOSWavesColor, context) : context.theme.colorScheme.properOnSurface,
+                    color: iOS ? context.theme.colorScheme.primary : context.theme.colorScheme.properOnSurface,
                     size: 15,
                   )),
                 onPressed: () async {
