@@ -11,7 +11,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/pic
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/voice_message_recorder.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/colors/voice_message_recorder_colors.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -858,7 +857,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
           decoration: iOS
               ? BoxDecoration(
                   border: Border.fromBorderSide(BorderSide(
-                    color: (isRecording & iOS) ? CupertinoDynamicColor.resolve(iOSVoiceRecorderBackgroundColor, context) : context.theme.colorScheme.properSurface,
+                    color: (isRecording & iOS) ? context.theme.colorScheme.primary.withOpacity(1.0) : context.theme.colorScheme.properSurface,
                     width: 1.5,
                   )),
                   borderRadius: BorderRadius.circular(20),
@@ -981,14 +980,15 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         ? "New Message"
                         : ss.settings.recipientAsPlaceholder.value == true
                             ? chat!.getTitle()
-                            : chat!.isTextForwarding
+                            : (chat!.isTextForwarding && !isRecording)
                                 ? "Text Forwarding"
-                                : "iMessage",
+                                : (!isRecording) // Only show iMessage when not recording
+                                  ? "iMessage" : "",
                     enabledBorder: InputBorder.none,
                     border: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     filled: (isRecording & iOS),
-                    fillColor: (isRecording & iOS) ? CupertinoDynamicColor.resolve(iOSVoiceRecorderBackgroundColor, context) : Colors.transparent,
+                    fillColor: (isRecording & iOS) ? context.theme.colorScheme.primary.withOpacity(0.3) : Colors.transparent,
                     hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                     suffixIconConstraints: const BoxConstraints(minHeight: 0),
                     suffixIcon: samsung && !isChatCreator

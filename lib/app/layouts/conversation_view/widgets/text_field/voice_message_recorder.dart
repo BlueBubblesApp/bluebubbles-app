@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/layouts/conversation_view/colors/voice_message_recorder_colors.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/cupertino.dart';
@@ -52,7 +51,7 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
               recorderController: widget.recorderController!,
               padding: EdgeInsets.symmetric(vertical: 5, horizontal: widget.iOS ? 10 : 15), // need extra spacing in case of iOS for recording duration
               waveStyle: WaveStyle(
-                waveColor: widget.iOS ? iOSWavesColor : Colors.white,
+                waveColor: widget.iOS ? context.theme.colorScheme.primary : Colors.white,
                 waveCap: StrokeCap.square,
                 spacing: 4.0,
                 showBottom: true,
@@ -62,13 +61,13 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
               decoration: BoxDecoration(
                 border: Border.fromBorderSide(BorderSide(
                   color: widget.iOS
-                      ? CupertinoDynamicColor.resolve(iOSVoiceRecorderBackgroundColor, context)
+                      ? Colors.transparent
                       : context.theme.colorScheme.outline,
                   width: 1,
                 )),
                 borderRadius: BorderRadius.circular(20),
                 color: widget.iOS
-                    ? CupertinoDynamicColor.resolve(iOSVoiceRecorderBackgroundColor, context)
+                    ? Colors.transparent
                     : context.theme.colorScheme.properSurface,
               ),
             ),
@@ -87,7 +86,7 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
 
                     return Text(
                       '$minutes:$seconds',
-                      style: TextStyle(color: Color(0xFFff6f61)),
+                      style: TextStyle(color: context.theme.colorScheme.primary),
                     );
                   } else {
                     return Container();
