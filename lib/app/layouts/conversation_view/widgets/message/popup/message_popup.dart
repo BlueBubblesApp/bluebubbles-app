@@ -17,7 +17,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
@@ -350,7 +349,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
-                                    if (backend.canEditUnsend() && 
+                                    if (backend.canEditUnsend && 
                                         message.isFromMe! &&
                                         !message.guid!.startsWith("temp"))
                                       PopupMenuItem(
@@ -360,7 +359,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                           style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
-                                    if (backend.canEditUnsend() && 
+                                    if (backend.canEditUnsend && 
                                         message.isFromMe! &&
                                         !message.guid!.startsWith("temp") &&
                                         (part.text?.isNotEmpty ?? false))
@@ -970,10 +969,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   void unsend() async {
     popDetails();
     final updatedMessage = await backend.unsend(message, part);
-    if (updatedMessage == null) {
-      return;
+    if (updatedMessage != null) {
+      ah.handleUpdatedMessage(chat, updatedMessage, null);
     }
-    ah.handleUpdatedMessage(chat, updatedMessage, null);
   }
 
   void edit() async {
@@ -1315,7 +1313,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (backend.canEditUnsend() && message.isFromMe! && !message.guid!.startsWith("temp"))
+      if (backend.canEditUnsend && message.isFromMe! && !message.guid!.startsWith("temp"))
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1334,7 +1332,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (backend.canEditUnsend() &&
+      if (backend.canEditUnsend &&
           message.isFromMe! &&
           !message.guid!.startsWith("temp") &&
           (part.text?.isNotEmpty ?? false))

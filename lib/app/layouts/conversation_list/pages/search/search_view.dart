@@ -50,7 +50,7 @@ class SearchViewState extends OptimizedState<SearchView> {
   bool noResults = false;
   bool isSearching = false;
   String? currentSearchTerm;
-  bool local = false;
+  bool local = backend.remoteService == null;
   bool network = true;
 
   Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
@@ -94,7 +94,7 @@ class SearchViewState extends OptimizedState<SearchView> {
     );
 
     if (local) {
-      final query = (messageBox.query(Message_.text.contains(currentSearchTerm!)
+      final query = (messageBox.query(Message_.text.contains(currentSearchTerm!, caseSensitive: false)
           .and(Message_.associatedMessageGuid.isNull())
           .and(Message_.dateDeleted.isNull())
           .and(Message_.dateCreated.notNull()))
@@ -253,7 +253,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                 suffixMode: OverlayVisibilityMode.editing,
               ),
             ),
-            if (!kIsWeb)
+            if (!kIsWeb && backend.remoteService != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
                 child: ToggleButtons(

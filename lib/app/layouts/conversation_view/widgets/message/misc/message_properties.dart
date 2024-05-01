@@ -39,22 +39,36 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
     final replyList = service.struct.threads(message.guid!, widget.part.part, returnOriginator: false);
     if (message.expressiveSendStyleId != null) {
       final effect = effectMap.entries.firstWhereOrNull((element) => element.value == message.expressiveSendStyleId)?.key ?? "unknown";
+      playEffect() {
+        if (stringToMessageEffect[effect] == MessageEffect.echo) {
+          showSnackbar("Notice", "Echo animation is not supported at this time.");
+          return;
+        }
+        HapticFeedback.mediumImpact();
+        if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
+          eventDispatcher.emit('play-bubble-effect', '${widget.part.part}/${message.guid}');
+        } else if (widget.globalKey != null) {
+          eventDispatcher.emit('play-effect', {
+            'type': effect,
+            'size': widget.globalKey!.globalPaintBounds(context),
+          });
+        }
+      }
+      if (message.datePlayed == null && !(message.isFromMe ?? false)) {
+        message.datePlayed = DateTime.now();
+        message.save();
+        var needsAlignment = stringToMessageEffect[effect] == MessageEffect.spotlight || 
+          stringToMessageEffect[effect] == MessageEffect.love || stringToMessageEffect[effect] == MessageEffect.lasers;
+        // wait extra long for effects that need the message to be in it's final position
+        Future.delayed(Duration(milliseconds: needsAlignment ? 500 : 200), () {
+          playEffect();
+        });
+        
+      }
       properties.add(TextSpan(
         text: "↺ sent with $effect",
         recognizer: TapGestureRecognizer()..onTap = () {
-          if (stringToMessageEffect[effect] == MessageEffect.echo) {
-            showSnackbar("Notice", "Echo animation is not supported at this time.");
-            return;
-          }
-          HapticFeedback.mediumImpact();
-          if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
-            eventDispatcher.emit('play-bubble-effect', '${widget.part.part}/${message.guid}');
-          } else if (widget.globalKey != null) {
-            eventDispatcher.emit('play-effect', {
-              'type': effect,
-              'size': widget.globalKey!.globalPaintBounds(context),
-            });
-          }
+          playEffect();
         }
       ));
     }

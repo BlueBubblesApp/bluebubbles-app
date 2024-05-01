@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
@@ -44,7 +43,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
   }
 
   void getBackups() async {
-    if (backend.getRemoteService() == null) {
+    if (backend.remoteService == null) {
       setState(() {
         fetching = false;
       });
@@ -109,7 +108,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
   }
 
   Future<bool?> showMethodDialog() async {
-    if (backend.getRemoteService() == null) {
+    if (backend.remoteService == null) {
       return false;
     }
     return await showDialog<bool>(

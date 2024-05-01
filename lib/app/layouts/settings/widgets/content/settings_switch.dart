@@ -11,6 +11,7 @@ class SettingsSwitch extends StatelessWidget {
     this.backgroundColor,
     this.subtitle,
     this.isThreeLine = false,
+    this.padding = true,
   });
   final bool initialVal;
   final Function(bool) onChanged;
@@ -18,6 +19,7 @@ class SettingsSwitch extends StatelessWidget {
   final Color? backgroundColor;
   final String? subtitle;
   final bool isThreeLine;
+  final bool padding;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,7 @@ class SettingsSwitch extends StatelessWidget {
             subtitle!,
             style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: 1.5),
           ) : null,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+          contentPadding: padding ? const EdgeInsets.symmetric(horizontal: 16.0) : EdgeInsets.zero,
         ),
       ),
     );

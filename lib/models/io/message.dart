@@ -452,6 +452,13 @@ class Message {
       if (existing != null) {
         id = existing.id;
         text ??= existing.text;
+        // delivered can sometimes come before sending, don't let it get overwritten
+        if (existing.dateDelivered != null && dateDelivered == null) {
+          dateDelivered = existing.dateDelivered;
+        }
+        if (existing.dateRead != null && dateRead == null) {
+          dateRead = existing.dateRead;
+        }
       }
 
       // Save the participant & set the handle ID to the new participant

@@ -12,7 +12,6 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -279,7 +278,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   );
                 }, childCount: clippedParticipants.length + 2),
               ),
-            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value && backend.canLeaveChat())
+            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value && backend.canLeaveChat)
               SliverToBoxAdapter(
                 child: Builder(
                   builder: (context) {

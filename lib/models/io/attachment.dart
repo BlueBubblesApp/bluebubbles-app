@@ -93,6 +93,12 @@ class Attachment {
     return PlatformFile(name: transferName!, bytes: bytes, path: kIsWeb ? null : path, size: totalBytes ?? 0);
   }
 
+  Future<void> writeToDisk() async {
+    var file = File(path);
+    await file.create(recursive: true);
+    await file.writeAsBytes(bytes!);
+  }
+
   /// Save a new attachment or update an existing attachment on disk
   /// [message] is used to create a link between the attachment and message,
   /// when provided

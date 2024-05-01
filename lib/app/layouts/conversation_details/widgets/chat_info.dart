@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
@@ -45,7 +44,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
               children: [
                 if (ss.settings.enablePrivateAPI.value && chat.isIMessage)
                   Text(
-                      "Local - Changes only apply to this device.\nPrivate API - Changes will apply to everyone's devices.",
+                      "Local - Changes only apply to this device.\nEveryone - Changes will apply to everyone's devices.",
                       style: context.theme.textTheme.bodyLarge
                   ),
               ],
@@ -62,7 +61,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
               ),
               TextButton(
                   child: Text(
-                      "Private API",
+                      "Everyone",
                       style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
                   ),
                   onPressed: () {

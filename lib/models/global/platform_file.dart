@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 class PlatformFile {
@@ -39,6 +40,17 @@ class PlatformFile {
 
   /// File extension for this file.
   String? get extension => name.split('.').last;
+
+  Future<Uint8List> getBytes() async {
+    if (bytes != null) return bytes!;
+    final File myFile = File(path!);
+    return await myFile.readAsBytes();
+  }
+
+  bool exists() {
+    if (bytes != null) return true;
+    return File(path!).existsSync();
+  }
 
   @override
   bool operator ==(Object other) {

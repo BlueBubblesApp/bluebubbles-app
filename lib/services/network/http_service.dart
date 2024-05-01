@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -10,214 +11,6 @@ import 'backend_service.dart';
 
 /// Get an instance of our [HttpService]
 HttpService http = Get.isRegistered<HttpService>() ? Get.find<HttpService>() : Get.put(HttpService());
-
-class HttpBackend implements BackendService {
-  @override
-  Future<Chat> createChat(List<String> addresses, String? message, String service, {CancelToken? cancelToken}) async {
-    var response = await http.createChat(addresses, message, service, cancelToken: cancelToken);
-    return Chat.fromMap(response.data["data"]);
-  }
-
-  @override
-  void init() { }
-
-  @override
-  void startedTyping(Chat c) {
-    socket.sendMessage("started-typing", {"chatGuid": c.guid});
-  }
-
-  @override
-  void stoppedTyping(Chat c){
-    socket.sendMessage("stopped-typing", {"chatGuid": c.guid});
-  }
-
-  @override
-  void updateTypingStatus(Chat c) {
-    socket.sendMessage("update-typing-status", {"chatGuid": c.guid});
-  }
-  
-  @override
-  Future<Message> sendMessage(Chat c, Message m, {CancelToken? cancelToken}) async {
-    var response = await http.sendMessage(c.guid,
-        m.guid!,
-        m.text!,
-        subject: m.subject,
-        method: (ss.settings.enablePrivateAPI.value
-            && ss.settings.privateAPISend.value)
-            || (m.subject?.isNotEmpty ?? false)
-            || m.threadOriginatorGuid != null
-            || m.expressiveSendStyleId != null
-            ? "private-api" : "apple-script",
-        selectedMessageGuid: m.threadOriginatorGuid,
-        effectId: m.expressiveSendStyleId,
-        partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-        ddScan: m.text!.isURL, cancelToken: cancelToken);
-    return Message.fromMap(response.data["data"]);
-  }
-  
-  @override
-  Future<bool> renameChat(Chat chat, String newName) async {
-    return (await http.updateChat(chat.guid, newName)).statusCode == 200;
-  }
-
-  @override
-  Future<bool> chatParticipant(ParticipantOp op, Chat chat, String address) async {
-    var method = op == ParticipantOp.Add ? "add" : "remove"; // TODO find a better way to do this
-    return (await http.chatParticipant(method, chat.guid, address)).statusCode == 200;
-  }
-  
-  @override
-  Future<bool> leaveChat(Chat chat) async {
-    return (await http.leaveChat(chat.guid)).statusCode == 200;
-  }
-  
-  @override
-  Future<Message> sendTapback(Chat chat, Message selected, String reaction, int? repPart) async {
-    return Message.fromMap((await http.sendTapback(chat.guid, selected.text ?? "", selected.guid!, reaction, partIndex: repPart)).data['data']);
-  }
-  
-  @override
-  Future<bool> markRead(Chat chat) async {
-    return (await http.markChatRead(chat.guid)).statusCode == 200;
-  }
-
-  @override
-  HttpService? getRemoteService() {
-    return http;
-  }
-
-  @override
-  bool canLeaveChat() {
-    return ss.serverDetailsSync().item4 >= 226;
-  }
-
-  @override
-  bool canEditUnsend() {
-    return ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148;
-  }
-
-  @override
-  Future<Message?> unsend(Message msg, MessagePart part) async {
-    var response = await http.unsend(msg.guid!, partIndex: part.part);
-    if (response.statusCode != 200) {
-      return null;
-    }
-    return Message.fromMap(response.data['data']);
-  }
-
-  @override
-  Future<Message?> edit(Message msg, String text, int part) async {
-    var response = await http.edit(msg.guid!, text, "Edited to: “$text", partIndex: part);
-    if (response.statusCode != 200) {
-      return null;
-    }
-    return Message.fromMap(response.data['data']);
-  }
-
-  @override
-  Future<PlatformFile> downloadAttachment(Attachment att, {void Function(int p1, int p2)? onReceiveProgress, bool original = false, CancelToken? cancelToken}) async {
-    var response = await http.downloadAttachment(att.guid!, onReceiveProgress: onReceiveProgress, original: original, cancelToken: cancelToken);
-    if (response.statusCode != 200) {
-      throw Exception("Bad!");
-    }
-    if (att.mimeType == "image/gif") {
-      att.bytes = await fixSpeedyGifs(response.data);
-    } else {
-      att.bytes = response.data;
-    }
-    att.webUrl = response.requestOptions.path;
-    return att.getFile();
-  }
-
-  @override
-  Future<Message> sendAttachment(Chat c, Message m, bool isAudioMessage, Attachment attachment, {void Function(int p1, int p2)? onSendProgress, CancelToken? cancelToken}) async {
-    var response = await http.sendAttachment(c.guid,
-      attachment.guid!,
-      attachment.getFile(),
-      onSendProgress: onSendProgress,
-      method: (ss.settings.enablePrivateAPI.value
-          && ss.settings.privateAPIAttachmentSend.value)
-          || (m.subject?.isNotEmpty ?? false)
-          || m.threadOriginatorGuid != null
-          || m.expressiveSendStyleId != null
-          ? "private-api" : "apple-script",
-      selectedMessageGuid: m.threadOriginatorGuid,
-      effectId: m.expressiveSendStyleId,
-      partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-      isAudioMessage: isAudioMessage,
-      cancelToken: cancelToken);
-    if (response.statusCode != 200) {
-      throw Exception("Failed to upload!");
-    }
-    return Message.fromMap(response.data['data']);
-  }
-
-  @override
-  bool canCancelUploads() {
-    return true;
-  }
-
-  @override
-  Future<bool> canUploadGroupPhotos() async {
-    return (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226;
-  }
-
-  @override
-  Future<bool> setChatIcon(Chat chat, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
-    return (await http.setChatIcon(chat.guid, chat.customAvatarPath!, onSendProgress: onSendProgress, cancelToken: cancelToken)).statusCode == 200;
-  }
-
-  @override
-  Future<bool> deleteChatIcon(Chat chat, {CancelToken? cancelToken}) async {
-    return (await http.deleteChatIcon(chat.guid, cancelToken: cancelToken)).statusCode == 200;
-  }
-
-  @override
-  bool supportsFocusStates() {
-    return ss.isMinMontereySync;
-  }
-
-  @override
-  Future<bool> downloadLivePhoto(Attachment att, String target, {void Function(int p1, int p2)? onReceiveProgress, CancelToken? cancelToken}) async {
-    var response = await http.downloadLivePhoto(att.guid!, onReceiveProgress: onReceiveProgress, cancelToken: cancelToken);
-    if (response.statusCode != 200) {
-      return false;
-    }
-    final file = PlatformFile(
-      name: target,
-      size: response.data.length,
-      bytes: response.data,
-    );
-    await as.saveToDisk(file);
-    return true;
-  }
-
-  @override
-  bool canSchedule() {
-    return ss.serverDetailsSync().item4 >= 205;
-  }
-
-  @override
-  bool supportsFindMy() {
-    return ss.isMinCatalinaSync;
-  }
-
-  @override
-  bool canCreateGroupChats() {
-    return ss.canCreateGroupChatSync();
-  }
-
-  @override
-  bool supportsSmsForwarding() {
-    return true;
-  }
-
-  @override
-  Future<bool> handleiMessageState(String address) async {
-    final response = await http.handleiMessageState(address);
-    return response.data["data"]["available"];
-  }
-}
 
 /// Class that manages foreground network requests from client to server, using
 /// GET or POST requests.
@@ -243,7 +36,7 @@ class HttpService extends GetxService {
   /// Global try-catch function
   Future<Response> runApiGuarded(Future<Response> Function() func, {bool checkOrigin = true}) async {
     if (http.origin.isEmpty && checkOrigin) {
-      Logger.info("Api failed ${StackTrace.current}");
+      Logger.error("Api failed ${StackTrace.current}");
       return Future.error("No server URL!");
     }
     try {
@@ -1351,15 +1144,13 @@ class HttpService extends GetxService {
   }
 
   Future<Response> downloadFromUrl(String url, {Function(int, int)? progress, CancelToken? cancelToken}) async {
-    return runApiGuarded(() async {
-      final response = await dio.get(
-          url,
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: headers),
-          cancelToken: cancelToken,
-          onReceiveProgress: progress,
-      );
-      return returnSuccessOrError(response);
-    });
+    final response = await dio.get(
+        url,
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: headers),
+        cancelToken: cancelToken,
+        onReceiveProgress: progress,
+    );
+    return returnSuccessOrError(response);
   }
 
   // The following methods are for Firebase only

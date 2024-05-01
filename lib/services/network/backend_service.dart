@@ -1,13 +1,11 @@
 import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/services/rustpush/rustpush_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
-BackendService backend = Get.isRegistered<BackendService>() ? Get.find<BackendService>() : Get.put(RustPushBackend());
-enum ParticipantOp { Add, Remove }
+BackendService backend = Get.isRegistered<BackendService>() ? Get.find<BackendService>() : Get.put(HttpBackend());
 
-abstract class BackendService {
+abstract class BackendService extends GetxService {
   Future<Chat> createChat(List<String> addresses, String? message, String service,
       {CancelToken? cancelToken});
   Future<Message> sendMessage(Chat c, Message m, {CancelToken? cancelToken});
@@ -16,10 +14,11 @@ abstract class BackendService {
   Future<bool> leaveChat(Chat chat);
   Future<Message> sendTapback(
       Chat chat, Message selected, String reaction, int? repPart);
-  Future<bool> markRead(Chat chat);
-  HttpService? getRemoteService();
-  bool canLeaveChat();
-  bool canEditUnsend();
+  Future<bool> markRead(Chat chat, bool notifyOthers);
+  Future<bool> markUnread(Chat chat);
+  HttpService? get remoteService;
+  bool get canLeaveChat;
+  bool get canEditUnsend;
   Future<Message?> unsend(Message msg, MessagePart part);
   Future<Message?> edit(Message msgGuid, String text, int part);
   Future<PlatformFile> downloadAttachment(Attachment attachment,
@@ -35,13 +34,16 @@ abstract class BackendService {
   bool supportsFocusStates();
   Future<bool> downloadLivePhoto(Attachment att, String target,
       {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken});
-  bool canSchedule();
-  bool supportsFindMy();
-  bool canCreateGroupChats();
-  bool supportsSmsForwarding();
+  bool get canSchedule;
+  bool get supportsFindMy;
+  bool get canCreateGroupChats;
+  bool get supportsSmsForwarding;
   void startedTyping(Chat c);
   void stoppedTyping(Chat c);
   void updateTypingStatus(Chat c);
   Future<bool> handleiMessageState(String address);
+  Future<Map<String, dynamic>> getAccountInfo();
+  Future<void> setDefaultHandle(String handle);
+  Future<Map<String, dynamic>> getAccountContact();
   void init();
 }

@@ -313,13 +313,13 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     );
                   }),
                 ]),
-              if (!kIsWeb)
+              if (!kIsWeb && backend.remoteService != null)
                 SettingsHeader(
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Database Re-syncing"
                 ),
-              if (!kIsWeb)
+              if (!kIsWeb && backend.remoteService != null)
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [

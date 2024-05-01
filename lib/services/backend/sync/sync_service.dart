@@ -4,7 +4,6 @@ import 'dart:isolate';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -30,7 +29,8 @@ class SyncService extends GetxService {
   Future<void> startFullSync() async {
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
-    if (backend.getRemoteService() == null) {
+    if (backend.remoteService == null) {
+      await cs.refreshContacts();
       return; // no syncing if no remote
     }
     ss.settings.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
@@ -45,9 +45,8 @@ class SyncService extends GetxService {
   }
 
   Future<void> startIncrementalSync() async {
-    if (backend.getRemoteService() == null) {
+    if (backend.remoteService == null) {
       await chats.init();
-      return; // no syncing if no remote
     }
     isIncrementalSyncing.value = true;
 
@@ -77,7 +76,7 @@ class SyncService extends GetxService {
       if (result.isNotEmpty && (result.first.isNotEmpty || result.last.isNotEmpty)) {
         contacts.addAll(Contact.getContacts());
         // auto upload contacts if requested
-        if (ss.settings.syncContactsAutomatically.value) {
+        if (ss.settings.syncContactsAutomatically.value && backend.remoteService != null) {
           Logger.debug("Contact changes detected, uploading to server...");
           final _contacts = <Map<String, dynamic>>[];
           for (Contact c in contacts) {
@@ -122,6 +121,14 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
       messageBox = store.box<Message>();
       themeBox = store.box<ThemeStruct>();
       http.originOverride = address;
+    }
+
+    if (backend.remoteService == null) {
+      // just do contacts
+      final refreshedItems = await cs.refreshContacts();
+      Logger.info('Finished contact refresh, shouldRefresh $refreshedItems');
+      port?.send(refreshedItems);
+      return refreshedItems;
     }
 
     int syncStart = ss.settings.lastIncrementalSync.value;

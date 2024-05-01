@@ -529,10 +529,14 @@ class Chat {
     // generate names for group chats or DMs
     List<String> titles = participants.map((e) => e.displayName.trim().split(isGroup && e.contact != null ? " " : String.fromCharCode(65532)).first).toList();
     if (titles.isEmpty) {
-      if (chatIdentifier!.startsWith("urn:biz")) {
-        return "Business Chat";
+      if(chatIdentifier != null) {
+        if (chatIdentifier!.startsWith("urn:biz")) {
+          return "Business Chat";
+        }
+        return chatIdentifier!;
+      } else {
+        return "Unnamed chat";
       }
-      return chatIdentifier!;
     } else if (titles.length == 1) {
       return titles[0];
     } else if (titles.length <= 4) {
@@ -661,13 +665,13 @@ class Chat {
       if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
         mcs.invokeMethod("delete-notification", {"notification_id": id});
       }
-      if (privateMark && ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
-        if (!hasUnread) {
-          backend.markRead(this);
-        } else if (hasUnread) {
-          backend.getRemoteService()?.markChatUnread(guid);
-        }
-      }
+      if (privateMark) {
+         if (!hasUnread) {
+          backend.markRead(this, ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value));
+         } else if (hasUnread) {
+          backend.markUnread(this);
+         }
+       }
     } catch (_) {}
 
     return this;
@@ -880,9 +884,7 @@ class Chat {
     if (id == null) return this;
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
-    if (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value) {
-      backend.markRead(this);
-    }
+    backend.markRead(this, autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value);
     return this;
   }
 
@@ -1012,13 +1014,13 @@ class Chat {
     return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
   }
 
-  String getIconPath(int responseLength) {
+  String _getIconPath(int responseLength) {
     return "${fs.appDocDir.path}/avatars/${guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-$responseLength.jpg";
   }
 
   static Future<void> getIcon(Chat c, {bool force = false}) async {
-    if ((!force && c.lockChatIcon) || backend.getRemoteService() == null) return;
-    final response = await backend.getRemoteService()!.getChatIcon(c.guid).catchError((err) async {
+    if ((!force && c.lockChatIcon) || backend.remoteService == null) return;
+    final response = await backend.remoteService!.getChatIcon(c.guid).catchError((err) async {
       Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
       return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
     });
@@ -1030,7 +1032,7 @@ class Chat {
       }
     } else {
       Logger.debug("Got chat icon for chat ${c.getTitle()}");
-      File file = File(c.getIconPath(response.data.length));
+      File file = File(c._getIconPath(response.data.length));
       if (!(await file.exists())) {
         await file.create(recursive: true);
       }

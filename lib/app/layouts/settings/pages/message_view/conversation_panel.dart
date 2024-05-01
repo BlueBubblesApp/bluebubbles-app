@@ -1,9 +1,11 @@
+import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart' hide PlatformFile;
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -153,7 +155,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
-                  if (!kIsWeb && backend.getRemoteService() != null)
+                  if (!kIsWeb && backend.remoteService != null)
                     SettingsTile(
                       title: "Sync Group Chat Icons",
                       trailing: Obx(() => gettingIcons.value == null
@@ -178,7 +180,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       },
                       subtitle: "Get iMessage group chat icons from the server",
                     ),
-                  if (!kIsWeb && backend.getRemoteService() != null)
+                  if (!kIsWeb && backend.remoteService != null)
                     const SettingsSubtitle(
                       subtitle: "Note: Overrides any custom avatars set for group chats.",
                     ),
@@ -521,6 +523,212 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         backgroundColor: tileColor,
                       )),
                 ],
+              ),
+              Obx(
+                () => AnimatedSizeAndFade.showHide(
+                  show: ss.settings.enablePrivateAPI.value,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: usingRustPush ? "Interaction settings" : "Private API Settings"),
+                    SettingsSection(
+                      backgroundColor: tileColor,
+                      children: [
+                        SettingsSwitch(
+                          onChanged: (bool val) {
+                            ss.settings.privateSendTypingIndicators.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.privateSendTypingIndicators.value,
+                          title: "Send Typing Indicators",
+                          subtitle: "Sends typing indicators to other iMessage users",
+                          backgroundColor: tileColor,
+                        ),
+                        AnimatedSizeAndFade(
+                          child: !ss.settings.privateManualMarkAsRead.value
+                              ? Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      color: tileColor,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 15.0),
+                                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                      ),
+                                    ),
+                                    SettingsSwitch(
+                                      onChanged: (bool val) {
+                                        ss.settings.privateMarkChatAsRead.value = val;
+                                        if (val) {
+                                          ss.settings.privateManualMarkAsRead.value = false;
+                                        }
+                                        saveSettings();
+                                      },
+                                      initialVal: ss.settings.privateMarkChatAsRead.value,
+                                      title: "Automatic Mark Read / Send Read Receipts",
+                                      subtitle:
+                                          "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
+                                      backgroundColor: tileColor,
+                                      isThreeLine: true,
+                                    ),
+                                  ],
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                        AnimatedSizeAndFade.showHide(
+                          show: !ss.settings.privateMarkChatAsRead.value,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 15.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              ),
+                              SettingsSwitch(
+                                onChanged: (bool val) {
+                                  ss.settings.privateManualMarkAsRead.value = val;
+                                  saveSettings();
+                                },
+                                initialVal: ss.settings.privateManualMarkAsRead.value,
+                                title: "Manual Mark Read / Send Read Receipts",
+                                subtitle: "Only mark a chat read when pressing the manual mark read button",
+                                backgroundColor: tileColor,
+                                isThreeLine: true,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 15.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                          ),
+                        ),
+                        SettingsSwitch(
+                          title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
+                          initialVal: ss.settings.enableQuickTapback.value,
+                          onChanged: (bool val) {
+                            ss.settings.enableQuickTapback.value = val;
+                            if (val && ss.settings.doubleTapForDetails.value) {
+                              ss.settings.doubleTapForDetails.value = false;
+                            }
+                            saveSettings();
+                          },
+                          subtitle: "Send a tapback of your choosing when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        ),
+                        AnimatedSizeAndFade.showHide(
+                          show: ss.settings.enableQuickTapback.value,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 5.0),
+                            child: SettingsOptions<String>(
+                              title: "Quick Tapback",
+                              options: ReactionTypes.toList(),
+                              cupertinoCustomWidgets: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                  child: ReactionWidget(
+                                    reaction: Message(
+                                        guid: "",
+                                        associatedMessageType: ReactionTypes.LOVE,
+                                        isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LOVE),
+                                    message: null,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                  child: ReactionWidget(
+                                    reaction: Message(
+                                        guid: "",
+                                        associatedMessageType: ReactionTypes.LIKE,
+                                        isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LIKE),
+                                    message: null,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                  child: ReactionWidget(
+                                    reaction: Message(
+                                        guid: "",
+                                        associatedMessageType: ReactionTypes.DISLIKE,
+                                        isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.DISLIKE),
+                                    message: null,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                  child: ReactionWidget(
+                                    reaction: Message(
+                                        guid: "",
+                                        associatedMessageType: ReactionTypes.LAUGH,
+                                        isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LAUGH),
+                                    message: null,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                  child: ReactionWidget(
+                                    reaction: Message(
+                                        guid: "",
+                                        associatedMessageType: ReactionTypes.EMPHASIZE,
+                                        isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.EMPHASIZE),
+                                    message: null,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 7.5),
+                                  child: ReactionWidget(
+                                    reaction: Message(
+                                        guid: "",
+                                        associatedMessageType: ReactionTypes.QUESTION,
+                                        isFromMe: ss.settings.quickTapbackType.value != ReactionTypes.QUESTION),
+                                    message: null,
+                                  ),
+                                ),
+                              ],
+                              initial: ss.settings.quickTapbackType.value,
+                              textProcessing: (val) => val,
+                              onChanged: (val) {
+                                if (val == null) return;
+                                ss.settings.quickTapbackType.value = val;
+                                saveSettings();
+                              },
+                              secondaryColor: headerColor,
+                            ),
+                          ),
+                        ),
+                        AnimatedSizeAndFade.showHide(
+                          show: backend.canEditUnsend,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                color: tileColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 15.0),
+                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                ),
+                              ),
+                              SettingsSwitch(
+                                title: "Up Arrow for Quick Edit",
+                                initialVal: ss.settings.editLastSentMessageOnUpArrow.value,
+                                onChanged: (bool val) {
+                                  ss.settings.editLastSentMessageOnUpArrow.value = val;
+                                  saveSettings();
+                                },
+                                subtitle: "Press the Up Arrow to begin editing the last message you sent",
+                                backgroundColor: tileColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  ]),
+                ),
               ),
             ],
           ),

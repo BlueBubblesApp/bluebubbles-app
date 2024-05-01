@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -35,7 +34,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    if (backend.getRemoteService() != null)
+                    if (backend.remoteService != null)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
                               ss.settings.showConnectionIndicator.value = val;
@@ -46,7 +45,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                             subtitle: "Show a visual status indicator when the app is not connected to the server",
                             backgroundColor: tileColor,
                           )),
-                    if (backend.getRemoteService() != null)
+                    if (backend.remoteService != null)
                       Container(
                         color: tileColor,
                         child: Padding(
@@ -54,7 +53,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
-                    if (backend.getRemoteService() != null)
+                    if (backend.remoteService != null)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
                               ss.settings.showSyncIndicator.value = val;
@@ -67,7 +66,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                             backgroundColor: tileColor,
                             isThreeLine: true,
                           )),
-                    if (backend.getRemoteService() != null)
+                    if (backend.remoteService != null)
                       Container(
                         color: tileColor,
                         child: Padding(

@@ -11,7 +11,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.da
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:dio/dio.dart';
@@ -73,7 +72,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
 
   final messageNode = FocusNode();
 
-  bool canCreateGroupChats = backend.canCreateGroupChats();
+  bool canCreateGroupChats = backend.canCreateGroupChats;
 
   @override
   void initState() {
@@ -450,7 +449,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                   ],
                 ),
               ),
-              if (backend.supportsSmsForwarding())
+              if (backend.supportsSmsForwarding)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 15.0).add(const EdgeInsets.only(bottom: 5.0)),
                   child: ToggleButtons(
@@ -669,13 +668,14 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
                           final chat = fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
-                          bool existsOnServer = false;
-                          if (chat != null && backend.getRemoteService() != null) {
+                          bool existsOnServer = true; // if there is no remote, we exist on the "server"
+                          if (chat != null && backend.remoteService != null) {
                             // if we don't error, then the chat exists
                             try {
-                              await backend.getRemoteService()!.singleChat(chat.guid);
-                              existsOnServer = true;
-                            } catch (_) {}
+                              await backend.remoteService!.singleChat(chat.guid);
+                            } catch (_) {
+                              existsOnServer = false;
+                            }
                           }
                           if (chat != null && existsOnServer) {
                             ns.pushAndRemoveUntil(
@@ -722,6 +722,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             final method = iMessage ? "iMessage" : "SMS";
                             showDialog(
                                 context: context,
+                                barrierDismissible: false,
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                     backgroundColor: context.theme.colorScheme.properSurface,
@@ -756,7 +757,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               chats.updateChat(newChat);
 
                               // Fetch the last message for the chat and save it.
-                              final messageRes = await backend.getRemoteService()?.chatMessages(newChat.guid, limit: 1);
+                              final messageRes = await backend.remoteService?.chatMessages(newChat.guid, limit: 1);
                               if (messageRes != null && messageRes.data["data"].length > 0) {
                                 final messages = (messageRes.data["data"] as List<dynamic>).map((e) => Message.fromMap(e)).toList();
                                 await Chat.bulkSyncMessages(newChat, messages);
@@ -771,7 +772,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               createCompleter?.complete();
 
                               // Navigate to the new chat
-                              Navigator.of(context).pop();
+                              Get.back(closeOverlays: true);
                               ns.pushAndRemoveUntil(
                                 Get.context!,
                                 ConversationView(chat: newChat),
@@ -787,7 +788,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                 ),
                               );
                             }).catchError((error) {
-                              Navigator.of(context).pop();
+                              Get.back(closeOverlays: true);
                               showDialog(
                                   barrierDismissible: false,
                                   context: context,

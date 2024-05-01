@@ -6,7 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:tuple/tuple.dart';
 
-String encryptAESCryptoJS(String plainText, String passphrase) {
+String encryptAESCryptoJS(Uint8List plainText, String passphrase) {
   try {
     final salt = genRandomWithNonZero(8);
     var keyndIV = deriveKeyAndIV(passphrase, salt);
@@ -14,7 +14,7 @@ String encryptAESCryptoJS(String plainText, String passphrase) {
     final iv = encrypt.IV(keyndIV.item2);
 
     final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: "PKCS7"));
-    final encrypted = encrypter.encrypt(plainText, iv: iv);
+    final encrypted = encrypter.encryptBytes(plainText, iv: iv);
     Uint8List encryptedBytesWithSalt =
         Uint8List.fromList(createUint8ListFromString("Salted__") + salt + encrypted.bytes);
     return base64.encode(encryptedBytesWithSalt);
@@ -23,7 +23,7 @@ String encryptAESCryptoJS(String plainText, String passphrase) {
   }
 }
 
-String decryptAESCryptoJS(String encrypted, String passphrase) {
+List<int> decryptAESCryptoJS(String encrypted, String passphrase) {
   try {
     Uint8List encryptedBytesWithSalt = base64.decode(encrypted);
 
@@ -34,7 +34,7 @@ String decryptAESCryptoJS(String encrypted, String passphrase) {
     final iv = encrypt.IV(keyndIV.item2);
 
     final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: "PKCS7"));
-    final decrypted = encrypter.decrypt64(base64.encode(encryptedBytes), iv: iv);
+    final decrypted = encrypter.decryptBytes(encrypt.Encrypted(encryptedBytes), iv: iv);
     return decrypted;
   } catch (error) {
     rethrow;

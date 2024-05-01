@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -99,7 +98,7 @@ class ChatManager extends GetxService {
   Future<Chat?> fetchChat(String chatGuid, {withParticipants = true, withLastMessage = false}) async {
     Logger.info("Fetching full chat metadata from server. ${StackTrace.current}", tag: "Fetch-Chat");
 
-    var remote = backend.getRemoteService();
+    var remote = backend.remoteService;
     if (remote == null) {
       return Chat.findOne(guid: chatGuid);
     }
@@ -181,7 +180,7 @@ class ChatManager extends GetxService {
     if (withAttachment) withQuery.add("attachment");
     if (withHandle) withQuery.add("handle");
 
-    backend.getRemoteService()?.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit, sort: sort, after: after, before: before).then((response) {
+    backend.remoteService?.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit, sort: sort, after: after, before: before).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;

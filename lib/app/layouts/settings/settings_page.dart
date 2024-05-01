@@ -4,7 +4,6 @@ import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dar
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
-import 'package:bluebubbles/services/network/backend_service.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -57,7 +56,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
   void initState() {
     super.initState();
 
-    if (showAltLayoutContextless && backend.getRemoteService() != null) {
+    if (showAltLayoutContextless && backend.remoteService != null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         ns.pushAndRemoveSettingsUntil(
           context,
@@ -139,12 +138,12 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               ),
                             ],
                           ),
-                        if (!kIsWeb && backend.getRemoteService() != null)
+                        if (!kIsWeb && backend.remoteService != null)
                           SettingsHeader(
                               iosSubtitle: iosSubtitle,
                               materialSubtitle: materialSubtitle,
                               text: "Server & Message Management"),
-                        if (backend.getRemoteService() != null)
+                        if (backend.remoteService != null)
                           SettingsSection(
                             backgroundColor: tileColor,
                             children: [
@@ -229,7 +228,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   trailing: nextIcon,
                                 );
                               }),
-                              if (backend.canSchedule())
+                              if (backend.canSchedule)
                                 Container(
                                   color: tileColor,
                                   child: Padding(
@@ -237,7 +236,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                   ),
                                 ),
-                              if (backend.canSchedule())
+                              if (backend.canSchedule)
                                 SettingsTile(
                                   backgroundColor: tileColor,
                                   title: "Scheduled Messages",
@@ -593,7 +592,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                 ),
                               ),
-                              if (!kIsWeb && !kIsDesktop)
+                              if (!kIsWeb && !kIsDesktop && backend.remoteService != null)
                                 SettingsTile(
                                   backgroundColor: tileColor,
                                   onTap: () async {
@@ -659,7 +658,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       var map = c.toMap();
                                       contacts.add(map);
                                     }
-                                    http.createContact(contacts, onSendProgress: (count, total) {
+                                    backend.remoteService!.createContact(contacts, onSendProgress: (count, total) {
                                       uploadingContacts.value = true;
                                       progress.value = count / total;
                                       totalSize.value = total;

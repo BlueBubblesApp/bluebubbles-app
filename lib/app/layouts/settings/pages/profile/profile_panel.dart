@@ -35,17 +35,11 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
 
   void getDetails() async {
     try {
-      final result = await http.getAccountInfo();
-      if (!isNullOrEmpty(result.data.isNotEmpty)!) {
-        accountInfo.addAll(result.data['data']);
-      }
+      final result = await backend.getAccountInfo();
+      accountInfo.addAll(result);
       opacity.value = 1.0;
-      if (ss.isMinBigSurSync) {
-        final result2 = await http.getAccountContact();
-        if (!isNullOrEmpty(result2.data.isNotEmpty)!) {
-          accountContact.addAll(result2.data['data']);
-        }
-      }
+      final result2 = await backend.getAccountContact();
+      accountContact.addAll(result2);
     } catch (_) {
 
     }
@@ -377,7 +371,7 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                             if (value == null) return;
                             accountInfo['active_alias'] = value;
                             setState(() {});
-                            await http.setAccountAlias(value);
+                            await backend.setAccountAlias(value);
                           },
                         ),
                     ],

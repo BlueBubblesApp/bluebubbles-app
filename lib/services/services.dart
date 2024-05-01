@@ -23,6 +23,7 @@ export 'network/firebase/database_service.dart';
 export 'network/downloads_service.dart';
 export 'network/http_service.dart';
 export 'network/socket_service.dart';
+export 'network/backend_service.dart';
 export 'ui/chat/chat_lifecycle_manager.dart';
 export 'ui/chat/chat_manager.dart';
 export 'ui/chat/chats_service.dart';

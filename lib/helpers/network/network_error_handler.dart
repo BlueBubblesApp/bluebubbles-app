@@ -20,7 +20,7 @@ Message handleSendError(dynamic error, Message m) {
     m.guid = m.guid!.replaceAll("temp", "error-$_error");
     m.error = error.response?.statusCode ?? MessageError.BAD_REQUEST.code;
   } else {
-    m.guid = m.guid!.replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
+    m.guid = m.guid!.replaceAll("temp", "error-$error");
     m.error = MessageError.BAD_REQUEST.code;
   }
 
