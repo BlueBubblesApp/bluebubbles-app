@@ -116,6 +116,8 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
           if (finalDate != null) {
             Navigator.of(context).pop();
           }
+        } else if (finalDate != null) {
+          Navigator.of(context).pop();
         }
       },
       child: Container(
