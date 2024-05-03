@@ -280,6 +280,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () async {
+              Navigator.pop(context); // Remove PopupMenuItem
               showDialog(
                 barrierDismissible: false,
                 context: context,
@@ -298,7 +299,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                       TextButton(
                         child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); //Remove AlertDialog
                         },
                       ),
                       TextButton(
@@ -306,7 +307,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                         onPressed: () async {
                           chats.removeChat(chat);
                           Chat.softDelete(chat);
-                          Navigator.pop(context);
+                          Navigator.pop(context); //Remove AlertDialog
                         },
                       ),
                     ],

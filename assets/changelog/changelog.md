@@ -2,6 +2,59 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.13.3
+
+This is a hotfix release
+
+### Bug Fixes
+
+- Fixes issue with app unnecessarily re-registering device under a different FCM ID
+
+## v1.13.2
+
+This is a hotfix release, fixing some issues introduced in v1.13.1
+
+### Bug Fixes
+
+- Fixes crash when running BlueBubbles as a Foreground Service on Android 14
+- Fixes crash when using the photo picker on Android 10 and older
+
+## v1.13.1
+
+This update includes a couple of new minor features as well as a bunch of QOL enhancements and bug fixes.
+
+### Enhancements
+
+- Search improvements
+    - You can now filter based on chat, sender, and date
+- Updates iOS emoji pack to iOS 17.4
+- App stays connected when "inactive" but not necessarily hidden
+- Hiding the full screen image viewer controls will now also hide the app bar
+- Adds light haptic feedback when sending a message
+- App startup time is now slightly quicker
+- Location widgets now show the Apple Maps preview
+- Adds ability to switch linked Google Firebase projects
+
+### Bug Fixes
+
+- Fixes issue delivering background messages (i.e. replies from notifications)
+- Fixes issue where an event dispatched to tasker would have the wrong intent
+- Fixes issue where a custom landing page for the server would break the detect localhost feature
+- Fixes issue where the keyboard would be dismissed when trying to change GBoard languages
+- Fixes issue where non-US phone numbers would be formatted incorrectly
+- Fixes issue causing the device ID for the app to change when your phone updated
+- Fixes issue where a new chat would not show up in the chat list until a full app restart (sometimes two)
+- Fixes issue where the search would return case-sensitive results from the server. The search is now case-insensitive
+- Fixes issue where the app would hang on startup due to a failed network request
+- Fixes issue with infinite "Server Password" popups when connecting to your Google Account
+
+### Developer Notes
+
+- Increased target SDK to 34
+- Upgraded a ton of dependencies
+- iOS emoji pack now always links to the latest release
+    - This is so we don't need to update the app to push emoji font updates
+
 ## v1.13.0
 
 This update sgnificantly overhauls the underlying Java code for the Android app, bringing better stability, fixing bugs, and more features.

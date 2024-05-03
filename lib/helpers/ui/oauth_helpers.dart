@@ -49,7 +49,8 @@ Future<String?> googleOAuth(BuildContext context) async {
     // initialize gsi
     final gsi = GoogleSignIn(clientId: fdb.getClientId(), scopes: defaultScopes);
     try {
-      // sign in
+      // sign out then sign in
+      await gsi.signOut();
       final account = await gsi.signIn();
       if (account != null) {
         // get access token

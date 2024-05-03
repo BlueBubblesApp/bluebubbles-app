@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 1.13.0+64
+version: 1.13.3+67
 publish_to: none
 
 environment:
@@ -142,7 +142,10 @@ dependencies:
   path_provider: ^2.1.2 # no web support
   pdf: ^3.10.8
   permission_handler: ^11.3.1 # mobile only
-  photo_manager: ^3.0.0-dev.5 # only mobile
+  photo_manager: # only mobile, depending on master waiting for https://github.com/fluttercandies/flutter_photo_manager/pull/1110
+    git:
+      url: https://github.com/fluttercandies/flutter_photo_manager.git
+      ref: main
   photo_view: ^0.14.0
   printing: ^5.12.0
   qr_flutter: ^4.1.0

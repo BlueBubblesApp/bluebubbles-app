@@ -13,8 +13,8 @@ class ExternalIntentReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) return
 
-        Log.d(Constants.logTag, "Received intent ${intent.type} from external app")
-        when (intent.type) {
+        Log.d(Constants.logTag, "Received intent ${intent.action} from external app")
+        when (intent.action) {
             "com.bluebubbles.external.GET_SERVER_URL" -> {
                 val password = intent.extras?.getString("password")
                 val identifier = intent.extras?.getString("id")
