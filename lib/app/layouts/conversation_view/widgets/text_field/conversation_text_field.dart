@@ -420,11 +420,24 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     super.dispose();
   }
 
+  String Function(dynamic) replaceEmoji(String emoji) {
+    return (match) {
+      return '${match.group(1)}$emoji${match.group(2)}';
+    };
+  }
+
   Future<void> sendMessage({String? effect}) async {
+    final text = controller.textController.text
+        .replaceAllMapped(RegExp(r'(\s):\)(\s|$)'), replaceEmoji("🙂"))
+        .replaceAllMapped(RegExp(r'(\s):P(\s|$)'), replaceEmoji("😛"))
+        .replaceAllMapped(RegExp(r'(\s)XD(\s|$)'), replaceEmoji("😆"))
+        .replaceAllMapped(RegExp(r'(\s);\)(\s|$)'), replaceEmoji("😉"))
+        .replaceAllMapped(RegExp(r'(\s):D(\s|$)'), replaceEmoji("😀"))
+        .replaceAllMapped(RegExp(r'(\s):\)(\s|$)'), replaceEmoji("🙂"));
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
       if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
-      if (controller.textController.text.contains(MentionTextEditingController.escapingChar)) {
+      if (text.contains(MentionTextEditingController.escapingChar)) {
         return showSnackbar("Error", "Mentions are not allowed in scheduled messages!");
       }
       showDialog(
@@ -448,7 +461,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           );
         },
       );
-      final response = await http.createScheduled(chat.guid, controller.textController.text, date.toUtc(), {"type": "once"});
+      final response = await http.createScheduled(chat.guid, text, date.toUtc(), {"type": "once"});
       Navigator.of(context).pop();
       if (response.statusCode == 200 && response.data != null) {
         showSnackbar("Notice", "Message scheduled successfully for ${buildFullDate(date)}");
@@ -458,7 +471,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         showSnackbar("Error", "Something went wrong!");
       }
     } else {
-      final text = controller.textController.text;
       if (text.isEmpty && controller.subjectTextController.text.isEmpty && !ss.settings.privateAPIAttachmentSend.value) {
         if (controller.replyToMessage != null) {
           return showSnackbar("Error", "Turn on Private API Attachment Send to send replies with media!");
