@@ -422,18 +422,20 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   String Function(dynamic) replaceEmoji(String emoji) {
     return (match) {
-      return '${match.group(1)}$emoji${match.group(2)}';
+      if (match.group(1) == "\\") {
+        return '${match.group(2)}${match.group(3)}';
+      }
+      return '${match.group(1)}$emoji${match.group(3)}';
     };
   }
 
   Future<void> sendMessage({String? effect}) async {
     final text = controller.textController.text
-        .replaceAllMapped(RegExp(r'(\s):\)(\s|$)'), replaceEmoji("🙂"))
-        .replaceAllMapped(RegExp(r'(\s):P(\s|$)'), replaceEmoji("😛"))
-        .replaceAllMapped(RegExp(r'(\s)XD(\s|$)'), replaceEmoji("😆"))
-        .replaceAllMapped(RegExp(r'(\s);\)(\s|$)'), replaceEmoji("😉"))
-        .replaceAllMapped(RegExp(r'(\s):D(\s|$)'), replaceEmoji("😀"))
-        .replaceAllMapped(RegExp(r'(\s):\)(\s|$)'), replaceEmoji("🙂"));
+        .replaceAllMapped(RegExp(r'([\s\\])(:\))(\s|$)'), replaceEmoji("🙂"))
+        .replaceAllMapped(RegExp(r'([\s\\])(:P)(\s|$)'), replaceEmoji("😛"))
+        .replaceAllMapped(RegExp(r'([\s\\])(XD)(\s|$)'), replaceEmoji("😆"))
+        .replaceAllMapped(RegExp(r'([\s\\])(;\))(\s|$)'), replaceEmoji("😉"))
+        .replaceAllMapped(RegExp(r'([\s\\])(:D)(\s|$)'), replaceEmoji("😀"));
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
       if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
