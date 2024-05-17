@@ -21,7 +21,8 @@ class Mentionable {
   String get address => handle.address;
 
   @override
-  bool operator ==(Object other) => identical(this, other) || other is Mentionable && runtimeType == other.runtimeType && address == other.address;
+  bool operator ==(Object other) =>
+      identical(this, other) || other is Mentionable && runtimeType == other.runtimeType && address == other.address;
 
   @override
   int get hashCode => address.hashCode;
@@ -32,7 +33,8 @@ class Mentionable {
 
 class SpellCheckTextEditingController extends TextEditingController {
   SpellCheckTextEditingController({super.text, this.focusNode}) {
-    _languageCheckService = DebounceLangToolService(LangToolService(LanguageToolClient()), const Duration(milliseconds: 500));
+    _languageCheckService =
+        DebounceLangToolService(LangToolService(LanguageToolClient()), const Duration(milliseconds: 500));
     if (text.isNotEmpty) {
       _processMistakes(text);
     }
@@ -114,7 +116,8 @@ class SpellCheckTextEditingController extends TextEditingController {
       _selectedMistakeIndex = -1;
       return;
     }
-    final mistakeIndex = _mistakes.indexWhere((e) => (e.offset == newSelection.baseOffset) && (e.endOffset == newSelection.extentOffset));
+    final mistakeIndex = _mistakes
+        .indexWhere((e) => (e.offset == newSelection.baseOffset) && (e.endOffset == newSelection.extentOffset));
     if (mistakeIndex != -1) {
       _selectedMistakeIndex = mistakeIndex;
     } else {
@@ -123,6 +126,13 @@ class SpellCheckTextEditingController extends TextEditingController {
   }
 
   Future<void> _processMistakes(String newText) async {
+    if (!ss.settings.spellcheck.value) {
+      _mistakes.clear();
+      _mistakeTooltip?.remove();
+      _mistakeTooltip = null;
+      notifyListeners();
+      return;
+    }
     final filteredMistakes = _filterMistakesOnChanged(newText);
     _mistakes = filteredMistakes.toList();
 
@@ -241,9 +251,11 @@ class SpellCheckTextEditingController extends TextEditingController {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(mistake.type.value.capitalizeFirst!, style: context.textTheme.titleSmall!.copyWith(color: color)),
-                  Text("\"$mistakeText\"",
-                      style: context.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
+                  Text(mistake.type.value.capitalizeFirst!,
+                      style: context.textTheme.titleSmall!.copyWith(color: color)),
+                  Text(
+                    "\"$mistakeText\"",
+                    style: context.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
                   ),
                   const SizedBox(height: 8.0),
                   replacements.isEmpty
@@ -252,7 +264,7 @@ class SpellCheckTextEditingController extends TextEditingController {
                           style: context.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
                         )
                       : Wrap(
-                    alignment: WrapAlignment.center,
+                          alignment: WrapAlignment.center,
                           spacing: 4.0,
                           runSpacing: 4.0,
                           children: List.generate(replacements.length, (index) {
@@ -329,7 +341,8 @@ class SpellCheckTextEditingController extends TextEditingController {
                 if (_mistakeTooltip != null) {
                   _mistakeTooltip!.remove();
                 }
-                _mistakeTooltip = _createTooltip(context, Offset(event.position.dx - ns.widthChatListLeft(context), event.position.dy), mistake, mistakeText);
+                _mistakeTooltip = _createTooltip(context,
+                    Offset(event.position.dx - ns.widthChatListLeft(context), event.position.dy), mistake, mistakeText);
                 Overlay.of(context).insert(_mistakeTooltip!);
               },
             ),
@@ -388,7 +401,11 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     final atIndex = text.substring(0, indexSelection).lastIndexOf("@");
     final index = mentionables.indexOf(mentionable);
     if (index == -1 || atIndex == -1) return;
-    List<String> textParts = [text.substring(0, atIndex), text.substring(atIndex, indexSelection), text.substring(indexSelection)];
+    List<String> textParts = [
+      text.substring(0, atIndex),
+      text.substring(atIndex, indexSelection),
+      text.substring(indexSelection)
+    ];
     final addSpace = !textParts[2].startsWith(" ");
     final replacement = "$escapingChar$index$escapingChar${addSpace ? " " : ""}";
     text = textParts[0] + textParts[1].replaceFirst(candidate, replacement) + textParts[2];
@@ -484,7 +501,10 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
               child: ShaderMask(
                 blendMode: BlendMode.srcIn,
                 shaderCallback: (bounds) => LinearGradient(
-                  colors: <Color>[context.theme.colorScheme.primary.darkenPercent(20), context.theme.colorScheme.primary.lightenPercent(20)],
+                  colors: <Color>[
+                    context.theme.colorScheme.primary.darkenPercent(20),
+                    context.theme.colorScheme.primary.lightenPercent(20)
+                  ],
                 ).createShader(
                   Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                 ),

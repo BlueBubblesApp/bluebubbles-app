@@ -13,7 +13,6 @@ import 'package:secure_application/secure_application.dart';
 import 'package:universal_io/io.dart';
 
 class MiscPanel extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() => _MiscPanelState();
 }
@@ -37,20 +36,18 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                   backgroundColor: tileColor,
                   children: [
                     if (ss.canAuthenticate)
-                      Obx(() =>
-                          SettingsSwitch(
+                      Obx(() => SettingsSwitch(
                             onChanged: (bool val) async {
                               var localAuth = LocalAuthentication();
                               bool didAuthenticate = await localAuth.authenticate(
                                   localizedReason:
-                                  'Please authenticate to ${val == true ? "enable" : "disable"} security',
+                                      'Please authenticate to ${val == true ? "enable" : "disable"} security',
                                   options: const AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 ss.settings.shouldSecure.value = val;
                                 if (val == false) {
                                   SecureApplicationProvider.of(context, listen: false)!.open();
-                                } else if (ss.settings.securityLevel.value ==
-                                    SecurityLevel.locked_and_secured) {
+                                } else if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
                                   SecureApplicationProvider.of(context, listen: false)!.secure();
                                 }
                                 saveSettings();
@@ -81,18 +78,23 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                                       if (!kIsDesktop)
                                         const TextSpan(children: [
                                           TextSpan(text: "\n\n"),
-                                          TextSpan(text: "There are two different security levels you can choose from:"),
+                                          TextSpan(
+                                              text: "There are two different security levels you can choose from:"),
                                           TextSpan(text: "\n\n"),
                                           TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
-                                          TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
+                                          TextSpan(
+                                              text: " - Requires biometrics/pin only when the app is first started"),
                                           TextSpan(text: "\n\n"),
-                                          TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          TextSpan(
+                                              text: "Locked and secured",
+                                              style: TextStyle(fontWeight: FontWeight.bold)),
                                           TextSpan(
                                               text:
                                                   " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
                                         ]),
                                     ],
-                                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                    style: context.theme.textTheme.bodySmall!
+                                        .copyWith(color: context.theme.colorScheme.properOnSurface),
                                   ),
                                 ),
                               ));
@@ -108,7 +110,8 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             onChanged: (val) async {
                               var localAuth = LocalAuthentication();
                               bool didAuthenticate = await localAuth.authenticate(
-                                  localizedReason: 'Please authenticate to change your security level', options: const AuthenticationOptions(stickyAuth: true));
+                                  localizedReason: 'Please authenticate to change your security level',
+                                  options: const AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 if (val != null) {
                                   ss.settings.securityLevel.value = val;
@@ -122,10 +125,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                               }
                             },
                             options: SecurityLevel.values,
-                            textProcessing: (val) =>
-                            val.toString().split(".")[1]
-                                .replaceAll("_", " ")
-                                .capitalizeFirst!,
+                            textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
                             title: "Security Level",
                             secondaryColor: headerColor,
                           );
@@ -143,16 +143,17 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       ),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
-                        onChanged: (bool val) async {
-                          ss.settings.incognitoKeyboard.value = val;
-                          saveSettings();
-                        },
-                        initialVal: ss.settings.incognitoKeyboard.value,
-                        title: "Incognito Keyboard",
-                        subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
-                        isThreeLine: true,
-                        backgroundColor: tileColor,
-                      )),
+                            onChanged: (bool val) async {
+                              ss.settings.incognitoKeyboard.value = val;
+                              saveSettings();
+                            },
+                            initialVal: ss.settings.incognitoKeyboard.value,
+                            title: "Incognito Keyboard",
+                            subtitle:
+                                "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
+                            isThreeLine: true,
+                            backgroundColor: tileColor,
+                          )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
@@ -163,39 +164,38 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       ),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
-                        onChanged: (bool val) async {
-                          ss.settings.keepAppAlive.value = val;
-                          saveSettings();
-                          if (!val) {
-                            await mcs.invokeMethod("stop-socket-service");
-                            FlutterForegroundTask.stopService();
-                          } else {
-                            await mcs.invokeMethod("start-socket-service");
-                          }
-                        },
-                        initialVal: ss.settings.keepAppAlive.value,
-                        title: "Use Foreground Service For Notifications",
-                        subtitle: "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.",
-                        isThreeLine: true,
-                        backgroundColor: tileColor,
-                      )),
+                            onChanged: (bool val) async {
+                              ss.settings.keepAppAlive.value = val;
+                              saveSettings();
+                              if (!val) {
+                                await mcs.invokeMethod("stop-socket-service");
+                                FlutterForegroundTask.stopService();
+                              } else {
+                                await mcs.invokeMethod("start-socket-service");
+                              }
+                            },
+                            initialVal: ss.settings.keepAppAlive.value,
+                            title: "Use Foreground Service For Notifications",
+                            subtitle:
+                                "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.",
+                            isThreeLine: true,
+                            backgroundColor: tileColor,
+                          )),
                     if (!kIsWeb && !kIsDesktop)
                       const SettingsSubtitle(
-                        subtitle: "Note: Closing the app via the app switcher will disconnect the socket connection, since the Flutter Engine is killed. The app must be permanently kept open in the background. As a result, you may experience higher battery drain.",
+                        subtitle:
+                            "Note: Closing the app via the app switcher will disconnect the socket connection, since the Flutter Engine is killed. The app must be permanently kept open in the background. As a result, you may experience higher battery drain.",
                         unlimitedSpace: true,
                       ),
                   ],
                 ),
               if (!kIsWeb && !kIsDesktop || ss.canAuthenticate)
                 SettingsHeader(
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Speed & Responsiveness"),
+                    iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Speed & Responsiveness"),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  Obx(() =>
-                      SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.highPerfMode.value = val;
                           saveSettings();
@@ -250,43 +250,41 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                   }),
                 ],
               ),
-              SettingsHeader(
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Networking"),
+              SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Networking"),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   const SettingsTile(
                     title: "API Timeout Duration",
-                    subtitle: "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
+                    subtitle:
+                        "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
                     isThreeLine: true,
                   ),
-                  Obx(() =>
-                      SettingsSlider(
-                          startingVal: ss.settings.apiTimeout.value / 1000,
-                          update: (double val) {
-                            ss.settings.apiTimeout.value = val.toInt() * 1000;
-                          },
-                          onChangeEnd: (double val) {
-                            saveSettings();
-                            http.dio = Dio(BaseOptions(
-                              connectTimeout: const Duration(milliseconds: 15000),
-                              receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
-                              sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
-                            ));
-                            http.dio.interceptors.add(ApiInterceptor());
-                          },
-                          backgroundColor: tileColor,
-                          min: 5,
-                          max: 60,
-                          divisions: 11)),
+                  Obx(() => SettingsSlider(
+                      startingVal: ss.settings.apiTimeout.value / 1000,
+                      update: (double val) {
+                        ss.settings.apiTimeout.value = val.toInt() * 1000;
+                      },
+                      onChangeEnd: (double val) {
+                        saveSettings();
+                        http.dio = Dio(BaseOptions(
+                          connectTimeout: const Duration(milliseconds: 15000),
+                          receiveTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+                          sendTimeout: Duration(milliseconds: ss.settings.apiTimeout.value),
+                        ));
+                        http.dio.interceptors.add(ApiInterceptor());
+                      },
+                      backgroundColor: tileColor,
+                      min: 5,
+                      max: 60,
+                      divisions: 11)),
                   Padding(
                     padding: const EdgeInsets.all(15),
                     child: Obx(() => Text(
-                      "Note: Attachment uploads will timeout after ${ss.settings.apiTimeout.value ~/ 1000 * 12} seconds",
-                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                    )),
+                          "Note: Attachment uploads will timeout after ${ss.settings.apiTimeout.value ~/ 1000 * 12} seconds",
+                          style: context.theme.textTheme.bodySmall!
+                              .copyWith(color: context.theme.colorScheme.properOnSurface),
+                        )),
                   ),
                   Container(
                     color: tileColor,
@@ -296,27 +294,37 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      ss.settings.cancelQueuedMessages.toggle();
-                      saveSettings();
-                    },
-                    initialVal: ss.settings.cancelQueuedMessages.value,
-                    title: "Cancel Queued Messages on Failure",
-                    subtitle: "Cancel messages queued to send in a chat if one fails before them",
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  )),
+                        onChanged: (bool val) {
+                          ss.settings.cancelQueuedMessages.toggle();
+                          saveSettings();
+                        },
+                        initialVal: ss.settings.cancelQueuedMessages.value,
+                        title: "Cancel Queued Messages on Failure",
+                        subtitle: "Cancel messages queued to send in a chat if one fails before them",
+                        backgroundColor: tileColor,
+                        isThreeLine: true,
+                      )),
                 ],
               ),
               SettingsHeader(
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
-                text: "Other",),
+                text: "Other",
+              ),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  Obx(() =>
-                      SettingsSwitch(
+                  if (kIsDesktop || kIsWeb)
+                    Obx(() => SettingsSwitch(
+                          onChanged: (bool val) {
+                            ss.settings.spellcheck.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.spellcheck.value,
+                          title: "Enable Spellcheck",
+                          backgroundColor: tileColor,
+                        )),
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.sendDelay.value = val ? 3 : 0;
                           saveSettings();
@@ -351,8 +359,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
-                  Obx(() =>
-                      SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.use24HrFormat.value = val;
                           saveSettings();
@@ -369,8 +376,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                     ),
                   ),
                   if (Platform.isAndroid)
-                    Obx(() =>
-                        SettingsSwitch(
+                    Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.allowUpsideDownRotation.value = val;
                             saveSettings();
@@ -378,8 +384,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                               DeviceOrientation.landscapeRight,
                               DeviceOrientation.landscapeLeft,
                               DeviceOrientation.portraitUp,
-                              if (ss.settings.allowUpsideDownRotation.value)
-                                DeviceOrientation.portraitDown,
+                              if (ss.settings.allowUpsideDownRotation.value) DeviceOrientation.portraitDown,
                             ]);
                           },
                           initialVal: ss.settings.allowUpsideDownRotation.value,
@@ -405,34 +410,32 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       return const SizedBox.shrink();
                     }
                   }),
-                  Obx(
-                        () {
-                      if (iOS) {
-                        return SettingsSlider(
-                          divisions: 3,
-                          max: 5,
-                          min: 3,
-                          startingVal: ss.settings.maxAvatarsInGroupWidget.value.toDouble(),
-                          update: (double val) {
-                            ss.settings.maxAvatarsInGroupWidget.value = val.toInt();
-                          },
-                          onChangeEnd: (double val) {
-                            saveSettings();
-                          },
-                          formatValue: ((double val) => val.toStringAsFixed(0)),
-                          backgroundColor: tileColor,
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    },
-                  ),
+                  Obx(() {
+                    if (iOS) {
+                      return SettingsSlider(
+                        divisions: 3,
+                        max: 5,
+                        min: 3,
+                        startingVal: ss.settings.maxAvatarsInGroupWidget.value.toDouble(),
+                        update: (double val) {
+                          ss.settings.maxAvatarsInGroupWidget.value = val.toInt();
+                        },
+                        onChangeEnd: (double val) {
+                          saveSettings();
+                        },
+                        formatValue: ((double val) => val.toStringAsFixed(0)),
+                        backgroundColor: tileColor,
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  }),
                 ],
               ),
             ],
           ),
         ),
-      ]
+      ],
     );
   }
 

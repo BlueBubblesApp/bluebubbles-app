@@ -135,6 +135,7 @@ class Settings {
   final RxBool launchAtStartupMinimized = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
+  final RxBool spellcheck = true.obs;
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
   final RxDouble windowEffectCustomOpacityLight = 0.5.obs;
   final RxDouble windowEffectCustomOpacityDark = 0.5.obs;
@@ -246,6 +247,7 @@ class Settings {
       'launchAtStartup': launchAtStartup.value,
       'launchAtStartupMinimized': launchAtStartupMinimized.value,
       'closeToTray': closeToTray.value,
+      'spellcheck': spellcheck.value,
       'minimizeToTray': minimizeToTray.value,
       'selectedActionIndices': selectedActionIndices,
       'actionList': actionList,
@@ -367,6 +369,7 @@ class Settings {
     ss.settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     ss.settings.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     ss.settings.closeToTray.value = map['closeToTray'] ?? true;
+    ss.settings.spellcheck.value = map['spellcheck'] ?? true;
     ss.settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     ss.settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     ss.settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
@@ -513,6 +516,7 @@ class Settings {
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
+    s.spellcheck.value = map['spellcheck'] ?? true;
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
