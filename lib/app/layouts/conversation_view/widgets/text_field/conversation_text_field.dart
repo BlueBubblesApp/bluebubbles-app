@@ -875,7 +875,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                             iOS ? CupertinoIcons.xmark : Icons.close,
                                             color: context.theme.colorScheme.outline,
                                           ),
-                                          onPressed: () => showEmojiPicker.value = false,
+                                          onPressed: () {
+                                            showEmojiPicker.value = false;
+                                            controller.lastFocusedNode.requestFocus();
+                                          },
                                         ),
                                       ),
                                       const SizedBox(width: 8),
