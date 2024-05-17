@@ -1044,10 +1044,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     }
   }
 
-  void edit() async {
-    cvController.editing.add(Tuple4(
-        message, part, SpellCheckTextEditingController(text: part.text!), kIsDesktop || kIsWeb ? FocusNode() : null));
+  void edit() {
     popDetails();
+    final FocusNode? node = kIsDesktop || kIsWeb ? FocusNode() : null;
+    cvController.editing.add(Tuple3(message, part, SpellCheckTextEditingController(text: part.text!, focusNode: node)));
   }
 
   void delete() {

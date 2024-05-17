@@ -1,5 +1,6 @@
 import "package:bluebubbles/helpers/helpers.dart";
 import "package:bluebubbles/models/models.dart";
+import "package:bluebubbles/services/services.dart";
 import "package:collection/collection.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
@@ -30,12 +31,15 @@ class Mentionable {
 }
 
 class SpellCheckTextEditingController extends TextEditingController {
-  SpellCheckTextEditingController({super.text}) {
+  SpellCheckTextEditingController({super.text, this.focusNode}) {
     _languageCheckService = DebounceLangToolService(LangToolService(LanguageToolClient()), const Duration(milliseconds: 500));
     if (text.isNotEmpty) {
       _processMistakes(text);
     }
   }
+
+  /// focusNode
+  FocusNode? focusNode;
 
   /// Language tool configs
   final HighlightStyle highlightStyle = const HighlightStyle();
@@ -53,10 +57,15 @@ class SpellCheckTextEditingController extends TextEditingController {
   /// An error that may have occurred during the API fetch.
   Object? get fetchError => _fetchError;
 
+  /// Mistake tooltip
+  OverlayEntry? _mistakeTooltip;
+
   @override
   set value(TextEditingValue newValue) {
     if (kIsDesktop || kIsWeb) {
       _handleTextChange(newValue.text);
+      _mistakeTooltip?.remove();
+      _mistakeTooltip = null;
     }
     super.value = newValue;
   }
@@ -72,6 +81,8 @@ class SpellCheckTextEditingController extends TextEditingController {
   @override
   void dispose() {
     _languageCheckService.dispose();
+    _mistakeTooltip?.remove();
+    _mistakeTooltip = null;
     super.dispose();
   }
 
@@ -84,6 +95,7 @@ class SpellCheckTextEditingController extends TextEditingController {
     Future.microtask.call(() {
       final newOffset = mistake.offset + replacement.length;
       selection = TextSelection.fromPosition(TextPosition(offset: newOffset));
+      focusNode?.requestFocus();
     });
   }
 
@@ -92,7 +104,7 @@ class SpellCheckTextEditingController extends TextEditingController {
   Future<void> _handleTextChange(String newText) async {
     ///set value triggers each time, even when cursor changes its location
     ///so this check avoid cleaning Mistake list when text wasn't really changed
-    if (newText == text || newText.isEmpty) return;
+    if (newText == text) return;
 
     await _processMistakes(newText);
   }
@@ -209,6 +221,71 @@ class SpellCheckTextEditingController extends TextEditingController {
     }
   }
 
+  OverlayEntry _createTooltip(BuildContext context, Offset offset, Mistake mistake, String mistakeText) {
+    final Color color = _getMistakeColor(mistake.type);
+    Iterable<String> replacements = mistake.replacements.take(15);
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        left: offset.dx - 100,
+        width: 200,
+        bottom: (context.height - offset.dy) ~/ 60 * 60 + 60,
+        child: Center(
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.theme.colorScheme.properSurface,
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            padding: const EdgeInsets.all(8.0),
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(mistake.type.value.capitalizeFirst!, style: context.textTheme.titleSmall!.copyWith(color: color)),
+                  Text("\"$mistakeText\"",
+                      style: context.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
+                  ),
+                  const SizedBox(height: 8.0),
+                  replacements.isEmpty
+                      ? Text(
+                          "No Replacements",
+                          style: context.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
+                        )
+                      : Wrap(
+                    alignment: WrapAlignment.center,
+                          spacing: 4.0,
+                          runSpacing: 4.0,
+                          children: List.generate(replacements.length, (index) {
+                            final replacement = mistake.replacements[index];
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(8.0),
+                              hoverColor: color.withOpacity(0.2),
+                              onTapDown: (_) {
+                                replaceMistake(mistake, replacement);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: context.theme.colorScheme.outline),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Text(replacement, style: context.textTheme.bodySmall),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Builds a TextSpan with mistakes highlighted
   /// [chunk] - the text chunk to build TextSpan for
   /// [offset] - the offset of the chunk in the whole text
@@ -248,6 +325,13 @@ class SpellCheckTextEditingController extends TextEditingController {
             TextSpan(
               text: mistakeText,
               style: mistakeStyle,
+              onEnter: (event) {
+                if (_mistakeTooltip != null) {
+                  _mistakeTooltip!.remove();
+                }
+                _mistakeTooltip = _createTooltip(context, Offset(event.position.dx - ns.widthChatListLeft(context), event.position.dy), mistake, mistakeText);
+                Overlay.of(context).insert(_mistakeTooltip!);
+              },
             ),
           );
 
@@ -276,6 +360,7 @@ class SpellCheckTextEditingController extends TextEditingController {
 class MentionTextEditingController extends SpellCheckTextEditingController {
   MentionTextEditingController({
     super.text,
+    super.focusNode,
     this.mentionables = const <Mentionable>[],
   });
 

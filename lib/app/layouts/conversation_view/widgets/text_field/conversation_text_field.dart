@@ -29,7 +29,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:languagetool_textfield/domain/mistake.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
@@ -799,8 +798,8 @@ class TextFieldComponent extends StatelessWidget {
     this.initialAttachments = const [],
   });
 
-  final SpellCheckTextEditingController subjectTextController;
-  final MentionTextEditingController textController;
+  final TextEditingController subjectTextController;
+  final TextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
@@ -849,7 +848,7 @@ class TextFieldComponent extends StatelessWidget {
                   PickedAttachmentsHolder(
                     controller: controller,
                     textController: textController,
-                    subjectTextController: controller?.subjectTextController ?? SpellCheckTextEditingController(),
+                    subjectTextController: controller?.subjectTextController ?? TextEditingController(),
                     initialAttachments: initialAttachments,
                   ),
                 if (!isChatCreator)
@@ -876,25 +875,6 @@ class TextFieldComponent extends StatelessWidget {
                     minLines: 1,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                     textInputAction: TextInputAction.next,
-                    contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
-                      final start = editableTextState.textEditingValue.selection.start;
-
-                      Mistake? mistake = controller?.subjectTextController.selectedMistake;
-                      return AdaptiveTextSelectionToolbar.editableText(
-                        editableTextState: editableTextState,
-                      )..buttonItems?.addAll(
-                          mistake?.replacements.take(3).map((replacement) {
-                            return ContextMenuButtonItem(
-                              onPressed: () {
-                                controller!.subjectTextController.replaceMistake(mistake, replacement);
-                                controller!.subjectTextController.selection = TextSelection.collapsed(offset: start + replacement.length);
-                                editableTextState.hideToolbar();
-                              },
-                              label: replacement,
-                            );
-                          }) ?? [],
-                        );
-                    },
                     cursorColor: context.theme.colorScheme.primary,
                     cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
                     decoration: InputDecoration(
@@ -979,24 +959,6 @@ class TextFieldComponent extends StatelessWidget {
                     final text = editableTextState.textEditingValue.text;
                     final selected = editableTextState.textEditingValue.text
                         .substring((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length));
-
-                    Mistake? mistake = controller?.textController.selectedMistake;
-                    if (mistake != null) {
-                      return AdaptiveTextSelectionToolbar.editableText(
-                        editableTextState: editableTextState,
-                      )..buttonItems?.addAll(
-                          mistake.replacements.take(3).map((replacement) {
-                            return ContextMenuButtonItem(
-                              onPressed: () {
-                                controller!.textController.replaceMistake(mistake, replacement);
-                                controller!.textController.selection = TextSelection.collapsed(offset: start + replacement.length);
-                                editableTextState.hideToolbar();
-                              },
-                              label: replacement,
-                            );
-                          }),
-                        );
-                    }
 
                     return AdaptiveTextSelectionToolbar.editableText(
                       editableTextState: editableTextState,
@@ -1162,7 +1124,7 @@ class TextFieldComponent extends StatelessWidget {
           final part = parts.filter((p) => p.text?.isNotEmpty ?? false).lastOrNull;
           if (part != null) {
             final FocusNode? node = kIsDesktop || kIsWeb ? FocusNode() : null;
-            controller!.editing.add(Tuple4(message, part, SpellCheckTextEditingController(text: part.text!), node));
+            controller!.editing.add(Tuple3(message, part, SpellCheckTextEditingController(text: part.text!, focusNode: node)));
             node?.requestFocus();
             return KeyEventResult.handled;
           }

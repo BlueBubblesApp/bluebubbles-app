@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
@@ -52,8 +51,8 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
-  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
-  final SpellCheckTextEditingController subjectController = SpellCheckTextEditingController();
+  late final TextEditingController textController = TextEditingController(text: widget.initialText);
+  final TextEditingController subjectController = TextEditingController();
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
