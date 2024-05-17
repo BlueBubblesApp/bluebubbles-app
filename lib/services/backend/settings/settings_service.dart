@@ -87,7 +87,6 @@ class SettingsService extends GetxService {
         \$Shortcut.Arguments = "${minimized ? 'minimized' : ''}"
         \$Shortcut.Save()
         ''';
-      print(script);
       await Process.run(
         'powershell',
         ['-Command', script],
