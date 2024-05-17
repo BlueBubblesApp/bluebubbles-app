@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_linux
   desktop_webview_auth
   dynamic_color
+  emoji_picker_flutter
   file_selector_linux
   flutter_acrylic
   gtk

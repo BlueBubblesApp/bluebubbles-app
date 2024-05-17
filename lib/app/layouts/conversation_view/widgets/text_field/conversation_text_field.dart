@@ -19,6 +19,7 @@ import 'package:bluebubbles/utils/share.dart';
 import 'package:chunked_stream/chunked_stream.dart';
 import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' hide Emoji;
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
@@ -74,6 +75,12 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   bool get showAttachmentPicker => controller.showAttachmentPicker;
 
+  late final double emojiPickerHeight = max(256, context.height * 0.4);
+  late final emojiColumns = ns.width(context) ~/ 56; // Intentionally not responsive to prevent rebuilds when resizing
+  RxBool showEmojiPicker = false.obs;
+
+  final proxyController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -101,6 +108,22 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
     controller.textController.addListener(() => textListener(false));
     controller.subjectTextController.addListener(() => textListener(true));
+
+    if (kIsDesktop || kIsWeb) {
+      proxyController.addListener(() {
+        if (proxyController.text.isEmpty) return;
+        String emoji = proxyController.text;
+        proxyController.clear();
+        TextEditingController realController = controller.lastFocusedTextController;
+        String text = realController.text;
+        TextSelection selection = realController.selection;
+
+        realController.text = text.substring(0, selection.start) + emoji + text.substring(selection.end);
+        realController.selection = TextSelection.collapsed(offset: selection.start + emoji.length);
+
+        controller.lastFocusedNode.requestFocus();
+      });
+    }
   }
 
   void getDrafts() async {
@@ -670,6 +693,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         }
                       }
                     }),
+              if (kIsDesktop || kIsWeb)
+                IconButton(
+                  icon: Icon(iOS ? CupertinoIcons.smiley_fill : Icons.emoji_emotions, color: context.theme.colorScheme.outline, size: 28),
+                  onPressed: () {
+                    showEmojiPicker.value = !showEmojiPicker.value;
+                    controller.lastFocusedNode.requestFocus();
+                  },
+                ),
               if (kIsDesktop && !Platform.isLinux)
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
@@ -778,6 +809,90 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                   : AttachmentPicker(
                       controller: controller,
                     ),
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeIn,
+              alignment: Alignment.bottomCenter,
+              child: Obx(() {
+                return showEmojiPicker.value
+                    ? Theme(
+                        data: context.theme.copyWith(canvasColor: Colors.transparent),
+                        child: EmojiPicker(
+                          textEditingController: proxyController,
+                          scrollController: ScrollController(),
+                          config: Config(
+                            height: emojiPickerHeight,
+                            checkPlatformCompatibility: true,
+                            emojiViewConfig: EmojiViewConfig(
+                              emojiSizeMax: 28,
+                              backgroundColor: Colors.transparent,
+                              columns: emojiColumns,
+                            ),
+                            swapCategoryAndBottomBar: true,
+                            skinToneConfig: const SkinToneConfig(enabled: false),
+                            categoryViewConfig: const CategoryViewConfig(
+                              backgroundColor: Colors.transparent,
+                              dividerColor: Colors.transparent,
+                            ),
+                            bottomActionBarConfig: BottomActionBarConfig(
+                              customBottomActionBar: (Config config, EmojiViewState state, VoidCallback showSearchView) {
+                                return Container(
+                                  margin: const EdgeInsets.only(top: 10),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Material(
+                                          child: InkWell(
+                                            onTap: showSearchView,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(12),
+                                              child: Row(children: [
+                                                Icon(
+                                                  iOS ? CupertinoIcons.search : Icons.search,
+                                                  color: context.theme.colorScheme.outline,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    "Search...",
+                                                    style: context.theme.textTheme.bodyLarge!.copyWith(
+                                                      color: context.theme.colorScheme.outline,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ]),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: IconButton(
+                                          icon: Icon(
+                                            iOS ? CupertinoIcons.xmark : Icons.close,
+                                            color: context.theme.colorScheme.outline,
+                                          ),
+                                          onPressed: () => showEmojiPicker.value = false,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            searchViewConfig: SearchViewConfig(
+                              backgroundColor: Colors.transparent,
+                              buttonIconColor: context.theme.colorScheme.outline,
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              }),
             ),
           ],
         ),
@@ -1065,7 +1180,9 @@ class TextFieldComponent extends StatelessWidget {
   KeyEventResult handleKey(FocusNode _, KeyEvent ev, BuildContext context, bool isChatCreator) {
     if (ev is! KeyDownEvent) return KeyEventResult.ignored;
 
-    if ((kIsWeb || Platform.isWindows || Platform.isLinux) && (ev.physicalKey == PhysicalKeyboardKey.keyV || ev.logicalKey == LogicalKeyboardKey.keyV) && HardwareKeyboard.instance.isControlPressed) {
+    if ((kIsWeb || Platform.isWindows || Platform.isLinux) &&
+        (ev.physicalKey == PhysicalKeyboardKey.keyV || ev.logicalKey == LogicalKeyboardKey.keyV) &&
+        HardwareKeyboard.instance.isControlPressed) {
       Pasteboard.image.then((image) {
         if (image != null) {
           controller!.pickedAttachments.add(PlatformFile(
@@ -1117,7 +1234,11 @@ class TextFieldComponent extends StatelessWidget {
 
     // Up arrow
     if (ev.logicalKey == LogicalKeyboardKey.arrowUp) {
-      if (chat != null && controller!.lastFocusedTextController.text.isEmpty && ss.settings.editLastSentMessageOnUpArrow.value && ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148) {
+      if (chat != null &&
+          controller!.lastFocusedTextController.text.isEmpty &&
+          ss.settings.editLastSentMessageOnUpArrow.value &&
+          ss.isMinVenturaSync &&
+          ss.serverDetailsSync().item4 >= 148) {
         final message = ms(chat!.guid).mostRecentSent;
         if (message != null) {
           final parts = mwc(message).parts;

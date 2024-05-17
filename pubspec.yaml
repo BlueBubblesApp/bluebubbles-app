@@ -52,6 +52,7 @@ dependencies:
   dynamic_color: ^1.7.0
   easy_debounce: ^2.0.3
   emojis: ^0.9.9
+  emoji_picker_flutter: ^2.2.0
   encrypt: ^5.0.3
   exif: ^3.3.0
   faker: ^2.1.0
