@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/details_menu_action.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -85,6 +86,7 @@ class Settings {
   final RxBool scrollToLastUnread = false.obs;
   final RxString userName = "You".obs;
   final RxnString userAvatarPath = RxnString();
+
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -152,6 +154,12 @@ class Settings {
     ReactionTypes.QUESTION
   ]);
 
+  // Message options order
+  final RxList<DetailsMenuAction> _detailsMenuActions = RxList.from(DetailsMenuAction.values);
+
+  /// Use [setDetailsMenuActions] to set this value
+  List<DetailsMenuAction> get detailsMenuActions => _detailsMenuActions;
+
   // Linux settings
   final RxBool useCustomTitleBar = RxBool(true);
 
@@ -174,6 +182,8 @@ class Settings {
         await ss.prefs.setInt(key, value);
       } else if (value is double) {
         await ss.prefs.setDouble(key, value);
+      } else if (value is List<DetailsMenuAction>) {
+        await ss.prefs.setString(key, jsonEncode(value.map((action) => action.name).toList()));
       } else if (value is List || value is Map) {
         await ss.prefs.setString(key, jsonEncode(value));
       } else if (value == null) {
@@ -251,6 +261,7 @@ class Settings {
       'minimizeToTray': minimizeToTray.value,
       'selectedActionIndices': selectedActionIndices,
       'actionList': actionList,
+      'detailsMenuActions': detailsMenuActions,
       'askWhereToSave': askWhereToSave.value,
       'indicatorsOnPinnedChats': statusIndicatorsOnChats.value,
       'apiTimeout': apiTimeout.value,
@@ -426,25 +437,11 @@ class Settings {
     ss.settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     ss.settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     ss.settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    ss.settings.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String
-                ? jsonDecode(map['selectedActionIndices']) as List
-                : [0, 1, 2, 3, 4])
-            .cast<int>()
-            .splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3))
-            .firstOrNull ??
-        [];
-    ss.settings.actionList.value = (map['actionList']?.runtimeType == String
-            ? jsonDecode(map['actionList']) as List
-            : [
-                "Mark Read",
-                ReactionTypes.LOVE,
-                ReactionTypes.LIKE,
-                ReactionTypes.LAUGH,
-                ReactionTypes.EMPHASIZE,
-                ReactionTypes.DISLIKE,
-                ReactionTypes.QUESTION
-              ])
-        .cast<String>();
+
+    ss.settings.selectedActionIndices.value = _processSelectedActionIndices(map['selectedActionIndices']);
+    ss.settings.actionList.value = _processActionList(map['actionList']);
+    ss.settings._detailsMenuActions.value = _processDetailsMenuActions(map['detailsMenuActions'], ss.settings.detailsMenuActions);
+
     ss.settings.windowEffect.value = kIsDesktop && Platform.isWindows
         ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled
         : WindowEffect.disabled;
@@ -462,8 +459,7 @@ class Settings {
     s.iCloudAccount.value = map['iCloudAccount'] ?? "";
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
-    s.customHeaders.value =
-        map['customHeaders'] is String ? jsonDecode(map['customHeaders']).cast<String, String>() : <String, String>{};
+    s.customHeaders.value = _processCustomHeaders(map['customHeaders']);
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
@@ -574,25 +570,11 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    s.selectedActionIndices.value = (map['selectedActionIndices']?.runtimeType == String
-                ? jsonDecode(map['selectedActionIndices']) as List
-                : [0, 1, 2, 3, 4])
-            .cast<int>()
-            .splitAfterIndexed((_, i) => i == (Platform.isWindows ? 5 : 3))
-            .firstOrNull ??
-        [];
-    s.actionList.value = (map['actionList']?.runtimeType == String
-            ? jsonDecode(map['actionList']) as List
-            : [
-                "Mark Read",
-                ReactionTypes.LOVE,
-                ReactionTypes.LIKE,
-                ReactionTypes.LAUGH,
-                ReactionTypes.EMPHASIZE,
-                ReactionTypes.DISLIKE,
-                ReactionTypes.QUESTION
-              ])
-        .cast<String>();
+
+    s.selectedActionIndices.value = _processSelectedActionIndices(map['selectedActionIndices']);
+    s.actionList.value = _processActionList(map['actionList']);
+    s._detailsMenuActions.value = _processDetailsMenuActions(map['detailsMenuActions'], DetailsMenuAction.values);
+
     s.windowEffect.value = (kIsDesktop && Platform.isWindows)
         ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled
         : WindowEffect.disabled;
@@ -602,4 +584,76 @@ class Settings {
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     return s;
   }
+
+  /// function to set detailsMenuActions from a subset of allActions
+  void setDetailsMenuActions(List<DetailsMenuAction> actions) {
+    ss.settings._detailsMenuActions.value = _filterDetailsMenuActions(actions, ss.settings.detailsMenuActions);
+    ss.settings.save();
+  }
+
+  void resetDetailsMenuActions() {
+    ss.settings._detailsMenuActions.value = DetailsMenuAction.values;
+    ss.settings.save();
+  }
+}
+
+Map<String, String> _processCustomHeaders(dynamic rawJson) {
+  try {
+    return (jsonDecode(rawJson) as Map).cast<String, String>();
+  } catch (e) {
+    debugPrint("Using default customHeaders");
+    return {};
+  }
+}
+
+List<int> _processSelectedActionIndices(dynamic rawJson) {
+  try {
+    return (jsonDecode(rawJson) as List).cast<int>().take(Platform.isWindows ? 5 : 3).toList();
+  } catch (e) {
+    debugPrint("Using default selectedActionIndices");
+    return [0, 1, 2, 3, 4].take(Platform.isWindows ? 5 : 3).toList();
+  }
+}
+
+List<String> _processActionList(dynamic rawJson) {
+  try {
+    return (jsonDecode(rawJson) as List).cast<String>();
+  } catch (e) {
+    debugPrint("Using default actionList");
+    return [
+      "Mark Read",
+      ReactionTypes.LOVE,
+      ReactionTypes.LIKE,
+      ReactionTypes.LAUGH,
+      ReactionTypes.EMPHASIZE,
+      ReactionTypes.DISLIKE,
+      ReactionTypes.QUESTION
+    ];
+  }
+}
+
+List<DetailsMenuAction> _processDetailsMenuActions(dynamic rawJson, List<DetailsMenuAction> allActions) {
+  try {
+    List<DetailsMenuAction> actions = (jsonDecode(rawJson) as List)
+        .cast<String>()
+        .map((s) => DetailsMenuAction.values.firstWhereOrNull((action) => action.name == s))
+        .whereNotNull()
+        .toList();
+    return _filterDetailsMenuActions(actions, allActions);
+  } catch (e) {
+    debugPrint("Using default detailsMenuActions");
+    return DetailsMenuAction.values;
+  }
+}
+
+List<DetailsMenuAction> _filterDetailsMenuActions(List<DetailsMenuAction> actions, List<DetailsMenuAction> allActions) {
+  // Keep existing order of other keys
+  List<(DetailsMenuAction, int)> remainingIndexed = allActions.mapIndexed((i, action) => (action, i)).whereNot((mapEntry) => actions.contains(mapEntry.$1)).toList();
+
+  for (int i = 0; i < remainingIndexed.length; i++) {
+    (DetailsMenuAction, int) item = remainingIndexed[i];
+    actions.insert(item.$2 + i, item.$1);
+  }
+
+  return actions;
 }
