@@ -254,12 +254,19 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  const SettingsTile(
+                  Obx(() => SettingsTile(
                     title: "API Timeout Duration",
                     subtitle:
                         "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
                     isThreeLine: true,
-                  ),
+                    trailing: ss.settings.apiTimeout.value != 30000 ? ElevatedButton(
+                      onPressed: () {
+                        ss.settings.apiTimeout.value = 30000;
+                        saveSettings();
+                      },
+                      child: const Text("Reset to Default"),
+                    ) : null,
+                  )),
                   Obx(() => SettingsSlider(
                       startingVal: ss.settings.apiTimeout.value / 1000,
                       update: (double val) {
