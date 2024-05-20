@@ -289,7 +289,14 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           return const SizedBox.shrink();
                         }
                       }),
-                    if (!kIsWeb) const SettingsDivider(),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                     if (kIsDesktop)
                       Obx(() {
                         if (iOS) {
