@@ -261,7 +261,7 @@ class Settings {
       'minimizeToTray': minimizeToTray.value,
       'selectedActionIndices': selectedActionIndices,
       'actionList': actionList,
-      'detailsMenuActions': detailsMenuActions,
+      'detailsMenuActions': detailsMenuActions.map((action) => action.name).toList(),
       'askWhereToSave': askWhereToSave.value,
       'indicatorsOnPinnedChats': statusIndicatorsOnChats.value,
       'apiTimeout': apiTimeout.value,
@@ -599,7 +599,7 @@ class Settings {
 
 Map<String, String> _processCustomHeaders(dynamic rawJson) {
   try {
-    return (jsonDecode(rawJson) as Map).cast<String, String>();
+    return (rawJson is Map ? rawJson : jsonDecode(rawJson) as Map).cast<String, String>();
   } catch (e) {
     debugPrint("Using default customHeaders");
     return {};
@@ -608,7 +608,7 @@ Map<String, String> _processCustomHeaders(dynamic rawJson) {
 
 List<int> _processSelectedActionIndices(dynamic rawJson) {
   try {
-    return (jsonDecode(rawJson) as List).cast<int>().take(Platform.isWindows ? 5 : 3).toList();
+    return (rawJson is List ? rawJson : jsonDecode(rawJson) as List).cast<int>().take(Platform.isWindows ? 5 : 3).toList();
   } catch (e) {
     debugPrint("Using default selectedActionIndices");
     return [0, 1, 2, 3, 4].take(Platform.isWindows ? 5 : 3).toList();
@@ -617,7 +617,7 @@ List<int> _processSelectedActionIndices(dynamic rawJson) {
 
 List<String> _processActionList(dynamic rawJson) {
   try {
-    return (jsonDecode(rawJson) as List).cast<String>();
+    return (rawJson is List ? rawJson : jsonDecode(rawJson) as List).cast<String>();
   } catch (e) {
     debugPrint("Using default actionList");
     return [
@@ -634,7 +634,7 @@ List<String> _processActionList(dynamic rawJson) {
 
 List<DetailsMenuAction> _processDetailsMenuActions(dynamic rawJson, List<DetailsMenuAction> allActions) {
   try {
-    List<DetailsMenuAction> actions = (jsonDecode(rawJson) as List)
+    List<DetailsMenuAction> actions = (rawJson is List ? rawJson : jsonDecode(rawJson) as List)
         .cast<String>()
         .map((s) => DetailsMenuAction.values.firstWhereOrNull((action) => action.name == s))
         .whereNotNull()
@@ -650,9 +650,8 @@ List<DetailsMenuAction> _filterDetailsMenuActions(List<DetailsMenuAction> action
   // Keep existing order of other keys
   List<(DetailsMenuAction, int)> remainingIndexed = allActions.mapIndexed((i, action) => (action, i)).whereNot((mapEntry) => actions.contains(mapEntry.$1)).toList();
 
-  for (int i = 0; i < remainingIndexed.length; i++) {
-    (DetailsMenuAction, int) item = remainingIndexed[i];
-    actions.insert(item.$2 + i, item.$1);
+  for ((DetailsMenuAction, int) item in remainingIndexed) {
+    actions.insert(item.$2, item.$1);
   }
 
   return actions;
