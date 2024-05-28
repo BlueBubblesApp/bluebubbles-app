@@ -969,7 +969,9 @@ Future<void> initSystemTray() async {
 
   // We first init the systray menu and then add the menu entries
   await trayManager.setIcon(path);
-  await trayManager.setToolTip("BlueBubbles");
+  if (Platform.isWindows) {
+    await trayManager.setToolTip("BlueBubbles");
+  }
   await setSystemTrayContextMenu(windowHidden: !appWindow.isVisible);
 }
 
