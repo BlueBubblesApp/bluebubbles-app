@@ -174,7 +174,6 @@ dependencies:
     git:
       url: https://github.com/ravitejaavv/store_checker
       ref: master
-  super_drag_and_drop: ^0.8.11
   synchronized: ^3.1.0+1
   supercharged: ^2.1.1
   system_info2: ^4.0.0
@@ -195,21 +194,22 @@ dependencies:
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions
-  material_color_utilities: ^0.11.1 # flutter test SDK
+  google_mlkit_smart_reply: # for gradle namespace issue
+    git:
+      url: https://github.com/BlueBubblesApp/google_ml_kit_flutter.git
+      ref: develop
+      path: packages/google_mlkit_smart_reply
+  http: ^1.2.1 # metadata_fetch
   intl: ^0.19.0 # firebase_dart
   js: ^0.7.1 # socket_io_client
-  http: ^1.2.1 # metadata_fetch
+  material_color_utilities: ^0.11.1 # flutter test SDK
   permission_handler_platform_interface: ^4.2.1 # BB permission_handler_windows
   permission_handler_windows:
     git:
       url: https://github.com/BlueBubblesApp/flutter-permission-handler.git
       ref: a7a87683a7745c30e68161b3924fefb94818c95c
       path: permission_handler_windows
-  google_mlkit_smart_reply: # for gradle namespace issue
-    git:
-      url: https://github.com/BlueBubblesApp/google_ml_kit_flutter.git
-      ref: develop
-      path: packages/google_mlkit_smart_reply
+  super_drag_and_drop: ^0.8.16 # for rust build issue
   uuid: ^4.4.0 # firebase_dart
 
 dev_dependencies:
@@ -326,8 +326,6 @@ msix_config:
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico
   store: true
-  #  certificate_path: ../bluebubbles.pfx
-  #  certificate_password: BlueBubbles
   icons_background_color: transparent
   languages: en-us
   architecture: x64
