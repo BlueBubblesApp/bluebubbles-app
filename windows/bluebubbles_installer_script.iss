@@ -42,7 +42,7 @@ Source: "{#ProjectRoot}\build\windows\x64\runner\Release\{#MyAppExeName}"; DestD
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.lib"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.exp"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#ProjectRoot}\windows\dlls\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+// Source: "{#ProjectRoot}\windows\dlls\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
