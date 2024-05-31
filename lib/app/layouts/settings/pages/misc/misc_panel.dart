@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/types/classes/language_codes.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -331,6 +332,20 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           title: "Enable Spellcheck",
                           backgroundColor: tileColor,
                         )),
+                  if (kIsDesktop || kIsWeb)
+                    Obx(() => ss.settings.spellcheck.value ? SettingsOptions<(String, String)>(
+                      useCupertino: false,
+                      onChanged: (val) {
+                        if (val == null) return;
+                        ss.settings.spellcheckLanguage.value = val.$2;
+                        saveSettings();
+                      },
+                      initial: languageNameAndCodes.firstWhereOrNull((l) => l.$2 == ss.settings.spellcheckLanguage.value) ?? ("Auto", "auto"),
+                      options: [("Auto", "auto"), ...languageNameAndCodes],
+                      title: 'Spellcheck Language',
+                      textProcessing: (val) => val.$1,
+                      capitalize: false,
+                    ) : const SizedBox.shrink()),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.sendDelay.value = val ? 3 : 0;
