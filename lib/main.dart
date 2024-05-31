@@ -960,7 +960,7 @@ Future<void> initSystemTray() async {
   if (Platform.isWindows) {
     path = 'assets/icon/icon.ico';
   } else if (isFlatpak) {
-    path = '/app/share/icons/hicolor/128x128/apps/app.bluebubbles.BlueBubbles.png';
+    path = 'app.bluebubbles.BlueBubbles';
   } else if (isSnap) {
     path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.png']);
   } else {
