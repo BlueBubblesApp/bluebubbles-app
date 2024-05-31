@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
@@ -51,8 +52,9 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
-  late final TextEditingController textController = TextEditingController(text: widget.initialText);
-  final TextEditingController subjectController = TextEditingController();
+  final messageNode = FocusNode();
+  late final TextEditingController textController = SpellCheckTextEditingController(text: widget.initialText, focusNode: messageNode);
+  final TextEditingController subjectController = TextEditingController(); // Chat creator doesn't have subject line
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -68,8 +70,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   ConversationViewController? oldController;
   Timer? _debounce;
   Completer<void>? createCompleter;
-
-  final messageNode = FocusNode();
 
   bool canCreateGroupChats = ss.canCreateGroupChatSync();
 

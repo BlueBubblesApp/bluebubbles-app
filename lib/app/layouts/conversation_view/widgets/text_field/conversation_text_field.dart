@@ -937,7 +937,6 @@ class TextFieldComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Focus(
-      focusNode: focusNode,
       onKeyEvent: (_, ev) => handleKey(_, ev, context, isChatCreator),
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
@@ -966,8 +965,8 @@ class TextFieldComponent extends StatelessWidget {
                 if (initialAttachments.isNotEmpty || !isChatCreator)
                   PickedAttachmentsHolder(
                     controller: controller,
-                    textController: textController,
-                    subjectTextController: controller?.subjectTextController ?? TextEditingController(),
+                    textController: controller?.textController ?? textController,
+                    subjectTextController: controller?.subjectTextController ?? subjectTextController,
                     initialAttachments: initialAttachments,
                   ),
                 if (!isChatCreator)
@@ -1015,7 +1014,7 @@ class TextFieldComponent extends StatelessWidget {
                       HapticFeedback.selectionClick();
                     },
                     onSubmitted: (String value) {
-                      controller!.subjectFocusNode.requestFocus();
+                      controller?.subjectFocusNode.requestFocus();
                     },
                     contentInsertionConfiguration: ContentInsertionConfiguration(onContentInserted: onContentCommit),
                   ),
@@ -1028,9 +1027,9 @@ class TextFieldComponent extends StatelessWidget {
                   ),
                 TextField(
                   textCapitalization: TextCapitalization.sentences,
-                  focusNode: controller?.focusNode,
+                  focusNode: controller?.focusNode ?? focusNode,
                   autocorrect: true,
-                  controller: textController,
+                  controller: controller?.textController ?? textController,
                   scrollPhysics: const CustomBouncingScrollPhysics(),
                   style: context.theme.extension<BubbleText>()!.bubbleText,
                   keyboardType: TextInputType.multiline,
@@ -1063,8 +1062,8 @@ class TextFieldComponent extends StatelessWidget {
                         : Padding(
                             padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
                             child: TextFieldSuffix(
-                              subjectTextController: subjectTextController,
-                              textController: textController,
+                              subjectTextController: controller?.subjectTextController ?? subjectTextController,
+                              textController: controller?.textController ?? textController,
                               controller: controller,
                               recorderController: recorderController,
                               sendMessage: sendMessage,
@@ -1104,7 +1103,7 @@ class TextFieldComponent extends StatelessWidget {
                               final checkSpace = end + replacement.length - 1;
                               final spaceAfter =
                                   checkSpace < text.length && text.substring(end + replacement.length - 1, end + replacement.length) == " ";
-                              controller?.textController.value = TextEditingValue(
+                              (controller?.textController ?? textController).value = TextEditingValue(
                                   text: text,
                                   selection: TextSelection.fromPosition(
                                       TextPosition(offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
@@ -1133,7 +1132,7 @@ class TextFieldComponent extends StatelessWidget {
                                 mention.customDisplayName = changed!;
                               }
                               final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
-                              controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
+                              (controller?.textController ?? textController).selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
                               editableTextState.hideToolbar();
                             },
                             label: "Custom Mention",
