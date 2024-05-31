@@ -35,15 +35,15 @@ class ThemeObject {
       name == "Music Theme (Dark)";
 
   List<ThemeEntry> toEntries() => [
-        ThemeEntry.fromStyle(ThemeColors.Headline1, data!.textTheme.displayLarge!),
-        ThemeEntry.fromStyle(ThemeColors.Headline2, data!.textTheme.displayMedium!),
-        ThemeEntry.fromStyle(ThemeColors.Bodytext1, data!.textTheme.bodyLarge!),
-        ThemeEntry.fromStyle(ThemeColors.Bodytext2, data!.textTheme.bodyMedium!),
-        ThemeEntry.fromStyle(ThemeColors.Subtitle1, data!.textTheme.titleMedium!),
-        ThemeEntry.fromStyle(ThemeColors.Subtitle2, data!.textTheme.titleSmall!),
+        ThemeEntry.fromStyle(ThemeColors.Headline1, data!.textTheme.headline1!),
+        ThemeEntry.fromStyle(ThemeColors.Headline2, data!.textTheme.headline2!),
+        ThemeEntry.fromStyle(ThemeColors.Bodytext1, data!.textTheme.bodyText1!),
+        ThemeEntry.fromStyle(ThemeColors.Bodytext2, data!.textTheme.bodyText2!),
+        ThemeEntry.fromStyle(ThemeColors.Subtitle1, data!.textTheme.subtitle1!),
+        ThemeEntry.fromStyle(ThemeColors.Subtitle2, data!.textTheme.subtitle2!),
         ThemeEntry(name: ThemeColors.AccentColor, color: data!.colorScheme.secondary, isFont: false),
         ThemeEntry(name: ThemeColors.DividerColor, color: data!.dividerColor, isFont: false),
-        ThemeEntry(name: ThemeColors.BackgroundColor, color: data!.colorScheme.background, isFont: false),
+        ThemeEntry(name: ThemeColors.BackgroundColor, color: data!.backgroundColor, isFont: false),
         ThemeEntry(name: ThemeColors.PrimaryColor, color: data!.primaryColor, isFont: false),
       ];
 
@@ -96,18 +96,19 @@ class ThemeObject {
 
     return ThemeData(
         textTheme: TextTheme(
-          displayLarge: data[ThemeColors.Headline1]!.style,
-          displayMedium: data[ThemeColors.Headline2]!.style,
-          bodyLarge: data[ThemeColors.Bodytext1]!.style,
-          bodyMedium: data[ThemeColors.Bodytext2]!.style,
-          titleMedium: data[ThemeColors.Subtitle1]!.style,
-          titleSmall: data[ThemeColors.Subtitle2]!.style,
+          headline1: data[ThemeColors.Headline1]!.style,
+          headline2: data[ThemeColors.Headline2]!.style,
+          bodyText1: data[ThemeColors.Bodytext1]!.style,
+          bodyText2: data[ThemeColors.Bodytext2]!.style,
+          subtitle1: data[ThemeColors.Subtitle1]!.style,
+          subtitle2: data[ThemeColors.Subtitle2]!.style,
         ),
         colorScheme: ColorScheme.fromSwatch(
             accentColor: data[ThemeColors.AccentColor]!.style,
             backgroundColor: data[ThemeColors.BackgroundColor]!.style,
         ),
         dividerColor: data[ThemeColors.DividerColor]!.style,
+        backgroundColor: data[ThemeColors.BackgroundColor]!.style,
         primaryColor: data[ThemeColors.PrimaryColor]!.style);
   }
 
