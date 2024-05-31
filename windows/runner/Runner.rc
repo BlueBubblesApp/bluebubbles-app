@@ -83,7 +83,7 @@ BEGIN
             VALUE "FileDescription", "BlueBubbles" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "bluebubbles" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 BlueBubbles. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2024 BlueBubbles. All rights reserved." "\0"
             VALUE "OriginalFilename", "bluebubbles.exe" "\0"
             VALUE "ProductName", "bluebubbles" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
