@@ -20,3 +20,4 @@ jq '.version = "1.12.101.0"' build/linux/$folder/release/bundle/data/flutter_ass
 chmod +x build/linux/$folder/release/bundle/bluebubbles
 
 tar cvf bluebubbles-linux-"$arch".tar -C build/linux/$folder/release/bundle .
+sha256sum bluebubbles-linux-"$arch".tar
