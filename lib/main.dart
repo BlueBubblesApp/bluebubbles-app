@@ -570,94 +570,99 @@ class Main extends StatelessWidget {
             ),
             notificationTitle: 'BlueBubbles Service',
             notificationText: 'Using socket connection for notifications',
-            child: SecureApplication(
-              child: Builder(
-                builder: (context) {
-                  if (ss.canAuthenticate && (!ls.isAlive || !uiStartup.isCompleted)) {
-                    if (ss.settings.shouldSecure.value) {
-                      SecureApplicationProvider.of(context, listen: false)!.lock();
-                      if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                        SecureApplicationProvider.of(context, listen: false)!.secure();
-                      }
-                    }
-                  }
-                  return TitleBarWrapper(
-                    child: SecureGate(
-                      blurr: 5,
-                      opacity: 0,
-                      lockedBuilder: (context, controller) {
-                        final localAuth = LocalAuthentication();
-                        if (!isAuthing) {
-                          isAuthing = true;
-                          localAuth
-                              .authenticate(
-                                  localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                  options: const AuthenticationOptions(stickyAuth: true))
-                              .then((result) {
-                            isAuthing = false;
-                            if (result) {
-                              SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
-                              if (kIsDesktop) {
-                                Future.delayed(Duration.zero, () {
-                                  chats.init();
-                                  socket;
+            child: !(kIsDesktop && Platform.isLinux)
+                ? SecureApplication(
+                    child: Builder(
+                      builder: (context) {
+                        if (ss.canAuthenticate && (!ls.isAlive || !uiStartup.isCompleted)) {
+                          if (ss.settings.shouldSecure.value) {
+                            SecureApplicationProvider.of(context, listen: false)!.lock();
+                            if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                              SecureApplicationProvider.of(context, listen: false)!.secure();
+                            }
+                          }
+                        }
+                        return TitleBarWrapper(
+                          child: SecureGate(
+                            blurr: 5,
+                            opacity: 0,
+                            lockedBuilder: (context, controller) {
+                              final localAuth = LocalAuthentication();
+                              if (!isAuthing) {
+                                isAuthing = true;
+                                localAuth
+                                    .authenticate(
+                                        localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                        options: const AuthenticationOptions(stickyAuth: true))
+                                    .then((result) {
+                                  isAuthing = false;
+                                  if (result) {
+                                    SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
+                                    if (kIsDesktop) {
+                                      Future.delayed(Duration.zero, () {
+                                        chats.init();
+                                        socket;
+                                      });
+                                    }
+                                  }
                                 });
                               }
-                            }
-                          });
-                        }
-                        return Container(
-                          color: context.theme.colorScheme.background,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                                  child: Text(
-                                    "BlueBubbles is currently locked. Please unlock to access your messages.",
-                                    style: context.theme.textTheme.titleLarge,
-                                    textAlign: TextAlign.center,
+                              return Container(
+                                color: context.theme.colorScheme.background,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                                        child: Text(
+                                          "BlueBubbles is currently locked. Please unlock to access your messages.",
+                                          style: context.theme.textTheme.titleLarge,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      Container(height: 20.0),
+                                      ClipOval(
+                                        child: Material(
+                                          color: context.theme.colorScheme.primary, // button color
+                                          child: InkWell(
+                                            child: SizedBox(
+                                                width: 60,
+                                                height: 60,
+                                                child:
+                                                    Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                            onTap: () async {
+                                              final localAuth = LocalAuthentication();
+                                              bool didAuthenticate = await localAuth.authenticate(
+                                                  localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                                  options: const AuthenticationOptions(stickyAuth: true));
+                                              if (didAuthenticate) {
+                                                controller!.authSuccess(unlock: true);
+                                                if (kIsDesktop) {
+                                                  Future.delayed(Duration.zero, () {
+                                                    chats.init();
+                                                    socket;
+                                                  });
+                                                }
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Container(height: 20.0),
-                                ClipOval(
-                                  child: Material(
-                                    color: context.theme.colorScheme.primary, // button color
-                                    child: InkWell(
-                                      child: SizedBox(
-                                          width: 60,
-                                          height: 60,
-                                          child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
-                                      onTap: () async {
-                                        final localAuth = LocalAuthentication();
-                                        bool didAuthenticate = await localAuth.authenticate(
-                                            localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                            options: const AuthenticationOptions(stickyAuth: true));
-                                        if (didAuthenticate) {
-                                          controller!.authSuccess(unlock: true);
-                                          if (kIsDesktop) {
-                                            Future.delayed(Duration.zero, () {
-                                              chats.init();
-                                              socket;
-                                            });
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
+                            child: child ?? Container(),
                           ),
                         );
                       },
-                      child: child ?? Container(),
                     ),
-                  );
-                },
-              ),
-            ),
+                  )
+                : TitleBarWrapper(
+                    child: child ?? Container(),
+                  ),
           ),
         ),
         defaultTransition: Transition.cupertino,
