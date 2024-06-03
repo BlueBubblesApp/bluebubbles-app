@@ -8,6 +8,8 @@
 #define MyAppExeName "bluebubbles_app.exe"
 #define ProjectRoot ".."
 
+#include "CodeDependencies.iss"
+
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
@@ -30,6 +32,19 @@ SetupIconFile={#ProjectRoot}\assets\icon\icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+
+[Code]
+function InitializeSetup: Boolean;
+begin
+  if not IsMsiProductInstalled('{36F68A90-239C-34DF-B58C-64B30153CE35}', PackVersionComponents(14, 40, 33810, 0)) then begin
+    Dependency_Add('vcredist2022 (x64).exe',
+      '/passive /norestart',
+      'Visual C++ 2015-2022 Redistributable (x64)',
+      'https://aka.ms/vs/17/release/vc_redist.x64.exe',
+      '', False, False);
+  end;
+  Result := True;
+end;
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
