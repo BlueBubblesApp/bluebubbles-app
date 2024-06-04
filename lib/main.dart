@@ -349,7 +349,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         await windowManager
             .setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
       }
-      windowManager.addListener(DesktopWindowListener());
+      windowManager.addListener(DesktopWindowListener.instance);
       doWhenWindowReady(() async {
         await windowManager.setMinimumSize(const Size(300, 300));
         Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
@@ -440,6 +440,10 @@ class BadCertOverride extends HttpOverrides {
 }
 
 class DesktopWindowListener extends WindowListener {
+  DesktopWindowListener._();
+
+  static final DesktopWindowListener instance = DesktopWindowListener._();
+
   @override
   void onWindowFocus() {
     ls.open();
@@ -472,6 +476,37 @@ class DesktopWindowListener extends WindowListener {
         break;
       case "show":
         await setSystemTrayContextMenu(windowHidden: false);
+        break;
+    }
+  }
+}
+
+class DesktopTrayListener extends TrayListener {
+  DesktopTrayListener._();
+
+  static final DesktopTrayListener instance = DesktopTrayListener._();
+
+  @override
+  void onTrayIconMouseDown() async {
+    await windowManager.show();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() async {
+    await trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) async {
+    switch (menuItem.key) {
+      case 'show_app':
+        await windowManager.show();
+        break;
+      case 'hide_app':
+        await windowManager.hide();
+        break;
+      case 'close_app':
+        await windowManager.close();
         break;
     }
   }
@@ -673,7 +708,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayListener {
+class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   final ReceivePort port = ReceivePort();
   bool serverCompatible = true;
   bool fullyLoaded = false;
@@ -762,7 +797,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayL
 
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
         await initSystemTray();
-        trayManager.addListener(this);
+        trayManager.addListener(DesktopTrayListener.instance);
 
         /* ----- NOTIFICATIONS INITIALIZATION ----- */
         await localNotifier.setup(appName: "BlueBubbles");
@@ -849,7 +884,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayL
   void dispose() {
     // Clean up observer when app is fully closed
     WidgetsBinding.instance.removeObserver(this);
-    trayManager.removeListener(this);
+    windowManager.removeListener(DesktopWindowListener.instance);
+    trayManager.removeListener(DesktopTrayListener.instance);
     super.dispose();
   }
 
@@ -927,31 +963,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayL
             )),
       ),
     );
-  }
-
-  @override
-  void onTrayIconMouseDown() async {
-    await windowManager.show();
-  }
-
-  @override
-  void onTrayIconRightMouseDown() async {
-    await trayManager.popUpContextMenu();
-  }
-
-  @override
-  void onTrayMenuItemClick(MenuItem menuItem) async {
-    switch (menuItem.key) {
-      case 'show_app':
-        await windowManager.show();
-        break;
-      case 'hide_app':
-        await windowManager.hide();
-        break;
-      case 'close_app':
-        await windowManager.close();
-        break;
-    }
   }
 }
 
