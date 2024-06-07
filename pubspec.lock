@@ -1857,10 +1857,11 @@ packages:
   msix:
     dependency: "direct main"
     description:
-      name: msix
-      sha256: "519b183d15dc9f9c594f247e2d2339d855cf0eaacc30e19b128e14f3ecc62047"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: main
+      resolved-ref: "0b314a2ec049d7c435700dae4ed17f45fc5203eb"
+      url: "https://github.com/BlueBubblesApp/msix.git"
+    source: git
     version: "3.16.7"
   multi_value_listenable_builder:
     dependency: "direct main"
