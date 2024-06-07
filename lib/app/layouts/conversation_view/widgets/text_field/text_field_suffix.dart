@@ -30,8 +30,8 @@ class TextFieldSuffix extends StatefulWidget {
     this.isChatCreator = false,
   });
 
-  final SpellCheckTextEditingController subjectTextController;
-  final MentionTextEditingController textController;
+  final TextEditingController subjectTextController;
+  final TextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
@@ -195,7 +195,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     widget.controller!.replyToMessage?.item2,
                     widget.controller!.chat.guid,
                     widget.sendMessage,
-                    widget.textController.mentionables,
+                    widget.textController is MentionTextEditingController ? (widget.textController as MentionTextEditingController).mentionables : [],
                   );
                 },
               ),

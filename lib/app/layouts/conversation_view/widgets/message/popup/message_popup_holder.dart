@@ -101,6 +101,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       widget.cvController.showingOverlays = false;
       if (widget.cvController.editing.isEmpty) {
         widget.cvController.focusNode.requestFocus();
+      } else {
+        // This delay is necessary because there is a second instance of the focus node in the popup which gets focused otherwise
+        // The autofocus doesn't seem to work on desktop
+        Future.delayed(const Duration(milliseconds: 500), () => widget.cvController.editing.last.item3.focusNode?.requestFocus());
       }
     }
   }

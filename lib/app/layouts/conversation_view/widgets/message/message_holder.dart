@@ -28,7 +28,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:languagetool_textfield/domain/mistake.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
@@ -505,7 +504,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                             padding: const EdgeInsets.only(right: 10).add(const EdgeInsets.all(5)),
                                                                             child: Focus(
                                                                               focusNode: FocusNode(),
-                                                                              skipTraversal: true,
                                                                               onKeyEvent: (_, ev) {
                                                                                 if (ev is! KeyDownEvent) {
                                                                                   if (ev.logicalKey == LogicalKeyboardKey.tab) { // Absorb tab
@@ -522,7 +520,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                   if (widget.cvController.editing.isEmpty) {
                                                                                     widget.cvController.lastFocusedNode.requestFocus();
                                                                                   } else {
-                                                                                    widget.cvController.editing.last.item4?.requestFocus();
+                                                                                    widget.cvController.editing.last.item3.focusNode?.requestFocus();
                                                                                   }
                                                                                   return KeyEventResult.handled;
                                                                                 }
@@ -535,7 +533,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 textCapitalization: TextCapitalization.sentences,
                                                                                 autocorrect: true,
                                                                                 controller: editStuff.item3,
-                                                                                focusNode: editStuff.item4,
+                                                                                focusNode: editStuff.item3.focusNode,
                                                                                 scrollPhysics: const CustomBouncingScrollPhysics(),
                                                                                 style: context.theme.extension<BubbleText>()!.bubbleText.apply(
                                                                                   fontSizeFactor: message.isBigEmoji ? 3 : 1,
@@ -543,26 +541,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                 keyboardType: TextInputType.multiline,
                                                                                 maxLines: 14,
                                                                                 minLines: 1,
-                                                                                contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
-                                                                                  final start = editableTextState.textEditingValue.selection.start;
-
-                                                                                  Mistake? mistake = editStuff.item3.selectedMistake;
-                                                                                  return AdaptiveTextSelectionToolbar.editableText(
-                                                                                    editableTextState: editableTextState,
-                                                                                  )..buttonItems?.addAll(
-                                                                                    mistake?.replacements.take(3).map((replacement) {
-                                                                                      return ContextMenuButtonItem(
-                                                                                        onPressed: () {
-                                                                                          editStuff.item3.replaceMistake(mistake, replacement);
-                                                                                          editStuff.item3.selection = TextSelection.collapsed(offset: start + replacement.length);
-                                                                                          editableTextState.hideToolbar();
-                                                                                        },
-                                                                                        label: replacement,
-                                                                                      );
-                                                                                    }) ?? [],
-                                                                                  );
-                                                                                },
-                                                                                autofocus: true,
+                                                                                autofocus: !(kIsDesktop || kIsWeb),
                                                                                 enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                                                                                 textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                                                                                     ? TextInputAction.send

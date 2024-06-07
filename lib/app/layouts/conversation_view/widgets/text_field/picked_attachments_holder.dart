@@ -22,8 +22,8 @@ class PickedAttachmentsHolder extends StatefulWidget {
   });
 
   final ConversationViewController? controller;
-  final SpellCheckTextEditingController subjectTextController;
-  final MentionTextEditingController textController;
+  final TextEditingController subjectTextController;
+  final TextEditingController textController;
   final List<PlatformFile> initialAttachments;
 
   @override
@@ -36,13 +36,14 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
       ? widget.controller!.pickedAttachments : widget.initialAttachments;
 
   void selectMention(int index, bool custom) async {
+    if (widget.textController is! MentionTextEditingController) return;
     final mention = widget.controller!.mentionMatches[index];
     if (custom) {
       final changed = await showCustomMentionDialog(context, mention);
       if (isNullOrEmpty(changed)!) return;
       mention.customDisplayName = changed!;
     }
-    final _controller = widget.textController;
+    final _controller = widget.textController as MentionTextEditingController;
     widget.controller!.mentionSelectedIndex.value = 0;
     final text = _controller.text;
     final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);

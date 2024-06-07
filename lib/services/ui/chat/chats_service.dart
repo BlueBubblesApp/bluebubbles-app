@@ -94,7 +94,7 @@ class ChatsService extends GetxService {
       }
 
       for (Chat c in temp) {
-        cm.createChatController(c);
+        cm.createChatController(c, active: cm.activeChat?.chat.guid == c.guid);
       }
       newChats.addAll(temp);
       newChats.sort(Chat.sort);

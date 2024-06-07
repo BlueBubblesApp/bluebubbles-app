@@ -47,7 +47,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxDouble timestampOffset = 0.0.obs;
   final RxBool inSelectMode = false.obs;
   final RxList<Message> selected = <Message>[].obs;
-  final RxList<Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode?>> editing = <Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode?>>[].obs;
+  final RxList<Tuple3<Message, MessagePart, SpellCheckTextEditingController>> editing = <Tuple3<Message, MessagePart, SpellCheckTextEditingController>>[].obs;
   final GlobalKey focusInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
   bool showingOverlays = false;
@@ -60,8 +60,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   bool showAttachmentPicker = false;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
-  final textController = MentionTextEditingController();
-  final subjectTextController = SpellCheckTextEditingController();
+  final focusNode = FocusNode();
+  final subjectFocusNode = FocusNode();
+  late final textController = MentionTextEditingController(focusNode: focusNode);
+  late final subjectTextController = SpellCheckTextEditingController(focusNode: subjectFocusNode);
   final RxBool showRecording = false.obs;
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
@@ -77,8 +79,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       lastFocusedNode.requestFocus();
     }
   }
-  final focusNode = FocusNode();
-  final subjectFocusNode = FocusNode();
   late final mentionables = chat.participants.map((e) => Mentionable(
     handle: e,
   )).toList();

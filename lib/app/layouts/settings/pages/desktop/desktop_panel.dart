@@ -42,9 +42,8 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                 children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) async {
-                      ss.settings.launchAtStartup.value = val;
+                      ss.settings.launchAtStartup.value = await ss.setupLaunchAtStartup(val, ss.settings.launchAtStartupMinimized.value);
                       saveSettings();
-                      ss.setupLaunchAtStartup();
                     },
                     initialVal: ss.settings.launchAtStartup.value,
                     title: "Launch on Startup",
@@ -64,10 +63,10 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                           ),
                         ),
                         SettingsSwitch(
-                          onChanged: (bool val) {
+                          onChanged: (bool val) async {
                             ss.settings.launchAtStartupMinimized.value = val;
+                            ss.settings.launchAtStartup.value = await ss.setupLaunchAtStartup(ss.settings.launchAtStartup.value, val);
                             saveSettings();
-                            ss.setupLaunchAtStartup();
                           },
                           initialVal: ss.settings.launchAtStartupMinimized.value,
                           title: "Launch on Startup Minimized",
