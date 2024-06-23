@@ -51,7 +51,7 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
               recorderController: widget.recorderController!,
               padding: EdgeInsets.symmetric(vertical: 5, horizontal: widget.iOS ? 10 : 15), // need extra spacing in case of iOS for recording duration
               waveStyle: WaveStyle(
-                waveColor: widget.iOS ? context.theme.colorScheme.primary : Colors.white,
+                waveColor: widget.iOS ? context.theme.colorScheme.primary : context.theme.colorScheme.properOnSurface,
                 waveCap: StrokeCap.square,
                 spacing: 4.0,
                 showBottom: true,
