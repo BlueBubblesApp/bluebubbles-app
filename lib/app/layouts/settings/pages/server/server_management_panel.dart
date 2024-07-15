@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_p
 import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/oauth_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
@@ -494,12 +495,12 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                 clientID: fcmData[6],
                                 applicationID: fcmData[7],
                               );
-                              ss.settings.guidAuthKey.value = fcmData[0];
-                              ss.settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
 
-                              ss.saveSettings();
+                              ss.settings.guidAuthKey.value = fcmData[0];
+
+                              // This will restart the socket & foreground service
+                              await saveNewServerUrl(fcmData[1]);
                               ss.saveFCMData(data);
-                              socket.restartSocket();
                             }
                           },
                   ),

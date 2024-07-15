@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -96,9 +97,8 @@ class DatabaseService extends GetxService {
         await mcs.invokeMethod('firebase-auth', ss.fcmData.toMap());
         url = sanitizeServerAddress(address: await mcs.invokeMethod("get-server-url"));
       }
-      // Update the address of the copied settings
-      ss.settings.serverAddress.value = url ?? ss.settings.serverAddress.value;
-      await ss.saveSettings();
+
+      await saveNewServerUrl(url ?? ss.settings.serverAddress.value, force: true);
       return url;
     } catch (e, s) {
       Logger.error("Failed to fetch URL: $e\n${s.toString()}");

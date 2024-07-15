@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/connecting_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
@@ -67,9 +68,9 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
       return;
     }
 
-    ss.settings.serverAddress.value = addr;
     ss.settings.guidAuthKey.value = password;
-    ss.settings.save();
+    await saveNewServerUrl(addr, restartSocket: false, force: true, saveAdditionalSettings: ["guidAuthKey"]);
+
     try {
       socket.restartSocket();
     } catch (e) {

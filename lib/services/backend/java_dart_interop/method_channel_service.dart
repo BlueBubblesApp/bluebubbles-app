@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
@@ -46,16 +47,11 @@ class MethodChannelService extends GetxService {
       case "NewServerUrl":
         if (arguments == null) return false;
         await storeStartup.future;
-        // remove brackets from URL
-        String address = arguments["server_url"];
-        String sanitized = sanitizeServerAddress(address: address)!;
-        if (sanitized != ss.settings.serverAddress.value) {
-          ss.settings.serverAddress.value = sanitizeServerAddress(address: address)!;
-          ss.settings.save();
 
-          if (!background) {
-            socket.restartSocket();
-          }
+        String address = arguments["server_url"];
+        bool updated = await saveNewServerUrl(address, restartSocket: false);
+        if (updated && !background) {
+          socket.restartSocket();
         }
         return true;
       case "new-message":

@@ -162,23 +162,57 @@ class Settings {
     return modes.firstWhereOrNull((element) => element.refreshRate.round() == refreshRate.value) ?? DisplayMode.auto;
   }
 
+  Future<void> _savePref(String key, dynamic value) async {
+    if (value is bool) {
+      await ss.prefs.setBool(key, value);
+    } else if (value is String) {
+      await ss.prefs.setString(key, value);
+    } else if (value is int) {
+      await ss.prefs.setInt(key, value);
+    } else if (value is double) {
+      await ss.prefs.setDouble(key, value);
+    } else if (value is List || value is Map) {
+      await ss.prefs.setString(key, jsonEncode(value));
+    } else if (value == null) {
+      await ss.prefs.remove(key);
+    }
+  }
+
   Settings save() {
     Map<String, dynamic> map = toMap(includeAll: true);
     map.forEach((key, value) async {
-      if (value is bool) {
-        await ss.prefs.setBool(key, value);
-      } else if (value is String) {
-        await ss.prefs.setString(key, value);
-      } else if (value is int) {
-        await ss.prefs.setInt(key, value);
-      } else if (value is double) {
-        await ss.prefs.setDouble(key, value);
-      } else if (value is List || value is Map) {
-        await ss.prefs.setString(key, jsonEncode(value));
-      } else if (value == null) {
-        await ss.prefs.remove(key);
-      }
+      await _savePref(key, value);
     });
+    return this;
+  }
+
+  Future<Settings> saveAsync() async {
+    Map<String, dynamic> map = toMap(includeAll: true);
+    // Wait for each key to be saved before moving on
+    await Future.forEach(map.entries, (entry) async {
+      await _savePref(entry.key, entry.value);
+    });
+
+    return this;
+  }
+
+  Future<Settings> saveOne(String key) async {
+    Map<String, dynamic> map = toMap(includeAll: true);
+    if (map.containsKey(key)) {
+      await _savePref(key, map[key]);
+    }
+
+    return this;
+  }
+
+  Future<Settings> saveMany(List<String> keys) async {
+    Map<String, dynamic> map = toMap(includeAll: true);
+    for (String key in keys) {
+      if (map.containsKey(key)) {
+        await _savePref(key, map[key]);
+      }
+    }
+
     return this;
   }
 

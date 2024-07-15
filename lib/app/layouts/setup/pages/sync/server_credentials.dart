@@ -7,8 +7,8 @@ import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/helpers/ui/oauth_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
@@ -633,9 +633,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       return;
     }
 
-    ss.settings.serverAddress.value = addr;
     ss.settings.guidAuthKey.value = password;
-    ss.settings.save();
+    await saveNewServerUrl(addr, saveAdditionalSettings: ["guidAuthKey"]);
 
     // Request data from the API
     showDialog(

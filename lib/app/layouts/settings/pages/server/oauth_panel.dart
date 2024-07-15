@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
@@ -82,21 +83,22 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
       error = "Authentication failed. Incorrect password!";
       ss.settings.serverAddress.value = oldAddr;
       ss.settings.guidAuthKey.value = oldPassword;
-      ss.settings.save();
+      await ss.settings.saveMany(["serverAddress", "guidAuthKey"]);
       return setState(() {});
     }
     if (serverResponse?.statusCode != 200) {
       error = "Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.";
       ss.settings.serverAddress.value = oldAddr;
       ss.settings.guidAuthKey.value = oldPassword;
-      ss.settings.save();
+      await ss.settings.saveMany(["serverAddress", "guidAuthKey"]);
       return setState(() {});
     }
 
     error = "";
     setState(() {});
 
-    ss.settings.save();
+    await saveNewServerUrl(addr, restartSocket: false, force: true, saveAdditionalSettings: ["guidAuthKey"]);
+
     try {
       socket.restartSocket();
     } catch (e) {

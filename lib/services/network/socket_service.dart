@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -121,8 +122,7 @@ class SocketService extends GetxService {
   void forgetConnection() {
     closeSocket();
     ss.settings.guidAuthKey.value = "";
-    ss.settings.serverAddress.value = "";
-    ss.saveSettings();
+    clearServerUrl(saveAdditionalSettings: ["guidAuthKey"]);
   }
 
   Future<Map<String, dynamic>> sendMessage(String event, Map<String, dynamic> message) {

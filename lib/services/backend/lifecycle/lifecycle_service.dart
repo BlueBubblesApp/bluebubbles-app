@@ -9,7 +9,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:universal_html/html.dart';
+import 'package:universal_html/html.dart' hide Platform;
+import 'dart:io' show Platform;
 
 LifecycleService ls = Get.isRegistered<LifecycleService>() ? Get.find<LifecycleService>() : Get.put(LifecycleService());
 
@@ -26,6 +27,8 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+
+    handleForegroundService(AppLifecycleState.resumed);
   }
 
   @override
@@ -48,6 +51,21 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.resumed) {
       await storeStartup.future;
       open();
+    }
+
+    handleForegroundService(state);
+  }
+
+  void handleForegroundService(AppLifecycleState state) async {
+    if (Platform.isAndroid && ss.settings.keepAppAlive.value) {
+      // We only want the foreground service to run when the app is not active
+      if (state == AppLifecycleState.resumed) {
+        Logger.info(tag: "LifecycleService", "Stopping foreground service");
+        mcs.invokeMethod("stop-foreground-service");
+      } else {
+        Logger.info(tag: "LifecycleService", "Starting foreground service");
+        mcs.invokeMethod("start-foreground-service");
+      }
     }
   }
 
