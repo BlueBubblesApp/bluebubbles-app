@@ -83,8 +83,11 @@ Future<Null> bubble() async {
 Future<Null> initApp(bool bubble, List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
+  await mcs.init();
+
   ls.isBubble = bubble;
   ls.isUiThread = true;
+
   await ss.init();
   await fs.init();
   await Logger.init();
@@ -142,8 +145,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       });
     });
   }
+  
   await ts.init();
-  await mcs.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();

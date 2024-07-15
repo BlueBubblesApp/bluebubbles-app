@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:universal_html/html.dart' hide Platform;
 import 'dart:io' show Platform;
 
@@ -57,7 +58,12 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void handleForegroundService(AppLifecycleState state) async {
-    if (Platform.isAndroid && ss.settings.keepAppAlive.value) {
+    // This may get called before the settings service is initialized
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool keepAlive = prefs.getBool("keepAppAlive") ?? false;
+    Logger.debug("State: $state, keepAlive: $keepAlive");
+
+    if (Platform.isAndroid && keepAlive) {
       // We only want the foreground service to run when the app is not active
       if (state == AppLifecycleState.resumed) {
         Logger.info(tag: "LifecycleService", "Stopping foreground service");
