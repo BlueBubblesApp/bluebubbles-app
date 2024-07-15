@@ -69,10 +69,6 @@ dependencies:
   flutter_audio_waveforms: ^1.2.1+8
   flutter_displaymode: ^0.6.0 # android only
   flutter_dotenv: ^5.1.0
-  flutter_foreground_task: # gradle namespace issue
-    git:
-      url: https://github.com/korama9320/flutter_foreground_task.git
-      ref: master
   flutter_image_compress: ^2.2.0
   flutter_improved_scrolling: ^0.0.3
   flutter_isolate: # gradle namespace issue
