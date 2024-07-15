@@ -9,7 +9,7 @@ import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.services.foreground.SocketIOForegroundService
 
 /// Receives intents from the system. This is primarily used for auto starting after a reboot
-class AutoStartRecevier: BroadcastReceiver() {
+class AutoStartReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) return
 
@@ -23,7 +23,7 @@ class AutoStartRecevier: BroadcastReceiver() {
                 // If the service is enabled, start it
                 if (keepAppAlive) {
                     val serviceIntent = Intent(context, SocketIOForegroundService::class.java)
-                    context.startService(serviceIntent)
+                    context.startForegroundService(serviceIntent)
                 }
             }
         }

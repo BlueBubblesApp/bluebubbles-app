@@ -177,7 +177,10 @@ class SocketService extends GetxService {
           restartSocket();
 
           if (state.value == SocketState.connected) return;
-          notif.createSocketError();
+
+          if (!ss.settings.keepAppAlive.value) {
+            notif.createSocketError();
+          }
         });
         return;
       default:
