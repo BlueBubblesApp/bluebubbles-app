@@ -157,9 +157,15 @@ class SocketIOForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 Constants.foregroundServiceNotificationChannel,
-                "BlueBubbles Foregronud Service",
+                "BlueBubbles Foreground Service",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
+
+            // This channel should not vibrate or make sound
+            channel.setSound(null, null)
+            channel.enableVibration(false)
+
+            // Create the channel
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
@@ -171,6 +177,18 @@ class SocketIOForegroundService : Service() {
             .setContentTitle("BlueBubbles Service")
             .setContentText(contentText)
             .setSmallIcon(R.mipmap.ic_stat_icon)
+            // The notification should be categorized as silent
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            // The notification should be ongoing and not cancelable
+            .setOngoing(true)
+            // The notification should not alert the user
+            .setOnlyAlertOnce(true)
+            // The notification should not cancel when the user taps on it
+            .setAutoCancel(false)
+            // The notification should not show the time
+            .setShowWhen(false)
+            // Make notification unswipeable
             .build()
     }
 
@@ -180,7 +198,6 @@ class SocketIOForegroundService : Service() {
             return
         }
 
-        currentNotification = contentText
         val notification = createNotification(contentText)
         val notificationManager = getSystemService(NotificationManager::class.java) as NotificationManager
         notificationManager.notify(Constants.foregroundServiceNotificationId, notification)
