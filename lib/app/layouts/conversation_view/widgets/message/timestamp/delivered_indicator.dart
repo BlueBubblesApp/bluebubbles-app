@@ -70,7 +70,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     } else if (message.dateRead != null) {
       return buildTwoPiece("Read", buildDate(message.dateRead));
     } else if (message.dateDelivered != null) {
-      return buildTwoPiece("Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}", ss.settings.showDeliveryTimestamps.value || !iOS || widget.forceShow ? " ${buildDate(message.dateDelivered)}" : "");
+      return buildTwoPiece("Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}", ss.settings.showDeliveryTimestamps.value || !iOS || widget.forceShow ? buildDate(message.dateDelivered) : "");
     } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
       return buildTwoPiece("Sending...", "");
     } else if (widget.forceShow) {
