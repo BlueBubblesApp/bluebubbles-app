@@ -14,9 +14,6 @@ class ForegroundServiceBroadcastReceiver : BroadcastReceiver() {
         Log.d(Constants.logTag, "Received Foreground Service Broadcast");
 
         if (context != null) {
-            Log.d(Constants.logTag, "Showing Foreground Service Broadcast Toast");
-            Toast.makeText(context, "BlueBubbles Service Restarted...", Toast.LENGTH_SHORT).show();
-
             val intent = Intent(context, SocketIOForegroundService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent);
