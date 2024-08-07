@@ -24,6 +24,9 @@ class NavigatorService extends GetxService {
   set maxWidthRight(double w) => _widthChatListRight = w;
   set maxWidthSettings(double w) => _widthSettings = w;
 
+  /// Returns widthChatListLeft if in tablet mode, and 0 otherwise
+  double widthChatListLeft(BuildContext context) => isTabletMode(context) ? _widthChatListLeft ?? 0 : 0;
+
   bool isTabletMode(BuildContext context) => (!context.isPhone || context.width / context.height > 0.8) &&
       ss.settings.tabletMode.value && context.width > 600;
 

@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/services/ui/contact_service.dart';
 import 'package:collection/collection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -103,6 +104,7 @@ class FilesystemService extends GetxService {
     chatBox.removeAll();
     fcmDataBox.removeAll();
     contactBox.removeAll();
+    cs.contacts.clear();
     handleBox.removeAll();
     messageBox.removeAll();
     themeBox.removeAll();

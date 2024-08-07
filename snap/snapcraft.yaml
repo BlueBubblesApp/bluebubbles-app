@@ -1,6 +1,6 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.12.100.0
+version: 1.12.102.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
@@ -118,8 +118,8 @@ parts:
       - alsa-mixin
       - fmedia
     source:
-      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.13.0%2B63/bluebubbles-linux-x86_64.tar
-      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.13.0%2B63/bluebubbles-linux-aarch64.tar
+      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.13.2%2B66-desktop-beta.1/bluebubbles-linux-x86_64.tar
+      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.13.2%2B66-desktop-beta.1/bluebubbles-linux-aarch64.tar
     plugin: nil
     override-build: |
       set -eux
@@ -132,6 +132,7 @@ parts:
       - libglu1-mesa
       - libmpv1
       - libnotify4
+      - net-tools
       - wmctrl
       - zenity
 

@@ -52,8 +52,9 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
-  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
-  final SpellCheckTextEditingController subjectController = SpellCheckTextEditingController();
+  final messageNode = FocusNode();
+  late final TextEditingController textController = SpellCheckTextEditingController(text: widget.initialText, focusNode: messageNode);
+  final TextEditingController subjectController = TextEditingController(); // Chat creator doesn't have subject line
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -69,8 +70,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   ConversationViewController? oldController;
   Timer? _debounce;
   Completer<void>? createCompleter;
-
-  final messageNode = FocusNode();
 
   bool canCreateGroupChats = ss.canCreateGroupChatSync();
 

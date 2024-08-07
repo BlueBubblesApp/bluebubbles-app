@@ -1,4 +1,5 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
+import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -144,6 +145,30 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         backgroundColor: tileColor,
                         isThreeLine: true,
                       )),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    SettingsTile(
+                      title: "Message Options Order",
+                      subtitle:
+                      "Set the order for the options when ${ss.settings.doubleTapForDetails.value ? "double-tapping" : "pressing and holding"} a message",
+                      onTap: () {
+                        ns.pushSettings(
+                          context,
+                          MessageOptionsOrderPanel(),
+                        );
+                      },
+                      trailing: Icon(
+                        iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                        color: context.theme.colorScheme.outline,
+                      ),
+                    ),
                   if (!kIsWeb)
                     Container(
                       color: tileColor,
