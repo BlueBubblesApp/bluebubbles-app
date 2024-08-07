@@ -29,8 +29,8 @@ class _MessageOptionsOrderPanelState extends OptimizedState<MessageOptionsOrderP
   @override
   Widget build(BuildContext context) {
     final Rx<Color> _backgroundColor = (kIsDesktop && ss.settings.windowEffect.value == WindowEffect.disabled
-            ? context.theme.colorScheme.background
-            : Colors.transparent)
+            ? Colors.transparent
+            : context.theme.colorScheme.background)
         .obs;
 
     final Color tileColor =
@@ -111,11 +111,8 @@ class _MessageOptionsOrderPanelState extends OptimizedState<MessageOptionsOrderP
                       child: MouseRegion(
                         cursor: SystemMouseCursors.move,
                         child: AbsorbPointer(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 48),
-                            child: DetailsMenuActionWidget(
-                              action: action,
-                            ),
+                          child: DetailsMenuActionWidget(
+                            action: action,
                           ),
                         ),
                       ),
