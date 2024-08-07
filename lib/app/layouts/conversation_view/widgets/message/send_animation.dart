@@ -60,7 +60,7 @@ class _SendAnimationState
         await player.open(Media(ss.settings.sendSoundPath.value!));
         player.stream.completed
             .firstWhere((completed) => completed)
-            .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
+            .then((_) async => Future.delayed(const Duration(milliseconds: 450), () async => await player.dispose()));
       } else {
         PlayerController controller = PlayerController();
         controller.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: ss.settings.soundVolume.value / 100).then((_) => controller.startPlayer());
@@ -176,7 +176,7 @@ class _SendAnimationState
   @override
   Widget build(BuildContext context) {
     final typicalWidth = message?.isBigEmoji ?? false ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
-    const duration = 500;
+    const duration = 450;
     const curve = Curves.easeInOut;
     const buttonSize = 88;
     final messageBoxSize = ns.width(context) - buttonSize;
@@ -221,7 +221,7 @@ class _SendAnimationState
                         minWidth: messageBoxSize * exp,
                         minHeight: 40,
                       ),
-                      color: !message!.isBigEmoji ? context.theme.colorScheme.primary.withAlpha(((1-value) * 255).toInt()) : null,
+                      color: !message!.isBigEmoji ? context.theme.colorScheme.primary.withAlpha(((1 - value) * 255).toInt()) : null,
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(
                         left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10, right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0)),
                       child: Align(
