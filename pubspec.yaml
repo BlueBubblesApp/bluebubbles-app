@@ -185,10 +185,10 @@ dependencies:
   vcf_dart: ^1.0.1
   version: ^3.0.2
   video_player: ^2.8.5
-  video_thumb_getter:
+  video_thumbnail:
     git:
-      url: https://github.com/BlueBubblesApp/video_thumb_getter
-      ref: main
+      url: https://github.com/BlueBubblesApp/video_thumbnail.git
+      ref: master
   window_manager: ^0.3.8
   windows_taskbar: ^1.1.2
 

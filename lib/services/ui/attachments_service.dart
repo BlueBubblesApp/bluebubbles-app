@@ -22,8 +22,7 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vcf_dart/vcf_dart.dart';
-import 'package:video_thumb_getter/index.dart';
-import 'package:video_thumb_getter/video_thumbnail.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<AttachmentsService>() : Get.put(AttachmentsService());
 
@@ -116,7 +115,7 @@ class AttachmentsService extends GetxService {
     );
     try {
       // contact_card.dart does real avatar parsing since no plugins can parse the photo correctly when the base64 is multiline
-      c.avatar = (isNullOrEmpty(contact.findFirstProperty(VConstants.photo)?.values.firstOrNull)! ? null : [0]) as Uint8List?;
+      c.avatar = (isNullOrEmpty(contact.findFirstProperty(VConstants.photo)?.values.firstOrNull) ? null : [0]) as Uint8List?;
     } catch (_) {}
     return c;
   }
@@ -297,19 +296,19 @@ class AttachmentsService extends GetxService {
       } catch (_) {}
     }
 
+
     final thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
+      maxWidth: 128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
       quality: 25,
     );
-    if (!isNullOrEmpty(thumbnail)!) {
-      return thumbnail;
-    } else {
-      if (useCachedFile) {
-        await cachedFile.writeAsBytes(thumbnail);
-      }
-      return thumbnail;
+
+    if (!isNullOrEmpty(thumbnail) && useCachedFile) {
+      await cachedFile.writeAsBytes(thumbnail!);
     }
+
+    return thumbnail;
   }
 
   Future<Uint8List?> loadAndGetProperties(Attachment attachment, {bool onlyFetchData = false, String? actualPath}) async {
