@@ -713,7 +713,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   style: context.theme.textTheme.titleLarge,
                 ),
                 content: Text(
-                  "We couldn't find a Firebase setup on your server. To receive notifications, please enable the foreground service option from Settings > Misc & Advanced.",
+                  "We couldn't find a Firebase setup on your server. To receive notifications, please enable the background service option from Settings > Misc & Advanced.",
                   style: context.theme.textTheme.bodyLarge,
                 ),
                 backgroundColor: context.theme.colorScheme.properSurface,
