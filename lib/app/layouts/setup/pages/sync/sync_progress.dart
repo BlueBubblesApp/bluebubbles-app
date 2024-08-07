@@ -98,10 +98,16 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                   padding: const EdgeInsets.all(10),
                   child: Obx(() => ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    findChildIndexCallback: (key) {
+                      final valueKey = key as ValueKey<String>;
+                      final index = syncManager.output.indexWhere((element) => "${element.item1}-${element.item2}" == valueKey.value);
+                      return index == -1 ? null : index;
+                    },
                     itemBuilder: (context, index) {
                       Tuple2<LogLevel, String> log = syncManager.output.reversed.toList()[index];
                       return Text(
                         log.item2,
+                        key: ValueKey("${log.item1}-${log.item2}"),
                         style: TextStyle(
                           color: log.item1 == LogLevel.INFO ? context.theme.colorScheme.properOnSurface : context.theme.colorScheme.error,
                           fontSize: 10,

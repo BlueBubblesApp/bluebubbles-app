@@ -231,6 +231,8 @@ class Address {
   final String? locality;
   final String? country;
 
+  String get uniqueValue => (label ?? mapItemFullAddress)!;
+
   factory Address.fromJson(Map<String, dynamic> json) => Address(
     subAdministrativeArea: json["subAdministrativeArea"],
     label: json["label"],

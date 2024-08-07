@@ -231,6 +231,11 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     if (savedLogs.isNotEmpty) {
                       return ListView.builder(
                         shrinkWrap: true,
+                        findChildIndexCallback: (key) {
+                          final valueKey = key as ValueKey<String>;
+                          final index = savedLogs.indexWhere((element) => element.path == valueKey.value);
+                          return index == -1 ? null : index;
+                        },
                         itemBuilder: (BuildContext context, int index) {
                           String? dayString;
                           String? timeString;
@@ -285,6 +290,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                             }
                           }
                           return SettingsTile(
+                            key: ValueKey(file.path),
                             leading: const SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.doc,
                               materialIcon: Icons.file_open,

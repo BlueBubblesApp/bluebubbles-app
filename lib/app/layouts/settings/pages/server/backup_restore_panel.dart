@@ -194,9 +194,15 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                         child: ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
+                          findChildIndexCallback: (key) {
+                            final valueKey = key as ValueKey<String>;
+                            final index = settings.indexWhere((element) => element["name"] == valueKey.value);
+                            return index == -1 ? null : index;
+                          },
                           itemBuilder: (context, index) {
                             final item = settings[index];
                             return ListTile(
+                              key: ValueKey(item["name"]),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                               mouseCursor: SystemMouseCursors.click,
                               title: RichText(
@@ -613,10 +619,16 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                         child: ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
+                          findChildIndexCallback: (key) {
+                            final valueKey = key as ValueKey<String>;
+                            final index = themes.indexWhere((element) => element["name"] == valueKey.value);
+                            return index == -1 ? null : index;
+                          },
                           itemBuilder: (context, index) {
                             final item = themes[index];
                             final data = item["data"];
                             return ListTile(
+                              key: ValueKey(item["name"]),
                               mouseCursor: SystemMouseCursors.click,
                               title: Text(item["name"]),
                               subtitle: !item.containsKey('data')

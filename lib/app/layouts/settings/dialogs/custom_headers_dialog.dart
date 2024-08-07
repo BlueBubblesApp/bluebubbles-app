@@ -37,8 +37,14 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
                   child: ListView.builder(
                     shrinkWrap: true,
                     itemCount: headers,
+                    findChildIndexCallback: (key) {
+                      final valueKey = key as ValueKey<String>;
+                      final index = ss.settings.customHeaders.keys.toList().indexWhere((element) => element == valueKey.value);
+                      return index == -1 ? null : index;
+                    },
                     itemBuilder: (context, index) {
                       return Row(
+                          key: ValueKey(ss.settings.customHeaders.keys.toList()[index]),
                           children: [
                             Flexible(
                               child: Padding(

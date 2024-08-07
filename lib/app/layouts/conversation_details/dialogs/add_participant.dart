@@ -70,8 +70,14 @@ void showAddParticipant(BuildContext context, Chat chat) {
                               child: ListView.builder(
                                 shrinkWrap: true,
                                 itemCount: contacts.length,
+                                findChildIndexCallback: (key) {
+                                  final valueKey = key as ValueKey<String>;
+                                  final index = contacts.indexWhere((item) => "${item.item1}-${item.item2}" == valueKey.value);
+                                  return index == -1 ? null : index;
+                                },
                                 itemBuilder: (context, index) {
                                   return ListTile(
+                                    key: ValueKey("${contacts[index].item1}-${contacts[index].item2}"),
                                     mouseCursor: MouseCursor.defer,
                                     title: Text(contacts[index].item2),
                                     subtitle: Text(contacts[index].item1),

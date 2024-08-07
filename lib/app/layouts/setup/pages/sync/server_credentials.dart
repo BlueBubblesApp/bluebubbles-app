@@ -112,6 +112,11 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 child: ListView.builder(
                                   shrinkWrap: true,
                                   itemCount: usableProjects.length,
+                                  findChildIndexCallback: (key) {
+                                    final valueKey = key as ValueKey<String>;
+                                    final index = usableProjects.indexWhere((element) => element['projectId'] == valueKey.value);
+                                    return index == -1 ? null : index;
+                                  },
                                   itemBuilder: (context, index) {
                                     return Obx(() {
                                       if (!triedConnecting[index].value) {
@@ -126,6 +131,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                         });
                                       }
                                       return ClipRRect(
+                                        key: ValueKey(usableProjects[index]['projectId']),
                                         clipBehavior: Clip.antiAlias,
                                         borderRadius: BorderRadius.circular(20),
                                         child: ListTile(

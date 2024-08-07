@@ -389,9 +389,15 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
+                    findChildIndexCallback: (key) {
+                      final valueKey = key as ValueKey<String>;
+                      final index = devicesWithLocation.indexWhere((item) => item.address?.uniqueValue == valueKey.value);
+                      return index == -1 ? null : index;
+                    },
                     itemBuilder: (context, i) {
                       final item = devicesWithLocation[i];
                       return ListTile(
+                        key: ValueKey(item.address?.uniqueValue),
                         mouseCursor: MouseCursor.defer,
                         title: Text(ss.settings.redactedMode.value ? "Device" : (item.name ?? "Unknown Device")),
                         subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found")),
@@ -479,9 +485,15 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
+                    findChildIndexCallback: (key) {
+                      final valueKey = key as ValueKey<String>;
+                      final index = itemsWithLocation.indexWhere((item) => item.address?.uniqueValue == valueKey.value);
+                      return index == -1 ? null : index;
+                    },
                     itemBuilder: (context, i) {
                       final item = itemsWithLocation[i];
                       return ListTile(
+                        key: ValueKey(item.address?.uniqueValue),
                         title: Text(ss.settings.redactedMode.value ? "Item" : (item.name ?? "Unknown Item")),
                         subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found")),
                         trailing: item.location?.latitude != null && item.location?.longitude != null ? ButtonTheme(
@@ -671,9 +683,15 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
+                    findChildIndexCallback: (key) {
+                      final valueKey = key as ValueKey<String>;
+                      final index = friendsWithLocation.indexWhere((item) => item.handle?.uniqueAddressAndService == valueKey.value);
+                      return index == -1 ? null : index;
+                    },
                     itemBuilder: (context, i) {
                       final item = friendsWithLocation[i];
                       return ListTile(
+                        key: ValueKey(item.handle?.uniqueAddressAndService),
                         leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
                         subtitle: Text(ss.settings.redactedMode.value ? "Location" : ("${item.shortAddress ?? "No location found"}${item.lastUpdated == null || item.status == LocationStatus.live ? "" : "\nLast updated ${buildDate(item.lastUpdated)}"}")),
