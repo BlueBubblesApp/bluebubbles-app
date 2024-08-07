@@ -338,6 +338,9 @@ class Chat {
   int? get pinIndex => _pinIndex.value;
   set pinIndex(int? i) => _pinIndex.value = i;
 
+  @Transient()
+  RxDouble sendProgress = 0.0.obs;
+
   final handles = ToMany<Handle>();
 
   @Backlink('chat')
@@ -508,7 +511,7 @@ class Chat {
 
   /// Get a chat's title
   String getTitle() {
-    if (isNullOrEmpty(displayName)!) {
+    if (isNullOrEmpty(displayName)) {
       title = getChatCreatorSubtitle();
     } else {
       title = displayName;
@@ -1010,7 +1013,7 @@ class Chat {
       Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
       return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
     });
-    if (response.statusCode != 200 || isNullOrEmpty(response.data)!) {
+    if (response.statusCode != 200 || isNullOrEmpty(response.data)) {
       if (c.customAvatarPath != null) {
         await File(c.customAvatarPath!).delete(recursive: true);
         c.customAvatarPath = null;

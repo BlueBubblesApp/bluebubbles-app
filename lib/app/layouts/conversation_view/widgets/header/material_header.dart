@@ -27,7 +27,8 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final Rx<Color> _backgroundColor = context.theme.colorScheme.background.withOpacity((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled) ? 0.4 : ss.settings.skin.value == Skins.Samsung ? 1 : 0.95).obs;
 
-    return Obx(() => AppBar(
+    return Stack(
+          children: [Obx(() => AppBar(
       backgroundColor: _backgroundColor.value,
       systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
@@ -213,7 +214,31 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
         )
       ],
-    ));
+    )),
+      Positioned(
+        child: Obx(() => TweenAnimationBuilder<double>(
+          duration: controller.chat.sendProgress.value == 0 ? Duration.zero : controller.chat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
+          curve: controller.chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+          tween: Tween<double>(
+              begin: 0,
+              end: controller.chat.sendProgress.value,
+          ),
+          builder: (context, value, _) =>
+              AnimatedOpacity(
+                opacity: value == 1 ? 0 : 1,
+                duration: const Duration(milliseconds: 250),
+                child: LinearProgressIndicator(
+                  value: value,
+                  backgroundColor: Colors.transparent,
+                  minHeight: 3,
+                ),
+              )
+        )),
+        bottom: 0,
+        left: 0,
+        right: 0,
+      ),
+    ]);
   }
 
   @override

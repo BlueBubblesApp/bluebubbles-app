@@ -390,8 +390,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                   // interactive messages may have subjects, so render them here
                                                   // also render the subject for attachments that may have not rendered already
                                                   if ((message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive
-                                                      || (e.part == 0 && isNullOrEmpty(e.text)! && e.attachments.isNotEmpty))
-                                                      && !isNullOrEmpty(message.subject)!)
+                                                      || (e.part == 0 && isNullOrEmpty(e.text) && e.attachments.isNotEmpty))
+                                                      && !isNullOrEmpty(message.subject))
                                                     Padding(
                                                       padding: const EdgeInsets.only(bottom: 2.0),
                                                       child: ClipPath(
@@ -494,7 +494,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           child: Container(
                                                                             decoration: BoxDecoration(
                                                                               color: !message.isBigEmoji
-                                                                                  ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0)
+                                                                                  ? context.theme.colorScheme.primary
                                                                                   : context.theme.colorScheme.background,
                                                                             ),
                                                                             constraints: BoxConstraints(

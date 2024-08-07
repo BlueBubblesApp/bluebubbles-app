@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
+import 'package:async_task/async_task_extension.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
@@ -66,6 +69,9 @@ class _SendAnimationState
     }
     for (int i = 0; i < attachments.length; i++) {
       final file = attachments[i];
+      String data = await DefaultAssetBundle.of(context).loadString("assets/rustpush/uti-map.json");
+      final utiMap = jsonDecode(data);
+
       final message = Message(
         text: "",
         dateCreated: DateTime.now(),
@@ -74,7 +80,7 @@ class _SendAnimationState
           Attachment(
             isOutgoing: true,
             mimeType: mime(file.path),
-            uti: "public.jpg",
+            uti: utiMap[mime(file.path)] ?? "public.data",
             bytes: file.bytes,
             transferName: file.name,
             totalBytes: file.size,
@@ -174,11 +180,15 @@ class _SendAnimationState
   @override
   Widget build(BuildContext context) {
     final typicalWidth = message?.isBigEmoji ?? false ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
+    const duration = 500;
+    const curve = Curves.easeInOut;
+    const buttonSize = 88;
+    final messageBoxSize = ns.width(context) - buttonSize;
     return AnimatedPositioned(
-      duration: Duration(milliseconds: message != null ? 400 : 0),
+      duration: Duration(milliseconds: message != null ? duration : 0),
       bottom: message != null ? textFieldSize + focusInfoSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) + (!iOS ? 15 : 0) : 0,
       right: samsung ? -37.5 : 5,
-      curve: Curves.easeInOutCubic,
+      curve: curve,
       onEnd: () async {
         if (message != null) {
           await Future.delayed(const Duration(milliseconds: 100));
@@ -194,41 +204,49 @@ class _SendAnimationState
         child: CustomAnimationBuilder<double>(
           control: control,
           tween: tween,
-          duration: Duration(milliseconds: message != null ? 150 : 0),
-          curve: Curves.linear,
-          builder: (context, value, child) {
-            return ClipPath(
-              clipper: TailClipper(
-                isFromMe: true,
-                showTail: true,
-                connectLower: false,
-                connectUpper: false,
-              ),
-              child: AnimatedContainer(
-                  constraints: BoxConstraints(
-                    maxWidth: max(ns.width(context) * value, typicalWidth),
-                    minWidth: ns.width(context) * value > typicalWidth ? ns.width(context) * value : 0.0,
-                    minHeight: 40,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(
-                      left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10, right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0)),
-                  color: !message!.isBigEmoji ? context.theme.colorScheme.primary.darkenAmount(0.2) : null,
-                  duration: Duration(milliseconds: ns.width(context) * value > typicalWidth ? 0 : 150),
-                  child: Center(
-                    widthFactor: 1,
-                    child: Padding(
-                      padding: message!.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
-                      child: RichText(
-                        text: TextSpan(
-                          children: buildMessageSpans(
-                            context,
-                            MessagePart(part: 0, text: message!.text, subject: message!.subject),
-                            message!,
+          duration: Duration(milliseconds: message != null ? duration : 0),
+          builder: (context, linear, child) {
+            var value = curve.transform(linear);
+            var exp = Curves.easeIn.transform(linear);
+            return Transform.scale(
+              scale: (1-value) < .5 ? lerpDouble(1.1, .9, (1-value) / .5) : lerpDouble(.9, 1, (.5-value) / .5),
+              alignment: Alignment.centerRight,
+              child: ClipPath(
+                clipper: TailClipper(
+                  isFromMe: true,
+                  showTail: true,
+                  connectLower: false,
+                  connectUpper: false,
+                ),
+                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: max(messageBoxSize * exp, typicalWidth),
+                        minWidth: messageBoxSize * exp,
+                        minHeight: 40,
+                      ),
+                      color: !message!.isBigEmoji ? context.theme.colorScheme.primary.withAlpha(((1-value) * 255).toInt()) : null,
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(
+                        left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10, right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0)),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: 1,
+                        child: Padding(
+                          padding: message!.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
+                          child: RichText(
+                            text: TextSpan(
+                              children: buildMessageSpans(
+                                context,
+                                MessagePart(part: 0, text: message!.text, subject: message!.subject),
+                                message!,
+                                colorOverride: Color.lerp(context.theme.colorScheme.properOnSurface, context.theme.colorScheme.onPrimary, 1 - value)
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  )),
+                      )
+                    ),),
+              ),
             );
           },
         ),
