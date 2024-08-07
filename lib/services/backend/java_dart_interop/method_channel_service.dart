@@ -62,7 +62,7 @@ class MethodChannelService extends GetxService {
         Logger.info("Received new message from MethodChannel");
         try {
           Map<String, dynamic>? data = arguments;
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
             if (ls.isAlive) {
@@ -82,7 +82,7 @@ class MethodChannelService extends GetxService {
         Logger.info("Received updated message from FCM");
         try {
           Map<String, dynamic>? data = arguments;
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
             if (ls.isAlive) {
@@ -105,7 +105,7 @@ class MethodChannelService extends GetxService {
         try {
           Logger.info("Received ${call.method} from FCM");
           Map<String, dynamic>? data = arguments;
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
             await ah.handleNewOrUpdatedChat(item.chat);
@@ -121,7 +121,7 @@ class MethodChannelService extends GetxService {
         try {
           Logger.info("Received group icon change from FCM");
           Map<String, dynamic>? data = arguments;
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             final guid = payload.data["chats"].first["guid"];
             final chat = Chat.findOne(guid: guid);
@@ -208,7 +208,7 @@ class MethodChannelService extends GetxService {
         Logger.info("Received chat status change from FCM");
         try {
           Map<String, dynamic>? data = arguments;
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             Chat? chat = Chat.findOne(guid: payload.data["chatGuid"]);
             if (chat == null || (payload.data["read"] != true && payload.data["read"] != false)) {
@@ -239,7 +239,7 @@ class MethodChannelService extends GetxService {
         Logger.info("Received legacy incoming facetime from FCM");
         try {
           Map<String, dynamic>? data = arguments;
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             await ActionHandler().handleIncomingFaceTimeCallLegacy(payload.data);
           }
@@ -255,7 +255,7 @@ class MethodChannelService extends GetxService {
         Logger.info("Received facetime call status change from FCM");
         try {
           Map<String, dynamic>? data = arguments;
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             await ActionHandler().handleFaceTimeStatusChange(payload.data);
           }
@@ -274,7 +274,7 @@ class MethodChannelService extends GetxService {
       case "imessage-aliases-removed":
         Map<String, dynamic>? data = arguments;
         try {
-          if (!isNullOrEmpty(data)!) {
+          if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             Logger.info("Alias(es) removed ${payload.data["aliases"]}");
             await notif.createAliasesRemovedNotification((payload.data["aliases"] as List).cast<String>());

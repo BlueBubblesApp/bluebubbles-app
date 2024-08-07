@@ -128,10 +128,10 @@ class Handle {
     handle1._color.value ??= handle2._color.value;
     handle1.country ??= handle2.country;
     handle1.formattedAddress ??= handle2.formattedAddress;
-    if (isNullOrEmpty(handle1.defaultPhone)!) {
+    if (isNullOrEmpty(handle1.defaultPhone)) {
       handle1.defaultPhone = handle2.defaultPhone;
     }
-    if (isNullOrEmpty(handle1.defaultEmail)!) {
+    if (isNullOrEmpty(handle1.defaultEmail)) {
       handle1.defaultEmail = handle2.defaultEmail;
     }
 

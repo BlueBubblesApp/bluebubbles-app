@@ -40,7 +40,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
     final mention = widget.controller!.mentionMatches[index];
     if (custom) {
       final changed = await showCustomMentionDialog(context, mention);
-      if (isNullOrEmpty(changed)!) return;
+      if (isNullOrEmpty(changed)) return;
       mention.customDisplayName = changed!;
     }
     final _controller = widget.textController as MentionTextEditingController;

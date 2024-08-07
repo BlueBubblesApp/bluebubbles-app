@@ -98,7 +98,7 @@ class ManualMarkState extends OptimizedState<ManualMark> {
                       bytes: bytes,
                     ));
                   }
-                  if (!isNullOrEmpty(m.text)!) {
+                  if (!isNullOrEmpty(m.text)) {
                     if (text.isEmpty) {
                       text = m.text!;
                     } else {

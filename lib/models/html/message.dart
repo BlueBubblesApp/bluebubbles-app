@@ -142,7 +142,7 @@ class Message {
     }
 
     Map<String, dynamic> metadata = {};
-    if (!isNullOrEmpty(json["metadata"])!) {
+    if (!isNullOrEmpty(json["metadata"])) {
       if (json["metadata"] is String) {
         try {
           metadata = jsonDecode(json["metadata"]);
@@ -305,7 +305,7 @@ class Message {
     return;
   }
 
-  String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
+  String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));
 
   // first condition is for macOS < 11 and second condition is for macOS >= 11
   bool get isLegacyUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
@@ -541,10 +541,10 @@ class Message {
             newMessage.dateEdited != null &&
             existing.dateEdited!.millisecondsSinceEpoch < newMessage.dateEdited!.millisecondsSinceEpoch)) {
       existing.dateEdited = newMessage.dateEdited;
-      if (!isNullOrEmpty(newMessage.attributedBody)!) {
+      if (!isNullOrEmpty(newMessage.attributedBody)) {
         existing.attributedBody = newMessage.attributedBody;
       }
-      if (!isNullOrEmpty(newMessage.messageSummaryInfo)!) {
+      if (!isNullOrEmpty(newMessage.messageSummaryInfo)) {
         existing.messageSummaryInfo = newMessage.messageSummaryInfo;
       }
     }

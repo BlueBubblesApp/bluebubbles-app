@@ -97,7 +97,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
     // Check if the color is the same as the real gradient, and if so, set it to null
     // Because it is not custom, then just use the regular gradient
     List gradient = toColorGradient(widget.handle?.address ?? "");
-    if (!isNullOrEmpty(gradient)! && gradient[0] == color) {
+    if (!isNullOrEmpty(gradient) && gradient[0] == color) {
       widget.handle!.color = null;
     } else {
       widget.handle!.color = color.value.toRadixString(16);
@@ -180,9 +180,9 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                     backgroundImage: FileImage(file),
                     backgroundColor: Colors.transparent,
                   );
-                } else if (isNullOrEmpty(avatar)! || hide) {
+                } else if (isNullOrEmpty(avatar) || hide) {
                   String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
-                  if (!isNullOrEmpty(initials)! && !hide) {
+                  if (!isNullOrEmpty(initials) && !hide) {
                     return Text(
                       initials!,
                       key: Key("$keyPrefix-avatar-text"),

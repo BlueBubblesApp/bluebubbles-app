@@ -218,7 +218,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   ],
                                 ),
                               ),
-                              subtitle: !isNullOrEmpty(item["description"])! ? Text(item["description"]) : null,
+                              subtitle: !isNullOrEmpty(item["description"]) ? Text(item["description"]) : null,
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -335,7 +335,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   ),
                                 );
                               },
-                              isThreeLine: !isNullOrEmpty(item["description"])!,
+                              isThreeLine: !isNullOrEmpty(item["description"]),
                             );
                           },
                           itemCount: settings.length,

@@ -37,7 +37,7 @@ class DatabaseService extends GetxService {
   Future<void> fetchFirebaseConfig() async {
     await http.fcmClient().then((response) async {
       Map<String, dynamic>? data = response.data["data"];
-      if (!isNullOrEmpty(data)!) {
+      if (!isNullOrEmpty(data)) {
         FCMData newData = FCMData.fromMap(data!);
         ss.saveFCMData(newData);
       }
@@ -78,7 +78,7 @@ class DatabaseService extends GetxService {
           app = Firebase.apps.first;
         }
 
-        if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
+        if (!isNullOrEmpty(ss.fcmData.firebaseURL)) {
           final FirebaseDatabase db = FirebaseDatabase(app: app);
           final DatabaseReference ref = db.reference().child('config').child('serverUrl');
 

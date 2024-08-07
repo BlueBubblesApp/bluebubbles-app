@@ -101,26 +101,26 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  !isNullOrEmpty(metadata?.title)! && metadata?.title != "www"
+                  !isNullOrEmpty(metadata?.title) && metadata?.title != "www"
                       ? metadata!.title!
-                      : !isNullOrEmpty(siteText)!
+                      : !isNullOrEmpty(siteText)
                       ? siteText! : message.text!,
                   style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (!isNullOrEmpty(metadata?.description)!)
+                if (!isNullOrEmpty(metadata?.description))
                   const SizedBox(height: 5),
-                if (!isNullOrEmpty(metadata?.description)!)
+                if (!isNullOrEmpty(metadata?.description))
                   Text(
                     metadata!.description!,
                     maxLines: ReplyScope.maybeOf(context) == null ? 3 : 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal)
                   ),
-                if (!isNullOrEmpty(siteText)!)
+                if (!isNullOrEmpty(siteText))
                   const SizedBox(height: 5),
-                if (!isNullOrEmpty(siteText)!)
+                if (!isNullOrEmpty(siteText))
                   Text(
                     siteText!,
                     style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),

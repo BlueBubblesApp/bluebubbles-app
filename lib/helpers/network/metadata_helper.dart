@@ -44,7 +44,7 @@ class MetadataHelper {
     }
 
     // If the everything in the metadata is null or empty, try to manually parse
-    if (data?.toMap().values.where((e) => !isNullOrEmpty(e)!).isEmpty ?? true) {
+    if (data?.toMap().values.where((e) => !isNullOrEmpty(e)).isEmpty ?? true) {
       data = await MetadataHelper._manuallyGetMetadata(url);
     }
 

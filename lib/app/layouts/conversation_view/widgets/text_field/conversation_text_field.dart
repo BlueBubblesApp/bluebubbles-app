@@ -1128,7 +1128,7 @@ class TextFieldComponent extends StatelessWidget {
                               if (kIsDesktop || kIsWeb) {
                                 controller?.showingOverlays = false;
                               }
-                              if (!isNullOrEmpty(changed)! && mention != null) {
+                              if (!isNullOrEmpty(changed) && mention != null) {
                                 mention.customDisplayName = changed!;
                               }
                               final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
@@ -1145,7 +1145,7 @@ class TextFieldComponent extends StatelessWidget {
                   },
                   onSubmitted: (String value) {
                     controller?.focusNode.requestFocus();
-                    if (isNullOrEmpty(value)! && (controller?.pickedAttachments.isEmpty ?? false)) return;
+                    if (isNullOrEmpty(value) && (controller?.pickedAttachments.isEmpty ?? false)) return;
                     sendMessage.call();
                   },
                   contentInsertionConfiguration: ContentInsertionConfiguration(onContentInserted: onContentCommit),
@@ -1355,7 +1355,7 @@ class TextFieldComponent extends StatelessWidget {
 
     if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
     if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
-      if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(controller!.subjectTextController.text)!) {
+      if (!isNullOrEmpty(textController.text) || !isNullOrEmpty(controller!.subjectTextController.text)) {
         sendMessage();
         controller!.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;

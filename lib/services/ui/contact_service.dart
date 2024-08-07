@@ -278,7 +278,7 @@ class ContactsService extends GetxService {
       try {
         final response = await http.contacts();
 
-        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
           logger?.call("Found contacts!");
 
           for (Map<String, dynamic> map in response.data['data']) {
@@ -322,9 +322,9 @@ class ContactsService extends GetxService {
       if (kIsWeb) {
         final response = await http.contacts(withAvatars: true);
 
-        if (!isNullOrEmpty(response.data['data'])!) {
+        if (!isNullOrEmpty(response.data['data'])) {
           logger?.call("Found contacts!");
-          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
+          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
             final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
             logger?.call("Adding avatar for contact: $displayName");
             final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
@@ -364,7 +364,7 @@ class ContactsService extends GetxService {
       } else {
         final response = await http.contacts(withAvatars: true);
 
-        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
           logger?.call("Found contacts!");
           for (Map<String, dynamic> map in response.data['data']) {
             final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
@@ -382,7 +382,7 @@ class ContactsService extends GetxService {
               displayName: displayName,
               emails: emails,
               phones: phones,
-              avatar: !isNullOrEmpty(map['avatar'])! ? base64Decode(map['avatar'].toString()) : null,
+              avatar: !isNullOrEmpty(map['avatar']) ? base64Decode(map['avatar'].toString()) : null,
             ));
           }
         } else {

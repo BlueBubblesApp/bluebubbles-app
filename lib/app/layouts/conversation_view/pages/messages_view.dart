@@ -181,10 +181,10 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   }
 
   void updateReplies({bool updateConversation = true}) async {
-    if (!showSmartReplies || isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop || !mounted || !ls.isAlive) return;
+    if (!showSmartReplies || isNullOrEmpty(_messages) || kIsWeb || kIsDesktop || !mounted || !ls.isAlive) return;
 
     if (updateConversation) {
-      _messages.reversed.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).skip(max(_messages.length - 5, 0)).forEach((message) {
+      _messages.reversed.where((e) => !isNullOrEmpty(e.fullText) && e.dateCreated != null).skip(max(_messages.length - 5, 0)).forEach((message) {
         _addMessageToSmartReply(message);
       });
     }
@@ -578,7 +578,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                                           builder: (context, child) {
                                             return Opacity(
                                               opacity: message.guid!.contains("temp") &&
-                                                      (!isNullOrEmpty(message.text)! || !isNullOrEmpty(message.subject)!) &&
+                                                      (!isNullOrEmpty(message.text) || !isNullOrEmpty(message.subject)) &&
                                                       !animation.isCompleted
                                                   ? 0
                                                   : 1,

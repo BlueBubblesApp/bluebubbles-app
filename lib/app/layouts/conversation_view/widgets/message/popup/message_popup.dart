@@ -979,7 +979,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         bytes: bytes,
       ));
     }
-    if (attachments.isNotEmpty || !isNullOrEmpty(message.text)!) {
+    if (attachments.isNotEmpty || !isNullOrEmpty(message.text)) {
       ns.pushAndRemoveUntil(
         context,
         ChatCreator(
@@ -1185,7 +1185,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           action: DetailsMenuAction.ViewThread,
         ),
       if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) ||
-          (!kIsWeb && !kIsDesktop && !isNullOrEmpty(part.text)!))
+          (!kIsWeb && !kIsDesktop && !isNullOrEmpty(part.text)))
         DetailsMenuActionWidget(
           onTap: share,
           action: DetailsMenuAction.Share,

@@ -571,7 +571,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         ),
       );
 
-      if (isNullOrEmpty(response)!) {
+      if (isNullOrEmpty(response)) {
         throw Exception("No data was scanned, please try again.");
       } else {
         final List result = jsonDecode(response);
@@ -695,7 +695,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     }
     // Ignore any other server errors unless user is using ngrok or cloudflare
     final data = fcmResponse?.data;
-    if ((data == null || isNullOrEmpty(data["data"])!) && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+    if ((data == null || isNullOrEmpty(data["data"])) && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
       return controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
     } else {
       try {

@@ -106,7 +106,7 @@ class ChatsService extends GetxService {
     // update share targets
     if (Platform.isAndroid) {
       uiStartup.future.then((_) async {
-        for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)!).take(4)) {
+        for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)).take(4)) {
           await mcs.invokeMethod("push-share-targets", {
             "title": c.title,
             "guid": c.guid,

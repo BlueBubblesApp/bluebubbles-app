@@ -305,7 +305,7 @@ MaterialColor createMaterialColor(Color color) {
 }
 
 List<Color> toColorGradient(String? str) {
-  if (isNullOrEmpty(str)!) return [HexColor("686868"), HexColor("928E8E")];
+  if (isNullOrEmpty(str)) return [HexColor("686868"), HexColor("928E8E")];
 
   int total = 0;
   for (int i = 0; i < (str ?? "").length; i++) {

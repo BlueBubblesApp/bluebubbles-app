@@ -45,7 +45,7 @@ class MessagePart {
 
   bool get isEdited => edits.isNotEmpty;
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
-  String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
+  String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));
 }
 
 class Mention {

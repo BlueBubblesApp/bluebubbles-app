@@ -21,7 +21,7 @@ class CustomAvatarColorPanelController extends StatefulController {
 
   Future<void> getCustomHandles({force = false}) async {
     List<Handle> handles = Handle.find();
-    if (isNullOrEmpty(handles)!) return;
+    if (isNullOrEmpty(handles)) return;
 
     // Filter handles down by ones with colors
     handles = handles.where((element) => element.color != null).toList();

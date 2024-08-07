@@ -162,7 +162,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
     String _subtitle = hideInfo ? fakeText : subtitle;
 
-    if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)!) {
+    if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)) {
       return const SizedBox.shrink();
     }
     final background = getBubbleColors().first.withOpacity(0.7);

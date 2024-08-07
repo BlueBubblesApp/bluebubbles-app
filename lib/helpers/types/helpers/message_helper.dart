@@ -148,7 +148,7 @@ class MessageHelper {
     if (message.isInteractive) {
       return "$sender${message.interactiveText}";
     }
-    if (isNullOrEmpty(message.fullText)! && !message.hasAttachments && isNullOrEmpty(message.associatedMessageGuid)!) {
+    if (isNullOrEmpty(message.fullText) && !message.hasAttachments && isNullOrEmpty(message.associatedMessageGuid)) {
       if (message.dateEdited != null) {
         return "${sender}Unsent message";
       }
@@ -164,7 +164,7 @@ class MessageHelper {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       return "$output: ${_getAttachmentText(message.realAttachments)}";
-    } else if (!isNullOrEmpty(message.associatedMessageGuid)!) {
+    } else if (!isNullOrEmpty(message.associatedMessageGuid)) {
       // It's a reaction message, get the sender
       String sender = message.isFromMe! ? 'You' : (message.handle?.displayName ?? "Someone");
       // fetch the associated message object
@@ -205,7 +205,7 @@ class MessageHelper {
               messageText = _getAttachmentText(associatedMessage.fetchAttachments()!);
             } else {
               messageText = (associatedMessage.subject ?? "")
-                + (!isNullOrEmpty(associatedMessage.subject?.trim())! ? "\n" : "")
+                + (!isNullOrEmpty(associatedMessage.subject?.trim()) ? "\n" : "")
                 + (associatedMessage.text ?? "");
             }
           }

@@ -946,7 +946,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                 showSnackbar("Error", "Something went wrong when updating Firebase Database!");
                               }
                             } else {
-                              if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
+                              if (!isNullOrEmpty(ss.fcmData.firebaseURL)) {
                                 var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
                                 var ref = db.reference().child('config').child('nextRestart');
                                 await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);

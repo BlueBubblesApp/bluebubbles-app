@@ -18,7 +18,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   }
 
   // If we don't have a valid address, or it's an email, return it
-  if (isNullOrEmpty(address)! || address!.isEmail || address.contains("urn:biz")) return address ?? "Unknown";
+  if (isNullOrEmpty(address) || address!.isEmail || address.contains("urn:biz")) return address ?? "Unknown";
   address = address.trim();
 
   String? formatted;

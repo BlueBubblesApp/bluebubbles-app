@@ -85,7 +85,7 @@ class FilesystemService extends GetxService {
         Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
         await txn.completed;
 
-        if (!isNullOrEmpty(bytes)!) {
+        if (!isNullOrEmpty(bytes)) {
           fontExistsOnDisk.value = true;
           final fontLoader = FontLoader("Apple Color Emoji");
           final cachedFontBytes = ByteData.view(bytes!.buffer);

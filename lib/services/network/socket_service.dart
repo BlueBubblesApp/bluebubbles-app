@@ -64,7 +64,7 @@ class SocketService extends GetxService {
         .enableReconnection();
     socket = io(serverAddress, options.build());
     // placed here so that [socket] is still initialized
-    if (isNullOrEmpty(serverAddress)!) return;
+    if (isNullOrEmpty(serverAddress)) return;
 
     socket.onConnect((data) => handleStatusUpdate(SocketState.connected, data));
     socket.onReconnect((data) => handleStatusUpdate(SocketState.connected, data));
@@ -100,19 +100,19 @@ class SocketService extends GetxService {
   }
 
   void disconnect() {
-    if (isNullOrEmpty(serverAddress)!) return;
+    if (isNullOrEmpty(serverAddress)) return;
     socket.disconnect();
     state.value = SocketState.disconnected;
   }
 
   void reconnect() {
-    if (state.value == SocketState.connected || isNullOrEmpty(serverAddress)!) return;
+    if (state.value == SocketState.connected || isNullOrEmpty(serverAddress)) return;
     state.value = SocketState.connecting;
     socket.connect();
   }
 
   void closeSocket() {
-    if (isNullOrEmpty(serverAddress)!) return;
+    if (isNullOrEmpty(serverAddress)) return;
     socket.dispose();
     state.value = SocketState.disconnected;
   }

@@ -215,26 +215,26 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        !isNullOrEmpty(_data.title)!
+                        !isNullOrEmpty(_data.title)
                             ? _data.title!
-                            : !isNullOrEmpty(siteText)!
+                            : !isNullOrEmpty(siteText)
                             ? siteText! : widget.message.text!,
                         style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (!isNullOrEmpty(_data.summary)!)
+                      if (!isNullOrEmpty(_data.summary))
                         const SizedBox(height: 5),
-                      if (!isNullOrEmpty(_data.summary)!)
+                      if (!isNullOrEmpty(_data.summary))
                         Text(
                           _data.summary ?? "",
                           maxLines: ReplyScope.maybeOf(context) == null ? 3 : 1,
                           overflow: TextOverflow.ellipsis,
                           style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal)
                         ),
-                      if (!isNullOrEmpty(siteText)!)
+                      if (!isNullOrEmpty(siteText))
                         const SizedBox(height: 5),
-                      if (!isNullOrEmpty(siteText)!)
+                      if (!isNullOrEmpty(siteText))
                         Text(
                           siteText!,
                           style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),

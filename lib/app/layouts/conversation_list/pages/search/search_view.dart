@@ -78,7 +78,7 @@ class SearchViewState extends OptimizedState<SearchView> {
   }
 
   Future<void> search(String newSearch) async {
-    if (isSearching || isNullOrEmpty(newSearch)! || newSearch.length < 3) return;
+    if (isSearching || isNullOrEmpty(newSearch) || newSearch.length < 3) return;
     focusNode.unfocus();
     noResults = false;
     currentSearchTerm = newSearch;

@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 
 String getFullChatTitle(Chat _chat) {
   String? title = "";
-  if (isNullOrEmpty(_chat.displayName)!) {
+  if (isNullOrEmpty(_chat.displayName)) {
     Chat chat = _chat.getParticipants();
 
     List<String> titles = [];
@@ -195,7 +195,7 @@ class Chat {
 
   /// Get a chat's title
   String getTitle() {
-    if (isNullOrEmpty(displayName)!) {
+    if (isNullOrEmpty(displayName)) {
       title = getChatCreatorSubtitle();
     } else {
       title = displayName;

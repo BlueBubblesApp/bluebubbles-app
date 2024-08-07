@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/types/helpers/file_helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/services/backend/java_dart_interop/intents_service.dart';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';

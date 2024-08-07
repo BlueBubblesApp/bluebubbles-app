@@ -575,7 +575,7 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
 
   @override
   Widget build(BuildContext context) {
-    return unread && !isNullOrEmpty(controller.chat.latestMessage.associatedMessageGuid)! && !controller.chat.latestMessage.isFromMe!
+    return unread && !isNullOrEmpty(controller.chat.latestMessage.associatedMessageGuid) && !controller.chat.latestMessage.isFromMe!
         ? Positioned(
             top: -sqrt(widget.width / 2) + widget.width * 0.05,
             right: -sqrt(widget.width / 2) + widget.width * 0.025,

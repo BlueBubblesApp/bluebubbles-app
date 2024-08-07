@@ -41,7 +41,7 @@ class ActionHandler extends GetxService {
       }
 
       messages.add(m..text = mainText);
-      if (!isNullOrEmpty(secondaryText)!) {
+      if (!isNullOrEmpty(secondaryText)) {
         messages.add(Message(
           text: secondaryText,
           threadOriginatorGuid: m.threadOriginatorGuid,
@@ -351,7 +351,7 @@ class ActionHandler extends GetxService {
     Logger.info("Received $event from $source");
     switch (event) {
       case "new-message":
-        if (!isNullOrEmpty(data)!) {
+        if (!isNullOrEmpty(data)) {
           final payload = ServerPayload.fromJson(data);
           final message = Message.fromMap(payload.data);
           if (message.isFromMe!) {
@@ -373,7 +373,7 @@ class ActionHandler extends GetxService {
         }
         return;
       case "updated-message":
-        if (!isNullOrEmpty(data)!) {
+        if (!isNullOrEmpty(data)) {
           final payload = ServerPayload.fromJson(data);
           IncomingItem item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
           if (useQueue) {

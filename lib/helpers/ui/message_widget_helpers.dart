@@ -25,7 +25,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
     fontSizeFactor: message.isBigEmoji ? 3 : 1,
   );
 
-  if (!isNullOrEmpty(part.subject)!) {
+  if (!isNullOrEmpty(part.subject)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       "${part.displaySubject}${!hideBodyText ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
@@ -62,7 +62,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
         ));
       }
     });
-  } else if (!isNullOrEmpty(part.displayText)!) {
+  } else if (!isNullOrEmpty(part.displayText)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       part.displayText!,
       textStyle,
@@ -82,7 +82,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
   final linkIndexMatches = <Tuple3<String, List<int>, List?>>[];
   final controller = cvc(message.chat.target ?? cm.activeChat!.chat);
-  if (!isNullOrEmpty(part.text)!) {
+  if (!isNullOrEmpty(part.text)) {
     if (!kIsWeb && !kIsDesktop && ss.settings.smartReply.value) {
       if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
         try {
@@ -145,7 +145,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
     }
   }
   // render subject
-  if (!isNullOrEmpty(part.subject)!) {
+  if (!isNullOrEmpty(part.subject)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       "${part.displaySubject}${!hideBodyText ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
@@ -228,7 +228,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
         ));
       }
     });
-  } else if (!isNullOrEmpty(part.displayText)!) {
+  } else if (!isNullOrEmpty(part.displayText)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       part.displayText!,
       textStyle,

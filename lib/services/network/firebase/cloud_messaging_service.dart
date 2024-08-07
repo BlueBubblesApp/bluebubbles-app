@@ -47,7 +47,7 @@ class CloudMessagingService extends GetxService {
     }
 
     // If we've already got a token, re-register with this token
-    if (!isNullOrEmpty(token)!) {
+    if (!isNullOrEmpty(token)) {
       Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
       Logger.info('Registering device with server...', tag: 'FCM-Auth');
       await http.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
@@ -121,7 +121,7 @@ class CloudMessagingService extends GetxService {
     }
 
     // Make sure we got a valid response back from the FCM auth
-    if (isNullOrEmpty(result)!) {
+    if (isNullOrEmpty(result)) {
       Logger.error("Empty results, not registering device with the server.", tag: 'FCM-Auth');
       completer?.complete();
       return;

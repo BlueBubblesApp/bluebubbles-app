@@ -116,9 +116,9 @@ class _UnsupportedInteractiveState extends OptimizedState<UnsupportedInteractive
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (!isNullOrEmpty(data?.userInfo?.caption)!)
+                    if (!isNullOrEmpty(data?.userInfo?.caption))
                       const SizedBox(height: 2.5),
-                    if (!isNullOrEmpty(data?.userInfo?.caption)!)
+                    if (!isNullOrEmpty(data?.userInfo?.caption))
                       Text(
                           data!.userInfo!.caption!,
                           maxLines: 3,

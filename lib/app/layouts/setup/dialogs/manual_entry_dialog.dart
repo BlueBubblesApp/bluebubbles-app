@@ -85,7 +85,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     // we get 200 from the API.
     http.fcmClient().then((response) {
       Map<String, dynamic>? data = response.data["data"];
-      if (!isNullOrEmpty(data)!) {
+      if (!isNullOrEmpty(data)) {
         FCMData newData = FCMData.fromMap(data!);
         ss.saveFCMData(newData);
       }
