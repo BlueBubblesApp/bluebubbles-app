@@ -28,17 +28,25 @@ class MainActivity : FlutterFragmentActivity() {
         Log.d(Constants.logTag, "BlueBubbles MainActivity is being destroyed")
         engine = null
 
+        // If we are finishing "gracefully", the dart code would have started the foreground service.
+        // If we are finishing because the system is destroying the activity, we need to start the foreground service
+        // via a broadcast intent.
         if (isFinishing) {
             Log.d(Constants.logTag, "BlueBubbles activity is finishing")
         } else {
             Log.d(Constants.logTag, "BlueBubbles activity is being destroyed by the system")
-        }
 
-        // Create an intent to start the foreground service
-        Log.d(Constants.logTag, "Creating broadcast intent to restart the foreground service...")
-        val broadcastIntent = Intent(this, ForegroundServiceBroadcastReceiver::class.java)
-        broadcastIntent.setAction("restartservice");
-        sendBroadcast(broadcastIntent);
+            val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
+            val keepAppAlive: Boolean = prefs.getBoolean("flutter.keepAppAlive", false)
+
+            // Create an intent to start the foreground service
+            if (keepAppAlive) {
+                Log.d(Constants.logTag, "Creating broadcast intent to restart the foreground service...")
+                val broadcastIntent = Intent(this, ForegroundServiceBroadcastReceiver::class.java)
+                broadcastIntent.setAction("restartservice");
+                sendBroadcast(broadcastIntent);
+            }
+        }
 
         try {
             super.onDestroy()
