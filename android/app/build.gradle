@@ -148,6 +148,7 @@ dependencies {
     implementation 'androidx.browser:browser:1.8.0'
     implementation 'androidx.activity:activity-ktx:1.9.1'
     implementation "androidx.work:work-runtime:2.9.0"
+    implementation "androidx.concurrent:concurrent-futures-ktx:1.2.0"
 
     // Firebase items
     implementation 'com.google.firebase:firebase-messaging:24.0.0'
@@ -157,10 +158,10 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore:25.0.0'
 
     // Kotlin Coroutines (async)
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.1"
 
     // Socket IO
     implementation ('io.socket:socket.io-client:2.1.1') {
