@@ -199,7 +199,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
             width: iosSize,
             height: iosSize,
             color: reactionIsFromMe
-                ? context.theme.colorScheme.primary
+                ? context.theme.colorScheme.primary.darkenAmount(reaction.guid!.startsWith("temp") ? 0.1 : 0)
                 : context.theme.colorScheme.properSurface,
             alignment: messageIsFromMe ? Alignment.topRight : Alignment.topLeft,
             child: SizedBox(
