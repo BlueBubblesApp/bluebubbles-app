@@ -14,6 +14,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Notification;
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:get/get.dart';
 import 'package:local_notifier/local_notifier.dart';
@@ -174,7 +175,7 @@ class NotificationsService extends GetxService {
     final title = isGroup ? chat.getTitle() : contactName;
     final text = hideContent ? "iMessage" : MessageHelper.getNotificationText(message);
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
-    final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+    final personIcon = (await rootBundle.load("assets/images/person64.png")).buffer.asUint8List();
 
     Uint8List chatIcon = await avatarAsBytes(chat: chat, quality: 256);
     Uint8List contactIcon = message.isFromMe!
@@ -219,7 +220,7 @@ class NotificationsService extends GetxService {
     // Set some notification defaults
     String title = caller;
     String text = "${callUuid == null ? "Incoming" : "Answer"} FaceTime ${isAudio ? 'Audio' : 'Video'} Call";
-    chatIcon ??= (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+    chatIcon ??= (await rootBundle.load("assets/images/person64.png")).buffer.asUint8List();
 
     if (kIsWeb && Notification.permission == "granted") {
       final notif = Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: callUuid);

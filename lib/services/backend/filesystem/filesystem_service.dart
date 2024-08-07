@@ -45,9 +45,9 @@ class FilesystemService extends GetxService {
         }
       }
       if (!headless) {
-        final file = await loadAsset("assets/images/no-video-preview.png");
+        final file = await rootBundle.load("assets/images/no-video-preview.png");
         noVideoPreviewIcon = file.buffer.asUint8List();
-        final file2 = await loadAsset("assets/images/unplayable-video.png");
+        final file2 = await rootBundle.load("assets/images/unplayable-video.png");
         unplayableVideoIcon = file2.buffer.asUint8List();
       }
     }

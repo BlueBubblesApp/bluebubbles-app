@@ -7,7 +7,6 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
-import 'package:bluebubbles/migrations/handle_migration_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -823,81 +822,14 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         await localNotifier.setup(appName: "BlueBubbles");
       }
 
-      // only show these dialogs if setup is finished
-      if (ss.settings.finishedSetup.value) {
-        if (ss.prefs.getBool('1.12.3-warning') != true && !kIsWeb) {
-          bool needsMigration = false;
-
-          try {
-            needsMigration = await needsMigrationForUniqueService(chats.loadedAllChats.future);
-          } catch (ex) {
-            Logger.error("Error checking for handle migration: $ex");
-          }
-
-          if (needsMigration) {
-            showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (BuildContext context) {
-                  return TitleBarWrapper(
-                    child: AlertDialog(
-                      title: Text(
-                        "Handle Migration",
-                        style: context.theme.textTheme.titleLarge,
-                      ),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                              "It looks like you have some SMS chats that have been merged with your iMessage chats! This can cause issues displaying contact names for your chats. If this is not an issue for you, you can ignore this message.",
-                              style: context.theme.textTheme.bodyLarge),
-                          Container(height: 5),
-                          Text(
-                              "To fix this, please re-sync your handles by going to Settings -> Troubleshooting -> Re-sync Handles / Contacts.",
-                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
-                          Container(height: 5),
-                          Text("Note: Make sure you've upgraded your server to the latest (>= 1.5.2)!",
-                              style: context.theme.textTheme.bodyLarge?.apply(fontWeightDelta: 2)),
-                        ],
-                      ),
-                      backgroundColor: context.theme.colorScheme.properSurface,
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text("Close",
-                              style: context.theme.textTheme.bodyLarge!
-                                  .copyWith(color: context.theme.colorScheme.primary)),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                });
-          }
-        }
-
-        if ((fs.androidInfo?.version.sdkInt ?? 0) >= 33) {
-          Permission.notification.request();
-        }
-      }
-
-      if (ss.prefs.getBool('1.12.3-warning') != true) {
-        await ss.prefs.setBool('1.12.3-warning', true);
-      }
-
       if (!ss.settings.finishedSetup.value) {
         setState(() {
           fullyLoaded = true;
         });
+      } else if ((fs.androidInfo?.version.sdkInt ?? 0) >= 33) {
+        Permission.notification.request();
       }
     });
-  }
-
-  @override
-  void didChangeDependencies() async {
-    countryCode = Get.deviceLocale?.countryCode;
-    super.didChangeDependencies();
   }
 
   @override

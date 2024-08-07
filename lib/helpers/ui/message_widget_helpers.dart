@@ -15,8 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class MentionEntity extends Entity {
   /// Constructor to create an instance of [AddressEntity].
-  MentionEntity(String rawValue)
-      : super(rawValue: rawValue, type: EntityType.unknown);
+  MentionEntity(String rawValue) : super(rawValue: rawValue, type: EntityType.unknown);
 }
 
 List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride, bool hideBodyText = false}) {

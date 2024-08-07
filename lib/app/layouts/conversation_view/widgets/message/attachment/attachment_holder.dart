@@ -154,7 +154,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                     ),
                                     const SizedBox(height: 10),
                                     Text(
-                                      "${(attachment.totalBytes! * min(_content.item2.value, 1.0)).toDouble().getFriendlySize(withPostfix: false)} / ${attachment.getFriendlySize()}",
+                                      "${(attachment.totalBytes! * min(_content.item2.value, 1.0)).toDouble().getFriendlySize(withSuffix: false)} / ${attachment.getFriendlySize()}",
                                       style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,

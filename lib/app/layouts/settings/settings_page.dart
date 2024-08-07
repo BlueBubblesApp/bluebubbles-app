@@ -615,7 +615,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: <Widget>[
                                                   Obx(() => Text(
-                                                    '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
+                                                    '${progress.value != null && totalSize.value != null ? (progress.value! * totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
                                                     style: context.theme.textTheme.bodyLarge,
                                                   ),
                                                   ),
