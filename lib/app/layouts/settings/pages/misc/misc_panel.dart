@@ -175,7 +175,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                               }
                             },
                             initialVal: ss.settings.keepAppAlive.value,
-                            title: "Use Foreground Service For Notifications",
+                            title: "Use Background Service For Notifications",
                             subtitle:
                                 "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.",
                             isThreeLine: true,
