@@ -513,6 +513,11 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                           SliverAnimatedList(
                               initialItemCount: _messages.length + 1,
                               key: listKey,
+                              findChildIndexCallback: (key) {
+                                final valueKey = key as ValueKey<String>;
+                                final index = _messages.indexWhere((item) => item.guid == valueKey.value);
+                                return index == -1 ? null : index;
+                              },
                               itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                                 // paginate
                                 if (index >= _messages.length) {
