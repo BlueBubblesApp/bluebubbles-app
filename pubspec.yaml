@@ -93,7 +93,7 @@ dependencies:
   giphy_get: ^3.5.4
   github: ^9.24.0
   google_fonts: ^6.2.1
-  google_ml_kit: ^0.16.3 # mobile only
+  google_ml_kit: ^0.18.0 # mobile only
   google_sign_in: ^6.2.1
   hand_signature: ^3.0.2
   idb_shim: ^2.4.1+1
@@ -193,12 +193,6 @@ dependencies:
   windows_taskbar: ^1.1.2
 
 dependency_overrides:
-  # overrides for packages stuck on outdated versions
-  google_mlkit_smart_reply: # for gradle namespace issue
-    git:
-      url: https://github.com/BlueBubblesApp/google_ml_kit_flutter.git
-      ref: develop
-      path: packages/google_mlkit_smart_reply
   http: ^1.2.1 # metadata_fetch
   intl: ^0.19.0 # firebase_dart
   js: ^0.7.1 # socket_io_client
