@@ -15,8 +15,8 @@ class PinnedOrderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Rx<Color> _backgroundColor = (kIsDesktop && ss.settings.windowEffect.value == WindowEffect.disabled
-            ? context.theme.colorScheme.background
-            : Colors.transparent)
+            ? Colors.transparent
+            : context.theme.colorScheme.background)
         .obs;
     final ScrollController scrollController = ScrollController();
 
