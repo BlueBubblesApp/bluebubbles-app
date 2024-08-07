@@ -205,9 +205,10 @@ dependency_overrides:
       path: permission_handler_windows
   uuid: ^4.4.0 # firebase_dart
   win32: ^5.5.3 # for build issue in flutter v3.24.0
+  frontend_server_client: ^4.0.0  # for build_runner issues on v3.24.0
 
 dev_dependencies:
-  build_runner: ^2.4.9
+  build_runner: ^2.4.12
   build_verify: ^3.1.0
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.0
