@@ -102,7 +102,6 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                       Tuple2<LogLevel, String> log = syncManager.output.reversed.toList()[index];
                       return Text(
                         log.item2,
-                        key: ValueKey("${log.item1}-${log.item2}"),
                         style: TextStyle(
                           color: log.item1 == LogLevel.INFO ? context.theme.colorScheme.properOnSurface : context.theme.colorScheme.error,
                           fontSize: 10,
