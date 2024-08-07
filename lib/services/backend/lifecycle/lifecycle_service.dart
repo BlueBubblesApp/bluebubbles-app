@@ -28,8 +28,17 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  Future<void> init({bool headless = false, bool isBubble = false}) async {
+    Logger.debug("Initializing LifecycleService${headless ? " in headless mode" : ""}");
+
+    isUiThread = !headless;
+    this.isBubble = isBubble;
 
     handleForegroundService(AppLifecycleState.resumed);
+
+    Logger.debug("LifecycleService initialized");
   }
 
   @override
@@ -58,6 +67,11 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void handleForegroundService(AppLifecycleState state) async {
+    // If an isolate is invoking this, we don't want to start/stop the foreground service.
+    // It should already be running. We don't need to stop it because the socket service
+    // is not started when in headless mode.
+    if (!isUiThread) return;
+
     // This may get called before the settings service is initialized
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool keepAlive = prefs.getBool("keepAppAlive") ?? false;
@@ -94,9 +108,8 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       if (!isBubble) {
         createFakePort();
       }
-      if (!ss.settings.keepAppAlive.value) {
-        socket.reconnect();
-      }
+      
+      socket.reconnect();
     }
 
     if (kIsDesktop) {
@@ -120,9 +133,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     }
     if (!kIsDesktop && !kIsWeb) {
       IsolateNameServer.removePortNameMapping('bg_isolate');
-      if (!ss.settings.keepAppAlive.value) {
-        socket.disconnect();
-      }
+      socket.disconnect();
     }
     if (cm.activeChat != null) {
       ConversationViewController _cvc = cvc(cm.activeChat!.chat);

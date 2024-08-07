@@ -1,5 +1,6 @@
 package com.bluebubbles.messaging.services.foreground
 
+import android.os.Build
 import android.content.Context
 import android.content.Intent
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
@@ -21,7 +22,11 @@ class StartForegroundServiceHandler: MethodCallHandlerImpl() {
         try {
             val serviceIntent = Intent(context, SocketIOForegroundService::class.java)
             if (context != null) {
-                context.startService(serviceIntent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent);
+                } else {
+                    context.startService(serviceIntent);
+                }
             }
             result.success(null)
         } catch (e: Exception) {

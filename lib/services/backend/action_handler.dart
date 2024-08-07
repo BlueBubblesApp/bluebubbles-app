@@ -346,4 +346,79 @@ class ActionHandler extends GetxService {
       await notif.createIncomingFaceTimeNotification(null, caller!, chatIcon, false);
     }
   }
+
+  Future<void> handleSocketEvent(String event, Map<String, dynamic> data, String source, {bool useQueue = true}) async {
+    Logger.info("Received $event from $source");
+    switch (event) {
+      case "new-message":
+        if (!isNullOrEmpty(data)!) {
+          final payload = ServerPayload.fromJson(data);
+          final message = Message.fromMap(payload.data);
+          if (message.isFromMe!) {
+            if (payload.data['tempGuid'] == null) {
+              ah.outOfOrderTempGuids.add(message.guid!);
+              await Future.delayed(const Duration(milliseconds: 500));
+              if (!ah.outOfOrderTempGuids.contains(message.guid!)) return;
+            } else {
+              ah.outOfOrderTempGuids.remove(message.guid!);
+            }
+          }
+
+          IncomingItem item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
+          if (useQueue) {
+            inq.queue(item);
+          } else {
+            await ah.handleNewMessage(item.chat, item.message, item.tempGuid);
+          }
+        }
+        return;
+      case "updated-message":
+        if (!isNullOrEmpty(data)!) {
+          final payload = ServerPayload.fromJson(data);
+          IncomingItem item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
+          if (useQueue) {
+            inq.queue(item);
+          } else {
+            await ah.handleUpdatedMessage(item.chat, item.message, item.tempGuid);
+          }
+        }
+        return;
+      case "group-name-change":
+      case "participant-removed":
+      case "participant-added":
+      case "participant-left":
+        try {
+          final item = IncomingItem.fromMap(QueueType.updatedMessage, data);
+          ah.handleNewOrUpdatedChat(item.chat);
+        } catch (_) {}
+        return;
+      case "chat-read-status-changed":
+        Chat? chat = Chat.findOne(guid: data["chatGuid"]);
+        if (chat != null && (data["read"] == true || data["read"] == false)) {
+          chat.toggleHasUnread(!data["read"]!, privateMark: false);
+        }
+        return;
+      case "typing-indicator":
+        final chat = chats.chats.firstWhereOrNull((element) => element.guid == data["guid"]);
+        if (chat != null) {
+          final controller = cvc(chat);
+          controller.showTypingIndicator.value = data["display"];
+        }
+        return;
+      case "incoming-facetime":
+        Logger.info("Received legacy incoming FaceTime call");
+        await handleIncomingFaceTimeCallLegacy(data);
+        return;
+      case "ft-call-status-changed":
+        Logger.info("Received FaceTime call status change");
+        await handleFaceTimeStatusChange(data);
+        return;
+      case "imessage-aliases-removed":
+        Logger.info("Alias(es) removed ${data["aliases"]}");
+        await notif.createAliasesRemovedNotification((data["aliases"] as List).cast<String>());
+        return;
+      default:
+        return;
+    }
+  }
 }

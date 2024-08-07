@@ -13,7 +13,6 @@ import androidx.core.app.NotificationCompat
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.R
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
-import com.bluebubbles.messaging.utils.Utils
 import io.socket.client.IO
 import io.socket.client.Socket
 import java.net.URISyntaxException
@@ -22,8 +21,8 @@ import org.json.JSONObject
 
 class SocketIOForegroundService : Service() {
 
-    // Consts for notification messages
     companion object {
+        // Consts for notification messages
         const val DEFAULT_NOTIFICATION = "BlueBubbles is running in the background."
         const val MISSING_SERVER_URL = "BlueBubbles Service is missing your server URL!"
         const val MISSING_PASSWORD = "BlueBubbles Service is missing your password!"
@@ -42,6 +41,14 @@ class SocketIOForegroundService : Service() {
     private var currentNotification: String? = null
 
     private var isBeingDestroyed: Boolean = false
+
+    private val eventBlacklist: Array<String> = arrayOf(
+        "typing-indicator",
+        "chat-read-status-changed",
+        "new-findmy-location",
+        Socket.EVENT_CONNECT,
+        Socket.EVENT_DISCONNECT
+    )
 
     override fun onCreate() {
         super.onCreate()
@@ -96,7 +103,7 @@ class SocketIOForegroundService : Service() {
 
             mSocket!!.on(Socket.EVENT_CONNECT_ERROR) { args ->
                 val error = args[0] as Exception
-                Log.d(Constants.logTag, "Socket.io failed to connect to your server! Error: ${error.message}")
+                Log.d(Constants.logTag, "Socket.io failed to connect to $serverUrl! Error: ${error.message}")
                 updateNotification(CONNECT_FAILED + error.message)
             }
 
@@ -127,8 +134,13 @@ class SocketIOForegroundService : Service() {
                 if (args.isNotEmpty()) {
                     val event = args[0] as String
                     val message = args[1] as JSONObject
-                    if (event != Socket.EVENT_CONNECT && event != Socket.EVENT_DISCONNECT) {
-                        DartWorkManager.createWorker(applicationContext, event, Utils.jsonObjectToHashMap(message)) {}
+
+                    Log.d(Constants.logTag, "Received event of type $event from Socket.io...")
+                    if (!eventBlacklist.contains(event)) {
+                        Log.d(Constants.logTag, "Received event of type $event from Socket.io...")
+                        DartWorkManager.createWorker(applicationContext, "socket-event", hashMapOf("event" to event, "data" to message.toString())) {}
+                    } else {
+                        Log.d(Constants.logTag, "Ignored event of type $event from Socket.io...")
                     }
                 }
             }
@@ -158,7 +170,7 @@ class SocketIOForegroundService : Service() {
             val channel = NotificationChannel(
                 Constants.foregroundServiceNotificationChannel,
                 "BlueBubbles Foreground Service",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_MIN
             )
 
             // This channel should not vibrate or make sound
@@ -180,7 +192,8 @@ class SocketIOForegroundService : Service() {
             // The notification should be categorized as silent
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_MIN)
-            // The notification should be ongoing and not cancelable
+            // The notification should be ongoing and not cancelable.
+            // This does not prevent dismissing it on Android 14+.
             .setOngoing(true)
             // The notification should not alert the user
             .setOnlyAlertOnce(true)
@@ -188,7 +201,7 @@ class SocketIOForegroundService : Service() {
             .setAutoCancel(false)
             // The notification should not show the time
             .setShowWhen(false)
-            // Make notification unswipeable
+            .setColor(4888294)
             .build()
     }
 

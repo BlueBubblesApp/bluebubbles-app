@@ -32,7 +32,9 @@ class BaseLogger extends GetxService {
 
   set setEnabledLevels(List<LogLevel> levels) => enabledLevels = levels;
 
-  Future<void> init() async {
+  Future<void> init({bool isStartup = false}) async {
+    Logger.startup.value = isStartup;
+
     // For now, only do logs on desktop
     if (kIsDesktop) {
       String startupPath = fs.appDocDir.path;

@@ -79,73 +79,261 @@ Future<Null> bubble() async {
   await initApp(true, []);
 }
 
-//ignore: prefer_void_to_null
-Future<Null> initApp(bool bubble, List<String> arguments) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  /* ----- SERVICES INITIALIZATION ----- */
-  await mcs.init();
+Future<void> checkInstanceLock() async {
+  if (!kIsDesktop || !Platform.isLinux) return;
+  Logger.debug("Starting process with PID $pid");
 
-  ls.isBubble = bubble;
-  ls.isUiThread = true;
+  final lockFile = File(join(fs.appDocDir.path, 'bluebubbles.lck'));
+  final instanceFile = File(join(fs.appDocDir.path, '.instance'));
+  onExit(() {
+    if (lockFile.existsSync()) lockFile.deleteSync();
+  });
 
-  await ss.init();
-  await fs.init();
-  await Logger.init();
-  Logger.startup.value = true;
-  Logger.info('Startup Logs');
+  if (!lockFile.existsSync()) {
+    lockFile.createSync();
+  }
+  if (!instanceFile.existsSync()) {
+    instanceFile.createSync();
+  }
 
-  /* ------ LINUX SINGLE INSTANCE ------ */
-  if (kIsDesktop && Platform.isLinux) {
-    Logger.debug("Starting process with PID $pid");
+  Logger.debug("Lockfile at ${lockFile.path}");
+  String _pid = lockFile.readAsStringSync();
+  String ps = Process.runSync('ps', ['-p', _pid]).stdout;
+  if (kReleaseMode && "$pid" != _pid && ps.endsWith('bluebubbles\n')) {
+    Logger.debug("Another instance is running. Sending foreground signal");
+    instanceFile.openSync(mode: FileMode.write).closeSync();
+    exit(0);
+  }
 
-    final lockFile = File(join(fs.appDocDir.path, 'bluebubbles.lck'));
-    final instanceFile = File(join(fs.appDocDir.path, '.instance'));
-    onExit(() {
-      if (lockFile.existsSync()) lockFile.deleteSync();
+  lockFile.writeAsStringSync("$pid");
+  instanceFile.watch(events: FileSystemEvent.modify).listen((event) async {
+    Logger.debug("Got Signal to go to foreground");
+    doWhenWindowReady(() async {
+      await windowManager.show();
+      List<Tuple2<String, String>?> widAndNames = await (await Process.start('wmctrl', ['-pl']))
+          .stdout
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
+          .map((split) => split[2] == "$pid" ? Tuple2(split.first, split.last) : null)
+          .where((tuple) => tuple != null)
+          .toList();
+
+      for (Tuple2<String, String>? window in widAndNames) {
+        if (window?.item2 == "BlueBubbles") {
+          Process.runSync('wmctrl', ['-iR', window!.item1]);
+          break;
+        }
+      }
     });
+  });
+}
 
-    if (!lockFile.existsSync()) {
-      lockFile.createSync();
+void performDatabaseMigrations({int? versionOverride}) {
+  int version = versionOverride ?? ss.prefs.getInt('dbVersion') ?? (ss.settings.finishedSetup.value ? 1 : databaseVersion);
+  if (version > databaseVersion) return;
+
+  final Stopwatch s = Stopwatch();
+  s.start();
+
+  int nextVersion = version;
+  Logger.debug("Performing database migration from version $version to $databaseVersion", tag: "DB-Migration");
+  switch (databaseVersion) {
+    // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
+    case 2:
+      Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
+      final messages = messageBox.getAll();
+      if (messages.isNotEmpty) {
+        final handles = handleBox.getAll();
+        Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
+        for (Message m in messages) {
+          if (m.isFromMe! || m.handleId == 0 || m.handleId == null) continue;
+          m.handleId = handles.firstWhereOrNull((e) => e.id == m.handleId)?.originalROWID ?? m.handleId;
+        }
+        Logger.info("Final save...", tag: "DB-Migration");
+        messageBox.putMany(messages);
+      }
+
+      nextVersion = 2;
+    // Version 3 modifies chat typing indicators and read receipts values to follow global setting initially
+    case 3:
+      final chats = chatBox.getAll();
+      final papi = ss.settings.enablePrivateAPI.value;
+      final typeGlobal = ss.settings.privateSendTypingIndicators.value;
+      final readGlobal = ss.settings.privateMarkChatAsRead.value;
+      for (Chat c in chats) {
+        if (papi && readGlobal && !(c.autoSendReadReceipts ?? true)) {
+          // dont do anything
+        } else {
+          c.autoSendReadReceipts = null;
+        }
+        if (papi && typeGlobal && !(c.autoSendTypingIndicators ?? true)) {
+          // dont do anything
+        } else {
+          c.autoSendTypingIndicators = null;
+        }
+      }
+
+      chatBox.putMany(chats);
+      nextVersion = 3;
+    // Version 4 saves FCM Data to the shared preferences for use in Tasker integration
+    case 4:
+      ss.getFcmData();
+      ss.fcmData.save();
+      nextVersion = 4;
+  }
+
+  if (nextVersion != version) {
+    performDatabaseMigrations(versionOverride: nextVersion);
+  }
+
+  s.stop();
+  Logger.info("Completed database migration in ${s.elapsedMilliseconds}ms", tag: "DB-Migration");
+}
+
+Future<void> initDatabaseMobile({bool? storeOpenStatus}) async {
+  Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
+  final isStoreOpen = storeOpenStatus ?? Store.isOpen(objectBoxDirectory.path);
+
+  try {
+    if (isStoreOpen) {
+      Logger.info("Attempting to attach to an existing ObjectBox store...");
+      store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+      Logger.info("Successfully attached to an existing ObjectBox store");
+    } else {
+      Logger.info("Opening new ObjectBox store from path: ${objectBoxDirectory.path}");
+      store = await openStore(directory: objectBoxDirectory.path);
     }
-    if (!instanceFile.existsSync()) {
-      instanceFile.createSync();
+  } catch (e, s) {
+    Logger.warn("Failed to open ObjectBox store!");
+    Logger.error(e);
+    Logger.error(s);
+
+    if (e.toString().contains("another store is still open using the same path")) {
+      Logger.info("Retrying to attach to an existing ObjectBox store");
+      await initDatabaseMobile(storeOpenStatus: true);
+    }
+  }
+}
+
+Future<void> initDatabaseDesktop() async {
+  Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
+  try {
+    objectBoxDirectory.createSync(recursive: true);
+    if (ss.prefs.getBool('use-custom-path') == true && ss.prefs.getString('custom-path') != null) {
+      Directory oldCustom = Directory(join(ss.prefs.getString('custom-path')!, 'objectbox'));
+      if (oldCustom.existsSync()) {
+        Logger.info("Detected prior use of custom path option. Migrating...");
+        copyDirectory(oldCustom, objectBoxDirectory);
+      }
+      await ss.prefs.remove('use-custom-path');
+      await ss.prefs.remove('custom-path');
     }
 
-    Logger.debug("Lockfile at ${lockFile.path}");
-
-    String _pid = lockFile.readAsStringSync();
-
-    String ps = Process.runSync('ps', ['-p', _pid]).stdout;
-    if (kReleaseMode && "$pid" != _pid && ps.endsWith('bluebubbles\n')) {
-      Logger.debug("Another instance is running. Sending foreground signal");
+    Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
+    store = await openStore(directory: objectBoxDirectory.path);
+  } catch (e, s) {
+    if (Platform.isLinux) {
+      Logger.debug("Another instance is probably running. Sending foreground signal");
+      final instanceFile = File(join(fs.appDocDir.path, '.instance'));
       instanceFile.openSync(mode: FileMode.write).closeSync();
       exit(0);
     }
 
-    lockFile.writeAsStringSync("$pid");
-
-    instanceFile.watch(events: FileSystemEvent.modify).listen((event) async {
-      Logger.debug("Got Signal to go to foreground");
-      doWhenWindowReady(() async {
-        await windowManager.show();
-        List<Tuple2<String, String>?> widAndNames = await (await Process.start('wmctrl', ['-pl']))
-            .stdout
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())
-            .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
-            .map((split) => split[2] == "$pid" ? Tuple2(split.first, split.last) : null)
-            .where((tuple) => tuple != null)
-            .toList();
-        for (Tuple2<String, String>? window in widAndNames) {
-          if (window?.item2 == "BlueBubbles") {
-            Process.runSync('wmctrl', ['-iR', window!.item1]);
-            break;
-          }
-        }
-      });
-    });
+    Logger.error(e);
+    Logger.error(s);
   }
-  
+}
+
+Future<void> initDatabase() async {
+  // Web doesn't use a database currently, so do not do anything
+  if (kIsWeb) return;
+
+  if (!kIsDesktop) {
+    await initDatabaseMobile();
+  } else {
+    await initDatabaseDesktop();
+  }
+
+  try {
+    attachmentBox = store.box<Attachment>();
+    chatBox = store.box<Chat>();
+    contactBox = store.box<Contact>();
+    fcmDataBox = store.box<FCMData>();
+    handleBox = store.box<Handle>();
+    messageBox = store.box<Message>();
+    themeBox = store.box<ThemeStruct>();
+    themeEntryBox = store.box<ThemeEntry>();
+    // ignore: deprecated_member_use_from_same_package
+    themeObjectBox = store.box<ThemeObject>();
+
+    if (!ss.settings.finishedSetup.value) {
+      attachmentBox.removeAll();
+      chatBox.removeAll();
+      contactBox.removeAll();
+      fcmDataBox.removeAll();
+      handleBox.removeAll();
+      messageBox.removeAll();
+      themeBox.removeAll();
+      themeEntryBox.removeAll();
+      themeObjectBox.removeAll();
+    }
+  } catch (e, s) {
+    Logger.error("Failed to setup ObjectBox boxes!");
+    Logger.error(e);
+    Logger.error(s);
+  }
+
+  try {
+    if (themeBox.isEmpty()) {
+      await ss.prefs.setString("selected-dark", "OLED Dark");
+      await ss.prefs.setString("selected-light", "Bright White");
+      themeBox.putMany(ts.defaultThemes);
+    }
+  } catch (e, s) {
+    Logger.error("Failed to seed themes!");
+    Logger.error(e);
+    Logger.error(s);
+  }
+
+  try {
+    performDatabaseMigrations();
+  } catch (e, s) {
+    Logger.error("Failed to perform database migrations!");
+    Logger.error(e);
+    Logger.error(s);
+  }
+
+  storeStartup.complete();
+}
+
+//ignore: prefer_void_to_null
+Future<Null> initApp(bool bubble, List<String> arguments) async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // First, initialize the filesystem service as it's used by other necessary services
+  await fs.init();
+
+  // Initialize the logger so we can start logging things immediately
+  await Logger.init(isStartup: true);
+
+  // Check if another instance is running (Linux Only).
+  // Automatically handled on Windows (I think)
+  await checkInstanceLock();
+
+  // Setup the settings service
+  await ss.init();
+
+  // The next thing we need to do is initialize the database.
+  // If the database is not initialized, we cannot do anything.
+  await initDatabase();
+
+  // We then have to initialize all the services that the app will use.
+  // Order matters here as some services may rely on others. For instance,
+  // The MethodChannel service needs the database to be initialized to handle events.
+  // The Lifecycle service needs the MethodChannel service to be initialized to send events.
+  await mcs.init();
+  await ls.init(isBubble: bubble);
   await ts.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
@@ -154,149 +342,8 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
   StackTrace? stacktrace;
 
   try {
-    /* ----- OBJECTBOX DB INITIALIZATION ----- */
-    if (!kIsWeb) {
-      Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
-      if (!kIsDesktop) {
-        Logger.info("Trying to attach to an existing ObjectBox store");
-        try {
-          store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
-        } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          Logger.info("Failed to attach to existing store, opening from path");
-          try {
-            store = await openStore(directory: objectBoxDirectory.path);
-          } catch (e, s) {
-            Logger.error(e);
-            Logger.error(s);
-            // this can very rarely happen
-            if (e.toString().contains("another store is still open using the same path")) {
-              Logger.info("Retrying to attach to an existing ObjectBox store");
-              store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
-            }
-          }
-        }
-      } else {
-        try {
-          objectBoxDirectory.createSync(recursive: true);
-          if (ss.prefs.getBool('use-custom-path') == true && ss.prefs.getString('custom-path') != null) {
-            Directory oldCustom = Directory(join(ss.prefs.getString('custom-path')!, 'objectbox'));
-            if (oldCustom.existsSync()) {
-              Logger.info("Detected prior use of custom path option. Migrating...");
-              copyDirectory(oldCustom, objectBoxDirectory);
-            }
-            await ss.prefs.remove('use-custom-path');
-            await ss.prefs.remove('custom-path');
-          }
-          Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
-          store = await openStore(directory: objectBoxDirectory.path);
-        } catch (e, s) {
-          if (Platform.isLinux) {
-            Logger.debug("Another instance is probably running. Sending foreground signal");
-            final instanceFile = File(join(fs.appDocDir.path, '.instance'));
-            instanceFile.openSync(mode: FileMode.write).closeSync();
-            exit(0);
-          }
-          Logger.error(e);
-          Logger.error(s);
-        }
-      }
-      attachmentBox = store.box<Attachment>();
-      chatBox = store.box<Chat>();
-      contactBox = store.box<Contact>();
-      fcmDataBox = store.box<FCMData>();
-      handleBox = store.box<Handle>();
-      messageBox = store.box<Message>();
-      themeBox = store.box<ThemeStruct>();
-      themeEntryBox = store.box<ThemeEntry>();
-      // ignore: deprecated_member_use_from_same_package
-      themeObjectBox = store.box<ThemeObject>();
-
-      if (!ss.settings.finishedSetup.value) {
-        attachmentBox.removeAll();
-        chatBox.removeAll();
-        contactBox.removeAll();
-        fcmDataBox.removeAll();
-        handleBox.removeAll();
-        messageBox.removeAll();
-        themeBox.removeAll();
-        themeEntryBox.removeAll();
-        themeObjectBox.removeAll();
-      }
-
-      if (themeBox.isEmpty()) {
-        await ss.prefs.setString("selected-dark", "OLED Dark");
-        await ss.prefs.setString("selected-light", "Bright White");
-        themeBox.putMany(ts.defaultThemes);
-      }
-      int version = ss.prefs.getInt('dbVersion') ?? (ss.settings.finishedSetup.value ? 1 : databaseVersion);
-
-      migrate() {
-        if (version < databaseVersion) {
-          switch (databaseVersion) {
-            // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
-            case 2:
-              Logger.info("Fetching all messages and handles...", tag: "DB-Migration");
-              final messages = messageBox.getAll();
-              if (messages.isNotEmpty) {
-                final handles = handleBox.getAll();
-                Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
-                for (Message m in messages) {
-                  if (m.isFromMe! || m.handleId == 0 || m.handleId == null) continue;
-                  m.handleId = handles.firstWhereOrNull((e) => e.id == m.handleId)?.originalROWID ?? m.handleId;
-                }
-                Logger.info("Final save...", tag: "DB-Migration");
-                messageBox.putMany(messages);
-              }
-              version = 2;
-              migrate.call();
-              return;
-            // Version 3 modifies chat typing indicators and read receipts values to follow global setting initially
-            case 3:
-              final chats = chatBox.getAll();
-              final papi = ss.settings.enablePrivateAPI.value;
-              final typeGlobal = ss.settings.privateSendTypingIndicators.value;
-              final readGlobal = ss.settings.privateMarkChatAsRead.value;
-              for (Chat c in chats) {
-                if (papi && readGlobal && !(c.autoSendReadReceipts ?? true)) {
-                  // dont do anything
-                } else {
-                  c.autoSendReadReceipts = null;
-                }
-                if (papi && typeGlobal && !(c.autoSendTypingIndicators ?? true)) {
-                  // dont do anything
-                } else {
-                  c.autoSendTypingIndicators = null;
-                }
-              }
-              chatBox.putMany(chats);
-              version = 3;
-              migrate.call();
-              return;
-            // Version 4 saves FCM Data to the shared preferences for use in Tasker integration
-            case 4:
-              ss.getFcmData();
-              ss.fcmData.save();
-              version = 4;
-              migrate.call();
-              return;
-            default:
-              return;
-          }
-        }
-      }
-
-      final Stopwatch s = Stopwatch();
-      s.start();
-      migrate.call();
-      s.stop();
-      Logger.info("Done in ${s.elapsedMilliseconds}ms", tag: "DB-Migration");
-    }
-
     /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
     await ss.prefs.setInt('dbVersion', databaseVersion);
-    storeStartup.complete();
     ss.getFcmData();
     if (!kIsWeb) {
       await cs.init();

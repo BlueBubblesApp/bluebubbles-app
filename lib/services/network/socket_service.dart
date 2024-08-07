@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
-import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -35,6 +34,8 @@ class SocketService extends GetxService {
   @override
   void onInit() {
     super.onInit();
+
+    Logger.debug("Initializing socket service...");
     startSocket();
     Connectivity().onConnectivityChanged.listen((event) {
       if (!event.contains(ConnectivityResult.wifi) &&
@@ -44,6 +45,7 @@ class SocketService extends GetxService {
         http.originOverride = null;
       }
     });
+    Logger.debug("Initialized socket service");
   }
 
   @override
@@ -79,19 +81,20 @@ class SocketService extends GetxService {
 
     // custom events
     // only listen to these events from socket on web/desktop (FCM handles on Android)
-    if (kIsWeb || kIsDesktop || ss.settings.keepAppAlive.value) {
-      socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
-      socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
-      socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
-      socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
-      socket.on("incoming-facetime", (data) => handleCustomEvent("incoming-facetime", jsonDecode(data)));
+    if (kIsWeb || kIsDesktop) {
+      socket.on("group-name-change", (data) => ah.handleSocketEvent("group-name-change", data, 'DartSocket'));
+      socket.on("participant-removed", (data) => ah.handleSocketEvent("participant-removed", data, 'DartSocket'));
+      socket.on("participant-added", (data) => ah.handleSocketEvent("participant-added", data, 'DartSocket'));
+      socket.on("participant-left", (data) => ah.handleSocketEvent("participant-left", data, 'DartSocket'));
+      socket.on("incoming-facetime", (data) => ah.handleSocketEvent("incoming-facetime", jsonDecode(data), 'DartSocket'));
     }
-    socket.on("ft-call-status-changed", (data) => handleCustomEvent("ft-call-status-changed", data));
-    socket.on("new-message", (data) => handleCustomEvent("new-message", data));
-    socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
-    socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
-    socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-changed", data));
-    socket.on("imessage-aliases-removed", (data) => handleCustomEvent("imessage-aliases-removed", data));
+
+    socket.on("ft-call-status-changed", (data) => ah.handleSocketEvent("ft-call-status-changed", data, 'DartSocket'));
+    socket.on("new-message", (data) => ah.handleSocketEvent("new-message", data, 'DartSocket'));
+    socket.on("updated-message", (data) => ah.handleSocketEvent("updated-message", data, 'DartSocket'));
+    socket.on("typing-indicator", (data) => ah.handleSocketEvent("typing-indicator", data, 'DartSocket'));
+    socket.on("chat-read-status-changed", (data) => ah.handleSocketEvent("chat-read-status-changed", data, 'DartSocket'));
+    socket.on("imessage-aliases-removed", (data) => ah.handleSocketEvent("imessage-aliases-removed", data, 'DartSocket'));
 
     socket.connect();
   }
@@ -194,70 +197,6 @@ class SocketService extends GetxService {
       lastError.value = "Failed to resolve hostname";
     } else {
       lastError.value = msg;
-    }
-  }
-
-  void handleCustomEvent(String event, Map<String, dynamic> data) async {
-    Logger.info("Received $event from socket");
-    switch (event) {
-      case "new-message":
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data);
-          final message = Message.fromMap(payload.data);
-          if (message.isFromMe!) {
-            if (payload.data['tempGuid'] == null) {
-              ah.outOfOrderTempGuids.add(message.guid!);
-              await Future.delayed(const Duration(milliseconds: 500));
-              if (!ah.outOfOrderTempGuids.contains(message.guid!)) return;
-            } else {
-              ah.outOfOrderTempGuids.remove(message.guid!);
-            }
-          }
-          inq.queue(IncomingItem.fromMap(QueueType.newMessage, payload.data));
-        }
-        return;
-      case "updated-message":
-        if (!isNullOrEmpty(data)!) {
-          final payload = ServerPayload.fromJson(data);
-          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, payload.data));
-        }
-        return;
-      case "group-name-change":
-      case "participant-removed":
-      case "participant-added":
-      case "participant-left":
-        try {
-          final item = IncomingItem.fromMap(QueueType.updatedMessage, data);
-          ah.handleNewOrUpdatedChat(item.chat);
-        } catch (_) {}
-        return;
-      case "chat-read-status-changed":
-        Chat? chat = Chat.findOne(guid: data["chatGuid"]);
-        if (chat != null && (data["read"] == true || data["read"] == false)) {
-          chat.toggleHasUnread(!data["read"]!, privateMark: false);
-        }
-        return;
-      case "typing-indicator":
-        final chat = chats.chats.firstWhereOrNull((element) => element.guid == data["guid"]);
-        if (chat != null) {
-          final controller = cvc(chat);
-          controller.showTypingIndicator.value = data["display"];
-        }
-        return;
-      case "incoming-facetime":
-        Logger.info("Received legacy incoming FaceTime call");
-        await ActionHandler().handleIncomingFaceTimeCallLegacy(data);
-        return;
-      case "ft-call-status-changed":
-        Logger.info("Received FaceTime call status change");
-        await ActionHandler().handleFaceTimeStatusChange(data);
-        return;
-      case "imessage-aliases-removed":
-        Logger.info("Alias(es) removed ${data["aliases"]}");
-        await notif.createAliasesRemovedNotification((data["aliases"] as List).cast<String>());
-        return;
-      default:
-        return;
     }
   }
 }

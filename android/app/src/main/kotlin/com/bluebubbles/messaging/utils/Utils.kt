@@ -10,8 +10,6 @@ import com.bluebubbles.messaging.services.firebase.FirebaseAuthHandler
 import com.bluebubbles.messaging.services.firebase.ServerUrlRequestHandler
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import org.json.JSONObject
-import org.json.JSONArray
 
 object Utils {
     fun getAdaptiveIconFromByteArray(data: ByteArray): IconCompat {
@@ -46,40 +44,5 @@ object Utils {
             override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {}
             override fun notImplemented() {}
         }, context)
-    }
-
-    fun jsonObjectToHashMap(jsonObject: JSONObject): HashMap<String, Any?> {
-        val map = HashMap<String, Any?>()
-    
-        val keys = jsonObject.keys()
-        while (keys.hasNext()) {
-            val key = keys.next()
-            val value = jsonObject.get(key)
-    
-            map[key] = when (value) {
-                is JSONObject -> Utils.jsonObjectToHashMap(value)
-                is JSONArray -> Utils.jsonArrayToList(value)
-                else -> value
-            }
-        }
-    
-        return map
-    }
-    
-    fun jsonArrayToList(jsonArray: org.json.JSONArray): List<Any?> {
-        val list = ArrayList<Any?>()
-    
-        for (i in 0 until jsonArray.length()) {
-            val value = jsonArray.get(i)
-            list.add(
-                when (value) {
-                    is JSONObject -> Utils.jsonObjectToHashMap(value)
-                    is JSONArray -> Utils.jsonArrayToList(value)
-                    else -> value
-                }
-            )
-        }
-    
-        return list
     }
 }

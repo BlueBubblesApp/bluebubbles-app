@@ -23,6 +23,7 @@ class MethodChannelService extends GetxService {
 
   Future<void> init({bool headless = false}) async {
     if (kIsWeb || kIsDesktop) return;
+    Logger.debug("Initializing MethodChannelService${headless ? " in headless mode" : ""}");
 
     background = headless;
     channel = const MethodChannel('com.bluebubbles.messaging');
@@ -39,6 +40,8 @@ class MethodChannelService extends GetxService {
         // chromeOS = await mcs.invokeMethod("check-chromeos") ?? false;
       } catch (_) {}
     }
+
+    Logger.debug("MethodChannelService initialized");
   }
 
   Future<bool> _callHandler(MethodCall call) async {
@@ -56,7 +59,7 @@ class MethodChannelService extends GetxService {
         return true;
       case "new-message":
         await storeStartup.future;
-        Logger.info("Received new message from FCM");
+        Logger.info("Received new message from MethodChannel");
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)!) {
@@ -283,6 +286,20 @@ class MethodChannelService extends GetxService {
           Logger.error(s);
           return Future.error(PlatformException(code: "500", message: e.toString()), s);
         }
+        return true;
+      case "socket-event":
+        Map<String, dynamic>? data = arguments;
+        if (data == null) return false;
+
+        try {
+          final Map<String, dynamic> jsonData = jsonDecode(data['data']);
+          await ah.handleSocketEvent(data['event'], jsonData, 'MethodChannel', useQueue: false);
+        } catch (e, s) {
+          Logger.error(e);
+          Logger.error(s);
+          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+        }
+
         return true;
       default:
         return true;

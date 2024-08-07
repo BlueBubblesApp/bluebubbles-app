@@ -76,6 +76,15 @@
         </receiver>
 
         <receiver
+            android:name=".services.foreground.ForegroundServiceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="restartservice" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
             android:name=".services.intents.AutoStartReceiver"
             android:enabled="true"
             android:exported="true">
