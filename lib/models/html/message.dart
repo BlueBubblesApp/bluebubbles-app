@@ -8,7 +8,7 @@ import 'package:bluebubbles/models/html/handle.dart';
 import 'package:bluebubbles/models/html/objectbox.dart';
 import 'package:bluebubbles/models/models.dart' show AttributedBody, MessageSummaryInfo, PayloadData;
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';

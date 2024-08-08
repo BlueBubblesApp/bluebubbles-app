@@ -8,7 +8,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/startup/failure_to_start.dart';
@@ -308,163 +308,170 @@ Future<void> initDatabase() async {
 
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool bubble, List<String> arguments) async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded<Future<void>>(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // First, initialize the filesystem service as it's used by other necessary services
-  await fs.init();
+      // First, initialize the filesystem service as it's used by other necessary services
+      await fs.init();
 
-  // Initialize the logger so we can start logging things immediately
-  await Logger.init(isStartup: true);
+      // Initialize the logger so we can start logging things immediately
+      await Logger.init(isStartup: true);
 
-  // Check if another instance is running (Linux Only).
-  // Automatically handled on Windows (I think)
-  await checkInstanceLock();
+      // Check if another instance is running (Linux Only).
+      // Automatically handled on Windows (I think)
+      await checkInstanceLock();
 
-  // Setup the settings service
-  await ss.init();
+      // Setup the settings service
+      await ss.init();
 
-  // The next thing we need to do is initialize the database.
-  // If the database is not initialized, we cannot do anything.
-  await initDatabase();
+      // The next thing we need to do is initialize the database.
+      // If the database is not initialized, we cannot do anything.
+      await initDatabase();
 
-  // We then have to initialize all the services that the app will use.
-  // Order matters here as some services may rely on others. For instance,
-  // The MethodChannel service needs the database to be initialized to handle events.
-  // The Lifecycle service needs the MethodChannel service to be initialized to send events.
-  await mcs.init();
-  await ls.init(isBubble: bubble);
-  await ts.init();
+      // We then have to initialize all the services that the app will use.
+      // Order matters here as some services may rely on others. For instance,
+      // The MethodChannel service needs the database to be initialized to handle events.
+      // The Lifecycle service needs the MethodChannel service to be initialized to send events.
+      await mcs.init();
+      await ls.init(isBubble: bubble);
+      await ts.init();
 
-  /* ----- RANDOM STUFF INITIALIZATION ----- */
-  HttpOverrides.global = BadCertOverride();
-  dynamic exception;
-  StackTrace? stacktrace;
+      /* ----- RANDOM STUFF INITIALIZATION ----- */
+      HttpOverrides.global = BadCertOverride();
+      dynamic exception;
+      StackTrace? stacktrace;
 
-  try {
-    /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
-    await ss.prefs.setInt('dbVersion', databaseVersion);
-    ss.getFcmData();
-    if (!kIsWeb) {
-      await cs.init();
-    }
-    await notif.init();
-    await intents.init();
-    if (!kIsDesktop) {
-      chats.init();
-      socket;
-    }
-
-    /* ----- DATE FORMATTING INITIALIZATION ----- */
-    await initializeDateFormatting();
-
-    /* ----- MEDIAKIT INITIALIZATION ----- */
-    MediaKit.ensureInitialized();
-
-    /* ----- SPLASH SCREEN INITIALIZATION ----- */
-    if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
-      runApp(MaterialApp(
-          home: SplashScreen(shouldNavigate: false),
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSwatch(
-                backgroundColor:
-                    PlatformDispatcher.instance.platformBrightness == Brightness.dark ? Colors.black : Colors.white),
-          )));
-    }
-
-    /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
-    if (!kIsWeb && !kIsDesktop) {
-      /* ----- TIME ZONE INITIALIZATION ----- */
-      tz.initializeTimeZones();
       try {
-        tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
-      } catch (_) {}
-
-      /* ----- MLKIT INITIALIZATION ----- */
-      if (!await EntityExtractorModelManager().isModelDownloaded(EntityExtractorLanguage.english.name)) {
-        EntityExtractorModelManager().downloadModel(EntityExtractorLanguage.english.name, isWifiRequired: false);
-      }
-    }
-
-    /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
-    if (kIsDesktop) {
-      /* ----- WINDOW INITIALIZATION ----- */
-      await windowManager.ensureInitialized();
-      await windowManager.setTitle('BlueBubbles');
-      await Window.initialize();
-      if (Platform.isWindows) {
-        await Window.hideWindowControls();
-      } else if (Platform.isLinux) {
-        await windowManager
-            .setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
-      }
-      windowManager.addListener(DesktopWindowListener.instance);
-      doWhenWindowReady(() async {
-        await windowManager.setMinimumSize(const Size(300, 300));
-        Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
-
-        Size size = await windowManager.getSize();
-        double width = ss.prefs.getDouble("window-width") ?? size.width;
-        double height = ss.prefs.getDouble("window-height") ?? size.height;
-
-        width = width.clamp(300, max(300, primary.size.width));
-        height = height.clamp(300, max(300, primary.size.height));
-        await windowManager.setSize(Size(width, height));
-        await ss.prefs.setDouble("window-width", width);
-        await ss.prefs.setDouble("window-height", height);
-
-        await windowManager.setAlignment(Alignment.center);
-        Offset offset = await windowManager.getPosition();
-        double? posX = ss.prefs.getDouble("window-x") ?? offset.dx;
-        double? posY = ss.prefs.getDouble("window-y") ?? offset.dy;
-
-        posX = posX.clamp(0, max(0, primary.size.width - width));
-        posY = posY.clamp(0, max(0, primary.size.height - height));
-        await windowManager.setPosition(Offset(posX, posY), animate: true);
-        await ss.prefs.setDouble("window-x", posX);
-        await ss.prefs.setDouble("window-y", posY);
-
-        await windowManager.setTitle('BlueBubbles');
-        if (arguments.firstOrNull == "minimized") {
-          await windowManager.hide();
-        } else {
-          await windowManager.show();
+        /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
+        await ss.prefs.setInt('dbVersion', databaseVersion);
+        ss.getFcmData();
+        if (!kIsWeb) {
+          await cs.init();
         }
-        if (!(ss.canAuthenticate && ss.settings.shouldSecure.value)) {
+        await notif.init();
+        await intents.init();
+        if (!kIsDesktop) {
           chats.init();
           socket;
         }
-      });
 
-      /* ----- GIPHY API KEY INITIALIZATION ----- */
-      await dotenv.load(fileName: '.env', isOptional: true);
+        /* ----- DATE FORMATTING INITIALIZATION ----- */
+        await initializeDateFormatting();
+
+        /* ----- MEDIAKIT INITIALIZATION ----- */
+        MediaKit.ensureInitialized();
+
+        /* ----- SPLASH SCREEN INITIALIZATION ----- */
+        if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+          runApp(MaterialApp(
+              home: SplashScreen(shouldNavigate: false),
+              theme: ThemeData(
+                colorScheme: ColorScheme.fromSwatch(
+                    backgroundColor:
+                        PlatformDispatcher.instance.platformBrightness == Brightness.dark ? Colors.black : Colors.white),
+              )));
+        }
+
+        /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
+        if (!kIsWeb && !kIsDesktop) {
+          /* ----- TIME ZONE INITIALIZATION ----- */
+          tz.initializeTimeZones();
+          try {
+            tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
+          } catch (_) {}
+
+          /* ----- MLKIT INITIALIZATION ----- */
+          if (!await EntityExtractorModelManager().isModelDownloaded(EntityExtractorLanguage.english.name)) {
+            EntityExtractorModelManager().downloadModel(EntityExtractorLanguage.english.name, isWifiRequired: false);
+          }
+        }
+
+        /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
+        if (kIsDesktop) {
+          /* ----- WINDOW INITIALIZATION ----- */
+          await windowManager.ensureInitialized();
+          await windowManager.setTitle('BlueBubbles');
+          await Window.initialize();
+          if (Platform.isWindows) {
+            await Window.hideWindowControls();
+          } else if (Platform.isLinux) {
+            await windowManager
+                .setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
+          }
+          windowManager.addListener(DesktopWindowListener.instance);
+          doWhenWindowReady(() async {
+            await windowManager.setMinimumSize(const Size(300, 300));
+            Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
+
+            Size size = await windowManager.getSize();
+            double width = ss.prefs.getDouble("window-width") ?? size.width;
+            double height = ss.prefs.getDouble("window-height") ?? size.height;
+
+            width = width.clamp(300, max(300, primary.size.width));
+            height = height.clamp(300, max(300, primary.size.height));
+            await windowManager.setSize(Size(width, height));
+            await ss.prefs.setDouble("window-width", width);
+            await ss.prefs.setDouble("window-height", height);
+
+            await windowManager.setAlignment(Alignment.center);
+            Offset offset = await windowManager.getPosition();
+            double? posX = ss.prefs.getDouble("window-x") ?? offset.dx;
+            double? posY = ss.prefs.getDouble("window-y") ?? offset.dy;
+
+            posX = posX.clamp(0, max(0, primary.size.width - width));
+            posY = posY.clamp(0, max(0, primary.size.height - height));
+            await windowManager.setPosition(Offset(posX, posY), animate: true);
+            await ss.prefs.setDouble("window-x", posX);
+            await ss.prefs.setDouble("window-y", posY);
+
+            await windowManager.setTitle('BlueBubbles');
+            if (arguments.firstOrNull == "minimized") {
+              await windowManager.hide();
+            } else {
+              await windowManager.show();
+            }
+            if (!(ss.canAuthenticate && ss.settings.shouldSecure.value)) {
+              chats.init();
+              socket;
+            }
+          });
+
+          /* ----- GIPHY API KEY INITIALIZATION ----- */
+          await dotenv.load(fileName: '.env', isOptional: true);
+        }
+
+        /* ----- EMOJI FONT INITIALIZATION ----- */
+        fs.checkFont();
+      } catch (e, s) {
+        Logger.error(e);
+        Logger.error(s);
+        exception = e;
+        stacktrace = s;
+      }
+
+      if (exception == null) {
+        /* ----- THEME INITIALIZATION ----- */
+        ThemeData light = ThemeStruct.getLightTheme().data;
+        ThemeData dark = ThemeStruct.getDarkTheme().data;
+
+        final tuple = ts.getStructsFromData(light, dark);
+        light = tuple.item1;
+        dark = tuple.item2;
+
+        runApp(Main(
+          lightTheme: light,
+          darkTheme: dark,
+        ));
+      } else {
+        runApp(FailureToStart(e: exception, s: stacktrace));
+        throw Exception("$exception $stacktrace");
+      }
+    },
+    (dynamic error, StackTrace stackTrace) {
+      Logger.error("Unhandled Exception -> $error", trace: stackTrace);
     }
-
-    /* ----- EMOJI FONT INITIALIZATION ----- */
-    fs.checkFont();
-  } catch (e, s) {
-    Logger.error(e);
-    Logger.error(s);
-    exception = e;
-    stacktrace = s;
-  }
-
-  if (exception == null) {
-    /* ----- THEME INITIALIZATION ----- */
-    ThemeData light = ThemeStruct.getLightTheme().data;
-    ThemeData dark = ThemeStruct.getDarkTheme().data;
-
-    final tuple = ts.getStructsFromData(light, dark);
-    light = tuple.item1;
-    dark = tuple.item2;
-
-    runApp(Main(
-      lightTheme: light,
-      darkTheme: dark,
-    ));
-  } else {
-    runApp(FailureToStart(e: exception, s: stacktrace));
-    throw Exception("$exception $stacktrace");
-  }
+  );
 }
 
 class BadCertOverride extends HttpOverrides {
@@ -892,7 +899,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
               body: Builder(
                 builder: (BuildContext context) {
                   if (ss.settings.finishedSetup.value) {
-                    Logger.startup.value = false;
                     if (!serverCompatible && kIsWeb) {
                       return const FailureToStart(
                         otherTitle: "Server version too low, please upgrade!",

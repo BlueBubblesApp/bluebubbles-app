@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/backend/foreground_service_helpers.dart';
 import 'package:bluebubbles/helpers/network/network_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 
 Future<bool> saveNewServerUrl(
   String newServerUrl,

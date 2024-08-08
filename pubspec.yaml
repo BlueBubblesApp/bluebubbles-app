@@ -56,7 +56,7 @@ dependencies:
   encrypt: ^5.0.3
   exif: ^3.3.0
   faker: ^2.1.0
-  fast_contacts: ^3.1.5 # mobile only
+  fast_contacts: ^4.0.0  # mobile only
   file_picker: ^8.0.0+1
   firebase_dart:
     git:
@@ -191,6 +191,7 @@ dependencies:
       ref: master
   window_manager: ^0.3.8
   windows_taskbar: ^1.1.2
+  logger: ^2.4.0
 
 dependency_overrides:
   http: ^1.2.1 # metadata_fetch
