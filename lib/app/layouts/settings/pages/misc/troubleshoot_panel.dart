@@ -1,4 +1,4 @@
-import 'package:archive/archive_io.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/misc/live_logging_panel.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -119,13 +119,31 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
+                  SettingsTile(
+                    title: "Live Logging",
+                    subtitle: "A live view of the logs. Useful for debugging issues.",
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.bolt_fill,
+                      materialIcon: Icons.bolt_outlined,
+                    ),
+                    onTap: () {
+                      ns.pushSettings(
+                        context,
+                        LiveLoggingPanel(),
+                      );
+                    },
+                    trailing: Icon(
+                      iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                      color: context.theme.colorScheme.outline,
+                    ),
+                  ),
                   if (Platform.isAndroid)
                     SettingsTile(
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.doc,
                         materialIcon: Icons.file_open,
                       ),
-                      title: "Share Logs",
+                      title: "Export / Share Logs",
                       subtitle: "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
                       onTap: () async {
                         if (logFileCount.value == 0) {

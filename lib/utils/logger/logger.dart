@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:archive/archive_io.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/outputs/log_stream_output.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
@@ -15,60 +19,112 @@ BaseLogger Logger = Get.isRegistered<BaseLogger>() ? Get.find<BaseLogger>() : Ge
 
 enum LogLevel { INFO, WARN, ERROR, DEBUG, TRACE, FATAL }
 
+const Map<Level, bool> defaultExcludeBoxes = {
+  LoggerFactory.Level.debug: true,
+  LoggerFactory.Level.info: true,
+  LoggerFactory.Level.warning: true,
+  LoggerFactory.Level.error: false,
+  LoggerFactory.Level.trace: false,
+  LoggerFactory.Level.fatal: false,
+};
+
 class BaseLogger extends GetxService {
-  late final LoggerFactory.Logger logger;
+  LoggerFactory.Logger _logger = LoggerFactory.Logger();
+
+  final StreamController<String> logStream = StreamController<String>.broadcast();
 
   String get logDir {
     return join(fs.appDocDir.path, 'logs');
   }
 
-  Future<void> init() async {
-    logger = createLogger(filter: LoggerFactory.ProductionFilter());
+  LoggerFactory.Logger get logger {
+    return _logger;
   }
 
-  LoggerFactory.Logger createLogger({required LoggerFactory.LogFilter filter}) {
+  LoggerFactory.LogOutput get fileOutput {
+    return LoggerFactory.AdvancedFileOutput(
+      path: logDir,
+      maxFileSizeKB: 1024 * 10,  // 10MB
+      maxRotatedFilesCount: 5,
+      maxDelay: const Duration(seconds: 3),
+      latestFileName: 'bluebubbles-latest.log',
+      fileNameFormatter: (timestamp) {
+        final now = DateTime.now();
+        return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
+      }
+    );
+  }
+
+  LoggerFactory.LogOutput get defaultOutput {
+    return LoggerFactory.MultiOutput([
+      DebugConsoleOutput(),
+      fileOutput
+    ]);
+  }
+
+  Future<void> init() async {
+    setToProduction();
+    
+    // Add initial data to logStream
+    logStream.sink.add("Logger initialized");
+  }
+
+  LoggerFactory.Logger createLogger({
+    required LoggerFactory.LogFilter filter,
+    required LoggerFactory.LogOutput output,
+    bool colors = kDebugMode,
+    Map<Level, bool> excludeBoxes = defaultExcludeBoxes
+  }) {
     return LoggerFactory.Logger(
       filter: filter,
       printer: LoggerFactory.PrettyPrinter(
         methodCount: 0, // Number of method calls to be displayed for any logs
         errorMethodCount: 8, // Number of method calls if stacktrace is provided
         lineLength: 120, // Width of the output
-        colors: kDebugMode, // Colorful log messages
-        printEmojis: true, // Print an emoji for each log message
+        colors: colors, // Colorful log messages
+        printEmojis: false, // Print an emoji for each log message
         // Should each log print contain a timestamp
         dateTimeFormat: LoggerFactory.DateTimeFormat.dateAndTime,
-        excludeBox: {
-          LoggerFactory.Level.debug: true,
-          LoggerFactory.Level.info: true,
-          LoggerFactory.Level.warning: true,
-          LoggerFactory.Level.error: false,
-          LoggerFactory.Level.trace: false,
-          LoggerFactory.Level.fatal: false,
-        }
+        excludeBox: excludeBoxes,
+        noBoxingByDefault: true,
       ),
-      output: LoggerFactory.MultiOutput([
-        DebugConsoleOutput(),
-        LoggerFactory.AdvancedFileOutput(
-          path: logDir,
-          maxFileSizeKB: 1024 * 10,  // 10MB
-          maxRotatedFilesCount: 5,
-          maxDelay: const Duration(seconds: 3),
-          latestFileName: 'bluebubbles-latest.log',
-          fileNameFormatter: (timestamp) {
-            final now = DateTime.now();
-            return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
-          },
-        )
-      ]),
+      output: output,
     );
   }
 
   set logFilter(LoggerFactory.LogFilter filter) {
-    logger = createLogger(filter: filter);
+    _logger = createLogger(filter: filter, output: defaultOutput);
   }
 
   void setToDevelopment() {
-    logFilter = LoggerFactory.DevelopmentFilter();
+    _logger = createLogger(
+      filter: LoggerFactory.DevelopmentFilter(),
+      output: defaultOutput
+    );
+  }
+
+  void setToProduction() {
+    _logger = createLogger(
+      filter: LoggerFactory.ProductionFilter(),
+      output: defaultOutput
+    );
+  }
+
+  void enableLiveLogging() {
+    _logger = createLogger(
+      filter: LoggerFactory.ProductionFilter(),
+      output: LoggerFactory.MultiOutput([
+        DebugConsoleOutput(),
+        fileOutput,
+        LogStreamOutput()
+      ]),
+      colors: false,
+      excludeBoxes: const {}
+    );
+  }
+
+  void disableLiveLogging() {
+    setToProduction();
   }
 
   String compressLogs() {
