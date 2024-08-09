@@ -1,8 +1,10 @@
+import 'package:archive/archive_io.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/share.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +19,27 @@ class TroubleshootPanel extends StatefulWidget {
 }
 
 class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
-  final RxList<File> savedLogs = <File>[].obs;
   final RxnBool resyncingHandles = RxnBool();
+  final RxInt logFileCount = 1.obs;
+  final RxInt logFileSize = 0.obs;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Count how many .log files are in the log directory    
+    final Directory logDir = Directory(Logger.logDir);
+    if (logDir.existsSync()) {
+      final List<FileSystemEntity> files = logDir.listSync();
+      final logFiles = files.where((file) => file.path.endsWith(".log")).toList();
+      logFileCount.value = logFiles.length;
+
+      // Size in KB
+      for (final file in logFiles) {
+        logFileSize.value += file.statSync().size ~/ 1024;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +119,26 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
+                  if (Platform.isAndroid)
+                    SettingsTile(
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.doc,
+                        materialIcon: Icons.file_open,
+                      ),
+                      title: "Share Logs",
+                      subtitle: "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
+                      onTap: () async {
+                        if (logFileCount.value == 0) {
+                          showSnackbar("No Logs", "There are no logs to share!");
+                          return;
+                        }
+
+                        showSnackbar("Please Wait", "Compressing ${logFileCount.value} log file(s)...");
+                        String filePath = Logger.compressLogs();
+                        final File zippedLogFile = File(filePath);
+                        Share.file("BlueBubbles Logs", zippedLogFile.path);
+                      }
+                    ),
                   if (kIsDesktop)
                     SettingsTile(
                       leading: const SettingsLeadingIcon(

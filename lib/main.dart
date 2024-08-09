@@ -316,7 +316,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       await fs.init();
 
       // Initialize the logger so we can start logging things immediately
-      await Logger.init(isStartup: true);
+      await Logger.init();
 
       // Check if another instance is running (Linux Only).
       // Automatically handled on Windows (I think)
