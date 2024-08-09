@@ -28,8 +28,9 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
   final Control animationController = Control.mirror;
   final controller = Get.find<SetupViewController>();
   final Tween<double> tween = Tween<double>(begin: 0, end: 5);
-  final FullSyncManager syncManager = sync.fullSyncManager!;
   bool hasPlayed = false;
+
+  FullSyncManager get syncManager => sync.fullSyncManager!;
 
   @override
   void initState() {
