@@ -84,7 +84,6 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     // If so, save. Let the parent widget know we've connected as long as
     // we get 200 from the API.
     http.fcmClient().then((response) {
-      print("GOT RESPONSE");
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)) {
         FCMData newData = FCMData.fromMap(data!);
@@ -93,10 +92,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
 
       widget.onConnect();
     }).catchError((err) {
-      print("GOT ERROR");
-      print(err);
       if (err is Response) {
-
         error = err.data["error"]["message"];
       } else {
         error = err.toString();

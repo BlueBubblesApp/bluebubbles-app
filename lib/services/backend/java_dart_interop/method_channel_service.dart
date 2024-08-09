@@ -84,6 +84,21 @@ class MethodChannelService extends GetxService {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
+
+            // Since this is an updated-message event, the message should exist in the DB.
+            // So if there is no chat, we can find it from the message guid
+            if (payload.data["chats"] == null || payload.data["chats"].isEmpty) {
+              Logger.warn("No chat data found, attempting to find chat from message guid...");
+              final existingMsg = Message.findOne(guid: payload.data["guid"]);
+              if (existingMsg != null && existingMsg.chat.target != null) {
+                Logger.debug("Found chat from message guid, adding to payload");
+                payload.data['chats'] = [existingMsg.chat.target!.toMap()];
+              } else {
+                Logger.warn("No chat data found, and unable to find chat from message guid");
+                return false;
+              }
+            }
+
             final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
             if (ls.isAlive) {
               await inq.queue(item);
