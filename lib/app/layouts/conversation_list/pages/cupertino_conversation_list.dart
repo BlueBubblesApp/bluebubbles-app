@@ -109,6 +109,12 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                   ListView.builder(
                                     shrinkWrap: true,
                                     itemCount: _chats.length,
+                                    findChildIndexCallback: (key) {
+                                      final valueKey = key as ValueKey<String>;
+                                      final index = _chats.indexWhere((item) => item.guid == valueKey.value);
+                                      if(index == -1) return null;
+                                      return index;
+                                    },
                                     itemBuilder: (context, index) {
                                       final chat = _chats[index];
                                       return Center(
@@ -141,6 +147,12 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                     physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                     scrollDirection: Axis.horizontal,
                                     controller: _controller,
+                                    findChildIndexCallback: (key) {
+                                      final valueKey = key as ValueKey<String>;
+                                      final index = _chats.indexWhere((item) => item.guid == valueKey.value);
+                                      if(index == -1) return null;
+                                      return index ~/ maxOnPage;
+                                    },
                                     itemBuilder: (context, index) {
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 10),

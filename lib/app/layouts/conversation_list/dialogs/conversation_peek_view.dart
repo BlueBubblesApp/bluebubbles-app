@@ -179,6 +179,12 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                     shrinkWrap: true,
                                     reverse: true,
                                     physics: ThemeSwitcher.getScrollPhysics(),
+                                    findChildIndexCallback: (key) {
+                                      final valueKey = key as ValueKey<String>;
+                                      final index = widget.messages.indexWhere((item) => item.guid == valueKey.value);
+                                      if(index == -1) return null;
+                                      return index;
+                                    },
                                     itemBuilder: (context, index) {
                                       return AbsorbPointer(
                                         absorbing: true,
