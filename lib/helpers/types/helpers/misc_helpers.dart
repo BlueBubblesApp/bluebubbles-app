@@ -1,5 +1,6 @@
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/utils/logger/task_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,7 +39,11 @@ Map<String, dynamic> mergeTopLevelDicts(Map<String, dynamic>? d1, Map<String, dy
 ///
 /// Used for heavy ObjectBox read/writes to avoid causing jank
 Future<T?> createAsyncTask<T>(AsyncTask<List<dynamic>, T> task) async {
-  final executor = AsyncExecutor(parallelism: 0, taskTypeRegister: () => [task]);
+  final executor = AsyncExecutor(
+    parallelism: 0,
+    taskTypeRegister: () => [task],
+    logger: asyncTaskLogger
+  );
   executor.logger.enabled = true;
   executor.logger.enabledExecution = true;
   await executor.execute(task);
