@@ -192,6 +192,7 @@ dependencies:
   window_manager: ^0.3.8
   windows_taskbar: ^1.1.2
   logger: ^2.4.0
+  archive: ^3.6.1
 
 dependency_overrides:
   http: ^1.2.1 # metadata_fetch
