@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 
@@ -20,6 +21,7 @@ backgroundIsolateEntrypoint() async {
   HttpOverrides.global = BadCertOverride();
 
   await fs.init(headless: true);
+  await Logger.init();
   await ss.init(headless: true);
 
   await initDatabase();
