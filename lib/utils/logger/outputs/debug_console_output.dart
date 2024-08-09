@@ -21,8 +21,6 @@ class DebugConsoleOutput extends LogOutput {
 
       // Only take the last 3 lines of the trace
       if (traceStr.trim().isNotEmpty) {
-        
-
         // If there is no trace, (so we are using the current trace),
         // we need to omit the first 5 lines of the trace, as they are
         // part of the logger itself.
@@ -31,7 +29,8 @@ class DebugConsoleOutput extends LogOutput {
           traceLines = traceLines.sublist(5);
         }
 
-        traceLines = (traceLines.length > 4) ? traceLines.sublist(0, 4) : traceLines;
+        // If there is a rendering error, we want the entire stack trace
+        traceLines = (traceLines.length > 5 && !lines[3].contains("Rendering Error:")) ? traceLines.sublist(0, 5) : traceLines;
         traceStr = traceLines.map((e) => '$colorPrefix| $e').join('\n');
 
         // Insert the trace into the box

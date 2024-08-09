@@ -342,6 +342,10 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       dynamic exception;
       StackTrace? stacktrace;
 
+      FlutterError.onError = (details) {
+        Logger.error("Rendering Error: ${details.exceptionAsString()}", trace: details.stack);
+      };
+
       try {
         /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
         await ss.prefs.setInt('dbVersion', databaseVersion);
