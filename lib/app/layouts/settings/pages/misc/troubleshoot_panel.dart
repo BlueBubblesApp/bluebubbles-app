@@ -171,6 +171,18 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                         await launchUrl(Uri.file(logFile.path));
                       }
                     ),
+                  SettingsTile(
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.trash,
+                      materialIcon: Icons.delete,
+                    ),
+                    title: "Clear Logs",
+                    subtitle: "Deletes all stored log files.",
+                    onTap: () async {
+                      Logger.clearLogs();
+                      showSnackbar("Logs Cleared", "All logs have been deleted.");
+                    }
+                  ),
                   if (kIsDesktop)
                     const SettingsDivider(),
                   if (kIsDesktop)

@@ -147,6 +147,17 @@ class BaseLogger extends GetxService {
     return zippedLogFile.path;
   }
 
+  void clearLogs() {
+    final Directory logDir = Directory(Logger.logDir);
+    if (!logDir.existsSync()) return;
+    
+    for (final file in logDir.listSync()) {
+      if (file is File) {
+        file.deleteSync();
+      }
+    }
+  }
+
   void info(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.i("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
 
   void warn(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.w("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
