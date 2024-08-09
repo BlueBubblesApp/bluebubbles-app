@@ -46,7 +46,7 @@ class BaseLogger extends GetxService {
       path: logDir,
       maxFileSizeKB: 1024 * 10,  // 10MB
       maxRotatedFilesCount: 5,
-      maxDelay: const Duration(seconds: 3),
+      maxDelay: const Duration(seconds: 5),
       latestFileName: 'bluebubbles-latest.log',
       fileNameFormatter: (timestamp) {
         final now = DateTime.now();
