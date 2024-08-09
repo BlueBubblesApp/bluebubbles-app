@@ -12,7 +12,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:get/get.dart' hide Response;
-import 'package:path/path.dart' show join;
 import 'package:universal_io/io.dart';
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
@@ -102,17 +101,14 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
       HttpOverrides.global = BadCertOverride();
-      ls.isUiThread = false;
-      await ss.init(headless: true);
-      await fs.init(headless: true);
-      store = Store.attach(getObjectBoxModel(), join(fs.appDocDir.path, 'objectbox'));
-      attachmentBox = store.box<Attachment>();
-      chatBox = store.box<Chat>();
-      contactBox = store.box<Contact>();
-      fcmDataBox = store.box<FCMData>();
-      handleBox = store.box<Handle>();
-      messageBox = store.box<Message>();
-      themeBox = store.box<ThemeStruct>();
+
+      // Order matters here
+      await fs.init();
+      await Logger.init();
+      await ss.init();
+      await initDatabase();
+      await ls.init();
+
       http.originOverride = address;
     }
 
