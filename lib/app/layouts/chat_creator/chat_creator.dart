@@ -594,7 +594,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                           title: _title,
                                           subtitle: hideInfo
                                               ? ""
-                                              : !chat.isGroup
+                                              : !chat.isGroup && chat.participants.isNotEmpty
                                                   ? (chat.participants.first.formattedAddress ??
                                                       chat.participants.first.address)
                                                   : chat.getChatCreatorSubtitle(),
