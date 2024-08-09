@@ -737,9 +737,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               cm.activeChat!.controller!.pickedAttachments.value = [];
                               fakeController.value = cm.activeChat!.controller;
                             }
+
                             await fakeController.value!.send(
                               widget.initialAttachments,
-                              textController.text,
+                              fakeController.value!.textController.text,
                               subjectController.text,
                               fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ??
                                   fakeController.value!.replyToMessage?.item1.guid,
@@ -747,8 +748,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               effect,
                               false,
                             );
+
                             fakeController.value!.replyToMessage = null;
                             fakeController.value!.pickedAttachments.clear();
+                            fakeController.value!.textController.clear();
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             // hard delete a chat that exists on BB but not on the server to make way for the proper server data

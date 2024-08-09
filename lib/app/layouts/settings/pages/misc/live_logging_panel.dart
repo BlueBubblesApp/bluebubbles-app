@@ -152,7 +152,7 @@ class _LiveLoggingPanel extends State<LiveLoggingPanel> {
               showScrollbar: true,
               controller: scrollController,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 child: StreamBuilder<String>(
                   stream: Logger.logStream.stream,
                   builder: (context, snapshot) {
@@ -168,7 +168,6 @@ class _LiveLoggingPanel extends State<LiveLoggingPanel> {
                       itemCount: _logs.length,
                       shrinkWrap: true,
                       controller: scrollController,
-
                       separatorBuilder: (context, index) => Divider(thickness: 0.25, color: context.theme.colorScheme.onSurface),
                       itemBuilder: (context, index) {
                         Color textColor = Colors.black;
