@@ -110,6 +110,11 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                 child: Obx(() => ListView.builder(
                   controller: controller.materialScrollController,
                   physics: ThemeSwitcher.getScrollPhysics(),
+                  findChildIndexCallback: (key) {
+                    final valueKey = key as ValueKey<String>;
+                    final index = _chats.indexWhere((element) => element.guid == valueKey.value);
+                    return index == -1 ? null : index;
+                  },
                   itemBuilder: (context, index) {
                     final chat = _chats[index];
                     return ListItem(chat: chat, controller: controller, update: () {

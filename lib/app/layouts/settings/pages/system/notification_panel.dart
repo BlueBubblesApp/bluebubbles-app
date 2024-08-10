@@ -452,6 +452,11 @@ class ChatListState extends OptimizedState<ChatList> {
                       physics: ThemeSwitcher.getScrollPhysics(),
                       shrinkWrap: true,
                       controller: _controller,
+                      findChildIndexCallback: (key) {
+                        final valueKey = key as ValueKey<String>;
+                        final index = chats.chats.indexWhere((element) => element.guid == valueKey.value);
+                        return index == -1 ? null : index;
+                      },
                       itemBuilder: (context, index) {
                         return ConversationTile(
                           key: Key(chats.chats[index].guid.toString()),

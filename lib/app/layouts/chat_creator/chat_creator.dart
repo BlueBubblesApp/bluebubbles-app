@@ -364,6 +364,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                       shrinkWrap: true,
                                       scrollDirection: Axis.horizontal,
                                       physics: const NeverScrollableScrollPhysics(),
+                                      findChildIndexCallback: (key) {
+                                        final valueKey = key as ValueKey<String>;
+                                        final index = selectedContacts.indexWhere((element) => element.address == valueKey.value);
+                                        return index == -1 ? null : index;
+                                      },
                                       itemBuilder: (context, index) {
                                         final e = selectedContacts[index];
                                         return Padding(

@@ -428,7 +428,6 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                     crossAxisSpacing: 10,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    addSemanticIndexes: true,
                     itemBuilder: (context, index) {
                       if (links[index].payloadData?.urlData?.firstOrNull == null) {
                         return const Text("Failed to load link!");
