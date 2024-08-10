@@ -33,14 +33,6 @@ class BaseLogger extends GetxService {
 
   final StreamController<String> logStream = StreamController<String>.broadcast();
 
-  String get logDir {
-    return join(fs.appDocDir.path, 'logs');
-  }
-
-  LoggerFactory.Logger get logger {
-    return _logger;
-  }
-
   LoggerFactory.LogOutput get fileOutput {
     return LoggerFactory.AdvancedFileOutput(
       path: logDir,
@@ -62,69 +54,127 @@ class BaseLogger extends GetxService {
     ]);
   }
 
+  LoggerFactory.LogFilter? _currentFilter;
+  set currentFilter(LoggerFactory.LogFilter? filter) {
+    _currentFilter = filter;
+    _logger = createLogger();
+  }
+
+  LoggerFactory.LogFilter get currentFilter {
+    return _currentFilter ?? LoggerFactory.ProductionFilter();
+  }
+
+  LoggerFactory.LogOutput? _currentOutput;
+  set currentOutput(LoggerFactory.LogOutput? output) {
+    _currentOutput = output;
+    _logger = createLogger();
+  }
+
+  LoggerFactory.LogOutput get currentOutput {
+    return _currentOutput ?? defaultOutput;
+  }
+
+  LoggerFactory.Level? _currentLevel;
+  set currentLevel(LoggerFactory.Level? level) {
+    _currentLevel = level;
+    info("Setting log level to $level");
+    _logger = createLogger();
+  }
+
+  LoggerFactory.Level? get currentLevel {
+    return _currentLevel ?? LoggerFactory.Level.info;
+  }
+
+  bool? _showColors;
+  set showColors(bool show) {
+    _showColors = show;
+    _logger = createLogger();
+  }
+
+  bool get showColors {
+    return _showColors ?? kDebugMode;
+  }
+
+  Map<Level, bool>? _excludeBoxes;
+  set excludeBoxes(Map<Level, bool> boxes) {
+    _excludeBoxes = boxes;
+    _logger = createLogger();
+  }
+
+  Map<Level, bool> get excludeBoxes {
+    return _excludeBoxes ?? defaultExcludeBoxes;
+  }
+
+  String get logDir {
+    return join(fs.appDocDir.path, 'logs');
+  }
+
+  LoggerFactory.Logger get logger {
+    return _logger;
+  }
+
   Future<void> init() async {
-    setToProduction();
+    _logger = createLogger();
+
+    if (ss.initCompleted.isCompleted) {
+      currentLevel = ss.settings.logLevel.value;
+    } else {
+      ss.initCompleted.future.then((_) {
+        currentLevel = ss.settings.logLevel.value;
+      });
+    }
     
     // Add initial data to logStream
     logStream.sink.add("Logger initialized");
   }
 
-  LoggerFactory.Logger createLogger({
-    required LoggerFactory.LogFilter filter,
-    required LoggerFactory.LogOutput output,
-    bool colors = kDebugMode,
-    Map<Level, bool> excludeBoxes = defaultExcludeBoxes
-  }) {
+  LoggerFactory.Logger createLogger() {
     return LoggerFactory.Logger(
-      filter: filter,
+      filter: currentFilter,
       printer: LoggerFactory.PrettyPrinter(
         methodCount: 0, // Number of method calls to be displayed for any logs
         errorMethodCount: 8, // Number of method calls if stacktrace is provided
         lineLength: 120, // Width of the output
-        colors: colors, // Colorful log messages
+        colors: showColors, // Colorful log messages
         printEmojis: false, // Print an emoji for each log message
         // Should each log print contain a timestamp
         dateTimeFormat: LoggerFactory.DateTimeFormat.dateAndTime,
         excludeBox: excludeBoxes,
         noBoxingByDefault: true,
       ),
-      output: output,
+      output: currentOutput,
+      level: currentLevel,
     );
   }
 
-  set logFilter(LoggerFactory.LogFilter filter) {
-    _logger = createLogger(filter: filter, output: defaultOutput);
-  }
+  void reset() {
+    _currentFilter = null;
+    _currentOutput = null;
+    _currentLevel = null;
+    _showColors = null;
+    _excludeBoxes = null;
 
-  void setToDevelopment() {
-    _logger = createLogger(
-      filter: LoggerFactory.DevelopmentFilter(),
-      output: defaultOutput
-    );
-  }
+    if (ss.initCompleted.isCompleted) {
+      _currentLevel = ss.settings.logLevel.value;
+    }
 
-  void setToProduction() {
-    _logger = createLogger(
-      filter: LoggerFactory.ProductionFilter(),
-      output: defaultOutput
-    );
+    _logger = createLogger();
   }
 
   void enableLiveLogging() {
-    _logger = createLogger(
-      filter: LoggerFactory.ProductionFilter(),
-      output: LoggerFactory.MultiOutput([
-        DebugConsoleOutput(),
-        fileOutput,
-        LogStreamOutput()
-      ]),
-      colors: false,
-      excludeBoxes: const {}
-    );
+    _currentOutput = LoggerFactory.MultiOutput([
+      DebugConsoleOutput(),
+      fileOutput,
+      LogStreamOutput()
+    ]);
+    _showColors = false;
+    _logger = createLogger();
   }
 
   void disableLiveLogging() {
-    setToProduction();
+    _currentOutput = null;
+    _showColors = null;
+    _logger = createLogger();
   }
 
   String compressLogs() {

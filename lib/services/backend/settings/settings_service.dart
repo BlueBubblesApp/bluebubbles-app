@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/private_api_panel.dart';
@@ -30,6 +31,7 @@ class SettingsService extends GetxService {
   bool _canAuthenticate = false;
   bool _showingPapiPopup = false;
   late final SharedPreferences prefs;
+  Completer<void> initCompleted = Completer<void>();
 
   bool get canAuthenticate => _canAuthenticate && (Platform.isWindows || (fs.androidInfo?.version.sdkInt ?? 0) > 28);
 
@@ -63,6 +65,8 @@ class SettingsService extends GetxService {
       }
       ss.settings.launchAtStartup.value = await setupLaunchAtStartup(ss.settings.launchAtStartup.value, ss.settings.launchAtStartupMinimized.value);
     }
+
+    initCompleted.complete();
   }
 
   /// Returns true if LaunchAtStartup is enabled and false if it is disabled

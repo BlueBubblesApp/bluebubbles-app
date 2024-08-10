@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
+import 'package:logger/logger.dart';
 import 'package:universal_io/io.dart';
 
 class Settings {
@@ -142,6 +143,9 @@ class Settings {
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
   final RxDouble windowEffectCustomOpacityLight = 0.5.obs;
   final RxDouble windowEffectCustomOpacityDark = 0.5.obs;
+
+  // Troubleshooting settings
+  final Rx<Level> logLevel = Level.info.obs;
 
   // Notification actions
   final RxList<int> selectedActionIndices = Platform.isWindows ? [0, 1, 2, 3, 4].obs : [0, 1, 2].obs;
@@ -351,6 +355,7 @@ class Settings {
       'windowEffectCustomOpacityLight': windowEffectCustomOpacityLight.value,
       'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
       'useWindowsAccent': useWindowsAccent.value,
+      'logLevel': logLevel.value.index,
     };
     if (includeAll) {
       map.addAll({
@@ -486,6 +491,7 @@ class Settings {
     ss.settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     ss.settings.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
+    ss.settings.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     ss.settings.save();
 
     eventDispatcher.emit("theme-update", null);
@@ -620,6 +626,7 @@ class Settings {
     s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
+    s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     return s;
   }
 

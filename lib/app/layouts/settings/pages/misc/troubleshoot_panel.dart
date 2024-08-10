@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/settings/pages/misc/live_logging_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -119,6 +120,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
+                  const LogLevelSelector(),
                   SettingsTile(
                     title: "Live Logging",
                     subtitle: "A live view of the logs. Useful for debugging issues.",
@@ -181,6 +183,8 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     onTap: () async {
                       Logger.clearLogs();
                       showSnackbar("Logs Cleared", "All logs have been deleted.");
+                      logFileCount.value = 0;
+                      logFileSize.value = 0;
                     }
                   ),
                   if (kIsDesktop)

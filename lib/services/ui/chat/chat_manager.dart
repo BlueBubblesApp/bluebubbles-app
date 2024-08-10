@@ -69,8 +69,6 @@ class ChatManager extends GetxService {
   bool isChatActive(String guid) => (getChatController(guid)?.isActive ?? false) && (getChatController(guid)?.isAlive ?? false);
 
   ChatLifecycleManager createChatController(Chat chat, {active = false}) {
-    Logger.debug('Creating chat controller for ${chat.guid} (${chat.displayName})');
-  
     // If a chat is passed, get the chat and set it be active and make sure it's stored
     ChatLifecycleManager controller = getChatController(chat.guid) ?? ChatLifecycleManager(chat);
     _chatControllers[chat.guid] = controller;
