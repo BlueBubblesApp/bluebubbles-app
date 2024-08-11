@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -112,13 +113,35 @@ class MediaMetadata {
   Size? size;
   String? url;
 
-  factory MediaMetadata.fromJson(Map<String, dynamic> json) => MediaMetadata(
-    size: json["size"] == null ? Size.zero : Size(double.parse(json["size"].split(",").first.toString().numericOnly()), double.parse(json["size"].split(",").last.toString().numericOnly())),
-    url: json["URL"]?["NS.relative"],
-  );
+  factory MediaMetadata.fromJson(Map<String, dynamic> json) {
+    Size size = Size.zero;
+
+    // This fixes the issue where the size is a string representation of a Size object
+    if (json["size"] == null || json["size"] == "Instance of 'Size'") {
+      return MediaMetadata(
+        size: size,
+        url: json["URL"]?["NS.relative"],
+      );
+    }
+
+    if (json["size"] is String && json["size"].contains(",")) {
+      size = Size(double.parse(json["size"].split(",").first.toString().numericOnly()), double.parse(json["size"].split(",").last.toString().numericOnly()));
+    } else if (json["size"] is Map) {
+      size = Size(double.parse(json["size"]["width"].toString().numericOnly()), double.parse(json["size"]["height"].toString().numericOnly()));
+    } else if (json["size"] is Size) {
+      size = json['size'];
+    } else {
+      Logger.warn("Failed to parse media metadata size: ${json["size"].toString()}");
+    }
+
+    return MediaMetadata(
+      size: size,
+      url: json["URL"]?["NS.relative"],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
-    "size": size.toString(),
+    "size": (size == null) ? "0,0" : "${size!.width},${size!.height}",
     "URL": {
       "NS.relative": url,
     },
