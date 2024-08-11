@@ -226,10 +226,16 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                  if (!kIsWeb)
-                    const SettingsSubtitle(
-                      subtitle: "Note: Can result in degraded performance depending on how many unread messages there are.",
-                    ),
+                  Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        ss.settings.hideNamesForReactions.value = val;
+                        ss.settings.saveOne("hideNamesForReactions");
+                      },
+                      initialVal: ss.settings.hideNamesForReactions.value,
+                      title: "Hide Names in Reaction Details",
+                      subtitle: "Enable this to hide names under participant avatars when you view a message's reactions",
+                      backgroundColor: tileColor,
+                    )),
                 ],
               ),
               if (!kIsWeb)

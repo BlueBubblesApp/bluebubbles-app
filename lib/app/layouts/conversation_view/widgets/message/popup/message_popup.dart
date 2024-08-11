@@ -1347,14 +1347,19 @@ class ReactionDetails extends StatelessWidget {
                         fontSize: 22,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        message.isFromMe! ? ss.settings.userName.value : (message.handle?.displayName ?? "Unknown"),
-                        style: context.theme.textTheme.bodySmall!
-                            .copyWith(color: context.theme.colorScheme.properOnSurface),
+                    if (!ss.settings.hideNamesForReactions.value)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          message.isFromMe! ? ss.settings.userName.value : (message.handle?.displayName ?? "Unknown"),
+                          style: context.theme.textTheme.bodySmall!
+                              .copyWith(color: context.theme.colorScheme.properOnSurface),
+                        ),
                       ),
-                    ),
+                    if (ss.settings.hideNamesForReactions.value)
+                      const SizedBox(
+                        height: 8,
+                      ),
                     Container(
                       height: 28,
                       width: 28,

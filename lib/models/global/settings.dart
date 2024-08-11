@@ -87,6 +87,7 @@ class Settings {
   final RxBool scrollToLastUnread = false.obs;
   final RxString userName = "You".obs;
   final RxnString userAvatarPath = RxnString();
+  final RxBool hideNamesForReactions = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -356,6 +357,7 @@ class Settings {
       'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
       'useWindowsAccent': useWindowsAccent.value,
       'logLevel': logLevel.value.index,
+      'hideNamesForReactions': hideNamesForReactions.value,
     };
     if (includeAll) {
       map.addAll({
@@ -492,6 +494,7 @@ class Settings {
     ss.settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     ss.settings.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     ss.settings.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
+    ss.settings.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
     ss.settings.save();
 
     eventDispatcher.emit("theme-update", null);
@@ -627,6 +630,7 @@ class Settings {
     s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
+    s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
     return s;
   }
 
