@@ -790,6 +790,8 @@ class Message {
     return Indicator.NONE;
   }
 
+  bool get hasAudioTranscript => attributedBody.any((i) => i.runs.any((e) => e.attributes?.audioTranscript != null));
+
   bool showTail(Message? newer) {
     // if there is no newer, or if the newer is a different sender
     if (newer == null || !sameSender(newer) || newer.isGroupEvent) return true;
