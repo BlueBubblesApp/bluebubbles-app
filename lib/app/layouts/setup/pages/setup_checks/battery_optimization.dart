@@ -1,4 +1,5 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/material.dart';
@@ -55,11 +56,11 @@ class BatteryOptimizationCheck extends StatelessWidget {
                       minimumSize: MaterialStateProperty.all(const Size(30, 30)),
                     ),
                     onPressed: () async {
-                      bool? isDisabled =
-                      await DisableBatteryOptimization.isAllBatteryOptimizationDisabled;
-                      if (isDisabled == null || !isDisabled) {
-                        isDisabled = await DisableBatteryOptimization
-                            .showDisableBatteryOptimizationSettings();
+                      final optimizationsDisabled = await disableBatteryOptimizations();
+                      if (optimizationsDisabled) {
+                        showSnackbar("Success", "You've successfully disabled battery optimization for BlueBubbles");
+                      } else {
+                        showSnackbar("Error", "Battery optimizations were not disabled. Please try again.");
                       }
                     },
                     child: Shimmer.fromColors(

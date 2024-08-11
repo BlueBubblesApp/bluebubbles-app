@@ -2,6 +2,7 @@ import 'package:bluebubbles/helpers/backend/foreground_service_helpers.dart';
 import 'package:bluebubbles/helpers/network/network_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 
 Future<bool> saveNewServerUrl(
   String newServerUrl,
@@ -54,4 +55,18 @@ Future<void> clearServerUrl(
       Logger.error("Failed to restart foreground service: $e");
     });
   }
+}
+
+/// Prompts the user to disable battery optimizations for the app
+/// 
+/// Returns true if the user has disabled battery optimizations
+Future<bool> disableBatteryOptimizations() async {
+  bool? isDisabled = await DisableBatteryOptimization.isAllBatteryOptimizationDisabled;
+
+  // If battery optomizations are already disabled, return true
+  if (isDisabled == true) return true;
+
+  // If optimizations are not disabled, prompt the user to disable them
+  isDisabled = await DisableBatteryOptimization.showDisableBatteryOptimizationSettings();
+  return isDisabled ?? false;
 }
