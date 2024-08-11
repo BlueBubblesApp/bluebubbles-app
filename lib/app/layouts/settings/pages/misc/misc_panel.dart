@@ -168,10 +168,10 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                               ss.settings.keepAppAlive.value = val;
                               await ss.saveSettings(ss.settings);
 
+                              // We don't need to start the service here because it will be started
+                              // when the app is inactive.
                               if (!val) {
                                 await mcs.invokeMethod("stop-foreground-service");
-                              } else {
-                                await mcs.invokeMethod("start-foreground-service");
                               }
                             },
                             initialVal: ss.settings.keepAppAlive.value,
