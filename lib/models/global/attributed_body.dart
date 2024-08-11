@@ -46,21 +46,25 @@ class Attributes {
     this.messagePart,
     this.attachmentGuid,
     this.mention,
+    this.audioTranscript
   });
 
   final int? messagePart;
   final String? attachmentGuid;
   final String? mention;
+  final String? audioTranscript;
 
   factory Attributes.fromMap(Map<String, dynamic> json) => Attributes(
     messagePart: json["__kIMMessagePartAttributeName"],
     attachmentGuid: json["__kIMFileTransferGUIDAttributeName"],
     mention: json["__kIMMentionConfirmedMention"],
+    audioTranscript: json["IMAudioTranscription"]
   );
 
   Map<String, dynamic> toMap() => {
     "__kIMMessagePartAttributeName": messagePart,
     "__kIMFileTransferGUIDAttributeName": attachmentGuid,
     "__kIMMentionConfirmedMention": mention,
+    "IMAudioTranscription": audioTranscript
   };
 }
