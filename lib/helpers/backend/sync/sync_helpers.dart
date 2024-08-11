@@ -1,5 +1,6 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 
 // UNUSED METHODS
@@ -169,21 +170,47 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
     }
   }
 
-  // Return a list of the inserted/existing messages
-  final query2 = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
-  List<Message> syncedMessages = query2.find().toList();
+  matchChats() {
+    // Return a list of the inserted/existing messages
+    final query2 = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
+    List<Message> syncedMessages = query2.find().toList();
 
-  // Insert the real ID & chat
-  for (var i = 0; i < messages.length; i++) {
-    Message? synced = syncedMessages.firstWhereOrNull((e) => e.guid == messages[i].guid);
-    if (synced == null) continue;
+    // Insert the real ID & chat
+    for (var i = 0; i < messages.length; i++) {
+      Message? synced = syncedMessages.firstWhereOrNull((e) => e.guid == messages[i].guid);
+      if (synced == null) continue;
 
-    messages[i] = Message.merge(messages[i], synced);
-    messages[i].chat.target = c;
+      messages[i] = Message.merge(messages[i], synced);
+      messages[i].chat.target = c;
+    }
+
+    // Apply the chats
+    messageBox.putMany(messages, mode: PutMode.update);
+  }
+    
+  // Try the matchChats function 3 times, or until it succeeds
+  int tries = 0;
+  bool success = false;
+  dynamic lastError;
+  StackTrace? stackTrace;
+  while (tries < 3) {
+    try {
+      matchChats();
+      success = true;
+      break;
+    } catch (ex, stack) {
+      lastError = ex;
+      stackTrace = stack;
+      tries += 1;
+      Logger.warn("Failed to match messages to chats, retrying... (Attempt $tries)", error: ex);
+    }
   }
 
-  // Apply the chats
-  messageBox.putMany(messages, mode: PutMode.update);
+  if (!success) {
+    Logger.error("Failed to match messages to chats after 3 attempts, skipping...", error: lastError, trace: stackTrace);
+  } else {
+    Logger.debug("Successfully matched messages to chats after ${tries + 1} attempts!");
+  }
 
   return messages;
 }
