@@ -281,6 +281,10 @@ class Message {
   DateTime? get dateDelivered => _dateDelivered.value;
   set dateDelivered(DateTime? d) => _dateDelivered.value = d;
 
+  final RxBool _isDelivered = RxBool(false);
+  bool get isDelivered => _isDelivered.value;
+  set isDelivered(bool b) => _isDelivered.value = b;
+
   final Rxn<DateTime> _dateEdited = Rxn<DateTime>();
   DateTime? get dateEdited => _dateEdited.value;
   set dateEdited(DateTime? d) => _dateEdited.value = d;
@@ -321,6 +325,7 @@ class Message {
     this.dateCreated,
     DateTime? dateRead,
     DateTime? dateDelivered,
+    bool? isDelievered,
     this.isFromMe = true,
     this.hasDdResults = false,
     this.datePlayed,
@@ -354,6 +359,7 @@ class Message {
       if (dateRead != null) _dateRead.value = dateRead;
       if (dateDelivered != null) _dateDelivered.value = dateDelivered;
       if (dateEdited != null) _dateEdited.value = dateEdited;
+      if (isDelievered != null) _isDelivered.value = isDelievered;
       if (attachments.isEmpty) attachments = [];
       if (associatedMessages.isEmpty) associatedMessages = [];
       if (attributedBody.isEmpty) attributedBody = [];
@@ -413,6 +419,7 @@ class Message {
       dateCreated: parseDate(json["dateCreated"]),
       dateRead: parseDate(json["dateRead"]),
       dateDelivered: parseDate(json["dateDelivered"]),
+      isDelievered: json["isDelivered"] ?? false,
       isFromMe: json['isFromMe'] == true,
       hasDdResults: json['hasDdResults'] == true,
       datePlayed: parseDate(json["datePlayed"]),
@@ -564,7 +571,9 @@ class Message {
     if (newMessage.text != null) {
       existing.text = newMessage.text;
     }
+    
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
+    existing._isDelivered.value = newMessage._isDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
     existing._dateEdited.value = newMessage._dateEdited.value ?? existing._dateEdited.value;
     existing.attributedBody = newMessage.attributedBody.isNotEmpty ? newMessage.attributedBody : existing.attributedBody;
@@ -687,6 +696,7 @@ class Message {
   /// This is purely because some Macs incorrectly report the dateCreated time
   static int sort(Message a, Message b, {bool descending = true}) {
     late DateTime aDateToUse;
+
     if (a.dateDelivered == null) {
       aDateToUse = a.dateCreated!;
     } else {
@@ -785,6 +795,7 @@ class Message {
   Indicator get indicatorToShow {
     if (!isFromMe!) return Indicator.NONE;
     if (dateRead != null) return Indicator.READ;
+    if (isDelivered) return Indicator.DELIVERED;
     if (dateDelivered != null) return Indicator.DELIVERED;
     if (dateCreated != null) return Indicator.SENT;
     return Indicator.NONE;
@@ -976,7 +987,12 @@ class Message {
       existing._dateDelivered.value = newMessage.dateDelivered;
     }
 
-    // Update date delivered
+    // Update is delivered
+    if (existing._isDelivered.value != newMessage._isDelivered.value) {
+      existing._isDelivered.value = newMessage._isDelivered.value;
+    }
+
+    // Update date read
     if ((existing._dateRead.value == null && newMessage._dateRead.value != null) ||
         (existing._dateRead.value != null &&
             newMessage._dateRead.value != null &&
@@ -1075,10 +1091,28 @@ class Message {
     return existing;
   }
 
+  String getLastUpdate() {
+    if (dateEdited != null) {
+      return "Edited at $dateEdited";
+    } else if (datePlayed != null) {
+      return "Played at $datePlayed";
+    } else if (dateRead != null) {
+      return "Read at $dateRead";
+    } else if (dateDelivered != null) {
+      return "Delivered at $dateDelivered";
+    } else if (isDelivered) {
+      return "Delivered";
+    } else {
+      return "Sent at $dateCreated";
+    }
+  }
+
   bool isNewerThan(Message other) {
     // Check null dates in order of what should be filled in first -> last
     if (dateCreated == null && other.dateCreated != null) return false;
     if (dateCreated != null && other.dateCreated == null) return true;
+    if (!isDelivered && other.isDelivered) return false;
+    if (isDelivered && !other.isDelivered) return true;
     if (dateDelivered == null && other.dateDelivered != null) return false;
     if (dateDelivered != null && other.dateDelivered == null) return true;
     if (dateRead == null && other.dateRead != null) return false;
@@ -1119,6 +1153,7 @@ class Message {
       "dateCreated": dateCreated?.millisecondsSinceEpoch,
       "dateRead": _dateRead.value?.millisecondsSinceEpoch,
       "dateDelivered":  _dateDelivered.value?.millisecondsSinceEpoch,
+      "isDelivered": _isDelivered.value,
       "isFromMe": isFromMe!,
       "hasDdResults": hasDdResults!,
       "datePlayed": datePlayed?.millisecondsSinceEpoch,

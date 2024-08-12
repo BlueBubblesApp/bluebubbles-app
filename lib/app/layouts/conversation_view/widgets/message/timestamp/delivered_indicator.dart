@@ -53,12 +53,13 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     return false;
   }
 
-  List<InlineSpan> buildTwoPiece(String action, String date) {
+  List<InlineSpan> buildTwoPiece(String action, String? date) {
     return [
       TextSpan(text: "$action ",
         style: context.theme.textTheme.labelSmall!.copyWith(fontWeight: FontWeight.w600, color: context.theme.colorScheme.outline),),
-      TextSpan(text: date,
-        style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal))
+      if (date != null)
+        TextSpan(text: date,
+          style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal))
     ];
   }
 
@@ -70,7 +71,9 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     } else if (message.dateRead != null) {
       return buildTwoPiece("Read", buildDate(message.dateRead));
     } else if (message.dateDelivered != null) {
-      return buildTwoPiece("Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}", ss.settings.showDeliveryTimestamps.value || !iOS || widget.forceShow ? buildDate(message.dateDelivered) : "");
+      return buildTwoPiece("Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}", ss.settings.showDeliveryTimestamps.value || !iOS || widget.forceShow ? buildDate(message.dateDelivered) : null);
+    } else if (message.isDelivered) {
+      return buildTwoPiece("Delivered", null);
     } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
       return buildTwoPiece("Sending...", "");
     } else if (widget.forceShow) {

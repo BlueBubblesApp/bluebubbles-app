@@ -295,7 +295,7 @@ class ActionHandler extends GetxService {
         return await handleNewMessage(c, m, tempGuid, checkExisting: false);
       }
     }
-    Logger.info("Updated message: [${m.text}] - for chat [${c.guid}]", tag: "ActionHandler");
+    Logger.info("Updated message: [${m.text}] ${m.getLastUpdate().toLowerCase()} - for chat [${c.guid}]", tag: "ActionHandler");
     // update any attachments
     for (Attachment? a in m.attachments) {
       if (a == null) continue;
