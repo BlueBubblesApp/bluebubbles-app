@@ -64,6 +64,14 @@ class OtherFile extends StatelessWidget {
               showSnackbar('Error', "No handler for this file type! Using share menu instead.");
               await Future.delayed(const Duration(seconds: 1));
               Share.file(file.name, file.path!);
+            } else if (res.type == ResultType.error) {
+              showSnackbar('Error', res.message);
+            } else if (res.type == ResultType.fileNotFound) {
+              showSnackbar('Not Found', "File not found at path: ${file.path}");
+            } else if (res.type == ResultType.permissionDenied) {
+              showSnackbar('Permission Denied', "BlueBubbles does not have access to this file! Using share menu instead.");
+              await Future.delayed(const Duration(seconds: 1));
+              Share.file(file.name, file.path!);
             }
           } catch (ex) {
             Logger.error(ex);
