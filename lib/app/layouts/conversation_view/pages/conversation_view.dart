@@ -20,11 +20,13 @@ class ConversationView extends StatefulWidget {
     required this.chat,
     this.customService,
     this.fromChatCreator = false,
+    this.onInit,
   });
 
   final Chat chat;
   final MessagesService? customService;
   final bool fromChatCreator;
+  final void Function()? onInit;
 
   @override
   ConversationViewState createState() => ConversationViewState();
@@ -41,6 +43,8 @@ class ConversationViewState extends OptimizedState<ConversationView> {
     controller.fromChatCreator = widget.fromChatCreator;
     cm.setActiveChatSync(chat);
     cm.activeChat!.controller = controller;
+
+    if (widget.onInit != null) widget.onInit!();
   }
 
   @override

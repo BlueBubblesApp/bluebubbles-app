@@ -157,6 +157,8 @@ class IntentsService extends GetxService {
   }
 
   Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
+    Logger.info("Handling open chat intent with guid: $guid", tag: "IntentsService");
+
     if (guid == null) {
       await uiStartup.future;
       ns.pushAndRemoveUntil(
@@ -188,26 +190,31 @@ class IntentsService extends GetxService {
         ),
       );
     } else {
+      Logger.info("Opening existing chat", tag: "IntentsService");
       final chat = Chat.findOne(guid: guid);
-      if (chat == null) return;
+      if (chat == null) {
+        Logger.debug("Chat not found with guid: $guid", tag: "IntentsService");
+        return;
+      }
+
       bool chatIsOpen = cm.activeChat?.chat.guid == guid;
       if (!chatIsOpen) {
         await uiStartup.future;
-        ns.pushAndRemoveUntil(
+        await ns.pushAndRemoveUntil(
           Get.context!,
           ConversationView(
             chat: chat,
+            onInit: () {
+              if (attachments.isNotEmpty) {
+                cvc(chat).pickedAttachments.value = attachments;
+              }
+              if (text != null && text.isNotEmpty) {
+                cvc(chat).textController.text = text;
+              }
+            },
           ),
           (route) => route.isFirst,
         );
-        // wait for controller to be initialized
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-      if (attachments.isNotEmpty) {
-        cvc(chat).pickedAttachments.value = attachments;
-      }
-      if (text != null && text.isNotEmpty) {
-        cvc(chat).textController.text = text;
       }
     }
   }
