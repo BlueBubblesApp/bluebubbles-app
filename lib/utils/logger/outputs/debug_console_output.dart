@@ -29,8 +29,6 @@ class DebugConsoleOutput extends LogOutput {
           traceLines = traceLines.sublist(5);
         }
 
-        // If there is a rendering error, we want the entire stack trace
-        traceLines = (traceLines.length > 5 && !lines[3].contains("Rendering Error:")) ? traceLines.sublist(0, 5) : traceLines;
         traceStr = traceLines.map((e) => '$colorPrefix| $e').join('\n');
 
         // Insert the trace into the box
