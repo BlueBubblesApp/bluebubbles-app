@@ -25,10 +25,6 @@ class DebugConsoleOutput extends LogOutput {
         // we need to omit the first 5 lines of the trace, as they are
         // part of the logger itself.
         List<String> traceLines = traceStr.split('\n').where((txt) => txt != '<asynchronous suspension>').toList();
-        if (!hasTrace) {
-          traceLines = traceLines.sublist(5);
-        }
-
         traceStr = traceLines.map((e) => '$colorPrefix| $e').join('\n');
 
         // Insert the trace into the box
