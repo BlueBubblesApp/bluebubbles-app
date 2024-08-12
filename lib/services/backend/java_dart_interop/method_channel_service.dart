@@ -86,7 +86,7 @@ class MethodChannelService extends GetxService {
         return true;
       case "updated-message":
         await storeStartup.future;
-        Logger.info("Received updated message from FCM");
+        Logger.info("Received updated message from MethodChannel");
 
         // The socket will handle this event if the app is alive
         if (ls.isAlive && socket.socket.connected) {
@@ -131,8 +131,16 @@ class MethodChannelService extends GetxService {
       case "participant-added":
       case "participant-left":
         await storeStartup.future;
+        Logger.info("Received ${call.method} from MethodChannel");
+
+        // The socket will handle this event if the app is alive
+        if (ls.isAlive && socket.socket.connected) {
+          Logger.debug("App is alive, ignoring updated message...");
+          return true;
+        }
+
         try {
-          Logger.info("Received ${call.method} from FCM");
+          
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
@@ -147,8 +155,15 @@ class MethodChannelService extends GetxService {
         return true;
       case "group-icon-changed":
         await storeStartup.future;
+        Logger.info("Received group icon change from MethodChannel");
+
+        // The socket will handle this event if the app is alive
+        if (ls.isAlive && socket.socket.connected) {
+          Logger.debug("App is alive, ignoring updated message...");
+          return true;
+        }
+
         try {
-          Logger.info("Received group icon change from FCM");
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
