@@ -6,6 +6,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/share.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -58,7 +59,12 @@ class OtherFile extends StatelessWidget {
           launchUrl(Uri.file(_file.path));
         } else {
           try {
-            await OpenFilex.open("${fs.appDocDir.path}/attachments/${attachment.guid!}/${basename(file.path!)}");
+            final res = await OpenFilex.open("${fs.appDocDir.path}/attachments/${attachment.guid!}/${basename(file.path!)}");
+            if (res.type == ResultType.noAppToOpen) {
+              showSnackbar('Error', "No handler for this file type! Using share menu instead.");
+              await Future.delayed(const Duration(seconds: 1));
+              Share.file(file.name, file.path!);
+            }
           } catch (ex) {
             Logger.error(ex);
             showSnackbar('Error', "No handler for this file type!");
