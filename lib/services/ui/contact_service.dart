@@ -173,11 +173,7 @@ class ContactsService extends GetxService {
       // get avatars
       startTime = DateTime.now().millisecondsSinceEpoch;
       for (Contact c in _contacts) {
-        try {
-          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
-        } catch (_) {
-          c.avatar = await FastContacts.getContactImage(c.id);
-        }
+        c.avatar = await getContactAvatar(c.id);
       }
 
       endTime = DateTime.now().millisecondsSinceEpoch;
@@ -185,6 +181,26 @@ class ContactsService extends GetxService {
     }
 
     return _contacts;
+  }
+
+  Future<Uint8List?> getContactAvatar(String id) async {
+    Uint8List? avatar;
+
+    try {
+      avatar = await FastContacts.getContactImage(id, size: ContactImageSize.fullSize);
+    } catch (e) {
+      Logger.warn("Failed to get full size avatar for ID, $id: $e");
+    }
+
+    if (avatar == null) {
+      try {
+        avatar = await FastContacts.getContactImage(id);
+      } catch (e) {
+        Logger.warn("Failed to get small size avatar for ID, $id: $e");
+      }
+    }
+
+    return avatar;
   }
 
   void completeContactsRefresh(List<Contact> refreshedContacts, {List<List<int>>? reloadUI}) {
