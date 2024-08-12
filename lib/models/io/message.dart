@@ -1075,6 +1075,36 @@ class Message {
     return existing;
   }
 
+  bool isNewerThan(Message other) {
+    // Check null dates in order of what should be filled in first -> last
+    if (dateCreated == null && other.dateCreated != null) return false;
+    if (dateCreated != null && other.dateCreated == null) return true;
+    if (dateDelivered == null && other.dateDelivered != null) return false;
+    if (dateDelivered != null && other.dateDelivered == null) return true;
+    if (dateRead == null && other.dateRead != null) return false;
+    if (dateRead != null && other.dateRead == null) return true;
+    if (datePlayed == null && other.datePlayed != null) return false;
+    if (datePlayed != null && other.datePlayed == null) return true;
+    if (dateEdited == null && other.dateEdited != null) return false;
+    if (dateEdited != null && other.dateEdited == null) return true;
+
+    // Once we verify that all aren't null, we can start comparing dates.
+    // Compare the dates in the opposite order of what should be filled in last -> first
+    if (dateEdited != null && other.dateEdited != null) {
+      return dateEdited!.millisecondsSinceEpoch > other.dateEdited!.millisecondsSinceEpoch;
+    } else if (datePlayed != null && other.datePlayed != null) {
+      return datePlayed!.millisecondsSinceEpoch > other.datePlayed!.millisecondsSinceEpoch;
+    } else if (dateRead != null && other.dateRead != null) {
+      return dateRead!.millisecondsSinceEpoch > other.dateRead!.millisecondsSinceEpoch;
+    } else if (dateDelivered != null && other.dateDelivered != null) {
+      return dateDelivered!.millisecondsSinceEpoch > other.dateDelivered!.millisecondsSinceEpoch;
+    } else if (dateCreated != null && other.dateCreated != null) {
+      return dateCreated!.millisecondsSinceEpoch > other.dateCreated!.millisecondsSinceEpoch;
+    }
+
+    return false;
+  }
+
   Map<String, dynamic> toMap({bool includeObjects = false}) {
     final map = {
       "ROWID": id,
