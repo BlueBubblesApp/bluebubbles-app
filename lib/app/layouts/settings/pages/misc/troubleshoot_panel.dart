@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/settings/pages/misc/live_logging_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -165,11 +166,26 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     },
                     trailing: nextIcon,
                   ),
+                  SettingsTile(
+                    title: "View Latest Log",
+                    subtitle: "View the latest log file. Useful for debugging issues, in app.",
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.doc_append,
+                      materialIcon: Icons.document_scanner_rounded
+                    ),
+                    onTap: () {
+                      ns.pushSettings(
+                        context,
+                        LoggingPanel(),
+                      );
+                    },
+                    trailing: nextIcon,
+                  ),
                   if (Platform.isAndroid)
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
-                          iosIcon: CupertinoIcons.doc,
-                          materialIcon: Icons.file_open,
+                          iosIcon: CupertinoIcons.share_up,
+                          materialIcon: Icons.share
                         ),
                         title: "Export / Share Logs",
                         subtitle:

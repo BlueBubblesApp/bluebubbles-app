@@ -32,14 +32,15 @@ class BaseLogger extends GetxService {
   LoggerFactory.Logger _logger = LoggerFactory.Logger();
 
   final StreamController<String> logStream = StreamController<String>.broadcast();
+  final latestLogName = 'bluebubbles-latest.log';
 
   LoggerFactory.LogOutput get fileOutput {
     return LoggerFactory.AdvancedFileOutput(
       path: logDir,
-      maxFileSizeKB: 1024 * 10,  // 10MB
+      maxFileSizeKB: 1024,  // 1 MB
       maxRotatedFilesCount: 5,
       maxDelay: const Duration(seconds: 5),
-      latestFileName: 'bluebubbles-latest.log',
+      latestFileName: latestLogName,
       fileNameFormatter: (timestamp) {
         final now = DateTime.now();
         return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
@@ -195,6 +196,19 @@ class BaseLogger extends GetxService {
     encoder.close();
 
     return zippedLogFile.path;
+  }
+
+  Future<List<String>> getLogs({maxLines = 1000}) async {
+    final Directory logDir = Directory(Logger.logDir);
+    if (!logDir.existsSync()) return [];
+
+    final List<FileSystemEntity> files = logDir.listSync();
+    final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(latestLogName)).toList();
+    if (logFiles.isEmpty) return [];
+
+    final File logFile = logFiles.first as File;
+    final List<String> lines = await logFile.readAsLines();
+    return lines.sublist(0, lines.length > maxLines ? maxLines : lines.length);
   }
 
   void clearLogs() {
