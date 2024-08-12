@@ -38,11 +38,7 @@ class OldThemesDialog extends StatelessWidget {
                   child: ListView.builder(
                     shrinkWrap: true,
                     itemCount: oldThemes.length,
-                    findChildIndexCallback: (key) {
-                      final valueKey = key as ValueKey<String>;
-                      final index = oldThemes.indexWhere((element) => element.name == valueKey.value);
-                      return index == -1 ? null : index;
-                    },
+                    findChildIndexCallback: (key) => findChildIndexByKey(oldThemes, key, (item) => item.name),
                     itemBuilder: (context, index) {
                       return ListTile(
                         key: ValueKey(oldThemes[index].name),
@@ -67,11 +63,7 @@ class OldThemesDialog extends StatelessWidget {
                                         child: ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: 4,
-                                          findChildIndexCallback: (key) {
-                                            final valueKey = key as ValueKey<String>;
-                                            final index = ThemeColors.Colors.reversed.toList().indexWhere((element) => element == valueKey.value);
-                                            return index == -1 ? null : index;
-                                          },
+                                          findChildIndexCallback: (key) => findChildIndexByKey(ThemeColors.Colors.toList(), key, (item) => item),
                                           itemBuilder: (context, index2) {
                                             final hex = oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex;
                                             return ListTile(

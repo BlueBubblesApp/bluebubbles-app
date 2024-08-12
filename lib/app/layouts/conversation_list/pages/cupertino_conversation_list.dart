@@ -109,11 +109,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                   ListView.builder(
                                     shrinkWrap: true,
                                     itemCount: _chats.length,
-                                    findChildIndexCallback: (key) {
-                                      final valueKey = key as ValueKey<String>;
-                                      final index = _chats.indexWhere((item) => item.guid == valueKey.value);
-                                      return index == -1 ? null : index;
-                                    },
+                                    findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
                                     itemBuilder: (context, index) {
                                       final chat = _chats[index];
                                       return Center(

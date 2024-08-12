@@ -389,11 +389,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
-                    findChildIndexCallback: (key) {
-                      final valueKey = key as ValueKey<String>;
-                      final index = devicesWithLocation.indexWhere((item) => item.address?.uniqueValue == valueKey.value);
-                      return index == -1 ? null : index;
-                    },
+                    findChildIndexCallback: (key) => findChildIndexByKey(devicesWithLocation, key, (item) => item.address?.uniqueValue),
                     itemBuilder: (context, i) {
                       final item = devicesWithLocation[i];
                       return ListTile(
@@ -485,11 +481,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
-                    findChildIndexCallback: (key) {
-                      final valueKey = key as ValueKey<String>;
-                      final index = itemsWithLocation.indexWhere((item) => item.address?.uniqueValue == valueKey.value);
-                      return index == -1 ? null : index;
-                    },
+                    findChildIndexCallback: (key) => findChildIndexByKey(itemsWithLocation, key, (item) => item.address?.uniqueValue),
                     itemBuilder: (context, i) {
                       final item = itemsWithLocation[i];
                       return ListTile(
@@ -683,11 +675,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
-                    findChildIndexCallback: (key) {
-                      final valueKey = key as ValueKey<String>;
-                      final index = friendsWithLocation.indexWhere((item) => item.handle?.uniqueAddressAndService == valueKey.value);
-                      return index == -1 ? null : index;
-                    },
+                    findChildIndexCallback: (key) => findChildIndexByKey(friendsWithLocation, key, (item) => item.handle?.uniqueAddressAndService),
                     itemBuilder: (context, i) {
                       final item = friendsWithLocation[i];
                       return ListTile(

@@ -662,3 +662,22 @@ extension VideoAspectRatio on VideoController {
     return _rect.width / _rect.height;
   }
 }
+
+int? findChildIndexByKey<T>(List<T> input, Key key, Function(T) getField) {
+  int index = -1;
+  if (key is UniqueKey) {
+    index = input.indexWhere((item) => getField(item) == key.toString());
+  } else if (key is ObjectKey) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  } else if (key is GlobalKey) {
+    index = input.indexWhere((item) => getField(item) == key.toString());
+  } else if (key is ValueKey<String>) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  } else if (key is ValueKey<int>) {
+    index = input.indexWhere((item) => getField(item) == key.value.toString());
+  } else if (key is ValueKey) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  }
+
+  return index == -1 ? null : index;
+}

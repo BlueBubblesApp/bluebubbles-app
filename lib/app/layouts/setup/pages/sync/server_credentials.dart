@@ -112,11 +112,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 child: ListView.builder(
                                   shrinkWrap: true,
                                   itemCount: usableProjects.length,
-                                  findChildIndexCallback: (key) {
-                                    final valueKey = key as ValueKey<String>;
-                                    final index = usableProjects.indexWhere((element) => element['projectId'] == valueKey.value);
-                                    return index == -1 ? null : index;
-                                  },
+                                  findChildIndexCallback: (key) => findChildIndexByKey(usableProjects, key, (item) => item['projectId']),
                                   itemBuilder: (context, index) {
                                     return Obx(() {
                                       if (!triedConnecting[index].value) {

@@ -194,11 +194,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                         child: ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
-                          findChildIndexCallback: (key) {
-                            final valueKey = key as ValueKey<String>;
-                            final index = settings.indexWhere((element) => element["name"] == valueKey.value);
-                            return index == -1 ? null : index;
-                          },
+                          findChildIndexCallback: (key) => findChildIndexByKey(settings, key, (item) => item["name"]),
                           itemBuilder: (context, index) {
                             final item = settings[index];
                             return ListTile(
@@ -619,11 +615,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                         child: ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
-                          findChildIndexCallback: (key) {
-                            final valueKey = key as ValueKey<String>;
-                            final index = themes.indexWhere((element) => element["name"] == valueKey.value);
-                            return index == -1 ? null : index;
-                          },
+                          findChildIndexCallback: (key) => findChildIndexByKey(themes, key, (item) => item['name']),
                           itemBuilder: (context, index) {
                             final item = themes[index];
                             final data = item["data"];

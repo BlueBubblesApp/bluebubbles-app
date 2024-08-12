@@ -80,11 +80,7 @@ class _MessageRemindersPanelState extends OptimizedState<MessageRemindersPanel> 
                     child: ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
-                      findChildIndexCallback: (key) {
-                        final valueKey = key as ValueKey<String>;
-                        final index = scheduled.indexWhere((element) => element.id.toString() == valueKey.value);
-                        return index == -1 ? null : index;
-                      },
+                      findChildIndexCallback: (key) => findChildIndexByKey(scheduled, key, (item) => item.id.toString()),
                       itemBuilder: (context, index) {
                         final item = scheduled[index];
                         return ListTile(

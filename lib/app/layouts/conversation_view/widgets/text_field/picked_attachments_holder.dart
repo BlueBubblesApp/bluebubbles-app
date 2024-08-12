@@ -124,11 +124,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                         controller: widget.controller!.emojiScrollController,
                         physics: ThemeSwitcher.getScrollPhysics(),
                         shrinkWrap: true,
-                        findChildIndexCallback: (key) {
-                          final valueKey = key as ValueKey<String>;
-                          final index = widget.controller!.emojiMatches.indexWhere((item) => item.shortName == valueKey.value);
-                          return index == -1 ? null : index;
-                        },
+                        findChildIndexCallback: (key) => findChildIndexByKey(widget.controller!.emojiMatches, key, (item) => item.shortName),
                         itemBuilder: (BuildContext context, int index) => Material(
                           key: ValueKey(widget.controller!.emojiMatches[index].shortName),
                           color: Colors.transparent,
@@ -201,11 +197,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                         controller: widget.controller!.emojiScrollController,
                         physics: ThemeSwitcher.getScrollPhysics(),
                         shrinkWrap: true,
-                        findChildIndexCallback: (key) {
-                          final valueKey = key as ValueKey<String>;
-                          final index = widget.controller!.mentionMatches.indexWhere((item) => item.address == valueKey.value);
-                          return index == -1 ? null : index;
-                        },
+                        findChildIndexCallback: (key) => findChildIndexByKey(widget.controller!.mentionMatches, key, (item) => item.address),
                         itemBuilder: (BuildContext context, int index) => Material(
                           key: ValueKey(widget.controller!.mentionMatches[index].address),
                           color: Colors.transparent,

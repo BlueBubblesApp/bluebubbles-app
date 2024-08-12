@@ -68,11 +68,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                                     child: ListView.builder(
                                       shrinkWrap: true,
                                       itemCount: chat.participants.length,
-                                      findChildIndexCallback: (key) {
-                                        final valueKey = key as ValueKey<String>;
-                                        final index = chat.participants.indexWhere((element) => element.address == valueKey.value);
-                                        return index == -1 ? null : index;
-                                      },
+                                      findChildIndexCallback: (key) => findChildIndexByKey(chat.participants, key, (item) => item.address),
                                       itemBuilder: (context, index) {
                                         return CheckboxListTile(
                                           key: ValueKey(chat.participants[index].address),

@@ -1327,11 +1327,7 @@ class ReactionDetails extends StatelessWidget {
               shrinkWrap: true,
               physics: ThemeSwitcher.getScrollPhysics(),
               scrollDirection: Axis.horizontal,
-              findChildIndexCallback: (key) {
-                final valueKey = key as ValueKey<String>;
-                final index = reactions.indexWhere((item) => item.guid == valueKey.value);
-                return index == -1 ? null : index;
-              },
+              findChildIndexCallback: (key) => findChildIndexByKey(reactions, key, (item) => item.guid),
               itemBuilder: (context, index) {
                 final message = reactions[index];
                 return Column(
