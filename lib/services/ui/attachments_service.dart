@@ -326,22 +326,33 @@ class AttachmentsService extends GetxService {
         originalFile = File("$filePath.jpg");
       } else {
         try {
-          final file = await FlutterImageCompress.compressAndGetFile(
-            filePath,
-            "$filePath.jpg",
-            format: CompressFormat.jpeg,
-            keepExif: true,
-            quality: 100,
-          );
-          if (file == null) {
-            Logger.error("Failed to compress HEIC!");
-            throw Exception();
+          if (onlyFetchData) {
+            return await FlutterImageCompress.compressWithFile(
+              filePath,
+              format: CompressFormat.jpeg,
+              keepExif: true,
+              quality: 100,
+            );
+          } else {
+            final file = await FlutterImageCompress.compressAndGetFile(
+              filePath,
+              "$filePath.jpg",
+              format: CompressFormat.jpeg,
+              keepExif: true,
+              quality: 100,
+            );
+
+            if (file == null) {
+              Logger.error("Failed to compress HEIC!");
+              throw Exception();
+            }
+  
+            originalFile = File("$filePath.jpg");
           }
-          if (onlyFetchData) return await file.readAsBytes();
-          originalFile = File("$filePath.jpg");
         } catch (_) {}
       }
     }
+
     if (attachment.mimeType!.contains('image/tif')) {
       if (await File("$filePath.jpg").exists()) {
         originalFile = File("$filePath.jpg");
