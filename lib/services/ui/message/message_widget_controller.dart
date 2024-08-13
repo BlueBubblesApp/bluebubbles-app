@@ -164,7 +164,7 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: e.isAttachment
+          attachments: e.isAttachment && (cvController?.chat != null || cm.activeChat != null)
               ? [
                   ms(cvController?.chat.guid ?? cm.activeChat!.chat.guid)
                           .struct
