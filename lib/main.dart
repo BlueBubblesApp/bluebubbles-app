@@ -473,7 +473,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       }
     },
     (dynamic error, StackTrace stackTrace) {
-      Logger.error("Unhandled Exception -> $error", trace: stackTrace);
+      Logger.error("Unhandled Exception", trace: stackTrace, error: error);
     }
   );
 }
