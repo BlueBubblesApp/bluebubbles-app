@@ -79,9 +79,7 @@ class MethodChannelService extends GetxService {
             }
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "updated-message":
@@ -121,9 +119,7 @@ class MethodChannelService extends GetxService {
             }
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "group-name-change":
@@ -148,9 +144,7 @@ class MethodChannelService extends GetxService {
             await ah.handleNewOrUpdatedChat(item.chat);
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "group-icon-changed":
@@ -174,9 +168,7 @@ class MethodChannelService extends GetxService {
             }
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "scheduled-message-error":
@@ -190,9 +182,7 @@ class MethodChannelService extends GetxService {
             await notif.createFailedToSend(chat, scheduled: true);
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "ReplyChat":
@@ -241,9 +231,7 @@ class MethodChannelService extends GetxService {
             }
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return false;
       case "chat-read-status-changed":
@@ -265,9 +253,7 @@ class MethodChannelService extends GetxService {
             return false;
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
       case "MediaColors":
         await storeStartup.future;
@@ -288,9 +274,7 @@ class MethodChannelService extends GetxService {
             await ActionHandler().handleIncomingFaceTimeCallLegacy(payload.data);
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "ft-call-status-changed":
@@ -304,9 +288,7 @@ class MethodChannelService extends GetxService {
             await ActionHandler().handleFaceTimeStatusChange(payload.data);
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "answer-facetime":
@@ -326,9 +308,7 @@ class MethodChannelService extends GetxService {
             Logger.warn("Aliases removed data empty or null");
           }
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
         return true;
       case "socket-event":
@@ -339,9 +319,7 @@ class MethodChannelService extends GetxService {
           final Map<String, dynamic> jsonData = jsonDecode(data['data']);
           await ah.handleSocketEvent(data['event'], jsonData, 'MethodChannel', useQueue: false);
         } catch (e, s) {
-          Logger.error(e);
-          Logger.error(s);
-          return Future.error(PlatformException(code: "500", message: e.toString()), s);
+          return Future.error(e, s);
         }
 
         return true;

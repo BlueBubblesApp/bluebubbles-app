@@ -202,7 +202,7 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
       lastError = ex;
       stackTrace = stack;
       tries += 1;
-      Logger.warn("Failed to match messages to chats, retrying... (Attempt $tries)", error: ex);
+      Logger.warn("Failed to match messages to chats, retrying... (Attempt $tries)", error: ex, trace: stackTrace);
     }
   }
 

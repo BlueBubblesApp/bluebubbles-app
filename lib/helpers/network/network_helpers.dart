@@ -58,9 +58,8 @@ Future<String> getDeviceName() async {
     if (items.isNotEmpty) {
       deviceName = items.join("_").toLowerCase().replaceAll(' ', '_');
     }
-  } catch (ex) {
-    Logger.error("Failed to get device name! Defaulting to 'bluebubbles-client'");
-    Logger.error(ex.toString());
+  } catch (ex, stack) {
+    Logger.error("Failed to get device name! Defaulting to 'bluebubbles-client'", error: ex, trace: stack);
   }
 
   return deviceName;

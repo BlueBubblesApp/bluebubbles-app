@@ -88,8 +88,8 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
         try {
           controller.mlKitParsedText["${message.guid!}-${part.part}"] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english)
               .annotateText(part.text!);
-        } catch (ex) {
-          Logger.warn('Failed to extract entities using mlkit! Error: ${ex.toString()}');
+        } catch (ex, stack) {
+          Logger.warn('Failed to extract entities using mlkit!', error: ex, trace: stack);
         }
       }
       final entities = controller.mlKitParsedText["${message.guid!}-${part.part}"] ?? [];

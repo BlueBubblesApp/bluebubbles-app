@@ -23,14 +23,14 @@ class NetworkTasks {
 
       try {
         ss.checkServerUpdate();
-      } catch (ex) {
-        Logger.warn("Failed to check for server update: ${ex.toString()}");
+      } catch (ex, stack) {
+        Logger.warn("Failed to check for server update!", error: ex, trace: stack);
       }
 
       try {
         ss.checkClientUpdate();
-      } catch (ex) {
-        Logger.warn("Failed to check for client update: ${ex.toString()}");
+      } catch (ex, stack) {
+        Logger.warn("Failed to check for client update!", error: ex, trace: stack);
       }
 
       // scan if server is on localhost

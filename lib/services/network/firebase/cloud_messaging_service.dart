@@ -81,10 +81,10 @@ class CloudMessagingService extends GetxService {
       // First, try to auth with FCM with the current data
       Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
       result = await mcs.invokeMethod('firebase-auth', ss.fcmData.toMap());
-    } on PlatformException catch (ex) {
+    } on PlatformException catch (ex, stack) {
       // Don't try to re-auth if device is de-Googled
       if (ex.toString().contains("Google Play Services is not available")) return;
-      Logger.error('Failed to perform initial FCM authentication: ${ex.toString()}', tag: 'FCM-Auth');
+      Logger.error('Failed to perform initial FCM authentication!', error: ex, trace: stack, tag: 'FCM-Auth');
 
       // If the first try fails, let's try again with new FCM data from the server
       Logger.info('Fetching FCM data from the server...', tag: 'FCM-Auth');
@@ -106,15 +106,14 @@ class CloudMessagingService extends GetxService {
           FCMData fcmData = FCMData.fromMap(fcmMeta);
           ss.saveFCMData(fcmData);
           result = await mcs.invokeMethod('firebase-auth', fcmData.toMap());
-        } on PlatformException catch (e) {
+        } on PlatformException catch (e, stack) {
           // If we fail a second time, error out
-          Logger.error("Failed to register with FCM: $e", tag: 'FCM-Auth');
+          Logger.error("Failed to register with FCM", error: e, trace: stack, tag: 'FCM-Auth');
           completer?.completeError(e);
           return;
         }
       } else {
-        Logger.error('Failed to register with FCM - API error ${response.statusCode}: ${response.data}',
-            tag: 'FCM-Auth');
+        Logger.error('Failed to register with FCM - API error ${response.statusCode}: ${response.data}', tag: 'FCM-Auth');
         completer?.completeError("API Error ${response.statusCode}");
         return;
       }

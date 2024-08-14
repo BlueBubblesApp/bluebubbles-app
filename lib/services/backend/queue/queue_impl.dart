@@ -55,8 +55,7 @@ abstract class Queue extends GetxService {
       });
       queued.completer?.complete();
     } catch (ex, stacktrace) {
-      Logger.error("Failed to handle queued item! $ex");
-      Logger.error(stacktrace.toString());
+      Logger.error("Failed to handle queued item!", error: ex, trace: stacktrace);
       queued.completer?.completeError(ex);
     }
 

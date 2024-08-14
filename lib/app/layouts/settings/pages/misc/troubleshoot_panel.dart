@@ -303,9 +303,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                             showSnackbar("Success",
                                 "Successfully re-synced handles! You may need to close and re-open the app for changes to take effect.");
                           } catch (ex, stacktrace) {
-                            Logger.error("Failed to reset contacts!");
-                            Logger.error(ex.toString());
-                            Logger.error(stacktrace.toString());
+                            Logger.error("Failed to reset contacts!", error: ex, trace: stacktrace);
 
                             showSnackbar("Failed to re-sync handles!",
                                 "Error: ${ex.toString()}");

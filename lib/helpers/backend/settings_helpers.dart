@@ -21,17 +21,15 @@ Future<bool> saveNewServerUrl(
 
     // Don't await because we don't care about the result
     if (tryRestartForegroundService) {
-      restartForegroundService().catchError((e) {
-        Logger.error("Failed to restart foreground service: $e");
-      });
+      restartForegroundService();
     }
     
     try {
       if (restartSocket) {
         socket.restartSocket();
       }
-    } catch (e) {
-      Logger.error("Failed to restart socket: $e");
+    } catch (e, stack) {
+      Logger.error("Failed to restart socket!", error: e, trace: stack);
     }
 
     return true;
@@ -51,9 +49,7 @@ Future<void> clearServerUrl(
 
   // Don't await because we don't care about the result
   if (tryRestartForegroundService) {
-    restartForegroundService().catchError((e) {
-      Logger.error("Failed to restart foreground service: $e");
-    });
+    restartForegroundService();
   }
 }
 

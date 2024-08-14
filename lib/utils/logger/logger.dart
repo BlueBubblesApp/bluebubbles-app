@@ -15,7 +15,9 @@ import 'package:logger/logger.dart' as LoggerFactory;
 import 'outputs/debug_console_output.dart';
 
 // ignore: non_constant_identifier_names
-BaseLogger Logger = Get.isRegistered<BaseLogger>() ? Get.find<BaseLogger>() : Get.put(BaseLogger());
+BaseLogger Logger = Get.isRegistered<BaseLogger>()
+    ? Get.find<BaseLogger>()
+    : Get.put(BaseLogger());
 
 enum LogLevel { INFO, WARN, ERROR, DEBUG, TRACE, FATAL }
 
@@ -31,28 +33,25 @@ const Map<Level, bool> defaultExcludeBoxes = {
 class BaseLogger extends GetxService {
   LoggerFactory.Logger _logger = LoggerFactory.Logger();
 
-  final StreamController<String> logStream = StreamController<String>.broadcast();
+  final StreamController<String> logStream =
+      StreamController<String>.broadcast();
   final latestLogName = 'bluebubbles-latest.log';
 
   LoggerFactory.LogOutput get fileOutput {
     return LoggerFactory.AdvancedFileOutput(
-      path: logDir,
-      maxFileSizeKB: 1024,  // 1 MB
-      maxRotatedFilesCount: 5,
-      maxDelay: const Duration(seconds: 5),
-      latestFileName: latestLogName,
-      fileNameFormatter: (timestamp) {
-        final now = DateTime.now();
-        return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
-      }
-    );
+        path: logDir,
+        maxFileSizeKB: 1024, // 1 MB
+        maxRotatedFilesCount: 5,
+        maxDelay: const Duration(seconds: 5),
+        latestFileName: latestLogName,
+        fileNameFormatter: (timestamp) {
+          final now = DateTime.now();
+          return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
+        });
   }
 
   LoggerFactory.LogOutput get defaultOutput {
-    return LoggerFactory.MultiOutput([
-      DebugConsoleOutput(),
-      fileOutput
-    ]);
+    return LoggerFactory.MultiOutput([DebugConsoleOutput(), fileOutput]);
   }
 
   LoggerFactory.LogFilter? _currentFilter;
@@ -124,7 +123,7 @@ class BaseLogger extends GetxService {
         currentLevel = ss.settings.logLevel.value;
       });
     }
-    
+
     // Add initial data to logStream
     logStream.sink.add("Logger initialized");
   }
@@ -134,14 +133,22 @@ class BaseLogger extends GetxService {
       filter: currentFilter,
       printer: LoggerFactory.PrettyPrinter(
         methodCount: 0, // Number of method calls to be displayed for any logs
-        errorMethodCount: 8, // Number of method calls if stacktrace is provided
+        errorMethodCount: null, // Unlimited
         lineLength: 120, // Width of the output
         colors: showColors, // Colorful log messages
         printEmojis: false, // Print an emoji for each log message
         // Should each log print contain a timestamp
-        dateTimeFormat: LoggerFactory.DateTimeFormat.dateAndTime,
+        dateTimeFormat: LoggerFactory.DateTimeFormat.none,
         excludeBox: excludeBoxes,
         noBoxingByDefault: true,
+        levelColors: {
+          Level.trace: AnsiColor.fg(AnsiColor.grey(0.25)),
+          Level.debug: AnsiColor.fg(AnsiColor.grey(0.5)),
+          Level.info: const AnsiColor.fg(12),
+          Level.warning: const AnsiColor.fg(208),
+          Level.error: const AnsiColor.fg(196),
+          Level.fatal: const AnsiColor.fg(199),
+        },
       ),
       output: currentOutput,
       level: currentLevel,
@@ -163,11 +170,8 @@ class BaseLogger extends GetxService {
   }
 
   void enableLiveLogging() {
-    _currentOutput = LoggerFactory.MultiOutput([
-      DebugConsoleOutput(),
-      fileOutput,
-      LogStreamOutput()
-    ]);
+    _currentOutput = LoggerFactory.MultiOutput(
+        [DebugConsoleOutput(), fileOutput, LogStreamOutput()]);
     _showColors = false;
     _logger = createLogger();
   }
@@ -181,11 +185,13 @@ class BaseLogger extends GetxService {
   String compressLogs() {
     final Directory logDir = Directory(Logger.logDir);
     final date = DateTime.now().toIso8601String().split('T').first;
-    final File zippedLogFile = File("${fs.appDocDir.path}/bluebubbles-logs-$date.zip");
+    final File zippedLogFile =
+        File("${fs.appDocDir.path}/bluebubbles-logs-$date.zip");
     if (zippedLogFile.existsSync()) zippedLogFile.deleteSync();
 
     final List<FileSystemEntity> files = logDir.listSync();
-    final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(".log")).toList();
+    final List<FileSystemEntity> logFiles =
+        files.where((file) => file.path.endsWith(".log")).toList();
     final List<String> logPaths = logFiles.map((file) => file.path).toList();
 
     final encoder = ZipFileEncoder();
@@ -203,7 +209,8 @@ class BaseLogger extends GetxService {
     if (!logDir.existsSync()) return [];
 
     final List<FileSystemEntity> files = logDir.listSync();
-    final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(latestLogName)).toList();
+    final List<FileSystemEntity> logFiles =
+        files.where((file) => file.path.endsWith(latestLogName)).toList();
     if (logFiles.isEmpty) return [];
 
     final File logFile = logFiles.first as File;
@@ -214,7 +221,7 @@ class BaseLogger extends GetxService {
   void clearLogs() {
     final Directory logDir = Directory(Logger.logDir);
     if (!logDir.existsSync()) return;
-    
+
     for (final file in logDir.listSync()) {
       if (file is File) {
         file.deleteSync();
@@ -222,15 +229,39 @@ class BaseLogger extends GetxService {
     }
   }
 
-  void info(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.i("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
+  void info(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
+      logger.i(
+          "${DateTime.now().toUtc().toIso8601String()} [INFO] [${tag ?? "BlueBubblesApp"}] $log",
+          error: error,
+          stackTrace: trace);
 
-  void warn(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.w("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
+  void warn(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
+      logger.w(
+          "${DateTime.now().toUtc().toIso8601String()} [WARN] [${tag ?? "BlueBubblesApp"}] $log",
+          error: error,
+          stackTrace: trace);
 
-  void debug(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.d("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
+  void debug(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
+      logger.d(
+          "${DateTime.now().toUtc().toIso8601String()} [DEBUG] [${tag ?? "BlueBubblesApp"}] $log",
+          error: error,
+          stackTrace: trace);
 
-  void error(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.e("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
+  void error(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
+      logger.e(
+          "${DateTime.now().toUtc().toIso8601String()} [ERROR] [${tag ?? "BlueBubblesApp"}] $log",
+          error: error,
+          stackTrace: trace);
 
-  void trace(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.t("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
+  void trace(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
+      logger.t(
+          "${DateTime.now().toUtc().toIso8601String()} [TRACE] [${tag ?? "BlueBubblesApp"}] $log",
+          error: error,
+          stackTrace: trace);
 
-  void fatal(dynamic log, {String? tag, Object? error, StackTrace? trace}) => logger.f("[${tag ?? "BlueBubblesApp"}] $log", error: error, stackTrace: trace);
+  void fatal(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
+      logger.f(
+          "${DateTime.now().toUtc().toIso8601String()} [FATAL] [${tag ?? "BlueBubblesApp"}] $log",
+          error: error,
+          stackTrace: trace);
 }

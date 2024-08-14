@@ -34,7 +34,7 @@ class IntentsService extends GetxService {
     sub = ReceiveIntent.receivedIntentStream.listen((Intent? intent) {
       handleIntent(intent);
     }, onError: (err) {
-      Logger.error("Failed to get intent! Error: ${err.toString()}");
+      Logger.error("Failed to get intent!", error: err);
     });
   }
 
@@ -160,7 +160,9 @@ class IntentsService extends GetxService {
     Logger.info("Handling open chat intent with guid: $guid", tag: "IntentsService");
 
     if (guid == null) {
+      Logger.debug("Awaiting UI startup...", tag: "IntentsService");
       await uiStartup.future;
+      Logger.debug("UI has completed startup. Pushing conversation route...", tag: "IntentsService");
       ns.pushAndRemoveUntil(
         Get.context!,
         ChatCreator(
@@ -198,8 +200,12 @@ class IntentsService extends GetxService {
       }
 
       bool chatIsOpen = cm.activeChat?.chat.guid == guid;
+      Logger.debug("Chat is open: $chatIsOpen", tag: "IntentsService");
+
       if (!chatIsOpen) {
+        Logger.debug("Awaiting UI startup...", tag: "IntentsService");
         await uiStartup.future;
+        Logger.debug("UI has completed startup. Pushing conversation route...", tag: "IntentsService");
         await ns.pushAndRemoveUntil(
           Get.context!,
           ConversationView(

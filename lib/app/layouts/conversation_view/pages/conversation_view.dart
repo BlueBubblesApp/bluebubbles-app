@@ -8,6 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.da
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/screen_effects_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,12 +40,18 @@ class ConversationViewState extends OptimizedState<ConversationView> {
 
   @override
   void initState() {
+    Logger.debug("Initializing Conversation View for ${chat.guid}");
+
     super.initState();
     controller.fromChatCreator = widget.fromChatCreator;
     cm.setActiveChatSync(chat);
     cm.activeChat!.controller = controller;
 
-    if (widget.onInit != null) widget.onInit!();
+    if (widget.onInit != null) {
+      Future.delayed(Duration.zero, widget.onInit!);
+    }
+
+    Logger.debug("Conversation View initialized for ${chat.guid}");
   }
 
   @override

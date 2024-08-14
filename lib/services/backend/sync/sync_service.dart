@@ -60,8 +60,8 @@ class SyncService extends GetxService {
       FlutterIsolate? isolate;
       try {
         isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, [port.sendPort, http.originOverride]);
-      } catch (e) {
-        Logger.error('Got error when opening isolate: $e');
+      } catch (e, stack) {
+        Logger.error('Got error when opening isolate!', error: e, trace: stack);
         port.close();
       }
       result = await completer.future;
@@ -75,11 +75,11 @@ class SyncService extends GetxService {
             var map = c.toMap();
             _contacts.add(map);
           }
-          http.createContact(_contacts).catchError((err) {
+          http.createContact(_contacts).catchError((err, stack) {
             if (err is Response) {
-              Logger.error(err.data["error"]["message"].toString());
+              Logger.error(err.data["error"]["message"].toString(), error: err, trace: stack);
             } else {
-              Logger.error(err.toString());
+              Logger.error("Failed to create contacts!", error: err, trace: stack);
             }
             return Response(requestOptions: RequestOptions(path: ''));
           });
@@ -119,8 +119,7 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     await incrementalSyncManager.start();
     chats.sort();
   } catch (ex, s) {
-    Logger.error('Incremental sync failed! Error: $ex');
-    Logger.error(s.toString());
+    Logger.error('Incremental sync failed!', error: ex, trace: s);
   }
   Logger.info('Starting contact refresh');
   try {
@@ -128,8 +127,8 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     Logger.info('Finished contact refresh, shouldRefresh $refreshedItems');
     port?.send(refreshedItems);
     return refreshedItems;
-  } catch (ex) {
-    Logger.error('Contacts refresh failed! Error: $ex');
+  } catch (ex, stack) {
+    Logger.error('Contacts refresh failed!', error: ex, trace: stack);
     port?.send([]);
     return [];
   }

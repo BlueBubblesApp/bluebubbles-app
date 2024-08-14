@@ -156,8 +156,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           refreshing2 = false;
         });
       } catch (e, s) {
-        Logger.error(e);
-        Logger.error(s);
+        Logger.error("Failed to parse FindMy Friends location data!", error: e, trace: s);
         setState(() {
           fetching2 = null;
           refreshing2 = false;
@@ -229,8 +228,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           refreshing = false;
         });
       } catch (e, s) {
-        Logger.error(e);
-        Logger.error(s);
+        Logger.error("Failed to parse FindMy Devices location data!", error: e, trace: s);
         setState(() {
           fetching = null;
           refreshing = false;

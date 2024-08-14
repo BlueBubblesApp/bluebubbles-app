@@ -34,8 +34,8 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
       if (metadata == null) {
         try {
           metadata = await MetadataHelper.fetchMetadata(message);
-        } catch (ex) {
-          Logger.error("Failed to fetch metadata! Error: ${ex.toString()}");
+        } catch (ex, stack) {
+          Logger.error("Failed to fetch metadata!", error: ex, trace: stack);
           return;
         }
         // If the data isn't empty, save/update it in the DB

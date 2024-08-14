@@ -665,11 +665,11 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         uploadingContacts.value = false;
                                         showSnackbar("Notice", "Successfully exported contacts to server");
                                       }
-                                    }).catchError((err) {
+                                    }).catchError((err, stack) {
                                       if (err is Response) {
-                                        Logger.error(err.data["error"]["message"].toString());
+                                        Logger.error(err.data["error"]["message"].toString(), error: err, trace: stack);
                                       } else {
-                                        Logger.error(err.toString());
+                                        Logger.error("Failed to create contact!", error: err, trace: stack);
                                       }
 
                                       closeDialog.call();

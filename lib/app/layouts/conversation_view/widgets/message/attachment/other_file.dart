@@ -74,7 +74,7 @@ class OtherFile extends StatelessWidget {
               Share.file(file.name, file.path!);
             }
           } catch (ex) {
-            Logger.error(ex);
+            Logger.error("Error opening file: ${file.path}", error: ex);
             showSnackbar('Error', "No handler for this file type!");
           }
         }

@@ -73,8 +73,8 @@ Future<String?> googleOAuth(BuildContext context) async {
         // error if account is not present
         throw Exception("No account!");
       }
-    } catch (e) {
-      Logger.error(e);
+    } catch (e, stack) {
+      Logger.error("Failed to sign in with Google (Android/Web)", error: e, trace: stack);
       return null;
     }
     // desktop implementation
@@ -98,8 +98,8 @@ Future<String?> googleOAuth(BuildContext context) async {
       if (token == null) {
         throw Exception("No access token!");
       }
-    } catch (e) {
-      Logger.error(e);
+    } catch (e, stack) {
+      Logger.error("Failed to sign in with Google (Desktop)", error: e, trace: stack);
       return null;
     }
   }

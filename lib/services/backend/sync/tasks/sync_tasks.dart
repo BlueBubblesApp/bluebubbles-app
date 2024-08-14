@@ -198,8 +198,8 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       for (Message m in syncedMessages) {
         try {
           messageBox.put(m);
-        } catch (e) {
-          Logger.error(e);
+        } catch (e, stack) {
+          Logger.error("Failed to put messages into database during bulk sync!", error: e, trace: stack);
         }
       }
       return syncedMessages;

@@ -415,8 +415,8 @@ Future<void> paintGroupAvatar({
     Uint8List? customAvatar;
     try {
       customAvatar = await clip(await File(chat.customAvatarPath!).readAsBytes(), size: size.toInt(), circle: true);
-    } catch (e) {
-      Logger.error(e);
+    } catch (e, stack) {
+      Logger.warn("Failed to load/clip custom avatar!", error: e, trace: stack);
     }
     if (customAvatar != null) {
       canvas.drawImage(await loadImage(customAvatar), const Offset(0, 0), Paint());

@@ -148,8 +148,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       http.handleFocusState(recipient.address).then((response) {
         final status = response.data['data']['status'];
         controller.recipientNotifsSilenced.value = status != "none";
-      }).catchError((error) async {
-        Logger.error('Failed to get focus state! Error: ${error.toString()}');
+      }).catchError((error, stack) async {
+        Logger.error('Failed to get focus state!', error: error, trace: stack);
       });
     }
   }
@@ -214,8 +214,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     fetching = true;
 
     // Start loading the next chunk of messages
-    noMoreMessages = !(await messageService.loadChunk(_messages.length, controller, limit: limit).catchError((e) {
-      Logger.error("Failed to fetch message chunk! $e");
+    noMoreMessages = !(await messageService.loadChunk(_messages.length, controller, limit: limit).catchError((e, stack) {
+      Logger.error("Failed to fetch message chunk!", error: e, trace: stack);
       return true;
     }));
 

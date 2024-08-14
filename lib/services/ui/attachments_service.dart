@@ -392,8 +392,8 @@ class AttachmentsService extends GetxService {
             attachment.height = size.height.toInt();
           }
           attachment.save(null);
-        } catch (ex) {
-          Logger.error('Failed to get GIF dimensions! Error: ${ex.toString()}');
+        } catch (ex, stack) {
+          Logger.error('Failed to get GIF dimensions!', error: ex, trace: stack);
         }
       } else if (attachment.mimeStart == "image") {
         try {
@@ -403,8 +403,8 @@ class AttachmentsService extends GetxService {
             attachment.height = size.height.toInt();
           }
           attachment.save(null);
-        } catch (ex) {
-          Logger.error('Failed to get Image Properties! Error: ${ex.toString()}');
+        } catch (ex, stack) {
+          Logger.error('Failed to get Image Properties!', error: ex, trace: stack);
         }
       }
     }
@@ -419,8 +419,8 @@ class AttachmentsService extends GetxService {
           attachment.metadata![item.key] = item.value.printable;
         }
         attachment.save(null);
-      } catch (ex) {
-        Logger.error('Failed to read EXIF data: ${ex.toString()}');
+      } catch (ex, stack) {
+        Logger.error('Failed to read EXIF data!', error: ex, trace: stack);
       }
     }
 

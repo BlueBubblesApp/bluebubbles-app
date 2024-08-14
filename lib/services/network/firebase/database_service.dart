@@ -53,7 +53,7 @@ class DatabaseService extends GetxService {
     // Make sure setup is complete and we have valid data
     if (!ss.settings.finishedSetup.value) return null;
     if (ss.fcmData.isNull) {
-      Logger.error("Firebase Data was null!");
+      Logger.error("Firebase Data was null when fetching new URL!");
       return null;
     }
 
@@ -101,7 +101,7 @@ class DatabaseService extends GetxService {
       await saveNewServerUrl(url ?? ss.settings.serverAddress.value, force: true);
       return url;
     } catch (e, s) {
-      Logger.error("Failed to fetch URL: $e\n${s.toString()}");
+      Logger.error("Failed to fetch URL!", error: e, trace: s);
       return null;
     }
   }

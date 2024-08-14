@@ -283,9 +283,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                           Settings.updateFromMap(item);
                                           showSnackbar("Success", "Settings restored successfully");
                                         } catch (e, s) {
-                                          Logger.error(e);
-                                          Logger.error(s);
-                                          showSnackbar("Error", "Something went wrong");
+                                          Logger.error("Failed to restore settings backup!", error: e, trace: s);
+                                          showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
                                         }
                                       }
                                   ),
@@ -587,9 +586,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                     Settings.updateFromMap(json);
                                     showSnackbar("Success", "Settings restored successfully");
                                   } catch (e, s) {
-                                    Logger.error(e);
-                                    Logger.error(s);
-                                    showSnackbar("Error", "Something went wrong");
+                                    Logger.error("Failed to restore settings backup!", error: e, trace: s);
+                                    showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
                                   }
                                 }
                             ),
@@ -721,9 +719,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                             object.save();
                                             showSnackbar("Success", "Theme restored successfully");
                                           } catch (e, s) {
-                                            Logger.error(e);
-                                            Logger.error(s);
-                                            showSnackbar("Error", "Something went wrong");
+                                            Logger.error("Failed to restore theme backup!", error: e, trace: s);
+                                            showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}");
                                           }
                                         }
                                     ),
@@ -928,9 +925,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                       }
                                       showSnackbar("Success", "Theming restored successfully");
                                     } catch (e, s) {
-                                      Logger.error(e);
-                                      Logger.error(s);
-                                      showSnackbar("Error", "Something went wrong");
+                                      Logger.error("Failed to restore theme backup!", error: e, trace: s);
+                                      showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}");
                                     }
                                   }
                               ),

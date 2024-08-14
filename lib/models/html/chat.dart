@@ -307,8 +307,7 @@ class Chat {
     } catch (ex, stacktrace) {
       newMessage = Message.findOne(guid: message.guid);
       if (newMessage == null) {
-        Logger.error(ex.toString());
-        Logger.error(stacktrace.toString());
+        Logger.error("Failed to add message (GUID: ${message.guid}) to chat (GUID: $guid)", error: ex, trace: stacktrace);
       }
     }
     bool isNewer = false;

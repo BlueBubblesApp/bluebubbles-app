@@ -189,14 +189,14 @@ class ContactsService extends GetxService {
     try {
       avatar = await FastContacts.getContactImage(id, size: ContactImageSize.fullSize);
     } catch (e) {
-      Logger.warn("Failed to get full size avatar for ID, $id: $e");
+      Logger.warn("Failed to get full size avatar for ID, $id!", error: e);
     }
 
     if (avatar == null) {
       try {
         avatar = await FastContacts.getContactImage(id);
       } catch (e) {
-        Logger.warn("Failed to get small size avatar for ID, $id: $e");
+        Logger.warn("Failed to get small size avatar for ID, $id!", error: e);
       }
     }
 

@@ -39,8 +39,8 @@ class MetadataHelper {
     }
     try {
       data = await MetadataFetch.extract(url);
-    } catch (ex) {
-      Logger.error('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
+    } catch (ex, stack) {
+      Logger.error('An error occurred while fetching URL Preview Metadata!', error: ex, trace: stack);
     }
 
     // If the everything in the metadata is null or empty, try to manually parse
@@ -117,9 +117,9 @@ class MetadataHelper {
     } on HandshakeException catch (ex) {
       meta.title = 'Invalid SSL Certificate';
       meta.description = ex.message;
-    } catch (ex) {
+    } catch (ex, stack) {
       meta.title = ex.toString();
-      Logger.error('Failed to manually get metadata: ${ex.toString()}');
+      Logger.error('Failed to manually get metadata!', error: ex, trace: stack);
     }
 
     return meta;

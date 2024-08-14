@@ -719,7 +719,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             isDocument: part.attachments.first.mimeStart != "image" && part.attachments.first.mimeStart != "video");
       }
     } catch (ex, trace) {
-      Logger.error(trace.toString());
+      Logger.error("Error downloading attachment: ${ex.toString()}", error: ex, trace: trace);
       showSnackbar("Save Error", ex.toString());
     }
   }
@@ -835,7 +835,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       progress.value = 1;
       downloadingAttachments.value = false;
     } catch (ex, trace) {
-      Logger.error(trace.toString());
+      Logger.error("Failed to download original attachment!", error: ex, trace: trace);
       showSnackbar("Download Error", ex.toString());
     }
   }
@@ -916,7 +916,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       progress.value = 1;
       downloadingAttachments.value = false;
     } catch (ex, trace) {
-      Logger.error(trace.toString());
+      Logger.error("Failed to download live photo!", error: ex, trace: trace);
       showSnackbar("Download Error", ex.toString());
     }
   }

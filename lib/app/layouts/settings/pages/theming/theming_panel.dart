@@ -659,9 +659,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                     controller.totalSize.value = total;
                                   }
                                 },
-                              ).catchError((err) {
-                                Logger.error(err.toString());
-                                showSnackbar("Error", "Failed to fetch font");
+                              ).catchError((err, stack) {
+                                Logger.error("Failed to fetch font!", error: err, trace: stack);
+                                showSnackbar("Error", "Failed to fetch font! Error: ${err.toString()}");
                                 return Response(requestOptions: RequestOptions(path: ''));
                               });
                               Get.back();
@@ -680,9 +680,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                   );
                                   await fontLoader.load();
                                   showSnackbar("Notice", "Font loaded");
-                                } catch (e) {
-                                  Logger.error(e);
-                                  showSnackbar("Error", "Something went wrong");
+                                } catch (e, stack) {
+                                  Logger.error("Failed to load font!", error: e, trace: stack);
+                                  showSnackbar("Error", "Failed to load font! Error: ${e.toString()}");
                                 }
                               } else {
                                 showSnackbar("Error", "Failed to fetch font");

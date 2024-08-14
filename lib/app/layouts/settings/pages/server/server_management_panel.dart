@@ -941,8 +941,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               try {
                                 await mcs.invokeMethod("set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
                               } catch (e, s) {
-                                Logger.error(e);
-                                Logger.error(s);
+                                Logger.error("Failed to update Firebase Database!", error: e, trace: s);
                                 showSnackbar("Error", "Something went wrong when updating Firebase Database!");
                               }
                             } else {

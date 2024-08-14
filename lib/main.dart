@@ -204,9 +204,7 @@ Future<void> initDatabaseMobile({bool? storeOpenStatus}) async {
       store = await openStore(directory: objectBoxDirectory.path);
     }
   } catch (e, s) {
-    Logger.warn("Failed to open ObjectBox store!");
-    Logger.error(e);
-    Logger.error(s);
+    Logger.error("Failed to open ObjectBox store!", error: e, trace: s);
 
     if (e.toString().contains("another store is still open using the same path")) {
       Logger.info("Retrying to attach to an existing ObjectBox store");
@@ -239,8 +237,7 @@ Future<void> initDatabaseDesktop() async {
       exit(0);
     }
 
-    Logger.error(e);
-    Logger.error(s);
+    Logger.error("Failed to initialize desktop database!", error: e, trace: s);
   }
 }
 
@@ -278,9 +275,7 @@ Future<void> initDatabase() async {
       themeObjectBox.removeAll();
     }
   } catch (e, s) {
-    Logger.error("Failed to setup ObjectBox boxes!");
-    Logger.error(e);
-    Logger.error(s);
+    Logger.error("Failed to setup ObjectBox boxes!", error: e, trace: s);
   }
 
   try {
@@ -290,17 +285,13 @@ Future<void> initDatabase() async {
       themeBox.putMany(ts.defaultThemes);
     }
   } catch (e, s) {
-    Logger.error("Failed to seed themes!");
-    Logger.error(e);
-    Logger.error(s);
+    Logger.error("Failed to seed themes!", error: e, trace: s);
   }
 
   try {
     performDatabaseMigrations();
   } catch (e, s) {
-    Logger.error("Failed to perform database migrations!");
-    Logger.error(e);
-    Logger.error(s);
+    Logger.error("Failed to perform database migrations!", error: e, trace: s);
   }
 
   storeStartup.complete();
@@ -448,8 +439,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         /* ----- EMOJI FONT INITIALIZATION ----- */
         fs.checkFont();
       } catch (e, s) {
-        Logger.error(e);
-        Logger.error(s);
+        Logger.error("Failure during app initialization!", error: e, trace: s);
         exception = e;
         stacktrace = s;
       }
@@ -765,8 +755,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       }
 
       ErrorWidget.builder = (FlutterErrorDetails error) {
-        Logger.error(error.exception);
-        Logger.error("Stacktrace: ${error.stack.toString()}");
+        Logger.error("An unexpected error occurred when rendering.", error: error.exception, trace: error.stack);
         return CustomErrorWidget(
           "An unexpected error occurred when rendering.",
         );

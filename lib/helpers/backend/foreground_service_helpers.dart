@@ -10,8 +10,8 @@ Future<void> runForegroundService() async {
     } else if (Platform.isAndroid && !ss.settings.keepAppAlive.value) {
       await mcs.invokeMethod("stop-foreground-service");
     }
-  } catch (e) {
-    Logger.error("Failed to start foreground service: $e");
+  } catch (e, stack) {
+    Logger.error("Failed to start foreground service!", error: e, trace: stack);
   }
 }
 
@@ -21,7 +21,7 @@ Future<void> restartForegroundService() async {
       await mcs.invokeMethod("stop-foreground-service");
       await mcs.invokeMethod("start-foreground-service");
     }
-  } catch (e) {
-    Logger.error("Failed to restart foreground service: $e");
+  } catch (e, stack) {
+    Logger.error("Failed to restart foreground service!", error: e, trace: stack);
   }
 }

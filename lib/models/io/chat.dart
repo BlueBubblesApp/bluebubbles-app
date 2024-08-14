@@ -689,8 +689,7 @@ class Chat {
     } catch (ex, stacktrace) {
       newMessage = Message.findOne(guid: message.guid);
       if (newMessage == null) {
-        Logger.error(ex.toString());
-        Logger.error(stacktrace.toString());
+        Logger.error("Failed to add message (GUID: ${message.guid}) to chat (GUID: $guid)", error: ex, trace: stacktrace);
       }
     }
     // Save any attachments
@@ -1009,8 +1008,8 @@ class Chat {
 
   static Future<void> getIcon(Chat c, {bool force = false}) async {
     if (!force && c.lockChatIcon) return;
-    final response = await http.getChatIcon(c.guid).catchError((err) async {
-      Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
+    final response = await http.getChatIcon(c.guid).catchError((err, stack) async {
+      Logger.error("Failed to get chat icon for chat ${c.getTitle()}", error: err, trace: stack);
       return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
     });
     if (response.statusCode != 200 || isNullOrEmpty(response.data)) {

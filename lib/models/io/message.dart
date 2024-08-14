@@ -376,8 +376,8 @@ class Message {
       }
       try {
         attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a!.cast<String, Object>())).toList();
-      } catch (e) {
-        Logger.error('Failed to parse attributed body! $e');
+      } catch (e, stack) {
+        Logger.error('Failed to parse attributed body!', error: e, trace: stack);
       }
     }
 
@@ -395,15 +395,15 @@ class Message {
     List<MessageSummaryInfo> msi = [];
     try {
       msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e!.cast<String, Object>())).toList();
-    } catch (e) {
-      Logger.error('Failed to parse summary info! $e');
+    } catch (e, stack) {
+      Logger.error('Failed to parse summary info!', error: e, trace: stack);
     }
 
     PayloadData? payloadData;
     try {
       payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
     } catch (e, s) {
-      Logger.error('Failed to parse payload data! $e\n$s');
+      Logger.error('Failed to parse payload data!', error: e, trace: s);
     }
 
     return Message(
@@ -585,9 +585,8 @@ class Message {
 
     try {
       messageBox.put(existing, mode: PutMode.update);
-    } catch (ex) {
-      Logger.error('Failed to replace message! This is likely due to a unique constraint being violated. See error below:');
-      Logger.error(ex.toString());
+    } catch (ex, stack) {
+      Logger.error('Failed to replace message! This is likely due to a unique constraint being violated.', error: ex, trace: stack);
     }
     return existing;
   }

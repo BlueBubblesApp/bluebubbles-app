@@ -174,8 +174,8 @@ class ContactTile extends StatelessWidget {
                 Get.back();
                 Logger.info("Removed participant ${handle.address}");
                 showSnackbar("Notice", "Removed participant from chat!");
-              }).catchError((err) {
-                Logger.error("Failed to remove participant ${handle.address}");
+              }).catchError((err, stack) {
+                Logger.error("Failed to remove participant ${handle.address}", error: err, trace: stack);
                 late final String error;
                 if (err is Response) {
                   error = err.data["error"]["message"].toString();
