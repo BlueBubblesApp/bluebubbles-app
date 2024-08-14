@@ -15,8 +15,7 @@ class ChatManager extends GetxService {
 
   /// Same as setAllInactive but but removes lastOpenedChat from prefs on next frame
   void setAllInactiveSync({save = true, bool clearActive = true}) {
-    Logger.debug('Setting all chats to inactive');
-
+    Logger.debug('Setting chats to inactive (save: $save, clearActive: $clearActive)');
 
     String? skip;
     if (clearActive) {

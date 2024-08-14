@@ -134,17 +134,17 @@ class BaseLogger extends GetxService {
     return LoggerFactory.Logger(
       filter: currentFilter,
       printer: LoggerFactory.PrettyPrinter(
-        methodCount: 0, // Number of method calls to be displayed for any logs
-        errorMethodCount: null, // Unlimited
-        lineLength: 120, // Width of the output
-        colors: showColors, // Colorful log messages
-        printEmojis: false, // Print an emoji for each log message
-        // Should each log print contain a timestamp
+        methodCount: 0,
+        errorMethodCount: 10,
+        lineLength: 120,
+        colors: showColors,
+        printEmojis: false,
+        // Don't contain a timestamp, we will add it in ourselves
         dateTimeFormat: LoggerFactory.DateTimeFormat.none,
         excludeBox: excludeBoxes,
         noBoxingByDefault: true,
         levelColors: {
-          Level.trace: AnsiColor.fg(AnsiColor.grey(0.25)),
+          Level.trace: const AnsiColor.fg(5),
           Level.debug: AnsiColor.fg(AnsiColor.grey(0.5)),
           Level.info: const AnsiColor.fg(12),
           Level.warning: const AnsiColor.fg(208),
@@ -259,7 +259,7 @@ class BaseLogger extends GetxService {
   void trace(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
       logger.t(
           "${DateTime.now().toUtc().toIso8601String()} [TRACE] [${tag ?? "BlueBubblesApp"}] $log",
-          error: error,
+          error: error ?? Traceback(),
           stackTrace: trace);
 
   void fatal(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
@@ -267,4 +267,15 @@ class BaseLogger extends GetxService {
           "${DateTime.now().toUtc().toIso8601String()} [FATAL] [${tag ?? "BlueBubblesApp"}] $log",
           error: error,
           stackTrace: trace);
+}
+
+class Traceback implements Exception {
+  final StackTrace? stackTrace;
+
+  Traceback([this.stackTrace]);
+
+  @override
+  String toString() {
+    return "Traceback";
+  }
 }
