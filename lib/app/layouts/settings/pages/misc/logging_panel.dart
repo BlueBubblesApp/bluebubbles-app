@@ -29,7 +29,7 @@ class _LoggingPanel extends State<LoggingPanel> {
     isLoading.value = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Logger.getLogs().then((value) {
+      Logger.getLogs(maxLines: 500).then((value) {
         _logs.addAll(value);
         
         _scrollToBottom();
@@ -143,26 +143,24 @@ class _LoggingPanel extends State<LoggingPanel> {
                         thickness: 0.25,
                         color: context.theme.colorScheme.onSurface),
                     itemBuilder: (context, index) {
-                      Color textColor = context.theme.colorScheme.primary;
-                      if (_logs[index].startsWith('[ERROR]')) {
-                        textColor = Colors.red;
-                      } else if (_logs[index].startsWith('[WARNING]')) {
-                        textColor = Colors.orange;
-                      } else if (_logs[index].startsWith('[TRACE]')) {
-                        textColor = context.theme.colorScheme.primary;
-                      } else if (_logs[index].startsWith('[FATAL]')) {
-                        textColor = Colors.red;
-                      } else if (_logs[index].startsWith('[DEBUG]')) {
-                        textColor = context.theme.colorScheme.secondary;
-                      }
-
                       String log = _logs[index].trim();
-                      
-                      // Remove ansi color
-                      log = log.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
 
                       // Remove date
                       log = log.split(' ').sublist(1).join(' ');
+
+                      // Print colorful
+                      Color textColor = context.theme.colorScheme.primary;
+                      if (log.startsWith('[ERROR]')) {
+                        textColor = Colors.red;
+                      } else if (log.startsWith('[WARNING]')) {
+                        textColor = Colors.orange;
+                      } else if (log.startsWith('[TRACE]')) {
+                        textColor = context.theme.colorScheme.primary;
+                      } else if (log.startsWith('[FATAL]')) {
+                        textColor = Colors.red;
+                      } else if (log.startsWith('[DEBUG]')) {
+                        textColor = context.theme.colorScheme.secondary;
+                      }
 
                       return Text(
                         log,

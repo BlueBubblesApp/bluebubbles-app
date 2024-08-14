@@ -217,8 +217,27 @@ class BaseLogger extends GetxService {
     if (logFiles.isEmpty) return [];
 
     final File logFile = logFiles.first as File;
-    final List<String> lines = await logFile.readAsLines();
-    return lines.sublist(0, lines.length > maxLines ? maxLines : lines.length);
+    List<String> lines = await logFile.readAsLines();
+
+    // Combine lines that are part of the same log message
+    List<String> logs = [];
+    String currentLog = "";
+    for (final log in lines) {
+      // Remove ansi colors
+      String line = log.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
+
+      // If the log starts with a date, then it's a new log
+      if (line.startsWith(RegExp(r"\d{4}-\d{2}-\d{2}"))) {
+        if (currentLog.isNotEmpty) logs.add(currentLog);
+        currentLog = line;
+      } else {
+        currentLog += "\n$line";
+      }
+
+      if (logs.length >= maxLines) break;
+    }
+
+    return logs;
   }
 
   void clearLogs() {
