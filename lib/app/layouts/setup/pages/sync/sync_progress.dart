@@ -130,15 +130,15 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                 padding: const EdgeInsets.all(2),
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                     ),
-                    backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                    shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                    maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                    minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                    backgroundColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                    shadowColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                    maximumSize: WidgetStateProperty.all(Size(context.width * 2 / 3, 36)),
+                    minimumSize: WidgetStateProperty.all(Size(context.width * 2 / 3, 36)),
                   ),
                   onPressed: () async {
                     Get.offAll(() => ConversationList(
@@ -183,15 +183,15 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                 height: 40,
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                     ),
-                    backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                    shadowColor: MaterialStateProperty.all(Colors.transparent),
-                    maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                    minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                    backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                    shadowColor: WidgetStateProperty.all(Colors.transparent),
+                    maximumSize: WidgetStateProperty.all(Size(context.width * 2 / 3, 36)),
+                    minimumSize: WidgetStateProperty.all(Size(context.width * 2 / 3, 36)),
                   ),
                   onPressed: () {
                     Get.offAll(() => ConversationList(

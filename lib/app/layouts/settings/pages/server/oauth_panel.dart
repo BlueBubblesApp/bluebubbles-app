@@ -287,15 +287,15 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                 padding: const EdgeInsets.all(2),
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                     ),
-                    backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                    shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                    maximumSize: MaterialStateProperty.all(buttonSize),
-                    minimumSize: MaterialStateProperty.all(buttonSize),
+                    backgroundColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                    shadowColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                    maximumSize: WidgetStateProperty.all(buttonSize),
+                    minimumSize: WidgetStateProperty.all(buttonSize),
                   ),
                   onPressed: () async {
                     setState(() {
@@ -324,15 +324,15 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                 width: buttonSize.width,
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                     ),
-                    backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                    shadowColor: MaterialStateProperty.all(Colors.transparent),
-                    maximumSize: MaterialStateProperty.all(buttonSize),
-                    minimumSize: MaterialStateProperty.all(buttonSize),
+                    backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                    shadowColor: WidgetStateProperty.all(Colors.transparent),
+                    maximumSize: WidgetStateProperty.all(buttonSize),
+                    minimumSize: WidgetStateProperty.all(buttonSize),
                   ),
                   onPressed: () async {
                     token = await googleOAuth(context);
