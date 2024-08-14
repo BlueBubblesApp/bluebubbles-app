@@ -51,7 +51,9 @@ class BaseLogger extends GetxService {
   }
 
   LoggerFactory.LogOutput get defaultOutput {
-    return LoggerFactory.MultiOutput([DebugConsoleOutput(), fileOutput]);
+    List<LogOutput> outputs = [DebugConsoleOutput()];
+    if (!kIsWeb) outputs.add(fileOutput);
+    return LoggerFactory.MultiOutput(outputs);
   }
 
   LoggerFactory.LogFilter? _currentFilter;
@@ -170,8 +172,9 @@ class BaseLogger extends GetxService {
   }
 
   void enableLiveLogging() {
-    _currentOutput = LoggerFactory.MultiOutput(
-        [DebugConsoleOutput(), fileOutput, LogStreamOutput()]);
+    List<LogOutput> outputs = [DebugConsoleOutput(), LogStreamOutput()];
+    if (!kIsWeb) outputs.add(fileOutput);
+    _currentOutput = LoggerFactory.MultiOutput(outputs);
     _showColors = false;
     _logger = createLogger();
   }
