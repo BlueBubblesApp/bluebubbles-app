@@ -57,9 +57,7 @@ class BatteryOptimizationCheck extends StatelessWidget {
                     ),
                     onPressed: () async {
                       final optimizationsDisabled = await disableBatteryOptimizations();
-                      if (optimizationsDisabled) {
-                        showSnackbar("Success", "You've successfully disabled battery optimization for BlueBubbles");
-                      } else {
+                      if (!optimizationsDisabled) {
                         showSnackbar("Error", "Battery optimizations were not disabled. Please try again.");
                       }
                     },

@@ -261,10 +261,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
 
                           final optsDisabled =
                               await disableBatteryOptimizations();
-                          if (optsDisabled) {
-                            showSnackbar("Success",
-                                "You've successfully disabled battery optimization for BlueBubbles");
-                          } else {
+                          if (!optsDisabled) {
                             showSnackbar("Error",
                                 "Battery optimizations were not disabled. Please try again.");
                           }
