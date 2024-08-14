@@ -27,17 +27,32 @@ class _LoggingPanel extends State<LoggingPanel> {
 
   void loadLogs() {
     isLoading.value = true;
-    Logger.getLogs().then((value) {
-      _logs.addAll(value);
-      _scrollToBottom();
-      isLoading.value = false;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Logger.getLogs().then((value) {
+        _logs.addAll(value);
+        
+        _scrollToBottom();
+        isLoading.value = false;
+      });
     });
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
-        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        // Keep scrolling until the scroll position is at the bottom
+        if (scrollController.position.pixels != scrollController.position.maxScrollExtent) {
+          scrollController.animateTo(
+            scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOut,
+          );
+
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _scrollToBottom();
+          });
+        }
       }
     });
   }
@@ -128,7 +143,7 @@ class _LoggingPanel extends State<LoggingPanel> {
                         thickness: 0.25,
                         color: context.theme.colorScheme.onSurface),
                     itemBuilder: (context, index) {
-                      Color textColor = Colors.black;
+                      Color textColor = context.theme.colorScheme.primary;
                       if (_logs[index].startsWith('[ERROR]')) {
                         textColor = Colors.red;
                       } else if (_logs[index].startsWith('[WARNING]')) {
@@ -141,8 +156,16 @@ class _LoggingPanel extends State<LoggingPanel> {
                         textColor = context.theme.colorScheme.secondary;
                       }
 
+                      String log = _logs[index].trim();
+                      
+                      // Remove ansi color
+                      log = log.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
+
+                      // Remove date
+                      log = log.split(' ').sublist(1).join(' ');
+
                       return Text(
-                        _logs[index].trim(),
+                        log,
                         style: TextStyle(fontSize: 12.0, color: textColor),
                       );
                     },
