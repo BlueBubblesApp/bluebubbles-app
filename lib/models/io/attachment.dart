@@ -143,7 +143,7 @@ class Attachment {
     if (kIsWeb) return newAttachment;
     Attachment? existing = Attachment.findOne(oldGuid!);
     if (existing == null) {
-      return Future.error("Old GUID does not exist!");
+      return Future.error("Old GUID ($oldGuid) does not exist!");
     }
     // update current chat image data to prevent the image or video thumbnail from reloading
     if (cm.activeChat != null) {
@@ -166,11 +166,16 @@ class Attachment {
     existing.webUrl = newAttachment.webUrl;
     existing.hasLivePhoto = newAttachment.hasLivePhoto;
     existing.save(null);
+
     // change the directory path
     String appDocPath = fs.appDocDir.path;
     String pathName = "$appDocPath/attachments/$oldGuid";
     Directory directory = Directory(pathName);
-    await directory.rename("$appDocPath/attachments/${newAttachment.guid}");
+
+    if (directory.existsSync()) {
+      await directory.rename("$appDocPath/attachments/${newAttachment.guid}");
+    }
+
     // grab values from existing
     newAttachment.id = existing.id;
     newAttachment.width = existing.width;
