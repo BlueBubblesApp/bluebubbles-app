@@ -245,6 +245,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               leading: const SettingsLeadingIcon(
                                 iosIcon: CupertinoIcons.chart_bar_square,
                                 materialIcon: Icons.stacked_bar_chart,
+                                containerColor: Colors.green,
                               ),
                               onTap: () {
                                 showDialog(
@@ -292,6 +293,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.qrcode,
                           materialIcon: Icons.qr_code,
+                          containerColor: Colors.black,
                         ),
                         onTap: () {
                           List<dynamic> json = [
@@ -441,6 +443,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
+                      containerColor: Colors.blueAccent,
                     ),
                     onLongPress: kIsWeb || kIsDesktop
                         ? null
@@ -518,9 +521,10 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           title: "Manually Sync Messages",
                           subtitle: socket.state.value == SocketState.connected ? "Tap to sync messages" : "Disconnected, cannot sync",
                           backgroundColor: tileColor,
-                          leading: const SettingsLeadingIcon(
+                          leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.arrow_2_circlepath,
                             materialIcon: Icons.sync,
+                            containerColor: Colors.yellow[700],
                           ),
                           onTap: () async {
                             if (socket.state.value != SocketState.connected) return;
@@ -556,7 +560,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       ),
                     ),
                   SettingsTile(
-                      leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.pencil, materialIcon: Icons.edit),
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.pencil,
+                        materialIcon: Icons.edit,
+                        containerColor: Colors.teal
+                      ),
                       title: "Configure Custom Headers",
                       subtitle: "Add or edit custom headers to connect to your server",
                       backgroundColor: tileColor,
@@ -584,6 +592,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             ss.settings.syncContactsAutomatically.value = val;
                             ss.saveSettings();
                           },
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.person_2,
+                            materialIcon: Icons.people,
+                            containerColor: Colors.green,
+                          ),
                         )),
                   Container(
                     color: tileColor,
@@ -593,7 +606,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     ),
                   ),
                   SettingsTile(
-                    leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.down_arrow, materialIcon: Icons.download),
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.down_arrow,
+                      materialIcon: Icons.download,
+                      containerColor: Colors.orange
+                    ),
                     title: "Fetch Firebase Config",
                     subtitle: socket.state.value == SocketState.connected
                         ? "Forcefully fetch current Firebase Config from server"
@@ -648,7 +665,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     ),
                   ),
                   SettingsTile(
-                      leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.refresh, materialIcon: Icons.refresh),
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.refresh,
+                        materialIcon: Icons.refresh,
+                        containerColor: Colors.blueAccent
+                      ),
                       title: "Fetch Latest URL",
                       subtitle: "Forcefully fetch latest URL from Firebase",
                       backgroundColor: tileColor,
@@ -674,6 +695,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               ? "Configured Port: ${ss.settings.localhostPort.value}"
                               : "Look up localhost address for a faster direct connection",
                           backgroundColor: tileColor,
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.wifi,
+                            materialIcon: Icons.network_check,
+                            containerColor: Colors.green,
+                          ),
                           onChanged: (bool val) async {
                             if (val) {
                               final TextEditingController portController = TextEditingController();
@@ -821,6 +847,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.chat_bubble,
                           materialIcon: Icons.sms,
+                          containerColor: Colors.blueAccent,
                         ),
                         onTap: () async {
                           if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value) {
@@ -877,6 +904,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   leading: const SettingsLeadingIcon(
                                     iosIcon: CupertinoIcons.exclamationmark_shield,
                                     materialIcon: Icons.gpp_maybe,
+                                    containerColor: Colors.orange
                                   ),
                                   onTap: () async {
                                     if (socket.state.value != SocketState.connected || controller.isRestartingPrivateAPI.value) return;
@@ -924,6 +952,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.desktopcomputer,
                           materialIcon: Icons.dvr,
+                          containerColor: Colors.redAccent,
                         ),
                         onTap: () async {
                           if (controller.isRestarting.value) return;
@@ -989,6 +1018,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                 leading: const SettingsLeadingIcon(
                                   iosIcon: CupertinoIcons.desktopcomputer,
                                   materialIcon: Icons.dvr,
+                                  containerColor: Colors.green
                                 ),
                                 onTap: () async {
                                   if (socket.state.value != SocketState.connected) return;

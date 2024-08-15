@@ -503,7 +503,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                   SettingsTile(
                                     backgroundColor: tileColor,
-                                    title: "Misc and Advanced Settings",
+                                    title: "Advanced Settings",
                                     onTap: () {
                                       ns.pushAndRemoveSettingsUntil(
                                         context,
@@ -871,6 +871,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     leading: const SettingsLeadingIcon(
                                       iosIcon: CupertinoIcons.info_circle,
                                       materialIcon: Icons.info,
+                                      containerColor: Colors.blueAccent,
                                     ),
                                   ),
                                 ],

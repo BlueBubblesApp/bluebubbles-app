@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,7 +22,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
-      title: "Miscellaneous & Advanced",
+      title: "Advanced",
       initialHeader: (!kIsWeb && !kIsDesktop) || ss.canAuthenticate ? "Security" : "Speed & Responsiveness",
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
@@ -153,6 +154,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                                 "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
                             isThreeLine: true,
                             backgroundColor: tileColor,
+                            leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.keyboard,
+                              materialIcon: Icons.keyboard,
+                              containerColor: Colors.teal
+                            ),
                           )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
@@ -180,6 +186,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                                 "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.",
                             isThreeLine: true,
                             backgroundColor: tileColor,
+                            leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.bolt_badge_a_fill,
+                              materialIcon: Icons.bolt,
+                              containerColor: Colors.blueAccent
+                            ),
                           )),
                   ],
                 ),
@@ -199,6 +210,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         subtitle: "Removes inline images and videos to boost performance on lower-end devices",
                         isThreeLine: true,
                         backgroundColor: tileColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.speedometer,
+                          materialIcon: Icons.speed_outlined,
+                          containerColor: Colors.green
+                        ),
                       )),
                   Obx(() {
                     if (iOS) {
@@ -218,6 +234,12 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       return const SettingsTile(
                         title: "Scroll Speed Multiplier",
                         subtitle: "Controls how fast scrolling occurs",
+                        isThreeLine: true,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.arrow_up_down_square,
+                          materialIcon: Icons.mouse_outlined,
+                          containerColor: Colors.orange
+                        ),
                       );
                     } else {
                       return const SizedBox.shrink();
@@ -253,6 +275,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                     subtitle:
                         "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
                     isThreeLine: true,
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.stopwatch,
+                      materialIcon: Icons.timer,
+                      containerColor: Colors.red
+                    ),
                     trailing: ss.settings.apiTimeout.value != 30000 ? ElevatedButton(
                       onPressed: () {
                         ss.settings.apiTimeout.value = 30000;
@@ -304,6 +331,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         subtitle: "Cancel messages queued to send in a chat if one fails before them",
                         backgroundColor: tileColor,
                         isThreeLine: true,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.hand_raised,
+                          materialIcon: Icons.back_hand_outlined,
+                          containerColor: Colors.orange
+                        ),
                       )),
                 ],
               ),
@@ -346,7 +378,13 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         },
                         initialVal: !isNullOrZero(ss.settings.sendDelay.value),
                         title: "Send Delay",
+                        subtitle: "Adds a delay before sending a message to prevent accidental sends. During this time, you can cancel the message.",
                         backgroundColor: tileColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.timer,
+                          materialIcon: Icons.timer,
+                          containerColor: Colors.green
+                        ),
                       )),
                   Obx(() {
                     if (!isNullOrZero(ss.settings.sendDelay.value)) {
@@ -382,6 +420,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         initialVal: ss.settings.use24HrFormat.value,
                         title: "Use 24 Hour Format for Times",
                         backgroundColor: tileColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.clock,
+                          materialIcon: Icons.access_time,
+                          containerColor: Colors.blue
+                        ),
                       )),
                   Container(
                     color: tileColor,
@@ -405,6 +448,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           initialVal: ss.settings.allowUpsideDownRotation.value,
                           title: "Allow Upside-Down Rotation",
                           backgroundColor: tileColor,
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.rotate_right,
+                            materialIcon: Icons.screen_rotation,
+                            containerColor: Colors.orange
+                          ),
                         )),
                   if (Platform.isAndroid)
                     Container(
@@ -420,6 +468,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         isThreeLine: true,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.person_2,
+                          materialIcon: Icons.people,
+                          containerColor: Colors.purple
+                        ),
                       );
                     } else {
                       return const SizedBox.shrink();

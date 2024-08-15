@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/layouts/settings/widgets/content/settings_leading_icon.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,6 +12,7 @@ class SettingsSwitch extends StatelessWidget {
     this.backgroundColor,
     this.subtitle,
     this.isThreeLine = false,
+    this.leading,
   });
   final bool initialVal;
   final Function(bool) onChanged;
@@ -18,6 +20,7 @@ class SettingsSwitch extends StatelessWidget {
   final Color? backgroundColor;
   final String? subtitle;
   final bool isThreeLine;
+  final SettingsLeadingIcon? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +38,10 @@ class SettingsSwitch extends StatelessWidget {
           title: Text(
             title,
             style: context.theme.textTheme.bodyLarge,
+          ),
+          leading: leading == null ? null : Padding(
+            padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0),
+            child: leading,
           ),
           trailing: Switch(
             value: initialVal,

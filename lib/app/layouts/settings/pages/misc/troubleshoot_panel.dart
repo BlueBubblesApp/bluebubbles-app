@@ -66,7 +66,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
         : const SizedBox.shrink());
 
     return SettingsScaffold(
-        title: "Troubleshooting",
+        title: "Developer Tools",
         initialHeader: (kIsWeb || kIsDesktop) ? "Contacts" : "Logging",
         iosSubtitle: iosSubtitle,
         materialSubtitle: materialSubtitle,

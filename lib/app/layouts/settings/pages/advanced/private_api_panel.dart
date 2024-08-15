@@ -163,6 +163,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             title: "Send Typing Indicators",
                             subtitle: "Sends typing indicators to other iMessage users",
                             backgroundColor: tileColor,
+                            leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.keyboard_chevron_compact_down,
+                              materialIcon: Icons.keyboard_alt_outlined,
+                              containerColor: Colors.green,
+                            ),
                           ),
                           AnimatedSizeAndFade(
                             child: !ss.settings.privateManualMarkAsRead.value
@@ -190,6 +195,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
                                         backgroundColor: tileColor,
                                         isThreeLine: true,
+                                        leading: const SettingsLeadingIcon(
+                                          iosIcon: CupertinoIcons.rectangle_fill_badge_checkmark,
+                                          materialIcon: Icons.playlist_add_check,
+                                          containerColor: Colors.blueAccent,
+                                        )
                                       ),
                                     ],
                                   )
@@ -217,6 +227,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   subtitle: "Only mark a chat read when pressing the manual mark read button",
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.check_mark_circled,
+                                    materialIcon: Icons.check_circle_outline,
+                                    containerColor: Colors.orange,
+                                  ),
                                 ),
                               ],
                             ),
@@ -241,6 +256,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             subtitle: "Send a tapback of your choosing when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
                             backgroundColor: tileColor,
                             isThreeLine: true,
+                            leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.rays,
+                              materialIcon: Icons.touch_app_outlined,
+                              containerColor: Colors.purple,
+                            ),
                           ),
                           AnimatedSizeAndFade.showHide(
                             show: ss.settings.enableQuickTapback.value,
@@ -366,7 +386,14 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   },
                                   initialVal: ss.settings.privateSubjectLine.value,
                                   title: "Send Subject Lines",
+                                  subtitle: "Show the subject line field when sending a message",
                                   backgroundColor: tileColor,
+                                  isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.textformat,
+                                    materialIcon: Icons.text_format_rounded,
+                                    containerColor: Colors.blueAccent,
+                                  ),
                                 ),
                               ],
                             ),
@@ -393,6 +420,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   subtitle: "Send regular iMessages using the Private API for much faster speed",
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.bubble_right,
+                                    materialIcon: Icons.chat_bubble_outline,
+                                    containerColor: Colors.green,
+                                  ),
                                 ),
                               ],
                             ),
@@ -419,6 +451,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   subtitle: "Send attachments using the Private API",
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.paperclip,
+                                    materialIcon: Icons.attach_file_outlined,
+                                    containerColor: Colors.teal,
+                                  ),
                                 ),
                               ],
                             ),

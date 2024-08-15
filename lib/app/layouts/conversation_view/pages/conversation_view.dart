@@ -40,18 +40,17 @@ class ConversationViewState extends OptimizedState<ConversationView> {
 
   @override
   void initState() {
-    Logger.debug("Initializing Conversation View for ${chat.guid}");
-
     super.initState();
+
+    Logger.debug("Initializing Conversation View for ${chat.guid}");
     controller.fromChatCreator = widget.fromChatCreator;
     cm.setActiveChatSync(chat);
     cm.activeChat!.controller = controller;
+    Logger.debug("Conversation View initialized for ${chat.guid}");
 
     if (widget.onInit != null) {
       Future.delayed(Duration.zero, widget.onInit!);
     }
-
-    Logger.debug("Conversation View initialized for ${chat.guid}");
   }
 
   @override
