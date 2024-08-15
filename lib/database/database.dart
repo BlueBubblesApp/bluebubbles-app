@@ -77,6 +77,9 @@ class Database {
 
     try {
       _performDatabaseMigrations();
+
+      // So long as migrations succeed, we can update the database version
+      await ss.prefs.setInt('dbVersion', version);
     } catch (e, s) {
       Logger.error("Failed to perform database migrations!", error: e, trace: s);
     }

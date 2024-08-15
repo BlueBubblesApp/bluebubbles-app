@@ -41,6 +41,10 @@ class StartupTasks {
     // If the database is not initialized, we cannot do anything.
     await Database.init();
 
+    // Load FCM data into settings from the database
+    // We only need to do this for the main startup
+    ss.getFcmData();
+    
     // We then have to initialize all the services that the app will use.
     // Order matters here as some services may rely on others. For instance,
     // The MethodChannel service needs the database to be initialized to handle events.
@@ -48,15 +52,20 @@ class StartupTasks {
     await mcs.init();
     await ls.init(isBubble: isBubble);
     await ts.init();
+    
+    if (!kIsWeb) {
+      await cs.init();
+    }
+
+    await notif.init();
+    await intents.init();
   }
 
   static Future<void> initIsolateServices() async {
     await fs.init(headless: true);
     await Logger.init();
     await ss.init(headless: true);
-
     await Database.init();
-    
     await mcs.init(headless: true);
     await ls.init(headless: true);
   }
