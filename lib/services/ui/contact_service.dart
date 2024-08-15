@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/database.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/string_utils.dart';

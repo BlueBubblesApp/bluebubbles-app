@@ -6,7 +6,7 @@ import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_picker_file.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/models/global/platform_file.dart';
+import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;

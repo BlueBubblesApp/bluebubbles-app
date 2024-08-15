@@ -14,7 +14,7 @@ import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/manual_entry_dialog.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';

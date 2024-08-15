@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:metadata_fetch/metadata_fetch.dart';

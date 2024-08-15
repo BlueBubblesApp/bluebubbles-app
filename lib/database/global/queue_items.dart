@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 
 enum QueueType {newMessage, updatedMessage, sendMessage, sendAttachment}
 

@@ -1,4 +1,4 @@
-import 'package:bluebubbles/models/database.dart';
+import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';

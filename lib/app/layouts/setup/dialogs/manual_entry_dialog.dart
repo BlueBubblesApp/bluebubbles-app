@@ -3,7 +3,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/connecting_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';

@@ -1,5 +1,5 @@
 // ignore_for_file: camel_case_types
-import 'package:bluebubbles/models/html/handle.dart';
+import 'package:bluebubbles/database/html/handle.dart';
 
 /// READ: Dummy file to allow objectbox related code to compile on Web. We use
 /// conditional imports at compile time, so any references to objectbox stuff

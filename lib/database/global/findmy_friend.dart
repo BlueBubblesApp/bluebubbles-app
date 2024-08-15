@@ -1,4 +1,4 @@
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
 import 'package:tuple/tuple.dart';

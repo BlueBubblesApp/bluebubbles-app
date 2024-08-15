@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/database.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';

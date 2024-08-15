@@ -8,7 +8,7 @@ import 'package:firebase_dart/implementation/pure_dart.dart';
 import 'package:firebase_dart/src/firestore.dart' show FirebaseFirestore;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 
 FirebaseDatabaseService fdb = Get.isRegistered<FirebaseDatabaseService>() ? Get.find<FirebaseDatabaseService>() : Get.put(FirebaseDatabaseService());
 

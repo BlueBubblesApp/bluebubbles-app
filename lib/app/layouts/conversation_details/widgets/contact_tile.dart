@@ -1,7 +1,7 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';

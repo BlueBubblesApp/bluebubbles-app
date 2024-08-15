@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/database.dart';
+import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -70,7 +70,12 @@ class StartupTasks {
   }
 
   static Future<void> onStartup() async {
-    if (ss.settings.finishedSetup.value) return;
+    if (!ss.settings.finishedSetup.value) return;
+
+    if (!kIsDesktop) {
+      chats.init();
+      socket;
+    }
 
     // Fetch server details for the rest of the app.
     // We only need to fetch it on startup since the metadata shouldn't change.
@@ -94,11 +99,6 @@ class StartupTasks {
         Logger.warn("Failed to check for client update!", error: ex, trace: stack);
       }
     });
-
-    if (!kIsDesktop) {
-      chats.init();
-      socket;
-    }
   }
 
   static Future<void> checkInstanceLock() async {

@@ -4,7 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -13,7 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
-import 'package:bluebubbles/models/database.dart';
+import 'package:bluebubbles/database/database.dart';
 
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
 
@@ -60,6 +60,7 @@ class ChatsService extends GetxService {
   }
 
   Future<void> init({bool force = false}) async {
+    print("INIT CHAT SERVICE");
     if (!force && !ss.settings.finishedSetup.value) return;
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ??

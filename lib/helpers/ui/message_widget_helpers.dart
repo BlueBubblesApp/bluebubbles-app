@@ -1,4 +1,4 @@
-import 'package:bluebubbles/models/models.dart' hide Entity;
+import 'package:bluebubbles/database/models.dart' hide Entity;
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';

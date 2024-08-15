@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';

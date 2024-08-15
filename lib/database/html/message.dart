@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/html/attachment.dart';
-import 'package:bluebubbles/models/html/chat.dart';
-import 'package:bluebubbles/models/html/handle.dart';
-import 'package:bluebubbles/models/html/objectbox.dart';
-import 'package:bluebubbles/models/models.dart' show AttributedBody, MessageSummaryInfo, PayloadData;
+import 'package:bluebubbles/database/html/attachment.dart';
+import 'package:bluebubbles/database/html/chat.dart';
+import 'package:bluebubbles/database/html/handle.dart';
+import 'package:bluebubbles/database/html/objectbox.dart';
+import 'package:bluebubbles/database/models.dart' show AttributedBody, MessageSummaryInfo, PayloadData;
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';

@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/models/io/theme_object.dart';
+import 'package:bluebubbles/database/io/theme_object.dart';
 import 'package:flutter/material.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import

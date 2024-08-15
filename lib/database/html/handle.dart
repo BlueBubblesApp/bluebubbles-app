@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/html/contact.dart';
-import 'package:bluebubbles/models/html/objectbox.dart';
+import 'package:bluebubbles/database/html/contact.dart';
+import 'package:bluebubbles/database/html/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:faker/faker.dart';
 import 'package:get/get.dart';

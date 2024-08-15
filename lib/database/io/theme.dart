@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:core';
 
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/models/database.dart';
+import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';

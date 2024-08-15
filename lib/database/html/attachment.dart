@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/html/message.dart';
-import 'package:bluebubbles/models/html/objectbox.dart';
+import 'package:bluebubbles/database/html/message.dart';
+import 'package:bluebubbles/database/html/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:mime_type/mime_type.dart';
 

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/html/attachment.dart';
-import 'package:bluebubbles/models/html/handle.dart';
-import 'package:bluebubbles/models/html/message.dart';
+import 'package:bluebubbles/database/html/attachment.dart';
+import 'package:bluebubbles/database/html/handle.dart';
+import 'package:bluebubbles/database/html/message.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';

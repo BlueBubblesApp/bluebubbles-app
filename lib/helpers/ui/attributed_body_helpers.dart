@@ -1,4 +1,4 @@
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 
 /// Get all audio transcripts from a list of attributed bodies
 /// 
