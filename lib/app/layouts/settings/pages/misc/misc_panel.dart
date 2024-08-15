@@ -58,6 +58,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             title: "Secure App",
                             subtitle: "Secure app with ${kIsDesktop ? "Windows Security" : "a fingerprint or pin"}",
                             backgroundColor: tileColor,
+                            leading: SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.lock_fill,
+                              materialIcon: Icons.lock,
+                              containerColor: (ss.settings.shouldSecure.value) ? Colors.green : Colors.redAccent
+                            ),
                           )),
                     if (ss.canAuthenticate)
                       Obx(() {
