@@ -28,8 +28,9 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
     }
 
     fun deleteNotification(context: Context, notificationId: Int): Boolean {
-        Log.d(Constants.logTag, "Cancelling notification with ID $notificationId")
+        Log.d(Constants.logTag, "Attempting to delete notification with ID, $notificationId")
         val notificationManager = context.getSystemService(NotificationManager::class.java)
+
         try {
             // Get the notification by ID
             val notification = notificationManager.activeNotifications.firstOrNull { it.id == notificationId }
@@ -38,11 +39,10 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
             // Return true cuz there wasn't technically an issue.
             if (notification == null) {
                 Log.d(Constants.logTag, "Notification with ID $notificationId not found!")
-                return true
+            } else {
+                Log.d(Constants.logTag, "Cancelling notification with tag ${notification.tag}")
+                notificationManager.cancel(notification.tag, notificationId)
             }
-
-            // Cancel the notification
-            notificationManager.cancel(notification.tag, notificationId)
 
             // Get all notifications of the same tag/channel
             val leftoverNotifications = notificationManager.activeNotifications.filter { it.tag == notification.tag }
@@ -53,6 +53,8 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
                 Log.d(Constants.logTag, "Cancelling notification summary")
                 notificationManager.cancel(notification.tag, 0)
             }
+
+            return true
         } catch (exception: Exception) {
             Log.e(Constants.logTag, "Failed to cancel notification with ID $notificationId!")
             return false
