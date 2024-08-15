@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/misc/live_logging_panel.d
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/services/backend/sync/chat_sync_manager.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -23,6 +24,7 @@ class TroubleshootPanel extends StatefulWidget {
 
 class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
   final RxnBool resyncingHandles = RxnBool();
+  final RxnBool resyncingChats = RxnBool();
   final RxInt logFileCount = 1.obs;
   final RxInt logFileSize = 0.obs;
   final RxBool optimizationsDisabled = false.obs;
@@ -271,9 +273,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           materialIcon: Icons.battery_5_bar,
                         ),
                         title: "Disable Battery Optimizations",
-                        subtitle: kIsWeb
-                            ? null
-                            : "Resets the app to default settings",
+                        subtitle: "Allow app to run in the background via the OS",
                         trailing: Obx(() => !optimizationsDisabled.value
                             ? nextIcon
                             : Icon(Icons.check,
@@ -287,7 +287,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                 if (!kIsWeb)
                   SettingsSection(backgroundColor: tileColor, children: [
                     SettingsTile(
-                        title: "Re-Sync Handles & Contacts",
+                        title: "Sync Handles & Contacts",
                         subtitle:
                             "Run this troubleshooter if you are experiencing issues with missing or incorrect contact names and photos",
                         onTap: () async {
@@ -323,6 +323,43 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                                     ))
                                 : Icon(Icons.check,
                                     color: context.theme.colorScheme.outline))),
+                    SettingsTile(
+                        title: "Sync Chat Info",
+                        subtitle: "This will re-sync all chat data & icons from the server to ensure that you have the most up-to-date information.\n\nNote: This will overwrite any group chat icons that are not locked!",
+                        onTap: () async {
+                          resyncingChats.value = true;
+                          try {
+                            showSnackbar("Please Wait...", "This may take a few minutes.");
+
+                            final chatSyncer = ChatSyncManager();
+                            await chatSyncer.start();
+                            eventDispatcher.emit("refresh-all", null);
+
+                            showSnackbar("Success",
+                                "Successfully synced your chat info! You may need to close and re-open the app for changes to take effect.");
+                          } catch (ex, stacktrace) {
+                            Logger.error("Failed to sync chat info!", error: ex, trace: stacktrace);
+                            showSnackbar("Failed to sync chat info!",
+                                "Error: ${ex.toString()}");
+                          } finally {
+                            resyncingChats.value = false;
+                          }
+                        },
+                        trailing: Obx(() => resyncingChats.value == null
+                            ? const SizedBox.shrink()
+                            : resyncingChats.value == true
+                                ? Container(
+                                    constraints: const BoxConstraints(
+                                      maxHeight: 20,
+                                      maxWidth: 20,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          context.theme.colorScheme.primary),
+                                    ))
+                                : Icon(Icons.check,
+                                    color: context.theme.colorScheme.outline)))
                   ]),
                 if (kIsDesktop) const SizedBox(height: 100),
               ],
