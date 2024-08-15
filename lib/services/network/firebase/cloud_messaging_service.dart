@@ -121,7 +121,7 @@ class CloudMessagingService extends GetxService {
 
     // Make sure we got a valid response back from the FCM auth
     if (isNullOrEmpty(result)) {
-      Logger.error("Empty results, not registering device with the server.", tag: 'FCM-Auth');
+      Logger.warn("Empty results, not registering device with the server.", tag: 'FCM-Auth');
       completer?.complete();
       return;
     }
