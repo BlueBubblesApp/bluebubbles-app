@@ -183,7 +183,13 @@ class ChatsService extends GetxService {
     final _chats = Database.chats.query(Chat_.hasUnreadMessage.equals(true)).build().find();
     for (Chat c in _chats) {
       c.hasUnreadMessage = false;
-      mcs.invokeMethod("delete-notification", {"notification_id": c.id});
+      mcs.invokeMethod(
+        "delete-notification",
+        {
+          "notification_id": c.id,
+          "tag": NotificationsService.NEW_MESSAGE_TAG
+        }
+      );
       if (ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
         http.markChatRead(c.guid);
       }

@@ -654,7 +654,13 @@ class Chat {
 
     try {
       if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
-        mcs.invokeMethod("delete-notification", {"notification_id": id});
+        mcs.invokeMethod(
+          "delete-notification",
+          {
+            "notification_id": id,
+            "tag": NotificationsService.NEW_MESSAGE_TAG
+          }
+        );
       }
       if (privateMark && ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
         if (!hasUnread) {

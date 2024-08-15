@@ -34,6 +34,9 @@ class NotificationsService extends GetxService {
   static const String FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
   static const String FOREGROUND_SERVICE_CHANNEL = "com.bluebubbles.foreground_service";
 
+  static const String NEW_MESSAGE_TAG = "com.bluebubbles.messaging.NEW_MESSAGE_NOTIFICATION";
+  static const String NEW_FACETIME_TAG = "com.bluebubbles.messaging.NEW_FACETIME_NOTIFICATION";
+
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
   StreamSubscription? countSub;
   int currentCount = 0;
@@ -250,7 +253,13 @@ class NotificationsService extends GetxService {
       await clearDesktopFaceTimeNotif(callUuid);
     } else if (!kIsWeb) {
       final numeric = callUuid.numericOnly();
-      mcs.invokeMethod("delete-notification", {"notification_id": int.parse(numeric.substring(0, min(8, numeric.length)))});
+      mcs.invokeMethod(
+        "delete-notification",
+        {
+          "notification_id": int.parse(numeric.substring(0, min(8, numeric.length))),
+          "tag": NEW_FACETIME_TAG
+        }
+      );
     }
   }
 

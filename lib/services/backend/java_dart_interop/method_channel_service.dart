@@ -226,7 +226,8 @@ class MethodChannelService extends GetxService {
           if (data != null) {
             Chat? chat = Chat.findOne(guid: data["chatGuid"]);
             if (chat != null) {
-              chat.toggleHasUnread(false);
+              // Don't clear local notifications because tapping Mark as Read should clear the notification automatically
+              chat.toggleHasUnread(false, clearLocalNotifications: false);
               return true;
             }
           }
