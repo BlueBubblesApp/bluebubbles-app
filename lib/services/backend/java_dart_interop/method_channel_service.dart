@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -49,7 +49,7 @@ class MethodChannelService extends GetxService {
     switch (call.method) {
       case "NewServerUrl":
         if (arguments == null) return false;
-        await storeStartup.future;
+        await Database.waitForInit();
 
         String address = arguments["server_url"];
         bool updated = await saveNewServerUrl(address, restartSocket: false);
@@ -58,7 +58,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "new-message":
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received new message from MethodChannel");
 
         // The socket will handle this event if the app is alive
@@ -83,7 +83,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "updated-message":
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received updated message from MethodChannel");
 
         // The socket will handle this event if the app is alive
@@ -126,7 +126,7 @@ class MethodChannelService extends GetxService {
       case "participant-removed":
       case "participant-added":
       case "participant-left":
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received ${call.method} from MethodChannel");
 
         // The socket will handle this event if the app is alive
@@ -148,7 +148,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "group-icon-changed":
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received group icon change from MethodChannel");
 
         // The socket will handle this event if the app is alive
@@ -186,7 +186,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "ReplyChat":
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received reply to message from Kotlin");
         final Map<String, dynamic>? data = arguments;
         if (data == null) return false;
@@ -219,7 +219,7 @@ class MethodChannelService extends GetxService {
         }
       case "MarkChatRead":
         if (ls.isAlive) return true;
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received markAsRead from Kotlin");
         try {
           final Map<String, dynamic>? data = arguments;
@@ -236,7 +236,7 @@ class MethodChannelService extends GetxService {
         return false;
       case "chat-read-status-changed":
         if (ls.isAlive) return true;
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received chat status change from FCM");
         try {
           Map<String, dynamic>? data = arguments;
@@ -256,7 +256,7 @@ class MethodChannelService extends GetxService {
           return Future.error(e, s);
         }
       case "MediaColors":
-        await storeStartup.future;
+        await Database.waitForInit();
         if (!ss.settings.colorsFromMedia.value) return false;
         final Uint8List art = call.arguments["albumArt"];
         if (Get.context != null && (!isRunning || art != previousArt)) {
@@ -265,7 +265,7 @@ class MethodChannelService extends GetxService {
         }
         return true;
       case "incoming-facetime":
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received legacy incoming facetime from FCM");
         try {
           Map<String, dynamic>? data = arguments;
@@ -279,7 +279,7 @@ class MethodChannelService extends GetxService {
         return true;
       case "ft-call-status-changed":
         if (ls.isAlive) return true;
-        await storeStartup.future;
+        await Database.waitForInit();
         Logger.info("Received facetime call status change from FCM");
         try {
           Map<String, dynamic>? data = arguments;

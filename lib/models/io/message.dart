@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -39,9 +39,9 @@ class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<At
     /// Pull args from input and create new instances of store and boxes
     List<int> messageIds = stuff[0];
     final Map<String, List<Attachment?>> map = {};
-    return store.runInTransaction(TxMode.read, () {
+    return Database.runInTransaction(TxMode.read, () {
       /// Query the [amJoinBox] for relevant attachment IDs
-      final messages = messageBox.getMany(messageIds);
+      final messages = Database.messages.getMany(messageIds);
 
       /// Add the attachments to the map with some clever list operations
       map.addEntries(messages.mapIndexed((index, e) => MapEntry(e!.guid!, e.dbAttachments)));
@@ -68,7 +68,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
   @override
   FutureOr<List<Message>> run() {
-    return store.runInTransaction(TxMode.write, () {
+    return Database.runInTransaction(TxMode.write, () {
       // NOTE: This assumes that handles and chats will already be created and in the database
       // 0. Create map for the messages and attachments to save
       // 1. Check for existing attachments and save new ones
@@ -84,7 +84,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       // 11. Update the associated chat's last message
 
       /// Takes the list of messages from [params] and saves it
-      /// to the objectbox store.
+      /// to the objectbox Database.
       Chat inputChat = params[0];
       List<Message> inputMessages = params[1];
       List<String> inputMessageGuids = inputMessages.map((element) => element.guid!).toList();
@@ -112,7 +112,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       Map<String, Attachment> attachmentMap = {};
       if (attachmentsToSave.isNotEmpty) {
         List<String> inputAttachmentGuids = attachmentsToSave.values.map((e) => e.guid).whereNotNull().toList();
-        QueryBuilder<Attachment> attachmentQuery = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
+        QueryBuilder<Attachment> attachmentQuery = Database.attachments.query(Attachment_.guid.oneOf(inputAttachmentGuids));
         List<String> existingAttachmentGuids =
             attachmentQuery.build().find().map((e) => e.guid).whereNotNull().toList();
 
@@ -121,10 +121,10 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
             .where((element) => !existingAttachmentGuids.contains(element.guid))
             .whereNotNull()
             .toList();
-        attachmentBox.putMany(attachmentsToInsert);
+        Database.attachments.putMany(attachmentsToInsert);
 
         // 2. Fetch all inserted/existing attachments based on input
-        QueryBuilder<Attachment> attachmentQuery2 = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
+        QueryBuilder<Attachment> attachmentQuery2 = Database.attachments.query(Attachment_.guid.oneOf(inputAttachmentGuids));
         List<Attachment> attachments = attachmentQuery2.build().find().whereNotNull().toList();
 
         // 3. Create map of inserted/existing attachments
@@ -134,12 +134,12 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       // 4. Check for existing messages & create list of new messages to save
-      QueryBuilder<Message> query = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
+      QueryBuilder<Message> query = Database.messages.query(Message_.guid.oneOf(inputMessageGuids));
       List<String> existingMessageGuids = query.build().find().map((e) => e.guid!).toList();
       inputMessages = inputMessages.where((element) => !existingMessageGuids.contains(element.guid)).toList();
 
       // 5. Fetch all handles and map the old handle ROWIDs from each message to the new ones based on the original ROWID
-      List<Handle> handles = handleBox.getAll();
+      List<Handle> handles = Database.handles.getAll();
 
       for (final msg in inputMessages) {
         msg.chat.target = inputChat;
@@ -155,10 +155,10 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       // 7. Save all messages (and handle/attachment relationships)
-      messageBox.putMany(inputMessages);
+      Database.messages.putMany(inputMessages);
 
       // 8. Get the inserted messages
-      QueryBuilder<Message> messageQuery = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
+      QueryBuilder<Message> messageQuery = Database.messages.query(Message_.guid.oneOf(inputMessageGuids));
       List<Message> messages = messageQuery.build().find().toList();
 
       // 9. Check inserted messages for associated message GUIDs & update hasReactions flag
@@ -197,7 +197,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       // 10. Save the updated associated messages
       if (messagesToUpdate.isNotEmpty) {
         try {
-          messageBox.putMany(messagesToUpdate.values.toList());
+          Database.messages.putMany(messagesToUpdate.values.toList());
         } catch (ex) {
           print('Failed to put associated messages into DB: ${ex.toString()}');
         }
@@ -454,7 +454,7 @@ class Message {
   /// than iterating through them
   Message save({Chat? chat, bool updateIsBookmarked = false}) {
     if (kIsWeb) return this;
-    store.runInTransaction(TxMode.write, () {
+    Database.runInTransaction(TxMode.write, () {
       Message? existing = Message.findOne(guid: guid);
       if (existing != null) {
         id = existing.id;
@@ -485,7 +485,7 @@ class Message {
 
       try {
         if (chat != null) this.chat.target = chat;
-        id = messageBox.put(this);
+        id = Database.messages.put(this);
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -500,7 +500,7 @@ class Message {
 
   /// Save a list of messages
   static List<Message> bulkSave(List<Message> messages) {
-    store.runInTransaction(TxMode.write, () {
+    Database.runInTransaction(TxMode.write, () {
       /// Find existing messages and match them to the messages to save, where
       /// possible
       List<Message> existingMessages = Message.find(cond: Message_.guid.oneOf(messages.map((e) => e.guid!).toList()));
@@ -515,7 +515,7 @@ class Message {
       /// Save the messages and update their IDs
       /// We do this first because we might want these same messages to show up
       /// in the next queries
-      final ids = messageBox.putMany(messages);
+      final ids = Database.messages.putMany(messages);
       for (int i = 0; i < messages.length; i++) {
         messages[i].id = ids[i];
       }
@@ -548,7 +548,7 @@ class Message {
       });
       try {
         /// Update the original messages and associated messages
-        final ids = messageBox.putMany(messages..addAll(associatedMessages));
+        final ids = Database.messages.putMany(messages..addAll(associatedMessages));
         for (int i = 0; i < messages.length; i++) {
           messages[i].id = ids[i];
         }
@@ -584,7 +584,7 @@ class Message {
     existing._error.value = newMessage._error.value;
 
     try {
-      messageBox.put(existing, mode: PutMode.update);
+      Database.messages.put(existing, mode: PutMode.update);
     } catch (ex, stack) {
       Logger.error('Failed to replace message! This is likely due to a unique constraint being violated.', error: ex, trace: stack);
     }
@@ -611,7 +611,7 @@ class Message {
       return attachments;
     }
 
-    return store.runInTransaction(TxMode.read, () {
+    return Database.runInTransaction(TxMode.read, () {
       attachments = dbAttachments;
       return attachments;
     });
@@ -620,7 +620,7 @@ class Message {
   /// Get the chat associated with the message
   Chat? getChat() {
     if (kIsWeb) return null;
-    return store.runInTransaction(TxMode.read, () {
+    return Database.runInTransaction(TxMode.read, () {
       return chat.target;
     });
   }
@@ -648,14 +648,14 @@ class Message {
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
     if (kIsWeb) return null;
     if (guid != null) {
-      final query = messageBox.query(Message_.guid.equals(guid)).build();
+      final query = Database.messages.query(Message_.guid.equals(guid)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
       result?.handle = result.getHandle();
       return result;
     } else if (associatedMessageGuid != null) {
-      final query = messageBox.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
+      final query = Database.messages.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
@@ -668,19 +668,19 @@ class Message {
   /// Find a list of messages by the specified condition, or return all messages
   /// when no condition is specified
   static List<Message> find({Condition<Message>? cond}) {
-    final query = messageBox.query(cond).build();
+    final query = Database.messages.query(cond).build();
     return query.find();
   }
 
   /// Delete a message and remove all instances of that message in the DB
   static void delete(String guid) {
     if (kIsWeb) return;
-    store.runInTransaction(TxMode.write, () {
-      final query = messageBox.query(Message_.guid.equals(guid)).build();
+    Database.runInTransaction(TxMode.write, () {
+      final query = Database.messages.query(Message_.guid.equals(guid)).build();
       final result = query.findFirst();
       query.close();
       if (result?.id != null) {
-        messageBox.remove(result!.id!);
+        Database.messages.remove(result!.id!);
       }
     });
   }

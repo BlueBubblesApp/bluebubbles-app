@@ -113,13 +113,27 @@ class HttpService extends GetxService {
   }
 
   /// Get server metadata like server version, macOS version, current URL, etc
+  Response? _serverInfoCache;
+  DateTime? _lastServerInfoFetch;
   Future<Response> serverInfo({CancelToken? cancelToken}) async {
+    final now = DateTime.now();
+    if (_serverInfoCache != null && _lastServerInfoFetch != null && now.difference(_lastServerInfoFetch!) < const Duration(minutes: 1)) {
+      Logger.debug("Server info was recently fetched. Using cache...");
+      return _serverInfoCache!;
+    }
+
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/server/info",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
+
+      if (response.statusCode == 200) {
+        _serverInfoCache = response;
+        _lastServerInfoFetch = now;
+      }
+
       return returnSuccessOrError(response);
     });
   }

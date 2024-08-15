@@ -5,14 +5,14 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/implementation/pure_dart.dart';
-import 'package:firebase_dart/src/firestore.dart';
+import 'package:firebase_dart/src/firestore.dart' show FirebaseFirestore;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:bluebubbles/models/models.dart';
 
-DatabaseService fdb = Get.isRegistered<DatabaseService>() ? Get.find<DatabaseService>() : Get.put(DatabaseService());
+FirebaseDatabaseService fdb = Get.isRegistered<FirebaseDatabaseService>() ? Get.find<FirebaseDatabaseService>() : Get.put(FirebaseDatabaseService());
 
-class DatabaseService extends GetxService {
+class FirebaseDatabaseService extends GetxService {
   @override
   void onInit() {
     super.onInit();

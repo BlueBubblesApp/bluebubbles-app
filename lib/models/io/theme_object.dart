@@ -1,6 +1,6 @@
 import 'dart:core';
 
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -58,7 +58,7 @@ class ThemeObject {
       ];
 
   static List<ThemeObject> getThemes() {
-    final results = themeObjectBox.getAll();
+    final results = Database.themeObjects.getAll();
     final list = <ThemeObject>[];
     if (results.isNotEmpty) {
       final existing = list.map((e) => e.name);

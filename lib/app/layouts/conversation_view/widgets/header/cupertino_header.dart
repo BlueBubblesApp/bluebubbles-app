@@ -7,7 +7,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.d
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -199,7 +199,7 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
     super.initState();
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
+        final unreadQuery = Database.chats.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
         sub = unreadQuery.listen((Query<Chat> query) {
           final c = query.count();
           if (count != c) {
@@ -296,10 +296,10 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
+        final titleQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = await runAsync(() {
-            final cquery = chatBox.query(Chat_.guid.equals(cachedGuid)).build();
+            final cquery = Database.chats.query(Chat_.guid.equals(cachedGuid)).build();
             return cquery.findFirst();
           });
 

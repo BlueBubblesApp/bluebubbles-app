@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/network/http_overrides.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -102,12 +103,7 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
       WidgetsFlutterBinding.ensureInitialized();
       HttpOverrides.global = BadCertOverride();
 
-      // Order matters here
-      await fs.init();
-      await Logger.init();
-      await ss.init();
-      await initDatabase();
-      await ls.init();
+      await StartupTasks.initIncrementalSyncServices();
 
       http.originOverride = address;
     }

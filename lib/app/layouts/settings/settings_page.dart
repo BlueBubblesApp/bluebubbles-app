@@ -26,7 +26,7 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -1003,7 +1003,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     await ss.prefs.setString(
                                                         "selected-light",
                                                         "Bright White");
-                                                    themeBox.putMany(
+                                                    Database.themes.putMany(
                                                         ts.defaultThemes);
                                                     await ts
                                                         .changeTheme(context);

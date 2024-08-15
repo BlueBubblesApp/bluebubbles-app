@@ -1,12 +1,13 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/services/ui/contact_service.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:idb_shim/idb.dart';
+import 'package:idb_shim/idb.dart' as idb;
 import 'package:idb_shim/idb_browser.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
@@ -20,7 +21,7 @@ class FilesystemService extends GetxService {
   late Directory appDocDir;
   late final PackageInfo packageInfo;
   AndroidDeviceInfo? androidInfo;
-  late final Database webDb;
+  late final idb.Database webDb;
   late final Uint8List noVideoPreviewIcon;
   late final Uint8List unplayableVideoIcon;
   final RxBool fontExistsOnDisk = false.obs;
@@ -73,14 +74,14 @@ class FilesystemService extends GetxService {
       }
     } else {
       final idbFactory = idbFactoryBrowser;
-      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (VersionChangeEvent e) {
-        final db = (e.target as OpenDBRequest).result;
+      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (idb.VersionChangeEvent e) {
+        final db = (e.target as idb.OpenDBRequest).result;
         if (!db.objectStoreNames.contains("BBStore")) {
           db.createObjectStore("BBStore");
         }
       }).then((_db) async {
         webDb = _db;
-        final txn = webDb.transaction("BBStore", idbModeReadOnly);
+        final txn = webDb.transaction("BBStore", idb.idbModeReadOnly);
         final store = txn.objectStore("BBStore");
         Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
         await txn.completed;
@@ -100,14 +101,8 @@ class FilesystemService extends GetxService {
 
   void deleteDB() {
     if (kIsWeb) return;
-    attachmentBox.removeAll();
-    chatBox.removeAll();
-    fcmDataBox.removeAll();
-    contactBox.removeAll();
+    Database.reset();
     cs.contacts.clear();
-    handleBox.removeAll();
-    messageBox.removeAll();
-    themeBox.removeAll();
   }
 
   String uriToFilename(String? uri, String? mimeType) {
@@ -135,4 +130,18 @@ class FilesystemService extends GetxService {
     // Rebuild the filename
     return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
   }
+
+  void copyDirectory(Directory source, Directory destination) =>
+    source.listSync(recursive: false).forEach((element) async {
+      if (element is Directory) {
+        Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
+        newDirectory.createSync();
+        Logger.info("Created new directory ${basename(element.path)}");
+
+        copyDirectory(element.absolute, newDirectory);
+      } else if (element is File) {
+        element.copySync(join(destination.path, basename(element.path)));
+        Logger.info("Created file ${basename(element.path)}");
+      }
+    });
 }

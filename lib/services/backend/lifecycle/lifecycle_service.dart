@@ -1,7 +1,7 @@
 import 'dart:isolate';
 import 'dart:ui' hide window;
 
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -59,7 +59,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
         close();
       }
     } else if (state == AppLifecycleState.resumed) {
-      await storeStartup.future;
+      await Database.waitForInit();
       open();
     }
 

@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
@@ -164,7 +164,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
     // otherwise fetch until it is loaded
     final message = Message.findOne(guid: guid);
-    final query = (messageBox.query(Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
+    final query = (Database.messages.query(Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
           ..link(Message_.chat, Chat_.id.equals(chat.id!))
           ..order(Message_.dateCreated, flags: Order.descending))
         .build();

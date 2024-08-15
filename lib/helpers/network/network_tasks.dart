@@ -14,36 +14,22 @@ import 'package:network_tools/network_tools.dart'
 class NetworkTasks {
   static Future<void> onConnect() async {
     if (ss.settings.finishedSetup.value) {
-      if (cm.activeChat != null) {
-        socket.sendMessage("update-typing-status", {"chatGuid": cm.activeChat!.chat.guid});
-      }
-      await fcm.registerDevice();
-      await ss.getServerDetails(refresh: true);
       await sync.startIncrementalSync();
-
-      try {
-        ss.checkServerUpdate();
-      } catch (ex, stack) {
-        Logger.warn("Failed to check for server update!", error: ex, trace: stack);
-      }
-
-      try {
-        ss.checkClientUpdate();
-      } catch (ex, stack) {
-        Logger.warn("Failed to check for client update!", error: ex, trace: stack);
-      }
 
       // scan if server is on localhost
       if (!kIsWeb && ss.settings.localhostPort.value != null) {
         detectLocalhost();
       }
 
-      if (kIsWeb && chats.chats.isEmpty) {
-        Get.reload<ChatsService>(force: true);
-        await chats.init();
-      }
-      if (kIsWeb && cs.contacts.isEmpty) {
-        await cs.refreshContacts();
+      if (kIsWeb) {
+        if (chats.chats.isEmpty) {
+          Get.reload<ChatsService>(force: true);
+          await chats.init();
+        }
+
+        if (cs.contacts.isEmpty) {
+          await cs.refreshContacts();
+        }
       }
     }
   }

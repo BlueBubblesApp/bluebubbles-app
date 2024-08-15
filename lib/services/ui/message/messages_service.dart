@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -55,7 +55,7 @@ class MessagesService extends GetxController {
     // watch for new messages
     if (!_init) {
       if (chat.id != null) {
-        final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        final countQuery = (Database.messages.query(Message_.dateDeleted.isNull())
           ..link(Message_.chat, Chat_.id.equals(chat.id!))
           ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
         countSub = countQuery.listen((event) async {

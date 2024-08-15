@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
@@ -120,8 +120,8 @@ class OldThemesDialog extends StatelessWidget {
         TextButton(
             child: Text("Delete Old", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
             onPressed: () {
-              themeObjectBox.removeAll();
-              themeEntryBox.removeAll();
+              Database.themeObjects.removeAll();
+              Database.themeEntries.removeAll();
               clearOld();
               Navigator.of(context).pop();
             }

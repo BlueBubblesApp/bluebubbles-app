@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
+import 'package:bluebubbles/models/database.dart';
 
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
 
@@ -33,7 +34,7 @@ class ChatsService extends GetxService {
     super.onInit();
     if (!kIsWeb) {
       // watch for new chats
-      final countQuery = (chatBox.query(Chat_.dateDeleted.isNull())..order(Chat_.id, flags: Order.descending))
+      final countQuery = (Database.chats.query(Chat_.dateDeleted.isNull())..order(Chat_.id, flags: Order.descending))
           .watch(triggerImmediately: true);
       countSub = countQuery.listen((event) async {
         if (!ss.settings.finishedSetup.value) return;
@@ -105,7 +106,7 @@ class ChatsService extends GetxService {
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
     // update share targets
     if (Platform.isAndroid) {
-      uiStartup.future.then((_) async {
+      StartupTasks.waitForUI().then((_) async {
         for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)).take(4)) {
           await mcs.invokeMethod("push-share-targets", {
             "title": c.title,
@@ -179,7 +180,7 @@ class ChatsService extends GetxService {
   }
 
   void markAllAsRead() {
-    final _chats = chatBox.query(Chat_.hasUnreadMessage.equals(true)).build().find();
+    final _chats = Database.chats.query(Chat_.hasUnreadMessage.equals(true)).build().find();
     for (Chat c in _chats) {
       c.hasUnreadMessage = false;
       mcs.invokeMethod("delete-notification", {"notification_id": c.id});
@@ -187,7 +188,7 @@ class ChatsService extends GetxService {
         http.markChatRead(c.guid);
       }
     }
-    chatBox.putMany(_chats);
+    Database.chats.putMany(_chats);
   }
 
   void updateChatPinIndex(int oldIndex, int newIndex) {

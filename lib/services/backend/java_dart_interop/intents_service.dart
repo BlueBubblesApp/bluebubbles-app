@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
-import 'package:bluebubbles/main.dart';
+
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
@@ -101,7 +102,7 @@ class IntentsService extends GetxService {
           ls.isBubble = bubble;
           await openChat(guid);
         } else if (intent.extra?["callUuid"] != null) {
-          await uiStartup.future;
+          await StartupTasks.waitForUI();
           if (intent.extra?["answer"] == true) {
             await answerFaceTime(intent.extra?["callUuid"]!);
           } else {
@@ -161,7 +162,7 @@ class IntentsService extends GetxService {
 
     if (guid == null) {
       Logger.debug("Awaiting UI startup...", tag: "IntentsService");
-      await uiStartup.future;
+      await StartupTasks.waitForUI();
       Logger.debug("UI has completed startup. Pushing conversation route...", tag: "IntentsService");
       ns.pushAndRemoveUntil(
         Get.context!,
@@ -204,7 +205,7 @@ class IntentsService extends GetxService {
 
       if (!chatIsOpen) {
         Logger.debug("Awaiting UI startup...", tag: "IntentsService");
-        await uiStartup.future;
+        await StartupTasks.waitForUI();
         Logger.debug("UI has completed startup. Pushing conversation route...", tag: "IntentsService");
         await ns.pushAndRemoveUntil(
           Get.context!,

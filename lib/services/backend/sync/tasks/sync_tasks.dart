@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/backend/sync/sync_helpers.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -25,7 +25,7 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
 
   @override
   FutureOr<List<Chat>> run() {
-    return store.runInTransaction(TxMode.write, () {
+    return Database.runInTransaction(TxMode.write, () {
       // 0. Create map for the chats and handles to save
       // 1. Check for existing handles and save new ones
       // 2. Fetch all inserted/existing handles based on input
@@ -65,13 +65,13 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
       // 1. Check for existing handles and save new ones
       List<Handle> inputHandles = handlesToSave.values.toList();
       List<String> inputHandleAddressesAndServices = inputHandles.map((element) => element.uniqueAddressAndService).toList();
-      final handleQuery = handleBox.query(Handle_.uniqueAddressAndService.oneOf(inputHandleAddressesAndServices)).build();
+      final handleQuery = Database.handles.query(Handle_.uniqueAddressAndService.oneOf(inputHandleAddressesAndServices)).build();
       List<String> existingHandleAddressesAndServices = handleQuery.find().map((e) => e.uniqueAddressAndService).toList();
       inputHandles = inputHandles.where((element) => !existingHandleAddressesAndServices.contains(element.uniqueAddressAndService)).toList();
-      handleBox.putMany(inputHandles);
+      Database.handles.putMany(inputHandles);
 
       // 2. Fetch all inserted/existing handles based on input
-      final handleQuery2 = handleBox.query(Handle_.uniqueAddressAndService.oneOf(inputHandleAddressesAndServices)).build();
+      final handleQuery2 = Database.handles.query(Handle_.uniqueAddressAndService.oneOf(inputHandleAddressesAndServices)).build();
       List<Handle> handles = handleQuery2.find().toList();
 
       // 3. Create map of inserted/existing handles
@@ -81,13 +81,13 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
       }
 
       // 4. Check for existing chats and save new ones
-      final chatQuery = chatBox.query(Chat_.guid.oneOf(inputChatGuids)).build();
+      final chatQuery = Database.chats.query(Chat_.guid.oneOf(inputChatGuids)).build();
       List<String> existingChatGuids = chatQuery.find().map((e) => e.guid).toList();
       inputChats = inputChats.where((element) => !existingChatGuids.contains(element.guid)).toList();
-      chatBox.putMany(inputChats);
+      Database.chats.putMany(inputChats);
 
       // 5. Fetch all inserted/existing chats based on input
-      final chatQuery2 = chatBox.query(Chat_.guid.oneOf(inputChatGuids)).build();
+      final chatQuery2 = Database.chats.query(Chat_.guid.oneOf(inputChatGuids)).build();
       List<Chat> chats = chatQuery2.find().toList();
 
       // 6. Create map of inserted/existing chats
@@ -109,7 +109,7 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
       }
 
       // 8. Save & return updated chats
-      chatBox.putMany(chats);
+      Database.chats.putMany(chats);
       return chats;
     });
   }
@@ -132,7 +132,7 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
   @override
   FutureOr<List<Message>> run() {
-    return store.runInTransaction(TxMode.write, () {
+    return Database.runInTransaction(TxMode.write, () {
       // Assumptions:
       // - The provided chat exists, has an ID, and participants exist and have an ID
       //
@@ -197,7 +197,7 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       // 5. Invoke a final put call to sync the relational data
       for (Message m in syncedMessages) {
         try {
-          messageBox.put(m);
+          Database.messages.put(m);
         } catch (e, stack) {
           Logger.error("Failed to put messages into database during bulk sync!", error: e, trace: stack);
         }
@@ -270,14 +270,14 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
 
   @override
   FutureOr<List<Chat>> run() {
-    return store.runInTransaction(TxMode.write, () {
+    return Database.runInTransaction(TxMode.write, () {
       // Input variables
       List<Chat> inputChats = params[0];
       bool toggleUnread = params[1];
       List<String> inputGuids = inputChats.map((e) => e.guid).toList();
 
       // Get the latest versions of the chats
-      final chatQuery = chatBox.query(Chat_.guid.oneOf(inputGuids)).build();
+      final chatQuery = Database.chats.query(Chat_.guid.oneOf(inputGuids)).build();
       List<Chat> existingChats = chatQuery.find();
 
       // Pull the latest message for all of the chats.
@@ -285,7 +285,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
       List<Chat> updatedChats = [];
       for (int i in chatIds) {
         // Fetch latest message for the chat
-        final latestMsgQuery = (messageBox.query(Message_.chat.equals(i))..order(Message_.dateCreated, flags: Order.descending)).build();
+        final latestMsgQuery = (Database.messages.query(Message_.chat.equals(i))..order(Message_.dateCreated, flags: Order.descending)).build();
         Message? latestMessage = latestMsgQuery.findFirst();
         if (latestMessage?.handle == null && latestMessage?.handleId != null && latestMessage?.handleId != 0) {
           latestMessage!.handle = latestMessage.getHandle();
@@ -302,7 +302,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
 
       // If we have updates to make, apply them
       if (updatedChats.isNotEmpty) {
-        chatBox.putMany(updatedChats, mode: PutMode.update);
+        Database.chats.putMany(updatedChats, mode: PutMode.update);
       }
       
       // This will contain the updated chat values

@@ -4,7 +4,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
@@ -81,7 +81,7 @@ class HandleSelectorViewState extends OptimizedState<HandleSelectorView> {
   }
 
   Future<void> loadHandles() async {
-    handles = handleBox.getAll();
+    handles = Database.handles.getAll();
 
     // Sort alphabetically, prioritizing handles with contact associations
     handles.sort((a, b) {

@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -104,7 +104,7 @@ class Handle {
   /// than iterating through them
   Handle save({bool updateColor = false, matchOnOriginalROWID = false}) {
     if (kIsWeb) return this;
-    store.runInTransaction(TxMode.write, () {
+    Database.runInTransaction(TxMode.write, () {
       Handle? existing;
       if (matchOnOriginalROWID) {
         existing = Handle.findOne(originalROWID: originalROWID);
@@ -122,7 +122,7 @@ class Handle {
         color = existing?.color ?? color;
       }
       try {
-        id = handleBox.put(this);
+        id = Database.handles.put(this);
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -130,7 +130,7 @@ class Handle {
 
   /// Save a list of handles
   static List<Handle> bulkSave(List<Handle> handles, {matchOnOriginalROWID = false}) {
-    store.runInTransaction(TxMode.write, () {
+    Database.runInTransaction(TxMode.write, () {
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
         Handle? existing;
@@ -147,7 +147,7 @@ class Handle {
         }
       }
 
-      List<int> insertedIds = handleBox.putMany(handles);
+      List<int> insertedIds = Database.handles.putMany(handles);
       for (int i = 0; i < insertedIds.length; i++) {
         handles[i].id = insertedIds[i];
       }
@@ -177,16 +177,16 @@ class Handle {
   static Handle? findOne({int? id, int? originalROWID, Tuple2<String, String>? addressAndService}) {
     if (kIsWeb || id == 0) return null;
     if (id != null) {
-      final handle = handleBox.get(id) ?? Handle.findOne(originalROWID: id);
+      final handle = Database.handles.get(id) ?? Handle.findOne(originalROWID: id);
       return handle;
     } else if (originalROWID != null) {
-      final query = handleBox.query(Handle_.originalROWID.equals(originalROWID)).build();
+      final query = Database.handles.query(Handle_.originalROWID.equals(originalROWID)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
     } else if (addressAndService != null) {
-      final query = handleBox.query(Handle_.address.equals(addressAndService.item1) & Handle_.service.equals(addressAndService.item2)).build();
+      final query = Database.handles.query(Handle_.address.equals(addressAndService.item1) & Handle_.service.equals(addressAndService.item2)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
@@ -214,7 +214,7 @@ class Handle {
   /// Find a list of handles by the specified condition, or return all handles
   /// when no condition is specified
   static List<Handle> find({Condition<Handle>? cond}) {
-    final query = handleBox.query(cond).build();
+    final query = Database.handles.query(cond).build();
     return query.find();
   }
 

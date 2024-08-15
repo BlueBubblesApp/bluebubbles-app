@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
+import 'package:bluebubbles/services/network/http_overrides.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 
@@ -20,12 +20,5 @@ backgroundIsolateEntrypoint() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = BadCertOverride();
 
-  await fs.init(headless: true);
-  await Logger.init();
-  await ss.init(headless: true);
-
-  await initDatabase();
-  
-  await mcs.init(headless: true);
-  await ls.init(headless: true);
+  await StartupTasks.initIsolateServices();
 }

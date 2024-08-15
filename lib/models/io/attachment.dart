@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/models/io/message.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -93,7 +93,7 @@ class Attachment {
   /// when provided
   Attachment save(Message? message) {
     if (kIsWeb) return this;
-    store.runInTransaction(TxMode.write, () {
+    Database.runInTransaction(TxMode.write, () {
       /// Find an existing attachment and update the attachment ID if applicable
       Attachment? existing = Attachment.findOne(guid!);
       if (existing != null) {
@@ -106,7 +106,7 @@ class Attachment {
           this.message.target = message;
         }
 
-        id = attachmentBox.put(this);
+        id = Database.attachments.put(this);
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -115,7 +115,7 @@ class Attachment {
   /// Save many attachments at once. [map] is used to establish a link between
   /// the message and its attachments.
   static void bulkSave(Map<Message, List<Attachment>> map) {
-    return store.runInTransaction(TxMode.write, () {
+    return Database.runInTransaction(TxMode.write, () {
       /// convert List<List<Attachment>> into just List<Attachment> (flatten it)
       final attachments = map.values.flattened.toList();
       /// find existing attachments
@@ -130,7 +130,7 @@ class Attachment {
       }
       try {
         /// store the attachments and update their ids
-        final ids = attachmentBox.putMany(attachments);
+        final ids = Database.attachments.putMany(attachments);
         for (int i = 0; i < attachments.length; i++) {
           attachments[i].id = ids[i];
         }
@@ -187,7 +187,7 @@ class Attachment {
   /// find an attachment by its guid
   static Attachment? findOne(String guid) {
     if (kIsWeb) return null;
-    final query = attachmentBox.query(Attachment_.guid.equals(guid)).build();
+    final query = Database.attachments.query(Attachment_.guid.equals(guid)).build();
     query.limit = 1;
     final result = query.findFirst();
     query.close();
@@ -197,19 +197,19 @@ class Attachment {
   /// Find all attachments matching a specified condition, or all attachments
   /// if no condition is provided
   static List<Attachment> find({Condition<Attachment>? cond}) {
-    final query = attachmentBox.query(cond).build();
+    final query = Database.attachments.query(cond).build();
     return query.find();
   }
 
   /// Delete an attachment and remove all instances of that attachment in the DB
   static void delete(String guid) {
     if (kIsWeb) return;
-    store.runInTransaction(TxMode.write, () {
-      final query = attachmentBox.query(Attachment_.guid.equals(guid)).build();
+    Database.runInTransaction(TxMode.write, () {
+      final query = Database.attachments.query(Attachment_.guid.equals(guid)).build();
       final result = query.findFirst();
       query.close();
       if (result?.id != null) {
-        attachmentBox.remove(result!.id!);
+        Database.attachments.remove(result!.id!);
       }
     });
   }

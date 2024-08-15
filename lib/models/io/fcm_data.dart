@@ -1,4 +1,4 @@
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/models/database.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -40,10 +40,10 @@ class FCMData {
 
   FCMData save() {
     if (kIsWeb) return this;
-    List<FCMData> data = fcmDataBox.getAll();
+    List<FCMData> data = Database.fcmData.getAll();
     if (data.length > 1) data.removeRange(1, data.length); // These were being ignored anyway
-    id = !fcmDataBox.isEmpty() ? data.first.id : null;
-    fcmDataBox.put(this);
+    id = !Database.fcmData.isEmpty() ? data.first.id : null;
+    Database.fcmData.put(this);
     Future(() async {
       if (projectID != null) {
         await ss.prefs.setString('projectID', projectID!);
@@ -81,7 +81,7 @@ class FCMData {
   }
 
   static void deleteFcmData() async {
-    fcmDataBox.removeAll();
+    Database.fcmData.removeAll();
     await ss.prefs.remove('projectID');
     await ss.prefs.remove('storageBucket');
     await ss.prefs.remove('apiKey');
@@ -92,7 +92,7 @@ class FCMData {
   }
 
   static FCMData getFCM() {
-    final result = fcmDataBox.getAll();
+    final result = Database.fcmData.getAll();
     if (result.isEmpty) {
       return FCMData(
         projectID: ss.prefs.getString('projectID'),
