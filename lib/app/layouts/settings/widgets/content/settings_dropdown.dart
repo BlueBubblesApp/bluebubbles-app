@@ -129,7 +129,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                 );
                 if (clampWidth) {
                   return ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: ns.width(context) * 2 / 5 - 30),
+                    constraints: BoxConstraints(maxWidth: ns.width(context) * 2 / 5 - 47),
                     child: widget,
                   );
                 } else {
