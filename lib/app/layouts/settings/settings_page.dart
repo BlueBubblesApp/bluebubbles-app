@@ -530,7 +530,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         backgroundColor: tileColor,
                                         title: "Private API Features",
                                         subtitle:
-                                            "Private API ${ss.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}${ss.settings.enablePrivateAPI.value && ss.settings.serverPrivateAPI.value == false ? " but not set up!" : ""}",
+                                            "Private API is ${ss.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}${ss.settings.enablePrivateAPI.value && ss.settings.serverPrivateAPI.value == false ? " but not set up!" : ""}",
                                         trailing: nextIcon,
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
@@ -567,7 +567,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         backgroundColor: tileColor,
                                         title: "Redacted Mode",
                                         subtitle:
-                                            "Redacted Mode ${ss.settings.redactedMode.value ? "Enabled" : "Disabled"}",
+                                            "Redacted Mode is ${ss.settings.redactedMode.value ? "Enabled" : "Disabled"}",
                                         trailing: nextIcon,
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
@@ -615,6 +615,34 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           materialIcon:
                                               Icons.electric_bolt_outlined,
                                           containerColor: Colors.orangeAccent),
+                                    ),
+                                  SettingsTile(
+                                      backgroundColor: tileColor,
+                                      onTap: () async {
+                                        ns.pushAndRemoveSettingsUntil(
+                                          context,
+                                          TroubleshootPanel(),
+                                          (route) => route.isFirst,
+                                        );
+                                      },
+                                      leading: const SettingsLeadingIcon(
+                                        iosIcon: CupertinoIcons.wrench,
+                                        materialIcon: Icons.adb,
+                                        containerColor: Colors.blueAccent,
+                                      ),
+                                      title: "Developer Tools",
+                                      subtitle: "View logs, troubleshoot bugs, and more",
+                                      trailing: nextIcon,
+                                    ),
+                                    Container(
+                                      color: tileColor,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 65.0),
+                                        child: SettingsDivider(
+                                            color: context.theme.colorScheme
+                                                .surfaceVariant),
+                                      ),
                                     ),
                                 ],
                               ),
@@ -820,33 +848,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                   .surfaceVariant),
                                         ),
                                       ),
-                                    SettingsTile(
-                                      backgroundColor: tileColor,
-                                      onTap: () async {
-                                        ns.pushAndRemoveSettingsUntil(
-                                          context,
-                                          TroubleshootPanel(),
-                                          (route) => route.isFirst,
-                                        );
-                                      },
-                                      leading: const SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.question_circle,
-                                        materialIcon: Icons.help_outline,
-                                        containerColor: Colors.blueAccent,
-                                      ),
-                                      title: "Troubleshooting",
-                                      trailing: nextIcon,
-                                    ),
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
                                   ]),
                               SettingsHeader(
                                   iosSubtitle: iosSubtitle,
