@@ -649,7 +649,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               SettingsHeader(
                                   iosSubtitle: iosSubtitle,
                                   materialSubtitle: materialSubtitle,
-                                  text: "Backup and Reset"),
+                                  text: "Backup and Restore"),
                               SettingsSection(
                                   backgroundColor: tileColor,
                                   children: [
@@ -882,6 +882,72 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               SettingsSection(
                                   backgroundColor: tileColor,
                                   children: [
+                                    if (!kIsWeb)
+                                      SettingsTile(
+                                        backgroundColor: tileColor,
+                                        onTap: () {
+                                          showDialog(
+                                            barrierDismissible: true,
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text(
+                                                  "Are you sure?",
+                                                  style: context
+                                                      .theme.textTheme.titleLarge,
+                                                ),
+                                                content: Text(
+                                                  "This will remove all attachments from this app. Recent attachments will be automatically re-downloaded when you enter a chat. This will not delete attachments from your server.",
+                                                  style: context
+                                                      .theme.textTheme.bodyLarge,
+                                                ),
+                                                backgroundColor: context.theme
+                                                    .colorScheme.properSurface,
+                                                actions: <Widget>[
+                                                  TextButton(
+                                                    child: Text("No",
+                                                        style: context.theme
+                                                            .textTheme.bodyLarge!
+                                                            .copyWith(
+                                                                color: context
+                                                                    .theme
+                                                                    .colorScheme
+                                                                    .primary)),
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop();
+                                                    },
+                                                  ),
+                                                  TextButton(
+                                                    child: Text("Yes",
+                                                        style: context.theme
+                                                            .textTheme.bodyLarge!
+                                                            .copyWith(
+                                                                color: context
+                                                                    .theme
+                                                                    .colorScheme
+                                                                    .primary)),
+                                                    onPressed: () async {
+                                                      final dir = Directory(
+                                                          "${fs.appDocDir.path}/attachments");
+                                                      await dir.delete(
+                                                          recursive: true);
+                                                      showSnackbar("Success",
+                                                          "Deleted cached attachments");
+                                                    }
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                        leading: SettingsLeadingIcon(
+                                          iosIcon: CupertinoIcons.trash_slash,
+                                          materialIcon: Icons.delete_forever_outlined,
+                                          containerColor: Colors.red[700],
+                                        ),
+                                        title: "Delete All Attachments",
+                                        subtitle: "Remove all attachments from this app",
+                                      ),
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () {
@@ -896,35 +962,13 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     .theme.textTheme.titleLarge,
                                               ),
                                               content: Text(
-                                                "If you just need to free up some storage, you can remove all downloaded attachments with the button below.",
+                                                "This will delete all app data, including your settings, messages, attachments, and more. This action cannot be undone. It is recommended that you take a backup of your settings before proceeding.",
                                                 style: context
                                                     .theme.textTheme.bodyLarge,
                                               ),
                                               backgroundColor: context.theme
                                                   .colorScheme.properSurface,
                                               actions: <Widget>[
-                                                if (!kIsWeb)
-                                                  TextButton(
-                                                    child: Text(
-                                                        "Remove Attachments",
-                                                        style: context
-                                                            .theme
-                                                            .textTheme
-                                                            .bodyLarge!
-                                                            .copyWith(
-                                                                color: context
-                                                                    .theme
-                                                                    .colorScheme
-                                                                    .primary)),
-                                                    onPressed: () async {
-                                                      final dir = Directory(
-                                                          "${fs.appDocDir.path}/attachments");
-                                                      await dir.delete(
-                                                          recursive: true);
-                                                      showSnackbar("Success",
-                                                          "Deleted cached attachments");
-                                                    },
-                                                  ),
                                                 TextButton(
                                                   child: Text("No",
                                                       style: context.theme
@@ -981,11 +1025,11 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         );
                                       },
                                       leading: SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.floppy_disk,
-                                        materialIcon: Icons.storage,
+                                        iosIcon: CupertinoIcons.refresh_thin,
+                                        materialIcon: Icons.refresh_rounded,
                                         containerColor: Colors.red[700],
                                       ),
-                                      title: kIsWeb ? "Logout" : "Reset",
+                                      title: kIsWeb ? "Logout" : "Reset App",
                                       subtitle: kIsWeb
                                           ? null
                                           : "Resets the app to default settings",
