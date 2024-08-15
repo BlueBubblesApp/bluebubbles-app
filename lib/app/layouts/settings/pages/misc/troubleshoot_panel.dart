@@ -159,6 +159,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.bolt_fill,
                       materialIcon: Icons.bolt_outlined,
+                      containerColor: Colors.amberAccent
                     ),
                     onTap: () {
                       ns.pushSettings(
@@ -173,7 +174,8 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     subtitle: "View the latest log file. Useful for debugging issues, in app.",
                     leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.doc_append,
-                      materialIcon: Icons.document_scanner_rounded
+                      materialIcon: Icons.document_scanner_rounded,
+                      containerColor: Colors.blueAccent,
                     ),
                     onTap: () {
                       ns.pushSettings(
@@ -187,7 +189,8 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.share_up,
-                          materialIcon: Icons.share
+                          materialIcon: Icons.share,
+                          containerColor: Colors.green,
                         ),
                         title: "Export / Share Logs",
                         subtitle:
@@ -215,14 +218,16 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                         subtitle: Logger.logDir,
                         onTap: () async {
                           final File logFile = File(Logger.logDir);
-                          if (logFile.existsSync())
+                          if (logFile.existsSync()) {
                             logFile.createSync(recursive: true);
+                          }
                           await launchUrl(Uri.file(logFile.path));
                         }),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.trash,
                         materialIcon: Icons.delete,
+                        containerColor: Colors.redAccent,
                       ),
                       title: "Clear Logs",
                       subtitle: "Deletes all stored log files.",
@@ -268,10 +273,11 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                                 "Battery optimizations were not disabled. Please try again.");
                           }
                         },
-                        leading: const SettingsLeadingIcon(
+                        leading: Obx(() => SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.battery_25,
                           materialIcon: Icons.battery_5_bar,
-                        ),
+                          containerColor: optimizationsDisabled.value ? Colors.green : Colors.redAccent,
+                        )),
                         title: "Disable Battery Optimizations",
                         subtitle: "Allow app to run in the background via the OS",
                         trailing: Obx(() => !optimizationsDisabled.value
