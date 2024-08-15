@@ -15,7 +15,7 @@ class LoggingPanel extends StatefulWidget {
 }
 
 class _LoggingPanel extends State<LoggingPanel> {
-  final RxBool isLoading = false.obs;
+  final RxBool errorsOnly = false.obs;
   final RxList<String> _logs = <String>[].obs;
   final ScrollController scrollController = ScrollController();
 
@@ -25,15 +25,18 @@ class _LoggingPanel extends State<LoggingPanel> {
     loadLogs();
   }
 
-  void loadLogs() {
-    isLoading.value = true;
-
+  void loadLogs([bool errorOnly = false]) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Logger.getLogs(maxLines: 500).then((value) {
-        _logs.addAll(value);
+        _logs.clear();
+
+        if (errorOnly) {
+          _logs.addAll(value.where((element) => element.startsWith('[ERROR]')));
+        } else {
+          _logs.addAll(value);
+        }
         
         _scrollToBottom();
-        isLoading.value = false;
       });
     });
   }
@@ -113,17 +116,38 @@ class _LoggingPanel extends State<LoggingPanel> {
                       style: context.theme.textTheme.titleLarge,
                     ),
                     actions: [
-                      // Animated refresh button that spins when clicked
-                      Obx(() => IconButton(
-                            icon: Icon(
-                              Icons.refresh,
-                              color: context.theme.colorScheme.primary,
-                              size: 30,
+                      // Menu button with 2 options, Play/Pause and Clear
+                      PopupMenuButton(
+                        icon: const Icon(Icons.more_vert),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            child: Obx(
+                              () => ListTile(
+                                leading: errorsOnly.value ? const Icon(Icons.file_copy_outlined) : const Icon(Icons.error_outline),
+                                title: Text(errorsOnly.value ? "Show All Logs" : "Show Only Errors"),
+                                onTap: () {
+                                  errorsOnly.toggle();
+                                  if (errorsOnly.value) {
+                                    loadLogs(true);
+                                  } else {
+                                    loadLogs(false);
+                                  }
+                                },
+                              ),
                             ),
-                            onPressed: isLoading.value
-                                ? null
-                                : () => loadLogs()
-                          )),
+                          ),
+                          PopupMenuItem(
+                            child: ListTile(
+                              leading: const Icon(Icons.refresh),
+                              title: const Text("Refresh"),
+                              onTap: () {
+                                _logs.clear();
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                   filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -134,40 +158,48 @@ class _LoggingPanel extends State<LoggingPanel> {
               showScrollbar: true,
               controller: scrollController,
               child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: ListView.separated(
-                    itemCount: _logs.length,
-                    shrinkWrap: true,
-                    controller: scrollController,
-                    separatorBuilder: (context, index) => Divider(
-                        thickness: 0.25,
-                        color: context.theme.colorScheme.onSurface),
-                    itemBuilder: (context, index) {
-                      String log = _logs[index].trim();
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+                  child: (_logs.isEmpty)
+                    ? const Center(
+                        child: Text(
+                          "No logs to display",
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: _logs.length,
+                        shrinkWrap: true,
+                        controller: scrollController,
+                        separatorBuilder: (context, index) => Divider(
+                            thickness: 0.25,
+                            color: context.theme.colorScheme.onSurface),
+                        itemBuilder: (context, index) {
+                          String log = _logs[index].trim();
 
-                      // Remove date
-                      log = log.split(' ').sublist(1).join(' ');
+                          // Remove date
+                          log = log.split(' ').sublist(1).join(' ');
 
-                      // Print colorful
-                      Color textColor = context.theme.colorScheme.primary;
-                      if (log.startsWith('[ERROR]')) {
-                        textColor = Colors.red;
-                      } else if (log.startsWith('[WARNING]')) {
-                        textColor = Colors.orange;
-                      } else if (log.startsWith('[TRACE]')) {
-                        textColor = context.theme.colorScheme.primary;
-                      } else if (log.startsWith('[FATAL]')) {
-                        textColor = Colors.red;
-                      } else if (log.startsWith('[DEBUG]')) {
-                        textColor = context.theme.colorScheme.secondary;
-                      }
+                          // Print colorful
+                          Color textColor = context.theme.colorScheme.primary;
+                          if (log.startsWith('[ERROR]')) {
+                            textColor = Colors.red;
+                          } else if (log.startsWith('[WARNING]')) {
+                            textColor = Colors.orange;
+                          } else if (log.startsWith('[TRACE]')) {
+                            textColor = context.theme.colorScheme.primary;
+                          } else if (log.startsWith('[FATAL]')) {
+                            textColor = Colors.red;
+                          } else if (log.startsWith('[DEBUG]')) {
+                            textColor = context.theme.colorScheme.secondary;
+                          }
 
-                      return Text(
-                        log,
-                        style: TextStyle(fontSize: 12.0, color: textColor),
-                      );
-                    },
-                  )),
+                          return Text(
+                            log,
+                            style: TextStyle(fontSize: 12.0, color: textColor),
+                          );
+                        },
+                      )
+                    ),
             ),
           ),
         ));
