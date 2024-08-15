@@ -334,7 +334,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       StackTrace? stacktrace;
 
       FlutterError.onError = (details) {
-        Logger.error("Rendering Error: ${details.exceptionAsString()}", trace: details.stack);
+        Logger.error("Rendering Error: ${details.exceptionAsString()}", error: details.exception, trace: details.stack);
       };
 
       try {
