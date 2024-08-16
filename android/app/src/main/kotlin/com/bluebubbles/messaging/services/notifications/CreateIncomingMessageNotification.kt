@@ -84,6 +84,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         val extras = Bundle()
         extras.putString("chatGuid", chatGuid)
         extras.putString("messageGuid", messageGuid)
+        extras.putString("channelId", channelId)
         extras.putString("tag", Constants.newMessageNotificationTag)
 
         // intent to open the conversation in-app
