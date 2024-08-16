@@ -81,6 +81,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 250), () async {
         final tuple = await SchedulerBinding.instance.scheduleTask(() async {
+          // If you type and then delete everything, show selected chat view
+          if (addressController.text.isEmpty && selectedContacts.isNotEmpty) {
+            await findExistingChat();
+            return Tuple2(contacts, existingChats);
+          }
+
           if (addressController.text != oldText) {
             oldText = addressController.text;
             // if user has typed stuff, remove the message view and show filtered results
