@@ -142,6 +142,7 @@ class _LoggingPanel extends State<LoggingPanel> {
                               title: const Text("Refresh"),
                               onTap: () {
                                 _logs.clear();
+                                loadLogs(errorsOnly.value);
                                 setState(() {});
                               },
                             ),
