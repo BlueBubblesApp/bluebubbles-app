@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -14,7 +15,13 @@ import 'package:network_tools/network_tools.dart'
 class NetworkTasks {
   static Future<void> onConnect() async {
     if (ss.settings.finishedSetup.value) {
-      await sync.startIncrementalSync();
+      // Only start incremental sync if the app is active and
+      // the previous state wasn't just inactive/hidden
+      if (ls.currentState == AppLifecycleState.resumed && [AppLifecycleState.paused, null].contains(ls.lastState)) {
+        await sync.startIncrementalSync();
+      } else {
+        print("Not starting incremental sync... (state: ${ls.currentState}, lastState: ${ls.lastState})");
+      }
 
       // scan if server is on localhost
       if (!kIsWeb && ss.settings.localhostPort.value != null) {

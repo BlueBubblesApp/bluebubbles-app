@@ -24,6 +24,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       : kIsDesktop ? windowFocused : (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed
         || IsolateNameServer.lookupPortByName('bg_isolate') != null);
 
+  AppLifecycleState? get currentState => WidgetsBinding.instance.lifecycleState;
+  AppLifecycleState? lastState;
+
   @override
   void onInit() {
     super.onInit();
@@ -49,7 +52,18 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (state != AppLifecycleState.resumed && state != AppLifecycleState.inactive) {
+    Logger.debug("App State changed to $state");
+
+    // Set the last non-resumed state so we know what we resumed from when the app is resumed
+    if (state != AppLifecycleState.resumed) {
+      Logger.debug("Setting lastState to $state");
+      lastState = state;
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      await Database.waitForInit();
+      open();
+    } else if (state != AppLifecycleState.inactive) {
       SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e, stack) {
         Logger.error("Error caught while hiding keyboard!", error: e, trace: stack);
       });
@@ -58,9 +72,6 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       } else {
         close();
       }
-    } else if (state == AppLifecycleState.resumed) {
-      await Database.waitForInit();
-      open();
     }
 
     handleForegroundService(state);
@@ -75,14 +86,13 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     // This may get called before the settings service is initialized
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool keepAlive = prefs.getBool("keepAppAlive") ?? false;
-    Logger.debug("State: $state, keepAlive: $keepAlive");
 
     if (Platform.isAndroid && keepAlive) {
       // We only want the foreground service to run when the app is not active
       if (state == AppLifecycleState.resumed) {
         Logger.info(tag: "LifecycleService", "Stopping foreground service");
         mcs.invokeMethod("stop-foreground-service");
-      } else {
+      } else if (state == AppLifecycleState.paused) {
         Logger.info(tag: "LifecycleService", "Starting foreground service");
         mcs.invokeMethod("start-foreground-service");
       }

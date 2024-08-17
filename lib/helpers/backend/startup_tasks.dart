@@ -75,7 +75,6 @@ class StartupTasks {
     await Logger.init();
     await ss.init();
     await Database.init();
-    await ls.init();
   }
 
   static Future<void> onStartup() async {
