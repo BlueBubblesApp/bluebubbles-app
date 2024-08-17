@@ -299,7 +299,7 @@ class AttachmentsService extends GetxService {
 
     final thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
-      imageFormat: ImageFormat.JPEG,
+      imageFormat: ImageFormat.PNG,
       maxWidth: 128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
       quality: 25,
     );

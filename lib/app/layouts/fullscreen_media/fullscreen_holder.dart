@@ -21,11 +21,15 @@ class FullscreenMediaHolder extends StatefulWidget {
     required this.attachment,
     required this.showInteractions,
     this.currentChat,
+    this.videoController,
+    this.mute
   });
 
   final ChatLifecycleManager? currentChat;
   final Attachment attachment;
   final bool showInteractions;
+  final VideoController? videoController;
+  final RxBool? mute;
 
   @override
   FullscreenMediaHolderState createState() => FullscreenMediaHolderState();
@@ -208,6 +212,8 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                           file: content,
                           attachment: attachment,
                           showInteractions: widget.showInteractions,
+                          videoController: widget.videoController,
+                          mute: widget.mute,
                         );
                       } else {
                         return const SizedBox.shrink();
