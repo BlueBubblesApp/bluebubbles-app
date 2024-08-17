@@ -161,9 +161,8 @@ class IntentsService extends GetxService {
     Logger.info("Handling open chat intent with guid: $guid", tag: "IntentsService");
 
     if (guid == null) {
-      Logger.debug("Awaiting UI startup...", tag: "IntentsService");
+      Logger.debug("Opening new chat creator..", tag: "IntentsService");
       await StartupTasks.waitForUI();
-      Logger.debug("UI has completed startup. Pushing conversation route...", tag: "IntentsService");
       ns.pushAndRemoveUntil(
         Get.context!,
         ChatCreator(
@@ -173,10 +172,12 @@ class IntentsService extends GetxService {
         (route) => route.isFirst,
       );
     } else if (guid == "-1") {
+      Logger.debug("Popping all routes...", tag: "IntentsService");
       if (cm.activeChat != null) {
         Navigator.of(Get.context!).popUntil((route) => route.isFirst);
       }
     } else if (guid == "-2") {
+      Logger.debug("Opening server management panel...", tag: "IntentsService");
       Navigator.of(Get.context!).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -185,6 +186,7 @@ class IntentsService extends GetxService {
         ),
       );
     } else if (guid.contains("scheduled")) {
+      Logger.debug("Opening scheduled messages panel...", tag: "IntentsService");
       Navigator.of(Get.context!).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -193,7 +195,7 @@ class IntentsService extends GetxService {
         ),
       );
     } else {
-      Logger.info("Opening existing chat", tag: "IntentsService");
+      Logger.debug("Opening existing chat (Attachments: ${attachments.length}; Text: ${text?.shorten(10) ?? 'N/A'})", tag: "IntentsService");
       final chat = Chat.findOne(guid: guid);
       if (chat == null) {
         Logger.debug("Chat not found with guid: $guid", tag: "IntentsService");
@@ -201,27 +203,32 @@ class IntentsService extends GetxService {
       }
 
       bool chatIsOpen = cm.activeChat?.chat.guid == guid;
-      Logger.debug("Chat is open: $chatIsOpen", tag: "IntentsService");
+      Logger.debug("Chat is active: $chatIsOpen", tag: "IntentsService");
+
+      setPickedAttachments() {
+        if (attachments.isNotEmpty) {
+          cvc(chat).pickedAttachments.value = attachments;
+        }
+
+        if (text != null && text.isNotEmpty) {
+          cvc(chat).textController.text = text;
+        }
+      }
 
       if (!chatIsOpen) {
-        Logger.debug("Awaiting UI startup...", tag: "IntentsService");
+        Logger.debug("Navigating to conversation view...", tag: "IntentsService");
         await StartupTasks.waitForUI();
-        Logger.debug("UI has completed startup. Pushing conversation route...", tag: "IntentsService");
         await ns.pushAndRemoveUntil(
           Get.context!,
           ConversationView(
             chat: chat,
-            onInit: () {
-              if (attachments.isNotEmpty) {
-                cvc(chat).pickedAttachments.value = attachments;
-              }
-              if (text != null && text.isNotEmpty) {
-                cvc(chat).textController.text = text;
-              }
-            },
+            onInit: () => setPickedAttachments(),
           ),
           (route) => route.isFirst,
         );
+      } else {
+        Logger.debug("Chat is already open, not navigating", tag: "IntentsService");
+        setPickedAttachments();
       }
     }
   }
