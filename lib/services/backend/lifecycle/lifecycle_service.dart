@@ -25,7 +25,8 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
         || IsolateNameServer.lookupPortByName('bg_isolate') != null);
 
   AppLifecycleState? get currentState => WidgetsBinding.instance.lifecycleState;
-  AppLifecycleState? lastState;
+  bool wasPaused = false;
+  bool? resumeFromPause;
 
   @override
   void onInit() {
@@ -54,10 +55,15 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     Logger.debug("App State changed to $state");
 
-    // Set the last non-resumed state so we know what we resumed from when the app is resumed
-    if (state != AppLifecycleState.resumed) {
-      Logger.debug("Setting lastState to $state");
-      lastState = state;
+    if (state == AppLifecycleState.paused) {
+      wasPaused = true;
+    } else if (state == AppLifecycleState.resumed) {
+      if (wasPaused) {
+        wasPaused = false;
+        resumeFromPause = true;
+      } else {
+        resumeFromPause = false;
+      }
     }
 
     if (state == AppLifecycleState.resumed) {
@@ -92,7 +98,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       if (state == AppLifecycleState.resumed) {
         Logger.info(tag: "LifecycleService", "Stopping foreground service");
         mcs.invokeMethod("stop-foreground-service");
-      } else if (state == AppLifecycleState.paused) {
+      } else if ([AppLifecycleState.paused, AppLifecycleState.detached].contains(state)) {
         Logger.info(tag: "LifecycleService", "Starting foreground service");
         mcs.invokeMethod("start-foreground-service");
       }

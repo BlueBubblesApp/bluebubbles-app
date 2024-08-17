@@ -16,11 +16,12 @@ class NetworkTasks {
   static Future<void> onConnect() async {
     if (ss.settings.finishedSetup.value) {
       // Only start incremental sync if the app is active and
-      // the previous state wasn't just inactive/hidden
-      if (ls.currentState == AppLifecycleState.resumed && [AppLifecycleState.paused, null].contains(ls.lastState)) {
+      // the previous state wasn't just hidden
+      if (ls.currentState == AppLifecycleState.resumed && (ls.resumeFromPause == null || ls.resumeFromPause == true)) {
         await sync.startIncrementalSync();
       } else {
-        print("Not starting incremental sync... (state: ${ls.currentState}, lastState: ${ls.lastState})");
+        print(
+            "Not starting incremental sync... (state: ${ls.currentState}, wasPaused: ${ls.wasPaused}; resumeFromPause: ${ls.resumeFromPause})");
       }
 
       // scan if server is on localhost
