@@ -293,17 +293,6 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
   }
 
   @override
-  void dispose() {
-    try {
-      if (videoController != null) videoController!.player.dispose();
-    } catch (ex) {
-      Logger.warn('Error disposing video player', error: ex);
-    }
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
     if (videoController != null) {

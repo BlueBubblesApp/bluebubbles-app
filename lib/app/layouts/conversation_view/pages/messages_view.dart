@@ -555,7 +555,6 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
                                 if (index == 0) {
                                   return SizeTransition(
-                                    key: ValueKey(_messages[index].guid!),
                                     axis: Axis.vertical,
                                     sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
                                     child: SlideTransition(
