@@ -142,3 +142,9 @@ extension LastChars on String {
 extension UrlParsing on String {
   bool get hasUrl => urlRegex.hasMatch(this) && !kIsWeb;
 }
+extension ShortenString on String {
+  String shorten(int length) {
+    if (this.length <= length) return this;
+    return "${substring(0, length)}...";
+  }
+}
