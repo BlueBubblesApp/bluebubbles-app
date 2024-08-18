@@ -87,7 +87,7 @@ class Settings {
   final RxBool scrollToLastUnread = false.obs;
   final RxString userName = "You".obs;
   final RxnString userAvatarPath = RxnString();
-  final RxBool hideNamesForReactions = false.obs;
+  final RxBool hideNamesForReactions = true.obs;
 
   // final RxString emojiFontFamily;
 
@@ -159,6 +159,7 @@ class Settings {
     ReactionTypes.DISLIKE,
     ReactionTypes.QUESTION
   ]);
+  final RxBool showNamesInReactionNotifications = false.obs;
 
   // Message options order
   final RxList<DetailsMenuAction> _detailsMenuActions = RxList.from(DetailsMenuAction.values);
@@ -358,6 +359,7 @@ class Settings {
       'useWindowsAccent': useWindowsAccent.value,
       'logLevel': logLevel.value.index,
       'hideNamesForReactions': hideNamesForReactions.value,
+      'showNamesInReactionNotifications': showNamesInReactionNotifications.value,
     };
     if (includeAll) {
       map.addAll({
@@ -495,6 +497,7 @@ class Settings {
     ss.settings.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     ss.settings.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     ss.settings.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
+    ss.settings.showNamesInReactionNotifications.value = map['showNamesInReactionNotifications'] ?? true;
     ss.settings.save();
 
     eventDispatcher.emit("theme-update", null);
@@ -631,6 +634,7 @@ class Settings {
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
+    s.showNamesInReactionNotifications.value = map['showNamesInReactionNotifications'] ?? true;
     return s;
   }
 

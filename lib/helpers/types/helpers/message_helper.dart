@@ -167,18 +167,27 @@ class MessageHelper {
     } else if (!isNullOrEmpty(message.associatedMessageGuid)) {
       // It's a reaction message, get the sender
       String sender = message.isFromMe! ? 'You' : (message.handle?.displayName ?? "Someone");
+      if (ss.settings.showNamesInReactionNotifications.value) {
+        sender = "$sender ";
+      } else {
+        sender = "";
+      }
+
       // fetch the associated message object
       Message? associatedMessage = Message.findOne(guid: message.associatedMessageGuid);
       if (associatedMessage != null) {
         // grab the verb we'll use from the reactionToVerb map
         String? verb = ReactionTypes.reactionToVerb[message.associatedMessageType];
+        if (verb != null && !ss.settings.showNamesInReactionNotifications.value) {
+          verb = verb.capitalizeFirst;
+        }
         // we need to check balloonBundleId first because for some reason
         // game pigeon messages have the text "�"
         if (associatedMessage.isInteractive) {
-          return "$sender $verb ${message.interactiveText}";
+          return "$sender$verb ${message.interactiveText}";
           // now we check if theres a subject or text and construct out message based off that
         } else if (associatedMessage.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
-          return "$sender $verb a message with Invisible Ink";
+          return "$sender$verb a message with Invisible Ink";
         } else {
           String? messageText;
           bool attachment = false;
@@ -209,17 +218,17 @@ class MessageHelper {
                 + (associatedMessage.text ?? "");
             }
           }
-          return '$sender $verb ${attachment ? "" : "“"}$messageText${attachment ? "" : "”"}';
+          return '$sender$verb ${attachment ? "" : "“"}$messageText${attachment ? "" : "”"}';
         }
       }
       // if we can't fetch the associated message for some reason
       // (or none of the above conditions about it are true)
       // then we should fallback to unparsed reaction messages
       Logger.info("Couldn't fetch associated message for message: ${message.guid}");
-      return "$sender ${message.text}";
+      return "$sender${message.text}";
     } else {
       // It's all other message types
-      return sender + message.fullText;
+      return "$sender${message.fullText}";
     }
   }
 
