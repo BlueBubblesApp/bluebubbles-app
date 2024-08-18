@@ -8,7 +8,6 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -314,6 +313,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
                           currentChat: cm.activeChat,
                           attachment: attachment,
                           showInteractions: true,
+                          videoController: videoController,
                           mute: muted,
                         ),
                       ),
@@ -329,6 +329,8 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
                         currentChat: cm.activeChat,
                         attachment: attachment,
                         showInteractions: true,
+                        mute: muted,
+                        videoController: videoController,
                       ),
                     ),
                   );
@@ -356,6 +358,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
                 FullscreenButton(
                   attachment: attachment,
                   isFromMe: widget.isFromMe,
+                  muted: muted
                 ),
             ],
           ),
@@ -375,6 +378,8 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
                   currentChat: cm.activeChat,
                   attachment: attachment,
                   showInteractions: true,
+                  mute: muted,
+                  videoController: videoController,
                 ),
               ),
             );
@@ -482,11 +487,12 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
 }
 
 class FullscreenButton extends StatelessWidget {
-  const FullscreenButton({super.key, required this.attachment, required this.isFromMe, this.videoController});
+  const FullscreenButton({super.key, required this.attachment, required this.isFromMe, this.videoController, this.muted});
 
   final Attachment attachment;
   final bool isFromMe;
   final VideoController? videoController;
+  final RxBool? muted;
 
   @override
   Widget build(BuildContext context) {
@@ -507,6 +513,7 @@ class FullscreenButton extends StatelessWidget {
                     attachment: attachment,
                     showInteractions: true,
                     videoController: videoController,
+                    mute: muted
                   ),
                 ),
               );
