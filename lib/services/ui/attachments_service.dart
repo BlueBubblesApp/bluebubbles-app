@@ -259,15 +259,15 @@ class AttachmentsService extends GetxService {
   Future<void> redownloadAttachment(Attachment attachment, {Function(PlatformFile)? onComplete, Function()? onError}) async {
     if (!kIsWeb) {
       final file = File(attachment.path);
-      final jpgFile = File(attachment.convertedPath);
+      final pngFile = File(attachment.convertedPath);
       final thumbnail = File("${attachment.path}.thumbnail");
-      final jpgThumbnail = File("${attachment.convertedPath}.thumbnail");
+      final pngThumbnail = File("${attachment.convertedPath}.thumbnail");
 
       try {
         await file.delete();
-        await jpgFile.delete();
+        await pngFile.delete();
         await thumbnail.delete();
-        await jpgThumbnail.delete();
+        await pngThumbnail.delete();
       } catch(_) {}
     }
 
@@ -296,7 +296,6 @@ class AttachmentsService extends GetxService {
       } catch (_) {}
     }
 
-
     final thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.PNG,
@@ -311,7 +310,7 @@ class AttachmentsService extends GetxService {
     return thumbnail;
   }
 
-  Future<Uint8List?> loadAndGetProperties(Attachment attachment, {bool onlyFetchData = false, String? actualPath}) async {
+  Future<Uint8List?> loadAndGetProperties(Attachment attachment, {bool onlyFetchData = false, String? actualPath, bool isPreview = false}) async {
     if (kIsWeb || attachment.mimeType == null || !["image", "video"].contains(attachment.mimeStart)) return null;
 
     final filePath = actualPath ?? attachment.path;
@@ -322,24 +321,24 @@ class AttachmentsService extends GetxService {
 
     // Handle getting heic and tiff images
     if (attachment.mimeType!.contains('image/hei') && !kIsDesktop) {
-      if (await File("$filePath.jpg").exists()) {
-        originalFile = File("$filePath.jpg");
+      if (await File("$filePath.png").exists()) {
+        originalFile = File("$filePath.png");
       } else {
         try {
           if (onlyFetchData) {
             return await FlutterImageCompress.compressWithFile(
               filePath,
-              format: CompressFormat.jpeg,
+              format: CompressFormat.png,
               keepExif: true,
-              quality: 100,
+              quality: isPreview ? 25 : 100,
             );
           } else {
             final file = await FlutterImageCompress.compressAndGetFile(
               filePath,
-              "$filePath.jpg",
-              format: CompressFormat.jpeg,
+              "$filePath.png",
+              format: CompressFormat.png,
               keepExif: true,
-              quality: 100,
+              quality: isPreview ? 25 : 100,
             );
 
             if (file == null) {
@@ -347,15 +346,15 @@ class AttachmentsService extends GetxService {
               throw Exception();
             }
   
-            originalFile = File("$filePath.jpg");
+            originalFile = File("$filePath.png");
           }
         } catch (_) {}
       }
     }
 
     if (attachment.mimeType!.contains('image/tif')) {
-      if (await File("$filePath.jpg").exists()) {
-        originalFile = File("$filePath.jpg");
+      if (await File("$filePath.png").exists()) {
+        originalFile = File("$filePath.png");
       } else {
         final receivePort = ReceivePort();
         await Isolate.spawn(
@@ -373,7 +372,7 @@ class AttachmentsService extends GetxService {
         final image = await receivePort.first as Uint8List?;
         if (onlyFetchData) return image;
         if (image != null) {
-          final cacheFile = File("$filePath.jpg");
+          final cacheFile = File("$filePath.png");
           originalFile = await cacheFile.writeAsBytes(image);
         } else {
           return null;

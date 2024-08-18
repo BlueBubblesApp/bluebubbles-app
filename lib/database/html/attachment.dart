@@ -120,7 +120,7 @@ class Attachment {
 
   String get path => "$directory/$transferName";
 
-  String get convertedPath => "$path.jpg";
+  String get convertedPath => "$path.png";
 
   bool get existsOnDisk => false;
 

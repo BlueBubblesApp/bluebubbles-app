@@ -240,7 +240,7 @@ class Attachment {
     }
   }
 
-  String get convertedPath => "$path.jpg";
+  String get convertedPath => "$path.png";
 
   bool get existsOnDisk => File(path).existsSync();
 

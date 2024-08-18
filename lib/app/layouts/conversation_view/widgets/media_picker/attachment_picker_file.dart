@@ -53,7 +53,7 @@ class _AttachmentPickerFileState extends OptimizedState<AttachmentPickerFile> wi
         transferName: file.path,
         mimeType: widget.data.mimeType!,
       );
-      image = await as.loadAndGetProperties(fakeAttachment, actualPath: file.path, onlyFetchData: true);
+      image = await as.loadAndGetProperties(fakeAttachment, actualPath: file.path, onlyFetchData: true, isPreview: true);
       setState(() {});
     } else {
       image = await file.readAsBytes();
