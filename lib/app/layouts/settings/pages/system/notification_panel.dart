@@ -101,23 +101,6 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                 ),
               ),
-              Obx(() => SettingsSwitch(
-                onChanged: (bool val) {
-                  ss.settings.showNamesInReactionNotifications.value = val;
-                  saveSettings();
-                },
-                initialVal: ss.settings.showNamesInReactionNotifications.value,
-                title: "Show Names in Reaction Notifications",
-                subtitle: "Allows you to show/hide sender names in reaction notifications",
-                backgroundColor: tileColor,
-              )),
-              Container(
-                color: tileColor,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15.0),
-                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                ),
-              ),
               /*if (!kIsWeb)
                                     Obx(() {
                                       if (iOS)
