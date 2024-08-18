@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:tuple/tuple.dart';
 
 /// Class to replace objectbox DB listener functionality with an old-fashioned

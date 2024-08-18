@@ -12,13 +12,14 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/rep
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:chunked_stream/chunked_stream.dart';
 import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' hide Emoji;
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
@@ -29,7 +30,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:languagetool_textfield/domain/mistake.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
@@ -75,6 +75,12 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   bool get showAttachmentPicker => controller.showAttachmentPicker;
 
+  late final double emojiPickerHeight = max(256, context.height * 0.4);
+  late final emojiColumns = ns.width(context) ~/ 56; // Intentionally not responsive to prevent rebuilds when resizing
+  RxBool showEmojiPicker = false.obs;
+
+  final proxyController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -102,6 +108,22 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
     controller.textController.addListener(() => textListener(false));
     controller.subjectTextController.addListener(() => textListener(true));
+
+    if (kIsDesktop || kIsWeb) {
+      proxyController.addListener(() {
+        if (proxyController.text.isEmpty) return;
+        String emoji = proxyController.text;
+        proxyController.clear();
+        TextEditingController realController = controller.lastFocusedTextController;
+        String text = realController.text;
+        TextSelection selection = realController.selection;
+
+        realController.text = text.substring(0, selection.start) + emoji + text.substring(selection.end);
+        realController.selection = TextSelection.collapsed(offset: selection.start + emoji.length);
+
+        controller.lastFocusedNode.requestFocus();
+      });
+    }
   }
 
   void getDrafts() async {
@@ -671,6 +693,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         }
                       }
                     }),
+              if (kIsDesktop || kIsWeb)
+                IconButton(
+                  icon: Icon(iOS ? CupertinoIcons.smiley_fill : Icons.emoji_emotions, color: context.theme.colorScheme.outline, size: 28),
+                  onPressed: () {
+                    showEmojiPicker.value = !showEmojiPicker.value;
+                    controller.lastFocusedNode.requestFocus();
+                  },
+                ),
               if (kIsDesktop && !Platform.isLinux)
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
@@ -780,6 +810,94 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                       controller: controller,
                     ),
             ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeIn,
+              alignment: Alignment.bottomCenter,
+              child: Obx(() {
+                return showEmojiPicker.value
+                    ? Theme(
+                        data: context.theme.copyWith(canvasColor: Colors.transparent),
+                        child: EmojiPicker(
+                          textEditingController: proxyController,
+                          scrollController: ScrollController(),
+                          config: Config(
+                            height: emojiPickerHeight,
+                            checkPlatformCompatibility: true,
+                            emojiViewConfig: EmojiViewConfig(
+                              emojiSizeMax: 28,
+                              backgroundColor: Colors.transparent,
+                              columns: emojiColumns,
+                              noRecents: Text("No Recents", style: context.textTheme.headlineMedium!.copyWith(color: context.theme.colorScheme.outline))
+                            ),
+                            swapCategoryAndBottomBar: true,
+                            skinToneConfig: const SkinToneConfig(enabled: false),
+                            categoryViewConfig: const CategoryViewConfig(
+                              backgroundColor: Colors.transparent,
+                              dividerColor: Colors.transparent,
+                            ),
+                            bottomActionBarConfig: BottomActionBarConfig(
+                              customBottomActionBar: (Config config, EmojiViewState state, VoidCallback showSearchView) {
+                                return Container(
+                                  margin: const EdgeInsets.only(top: 10),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Material(
+                                          child: InkWell(
+                                            onTap: showSearchView,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(12),
+                                              child: Row(children: [
+                                                Icon(
+                                                  iOS ? CupertinoIcons.search : Icons.search,
+                                                  color: context.theme.colorScheme.outline,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    "Search...",
+                                                    style: context.theme.textTheme.bodyLarge!.copyWith(
+                                                      color: context.theme.colorScheme.outline,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ]),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: IconButton(
+                                          icon: Icon(
+                                            iOS ? CupertinoIcons.xmark : Icons.close,
+                                            color: context.theme.colorScheme.outline,
+                                          ),
+                                          onPressed: () {
+                                            showEmojiPicker.value = false;
+                                            controller.lastFocusedNode.requestFocus();
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            searchViewConfig: SearchViewConfig(
+                              backgroundColor: Colors.transparent,
+                              buttonIconColor: context.theme.colorScheme.outline,
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              }),
+            ),
           ],
         ),
       ),
@@ -799,8 +917,8 @@ class TextFieldComponent extends StatelessWidget {
     this.initialAttachments = const [],
   });
 
-  final SpellCheckTextEditingController subjectTextController;
-  final MentionTextEditingController textController;
+  final TextEditingController subjectTextController;
+  final TextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
@@ -819,7 +937,6 @@ class TextFieldComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Focus(
-      focusNode: focusNode,
       onKeyEvent: (_, ev) => handleKey(_, ev, context, isChatCreator),
       child: Padding(
         padding: const EdgeInsets.only(right: 5.0),
@@ -848,8 +965,8 @@ class TextFieldComponent extends StatelessWidget {
                 if (initialAttachments.isNotEmpty || !isChatCreator)
                   PickedAttachmentsHolder(
                     controller: controller,
-                    textController: textController,
-                    subjectTextController: controller?.subjectTextController ?? SpellCheckTextEditingController(),
+                    textController: controller?.textController ?? textController,
+                    subjectTextController: controller?.subjectTextController ?? subjectTextController,
                     initialAttachments: initialAttachments,
                   ),
                 if (!isChatCreator)
@@ -876,25 +993,6 @@ class TextFieldComponent extends StatelessWidget {
                     minLines: 1,
                     enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                     textInputAction: TextInputAction.next,
-                    contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
-                      final start = editableTextState.textEditingValue.selection.start;
-
-                      Mistake? mistake = controller?.subjectTextController.selectedMistake;
-                      return AdaptiveTextSelectionToolbar.editableText(
-                        editableTextState: editableTextState,
-                      )..buttonItems?.addAll(
-                          mistake?.replacements.take(3).map((replacement) {
-                            return ContextMenuButtonItem(
-                              onPressed: () {
-                                controller!.subjectTextController.replaceMistake(mistake, replacement);
-                                controller!.subjectTextController.selection = TextSelection.collapsed(offset: start + replacement.length);
-                                editableTextState.hideToolbar();
-                              },
-                              label: replacement,
-                            );
-                          }) ?? [],
-                        );
-                    },
                     cursorColor: context.theme.colorScheme.primary,
                     cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
                     decoration: InputDecoration(
@@ -916,7 +1014,7 @@ class TextFieldComponent extends StatelessWidget {
                       HapticFeedback.selectionClick();
                     },
                     onSubmitted: (String value) {
-                      controller!.subjectFocusNode.requestFocus();
+                      controller?.subjectFocusNode.requestFocus();
                     },
                     contentInsertionConfiguration: ContentInsertionConfiguration(onContentInserted: onContentCommit),
                   ),
@@ -929,9 +1027,9 @@ class TextFieldComponent extends StatelessWidget {
                   ),
                 TextField(
                   textCapitalization: TextCapitalization.sentences,
-                  focusNode: controller?.focusNode,
+                  focusNode: controller?.focusNode ?? focusNode,
                   autocorrect: true,
-                  controller: textController,
+                  controller: controller?.textController ?? textController,
                   scrollPhysics: const CustomBouncingScrollPhysics(),
                   style: context.theme.extension<BubbleText>()!.bubbleText,
                   keyboardType: TextInputType.multiline,
@@ -964,8 +1062,8 @@ class TextFieldComponent extends StatelessWidget {
                         : Padding(
                             padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
                             child: TextFieldSuffix(
-                              subjectTextController: subjectTextController,
-                              textController: textController,
+                              subjectTextController: controller?.subjectTextController ?? subjectTextController,
+                              textController: controller?.textController ?? textController,
                               controller: controller,
                               recorderController: recorderController,
                               sendMessage: sendMessage,
@@ -979,24 +1077,6 @@ class TextFieldComponent extends StatelessWidget {
                     final text = editableTextState.textEditingValue.text;
                     final selected = editableTextState.textEditingValue.text
                         .substring((start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length));
-
-                    Mistake? mistake = controller?.textController.selectedMistake;
-                    if (mistake != null) {
-                      return AdaptiveTextSelectionToolbar.editableText(
-                        editableTextState: editableTextState,
-                      )..buttonItems?.addAll(
-                          mistake.replacements.take(3).map((replacement) {
-                            return ContextMenuButtonItem(
-                              onPressed: () {
-                                controller!.textController.replaceMistake(mistake, replacement);
-                                controller!.textController.selection = TextSelection.collapsed(offset: start + replacement.length);
-                                editableTextState.hideToolbar();
-                              },
-                              label: replacement,
-                            );
-                          }),
-                        );
-                    }
 
                     return AdaptiveTextSelectionToolbar.editableText(
                       editableTextState: editableTextState,
@@ -1023,7 +1103,7 @@ class TextFieldComponent extends StatelessWidget {
                               final checkSpace = end + replacement.length - 1;
                               final spaceAfter =
                                   checkSpace < text.length && text.substring(end + replacement.length - 1, end + replacement.length) == " ";
-                              controller?.textController.value = TextEditingValue(
+                              (controller?.textController ?? textController).value = TextEditingValue(
                                   text: text,
                                   selection: TextSelection.fromPosition(
                                       TextPosition(offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
@@ -1048,11 +1128,11 @@ class TextFieldComponent extends StatelessWidget {
                               if (kIsDesktop || kIsWeb) {
                                 controller?.showingOverlays = false;
                               }
-                              if (!isNullOrEmpty(changed)! && mention != null) {
+                              if (!isNullOrEmpty(changed) && mention != null) {
                                 mention.customDisplayName = changed!;
                               }
                               final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
-                              controller?.textController.selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
+                              (controller?.textController ?? textController).selection = TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
                               editableTextState.hideToolbar();
                             },
                             label: "Custom Mention",
@@ -1065,7 +1145,7 @@ class TextFieldComponent extends StatelessWidget {
                   },
                   onSubmitted: (String value) {
                     controller?.focusNode.requestFocus();
-                    if (isNullOrEmpty(value)! && (controller?.pickedAttachments.isEmpty ?? false)) return;
+                    if (isNullOrEmpty(value) && (controller?.pickedAttachments.isEmpty ?? false)) return;
                     sendMessage.call();
                   },
                   contentInsertionConfiguration: ContentInsertionConfiguration(onContentInserted: onContentCommit),
@@ -1103,7 +1183,9 @@ class TextFieldComponent extends StatelessWidget {
   KeyEventResult handleKey(FocusNode _, KeyEvent ev, BuildContext context, bool isChatCreator) {
     if (ev is! KeyDownEvent) return KeyEventResult.ignored;
 
-    if ((kIsWeb || Platform.isWindows || Platform.isLinux) && (ev.physicalKey == PhysicalKeyboardKey.keyV || ev.logicalKey == LogicalKeyboardKey.keyV) && HardwareKeyboard.instance.isControlPressed) {
+    if ((kIsWeb || Platform.isWindows || Platform.isLinux) &&
+        (ev.physicalKey == PhysicalKeyboardKey.keyV || ev.logicalKey == LogicalKeyboardKey.keyV) &&
+        HardwareKeyboard.instance.isControlPressed) {
       Pasteboard.image.then((image) {
         if (image != null) {
           controller!.pickedAttachments.add(PlatformFile(
@@ -1155,14 +1237,18 @@ class TextFieldComponent extends StatelessWidget {
 
     // Up arrow
     if (ev.logicalKey == LogicalKeyboardKey.arrowUp) {
-      if (chat != null && controller!.lastFocusedTextController.text.isEmpty && ss.settings.editLastSentMessageOnUpArrow.value && ss.isMinVenturaSync && ss.serverDetailsSync().item4 >= 148) {
+      if (chat != null &&
+          controller!.lastFocusedTextController.text.isEmpty &&
+          ss.settings.editLastSentMessageOnUpArrow.value &&
+          ss.isMinVenturaSync &&
+          ss.serverDetailsSync().item4 >= 148) {
         final message = ms(chat!.guid).mostRecentSent;
         if (message != null) {
           final parts = mwc(message).parts;
           final part = parts.filter((p) => p.text?.isNotEmpty ?? false).lastOrNull;
           if (part != null) {
             final FocusNode? node = kIsDesktop || kIsWeb ? FocusNode() : null;
-            controller!.editing.add(Tuple4(message, part, SpellCheckTextEditingController(text: part.text!), node));
+            controller!.editing.add(Tuple3(message, part, SpellCheckTextEditingController(text: part.text!, focusNode: node)));
             node?.requestFocus();
             return KeyEventResult.handled;
           }
@@ -1269,7 +1355,7 @@ class TextFieldComponent extends StatelessWidget {
 
     if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
     if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
-      if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(controller!.subjectTextController.text)!) {
+      if (!isNullOrEmpty(textController.text) || !isNullOrEmpty(controller!.subjectTextController.text)) {
         sendMessage();
         controller!.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;

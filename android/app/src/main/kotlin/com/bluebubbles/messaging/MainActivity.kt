@@ -1,9 +1,12 @@
 package com.bluebubbles.messaging
 
+import android.util.Log
 import android.app.Activity
 import android.content.Intent
 import androidx.activity.ComponentActivity
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
+import com.bluebubbles.messaging.services.foreground.ForegroundServiceBroadcastReceiver
+import com.bluebubbles.messaging.Constants
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -22,8 +25,38 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     override fun onDestroy() {
+        Log.d(Constants.logTag, "BlueBubbles MainActivity is being destroyed")
         engine = null
-        super.onDestroy()
+
+        // If we are finishing "gracefully", the dart code would have started the foreground service.
+        // If we are finishing because the system is destroying the activity, we need to start the foreground service
+        // via a broadcast intent.
+        if (isFinishing) {
+            Log.d(Constants.logTag, "BlueBubbles activity is finishing")
+        } else {
+            Log.d(Constants.logTag, "BlueBubbles activity is being destroyed by the system")
+
+            val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
+            val keepAppAlive: Boolean = prefs.getBoolean("flutter.keepAppAlive", false)
+
+            // Create an intent to start the foreground service
+            if (keepAppAlive) {
+                Log.d(Constants.logTag, "Creating broadcast intent to restart the foreground service...")
+                val broadcastIntent = Intent(this, ForegroundServiceBroadcastReceiver::class.java)
+                broadcastIntent.setAction("restartservice");
+                sendBroadcast(broadcastIntent);
+            }
+        }
+
+        try {
+            super.onDestroy()
+        } catch (e: ConcurrentModificationException) {
+            Log.d(Constants.logTag, "Caught ConcurrentModificationException when destroying MainActivity")
+            Log.e(Constants.logTag, e.stackTraceToString())
+        } catch (e: Exception) {
+            Log.d(Constants.logTag, "Caught unhandled Exception when destroying MainActivity")
+            Log.e(Constants.logTag, e.stackTraceToString())
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

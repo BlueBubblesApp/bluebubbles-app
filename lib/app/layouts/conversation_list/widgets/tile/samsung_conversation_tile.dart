@@ -2,8 +2,8 @@ import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -129,7 +129,7 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        final latestMessageQuery = (Database.messages.query(Message_.dateDeleted.isNull())
               ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
               ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
@@ -155,14 +155,14 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
           cachedLatestMessageGuid = message?.guid;
         });
 
-        final unreadQuery = chatBox
+        final unreadQuery = Database.chats
             .query((Chat_.hasUnreadMessage.equals(true).or(Chat_.muteType.equals("mute"))).and(Chat_.guid.equals(controller.chat.guid)))
             .watch();
         sub2 = unreadQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null
               ? null
               : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
+                  return Database.chats.get(controller.chat.id!);
                 });
           final newUnread = chat?.hasUnreadMessage ?? false;
           final newMute = chat?.muteType ?? "";
@@ -284,12 +284,12 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     unread = controller.chat.hasUnreadMessage ?? false;
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
+        final unreadQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = unreadQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null
               ? null
               : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
+                  return Database.chats.get(controller.chat.id!);
                 });
           if (chat == null) return;
           if (chat.hasUnreadMessage != unread) {

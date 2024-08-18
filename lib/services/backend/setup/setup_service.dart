@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart';
@@ -16,6 +17,8 @@ class SetupService extends GetxService {
   Future<void> _finishSetup() async {
     ss.settings.finishedSetup.value = true;
     await ss.saveSettings();
+
+    await StartupTasks.onStartup();
     await NetworkTasks.onConnect();
   }
 }

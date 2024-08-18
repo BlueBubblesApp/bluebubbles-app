@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:metadata_fetch/metadata_fetch.dart';
@@ -39,12 +39,12 @@ class MetadataHelper {
     }
     try {
       data = await MetadataFetch.extract(url);
-    } catch (ex) {
-      Logger.error('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
+    } catch (ex, stack) {
+      Logger.error('An error occurred while fetching URL Preview Metadata!', error: ex, trace: stack);
     }
 
     // If the everything in the metadata is null or empty, try to manually parse
-    if (data?.toMap().values.where((e) => !isNullOrEmpty(e)!).isEmpty ?? true) {
+    if (data?.toMap().values.where((e) => !isNullOrEmpty(e)).isEmpty ?? true) {
       data = await MetadataHelper._manuallyGetMetadata(url);
     }
 
@@ -117,9 +117,9 @@ class MetadataHelper {
     } on HandshakeException catch (ex) {
       meta.title = 'Invalid SSL Certificate';
       meta.description = ex.message;
-    } catch (ex) {
+    } catch (ex, stack) {
       meta.title = ex.toString();
-      Logger.error('Failed to manually get metadata: ${ex.toString()}');
+      Logger.error('Failed to manually get metadata!', error: ex, trace: stack);
     }
 
     return meta;

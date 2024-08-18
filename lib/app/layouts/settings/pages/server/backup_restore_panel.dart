@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
@@ -194,9 +194,11 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                         child: ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
+                          findChildIndexCallback: (key) => findChildIndexByKey(settings, key, (item) => item["name"]),
                           itemBuilder: (context, index) {
                             final item = settings[index];
                             return ListTile(
+                              key: ValueKey(item["name"]),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                               mouseCursor: SystemMouseCursors.click,
                               title: RichText(
@@ -212,7 +214,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   ],
                                 ),
                               ),
-                              subtitle: !isNullOrEmpty(item["description"])! ? Text(item["description"]) : null,
+                              subtitle: !isNullOrEmpty(item["description"]) ? Text(item["description"]) : null,
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -281,9 +283,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                           Settings.updateFromMap(item);
                                           showSnackbar("Success", "Settings restored successfully");
                                         } catch (e, s) {
-                                          Logger.error(e);
-                                          Logger.error(s);
-                                          showSnackbar("Error", "Something went wrong");
+                                          Logger.error("Failed to restore settings backup!", error: e, trace: s);
+                                          showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
                                         }
                                       }
                                   ),
@@ -329,7 +330,7 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                   ),
                                 );
                               },
-                              isThreeLine: !isNullOrEmpty(item["description"])!,
+                              isThreeLine: !isNullOrEmpty(item["description"]),
                             );
                           },
                           itemCount: settings.length,
@@ -585,9 +586,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                     Settings.updateFromMap(json);
                                     showSnackbar("Success", "Settings restored successfully");
                                   } catch (e, s) {
-                                    Logger.error(e);
-                                    Logger.error(s);
-                                    showSnackbar("Error", "Something went wrong");
+                                    Logger.error("Failed to restore settings backup!", error: e, trace: s);
+                                    showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
                                   }
                                 }
                             ),
@@ -613,10 +613,12 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                         child: ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
+                          findChildIndexCallback: (key) => findChildIndexByKey(themes, key, (item) => item['name']),
                           itemBuilder: (context, index) {
                             final item = themes[index];
                             final data = item["data"];
                             return ListTile(
+                              key: ValueKey(item["name"]),
                               mouseCursor: SystemMouseCursors.click,
                               title: Text(item["name"]),
                               subtitle: !item.containsKey('data')
@@ -717,9 +719,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                             object.save();
                                             showSnackbar("Success", "Theme restored successfully");
                                           } catch (e, s) {
-                                            Logger.error(e);
-                                            Logger.error(s);
-                                            showSnackbar("Error", "Something went wrong");
+                                            Logger.error("Failed to restore theme backup!", error: e, trace: s);
+                                            showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}");
                                           }
                                         }
                                     ),
@@ -924,9 +925,8 @@ class _BackupRestorePanelState extends OptimizedState<BackupRestorePanel> {
                                       }
                                       showSnackbar("Success", "Theming restored successfully");
                                     } catch (e, s) {
-                                      Logger.error(e);
-                                      Logger.error(s);
-                                      showSnackbar("Error", "Something went wrong");
+                                      Logger.error("Failed to restore theme backup!", error: e, trace: s);
+                                      showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}");
                                     }
                                   }
                               ),

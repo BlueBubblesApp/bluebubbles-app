@@ -8,12 +8,13 @@ import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
-import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Notification;
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:get/get.dart';
 import 'package:local_notifier/local_notifier.dart';
@@ -32,6 +33,9 @@ class NotificationsService extends GetxService {
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
   static const String FACETIME_CHANNEL = "com.bluebubbles.incoming_facetimes";
   static const String FOREGROUND_SERVICE_CHANNEL = "com.bluebubbles.foreground_service";
+
+  static const String NEW_MESSAGE_TAG = "com.bluebubbles.messaging.NEW_MESSAGE_NOTIFICATION";
+  static const String NEW_FACETIME_TAG = "com.bluebubbles.messaging.NEW_FACETIME_NOTIFICATION";
 
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
   StreamSubscription? countSub;
@@ -96,7 +100,7 @@ class NotificationsService extends GetxService {
 
     // watch for new messages and handle the notification
     if (!kIsWeb) {
-      final countQuery = (messageBox.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      final countQuery = (Database.messages.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
@@ -173,8 +177,8 @@ class NotificationsService extends GetxService {
     final contactName = message.handle?.displayName ?? "Unknown";
     final title = isGroup ? chat.getTitle() : contactName;
     final text = hideContent ? "iMessage" : MessageHelper.getNotificationText(message);
-    final isReaction = !isNullOrEmpty(message.associatedMessageGuid)!;
-    final personIcon = (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+    final isReaction = !isNullOrEmpty(message.associatedMessageGuid);
+    final personIcon = (await rootBundle.load("assets/images/person64.png")).buffer.asUint8List();
 
     Uint8List chatIcon = await avatarAsBytes(chat: chat, quality: 256);
     Uint8List contactIcon = message.isFromMe!
@@ -219,7 +223,7 @@ class NotificationsService extends GetxService {
     // Set some notification defaults
     String title = caller;
     String text = "${callUuid == null ? "Incoming" : "Answer"} FaceTime ${isAudio ? 'Audio' : 'Video'} Call";
-    chatIcon ??= (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+    chatIcon ??= (await rootBundle.load("assets/images/person64.png")).buffer.asUint8List();
 
     if (kIsWeb && Notification.permission == "granted") {
       final notif = Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: callUuid);
@@ -249,7 +253,13 @@ class NotificationsService extends GetxService {
       await clearDesktopFaceTimeNotif(callUuid);
     } else if (!kIsWeb) {
       final numeric = callUuid.numericOnly();
-      mcs.invokeMethod("delete-notification", {"notification_id": int.parse(numeric.substring(0, min(8, numeric.length)))});
+      mcs.invokeMethod(
+        "delete-notification",
+        {
+          "notification_id": int.parse(numeric.substring(0, min(8, numeric.length))),
+          "tag": NEW_FACETIME_TAG
+        }
+      );
     }
   }
 

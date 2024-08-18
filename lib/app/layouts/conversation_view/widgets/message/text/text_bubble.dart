@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -101,7 +101,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           right: message.isFromMe! && !message.isBigEmoji ? 10 : 0
         )),
       color: message.isFromMe! && !message.isBigEmoji
-          ? (selected ? context.theme.colorScheme.tertiaryContainer : context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0))
+          ? (selected ? context.theme.colorScheme.tertiaryContainer : context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.1 : 0))
           : null,
       decoration: message.isFromMe! || message.isBigEmoji ? null : BoxDecoration(
         gradient: LinearGradient(

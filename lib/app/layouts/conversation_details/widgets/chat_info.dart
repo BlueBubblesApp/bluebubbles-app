@@ -6,7 +6,7 @@ import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
@@ -329,8 +329,8 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
                 children: intersperse(const SizedBox(width: 5), [
                   if (!kIsWeb && !kIsDesktop && !chat.chatIdentifier!.startsWith("urn:biz")
-                      && ((chat.participants.first.contact?.phones.isNotEmpty ?? false)
-                          || !chat.participants.first.address.contains("@")))
+                      && (chat.participants.isNotEmpty && ((chat.participants.first.contact?.phones.isNotEmpty ?? false)
+                          || !chat.participants.first.address.contains("@"))))
                     Expanded(
                       child: Row(
                         children: [
@@ -404,7 +404,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                         ],
                       ),
                     ),
-                  if ((chat.participants.first.contact?.emails.isNotEmpty ?? false) || chat.participants.first.address.contains("@"))
+                  if (chat.participants.isNotEmpty && ((chat.participants.first.contact?.emails.isNotEmpty ?? false) || chat.participants.first.address.contains("@")))
                     Expanded(
                       child: Material(
                         borderRadius: BorderRadius.circular(15),
@@ -465,7 +465,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  chat.participants.first.contact != null
+                                  chat.participants.isNotEmpty && chat.participants.first.contact != null
                                       ? (iOS ? CupertinoIcons.info : Icons.info)
                                       : (iOS ? CupertinoIcons.plus_circle : Icons.add_circle_outline),
                                   color: context.theme.colorScheme.onSurface,
@@ -473,7 +473,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                                 ),
                                 const SizedBox(height: 7.5),
                                 Text(
-                                  chat.participants.first.contact != null ? "Info" : "Add Contact",
+                                  chat.participants.isNotEmpty && chat.participants.first.contact != null ? "Info" : "Add Contact",
                                   style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)
                                 ),
                               ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/private_api_panel.dart';
@@ -5,7 +6,7 @@ import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,7 @@ class SettingsService extends GetxService {
   bool _canAuthenticate = false;
   bool _showingPapiPopup = false;
   late final SharedPreferences prefs;
+  Completer<void> initCompleted = Completer<void>();
 
   bool get canAuthenticate => _canAuthenticate && (Platform.isWindows || (fs.androidInfo?.version.sdkInt ?? 0) > 28);
 
@@ -61,18 +63,54 @@ class SettingsService extends GetxService {
       if (Platform.isWindows) {
         _canAuthenticate = await LocalAuthentication().isDeviceSupported();
       }
-      await setupLaunchAtStartup();
+      ss.settings.launchAtStartup.value = await setupLaunchAtStartup(ss.settings.launchAtStartup.value, ss.settings.launchAtStartupMinimized.value);
     }
+
+    initCompleted.complete();
   }
 
-  Future<void> setupLaunchAtStartup() async {
+  /// Returns true if LaunchAtStartup is enabled and false if it is disabled
+  Future<bool> setupLaunchAtStartup(bool launchAtStartup, bool minimized) async {
     // Can't use fs here because it hasn't been initialized yet
-    LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName, settings.launchAtStartupMinimized.value);
-    if (settings.launchAtStartup.value) {
-      await LaunchAtStartup.enable();
-    } else {
+    if (!isMsix) {
+      LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName, minimized);
+      if (launchAtStartup) {
+        await LaunchAtStartup.enable();
+        return true;
+      }
       await LaunchAtStartup.disable();
+      return false;
+    } else if (launchAtStartup) {
+      /// Copied from https://github.com/Merrit/nyrna/pull/172/files
+      String script = '''
+        \$TargetPath = "shell:AppsFolder\\$windowsAppPackageName"
+        \$ShortcutFile = "\$env:USERPROFILE\\Start Menu\\Programs\\Startup\\$appName.lnk"
+        \$WScriptShell = New-Object -ComObject WScript.Shell
+        \$Shortcut = \$WScriptShell.CreateShortcut(\$ShortcutFile)
+        \$Shortcut.TargetPath = \$TargetPath
+        \$Shortcut.Arguments = "${minimized ? 'minimized' : ''}"
+        \$Shortcut.Save()
+        ''';
+      await Process.run(
+        'powershell',
+        ['-Command', script],
+      );
+    } else {
+      const String script = '''
+        Remove-Item -Path "\$env:USERPROFILE\\Start Menu\\Programs\\Startup\\$appName.lnk"
+      ''';
+      await Process.run(
+        'powershell',
+        ['-Command', script],
+      );
     }
+    final createdShortcut = File(
+      '${Platform.environment['USERPROFILE']}\\Start Menu\\Programs\\Startup\\$appName.lnk',
+    );
+    if (!createdShortcut.existsSync()) {
+      return false;
+    }
+    return true;
   }
 
   // this is a separate method because objectbox needs to be initialized
@@ -191,7 +229,9 @@ class SettingsService extends GetxService {
                                   ThemeSwitcher.buildPageRoute(
                                     builder: (BuildContext context) {
                                       return SettingsPage(
-                                        initialPage: PrivateAPIPanel(enablePrivateAPIonInit: true,),
+                                        initialPage: PrivateAPIPanel(
+                                          enablePrivateAPIonInit: true,
+                                        ),
                                       );
                                     },
                                   ),

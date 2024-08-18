@@ -75,6 +75,25 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".services.foreground.ForegroundServiceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="restartservice" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".services.intents.AutoStartReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
@@ -117,9 +136,10 @@
         </service>
 
         <service
-            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:name=".services.foreground.SocketIOForegroundService"
             android:foregroundServiceType="remoteMessaging"
-            android:exported="false"/>
+            android:enabled="true"
+            android:exported="true" />
 
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"

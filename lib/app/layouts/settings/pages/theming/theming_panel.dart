@@ -1,13 +1,13 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/custom_avatar_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced_theming_panel.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -607,7 +607,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                       children: <Widget>[
                                         Obx(
                                               () => Text(
-                                              '${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)} (${((controller.progress.value ?? 0) * 100).floor()}%)',
+                                              '${controller.progress.value != null && controller.totalSize.value != null ? (controller.progress.value! * controller.totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((controller.totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()} (${((controller.progress.value ?? 0) * 100).floor()}%)',
                                               style: context.theme.textTheme.bodyLarge),
                                         ),
                                         const SizedBox(height: 10.0),
@@ -659,9 +659,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                     controller.totalSize.value = total;
                                   }
                                 },
-                              ).catchError((err) {
-                                Logger.error(err.toString());
-                                showSnackbar("Error", "Failed to fetch font");
+                              ).catchError((err, stack) {
+                                Logger.error("Failed to fetch font!", error: err, trace: stack);
+                                showSnackbar("Error", "Failed to fetch font! Error: ${err.toString()}");
                                 return Response(requestOptions: RequestOptions(path: ''));
                               });
                               Get.back();
@@ -680,16 +680,16 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                   );
                                   await fontLoader.load();
                                   showSnackbar("Notice", "Font loaded");
-                                } catch (e) {
-                                  Logger.error(e);
-                                  showSnackbar("Error", "Something went wrong");
+                                } catch (e, stack) {
+                                  Logger.error("Failed to load font!", error: e, trace: stack);
+                                  showSnackbar("Error", "Failed to load font! Error: ${e.toString()}");
                                 }
                               } else {
                                 showSnackbar("Error", "Failed to fetch font");
                               }
                             },
                             title:
-                            kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
+                            kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? (controller.progress.value! * controller.totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((controller.totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
                             subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
                           );
                         } else {

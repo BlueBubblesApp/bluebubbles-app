@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -42,9 +42,8 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                 children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) async {
-                      ss.settings.launchAtStartup.value = val;
+                      ss.settings.launchAtStartup.value = await ss.setupLaunchAtStartup(val, ss.settings.launchAtStartupMinimized.value);
                       saveSettings();
-                      ss.setupLaunchAtStartup();
                     },
                     initialVal: ss.settings.launchAtStartup.value,
                     title: "Launch on Startup",
@@ -64,10 +63,10 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                           ),
                         ),
                         SettingsSwitch(
-                          onChanged: (bool val) {
+                          onChanged: (bool val) async {
                             ss.settings.launchAtStartupMinimized.value = val;
+                            ss.settings.launchAtStartup.value = await ss.setupLaunchAtStartup(ss.settings.launchAtStartup.value, val);
                             saveSettings();
-                            ss.setupLaunchAtStartup();
                           },
                           initialVal: ss.settings.launchAtStartupMinimized.value,
                           title: "Launch on Startup Minimized",

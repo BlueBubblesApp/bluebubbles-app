@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -77,7 +77,7 @@ class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> wi
                   child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
                 ),
               ),
-            if (!isNullOrEmpty(data.userInfo?.imageTitle)! || !isNullOrEmpty(data.userInfo?.imageSubtitle)!)
+            if (!isNullOrEmpty(data.userInfo?.imageTitle) || !isNullOrEmpty(data.userInfo?.imageSubtitle))
               Positioned(
                 bottom: 5,
                 left: 15,
@@ -85,14 +85,14 @@ class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> wi
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!isNullOrEmpty(data.userInfo?.imageTitle)!)
+                    if (!isNullOrEmpty(data.userInfo?.imageTitle))
                       Text(
                         data.userInfo!.imageTitle!,
                         style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    if (!isNullOrEmpty(data.userInfo?.imageSubtitle)!)
+                    if (!isNullOrEmpty(data.userInfo?.imageSubtitle))
                       Text(
                         data.userInfo!.imageSubtitle!,
                         maxLines: 1,
@@ -114,9 +114,9 @@ class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> wi
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (!isNullOrEmpty(data.userInfo?.caption)!)
+                  if (!isNullOrEmpty(data.userInfo?.caption))
                     Flexible(
-                      fit: !isNullOrEmpty(data.userInfo?.secondarySubcaption)! ? FlexFit.tight : FlexFit.loose,
+                      fit: !isNullOrEmpty(data.userInfo?.secondarySubcaption) ? FlexFit.tight : FlexFit.loose,
                       child: Text(
                         data.userInfo!.caption!,
                         style: context.theme.textTheme.bodyLarge!.apply(fontWeightDelta: 2),
@@ -124,9 +124,9 @@ class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> wi
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  if (isNullOrEmpty(data.userInfo?.caption)! && !isNullOrEmpty(data.ldText)!)
+                  if (isNullOrEmpty(data.userInfo?.caption) && !isNullOrEmpty(data.ldText))
                     Flexible(
-                      fit: !isNullOrEmpty(data.userInfo?.secondarySubcaption)! ? FlexFit.tight : FlexFit.loose,
+                      fit: !isNullOrEmpty(data.userInfo?.secondarySubcaption) ? FlexFit.tight : FlexFit.loose,
                       child: Text(
                         data.ldText!,
                         style: context.theme.textTheme.bodyLarge!.apply(fontWeightDelta: 2),
@@ -134,7 +134,7 @@ class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> wi
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  if (!isNullOrEmpty(data.userInfo?.secondarySubcaption)!)
+                  if (!isNullOrEmpty(data.userInfo?.secondarySubcaption))
                     Text(
                       data.userInfo!.secondarySubcaption!,
                       style: context.theme.textTheme.bodyLarge!.apply(fontWeightDelta: 2),
@@ -143,18 +143,18 @@ class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> wi
                     ),
                 ],
               ),
-              if (!isNullOrEmpty(data.userInfo?.subcaption)!)
+              if (!isNullOrEmpty(data.userInfo?.subcaption))
                 const SizedBox(height: 2.5),
-              if (!isNullOrEmpty(data.userInfo?.subcaption)!)
+              if (!isNullOrEmpty(data.userInfo?.subcaption))
                 Text(
                   data.userInfo!.subcaption!,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal)
                 ),
-              if (!isNullOrEmpty(data.appName)!)
+              if (!isNullOrEmpty(data.appName))
                 const SizedBox(height: 5),
-              if (!isNullOrEmpty(data.appName)!)
+              if (!isNullOrEmpty(data.appName))
                 Text(
                   data.appName!,
                   style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),

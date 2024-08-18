@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/utils/logger.dart';
+
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Intent;
@@ -34,7 +35,7 @@ class IntentsService extends GetxService {
     sub = ReceiveIntent.receivedIntentStream.listen((Intent? intent) {
       handleIntent(intent);
     }, onError: (err) {
-      Logger.error("Failed to get intent! Error: ${err.toString()}");
+      Logger.error("Failed to get intent!", error: err);
     });
   }
 
@@ -101,7 +102,7 @@ class IntentsService extends GetxService {
           ls.isBubble = bubble;
           await openChat(guid);
         } else if (intent.extra?["callUuid"] != null) {
-          await uiStartup.future;
+          await StartupTasks.waitForUI();
           if (intent.extra?["answer"] == true) {
             await answerFaceTime(intent.extra?["callUuid"]!);
           } else {
@@ -157,8 +158,11 @@ class IntentsService extends GetxService {
   }
 
   Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
+    Logger.info("Handling open chat intent with guid: $guid", tag: "IntentsService");
+
     if (guid == null) {
-      await uiStartup.future;
+      Logger.debug("Opening new chat creator..", tag: "IntentsService");
+      await StartupTasks.waitForUI();
       ns.pushAndRemoveUntil(
         Get.context!,
         ChatCreator(
@@ -168,10 +172,12 @@ class IntentsService extends GetxService {
         (route) => route.isFirst,
       );
     } else if (guid == "-1") {
+      Logger.debug("Popping all routes...", tag: "IntentsService");
       if (cm.activeChat != null) {
         Navigator.of(Get.context!).popUntil((route) => route.isFirst);
       }
     } else if (guid == "-2") {
+      Logger.debug("Opening server management panel...", tag: "IntentsService");
       Navigator.of(Get.context!).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -180,6 +186,7 @@ class IntentsService extends GetxService {
         ),
       );
     } else if (guid.contains("scheduled")) {
+      Logger.debug("Opening scheduled messages panel...", tag: "IntentsService");
       Navigator.of(Get.context!).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -188,26 +195,40 @@ class IntentsService extends GetxService {
         ),
       );
     } else {
+      Logger.debug("Opening existing chat (Attachments: ${attachments.length}; Text: ${text?.shorten(10) ?? 'N/A'})", tag: "IntentsService");
       final chat = Chat.findOne(guid: guid);
-      if (chat == null) return;
+      if (chat == null) {
+        Logger.debug("Chat not found with guid: $guid", tag: "IntentsService");
+        return;
+      }
+
       bool chatIsOpen = cm.activeChat?.chat.guid == guid;
+      Logger.debug("Chat is active: $chatIsOpen", tag: "IntentsService");
+
+      setPickedAttachments() {
+        if (attachments.isNotEmpty) {
+          cvc(chat).pickedAttachments.value = attachments;
+        }
+
+        if (text != null && text.isNotEmpty) {
+          cvc(chat).textController.text = text;
+        }
+      }
+
       if (!chatIsOpen) {
-        await uiStartup.future;
-        ns.pushAndRemoveUntil(
+        Logger.debug("Navigating to conversation view...", tag: "IntentsService");
+        await StartupTasks.waitForUI();
+        await ns.pushAndRemoveUntil(
           Get.context!,
           ConversationView(
             chat: chat,
+            onInit: () => setPickedAttachments(),
           ),
           (route) => route.isFirst,
         );
-        // wait for controller to be initialized
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-      if (attachments.isNotEmpty) {
-        cvc(chat).pickedAttachments.value = attachments;
-      }
-      if (text != null && text.isNotEmpty) {
-        cvc(chat).textController.text = text;
+      } else {
+        Logger.debug("Chat is already open, not navigating", tag: "IntentsService");
+        setPickedAttachments();
       }
     }
   }

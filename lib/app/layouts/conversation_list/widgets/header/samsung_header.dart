@@ -5,8 +5,8 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_lis
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -189,7 +189,7 @@ class _ExpandedHeaderTextState extends CustomState<ExpandedHeaderText, void, Con
   void initState() {
     super.initState();
     if (!kIsWeb) {
-      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true))
+      final unreadQuery = Database.chats.query(Chat_.hasUnreadMessage.equals(true))
           .watch(triggerImmediately: true);
       sub = unreadQuery.listen((Query<Chat> query) {
         final count = query.count();

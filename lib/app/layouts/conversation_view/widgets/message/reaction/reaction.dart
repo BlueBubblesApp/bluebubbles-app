@@ -5,8 +5,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
@@ -48,10 +48,10 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
     super.initState();
     updateObx(() {
       if (!kIsWeb && widget.message != null) {
-        final messageQuery = messageBox.query(Message_.id.equals(reaction.id!)).watch();
+        final messageQuery = Database.messages.query(Message_.id.equals(reaction.id!)).watch();
         sub = messageQuery.listen((Query<Message> query) async {
           final _message = await runAsync(() {
-            return messageBox.get(reaction.id!);
+            return Database.messages.get(reaction.id!);
           });
           if (_message != null) {
             if (_message.guid != reaction.guid || _message.dateDelivered != reaction.dateDelivered) {
@@ -199,7 +199,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
             width: iosSize,
             height: iosSize,
             color: reactionIsFromMe
-                ? context.theme.colorScheme.primary.darkenAmount(reaction.guid!.startsWith("temp") ? 0.2 : 0)
+                ? context.theme.colorScheme.primary.darkenAmount(reaction.guid!.startsWith("temp") ? 0.1 : 0)
                 : context.theme.colorScheme.properSurface,
             alignment: messageIsFromMe ? Alignment.topRight : Alignment.topLeft,
             child: SizedBox(

@@ -7,7 +7,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/pic
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -22,8 +22,8 @@ class PickedAttachmentsHolder extends StatefulWidget {
   });
 
   final ConversationViewController? controller;
-  final SpellCheckTextEditingController subjectTextController;
-  final MentionTextEditingController textController;
+  final TextEditingController subjectTextController;
+  final TextEditingController textController;
   final List<PlatformFile> initialAttachments;
 
   @override
@@ -36,13 +36,14 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
       ? widget.controller!.pickedAttachments : widget.initialAttachments;
 
   void selectMention(int index, bool custom) async {
+    if (widget.textController is! MentionTextEditingController) return;
     final mention = widget.controller!.mentionMatches[index];
     if (custom) {
       final changed = await showCustomMentionDialog(context, mention);
-      if (isNullOrEmpty(changed)!) return;
+      if (isNullOrEmpty(changed)) return;
       mention.customDisplayName = changed!;
     }
-    final _controller = widget.textController;
+    final _controller = widget.textController as MentionTextEditingController;
     widget.controller!.mentionSelectedIndex.value = 0;
     final text = _controller.text;
     final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
@@ -123,7 +124,9 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                         controller: widget.controller!.emojiScrollController,
                         physics: ThemeSwitcher.getScrollPhysics(),
                         shrinkWrap: true,
+                        findChildIndexCallback: (key) => findChildIndexByKey(widget.controller!.emojiMatches, key, (item) => item.shortName),
                         itemBuilder: (BuildContext context, int index) => Material(
+                          key: ValueKey(widget.controller!.emojiMatches[index].shortName),
                           color: Colors.transparent,
                           child: InkWell(
                             onTapDown: (details) {
@@ -194,7 +197,9 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                         controller: widget.controller!.emojiScrollController,
                         physics: ThemeSwitcher.getScrollPhysics(),
                         shrinkWrap: true,
+                        findChildIndexCallback: (key) => findChildIndexByKey(widget.controller!.mentionMatches, key, (item) => item.address),
                         itemBuilder: (BuildContext context, int index) => Material(
+                          key: ValueKey(widget.controller!.mentionMatches[index].address),
                           color: Colors.transparent,
                           child: InkWell(
                             onTapDown: (details) {

@@ -11,10 +11,10 @@ import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -156,8 +156,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           refreshing2 = false;
         });
       } catch (e, s) {
-        Logger.error(e);
-        Logger.error(s);
+        Logger.error("Failed to parse FindMy Friends location data!", error: e, trace: s);
         setState(() {
           fetching2 = null;
           refreshing2 = false;
@@ -229,8 +228,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
           refreshing = false;
         });
       } catch (e, s) {
-        Logger.error(e);
-        Logger.error(s);
+        Logger.error("Failed to parse FindMy Devices location data!", error: e, trace: s);
         setState(() {
           fetching = null;
           refreshing = false;
@@ -389,9 +387,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
+                    findChildIndexCallback: (key) => findChildIndexByKey(devicesWithLocation, key, (item) => item.address?.uniqueValue),
                     itemBuilder: (context, i) {
                       final item = devicesWithLocation[i];
                       return ListTile(
+                        key: ValueKey(item.address?.uniqueValue),
                         mouseCursor: MouseCursor.defer,
                         title: Text(ss.settings.redactedMode.value ? "Device" : (item.name ?? "Unknown Device")),
                         subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found")),
@@ -479,9 +479,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
+                    findChildIndexCallback: (key) => findChildIndexByKey(itemsWithLocation, key, (item) => item.address?.uniqueValue),
                     itemBuilder: (context, i) {
                       final item = itemsWithLocation[i];
                       return ListTile(
+                        key: ValueKey(item.address?.uniqueValue),
                         title: Text(ss.settings.redactedMode.value ? "Item" : (item.name ?? "Unknown Item")),
                         subtitle: Text(ss.settings.redactedMode.value ? "Location" : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found")),
                         trailing: item.location?.latitude != null && item.location?.longitude != null ? ButtonTheme(
@@ -671,9 +673,11 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
+                    findChildIndexCallback: (key) => findChildIndexByKey(friendsWithLocation, key, (item) => item.handle?.uniqueAddressAndService),
                     itemBuilder: (context, i) {
                       final item = friendsWithLocation[i];
                       return ListTile(
+                        key: ValueKey(item.handle?.uniqueAddressAndService),
                         leading: ContactAvatarWidget(handle: item.handle),
                         title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
                         subtitle: Text(ss.settings.redactedMode.value ? "Location" : ("${item.shortAddress ?? "No location found"}${item.lastUpdated == null || item.status == LocationStatus.live ? "" : "\nLast updated ${buildDate(item.lastUpdated)}"}")),

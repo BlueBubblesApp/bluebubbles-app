@@ -3,8 +3,8 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:faker/faker.dart';
@@ -57,7 +57,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        final latestMessageQuery = (Database.messages.query(Message_.dateDeleted.isNull())
               ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
               ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
@@ -81,12 +81,12 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
           cachedLatestMessageGuid = message?.guid;
         });
 
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
+        final unreadQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub2 = unreadQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null
               ? null
               : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
+                  return Database.chats.get(controller.chat.id!);
                 });
           final newUnread = chat?.hasUnreadMessage ?? false;
           if (chat != null && unread != newUnread) {
@@ -162,7 +162,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
     String _subtitle = hideInfo ? fakeText : subtitle;
 
-    if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)!) {
+    if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)) {
       return const SizedBox.shrink();
     }
     final background = getBubbleColors().first.withOpacity(0.7);

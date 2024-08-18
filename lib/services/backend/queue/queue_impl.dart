@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:get/get.dart';
 
 abstract class Queue extends GetxService {
@@ -55,8 +55,7 @@ abstract class Queue extends GetxService {
       });
       queued.completer?.complete();
     } catch (ex, stacktrace) {
-      Logger.error("Failed to handle queued item! $ex");
-      Logger.error(stacktrace.toString());
+      Logger.error("Failed to handle queued item!", error: ex, trace: stacktrace);
       queued.completer?.completeError(ex);
     }
 

@@ -1,8 +1,8 @@
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/create_scheduled_panel.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -147,10 +147,12 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                     child: ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
+                      findChildIndexCallback: (key) => findChildIndexByKey(oneTime, key, (item) => item.id.toString()),
                       itemBuilder: (context, index) {
                         final item = oneTime[index];
                         final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                         return ListTile(
+                          key: ValueKey(item.id.toString()),
                           mouseCursor: SystemMouseCursors.click,
                           title: Text(item.payload.message),
                           subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} on ${buildFullDate(item.scheduledFor)}"),
@@ -191,10 +193,12 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                     child: ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
+                      findChildIndexCallback: (key) => findChildIndexByKey(recurring, key, (item) => item.id.toString()),
                       itemBuilder: (context, index) {
                         final item = recurring[index];
                         final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                         return ListTile(
+                          key: ValueKey(item.id.toString()),
                           mouseCursor: SystemMouseCursors.click,
                           title: Text(item.payload.message),
                           subtitle: Text("Sending to ${chat == null ? item.payload.chatGuid : chat.getTitle()} every ${item.schedule.interval} ${frequencyToText[item.schedule.intervalType]}(s) starting starting on ${buildFullDate(item.scheduledFor)}"),
@@ -234,10 +238,12 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                   ListView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
+                    findChildIndexCallback: (key) => findChildIndexByKey(oneTimeCompleted, key, (item) => item.id.toString()),
                     itemBuilder: (context, index) {
                       final item = oneTimeCompleted[index];
                       final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                       return ListTile(
+                        key: ValueKey(item.id.toString()),
                         title: Text(item.payload.message),
                         subtitle: Text(item.status == "error"
                             ? item.error ?? "Something went wrong sending this message."

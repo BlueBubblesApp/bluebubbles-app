@@ -2,10 +2,11 @@ import 'dart:convert';
 
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/share.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -58,9 +59,22 @@ class OtherFile extends StatelessWidget {
           launchUrl(Uri.file(_file.path));
         } else {
           try {
-            await OpenFilex.open("${fs.appDocDir.path}/attachments/${attachment.guid!}/${basename(file.path!)}");
+            final res = await OpenFilex.open("${fs.appDocDir.path}/attachments/${attachment.guid!}/${basename(file.path!)}");
+            if (res.type == ResultType.noAppToOpen) {
+              showSnackbar('Error', "No handler for this file type! Using share menu instead.");
+              await Future.delayed(const Duration(seconds: 1));
+              Share.file(file.name, file.path!);
+            } else if (res.type == ResultType.error) {
+              showSnackbar('Error', res.message);
+            } else if (res.type == ResultType.fileNotFound) {
+              showSnackbar('Not Found', "File not found at path: ${file.path}");
+            } else if (res.type == ResultType.permissionDenied) {
+              showSnackbar('Permission Denied', "BlueBubbles does not have access to this file! Using share menu instead.");
+              await Future.delayed(const Duration(seconds: 1));
+              Share.file(file.name, file.path!);
+            }
           } catch (ex) {
-            Logger.error(ex);
+            Logger.error("Error opening file: ${file.path}", error: ex);
             showSnackbar('Error', "No handler for this file type!");
           }
         }

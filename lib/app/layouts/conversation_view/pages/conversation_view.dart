@@ -6,8 +6,9 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/screen_effects_widget.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +21,13 @@ class ConversationView extends StatefulWidget {
     required this.chat,
     this.customService,
     this.fromChatCreator = false,
+    this.onInit,
   });
 
   final Chat chat;
   final MessagesService? customService;
   final bool fromChatCreator;
+  final void Function()? onInit;
 
   @override
   ConversationViewState createState() => ConversationViewState();
@@ -38,9 +41,16 @@ class ConversationViewState extends OptimizedState<ConversationView> {
   @override
   void initState() {
     super.initState();
+
+    Logger.debug("Initializing Conversation View for ${chat.guid}");
     controller.fromChatCreator = widget.fromChatCreator;
     cm.setActiveChatSync(chat);
     cm.activeChat!.controller = controller;
+    Logger.debug("Conversation View initialized for ${chat.guid}");
+
+    if (widget.onInit != null) {
+      Future.delayed(Duration.zero, widget.onInit!);
+    }
   }
 
   @override

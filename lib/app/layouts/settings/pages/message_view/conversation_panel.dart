@@ -1,8 +1,9 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
+import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart' hide PlatformFile;
+import 'package:bluebubbles/database/models.dart' hide PlatformFile;
 import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -154,6 +155,30 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                     ),
                   if (!kIsWeb)
                     SettingsTile(
+                      title: "Message Options Order",
+                      subtitle:
+                      "Set the order for the options when ${ss.settings.doubleTapForDetails.value ? "double-tapping" : "pressing and holding"} a message",
+                      onTap: () {
+                        ns.pushSettings(
+                          context,
+                          MessageOptionsOrderPanel(),
+                        );
+                      },
+                      trailing: Icon(
+                        iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                        color: context.theme.colorScheme.outline,
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    SettingsTile(
                       title: "Sync Group Chat Icons",
                       trailing: Obx(() => gettingIcons.value == null
                           ? const SizedBox.shrink()
@@ -201,10 +226,16 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                  if (!kIsWeb)
-                    const SettingsSubtitle(
-                      subtitle: "Note: Can result in degraded performance depending on how many unread messages there are.",
-                    ),
+                  Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        ss.settings.hideNamesForReactions.value = val;
+                        ss.settings.saveOne("hideNamesForReactions");
+                      },
+                      initialVal: ss.settings.hideNamesForReactions.value,
+                      title: "Hide Names in Reaction Details",
+                      subtitle: "Enable this to hide names under participant avatars when you view a message's reactions",
+                      backgroundColor: tileColor,
+                    )),
                 ],
               ),
               if (!kIsWeb)

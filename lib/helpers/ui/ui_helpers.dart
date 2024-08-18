@@ -4,9 +4,9 @@ import 'dart:ui' as ui;
 
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -37,9 +37,9 @@ class BackButton extends StatelessWidget {
       },
       child: IconButton(
         icon: Obx(() => Icon(
-              ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-              color: color ?? context.theme.colorScheme.primary,
-            )),
+          ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+          color: color ?? context.theme.colorScheme.primary,
+        )),
         iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
         onPressed: kIsDesktop ? null : () {
           final result = onPressed?.call() ?? false;
@@ -55,15 +55,32 @@ class BackButton extends StatelessWidget {
   }
 }
 
+// todo remove
 Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
   return Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: padding,
-        width: 48,
-        child: XGestureDetector(
-          supportTouch: true,
-          onTap: !kIsDesktop ? null : (details) {
+    color: Colors.transparent,
+    child: Container(
+      padding: padding,
+      width: 48,
+      child: XGestureDetector(
+        supportTouch: true,
+        onTap: !kIsDesktop ? null : (details) {
+          final result = callback?.call() ?? true;
+          if (result) {
+            if (Get.isSnackbarOpen) {
+              Get.closeAllSnackbars();
+            }
+            Navigator.of(context).pop();
+          }
+        },
+        child: IconButton(
+          iconSize: iconSize ?? (ss.settings.skin.value != Skins.Material ? 30 : 24),
+          icon: skin != null
+              ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
+              : Obx(() => Icon(ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+                  color: context.theme.colorScheme.primary)),
+          onPressed: () {
+            if (kIsDesktop) return;
             final result = callback?.call() ?? true;
             if (result) {
               if (Get.isSnackbarOpen) {
@@ -72,25 +89,10 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
               Navigator.of(context).pop();
             }
           },
-          child: IconButton(
-            iconSize: iconSize ?? (ss.settings.skin.value != Skins.Material ? 30 : 24),
-            icon: skin != null
-                ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
-                : Obx(() => Icon(ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-                    color: context.theme.colorScheme.primary)),
-            onPressed: () {
-              if (kIsDesktop) return;
-              final result = callback?.call() ?? true;
-              if (result) {
-                if (Get.isSnackbarOpen) {
-                  Get.closeAllSnackbars();
-                }
-                Navigator.of(context).pop();
-              }
-            },
-          ),
         ),
-      ));
+      ),
+    ),
+  );
 }
 
 Widget buildProgressIndicator(BuildContext context, {double size = 20, double strokeWidth = 2}) {
@@ -116,31 +118,6 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
               ),
           ),
       );
-}
-
-Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget child, {bool isLoaded = false}) {
-  double placeholderWidth = 200;
-  double placeholderHeight = 150;
-
-  // If the image doesn't have a valid size, show the loader with static height/width
-  if (!attachment.hasValidSize) {
-    return Container(
-        width: placeholderWidth, height: placeholderHeight, color: context.theme.colorScheme.properSurface, child: child);
-  }
-
-  // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
-  // Calculate the aspect ratio for the placeholders
-  double ratio = attachment.aspectRatio;
-  double height = attachment.height?.toDouble() ?? placeholderHeight;
-  double width = attachment.width?.toDouble() ?? placeholderWidth;
-
-  // YES, this countainer surrounding the AspectRatio is needed.
-  // If not there, the box may be too large
-  return Container(
-      constraints: BoxConstraints(maxHeight: height, maxWidth: width),
-      child: AspectRatio(
-          aspectRatio: ratio,
-          child: Container(width: width, height: height, color: context.theme.colorScheme.properSurface, child: child)));
 }
 
 Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
@@ -363,32 +340,27 @@ IconData getAttachmentIcon(String mimeType) {
       : Icons.open_in_new;
 }
 
-void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
-  Get.snackbar(title, message,
-      snackPosition: SnackPosition.BOTTOM,
-      colorText: Get.theme.colorScheme.onInverseSurface,
-      backgroundColor: Get.theme.colorScheme.inverseSurface,
-      margin: const EdgeInsets.only(bottom: 10),
-      maxWidth: Get.width - 20,
-      isDismissible: false,
-      duration: Duration(milliseconds: durationMs),
-      animationDuration: Duration(milliseconds: animationMs),
-      mainButton: button,
-      onTap: onTap ??
-              (GetSnackBar bar) {
-            if (Get.isSnackbarOpen) Get.back();
-          });
+void showSnackbar(String title, String message, {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
+  Get.snackbar(
+    title,
+    message,
+    snackPosition: SnackPosition.BOTTOM,
+    colorText: Get.theme.colorScheme.onInverseSurface,
+    backgroundColor: Get.theme.colorScheme.inverseSurface,
+    margin: const EdgeInsets.only(bottom: 10),
+    maxWidth: Get.width - 20,
+    isDismissible: false,
+    duration: Duration(milliseconds: durationMs),
+    animationDuration: Duration(milliseconds: animationMs),
+    mainButton: button,
+    onTap: onTap ?? (GetSnackBar bar) {
+      if (Get.isSnackbarOpen) Get.back();
+    },
+  );
 }
 
 Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
-  if (socketState == SocketState.connecting) {
-    return Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-  } else if (socketState == SocketState.connected) {
-    return Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
-  } else {
-    return Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
-  }
+  return Icon(Icons.fiber_manual_record, color: getIndicatorColor(socketState).withAlpha(showAlpha ? 200 : 255), size: size);
 }
 
 Color getIndicatorColor(SocketState socketState) {
@@ -443,8 +415,8 @@ Future<void> paintGroupAvatar({
     Uint8List? customAvatar;
     try {
       customAvatar = await clip(await File(chat.customAvatarPath!).readAsBytes(), size: size.toInt(), circle: true);
-    } catch (e) {
-      Logger.error(e);
+    } catch (e, stack) {
+      Logger.warn("Failed to load/clip custom avatar!", error: e, trace: stack);
     }
     if (customAvatar != null) {
       canvas.drawImage(await loadImage(customAvatar), const Offset(0, 0), Paint());
@@ -689,4 +661,23 @@ extension VideoAspectRatio on VideoController {
 
     return _rect.width / _rect.height;
   }
+}
+
+int? findChildIndexByKey<T>(List<T> input, Key key, Function(T) getField) {
+  int index = -1;
+  if (key is UniqueKey) {
+    index = input.indexWhere((item) => getField(item) == key.toString());
+  } else if (key is ObjectKey) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  } else if (key is GlobalKey) {
+    index = input.indexWhere((item) => getField(item) == key.toString());
+  } else if (key is ValueKey<String>) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  } else if (key is ValueKey<int>) {
+    index = input.indexWhere((item) => getField(item) == key.value.toString());
+  } else if (key is ValueKey) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  }
+
+  return index == -1 ? null : index;
 }

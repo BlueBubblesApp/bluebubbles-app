@@ -1,9 +1,9 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -101,6 +101,10 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       widget.cvController.showingOverlays = false;
       if (widget.cvController.editing.isEmpty) {
         widget.cvController.focusNode.requestFocus();
+      } else {
+        // This delay is necessary because there is a second instance of the focus node in the popup which gets focused otherwise
+        // The autofocus doesn't seem to work on desktop
+        Future.delayed(const Duration(milliseconds: 500), () => widget.cvController.editing.last.item3.focusNode?.requestFocus());
       }
     }
   }

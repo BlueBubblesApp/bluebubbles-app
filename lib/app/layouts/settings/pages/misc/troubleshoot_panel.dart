@@ -1,165 +1,244 @@
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/misc/live_logging_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/services/backend/sync/chat_sync_manager.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/share.dart';
+import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class TroubleshootPanel extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() => _TroubleshootPanelState();
 }
 
 class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
-  late final savedLogsDir = kIsDesktop ? Directory(join(Logger.logFile.parent.path, "Saved Logs")) : null;
-  final RxList<File> savedLogs = <File>[].obs;
   final RxnBool resyncingHandles = RxnBool();
+  final RxnBool resyncingChats = RxnBool();
+  final RxInt logFileCount = 1.obs;
+  final RxInt logFileSize = 0.obs;
+  final RxBool optimizationsDisabled = false.obs;
 
   @override
   void initState() {
     super.initState();
-    if (kIsDesktop && savedLogsDir!.existsSync()) {
-      savedLogs.value = savedLogsDir!.listSync().whereType<File>().toList().reversed.toList();
+
+    // Count how many .log files are in the log directory
+    final Directory logDir = Directory(Logger.logDir);
+    if (logDir.existsSync()) {
+      final List<FileSystemEntity> files = logDir.listSync();
+      final logFiles =
+          files.where((file) => file.path.endsWith(".log")).toList();
+      logFileCount.value = logFiles.length;
+
+      // Size in KB
+      for (final file in logFiles) {
+        logFileSize.value += file.statSync().size ~/ 1024;
+      }
     }
+
+    // Check if battery optimizations are disabled
+    DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((value) {
+      optimizationsDisabled.value = value ?? false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final Widget nextIcon = Obx(() => ss.settings.skin.value != Skins.Material
+        ? Icon(
+            ss.settings.skin.value != Skins.Material
+                ? CupertinoIcons.chevron_right
+                : Icons.arrow_forward,
+            color: context.theme.colorScheme.outline,
+            size: iOS ? 18 : 24,
+          )
+        : const SizedBox.shrink());
+
     return SettingsScaffold(
-      title: "Troubleshooting",
-      initialHeader: (kIsWeb || kIsDesktop) ? "Contacts" : "Logging",
-      iosSubtitle: iosSubtitle,
-      materialSubtitle: materialSubtitle,
-      tileColor: tileColor,
-      headerColor: headerColor,
-      bodySlivers: [
-        SliverList(
-          delegate: SliverChildListDelegate(
-            <Widget>[
-              if (kIsWeb || kIsDesktop)
-                SettingsSection(
-                  backgroundColor: tileColor,
-                  children: [
-                    SettingsTile(
-                      onTap: () async {
-                        final RxList<String> log = <String>[].obs;
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                            titlePadding: const EdgeInsets.only(top: 15),
-                            title: Text("Fetching contacts...", style: context.theme.textTheme.titleLarge),
-                            content: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                width: ns.width(context) * 4 / 5,
-                                height: context.height * 1 / 3,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(25),
-                                    color: context.theme.colorScheme.background,
-                                  ),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Obx(() => ListView.builder(
-                                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                                    itemBuilder: (context, index) {
-                                      return Text(
-                                        log[index],
-                                        style: TextStyle(
-                                          color: context.theme.colorScheme.onBackground,
-                                          fontSize: 10,
+        title: "Developer Tools",
+        initialHeader: (kIsWeb || kIsDesktop) ? "Contacts" : "Logging",
+        iosSubtitle: iosSubtitle,
+        materialSubtitle: materialSubtitle,
+        tileColor: tileColor,
+        headerColor: headerColor,
+        bodySlivers: [
+          SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[
+                if (kIsWeb || kIsDesktop)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
+                      SettingsTile(
+                        onTap: () async {
+                          final RxList<String> log = <String>[].obs;
+                          showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                    backgroundColor:
+                                        context.theme.colorScheme.surface,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    titlePadding:
+                                        const EdgeInsets.only(top: 15),
+                                    title: Text("Fetching contacts...",
+                                        style:
+                                            context.theme.textTheme.titleLarge),
+                                    content: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: SizedBox(
+                                        width: ns.width(context) * 4 / 5,
+                                        height: context.height * 1 / 3,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(25),
+                                            color: context
+                                                .theme.colorScheme.background,
+                                          ),
+                                          padding: const EdgeInsets.all(10),
+                                          child: Obx(() => ListView.builder(
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                        parent:
+                                                            BouncingScrollPhysics()),
+                                                itemBuilder: (context, index) {
+                                                  return Text(
+                                                    log[index],
+                                                    style: TextStyle(
+                                                      color: context
+                                                          .theme
+                                                          .colorScheme
+                                                          .onBackground,
+                                                      fontSize: 10,
+                                                    ),
+                                                  );
+                                                },
+                                                itemCount: log.length,
+                                              )),
                                         ),
-                                      );
-                                    },
-                                    itemCount: log.length,
-                                  )),
-                                ),
-                              ),
-                            ),
-                          )
-                        );
-                        await cs.fetchNetworkContacts(logger: (newLog) {
-                          log.add(newLog);
-                        });
-                      },
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.group,
-                        materialIcon: Icons.contacts,
+                                      ),
+                                    ),
+                                  ));
+                          await cs.fetchNetworkContacts(logger: (newLog) {
+                            log.add(newLog);
+                          });
+                        },
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.group,
+                          materialIcon: Icons.contacts,
+                        ),
+                        title: "Fetch Contacts With Verbose Logging",
+                        subtitle:
+                            "This will fetch contacts from the server with extra info to help devs debug contacts issues",
                       ),
-                      title: "Fetch Contacts With Verbose Logging",
-                      subtitle: "This will fetch contacts from the server with extra info to help devs debug contacts issues",
+                    ],
+                  ),
+                if (kIsWeb || kIsDesktop)
+                  SettingsHeader(
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Logging"),
+                SettingsSection(backgroundColor: tileColor, children: [
+                  const LogLevelSelector(),
+                  SettingsTile(
+                    title: "Live Logging",
+                    subtitle:
+                        "A live view of the logs. Useful for debugging issues.",
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.bolt_fill,
+                      materialIcon: Icons.bolt_outlined,
+                      containerColor: Colors.amberAccent
                     ),
-                  ],
-                ),
-              if (kIsWeb || kIsDesktop)
-                SettingsHeader(
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Logging"
-                ),
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  if (!kIsDesktop)
-                    Obx(() => SettingsTile(
-                      onTap: () async {
-                        if (Logger.saveLogs.value) {
-                          await Logger.stopSavingLogs();
-                          Logger.saveLogs.value = false;
-                          savedLogs.value =
-                              RxList.from(savedLogsDir!.listSync().whereType<File>().toList().reversed);
-                        } else {
-                          Logger.startSavingLogs();
-                        }
-                      },
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
-                        materialIcon: Icons.history_edu,
-                      ),
-                      title: "${Logger.saveLogs.value ? "End" : "Start"} Logging",
-                      subtitle: Logger.saveLogs.value
-                          ? "Logging started, tap here to end and save"
-                          : "Create a bug report for developers to analyze",
-                    )),
+                    onTap: () {
+                      ns.pushSettings(
+                        context,
+                        LiveLoggingPanel(),
+                      );
+                    },
+                    trailing: nextIcon,
+                  ),
+                  SettingsTile(
+                    title: "View Latest Log",
+                    subtitle: "View the latest log file. Useful for debugging issues, in app.",
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.doc_append,
+                      materialIcon: Icons.document_scanner_rounded,
+                      containerColor: Colors.blueAccent,
+                    ),
+                    onTap: () {
+                      ns.pushSettings(
+                        context,
+                        LoggingPanel(),
+                      );
+                    },
+                    trailing: nextIcon,
+                  ),
+                  if (Platform.isAndroid)
+                    SettingsTile(
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.share_up,
+                          materialIcon: Icons.share,
+                          containerColor: Colors.green,
+                        ),
+                        title: "Export / Share Logs",
+                        subtitle:
+                            "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
+                        onTap: () async {
+                          if (logFileCount.value == 0) {
+                            showSnackbar(
+                                "No Logs", "There are no logs to share!");
+                            return;
+                          }
+
+                          showSnackbar("Please Wait",
+                              "Compressing ${logFileCount.value} log file(s)...");
+                          String filePath = Logger.compressLogs();
+                          final File zippedLogFile = File(filePath);
+                          Share.file("BlueBubbles Logs", zippedLogFile.path);
+                        }),
                   if (kIsDesktop)
                     SettingsTile(
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.doc,
+                          materialIcon: Icons.file_open,
+                        ),
+                        title: "Open Logs",
+                        subtitle: Logger.logDir,
+                        onTap: () async {
+                          final File logFile = File(Logger.logDir);
+                          if (logFile.existsSync()) {
+                            logFile.createSync(recursive: true);
+                          }
+                          await launchUrl(Uri.file(logFile.path));
+                        }),
+                  SettingsTile(
                       leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.doc,
-                        materialIcon: Icons.file_open,
+                        iosIcon: CupertinoIcons.trash,
+                        materialIcon: Icons.delete,
+                        containerColor: Colors.redAccent,
                       ),
-                      title: "Open Real-time Log File",
-                      subtitle: Logger.logFile.path,
+                      title: "Clear Logs",
+                      subtitle: "Deletes all stored log files.",
                       onTap: () async {
-                        if (Logger.logFile.existsSync()) Logger.logFile.createSync();
-                        await launchUrl(Uri.file(Logger.logFile.path));
-                      }
-                    ),
-                  if (kIsDesktop)
-                    const SettingsDivider(),
-                  if (kIsDesktop)
-                    SettingsTile(
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.doc,
-                        materialIcon: Icons.file_open,
-                      ),
-                      title: "Open Startup Log File",
-                      subtitle: Logger.startupFile.path,
-                      onTap: () async {
-                        if (Logger.startupFile.existsSync()) Logger.startupFile.createSync();
-                        await launchUrl(Uri.file(Logger.startupFile.path));
-                      }
-                    ),
-                  if (kIsDesktop)
-                    const SettingsDivider(),
+                        Logger.clearLogs();
+                        showSnackbar(
+                            "Logs Cleared", "All logs have been deleted.");
+                        logFileCount.value = 0;
+                        logFileSize.value = 0;
+                      }),
+                  if (kIsDesktop) const SettingsDivider(),
                   if (kIsDesktop)
                     SettingsTile(
                       leading: const SettingsLeadingIcon(
@@ -168,201 +247,130 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                       ),
                       title: "Open App Data Location",
                       subtitle: fs.appDocDir.path,
-                      onTap: () async => await launchUrl(Uri.file(fs.appDocDir.path)),
+                      onTap: () async =>
+                          await launchUrl(Uri.file(fs.appDocDir.path)),
                     ),
-                ]
-              ),
-              if (kIsDesktop)
-                SettingsHeader(
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Saved Logs"
-                ),
-              if (kIsDesktop)
-                SettingsSection(
-                  backgroundColor: tileColor,
-                  children: [
-                    SettingsTile(
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.folder,
-                        materialIcon: Icons.folder,
-                      ),
-                      title: "Open Saved Logs Location",
-                      subtitle: savedLogsDir!.path,
-                      onTap: () async {
-                        if (!savedLogsDir!.existsSync()) savedLogsDir!.createSync(recursive: true);
-                        await launchUrl(Uri.file(savedLogsDir!.path));
-                      },
-                    ),
-                  const SettingsDivider(),
-                  Obx(() => SettingsTile(
-                    onTap: () async {
-                      if (Logger.saveLogs.value) {
-                        await Logger.stopSavingLogs();
-                        Logger.saveLogs.value = false;
-                        savedLogs.value = RxList.from(savedLogsDir!.listSync().whereType<File>().toList().reversed);
-                      } else {
-                        Logger.startSavingLogs();
-                      }
-                    },
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
-                      materialIcon: Icons.history_edu,
-                    ),
-                    title: "${Logger.saveLogs.value ? "Stop" : "Start"} Saving Logs",
-                    subtitle: Logger.saveLogs.value
-                        ? "Logging started, tap here to end and save"
-                        : "Create a bug report for developers to analyze",
-                  )),
-                  const SettingsDivider(),
-                  SettingsTile(
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.refresh,
-                      materialIcon: Icons.refresh,
-                    ),
-                    onTap: () {
-                      savedLogs.value = RxList.from(savedLogsDir!.listSync().whereType<File>().toList().reversed);
-                    },
-                    title: "Refresh Saved Logs",
-                    subtitle: "Reload the Saved Logs directory",
-                  ),
-                  const SettingsDivider(),
-                  Obx(() {
-                    if (savedLogs.isNotEmpty) {
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        itemBuilder: (BuildContext context, int index) {
-                          String? dayString;
-                          String? timeString;
-                          File file = savedLogs[index];
-                          String name = basename(file.path);
-                          RegExpMatch? timestamp = RegExp("BlueBubbles_Logs_(.*)_(.*).txt").firstMatch(name);
-                          if (timestamp == null) dayString = "Unknown";
-
-                          String? date = timestamp?.group(1);
-                          String? time = timestamp?.group(2);
-                          if (date == null || time == null) dayString = "Unknown";
-
-                          List<String> splitDate = date?.split("-") ?? [];
-                          List<String> splitTime = time?.split("-") ?? [];
-                          if (splitDate.length == 3 && splitTime.length == 3) {
-                            int? year = int.tryParse(splitDate[0]);
-                            int? month = int.tryParse(splitDate[1]);
-                            int? day = int.tryParse(splitDate[2]);
-                            int? hour = int.tryParse(splitTime[0]);
-                            int? minute = int.tryParse(splitTime[1]);
-                            int? second = int.tryParse(splitTime[2]);
-                            if (year != null &&
-                                month != null &&
-                                day != null &&
-                                hour != null &&
-                                minute != null &&
-                                second != null) {
-                              DateTime dateTime = DateTime(year, month, day, hour, minute, second);
-                              dayString = DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY).format(dateTime);
-                              timeString = DateFormat(ss.settings.use24HrFormat.value
-                                  ? DateFormat.HOUR24_MINUTE_SECOND
-                                  : DateFormat.HOUR_MINUTE_SECOND)
-                                  .format(dateTime);
-                            }
-                          }
-                          if (dayString == null) {
-                            if ((date ?? "").length >= 6) {
-                              List<String> chars = date!.characters.toList();
-                              int? year = int.tryParse(chars.sublist(0, 4).join());
-                              if (year == null) return const SizedBox.shrink();
-
-                              bool twoDigit = chars[5] == "0";
-                              int? month = int.tryParse(chars.sublist(4, twoDigit ? 6 : 5).join());
-                              if (month == null) return const SizedBox.shrink();
-
-                              if (twoDigit && date.length < 7) return const SizedBox.shrink();
-                              int? day = int.tryParse(chars.sublist(twoDigit ? 6 : 5).join());
-                              if (day == null) return const SizedBox.shrink();
-
-                              DateTime dateTime = DateTime(year, month, day);
-                              dayString = DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY).format(dateTime);
-                            }
-                          }
-                          return SettingsTile(
-                            leading: const SettingsLeadingIcon(
-                              iosIcon: CupertinoIcons.doc,
-                              materialIcon: Icons.file_open,
-                            ),
-                            title: "$dayString${timeString != null ? " at $timeString" : ""}",
-                            subtitle: basename(savedLogs[index].path),
-                            onTap: () async => await launchUrl(Uri.file(savedLogs[index].path)),
-                            trailing: IconButton(
-                              icon: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
-                              onPressed: () {
-                                savedLogs[index].deleteSync();
-                                savedLogs.value =
-                                    RxList.from(savedLogsDir!.listSync().whereType<File>().toList().reversed);
-                              },
-                            ),
-                          );
-                        },
-                        itemCount: savedLogs.length,
-                      );
-                    }
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 16),
-                        child: Text("When you save logs, they'll show up here", style: context.textTheme.bodySmall),
-                      ),
-                    );
-                  }),
                 ]),
-              if (!kIsWeb)
-                SettingsHeader(
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Database Re-syncing"
-                ),
-              if (!kIsWeb)
-                SettingsSection(
-                  backgroundColor: tileColor,
-                  children: [
+                if (Platform.isAndroid)
+                  SettingsHeader(
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Optimizations"),
+                if (Platform.isAndroid)
+                  SettingsSection(backgroundColor: tileColor, children: [
                     SettingsTile(
-                      title: "Re-Sync Handles & Contacts",
-                      subtitle: "Run this troubleshooter if you are experiencing issues with missing or incorrect contact names and photos",
-                      onTap: () async {
+                        onTap: () async {
+                          if (optimizationsDisabled.value) {
+                            showSnackbar("Already Disabled",
+                                "Battery optimizations are already disabled for BlueBubbles");
+                            return;
+                          }
+
+                          final optsDisabled =
+                              await disableBatteryOptimizations();
+                          if (!optsDisabled) {
+                            showSnackbar("Error",
+                                "Battery optimizations were not disabled. Please try again.");
+                          }
+                        },
+                        leading: Obx(() => SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.battery_25,
+                          materialIcon: Icons.battery_5_bar,
+                          containerColor: optimizationsDisabled.value ? Colors.green : Colors.redAccent,
+                        )),
+                        title: "Disable Battery Optimizations",
+                        subtitle: "Allow app to run in the background via the OS",
+                        trailing: Obx(() => !optimizationsDisabled.value
+                            ? nextIcon
+                            : Icon(Icons.check,
+                                color: context.theme.colorScheme.outline))),
+                  ]),
+                if (!kIsWeb)
+                  SettingsHeader(
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Database Re-syncing"),
+                if (!kIsWeb)
+                  SettingsSection(backgroundColor: tileColor, children: [
+                    SettingsTile(
+                        title: "Sync Handles & Contacts",
+                        subtitle:
+                            "Run this troubleshooter if you are experiencing issues with missing or incorrect contact names and photos",
+                        onTap: () async {
                           resyncingHandles.value = true;
                           try {
                             final handleSyncer = HandleSyncManager();
                             await handleSyncer.start();
                             eventDispatcher.emit("refresh-all", null);
 
-                            showSnackbar("Success", "Successfully re-synced handles! You may need to close and re-open the app for changes to take effect.");
+                            showSnackbar("Success",
+                                "Successfully re-synced handles! You may need to close and re-open the app for changes to take effect.");
                           } catch (ex, stacktrace) {
-                            Logger.error("Failed to reset contacts!");
-                            Logger.error(ex.toString());
-                            Logger.error(stacktrace.toString());
+                            Logger.error("Failed to reset contacts!", error: ex, trace: stacktrace);
 
-                            showSnackbar("Failed to re-sync handles!", "Error: ${ex.toString()}");
+                            showSnackbar("Failed to re-sync handles!",
+                                "Error: ${ex.toString()}");
                           } finally {
                             resyncingHandles.value = false;
                           }
-                      },
-                      trailing: Obx(() => resyncingHandles.value == null
-                          ? const SizedBox.shrink()
-                          : resyncingHandles.value == true ? Container(
-                          constraints: const BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
-                      )),
+                        },
+                        trailing: Obx(() => resyncingHandles.value == null
+                            ? const SizedBox.shrink()
+                            : resyncingHandles.value == true
+                                ? Container(
+                                    constraints: const BoxConstraints(
+                                      maxHeight: 20,
+                                      maxWidth: 20,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          context.theme.colorScheme.primary),
+                                    ))
+                                : Icon(Icons.check,
+                                    color: context.theme.colorScheme.outline))),
+                    SettingsTile(
+                        title: "Sync Chat Info",
+                        subtitle: "This will re-sync all chat data & icons from the server to ensure that you have the most up-to-date information.\n\nNote: This will overwrite any group chat icons that are not locked!",
+                        onTap: () async {
+                          resyncingChats.value = true;
+                          try {
+                            showSnackbar("Please Wait...", "This may take a few minutes.");
+
+                            final chatSyncer = ChatSyncManager();
+                            await chatSyncer.start();
+                            eventDispatcher.emit("refresh-all", null);
+
+                            showSnackbar("Success",
+                                "Successfully synced your chat info! You may need to close and re-open the app for changes to take effect.");
+                          } catch (ex, stacktrace) {
+                            Logger.error("Failed to sync chat info!", error: ex, trace: stacktrace);
+                            showSnackbar("Failed to sync chat info!",
+                                "Error: ${ex.toString()}");
+                          } finally {
+                            resyncingChats.value = false;
+                          }
+                        },
+                        trailing: Obx(() => resyncingChats.value == null
+                            ? const SizedBox.shrink()
+                            : resyncingChats.value == true
+                                ? Container(
+                                    constraints: const BoxConstraints(
+                                      maxHeight: 20,
+                                      maxWidth: 20,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          context.theme.colorScheme.primary),
+                                    ))
+                                : Icon(Icons.check,
+                                    color: context.theme.colorScheme.outline)))
                   ]),
-              if (kIsDesktop)
-                const SizedBox(height: 100),
-            ],
+                if (kIsDesktop) const SizedBox(height: 100),
+              ],
+            ),
           ),
-        ),
-      ]
-    );
+        ]);
   }
 }

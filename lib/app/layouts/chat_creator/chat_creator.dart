@@ -9,8 +9,8 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:dio/dio.dart';
@@ -52,8 +52,9 @@ class ChatCreator extends StatefulWidget {
 
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
-  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText);
-  final SpellCheckTextEditingController subjectController = SpellCheckTextEditingController();
+  final messageNode = FocusNode();
+  late final TextEditingController textController = SpellCheckTextEditingController(text: widget.initialText, focusNode: messageNode);
+  final TextEditingController subjectController = TextEditingController(); // Chat creator doesn't have subject line
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -70,8 +71,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   Timer? _debounce;
   Completer<void>? createCompleter;
 
-  final messageNode = FocusNode();
-
   bool canCreateGroupChats = ss.canCreateGroupChatSync();
 
   @override
@@ -82,6 +81,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 250), () async {
         final tuple = await SchedulerBinding.instance.scheduleTask(() async {
+          // If you type and then delete everything, show selected chat view
+          if (addressController.text.isEmpty && selectedContacts.isNotEmpty) {
+            await findExistingChat();
+            return Tuple2(contacts, existingChats);
+          }
+
           if (addressController.text != oldText) {
             oldText = addressController.text;
             // if user has typed stuff, remove the message view and show filtered results
@@ -122,7 +127,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
 
     updateObx(() {
       if (widget.initialAttachments.isEmpty && !kIsWeb) {
-        final query = (contactBox.query()..order(Contact_.displayName)).build();
+        final query = (Database.contacts.query()..order(Contact_.displayName)).build();
         contacts = query.find().toSet().toList();
         filteredContacts = List<Contact>.from(contacts);
       }
@@ -201,7 +206,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     }
     // match each selected contact to a participant in a chat
     if (existingChat == null) {
-      for (Chat c in (checkDeleted ? chatBox.getAll() : filteredChats)) {
+      for (Chat c in (checkDeleted ? Database.chats.getAll() : filteredChats)) {
         if (c.participants.length != selectedContacts.length) continue;
         int matches = 0;
         for (SelectedContact contact in selectedContacts) {
@@ -364,6 +369,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                       shrinkWrap: true,
                                       scrollDirection: Axis.horizontal,
                                       physics: const NeverScrollableScrollPhysics(),
+                                      findChildIndexCallback: (key) => findChildIndexByKey(selectedContacts, key, (item) => item.address),
                                       itemBuilder: (context, index) {
                                         final e = selectedContacts[index];
                                         return Padding(
@@ -590,7 +596,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                           title: _title,
                                           subtitle: hideInfo
                                               ? ""
-                                              : !chat.isGroup
+                                              : !chat.isGroup && chat.participants.isNotEmpty
                                                   ? (chat.participants.first.formattedAddress ??
                                                       chat.participants.first.address)
                                                   : chat.getChatCreatorSubtitle(),
@@ -733,9 +739,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               cm.activeChat!.controller!.pickedAttachments.value = [];
                               fakeController.value = cm.activeChat!.controller;
                             }
+
                             await fakeController.value!.send(
                               widget.initialAttachments,
-                              textController.text,
+                              fakeController.value!.textController.text,
                               subjectController.text,
                               fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ??
                                   fakeController.value!.replyToMessage?.item1.guid,
@@ -743,8 +750,10 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               effect,
                               false,
                             );
+
                             fakeController.value!.replyToMessage = null;
                             fakeController.value!.pickedAttachments.clear();
+                            fakeController.value!.textController.clear();
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             // hard delete a chat that exists on BB but not on the server to make way for the proper server data

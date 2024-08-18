@@ -7,8 +7,8 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.d
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -23,106 +23,155 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
 
   final ConversationViewController controller;
 
+  // simulate apple's saturatioon
+  static const List<double> darkMatrix = <double>[
+    1.385, -0.56, -0.112, 0.0, 0.3, //
+    -0.315, 1.14, -0.112, 0.0, 0.3, //
+    -0.315, -0.56, 1.588, 0.0, 0.3, //
+    0.0, 0.0, 0.0, 1.0, 0.0
+  ];
+
+  static const List<double> lightMatrix = <double>[
+    1.74, -0.4, -0.17, 0.0, 0.0, //
+    -0.26, 1.6, -0.17, 0.0, 0.0, //
+    -0.26, -0.4, 1.83, 0.0, 0.0, //
+    0.0, 0.0, 0.0, 1.0, 0.0
+  ];
+
   @override
   Widget build(BuildContext context) {
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: context.theme.colorScheme.properSurface.withOpacity(0.3),
-            border: Border(
-              bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1),
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: Padding(
-              padding: EdgeInsets.only(left: 20.0, right: 20, top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)),
-              child: Stack(alignment: Alignment.center, children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: XGestureDetector(
-                    supportTouch: true,
-                    onTap: !kIsDesktop ? null : (details) {
-                      if (controller.inSelectMode.value) {
-                        controller.inSelectMode.value = false;
-                        controller.selected.clear();
-                        return;
-                      }
-                      if (ls.isBubble) {
-                        SystemNavigator.pop();
-                        return;
-                      }
-                      controller.close();
-                      if (Get.isSnackbarOpen) {
-                        Get.closeAllSnackbars();
-                      }
-                      Navigator.of(context).pop();
-                    },
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: () {
-                        if (kIsDesktop) return;
-                        if (controller.inSelectMode.value) {
-                          controller.inSelectMode.value = false;
-                          controller.selected.clear();
-                          return;
-                        }
-                        if (ls.isBubble) {
-                          SystemNavigator.pop();
-                          return;
-                        }
-                        controller.close();
-                        if (Get.isSnackbarOpen) {
-                          Get.closeAllSnackbars();
-                        }
-                        Navigator.of(context).pop();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(3.0),
-                        child: _UnreadIcon(controller: controller),
-                      ),
-                    ),
-                  ),
+        filter: ImageFilter.compose(
+          outer: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+          inner: ColorFilter.matrix(
+            CupertinoTheme.maybeBrightnessOf(context) == Brightness.dark
+                ? darkMatrix
+                : lightMatrix,
+          )
+        ),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: context.theme.colorScheme.properSurface.withOpacity(0.7),
+                border: Border(
+                  bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1),
                 ),
-                Align(
-                  alignment: Alignment.center,
-                  child: XGestureDetector(
-                    supportTouch: true,
-                    onTap: !kIsDesktop ? null : (details) {
-                      Navigator.of(context).push(
-                        ThemeSwitcher.buildPageRoute(
-                          builder: (context) => ConversationDetails(
-                            chat: controller.chat,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20, top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)),
+                  child: Stack(alignment: Alignment.center, children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: XGestureDetector(
+                        supportTouch: true,
+                        onTap: !kIsDesktop ? null : (details) {
+                          if (controller.inSelectMode.value) {
+                            controller.inSelectMode.value = false;
+                            controller.selected.clear();
+                            return;
+                          }
+                          if (ls.isBubble) {
+                            SystemNavigator.pop();
+                            return;
+                          }
+                          controller.close();
+                          if (Get.isSnackbarOpen) {
+                            Get.closeAllSnackbars();
+                          }
+                          Navigator.of(context).pop();
+                        },
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () {
+                            if (kIsDesktop) return;
+                            if (controller.inSelectMode.value) {
+                              controller.inSelectMode.value = false;
+                              controller.selected.clear();
+                              return;
+                            }
+                            if (ls.isBubble) {
+                              SystemNavigator.pop();
+                              return;
+                            }
+                            controller.close();
+                            if (Get.isSnackbarOpen) {
+                              Get.closeAllSnackbars();
+                            }
+                            Navigator.of(context).pop();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: _UnreadIcon(controller: controller),
                           ),
                         ),
-                      );
-                    },
-                    child: InkWell(
-                      onTap: () {
-                        if (kIsDesktop) return;
-                        Navigator.of(context).push(
-                          ThemeSwitcher.buildPageRoute(
-                            builder: (context) => ConversationDetails(
-                              chat: controller.chat,
-                            ),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(3.0),
-                        child: _ChatIconAndTitle(parentController: controller),
                       ),
                     ),
-                  ),
+                    Align(
+                      alignment: Alignment.center,
+                      child: XGestureDetector(
+                        supportTouch: true,
+                        onTap: !kIsDesktop ? null : (details) {
+                          Navigator.of(context).push(
+                            ThemeSwitcher.buildPageRoute(
+                              builder: (context) => ConversationDetails(
+                                chat: controller.chat,
+                              ),
+                            ),
+                          );
+                        },
+                        child: InkWell(
+                          onTap: () {
+                            if (kIsDesktop) return;
+                            Navigator.of(context).push(
+                              ThemeSwitcher.buildPageRoute(
+                                builder: (context) => ConversationDetails(
+                                  chat: controller.chat,
+                                ),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: _ChatIconAndTitle(parentController: controller),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Align(alignment: Alignment.centerRight, child: ManualMark(controller: controller)),
+                  ]),
                 ),
-                Align(alignment: Alignment.centerRight, child: ManualMark(controller: controller)),
-              ]),
+              ),
             ),
-          ),
-        ),
+            Positioned(
+              child: Obx(() => TweenAnimationBuilder<double>(
+                duration: controller.chat.sendProgress.value == 0 ? Duration.zero : controller.chat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
+                curve: controller.chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+                tween: Tween<double>(
+                    begin: 0,
+                    end: controller.chat.sendProgress.value,
+                ),
+                builder: (context, value, _) =>
+                    AnimatedOpacity(
+                      opacity: value == 1 ? 0 : 1,
+                      duration: const Duration(milliseconds: 250),
+                      child: LinearProgressIndicator(
+                        value: value,
+                        backgroundColor: Colors.transparent,
+                        minHeight: 3,
+                      ),
+                    )
+              )),
+              bottom: 0,
+              left: 0,
+              right: 0,
+            ),
+          ],
+        )
       ),
     );
   }
@@ -150,7 +199,7 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
     super.initState();
     if (!kIsWeb) {
       updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
+        final unreadQuery = Database.chats.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
         sub = unreadQuery.listen((Query<Chat> query) {
           final c = query.count();
           if (count != c) {
@@ -247,10 +296,10 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
+        final titleQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = await runAsync(() {
-            final cquery = chatBox.query(Chat_.guid.equals(cachedGuid)).build();
+            final cquery = Database.chats.query(Chat_.guid.equals(cachedGuid)).build();
             return cquery.findFirst();
           });
 

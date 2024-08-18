@@ -59,8 +59,8 @@ IDI_APP_ICON            ICON                    "resources\\app_icon.ico"
 //
 // Version
 //
-#define VERSION_AS_NUMBER 1,12,100,0
-#define VERSION_AS_STRING "1.12.100.0"
+#define VERSION_AS_NUMBER 1,12,102,0
+#define VERSION_AS_STRING "1.12.102.0"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION VERSION_AS_NUMBER
@@ -83,7 +83,7 @@ BEGIN
             VALUE "FileDescription", "BlueBubbles" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "bluebubbles" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 BlueBubbles. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2024 BlueBubbles. All rights reserved." "\0"
             VALUE "OriginalFilename", "bluebubbles.exe" "\0"
             VALUE "ProductName", "bluebubbles" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
