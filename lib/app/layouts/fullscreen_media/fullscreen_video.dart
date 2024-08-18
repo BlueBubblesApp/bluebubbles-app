@@ -59,20 +59,25 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
   }
 
   void initControllers() async {
-    videoController = widget.videoController ?? VideoController(Player());
-
-    late final Media media;
-    if (widget.file.path == null) {
-      final blob = html.Blob([widget.file.bytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      media = Media(url);
+    if (widget.videoController != null) {
+      videoController = widget.videoController!;
     } else {
-      media = Media(widget.file.path!);
+      videoController = VideoController(Player());
+
+      late final Media media;
+      if (widget.file.path == null) {
+        final blob = html.Blob([widget.file.bytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        media = Media(url);
+      } else {
+        media = Media(widget.file.path!);
+      }
+      
+      await videoController.player.setPlaylistMode(PlaylistMode.none);
+      await videoController.player.open(media, play: false);
+      await videoController.player.setVolume(muted.value ? 0 : 100);
     }
     
-    await videoController.player.setPlaylistMode(PlaylistMode.none);
-    await videoController.player.open(media, play: false);
-    await videoController.player.setVolume(muted.value ? 0 : 100);
     createListener(videoController);
     showPlayPauseOverlay.value = true;
     setState(() {});

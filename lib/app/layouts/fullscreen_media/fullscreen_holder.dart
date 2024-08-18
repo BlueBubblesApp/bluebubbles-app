@@ -47,8 +47,6 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
   ScrollPhysics? physics;
   Attachment get attachment => widget.attachment;
   bool showAppBar = true;
-  // bool showOverlay = true;
-  // StreamSubscription<Tuple2<String, dynamic>>? overlaySub;
 
   @override
   void initState() {
@@ -65,23 +63,11 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
       }
       controller = PageController(initialPage: currentIndex);
     }
-
-    // overlaySub = eventDispatcher.stream.listen((event) {
-    //   if (!mounted || event.item1 != 'overlay-toggle') return;
-    //   if (event.item2 == showOverlay) return;
-    //   setState(() {
-    //     showOverlay = event.item2;
-    //   });
-    // });
   }
 
   @override
   void dispose() {
     controller.dispose();
-    // if (overlaySub != null) {
-    //   overlaySub!.cancel();
-    // }
-
     super.dispose();
   }
 

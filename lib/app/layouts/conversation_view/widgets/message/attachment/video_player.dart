@@ -73,13 +73,12 @@ class PlayPauseButton extends StatelessWidget {
                       showPlayPauseOverlay.value = true;
                     });
                   } else {
-
                     if (customOnTap != null) {
                       customOnTap?.call();
                     } else {
                       await controller?.player.play();
                       Future.delayed(const Duration(milliseconds: 500), () {
-                        showPlayPauseOverlay.value = true;
+                        showPlayPauseOverlay.value = false;
                       });
                     }
                   }
@@ -305,6 +304,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
               ? () async {
                   if (attachment.id == null) return;
                   if (videoController!.player.state.playing) {
+                    await videoController!.player.pause();
                     showPlayPauseOverlay.value = true;
                   } else {
                     if (attachment.id == null) return;
