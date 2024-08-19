@@ -89,6 +89,8 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     // is not started when in headless mode.
     if (!isUiThread) return;
 
+    if ([AppLifecycleState.inactive, AppLifecycleState.hidden].contains(state)) return;
+
     // This may get called before the settings service is initialized
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool keepAlive = prefs.getBool("keepAppAlive") ?? false;
