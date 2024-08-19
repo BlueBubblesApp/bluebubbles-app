@@ -724,6 +724,12 @@ class Message {
 
   String get interactiveText {
     String text = "";
+
+    if (payloadData?.urlData != null && payloadData!.urlData!.isNotEmpty && payloadData?.urlData?.first.url != null) {
+      final uri = Uri.parse(payloadData!.urlData!.first.url!);
+      return "Website: ${payloadData!.urlData!.first.title} (${uri.host.replaceFirst('www.', '')})";
+    }
+
     final temp = balloonBundleIdMap[balloonBundleId?.split(":").first] ?? (balloonBundleId?.split(":").first ?? "Unknown");
     if (temp is Map) {
       text = temp[balloonBundleId?.split(":").last] ?? ((balloonBundleId?.split(":").last ?? "Unknown"));
