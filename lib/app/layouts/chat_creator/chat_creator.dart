@@ -237,7 +237,21 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
       if (existingChat != null) {
         await cm.setActiveChat(existingChat, clearNotifications: false);
         cm.activeChat!.controller = cvc(existingChat);
-        cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
+
+        if (widget.initialAttachments.isNotEmpty) {
+          cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
+        } else if (fakeController.value != null && fakeController.value!.pickedAttachments.isNotEmpty) {
+          cm.activeChat!.controller!.pickedAttachments.value = fakeController.value!.pickedAttachments;
+        }
+
+        if (widget.initialText != null && widget.initialText!.isNotEmpty) {
+          cm.activeChat!.controller!.textController.text = widget.initialText!;
+        } else if (fakeController.value?.textController.text != null && fakeController.value!.textController.text.isNotEmpty) {
+          cm.activeChat!.controller!.textController.text = fakeController.value!.textController.text;
+        } else if (textController.text.isNotEmpty) {
+          cm.activeChat!.controller!.textController.text = textController.text;
+        }
+
         fakeController.value = cm.activeChat!.controller;
       } else {
         await cm.setAllInactive();
@@ -732,13 +746,23 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                 transitionDuration: Duration.zero,
                               ),
                             );
+
                             await Future.delayed(const Duration(milliseconds: 500));
+                            print("Chat: ${chat.guid}");
                             if (fakeController.value == null) {
+                              print("Controller is null");
+                              print(cm.activeChat!.controller?.pickedAttachments);
                               await cm.setActiveChat(chat, clearNotifications: false);
                               cm.activeChat!.controller = cvc(chat);
                               cm.activeChat!.controller!.pickedAttachments.value = [];
                               fakeController.value = cm.activeChat!.controller;
+                            } else {
+                              print("Controller is not null");
+                              print(fakeController.value?.pickedAttachments);
+                              print(fakeController.value?.textController.text);
                             }
+
+                            print("SENDING");
 
                             await fakeController.value!.send(
                               widget.initialAttachments,
