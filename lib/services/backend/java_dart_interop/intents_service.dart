@@ -218,6 +218,7 @@ class IntentsService extends GetxService {
       if (!chatIsOpen) {
         Logger.debug("Navigating to conversation view...", tag: "IntentsService");
         await StartupTasks.waitForUI();
+        await Future.delayed(const Duration(milliseconds: 500));
         await ns.pushAndRemoveUntil(
           Get.context!,
           ConversationView(
