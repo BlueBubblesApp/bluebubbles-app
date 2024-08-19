@@ -29,6 +29,7 @@ class StartupTasks {
 
     // Initialize the logger so we can start logging things immediately
     await Logger.init();
+    Logger.debug("Initializing startup services...");
 
     // Check if another instance is running (Linux Only).
     // Automatically handled on Windows (I think)
@@ -62,8 +63,10 @@ class StartupTasks {
   }
 
   static Future<void> initIsolateServices() async {
+    debugPrint("Initializing isolate services...");
     await fs.init(headless: true);
     await Logger.init();
+    Logger.debug("Initializing isolate services...");
     await ss.init(headless: true);
     await Database.init();
     await mcs.init(headless: true);
@@ -71,8 +74,10 @@ class StartupTasks {
   }
 
   static Future<void> initIncrementalSyncServices() async {
+    debugPrint("Initializing incremental sync services...");
     await fs.init();
     await Logger.init();
+    Logger.debug("Initializing incremental sync services...");
     await ss.init();
     await Database.init();
   }
