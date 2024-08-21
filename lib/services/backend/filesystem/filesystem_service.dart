@@ -26,6 +26,17 @@ class FilesystemService extends GetxService {
   late final Uint8List unplayableVideoIcon;
   final RxBool fontExistsOnDisk = false.obs;
 
+  Future<String> get downloadsDirectory async {
+    if (kIsWeb) throw "Cannot get downloads directory on web!";
+
+    String filePath = "/storage/emulated/0/Download/";
+    if (kIsDesktop) {
+      filePath = (await getDownloadsDirectory())!.path;
+    }
+
+    return filePath;
+  }
+
   Future<void> init({bool headless = false}) async {
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
@@ -144,4 +155,14 @@ class FilesystemService extends GetxService {
         Logger.info("Created file ${basename(element.path)}");
       }
     });
+
+  Future<String> saveToDownloads(File file) async {
+    if (kIsWeb) throw "Cannot save file on web!";
+
+    final String filename = basename(file.path);
+    final String downloadsDir = await downloadsDirectory;
+    final String newPath = join(downloadsDir, filename);
+    await file.copy(newPath);
+    return newPath;
+  }
 }
