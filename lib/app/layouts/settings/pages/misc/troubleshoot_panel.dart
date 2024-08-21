@@ -1,4 +1,3 @@
-import 'package:bluebubbles/app/layouts/settings/pages/misc/live_logging_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
@@ -28,6 +27,8 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
   final RxInt logFileCount = 1.obs;
   final RxInt logFileSize = 0.obs;
   final RxBool optimizationsDisabled = false.obs;
+
+  bool isExportingLogs = false;
 
   @override
   void initState() {
@@ -153,23 +154,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                 SettingsSection(backgroundColor: tileColor, children: [
                   const LogLevelSelector(),
                   SettingsTile(
-                    title: "Live Logging",
-                    subtitle:
-                        "A live view of the logs. Useful for debugging issues.",
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.bolt_fill,
-                      materialIcon: Icons.bolt_outlined,
-                      containerColor: Colors.amberAccent
-                    ),
-                    onTap: () {
-                      ns.pushSettings(
-                        context,
-                        LiveLoggingPanel(),
-                      );
-                    },
-                    trailing: nextIcon,
-                  ),
-                  SettingsTile(
                     title: "View Latest Log",
                     subtitle: "View the latest log file. Useful for debugging issues, in app.",
                     leading: const SettingsLeadingIcon(
@@ -192,21 +176,44 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           materialIcon: Icons.share,
                           containerColor: Colors.green,
                         ),
-                        title: "Export / Share Logs",
+                        title: "Download / Share Logs",
                         subtitle:
                             "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
                         onTap: () async {
                           if (logFileCount.value == 0) {
-                            showSnackbar(
-                                "No Logs", "There are no logs to share!");
+                            showSnackbar("No Logs", "There are no logs to download!");
                             return;
                           }
 
-                          showSnackbar("Please Wait",
-                              "Compressing ${logFileCount.value} log file(s)...");
-                          String filePath = Logger.compressLogs();
-                          final File zippedLogFile = File(filePath);
-                          Share.file("BlueBubbles Logs", zippedLogFile.path);
+                          if (isExportingLogs) return;
+                          isExportingLogs = true;
+
+                          try {
+                            showSnackbar("Please Wait", "Compressing ${logFileCount.value} log file(s)...");
+                            String filePath = Logger.compressLogs();
+                            final File zippedLogFile = File(filePath);
+
+                            // Copy the file to downloads
+                            String newPath = await fs.saveToDownloads(zippedLogFile);
+
+                            // Delete the original file
+                            zippedLogFile.deleteSync();
+
+                            // Let the user know what happened
+                            showSnackbar(
+                              "Logs Exported",
+                              "Logs have been exported to your downloads folder. Tap here to share it.",
+                              durationMs: 5000,
+                              onTap: (snackbar) async {
+                                Share.file("BlueBubbles Logs", newPath);
+                              },
+                            );
+                          } catch (ex, stacktrace) {
+                            Logger.error("Failed to export logs!", error: ex, trace: stacktrace);
+                            showSnackbar("Failed to export logs!", "Error: ${ex.toString()}");
+                          } finally {
+                            isExportingLogs = false;
+                          }
                         }),
                   if (kIsDesktop)
                     SettingsTile(
