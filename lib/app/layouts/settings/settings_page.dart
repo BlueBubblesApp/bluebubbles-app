@@ -642,17 +642,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       title: "Developer Tools",
                                       subtitle: "View logs, troubleshoot bugs, and more",
                                       trailing: nextIcon,
-                                    ),
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    )
                                 ],
                               ),
                               SettingsHeader(
@@ -845,17 +835,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         title: "Export Contacts",
                                         subtitle:
                                             "Send contacts to server for use on webapp and desktop app",
-                                      ),
-                                    if (!kIsWeb && !kIsDesktop)
-                                      Container(
-                                        color: tileColor,
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 65.0),
-                                          child: SettingsDivider(
-                                              color: context.theme.colorScheme
-                                                  .surfaceVariant),
-                                        ),
                                       ),
                                   ]),
                               SettingsHeader(
