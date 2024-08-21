@@ -616,6 +616,15 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                               Icons.electric_bolt_outlined,
                                           containerColor: Colors.orangeAccent),
                                     ),
+                                  if (Platform.isAndroid)
+                                    Container(
+                                      color: tileColor,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 65.0),
+                                        child: SettingsDivider(
+                                            color: context.theme.colorScheme
+                                                .surfaceVariant))),
                                   SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () async {
