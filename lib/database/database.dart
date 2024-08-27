@@ -202,6 +202,13 @@ class Database {
           brightWhite.data = ts.whiteLightTheme;
           Database.themes.put(brightWhite, mode: PutMode.update);
         }
+
+        // Find the OLED theme and reset it back to the default (new colors)
+        final oled = Database.themes.query(ThemeStruct_.name.equals("OLED Dark")).build().findFirst();
+        if (oled != null) {
+          oled.data = ts.oledDarkTheme;
+          Database.themes.put(oled, mode: PutMode.update);
+        }
     }
 
     if (nextVersion != version) {
