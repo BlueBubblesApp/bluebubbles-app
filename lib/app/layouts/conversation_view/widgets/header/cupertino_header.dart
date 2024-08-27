@@ -56,7 +56,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
               decoration: BoxDecoration(
                 color: context.theme.colorScheme.properSurface.withOpacity(0.7),
                 border: Border(
-                  bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1),
+                  bottom: BorderSide(color: context.theme.colorScheme.properSurface.darkenAmount(0.25), width: 0.5),
                 ),
               ),
               child: Material(
@@ -65,7 +65,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                   padding: EdgeInsets.only(left: 20.0, right: 20, top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)),
                   child: Stack(alignment: Alignment.center, children: [
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: Alignment.topLeft,
                       child: XGestureDetector(
                         supportTouch: true,
                         onTap: !kIsDesktop ? null : (details) {
@@ -142,7 +142,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                         ),
                       ),
                     ),
-                    Align(alignment: Alignment.centerRight, child: ManualMark(controller: controller)),
+                    Align(alignment: Alignment.topRight, child: ManualMark(controller: controller)),
                   ]),
                 ),
               ),
