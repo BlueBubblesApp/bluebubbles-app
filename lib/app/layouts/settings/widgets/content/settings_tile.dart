@@ -1,4 +1,5 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -45,8 +46,9 @@ class SettingsTile extends StatelessWidget {
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             enableFeedback: true,
-            minVerticalPadding: 10,
+            minVerticalPadding: ss.settings.skin.value == Skins.iOS ? 5 : 10,
             horizontalTitleGap: 10,
+            dense: ss.settings.skin.value == Skins.iOS ? true : false,
             leading: leading == null ? null : Padding(
               padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0),
               child: leading,

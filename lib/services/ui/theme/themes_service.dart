@@ -89,6 +89,7 @@ class ThemesService extends GetxService {
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.blue,
       background: Colors.white,
+      surfaceVariant: HexColor('F3F3F6'),
       error: Colors.red,
       brightness: Brightness.light,
     ),

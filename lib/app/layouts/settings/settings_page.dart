@@ -220,11 +220,11 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     socket.state.value)
                                                 : Colors.transparent,
                                             borderRadius: iOS
-                                                ? BorderRadius.circular(5)
+                                                ? BorderRadius.circular(6)
                                                 : null,
                                             child: SizedBox(
-                                              width: 32,
-                                              height: 32,
+                                              width: 30,
+                                              height: 30,
                                               child: Stack(
                                                   alignment: Alignment.center,
                                                   children: [
@@ -241,8 +241,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                       size: ss.settings.skin
                                                                   .value !=
                                                               Skins.Material
-                                                          ? 23
-                                                          : 30,
+                                                          ? 21
+                                                          : 28,
                                                     ),
                                                     if (material)
                                                       Positioned.fill(
@@ -253,7 +253,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                                 getIndicatorIcon(
                                                                     socket.state
                                                                         .value,
-                                                                    size: 15,
+                                                                    size: 12,
                                                                     showAlpha:
                                                                         false)),
                                                       ),
@@ -292,7 +292,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       },
                                       trailing: nextIcon,
                                       leading: const SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.calendar_today,
+                                        iosIcon: CupertinoIcons.calendar,
                                         materialIcon:
                                             Icons.schedule_send_outlined,
                                         containerColor: Colors.redAccent,
@@ -324,7 +324,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       },
                                       trailing: nextIcon,
                                       leading: const SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.alarm,
+                                        iosIcon: CupertinoIcons.alarm_fill,
                                         materialIcon: Icons.alarm,
                                         containerColor: Colors.blueAccent,
                                       ),
@@ -352,7 +352,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     },
                                     trailing: nextIcon,
                                     leading: const SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.paintbrush,
+                                        iosIcon: CupertinoIcons.paintbrush_fill,
                                         materialIcon: Icons.palette,
                                         containerColor: Colors.blueGrey),
                                   ),
@@ -376,8 +376,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       );
                                     },
                                     leading: const SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.paperclip,
+                                        iosIcon: CupertinoIcons.photo_fill,
                                         materialIcon: Icons.attachment,
+                                        iconSize: 18,
                                         containerColor:
                                             Colors.deepPurpleAccent),
                                     trailing: nextIcon,
@@ -403,7 +404,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       );
                                     },
                                     leading: const SettingsLeadingIcon(
-                                      iosIcon: CupertinoIcons.bell,
+                                      iosIcon: CupertinoIcons.bell_fill,
                                       materialIcon: Icons.notifications_on,
                                       containerColor: Colors.redAccent,
                                     ),
@@ -430,7 +431,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       );
                                     },
                                     leading: const SettingsLeadingIcon(
-                                      iosIcon: CupertinoIcons.square_list,
+                                      iosIcon: CupertinoIcons.square_list_fill,
                                       materialIcon: Icons.list,
                                       containerColor: Colors.blueAccent,
                                     ),
@@ -457,7 +458,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       );
                                     },
                                     leading: const SettingsLeadingIcon(
-                                      iosIcon: CupertinoIcons.chat_bubble,
+                                      iosIcon: CupertinoIcons.chat_bubble_fill,
                                       materialIcon: Icons.sms,
                                       containerColor: Colors.green,
                                     ),
@@ -503,7 +504,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                   SettingsTile(
                                     backgroundColor: tileColor,
-                                    title: "Advanced Settings",
+                                    title: "More Settings",
                                     onTap: () {
                                       ns.pushAndRemoveSettingsUntil(
                                         context,
@@ -512,7 +513,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       );
                                     },
                                     leading: const SettingsLeadingIcon(
-                                      iosIcon: CupertinoIcons.ellipsis_circle,
+                                      iosIcon: CupertinoIcons.ellipsis_circle_fill,
                                       materialIcon: Icons.more_vert,
                                     ),
                                     trailing: nextIcon,
@@ -541,7 +542,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         },
                                         leading: SettingsLeadingIcon(
                                           iosIcon: CupertinoIcons
-                                              .exclamationmark_shield,
+                                              .exclamationmark_shield_fill,
                                           materialIcon: Icons.gpp_maybe,
                                           containerColor:
                                               ss.settings.enablePrivateAPI.value
@@ -611,7 +612,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         );
                                       },
                                       leading: const SettingsLeadingIcon(
-                                          iosIcon: CupertinoIcons.bolt,
+                                          iosIcon: CupertinoIcons.bolt_fill,
                                           materialIcon:
                                               Icons.electric_bolt_outlined,
                                           containerColor: Colors.orangeAccent),
@@ -635,7 +636,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         );
                                       },
                                       leading: const SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.wrench,
+                                        iosIcon: CupertinoIcons.wrench_fill,
                                         materialIcon: Icons.adb,
                                         containerColor: Colors.blueAccent,
                                       ),
@@ -663,7 +664,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       },
                                       trailing: nextIcon,
                                       leading: const SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.cloud_upload,
+                                        iosIcon: CupertinoIcons.cloud_upload_fill,
                                         materialIcon: Icons.backup,
                                         containerColor: Colors.amber,
                                       ),
@@ -829,7 +830,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           });
                                         },
                                         leading: const SettingsLeadingIcon(
-                                            iosIcon: CupertinoIcons.group,
+                                            iosIcon: CupertinoIcons.group_solid,
                                             materialIcon: Icons.contacts,
                                             containerColor: Colors.green),
                                         title: "Export Contacts",
@@ -857,7 +858,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     },
                                     trailing: nextIcon,
                                     leading: const SettingsLeadingIcon(
-                                      iosIcon: CupertinoIcons.info_circle,
+                                      iosIcon: CupertinoIcons.info_circle_fill,
                                       materialIcon: Icons.info,
                                       containerColor: Colors.blueAccent,
                                     ),
@@ -930,7 +931,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           );
                                         },
                                         leading: SettingsLeadingIcon(
-                                          iosIcon: CupertinoIcons.trash_slash,
+                                          iosIcon: CupertinoIcons.trash_slash_fill,
                                           materialIcon: Icons.delete_forever_outlined,
                                           containerColor: Colors.red[700],
                                         ),
@@ -1014,7 +1015,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         );
                                       },
                                       leading: SettingsLeadingIcon(
-                                        iosIcon: CupertinoIcons.refresh_thin,
+                                        iosIcon: CupertinoIcons.refresh_circled_solid,
                                         materialIcon: Icons.refresh_rounded,
                                         containerColor: Colors.red[700],
                                       ),

@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 
 class Database {
-  static int version = 4;
+  static int version = 5;
 
   static late final Store store;
   static late final Box<Attachment> attachments;
@@ -195,6 +195,13 @@ class Database {
         ss.getFcmData();
         ss.fcmData.save();
         nextVersion = 4;
+      case 5:
+        // Find the Bright White theme and reset it back to the default (new colors)
+        final brightWhite = Database.themes.query(ThemeStruct_.name.equals("Bright White")).build().findFirst();
+        if (brightWhite != null) {
+          brightWhite.data = ts.whiteLightTheme;
+          Database.themes.put(brightWhite, mode: PutMode.update);
+        }
     }
 
     if (nextVersion != version) {
