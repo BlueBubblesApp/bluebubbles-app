@@ -330,7 +330,7 @@ class ActionHandler extends GetxService {
     // Get the message handle
     m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId) ?? Handle.findOne(originalROWID: m.handleId);
     // Display notification if needed and save everything to DB
-    if (!ls.isAlive) {
+    if (!ls.isAlive || ss.settings.endpointUnifiedPush.value != "") {
       await MessageHelper.handleNotification(m, c);
     }
     await c.addMessage(m);

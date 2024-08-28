@@ -4,6 +4,12 @@ allprojects {
         maven { url "https://jitpack.io" }
         maven { url "https://maven.google.com" }
         mavenCentral()
+        maven {
+            url "https://www.jitpack.io"
+            content {
+                includeModule 'com.github.UnifiedPush', 'android-connector'
+            }
+        }
     }
 }
 

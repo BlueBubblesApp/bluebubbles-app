@@ -14,6 +14,7 @@ import com.bluebubbles.messaging.services.notifications.DeleteNotificationHandle
 import com.bluebubbles.messaging.services.notifications.NotificationChannelHandler
 import com.bluebubbles.messaging.services.notifications.NotificationListenerPermissionRequestHandler
 import com.bluebubbles.messaging.services.notifications.StartNotificationListenerHandler
+import com.bluebubbles.messaging.services.notifications.UnifiedPushHandler
 import com.bluebubbles.messaging.services.system.BrowserLaunchRequestHandler
 import com.bluebubbles.messaging.services.system.CheckChromeOsHandler
 import com.bluebubbles.messaging.services.system.NewContactFormRequestHandler
@@ -42,6 +43,7 @@ class MethodCallHandler {
     fun methodCallHandler(call: MethodCall, result: MethodChannel.Result, context: Context) {
         Log.d(Constants.logTag, "Received new method call from Dart with method ${call.method}")
         when(call.method) {
+            UnifiedPushHandler.tag -> UnifiedPushHandler().handleMethodCall(call, result, context)
             FirebaseAuthHandler.tag -> FirebaseAuthHandler().handleMethodCall(call, result, context)
             NotificationChannelHandler.tag -> NotificationChannelHandler().handleMethodCall(call, result, context)
             ServerUrlRequestHandler.tag -> ServerUrlRequestHandler().handleMethodCall(call, result, context)
