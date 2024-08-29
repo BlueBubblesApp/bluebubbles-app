@@ -46,7 +46,7 @@ class SettingsTile extends StatelessWidget {
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             enableFeedback: true,
-            minVerticalPadding: ss.settings.skin.value == Skins.iOS ? 5 : 10,
+            minVerticalPadding: 10,
             horizontalTitleGap: 10,
             dense: ss.settings.skin.value == Skins.iOS ? true : false,
             leading: leading == null ? null : Padding(
