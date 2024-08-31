@@ -42,142 +42,153 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.compose(
-          outer: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-          inner: ColorFilter.matrix(
-            CupertinoTheme.maybeBrightnessOf(context) == Brightness.dark
-                ? darkMatrix
-                : lightMatrix,
-          )
-        ),
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: context.theme.colorScheme.properSurface.withOpacity(0.7),
-                border: Border(
-                  bottom: BorderSide(color: context.theme.colorScheme.properSurface.darkenAmount(0.25), width: 0.5),
+          filter: ImageFilter.compose(
+              outer: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              inner: ColorFilter.matrix(
+                CupertinoTheme.maybeBrightnessOf(context) == Brightness.dark ? darkMatrix : lightMatrix,
+              )),
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: context.theme.colorScheme.properSurface.withOpacity(0.7),
+                  border: Border(
+                    bottom: BorderSide(color: context.theme.colorScheme.properSurface.darkenAmount(0.25), width: 0.5),
+                  ),
                 ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20, top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)),
-                  child: Stack(alignment: Alignment.center, children: [
-                    Align(
-                      alignment: Alignment.topLeft,
-                      child: XGestureDetector(
-                        supportTouch: true,
-                        onTap: !kIsDesktop ? null : (details) {
-                          if (controller.inSelectMode.value) {
-                            controller.inSelectMode.value = false;
-                            controller.selected.clear();
-                            return;
-                          }
-                          if (ls.isBubble) {
-                            SystemNavigator.pop();
-                            return;
-                          }
-                          controller.close();
-                          if (Get.isSnackbarOpen) {
-                            Get.closeAllSnackbars();
-                          }
-                          Navigator.of(context).pop();
-                        },
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () {
-                            if (kIsDesktop) return;
-                            if (controller.inSelectMode.value) {
-                              controller.inSelectMode.value = false;
-                              controller.selected.clear();
-                              return;
-                            }
-                            if (ls.isBubble) {
-                              SystemNavigator.pop();
-                              return;
-                            }
-                            controller.close();
-                            if (Get.isSnackbarOpen) {
-                              Get.closeAllSnackbars();
-                            }
-                            Navigator.of(context).pop();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: _UnreadIcon(controller: controller),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.center,
-                      child: XGestureDetector(
-                        supportTouch: true,
-                        onTap: !kIsDesktop ? null : (details) {
-                          Navigator.of(context).push(
-                            ThemeSwitcher.buildPageRoute(
-                              builder: (context) => ConversationDetails(
-                                chat: controller.chat,
-                              ),
-                            ),
-                          );
-                        },
-                        child: InkWell(
-                          onTap: () {
-                            if (kIsDesktop) return;
-                            Navigator.of(context).push(
-                              ThemeSwitcher.buildPageRoute(
-                                builder: (context) => ConversationDetails(
-                                  chat: controller.chat,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        left: 20.0,
+                        right: 20,
+                        top: (MediaQuery.of(context).viewPadding.top - 2).clamp(0, double.infinity)),
+                    child: Stack(alignment: Alignment.center, children: [
+                      Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: XGestureDetector(
+                              supportTouch: true,
+                              onTap: !kIsDesktop
+                                  ? null
+                                  : (details) {
+                                      if (controller.inSelectMode.value) {
+                                        controller.inSelectMode.value = false;
+                                        controller.selected.clear();
+                                        return;
+                                      }
+                                      if (ls.isBubble) {
+                                        SystemNavigator.pop();
+                                        return;
+                                      }
+                                      controller.close();
+                                      if (Get.isSnackbarOpen) {
+                                        Get.closeAllSnackbars();
+                                      }
+                                      Navigator.of(context).pop();
+                                    },
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () {
+                                  if (kIsDesktop) return;
+                                  if (controller.inSelectMode.value) {
+                                    controller.inSelectMode.value = false;
+                                    controller.selected.clear();
+                                    return;
+                                  }
+                                  if (ls.isBubble) {
+                                    SystemNavigator.pop();
+                                    return;
+                                  }
+                                  controller.close();
+                                  if (Get.isSnackbarOpen) {
+                                    Get.closeAllSnackbars();
+                                  }
+                                  Navigator.of(context).pop();
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(3.0),
+                                  child: _UnreadIcon(controller: controller),
                                 ),
                               ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: _ChatIconAndTitle(parentController: controller),
+                            ),
+                          )),
+                      Align(
+                        alignment: Alignment.center,
+                        child: XGestureDetector(
+                          supportTouch: true,
+                          onTap: !kIsDesktop
+                              ? null
+                              : (details) {
+                                  Navigator.of(context).push(
+                                    ThemeSwitcher.buildPageRoute(
+                                      builder: (context) => ConversationDetails(
+                                        chat: controller.chat,
+                                      ),
+                                    ),
+                                  );
+                                },
+                          child: InkWell(
+                            onTap: () {
+                              if (kIsDesktop) return;
+                              Navigator.of(context).push(
+                                ThemeSwitcher.buildPageRoute(
+                                  builder: (context) => ConversationDetails(
+                                    chat: controller.chat,
+                                  ),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Padding(
+                              padding: const EdgeInsets.all(3.0),
+                              child: _ChatIconAndTitle(parentController: controller),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Align(alignment: Alignment.topRight, child: ManualMark(controller: controller)),
-                  ]),
+                      Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: Align(alignment: Alignment.topRight, child: ManualMark(controller: controller))),
+                    ]),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              child: Obx(() => TweenAnimationBuilder<double>(
-                duration: controller.chat.sendProgress.value == 0 ? Duration.zero : controller.chat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
-                curve: controller.chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
-                tween: Tween<double>(
-                    begin: 0,
-                    end: controller.chat.sendProgress.value,
-                ),
-                builder: (context, value, _) =>
-                    AnimatedOpacity(
-                      opacity: value == 1 ? 0 : 1,
-                      duration: const Duration(milliseconds: 250),
-                      child: LinearProgressIndicator(
-                        value: value,
-                        backgroundColor: Colors.transparent,
-                        minHeight: 3,
-                      ),
-                    )
-              )),
-              bottom: 0,
-              left: 0,
-              right: 0,
-            ),
-          ],
-        )
-      ),
+              Positioned(
+                child: Obx(() => TweenAnimationBuilder<double>(
+                    duration: controller.chat.sendProgress.value == 0
+                        ? Duration.zero
+                        : controller.chat.sendProgress.value == 1
+                            ? const Duration(milliseconds: 250)
+                            : const Duration(seconds: 10),
+                    curve: controller.chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+                    tween: Tween<double>(
+                      begin: 0,
+                      end: controller.chat.sendProgress.value,
+                    ),
+                    builder: (context, value, _) => AnimatedOpacity(
+                          opacity: value == 1 ? 0 : 1,
+                          duration: const Duration(milliseconds: 250),
+                          child: LinearProgressIndicator(
+                            value: value,
+                            backgroundColor: Colors.transparent,
+                            minHeight: 3,
+                          ),
+                        ))),
+                bottom: 0,
+                left: 0,
+                right: 0,
+              ),
+            ],
+          )),
     );
   }
 
   @override
-  Size get preferredSize => Size.fromHeight((Get.context!.orientation == Orientation.landscape && Platform.isAndroid ? 55 : 75) * ss.settings.avatarScale.value);
+  Size get preferredSize =>
+      Size.fromHeight((Get.context!.orientation == Orientation.landscape && Platform.isAndroid ? 55 : 75) *
+          ss.settings.avatarScale.value);
 }
 
 class _UnreadIcon extends StatefulWidget {
@@ -234,33 +245,38 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
               style: TextStyle(
                 fontFamily: icon.fontFamily,
                 package: icon.fontPackage,
-                fontSize: 35,
+                fontSize: 36,
                 color: context.theme.colorScheme.primary,
               ),
             );
           }),
         ),
+        const SizedBox(width: 2),
         Obx(() {
           final _count = widget.controller.inSelectMode.value ? widget.controller.selected.length : count;
           if (_count == 0) return const SizedBox.shrink();
-          return Container(
-            height: 20.0,
-            constraints: const BoxConstraints(minWidth: 20),
-            decoration: BoxDecoration(
-              color: context.theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.only(left: 1),
-            child: Padding(
-              padding: _count > 99 ? const EdgeInsets.symmetric(horizontal: 2.5) : EdgeInsets.zero,
-              child: Text(
-                _count.toString(),
-                style: context.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onPrimary, fontSize: _count > 9 ?
-                  context.textTheme.bodyMedium!.fontSize! - 1.0 : context.textTheme.bodyMedium!.fontSize),
-              ),
-            )
-          );
+          return Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Container(
+                  height: 25.0,
+                  width: 25.0,
+                  constraints: const BoxConstraints(minWidth: 20),
+                  decoration: BoxDecoration(
+                    color: context.theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: _count > 99 ? const EdgeInsets.symmetric(horizontal: 2.5) : EdgeInsets.zero,
+                    child: Text(
+                      _count.toString(),
+                      style: context.textTheme.bodyMedium!.copyWith(
+                          color: context.theme.colorScheme.onPrimary,
+                          fontSize: _count > 99
+                              ? context.textTheme.bodyMedium!.fontSize! - 1.0
+                              : context.textTheme.bodyMedium!.fontSize),
+                    ),
+                  )));
         }),
       ],
     );
@@ -356,7 +372,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
         ignoring: true,
         child: ContactAvatarGroupWidget(
           chat: controller.chat,
-          size: !controller.chat.isGroup ? 40 : 45,
+          size: 54,
         ),
       ),
       const SizedBox(height: 5, width: 5),
