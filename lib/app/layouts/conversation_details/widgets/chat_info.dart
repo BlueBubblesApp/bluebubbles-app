@@ -19,7 +19,7 @@ class ChatInfo extends StatefulWidget {
   const ChatInfo({super.key, required this.chat});
 
   final Chat chat;
-  
+
   @override
   OptimizedState createState() => _ChatInfoState();
 }
@@ -45,33 +45,25 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 if (ss.settings.enablePrivateAPI.value && chat.isIMessage)
                   Text(
                       "Local - Changes only apply to this device.\nPrivate API - Changes will apply to everyone's devices.",
-                      style: context.theme.textTheme.bodyLarge
-                  ),
+                      style: context.theme.textTheme.bodyLarge),
               ],
             ),
             actions: [
               TextButton(
-                  child: Text(
-                      "Local",
-                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
-                  ),
+                  child: Text("Local",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                   onPressed: () {
                     Navigator.of(context).pop(false);
-                  }
-              ),
+                  }),
               TextButton(
-                  child: Text(
-                      "Private API",
-                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
-                  ),
+                  child: Text("Private API",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                   onPressed: () {
                     Navigator.of(context).pop(true);
-                  }
-              ),
+                  }),
             ],
           );
-        }
-    );
+        });
   }
 
   void updatePhoto() async {
@@ -88,7 +80,11 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
     if (result != null) {
       chat.customAvatarPath = result;
     }
-    if (papi && ss.settings.enablePrivateAPI.value && result != null && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
+    if (papi &&
+        ss.settings.enablePrivateAPI.value &&
+        result != null &&
+        (await ss.isMinBigSur) &&
+        ss.serverDetailsSync().item4 >= 226) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -108,8 +104,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 ),
               ),
             );
-          }
-      );
+          });
       final response = await http.setChatIcon(chat.guid, chat.customAvatarPath!);
       if (response.statusCode == 200) {
         Get.back();
@@ -150,165 +145,102 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
     if (hideInfo) {
       _title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
     }
+
+    bool canCall = !kIsWeb &&
+        !kIsDesktop &&
+        !chat.chatIdentifier!.startsWith("urn:biz") &&
+        (chat.participants.isNotEmpty &&
+            ((chat.participants.first.contact?.phones.isNotEmpty ?? false) ||
+                !chat.participants.first.address.contains("@")));
+
     return DeferredPointerHandler(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          if (iOS)
-            Center(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  GestureDetector(
-                    onTap: chat.isGroup ? () async {
-                      updatePhoto();
-                    } : null,
-                    child: ContactAvatarGroupWidget(
-                      chat: chat,
-                      size: 100,
-                      editable: !chat.isGroup,
-                    ),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SizedBox(height: 10),
+        if (iOS)
+          Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                GestureDetector(
+                  onTap: chat.isGroup
+                      ? () async {
+                          updatePhoto();
+                        }
+                      : null,
+                  child: ContactAvatarGroupWidget(
+                    chat: chat,
+                    size: 100,
+                    editable: !chat.isGroup,
                   ),
-                  Obx(() => chat.customAvatarPath != null ? Positioned(
-                    right: -5,
-                    top: -5,
-                    child: DeferPointer(
-                      child: InkWell(
-                        onTap: () async {
-                          deletePhoto();
-                        },
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: context.theme.colorScheme.background, width: 1),
-                            shape: BoxShape.circle,
-                            color: context.theme.colorScheme.tertiaryContainer,
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            color: context.theme.colorScheme.onTertiaryContainer,
-                            size: 20,
+                ),
+                Obx(() => chat.customAvatarPath != null
+                    ? Positioned(
+                        right: -5,
+                        top: -5,
+                        child: DeferPointer(
+                          child: InkWell(
+                            onTap: () async {
+                              deletePhoto();
+                            },
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: context.theme.colorScheme.background, width: 1),
+                                shape: BoxShape.circle,
+                                color: context.theme.colorScheme.tertiaryContainer,
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                color: context.theme.colorScheme.onTertiaryContainer,
+                                size: 20,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ) : const SizedBox.shrink()),
-                ],
-              ),
+                      )
+                    : const SizedBox.shrink()),
+              ],
             ),
-          if (iOS)
-            Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: Center(
-                child: RichText(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: context.theme.textTheme.headlineMedium!.copyWith(
+          ),
+        if (iOS)
+          Padding(
+            padding: const EdgeInsets.only(top: 12.0),
+            child: Center(
+              child: RichText(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: context.theme.textTheme.headlineMedium!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: context.theme.colorScheme.onBackground,
+                  ),
+                  children: MessageHelper.buildEmojiText(
+                    _title,
+                    context.theme.textTheme.headlineMedium!.copyWith(
                       fontWeight: FontWeight.bold,
                       color: context.theme.colorScheme.onBackground,
                     ),
-                    children: MessageHelper.buildEmojiText(
-                      _title,
-                      context.theme.textTheme.headlineMedium!.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: context.theme.colorScheme.onBackground,
-                      ),
-                    ),
                   ),
                 ),
               ),
             ),
-          if (chat.isGroup && !iOS)
-            Padding(
-              padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
-              child: Text(
-                  "GROUP NAME AND PHOTO",
-                  style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)
-              ),
-            ),
-          if (chat.isGroup && !iOS)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 5.0),
-              child: Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  mouseCursor: MouseCursor.defer,
-                  onTap: () async {
-                    bool? papi = false;
-                    if (ss.settings.enablePrivateAPI.value && chat.isIMessage) {
-                      papi = await showMethodDialog("Group Name Update Method");
-                    }
-                    if (papi == null) return;
-                    if (!papi) {
-                      showChangeName(chat, "local", context);
-                    } else {
-                      showChangeName(chat, "private-api", context);
-                    }
-                  },
-                  title: RichText(
-                    text: TextSpan(
-                      style: context.theme.textTheme.bodyLarge,
-                      children: MessageHelper.buildEmojiText(
-                        _title,
-                        context.theme.textTheme.bodyLarge!,
-                      ),
-                    ),
-                  ),
-                  trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
-                ),
-              ),
-            ),
-          if (chat.isGroup && !iOS)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 5.0),
-              child: Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  mouseCursor: MouseCursor.defer,
-                  onTap: () async {
-                    updatePhoto();
-                  },
-                  title: Text("Update group photo", style: context.theme.textTheme.bodyLarge!),
-                  trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
-                ),
-              ),
-            ),
-          if (chat.isGroup && !iOS)
-            Obx(() => chat.customAvatarPath != null ? Padding(
-              padding: const EdgeInsets.only(bottom: 5.0),
-              child: Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  mouseCursor: MouseCursor.defer,
-                  onTap: () async {
-                    deletePhoto();
-                  },
-                  title: Text("Remove group photo", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.error)),
-                  trailing: Icon(Icons.close, color: context.theme.colorScheme.error),
-                ),
-              ),
-            ) : const SizedBox.shrink()),
-          if (!chat.isGroup && !iOS)
-            ContactTile(
-              key: Key(chat.participants.first.address),
-              handle: chat.participants.first,
-              chat: chat,
-              canBeRemoved: false,
-            ),
-          if (chat.isGroup && iOS)
-            Center(
-              child: TextButton(
-                child: Text(
-                  "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
-                  style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.primaryColor),
-                  textScaler: const TextScaler.linear(1.15),
-                ),
-                onPressed: () async {
+          ),
+        if (chat.isGroup && !iOS)
+          Padding(
+            padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
+            child: Text("GROUP NAME AND PHOTO",
+                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+          ),
+        if (chat.isGroup && !iOS)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5.0),
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                mouseCursor: MouseCursor.defer,
+                onTap: () async {
                   bool? papi = false;
                   if (ss.settings.enablePrivateAPI.value && chat.isIMessage) {
                     papi = await showMethodDialog("Group Name Update Method");
@@ -320,180 +252,304 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                     showChangeName(chat, "private-api", context);
                   }
                 },
+                title: RichText(
+                  text: TextSpan(
+                    style: context.theme.textTheme.bodyLarge,
+                    children: MessageHelper.buildEmojiText(
+                      _title,
+                      context.theme.textTheme.bodyLarge!,
+                    ),
+                  ),
+                ),
+                trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
               ),
             ),
-          if (!chat.isGroup && iOS)
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
-              child: Row(
-                mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
-                children: intersperse(const SizedBox(width: 5), [
-                  if (!kIsWeb && !kIsDesktop && !chat.chatIdentifier!.startsWith("urn:biz")
-                      && (chat.participants.isNotEmpty && ((chat.participants.first.contact?.phones.isNotEmpty ?? false)
-                          || !chat.participants.first.address.contains("@"))))
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Material(
-                              borderRadius: BorderRadius.circular(15),
-                              color: tileColor,
-                              child: InkWell(
-                                onTap: () {
-                                  final contact = chat.participants.first.contact;
-                                  showAddressPicker(contact, chat.participants.first, context);
-                                },
-                                onLongPress: () {
-                                  final contact = chat.participants.first.contact;
-                                  showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
-                                },
-                                borderRadius: BorderRadius.circular(15),
-                                child: SizedBox(
-                                  height: 60,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        iOS ? CupertinoIcons.phone : Icons.call,
-                                        color: context.theme.colorScheme.onSurface,
-                                        size: 20
-                                      ),
-                                      const SizedBox(height: 7.5),
-                                      Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Material(
-                              borderRadius: BorderRadius.circular(15),
-                              color: tileColor,
-                              child: InkWell(
-                                onTap: () {
-                                  final contact = chat.participants.first.contact;
-                                  showAddressPicker(contact, chat.participants.first, context, video: true);
-                                },
-                                onLongPress: () {
-                                  final contact = chat.participants.first.contact;
-                                  showAddressPicker(contact, chat.participants.first, context, isLongPressed: true, video: true);
-                                },
-                                borderRadius: BorderRadius.circular(15),
-                                child: SizedBox(
-                                  height: 60,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                          iOS ? CupertinoIcons.video_camera : Icons.video_call_outlined,
-                                          color: context.theme.colorScheme.onSurface,
-                                          size: 25
-                                      ),
-                                      const SizedBox(height: 2.5),
-                                      Text("Video Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (chat.participants.isNotEmpty && ((chat.participants.first.contact?.emails.isNotEmpty ?? false) || chat.participants.first.address.contains("@")))
-                    Expanded(
-                      child: Material(
-                        borderRadius: BorderRadius.circular(15),
-                        color: tileColor,
-                        child: InkWell(
-                          onTap: () {
-                            final contact = chat.participants.first.contact;
-                            showAddressPicker(contact, chat.participants.first, context, isEmail: true);
-                          },
-                          onLongPress: () {
-                            final contact = chat.participants.first.contact;
-                            showAddressPicker(contact, chat.participants.first, context, isEmail: true, isLongPressed: true);
-                          },
-                          borderRadius: BorderRadius.circular(15),
-                          child: SizedBox(
-                            height: 60,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  iOS ? CupertinoIcons.mail : Icons.email,
-                                  color: context.theme.colorScheme.onSurface,
-                                  size: 20
-                                ),
-                                const SizedBox(height: 7.5),
-                                Text("Mail", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (!kIsWeb && !kIsDesktop)
-                    Expanded(
-                      child: Material(
-                        borderRadius: BorderRadius.circular(15),
-                        color: tileColor,
-                        child: InkWell(
-                          onTap: () async {
-                            final contact = chat.participants.first.contact;
-                            final handle = chat.participants.first;
-                            if (contact == null) {
-                              await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
-                            } else {
-                              try {
-                                await mcs.invokeMethod("view-contact-form", {'id': contact.id});
-                              } catch (_) {
-                                showSnackbar("Error", "Failed to find contact on device!");
-                              }
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(15),
-                          child: SizedBox(
-                            height: 60,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  chat.participants.isNotEmpty && chat.participants.first.contact != null
-                                      ? (iOS ? CupertinoIcons.info : Icons.info)
-                                      : (iOS ? CupertinoIcons.plus_circle : Icons.add_circle_outline),
-                                  color: context.theme.colorScheme.onSurface,
-                                  size: 20,
-                                ),
-                                const SizedBox(height: 7.5),
-                                Text(
-                                  chat.participants.isNotEmpty && chat.participants.first.contact != null ? "Info" : "Add Contact",
-                                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ]).toList(),
+          ),
+        if (chat.isGroup && !iOS)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5.0),
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                mouseCursor: MouseCursor.defer,
+                onTap: () async {
+                  updatePhoto();
+                },
+                title: Text("Update group photo", style: context.theme.textTheme.bodyLarge!),
+                trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
               ),
             ),
-          if (chat.isGroup)
-            Padding(
-              padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
+          ),
+        if (chat.isGroup && !iOS)
+          Obx(() => chat.customAvatarPath != null
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: 5.0),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      mouseCursor: MouseCursor.defer,
+                      onTap: () async {
+                        deletePhoto();
+                      },
+                      title: Text("Remove group photo",
+                          style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.error)),
+                      trailing: Icon(Icons.close, color: context.theme.colorScheme.error),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink()),
+        if (!chat.isGroup && !iOS)
+          ContactTile(
+            key: Key(chat.participants.first.address),
+            handle: chat.participants.first,
+            chat: chat,
+            canBeRemoved: false,
+          ),
+        if (chat.isGroup && iOS)
+          Center(
+            child: TextButton(
               child: Text(
-                "${chat.participants.length} ${iOS ? "OTHER MEMBERS" : "OTHER PEOPLE"}",
-                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)
+                "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
+                style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.primaryColor),
+                textScaler: const TextScaler.linear(1.15),
               ),
+              onPressed: () async {
+                bool? papi = false;
+                if (ss.settings.enablePrivateAPI.value && chat.isIMessage) {
+                  papi = await showMethodDialog("Group Name Update Method");
+                }
+                if (papi == null) return;
+                if (!papi) {
+                  showChangeName(chat, "local", context);
+                } else {
+                  showChangeName(chat, "private-api", context);
+                }
+              },
             ),
-        ]
+          ),
+        if (!chat.isGroup && iOS)
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
+            child: Row(
+              mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+              children: intersperse(const SizedBox(width: 5), [
+                if (canCall) CallButton(tileColor: tileColor, chat: chat, iOS: iOS),
+                VideoCallButton(tileColor: tileColor, chat: chat, iOS: iOS),
+                if (chat.participants.isNotEmpty &&
+                    ((chat.participants.first.contact?.emails.isNotEmpty ?? false) ||
+                        chat.participants.first.address.contains("@")))
+                  MailButton(tileColor: tileColor, chat: chat, iOS: iOS),
+                if (!kIsWeb && !kIsDesktop) InfoButton(tileColor: tileColor, chat: chat, iOS: iOS),
+              ]).toList(),
+            ),
+          ),
+        if (chat.isGroup)
+          Padding(
+            padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
+            child: Text("${chat.participants.length} ${iOS ? "OTHER MEMBERS" : "OTHER PEOPLE"}",
+                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+          ),
+      ]),
+    );
+  }
+}
+
+class InfoButton extends StatelessWidget {
+  const InfoButton({
+    super.key,
+    required this.tileColor,
+    required this.chat,
+    required this.iOS,
+  });
+
+  final Color tileColor;
+  final Chat chat;
+  final bool iOS;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        borderRadius: BorderRadius.circular(15),
+        color: tileColor,
+        child: InkWell(
+          onTap: () async {
+            final contact = chat.participants.first.contact;
+            final handle = chat.participants.first;
+            if (contact == null) {
+              await mcs.invokeMethod("open-contact-form",
+                  {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
+            } else {
+              try {
+                await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+              } catch (_) {
+                showSnackbar("Error", "Failed to find contact on device!");
+              }
+            }
+          },
+          borderRadius: BorderRadius.circular(15),
+          child: SizedBox(
+            height: 60,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  chat.participants.isNotEmpty && chat.participants.first.contact != null
+                      ? (iOS ? CupertinoIcons.info : Icons.info)
+                      : (iOS ? CupertinoIcons.plus_circle : Icons.add_circle_outline),
+                  color: context.theme.colorScheme.onSurface,
+                  size: 20,
+                ),
+                const SizedBox(height: 7.5),
+                Text(chat.participants.isNotEmpty && chat.participants.first.contact != null ? "Info" : "Add Contact",
+                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MailButton extends StatelessWidget {
+  const MailButton({
+    super.key,
+    required this.tileColor,
+    required this.chat,
+    required this.iOS,
+  });
+
+  final Color tileColor;
+  final Chat chat;
+  final bool iOS;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        borderRadius: BorderRadius.circular(15),
+        color: tileColor,
+        child: InkWell(
+          onTap: () {
+            final contact = chat.participants.first.contact;
+            showAddressPicker(contact, chat.participants.first, context, isEmail: true);
+          },
+          onLongPress: () {
+            final contact = chat.participants.first.contact;
+            showAddressPicker(contact, chat.participants.first, context, isEmail: true, isLongPressed: true);
+          },
+          borderRadius: BorderRadius.circular(15),
+          child: SizedBox(
+            height: 60,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(iOS ? CupertinoIcons.mail : Icons.email, color: context.theme.colorScheme.onSurface, size: 20),
+                const SizedBox(height: 7.5),
+                Text("Mail",
+                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class VideoCallButton extends StatelessWidget {
+  const VideoCallButton({
+    super.key,
+    required this.tileColor,
+    required this.chat,
+    required this.iOS,
+  });
+
+  final Color tileColor;
+  final Chat chat;
+  final bool iOS;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        borderRadius: BorderRadius.circular(15),
+        color: tileColor,
+        child: InkWell(
+          onTap: () {
+            final contact = chat.participants.first.contact;
+            showAddressPicker(contact, chat.participants.first, context, video: true);
+          },
+          onLongPress: () {
+            final contact = chat.participants.first.contact;
+            showAddressPicker(contact, chat.participants.first, context, isLongPressed: true, video: true);
+          },
+          borderRadius: BorderRadius.circular(15),
+          child: SizedBox(
+            height: 60,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(iOS ? CupertinoIcons.video_camera : Icons.video_call_outlined,
+                    color: context.theme.colorScheme.onSurface, size: 25),
+                const SizedBox(height: 2.5),
+                Text("Video Call",
+                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CallButton extends StatelessWidget {
+  const CallButton({
+    super.key,
+    required this.tileColor,
+    required this.chat,
+    required this.iOS,
+  });
+
+  final Color tileColor;
+  final Chat chat;
+  final bool iOS;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        borderRadius: BorderRadius.circular(15),
+        color: tileColor,
+        child: InkWell(
+          onTap: () {
+            final contact = chat.participants.first.contact;
+            showAddressPicker(contact, chat.participants.first, context);
+          },
+          onLongPress: () {
+            final contact = chat.participants.first.contact;
+            showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
+          },
+          borderRadius: BorderRadius.circular(15),
+          child: SizedBox(
+            height: 60,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(iOS ? CupertinoIcons.phone : Icons.call, color: context.theme.colorScheme.onSurface, size: 20),
+                const SizedBox(height: 7.5),
+                Text("Call",
+                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
