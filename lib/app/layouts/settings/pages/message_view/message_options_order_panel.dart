@@ -90,7 +90,7 @@ class _MessageOptionsOrderPanelState extends OptimizedState<MessageOptionsOrderP
           ),
           body: SingleChildScrollView(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 30),
               decoration: BoxDecoration(
                 color: tileColor,
                 borderRadius: BorderRadius.circular(8),
