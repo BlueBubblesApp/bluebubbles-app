@@ -256,7 +256,7 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
           final _count = widget.controller.inSelectMode.value ? widget.controller.selected.length : count;
           if (_count == 0) return const SizedBox.shrink();
           return Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.only(top: 3),
               child: Container(
                   height: 25.0,
                   width: 25.0,
