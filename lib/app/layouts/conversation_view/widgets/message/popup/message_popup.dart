@@ -1323,11 +1323,12 @@ class ReactionDetails extends StatelessWidget {
           color: context.theme.colorScheme.properSurface.withAlpha(ss.settings.skin.value == Skins.iOS ? 150 : 255),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: ListView.builder(
+            child: ListView.separated(
               shrinkWrap: true,
               physics: ThemeSwitcher.getScrollPhysics(),
               scrollDirection: Axis.horizontal,
               findChildIndexCallback: (key) => findChildIndexByKey(reactions, key, (item) => item.guid),
+              separatorBuilder: (context, index) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final message = reactions[index];
                 return Column(
