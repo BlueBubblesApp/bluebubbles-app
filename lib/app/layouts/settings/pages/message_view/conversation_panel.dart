@@ -1,5 +1,6 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -382,13 +383,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         title: "Send/Receive Sound Volume",
                         subtitle: "Controls the volume of the send and receive sounds",
                       ),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 62.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      CupertinoSettingsDivider(tileColor: tileColor),
                       Obx(() => SettingsSlider(
                         startingVal: ss.settings.soundVolume.value.toDouble(),
                         min: 0,

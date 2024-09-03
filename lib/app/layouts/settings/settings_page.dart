@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dar
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -268,16 +269,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     );
                                   }),
                                   if (ss.serverDetailsSync().item4 >= 205)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 62.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    CupertinoSettingsDivider(tileColor: tileColor),
                                   if (ss.serverDetailsSync().item4 >= 205)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -301,16 +293,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       ),
                                     ),
                                   if (Platform.isAndroid)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 62.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    CupertinoSettingsDivider(tileColor: tileColor),
                                   if (Platform.isAndroid)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -385,16 +368,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                             Colors.deepPurpleAccent),
                                     trailing: nextIcon,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Notification Settings",
@@ -412,16 +386,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     trailing: nextIcon,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Chat List Settings",
@@ -439,16 +404,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     trailing: nextIcon,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Conversation Settings",
@@ -466,16 +422,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     trailing: nextIcon,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   if (kIsDesktop)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -494,16 +441,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       trailing: nextIcon,
                                     ),
                                   if (kIsDesktop)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 62.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "More Settings",
@@ -556,16 +494,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                   : Colors.amber,
                                         ),
                                       )),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   Obx(() => SettingsTile(
                                         backgroundColor: tileColor,
                                         title: "Redacted Mode",
@@ -589,16 +518,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         ),
                                       )),
                                   if (Platform.isAndroid)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 62.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    CupertinoSettingsDivider(tileColor: tileColor),
                                   if (Platform.isAndroid)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -620,14 +540,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           containerColor: Colors.orangeAccent),
                                     ),
                                   if (Platform.isAndroid)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 62.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant))),
+                                    CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () async {
@@ -674,16 +587,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       subtitle:
                                           "Backup and restore all app settings and custom themes",
                                     ),
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 62.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    CupertinoSettingsDivider(tileColor: tileColor),
                                     if (!kIsWeb && !kIsDesktop)
                                       SettingsTile(
                                         backgroundColor: tileColor,
@@ -866,16 +770,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     isThreeLine: false,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                     title: "Make a Donation",
                                     subtitle: "Support the developers by making a one-time or recurring donation to the BlueBubbles Team!",
@@ -889,16 +784,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     isThreeLine: false,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                     title: "Join Our Discord",
                                     subtitle: "Join our Discord server to chat with other BlueBubbles users and the developers",
@@ -911,16 +797,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       containerColor: HexColor('#7785CC'),
                                     ),
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 62.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "About & More",
@@ -1015,16 +892,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         subtitle: "Remove all attachments from this app",
                                       ),
                                     if (!kIsWeb)
-                                      Container(
-                                        color: tileColor,
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 62.0),
-                                          child: SettingsDivider(
-                                              color: context.theme.colorScheme
-                                                  .surfaceVariant),
-                                        ),
-                                      ),
+                                      CupertinoSettingsDivider(tileColor: tileColor),
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () {
