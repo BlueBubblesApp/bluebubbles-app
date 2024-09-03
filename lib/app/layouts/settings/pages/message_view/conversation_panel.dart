@@ -385,7 +385,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
+                          padding: const EdgeInsets.only(left: 62.0),
                           child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),

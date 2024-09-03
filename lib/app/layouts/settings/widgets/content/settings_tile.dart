@@ -50,7 +50,7 @@ class SettingsTile extends StatelessWidget {
             horizontalTitleGap: 10,
             dense: ss.settings.skin.value == Skins.iOS ? true : false,
             leading: leading == null ? null : Padding(
-              padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0),
+              padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0, right: 5),
               child: leading,
             ),
             title: title != null ? Text(

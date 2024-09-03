@@ -293,7 +293,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             Container(
                               color: tileColor,
                               child: Padding(
-                                padding: const EdgeInsets.only(left: 65.0),
+                                padding: const EdgeInsets.only(left: 62.0),
                                 child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                               ),
                             )
@@ -444,7 +444,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   Obx(() => controller.proxyService.value != null && !kIsWeb ? Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
+                      padding: const EdgeInsets.only(left: 62.0),
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),*/
@@ -527,7 +527,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -573,7 +573,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -593,7 +593,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -616,7 +616,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
+                      padding: const EdgeInsets.only(left: 62.0),
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
@@ -640,7 +640,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -678,7 +678,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
+                      padding: const EdgeInsets.only(left: 62.0),
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
@@ -700,7 +700,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -772,7 +772,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -851,7 +851,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -904,7 +904,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
+                        padding: const EdgeInsets.only(left: 62.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
@@ -962,7 +962,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               Container(
                                 color: tileColor,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 65.0),
+                                  padding: const EdgeInsets.only(left: 62.0),
                                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                 ),
                               )
@@ -1031,7 +1031,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               Container(
                                 color: tileColor,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 65.0),
+                                  padding: const EdgeInsets.only(left: 62.0),
                                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                 ),
                               ),

@@ -272,7 +272,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       color: tileColor,
                                       child: Padding(
                                         padding:
-                                            const EdgeInsets.only(left: 65.0),
+                                            const EdgeInsets.only(left: 62.0),
                                         child: SettingsDivider(
                                             color: context.theme.colorScheme
                                                 .surfaceVariant),
@@ -305,7 +305,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       color: tileColor,
                                       child: Padding(
                                         padding:
-                                            const EdgeInsets.only(left: 65.0),
+                                            const EdgeInsets.only(left: 62.0),
                                         child: SettingsDivider(
                                             color: context.theme.colorScheme
                                                 .surfaceVariant),
@@ -389,7 +389,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -416,7 +416,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -443,7 +443,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -470,7 +470,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -498,7 +498,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       color: tileColor,
                                       child: Padding(
                                         padding:
-                                            const EdgeInsets.only(left: 65.0),
+                                            const EdgeInsets.only(left: 62.0),
                                         child: SettingsDivider(
                                             color: context.theme.colorScheme
                                                 .surfaceVariant),
@@ -560,7 +560,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -593,7 +593,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       color: tileColor,
                                       child: Padding(
                                         padding:
-                                            const EdgeInsets.only(left: 65.0),
+                                            const EdgeInsets.only(left: 62.0),
                                         child: SettingsDivider(
                                             color: context.theme.colorScheme
                                                 .surfaceVariant),
@@ -624,7 +624,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       color: tileColor,
                                       child: Padding(
                                         padding:
-                                            const EdgeInsets.only(left: 65.0),
+                                            const EdgeInsets.only(left: 62.0),
                                         child: SettingsDivider(
                                             color: context.theme.colorScheme
                                                 .surfaceVariant))),
@@ -678,7 +678,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       color: tileColor,
                                       child: Padding(
                                         padding:
-                                            const EdgeInsets.only(left: 65.0),
+                                            const EdgeInsets.only(left: 62.0),
                                         child: SettingsDivider(
                                             color: context.theme.colorScheme
                                                 .surfaceVariant),
@@ -870,7 +870,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -893,7 +893,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -915,7 +915,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     color: tileColor,
                                     child: Padding(
                                       padding:
-                                          const EdgeInsets.only(left: 65.0),
+                                          const EdgeInsets.only(left: 62.0),
                                       child: SettingsDivider(
                                           color: context.theme.colorScheme
                                               .surfaceVariant),
@@ -1019,7 +1019,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         color: tileColor,
                                         child: Padding(
                                           padding:
-                                              const EdgeInsets.only(left: 65.0),
+                                              const EdgeInsets.only(left: 62.0),
                                           child: SettingsDivider(
                                               color: context.theme.colorScheme
                                                   .surfaceVariant),
