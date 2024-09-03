@@ -32,8 +32,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({
@@ -841,14 +843,88 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               SettingsHeader(
                                   iosSubtitle: iosSubtitle,
                                   materialSubtitle: materialSubtitle,
-                                  text: "About"),
+                                  text: "About & Links"),
                               SettingsSection(
                                 backgroundColor: tileColor,
                                 children: [
                                   SettingsTile(
+                                    title: "Leave Us a Review",
+                                    subtitle: "Enjoying the app? Leave us a review on the App Store or Google Play Store!",
+                                    onTap: () async {
+                                      final InAppReview inAppReview = InAppReview.instance;
+                                      final isAvailable = await inAppReview.isAvailable();
+                                      if (isAvailable) {
+                                          inAppReview.requestReview();
+                                      } else {
+                                        inAppReview.openStoreListing(microsoftStoreId: '9P3XF8KJ0LSM');
+                                      }
+                                    },
+                                    leading: const SettingsLeadingIcon(
+                                      iosIcon: CupertinoIcons.star_fill,
+                                      materialIcon: Icons.star,
+                                      containerColor: Colors.blue,
+                                    ),
+                                    isThreeLine: false,
+                                  ),
+                                  Container(
+                                    color: tileColor,
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 65.0),
+                                      child: SettingsDivider(
+                                          color: context.theme.colorScheme
+                                              .surfaceVariant),
+                                    ),
+                                  ),
+                                  SettingsTile(
+                                    title: "Make a Donation",
+                                    subtitle: "Support the developers by making a one-time or recurring donation to the BlueBubbles Team!",
+                                    onTap: () async {
+                                      await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"), mode: LaunchMode.externalApplication);
+                                    },
+                                    leading: const SettingsLeadingIcon(
+                                      iosIcon: CupertinoIcons.money_dollar_circle,
+                                      materialIcon: Icons.attach_money,
+                                      containerColor: Colors.green,
+                                    ),
+                                    isThreeLine: false,
+                                  ),
+                                  Container(
+                                    color: tileColor,
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 65.0),
+                                      child: SettingsDivider(
+                                          color: context.theme.colorScheme
+                                              .surfaceVariant),
+                                    ),
+                                  ),
+                                  SettingsTile(
+                                    title: "Join Our Discord",
+                                    subtitle: "Join our Discord server to chat with other BlueBubbles users and the developers",
+                                    onTap: () async {
+                                      await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"), mode: LaunchMode.externalApplication);
+                                    },
+                                    leading: SettingsLeadingIcon(
+                                      iosIcon: Icons.discord,
+                                      materialIcon: Icons.discord,
+                                      containerColor: HexColor('#7785CC'),
+                                    ),
+                                  ),
+                                  Container(
+                                    color: tileColor,
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 65.0),
+                                      child: SettingsDivider(
+                                          color: context.theme.colorScheme
+                                              .surfaceVariant),
+                                    ),
+                                  ),
+                                  SettingsTile(
                                     backgroundColor: tileColor,
-                                    title: "About & Links",
-                                    subtitle: "Donate, Rate, Changelog, & More",
+                                    title: "About & More",
+                                    subtitle: "Links, Changelog, & More",
                                     onTap: () {
                                       ns.pushAndRemoveSettingsUntil(
                                         context,
@@ -937,6 +1013,17 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         ),
                                         title: "Delete All Attachments",
                                         subtitle: "Remove all attachments from this app",
+                                      ),
+                                    if (!kIsWeb)
+                                      Container(
+                                        color: tileColor,
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 65.0),
+                                          child: SettingsDivider(
+                                              color: context.theme.colorScheme
+                                                  .surfaceVariant),
+                                        ),
                                       ),
                                     SettingsTile(
                                       backgroundColor: tileColor,

@@ -12,7 +12,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -27,6 +26,16 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget nextIcon = Obx(() => ss.settings.skin.value != Skins.Material
+        ? Icon(
+            ss.settings.skin.value != Skins.Material
+                ? CupertinoIcons.chevron_right
+                : Icons.arrow_forward,
+            color: context.theme.colorScheme.outline,
+            size: iOS ? 18 : 24,
+          )
+        : const SizedBox.shrink());
+
     return SettingsScaffold(
         title: "About & Links",
         initialHeader: "Links",
@@ -41,20 +50,25 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                     SettingsTile(
-                      title: "Support Us",
-                      subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo\nRight click for Github Sponsors" : "Tap for PayPal / Venmo\nTap and hold for GitHub Sponsors",
+                      title: "BlueBubbles Website",
+                      subtitle: "Visit the BlueBubbles Homepage",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"), mode: LaunchMode.externalApplication);
-                      },
-                      onLongPress: () async {
-                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "sponsors/BlueBubblesApp"), mode: LaunchMode.externalApplication);
+                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.money_dollar_circle,
-                        materialIcon: Icons.attach_money,
+                        iosIcon: CupertinoIcons.globe,
+                        materialIcon: Icons.language,
+                        containerColor: Colors.green,
                       ),
-                      isThreeLine: true,
+                      trailing: nextIcon
                     ),
                     Container(
                       color: tileColor,
@@ -64,14 +78,17 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       ),
                     ),
                     SettingsTile(
-                      title: "Website",
+                      title: "Documentation",
+                      subtitle: "RTFM: Read the [Fine] Manual and learn how to use BlueBubbles or fix common issues",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"), mode: LaunchMode.externalApplication);
+                        await launchUrl(Uri(scheme: "https", host: "docs.bluebubbles.app"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.globe,
-                        materialIcon: Icons.language,
+                        iosIcon: CupertinoIcons.doc_append,
+                        materialIcon: Icons.document_scanner,
+                        containerColor: Colors.blueAccent,
                       ),
+                      trailing: nextIcon
                     ),
                     Container(
                       color: tileColor,
@@ -82,17 +99,16 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                     ),
                     SettingsTile(
                       title: "Source Code",
-                      subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
+                      subtitle: "View the source code for BlueBubbles, and contribute!",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp"), mode: LaunchMode.externalApplication);
-                      },
-                      onLongPress: () async {
-                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp/bluebubbles-app/issues"), mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
                         materialIcon: Icons.code,
+                        containerColor: Colors.orange,
                       ),
+                      trailing: nextIcon
                     ),
                     Container(
                       color: tileColor,
@@ -102,16 +118,17 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       ),
                     ),
                     SettingsTile(
-                      title: "Join Our Discord",
+                      title: "Report a Bug",
+                      subtitle: "Found a bug? Report it here!",
                       onTap: () async {
-                        await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"), mode: LaunchMode.externalApplication);
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp/bluebubbles-app/issues"), mode: LaunchMode.externalApplication);
                       },
-                      leading: SvgPicture.asset(
-                        "assets/icon/discord.svg",
-                        colorFilter: ColorFilter.mode(HexColor("#7289DA"), BlendMode.srcIn),
-                        alignment: Alignment.centerRight,
-                        width: 32,
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.triangle_righthalf_fill,
+                        materialIcon: Icons.bug_report,
+                        containerColor: Colors.redAccent,
                       ),
+                      trailing: nextIcon
                     ),
                   ],
                 ),
@@ -181,9 +198,11 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                           ),
                         );
                       },
+                      subtitle: "See what's new in the latest version",
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.doc_plaintext,
                         materialIcon: Icons.article,
+                        containerColor: Colors.blueAccent,
                       ),
                     ),
                     Container(
@@ -205,7 +224,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: Text(
-                              "Developers! Developers!",
+                              "GitHub Profiles",
                               style: context.theme.textTheme.titleLarge,
                               textAlign: TextAlign.center,
                             ),
@@ -237,9 +256,11 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                           ),
                         );
                       },
+                      subtitle: "Meet the developers behind BlueBubbles",
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.person_alt,
                         materialIcon: Icons.person,
+                        containerColor: Colors.green,
                       ),
                     ),
                     if (kIsWeb || kIsDesktop)
@@ -413,6 +434,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                     ),
                     SettingsTile(
                       title: "About",
+                      subtitle: "Version and other information",
                       onTap: () {
                         showDialog<void>(
                           context: context,
