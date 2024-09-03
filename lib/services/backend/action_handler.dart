@@ -66,36 +66,27 @@ class ActionHandler extends GetxService {
     return messages;
   }
 
-  Future<void> matchMessageWithExisting(Chat chat, String existingGuid, Message replacement, {Message? existing}) async {
+  Future<void> matchMessageWithExisting(Chat chat, Message existing, Message replacement) async {
     // First, try to find a matching message with the replacement's GUID.
     // We check this first because if an event came in for that GUID, we should be able to ignore
     // the API response.
     final existingReplacementMessage = Message.findOne(guid: replacement.guid);
     if (existingReplacementMessage != null) {
-      Logger.debug("Found existing message with GUID ${replacement.guid}...", tag: "MessageStatus");
-
-      if (replacement.isNewerThan(existingReplacementMessage)) {
-        Logger.debug("Replacing existing message with newer message (GUID: ${replacement.guid})...", tag: "MessageStatus");
-        await Message.replaceMessage(replacement.guid, replacement);
-      } else {
-        Logger.debug("Existing message with GUID ${replacement.guid} is newer than the replacement...", tag: "MessageStatus");
-      }
+      Logger.debug("Found existing message with GUID ${replacement.guid}! Not replacing...", tag: "MessageStatus");
       
       // Delete the temp message if it exists
-      if (existingGuid != replacement.guid) {
-        Logger.debug("Deleting temp message with GUID $existingGuid...", tag: "MessageStatus");
-        final existingTempMessage = Message.findOne(guid: existingGuid);
+      if (existing.guid != replacement.guid) {
+        Logger.debug("Deleting temp message with GUID ${existing.guid}...", tag: "MessageStatus");
+        final existingTempMessage = Message.findOne(guid: existing.guid);
         if (existingTempMessage != null) {
           Message.delete(existingTempMessage.guid!);
-          if (existing != null) {
-            ms(chat.guid).removeMessage(existing);
-          }
+          ms(chat.guid).removeMessage(existing);
         }
       }
     } else {
       // If we didn't find a matching message with the replacement's GUID, replace the existing message.
-      Logger.debug("Replacing message with GUID $existingGuid with ${replacement.guid}...", tag: "MessageStatus");
-      await Message.replaceMessage(existingGuid, replacement);
+      Logger.debug("Replacing message with GUID ${existing.guid} with ${replacement.guid}...", tag: "MessageStatus");
+      await Message.replaceMessage(existing.guid, replacement);
     }
   }
 
@@ -120,7 +111,7 @@ class ActionHandler extends GetxService {
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+          await matchMessageWithExisting(c, m, newMessage);
         } catch (_) {
           Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
         }
@@ -142,7 +133,7 @@ class ActionHandler extends GetxService {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, partIndex: m.associatedMessagePart).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+          await matchMessageWithExisting(c, m, newMessage);
         } catch (_) {
           Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
         }
@@ -181,7 +172,7 @@ class ActionHandler extends GetxService {
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
       try {
-        await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+        await matchMessageWithExisting(c, m, newMessage);
       } catch (_) {
         Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
       }
@@ -246,16 +237,10 @@ class ActionHandler extends GetxService {
 
       for (Attachment? a in newMessage.attachments) {
         if (a == null) continue;
-
-        try {
-          Attachment.replaceAttachment(m.guid, a);
-        } catch (e) {
-          Logger.warn("Failed to replace attachment ${a.guid}!", tag: "MessageStatus");
-        }
+        Attachment.replaceAttachment(m.guid, a);
       }
-
       try {
-        await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+        await matchMessageWithExisting(c, m, newMessage);
       } catch (_) {
         Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
       }
@@ -311,21 +296,13 @@ class ActionHandler extends GetxService {
       }
     }
     Logger.info("Updated message: [${m.text}] ${m.getLastUpdate().toLowerCase()} - for chat [${c.guid}]", tag: "ActionHandler");
-
     // update any attachments
     for (Attachment? a in m.attachments) {
       if (a == null) continue;
-
-      try {
-        Attachment.replaceAttachment(tempGuid ?? m.guid, a);
-      } catch (e) {
-        Logger.warn("Failed to replace attachment ${a.guid}!", tag: "MessageStatus");
-      }
+      Attachment.replaceAttachment(tempGuid ?? m.guid, a);
     }
-
     // update the message in the DB
-    await matchMessageWithExisting(c, tempGuid ?? m.guid!, m);
-    eventDispatcher.emit("message-updated-${m.guid}");
+    await Message.replaceMessage(tempGuid ?? m.guid, m);
   }
 
   Future<Chat> handleNewOrUpdatedChat(Chat partialData) async {

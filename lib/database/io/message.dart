@@ -282,7 +282,7 @@ class Message {
   set dateDelivered(DateTime? d) => _dateDelivered.value = d;
 
   final RxBool _isDelivered = RxBool(false);
-  bool get isDelivered => (dateDelivered != null) ? true : _isDelivered.value;
+  bool get isDelivered => _isDelivered.value;
   set isDelivered(bool b) => _isDelivered.value = b;
 
   final Rxn<DateTime> _dateEdited = Rxn<DateTime>();
@@ -1113,9 +1113,6 @@ class Message {
   }
 
   bool isNewerThan(Message other) {
-    // If the other message has an error, we want to show that.
-    if (error == 0 && other.error != 0) return false;
-
     // Check null dates in order of what should be filled in first -> last
     if (dateCreated == null && other.dateCreated != null) return false;
     if (dateCreated != null && other.dateCreated == null) return true;
