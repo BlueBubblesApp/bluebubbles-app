@@ -93,40 +93,9 @@ class ActionHandler extends GetxService {
         }
       }
     } else {
-      try {
-        // If we didn't find a matching message with the replacement's GUID, replace the existing message.
+      // If we didn't find a matching message with the replacement's GUID, replace the existing message.
       Logger.debug("Replacing message with GUID $existingGuid with ${replacement.guid}...", tag: "MessageStatus");
       await Message.replaceMessage(existingGuid, replacement);
-      } catch (ex) {
-        Logger.warn("Unable to find & replace message with GUID $existingGuid...", tag: "MessageStatus", error: ex);
-      }
-    }
-  }
-
-  Future<void> matchAttachmentWithExisting(Chat chat, String existingGuid, Attachment replacement, {Attachment? existing}) async {
-    // First, try to find a matching message with the replacement's GUID.
-    // We check this first because if an event came in for that GUID, we should be able to ignore
-    // the API response.
-    final existingReplacementMessage = Attachment.findOne(replacement.guid!);
-    if (existingReplacementMessage != null) {
-      Logger.debug("Replacing existing attachment with GUID ${replacement.guid}...", tag: "AttachmentStatus");
-      await Attachment.replaceAttachment(replacement.guid, replacement);
-      
-      // Delete the temp message if it exists
-      if (existingGuid != replacement.guid) {
-        Logger.debug("Deleting temp attachment with GUID $existingGuid...", tag: "AttachmentStatus");
-        final existingTempMessage = Attachment.findOne(existingGuid);
-        if (existingTempMessage != null) {
-          Attachment.delete(existingTempMessage.guid!);
-        }
-      }
-    } else {
-      try {
-        Logger.debug("Replacing original attachment with GUID $existingGuid with ${replacement.guid}...", tag: "AttachmentStatus");
-        await Attachment.replaceAttachment(existingGuid, replacement);
-      } catch (ex) {
-        Logger.warn("Unable to find & replace attachment with GUID $existingGuid...", error: ex, tag: "AttachmentStatus");
-      }
     }
   }
 
@@ -152,13 +121,13 @@ class ActionHandler extends GetxService {
         final newMessage = Message.fromMap(response.data['data']);
         try {
           await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
-        } catch (ex) {
-          Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: ex, tag: "MessageStatus");
+        } catch (_) {
+          Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
         }
 
         completer.complete();
-      }).catchError((error, stack) async {
-        Logger.error('Failed to send message!', error: error, trace: stack);
+      }).catchError((error) async {
+        Logger.error('Failed to send message! Error: ${error.toString()}');
 
         final tempGuid = m.guid;
         m = handleSendError(error, m);
@@ -174,12 +143,12 @@ class ActionHandler extends GetxService {
         final newMessage = Message.fromMap(response.data['data']);
         try {
           await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
-        } catch (ex) {
-          Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: ex, tag: "MessageStatus");
+        } catch (_) {
+          Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
         }
         completer.complete();
-      }).catchError((error, stack) async {
-        Logger.error('Failed to send message!', error: error, trace: stack);
+      }).catchError((error) async {
+        Logger.error('Failed to send message! Error: ${error.toString()}');
 
         final tempGuid = m.guid;
         m = handleSendError(error, m);
@@ -213,12 +182,12 @@ class ActionHandler extends GetxService {
       final newMessage = Message.fromMap(response.data['data']);
       try {
         await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
-      } catch (ex) {
-        Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: ex, tag: "MessageStatus");
+      } catch (_) {
+        Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
       }
       completer.complete();
-    }).catchError((error, stack) async {
-      Logger.error('Failed to send message!', error: error, trace: stack);
+    }).catchError((error) async {
+      Logger.error('Failed to send message! Error: ${error.toString()}');
 
       final tempGuid = m.guid;
       m = handleSendError(error, m);
@@ -278,27 +247,24 @@ class ActionHandler extends GetxService {
       for (Attachment? a in newMessage.attachments) {
         if (a == null) continue;
 
-        matchAttachmentWithExisting(c, m.guid!, a, existing: attachment)
-          .then((_) {
-            ms(c.guid).updateMessage(newMessage);
-          })
-          .catchError((e, stack) {
-            Logger.warn("Failed to replace attachment ${a.guid}!", error: e, tag: "AttachmentStatus");
-          }
-        );
+        try {
+          Attachment.replaceAttachment(m.guid, a);
+        } catch (e) {
+          Logger.warn("Failed to replace attachment ${a.guid}!", tag: "MessageStatus");
+        }
       }
 
       try {
         await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
-      } catch (e) {
-        Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: e, tag: "MessageStatus");
+      } catch (_) {
+        Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
       }
       attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);
 
       completer.complete();
-    }).catchError((error, stack) async {
+    }).catchError((error) async {
       latestCancelToken = null;
-      Logger.error('Failed to send message!', error: error, trace: stack);
+      Logger.error('Failed to send message! Error: ${error.toString()}');
 
       final tempGuid = m.guid;
       m = handleSendError(error, m);
@@ -350,14 +316,11 @@ class ActionHandler extends GetxService {
     for (Attachment? a in m.attachments) {
       if (a == null) continue;
 
-      matchAttachmentWithExisting(c, tempGuid ?? m.guid!, a)
-        .then((_) {
-          ms(c.guid).updateMessage(m);
-        })
-        .catchError((e, stack) {
-          Logger.warn("Failed to replace attachment ${a.guid}!", error: e, trace: stack, tag: "AttachmentStatus");
-        }
-      );
+      try {
+        Attachment.replaceAttachment(tempGuid ?? m.guid, a);
+      } catch (e) {
+        Logger.warn("Failed to replace attachment ${a.guid}!", tag: "MessageStatus");
+      }
     }
 
     // update the message in the DB
