@@ -1,6 +1,7 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -71,13 +72,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         title: "Show Delivery Timestamps",
                         backgroundColor: tileColor,
                       )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.recipientAsPlaceholder.value = val;
@@ -89,13 +84,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         backgroundColor: tileColor,
                         isThreeLine: true,
                       )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.alwaysShowAvatars.value = val;
@@ -108,13 +97,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -128,13 +111,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.repliesToPrevious.value = val;
@@ -147,13 +124,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb)
                     SettingsTile(
                       title: "Message Options Order",
@@ -165,19 +136,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           MessageOptionsOrderPanel(),
                         );
                       },
-                      trailing: Icon(
-                        iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-                        color: context.theme.colorScheme.outline,
-                      ),
+                      trailing: const NextButton(),
                     ),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb)
                     SettingsTile(
                       title: "Sync Group Chat Icons",
@@ -208,13 +170,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       subtitle: "Note: Overrides any custom avatars set for group chats.",
                     ),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -311,13 +267,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                 ],
                               ),
                       ),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                       SettingsTile(
                         title: "${ss.settings.receiveSoundPath.value == null ? "Add" : "Change"} Receive Sound",
                         subtitle: ss.settings.receiveSoundPath.value != null
@@ -379,11 +329,11 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                 ],
                               ),
                       ),
+                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                       const SettingsTile(
                         title: "Send/Receive Sound Volume",
                         subtitle: "Controls the volume of the send and receive sounds",
                       ),
-                      CupertinoSettingsDivider(tileColor: tileColor),
                       Obx(() => SettingsSlider(
                         startingVal: ss.settings.soundVolume.value.toDouble(),
                         min: 0,
@@ -415,13 +365,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -434,13 +378,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -453,13 +391,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -471,13 +403,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -489,13 +415,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.doubleTapForDetails.value = val;
@@ -511,13 +431,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsDesktop && !kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   if (!kIsDesktop && !kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -528,13 +442,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           title: "Send Message with Enter",
                           backgroundColor: tileColor,
                         )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.scrollToBottomOnSend.value = val;

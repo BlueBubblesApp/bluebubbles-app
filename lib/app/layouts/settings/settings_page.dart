@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dar
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -79,16 +80,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Widget nextIcon = Obx(() => ss.settings.skin.value != Skins.Material
-        ? Icon(
-            ss.settings.skin.value != Skins.Material
-                ? CupertinoIcons.chevron_right
-                : Icons.arrow_forward,
-            color: context.theme.colorScheme.outline,
-            size: iOS ? 18 : 24,
-          )
-        : const SizedBox.shrink());
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value
@@ -148,7 +139,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         fontSize: 22,
                                         size: 50,
                                       ),
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                     ),
                                   ],
                                 ),
@@ -265,7 +256,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           ),
                                         ],
                                       ),
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                     );
                                   }),
                                   if (ss.serverDetailsSync().item4 >= 205)
@@ -284,7 +275,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           (route) => route.isFirst,
                                         );
                                       },
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.calendar,
                                         materialIcon:
@@ -307,7 +298,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           (route) => route.isFirst,
                                         );
                                       },
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.alarm_fill,
                                         materialIcon: Icons.alarm,
@@ -335,7 +326,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         (route) => route.isFirst,
                                       );
                                     },
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                     leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.paintbrush_fill,
                                         materialIcon: Icons.palette,
@@ -366,7 +357,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         iconSize: 18,
                                         containerColor:
                                             Colors.deepPurpleAccent),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
                                   CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
@@ -384,7 +375,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       materialIcon: Icons.notifications_on,
                                       containerColor: Colors.redAccent,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
                                   CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
@@ -402,7 +393,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       materialIcon: Icons.list,
                                       containerColor: Colors.blueAccent,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
                                   CupertinoSettingsDivider(tileColor: tileColor),
                                   SettingsTile(
@@ -420,7 +411,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       materialIcon: Icons.sms,
                                       containerColor: Colors.green,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
                                   CupertinoSettingsDivider(tileColor: tileColor),
                                   if (kIsDesktop)
@@ -438,7 +429,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         iosIcon: CupertinoIcons.desktopcomputer,
                                         materialIcon: Icons.desktop_windows,
                                       ),
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                     ),
                                   if (kIsDesktop)
                                     CupertinoSettingsDivider(tileColor: tileColor),
@@ -456,7 +447,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       iosIcon: CupertinoIcons.ellipsis_circle_fill,
                                       materialIcon: Icons.more_vert,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
                                 ],
                               ),
@@ -472,7 +463,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         title: "Private API Features",
                                         subtitle:
                                             "Private API is ${ss.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}${ss.settings.enablePrivateAPI.value && ss.settings.serverPrivateAPI.value == false ? " but not set up!" : ""}",
-                                        trailing: nextIcon,
+                                        trailing: const NextButton(),
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
                                             context,
@@ -500,7 +491,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         title: "Redacted Mode",
                                         subtitle:
                                             "Redacted Mode is ${ss.settings.redactedMode.value ? "Enabled" : "Disabled"}",
-                                        trailing: nextIcon,
+                                        trailing: const NextButton(),
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
                                             context,
@@ -525,7 +516,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       title: "Tasker Integration",
                                       subtitle:
                                           "Control integrations with Tasker",
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       onTap: () async {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -557,7 +548,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       ),
                                       title: "Developer Tools",
                                       subtitle: "View logs, troubleshoot bugs, and more",
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                     )
                                 ],
                               ),
@@ -577,7 +568,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           (route) => route.isFirst,
                                         );
                                       },
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.cloud_upload_fill,
                                         materialIcon: Icons.backup,
@@ -809,7 +800,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         (route) => route.isFirst,
                                       );
                                     },
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                     leading: const SettingsLeadingIcon(
                                       iosIcon: CupertinoIcons.info_circle_fill,
                                       materialIcon: Icons.info,

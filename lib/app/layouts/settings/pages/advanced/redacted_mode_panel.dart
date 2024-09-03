@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_sender.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -225,13 +226,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           backgroundColor: tileColor,
                           subtitle: "Replace message text with generated lorem ipsum",
                         ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                         SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.hideAttachments.value = val;
@@ -242,13 +237,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           backgroundColor: tileColor,
                           subtitle: "Replace attachments with placeholder boxes",
                         ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
                         SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.hideContactInfo.value = val;
