@@ -164,7 +164,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         subtitle = "Error";
                                         break;
                                       case SocketState.connecting:
-                                        subtitle = "Connecting...";
+                                        subtitle = "Connecting";
                                         break;
                                       default:
                                         subtitle = "Error";
@@ -174,7 +174,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     return SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Connection & Server",
-                                      subtitle: subtitle,
                                       onTap: () async {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -256,7 +255,17 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           ),
                                         ],
                                       ),
-                                      trailing: const NextButton(),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            subtitle,
+                                            style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          const NextButton(),
+                                        ]
+                                      )
                                     );
                                   }),
                                   if (ss.serverDetailsSync().item4 >= 205)
@@ -265,9 +274,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Scheduled Messages",
-                                      subtitle:
-                                          "Schedule your server to send a message in the future or at set intervals",
-                                      isThreeLine: true,
                                       onTap: () {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -289,8 +295,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Message Reminders",
-                                      subtitle:
-                                          "View and manage your upcoming message reminders",
                                       onTap: () {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -317,8 +321,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Appearance Settings",
-                                    subtitle:
-                                        "${ss.settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
                                     onTap: () {
                                       ns.pushAndRemoveSettingsUntil(
                                         context,
@@ -326,7 +328,17 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         (route) => route.isFirst,
                                       );
                                     },
-                                    trailing: const NextButton(),
+                                    trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            "${ss.settings.skin.value.toString().split(".").last}  |  ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!}",
+                                            style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          const NextButton(),
+                                        ]
+                                      ),
                                     leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.paintbrush_fill,
                                         materialIcon: Icons.palette,
@@ -461,9 +473,17 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   Obx(() => SettingsTile(
                                         backgroundColor: tileColor,
                                         title: "Private API Features",
-                                        subtitle:
-                                            "Private API is ${ss.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}${ss.settings.enablePrivateAPI.value && ss.settings.serverPrivateAPI.value == false ? " but not set up!" : ""}",
-                                        trailing: const NextButton(),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              ss.settings.enablePrivateAPI.value ? ss.settings.serverPrivateAPI.value == false ? "Not Set Up" : "Enabled" : "Disabled",
+                                              style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            const NextButton(),
+                                          ]
+                                        ),
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
                                             context,
@@ -489,9 +509,17 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   Obx(() => SettingsTile(
                                         backgroundColor: tileColor,
                                         title: "Redacted Mode",
-                                        subtitle:
-                                            "Redacted Mode is ${ss.settings.redactedMode.value ? "Enabled" : "Disabled"}",
-                                        trailing: const NextButton(),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              ss.settings.redactedMode.value ? "Enabled" : "Disabled",
+                                              style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            const NextButton(),
+                                          ]
+                                        ),
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
                                             context,
@@ -514,8 +542,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Tasker Integration",
-                                      subtitle:
-                                          "Control integrations with Tasker",
                                       trailing: const NextButton(),
                                       onTap: () async {
                                         ns.pushAndRemoveSettingsUntil(
@@ -732,7 +758,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                             containerColor: Colors.green),
                                         title: "Export Contacts",
                                         subtitle:
-                                            "Send contacts to server for use on webapp and desktop app",
+                                            "Send contacts to server for use on the desktop app",
                                       ),
                                   ]),
                               SettingsHeader(

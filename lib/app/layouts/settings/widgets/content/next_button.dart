@@ -14,7 +14,7 @@ class NextButton extends StatelessWidget {
             ? CupertinoIcons.chevron_right
             : Icons.arrow_forward,
         color: context.theme.colorScheme.outline.withOpacity(0.5),
-        size: ss.settings.skin.value != Skins.iOS ? 18 : 24,
+        size: 18,
       ) : const SizedBox.shrink());
   }
 }

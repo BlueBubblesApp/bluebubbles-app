@@ -13,7 +13,7 @@ class SettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: ss.settings.skin.value == Skins.iOS
-          ? const EdgeInsets.symmetric(horizontal: 10)
+          ? const EdgeInsets.symmetric(horizontal: 20)
           : ss.settings.skin.value == Skins.Samsung
           ? const EdgeInsets.symmetric(vertical: 5)
           : EdgeInsets.zero,
