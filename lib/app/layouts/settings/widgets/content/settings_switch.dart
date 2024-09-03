@@ -50,7 +50,7 @@ class SettingsSwitch extends StatelessWidget {
           ),
           subtitle: subtitle != null ? Text(
             subtitle!,
-            style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: 1.5),
+            style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface.withOpacity(0.75), height: 1.5),
           ) : null,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
         ),
