@@ -62,9 +62,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   String oldText = "\n";
   Timer? _debounceTyping;
 
-  // emoji
-  String oldEmojiText = "";
-
   // previous text state
   String oldTextFieldText = "";
   TextSelection oldTextFieldSelection = const TextSelection.collapsed(offset: 0);
@@ -317,8 +314,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     // emoji picker
     final _controller = subject ? controller.subjectTextController : controller.textController;
     final newEmojiText = _controller.text;
-    if (newEmojiText.contains(":") && newEmojiText != oldEmojiText) {
-      oldEmojiText = newEmojiText;
+    if (newEmojiText.contains(":")) {
       final regExp = RegExp(r"(?<=^|[^a-zA-Z\d]):[^: \n]{2,}(?:(?=[ \n]|$)|:)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
       List<Emoji> allMatches = [];
@@ -357,17 +353,19 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         }
         Logger.info("${allMatches.length} matches found for: $emojiName");
       }
-      controller.mentionMatches.value = [];
-      controller.mentionSelectedIndex.value = 0;
       if (allMatches.isNotEmpty) {
+        controller.mentionMatches.value = [];
+        controller.mentionSelectedIndex.value = 0;
         controller.emojiMatches.value = allMatches;
         controller.emojiSelectedIndex.value = 0;
+        return;
       } else {
         controller.emojiMatches.value = [];
         controller.emojiSelectedIndex.value = 0;
       }
-    } else if (ss.settings.enablePrivateAPI.value && !subject && newEmojiText.contains("@")) {
-      oldEmojiText = newEmojiText;
+    }
+
+    if (ss.settings.enablePrivateAPI.value && !subject && newEmojiText.contains("@")) {
       final regExp = RegExp(r"(?<=^|[^a-zA-Z\d])@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
       final matches = regExp.allMatches(newEmojiText);
       List<Mentionable> allMatches = [];
@@ -402,22 +400,22 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         }
         Logger.info("${allMatches.length} matches found for: $mentionName");
       }
-      controller.emojiMatches.value = [];
-      controller.emojiSelectedIndex.value = 0;
       if (allMatches.isNotEmpty) {
+        controller.emojiMatches.value = [];
+        controller.emojiSelectedIndex.value = 0;
         controller.mentionMatches.value = allMatches;
         controller.mentionSelectedIndex.value = 0;
+        return;
       } else {
         controller.mentionMatches.value = [];
         controller.mentionSelectedIndex.value = 0;
       }
-    } else {
-      oldEmojiText = newEmojiText;
-      controller.emojiMatches.value = [];
-      controller.emojiSelectedIndex.value = 0;
-      controller.mentionMatches.value = [];
-      controller.mentionSelectedIndex.value = 0;
     }
+
+    controller.emojiMatches.value = [];
+    controller.emojiSelectedIndex.value = 0;
+    controller.mentionMatches.value = [];
+    controller.mentionSelectedIndex.value = 0;
   }
 
   @override
