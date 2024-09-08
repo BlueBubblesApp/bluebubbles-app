@@ -176,5 +176,5 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     // Unified Push
-    implementation 'com.github.UnifiedPush:android-connector:eca07d314d'
+    implementation 'com.github.UnifiedPush:android-connector:2.5.0'
 }
