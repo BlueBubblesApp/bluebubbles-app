@@ -200,7 +200,7 @@ dependency_overrides:
   js: ^0.7.1 # socket_io_client
   material_color_utilities: ^0.11.1 # flutter test SDK
   permission_handler_platform_interface: ^4.2.1 # BB permission_handler_windows
-  permission_handler_windows:
+  permission_handler_windows: # https://github.com/Baseflow/flutter-permission-handler/issues/983
     git:
       url: https://github.com/BlueBubblesApp/flutter-permission-handler.git
       ref: 7912a76a3208e876c2275e1a87003ede3903abc8
