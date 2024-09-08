@@ -82,6 +82,7 @@ class SettingsService extends GetxService {
       return false;
     } else if (launchAtStartup) {
       /// Copied from https://github.com/Merrit/nyrna/pull/172/files
+      /// Custom because LaunchAtStartup's implementation doesn't support args yet.
       String script = '''
         \$TargetPath = "shell:AppsFolder\\$windowsAppPackageName"
         \$ShortcutFile = "\$env:USERPROFILE\\Start Menu\\Programs\\Startup\\$appName.lnk"
