@@ -114,14 +114,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         if (proxyController.text.isEmpty) return;
         String emoji = proxyController.text;
         proxyController.clear();
-        TextEditingController realController = controller.lastFocusedTextController;
+        TextEditingController realController = controller.editing.lastOrNull?.item3 ?? controller.lastFocusedTextController;
         String text = realController.text;
         TextSelection selection = realController.selection;
 
         realController.text = text.substring(0, selection.start) + emoji + text.substring(selection.end);
         realController.selection = TextSelection.collapsed(offset: selection.start + emoji.length);
 
-        controller.lastFocusedNode.requestFocus();
+        (controller.editing.lastOrNull?.item3.focusNode ?? controller.lastFocusedNode).requestFocus();
       });
     }
   }
@@ -698,7 +698,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                   icon: Icon(iOS ? CupertinoIcons.smiley_fill : Icons.emoji_emotions, color: context.theme.colorScheme.outline, size: 28),
                   onPressed: () {
                     showEmojiPicker.value = !showEmojiPicker.value;
-                    controller.lastFocusedNode.requestFocus();
+                    (controller.editing.lastOrNull?.item3.focusNode ?? controller.lastFocusedNode).requestFocus();
                   },
                 ),
               if (kIsDesktop && !Platform.isLinux)
