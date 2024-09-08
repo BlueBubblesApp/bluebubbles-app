@@ -1243,7 +1243,7 @@ class TextFieldComponent extends StatelessWidget {
           ss.isMinVenturaSync &&
           ss.serverDetailsSync().item4 >= 148) {
         final message = ms(chat!.guid).mostRecentSent;
-        if (message != null) {
+        if (message != null && !message.guid!.startsWith("temp")) {
           final parts = mwc(message).parts;
           final part = parts.filter((p) => p.text?.isNotEmpty ?? false).lastOrNull;
           if (part != null) {
