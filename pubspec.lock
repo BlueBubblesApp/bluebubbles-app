@@ -2295,6 +2295,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.3"
+  pull_down_button:
+    dependency: "direct main"
+    description:
+      name: pull_down_button
+      sha256: "96d0a869c460318cc30b6ce3773b3c5d26291e8a1f93f358c826e14bc13e266a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.10.1"
   qr:
     dependency: transitive
     description:
