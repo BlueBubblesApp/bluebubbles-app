@@ -230,49 +230,31 @@ class CupertinoOverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PullDownButton(
       routeTheme: PullDownMenuRouteTheme(
-        backgroundColor: context.theme.colorScheme.properSurface.withOpacity(ss.settings.windowEffect.value != WindowEffect.disabled ? 0.9 : 1),
-        shadow: BoxShadow(
-          color: Colors.black.withOpacity(0.5),
-          offset: const Offset(-0.5, 1),
-          blurRadius: 20,
-          spreadRadius: -8,
-        )
+        backgroundColor: context.theme.colorScheme.properSurface.withOpacity(0.9)
       ),
       itemBuilder: (context) => [
         PullDownMenuHeader(
           title: ss.settings.userName.value,
           icon: CupertinoIcons.chevron_right,
           leadingBuilder: (context, constraints) {
-            return ss.settings.userAvatarPath.value != null ? Positioned(
-              right: -5,
-              top: -5,
-              child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: context.theme.colorScheme.background, width: 1),
-                    shape: BoxShape.circle,
-                    color: context.theme.colorScheme.tertiaryContainer,
-                  ),
-                  child: Icon(
-                    Icons.close,
-                    color: context.theme.colorScheme.onTertiaryContainer,
-                    size: 20,
-                  ),
+            return Container(constraints: constraints, child: ContactAvatarWidget(
+                size: 50,
+                preferHighResAvatar: true,
+                borderThickness: 0.1,
+                editable: false,
+                fontSize: 16,
+                contact: Contact(
+                  id: 'you',
+                  displayName: ss.settings.userName.value,
+                  emails: [ss.settings.iCloudAccount.value],
                 ),
-            ) : Container(constraints: constraints, child: ContactAvatarWidget(
-              size: 50,
-              preferHighResAvatar: true,
-              contact: Contact(
-                id: 'you',
-                displayName: ss.settings.userName.value,
-                emails: [ss.settings.iCloudAccount.value],
-              ),
-            ));
+              )
+            );
           },
-          subtitle: ss.settings.iCloudAccount.value,
+          subtitle: "Tap to open profile",
           onTap: () => goToProfile(context),
         ),
+        PullDownMenuDivider.large(color: context.theme.colorScheme.background.withOpacity(0.5)),
         PullDownMenuItem(
           title: 'Mark All As Read',
           icon: CupertinoIcons.check_mark_circled,
@@ -295,17 +277,6 @@ class CupertinoOverflowMenu extends StatelessWidget {
             icon: CupertinoIcons.location,
             onTap: () => goToFindMy(context),
           ),
-        PullDownMenuItem(
-          title: 'Settings',
-          icon: CupertinoIcons.gear,
-          onTap: () => goToSettings(context),
-        ),
-        if (kIsWeb)
-          PullDownMenuItem(
-            title: 'Logout',
-            icon: CupertinoIcons.power,
-            onTap: () => logout(context),
-          ),
         if (extraItems)
           PullDownMenuItem(
             title: 'Search',
@@ -317,6 +288,17 @@ class CupertinoOverflowMenu extends StatelessWidget {
             title: 'New Chat',
             icon: CupertinoIcons.plus,
             onTap: () => controller?.openNewChatCreator(context)
+          ),
+        PullDownMenuItem(
+          title: 'Settings',
+          icon: CupertinoIcons.gear,
+          onTap: () => goToSettings(context),
+        ),
+        if (kIsWeb)
+          PullDownMenuItem(
+            title: 'Logout',
+            icon: CupertinoIcons.power,
+            onTap: () => logout(context),
           ),
       ],
       buttonBuilder: (context, showMenu) => GestureDetector(
