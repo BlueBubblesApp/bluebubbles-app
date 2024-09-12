@@ -66,6 +66,30 @@ class ActionHandler extends GetxService {
     return messages;
   }
 
+  Future<void> matchMessageWithExisting(Chat chat, Message existing, Message replacement) async {
+    // First, try to find a matching message with the replacement's GUID.
+    // We check this first because if an event came in for that GUID, we should be able to ignore
+    // the API response.
+    final existingReplacementMessage = Message.findOne(guid: replacement.guid);
+    if (existingReplacementMessage != null) {
+      Logger.debug("Found existing message with GUID ${replacement.guid}! Not replacing...", tag: "MessageStatus");
+      
+      // Delete the temp message if it exists
+      if (existing.guid != replacement.guid) {
+        Logger.debug("Deleting temp message with GUID ${existing.guid}...", tag: "MessageStatus");
+        final existingTempMessage = Message.findOne(guid: existing.guid);
+        if (existingTempMessage != null) {
+          Message.delete(existingTempMessage.guid!);
+          ms(chat.guid).removeMessage(existing);
+        }
+      }
+    } else {
+      // If we didn't find a matching message with the replacement's GUID, replace the existing message.
+      Logger.debug("Replacing message with GUID ${existing.guid} with ${replacement.guid}...", tag: "MessageStatus");
+      await Message.replaceMessage(existing.guid, replacement);
+    }
+  }
+
   Future<void> sendMessage(Chat c, Message m, Message? selected, String? r) async {
     final completer = Completer<void>();
     if (r == null) {
@@ -87,11 +111,11 @@ class ActionHandler extends GetxService {
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await Message.replaceMessage(m.guid, newMessage);
-          Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+          await matchMessageWithExisting(c, m, newMessage);
         } catch (_) {
-          Logger.info("Message match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+          Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
         }
+
         completer.complete();
       }).catchError((error) async {
         Logger.error('Failed to send message! Error: ${error.toString()}');
@@ -109,10 +133,9 @@ class ActionHandler extends GetxService {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, partIndex: m.associatedMessagePart).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await Message.replaceMessage(m.guid, newMessage);
-          Logger.info("Reaction match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+          await matchMessageWithExisting(c, m, newMessage);
         } catch (_) {
-          Logger.info("Reaction match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+          Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
         }
         completer.complete();
       }).catchError((error) async {
@@ -149,10 +172,9 @@ class ActionHandler extends GetxService {
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
       try {
-        await Message.replaceMessage(m.guid, newMessage);
-        Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+        await matchMessageWithExisting(c, m, newMessage);
       } catch (_) {
-        Logger.info("Message match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+        Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
       }
       completer.complete();
     }).catchError((error) async {
@@ -218,10 +240,9 @@ class ActionHandler extends GetxService {
         Attachment.replaceAttachment(m.guid, a);
       }
       try {
-        await Message.replaceMessage(m.guid, newMessage);
-        Logger.info("Attachment match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+        await matchMessageWithExisting(c, m, newMessage);
       } catch (_) {
-        Logger.info("Attachment match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+        Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", tag: "MessageStatus");
       }
       attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);
 
