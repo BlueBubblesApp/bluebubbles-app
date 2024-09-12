@@ -61,8 +61,8 @@ class MethodChannelService extends GetxService {
         await Database.waitForInit();
         Logger.info("Received new message from MethodChannel");
 
-        // The socket will handle this event if the app is alive
-        if (ls.isAlive && socket.socket.connected) {
+        // The socket will handle this event if the app is alive and unifiedpush is not enabled
+        if (ls.isAlive && socket.socket.connected && ss.settings.endpointUnifiedPush.value == "") {
           Logger.debug("App is alive, ignoring new message...");
           return true;
         }
@@ -72,7 +72,7 @@ class MethodChannelService extends GetxService {
           if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
-            if (ls.isAlive) {
+            if (ls.isAlive && ss.settings.endpointUnifiedPush.value == "") {
               await inq.queue(item);
             } else {
               await ah.handleNewMessage(item.chat, item.message, item.tempGuid);
@@ -323,6 +323,17 @@ class MethodChannelService extends GetxService {
           return Future.error(e, s);
         }
 
+        return true;
+      case "unifiedpush-settings":
+        Map<String, dynamic>? data = arguments;
+        if (data == null) return false;
+
+        try {
+            final String endpoint = data['endpoint'].toString();
+            upr.update(endpoint);
+        } catch(e, s) {
+            return Future.error(e, s);
+        }
         return true;
       default:
         return true;

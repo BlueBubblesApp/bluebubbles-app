@@ -109,6 +109,10 @@ class Settings {
   final RxBool generateFakeContactNames = false.obs;
   final RxBool hideMessageContent = false.obs;
 
+  // Unified Push Settings
+  final RxBool enableUnifiedPush = false.obs;
+  final RxString endpointUnifiedPush = RxString("");
+
   // Quick tapback settings
   final RxBool enableQuickTapback = false.obs;
   final RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
@@ -323,6 +327,8 @@ class Settings {
       'userName': userName.value,
       'privateAPISend': privateAPISend.value,
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
+      'enableUnifiedPush': enableUnifiedPush.value,
+      'endpointUnifiedPush': endpointUnifiedPush.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -458,6 +464,8 @@ class Settings {
     ss.settings.hideContactInfo.value = map['hideContactInfo'] ?? true;
     ss.settings.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
     ss.settings.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
+    ss.settings.enableUnifiedPush.value = map['enableUnifiedPush'] ?? false;
+    ss.settings.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
     ss.settings.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     ss.settings.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
     ss.settings.materialRightAction.value = map['materialRightAction'] != null
@@ -594,6 +602,8 @@ class Settings {
     s.hideContactInfo.value = map['hideContactInfo'] ?? true;
     s.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
     s.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
+    s.enableUnifiedPush.value = map['enableUnifiedPush'] ?? false;
+    s.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
     s.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     s.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
     s.materialRightAction.value = map['materialRightAction'] != null
