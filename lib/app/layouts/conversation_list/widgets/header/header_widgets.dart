@@ -230,7 +230,7 @@ class CupertinoOverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PullDownButton(
       routeTheme: PullDownMenuRouteTheme(
-        backgroundColor: context.theme.colorScheme.properSurface,
+        backgroundColor: context.theme.colorScheme.properSurface.withOpacity(ss.settings.windowEffect.value != WindowEffect.disabled ? 0.9 : 1),
         shadow: BoxShadow(
           color: Colors.black.withOpacity(0.5),
           offset: const Offset(-0.5, 1),
