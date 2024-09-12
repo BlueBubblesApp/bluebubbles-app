@@ -27,6 +27,12 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   void initState() {
     forceDelete = false;
     super.initState();
+
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == "message-updated-${message.guid}") {
+        setState(() {});
+      }
+    });
   }
 
   bool get shouldShow {
