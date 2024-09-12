@@ -1,4 +1,3 @@
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
@@ -78,7 +77,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                       : "Click to enable notifications",
                   backgroundColor: tileColor,
                 ),
-              CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+              const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
               Obx(() => SettingsSwitch(
                 onChanged: (bool val) {
                   ss.settings.notifyReactions.value = val;
@@ -89,7 +88,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                 subtitle: "Sends notifications for incoming reactions",
                 backgroundColor: tileColor,
               )),
-              CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+              const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
               /*if (!kIsWeb)
                                     Obx(() {
                                       if (iOS)
@@ -159,7 +158,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                   subtitle: "Replaces message text with 'iMessage' in notifications",
                   backgroundColor: tileColor,
                 )),
-                CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
                     ss.settings.showIncrementalSync.value = val;

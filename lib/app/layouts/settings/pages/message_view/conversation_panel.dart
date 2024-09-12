@@ -1,6 +1,5 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -72,7 +71,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         title: "Show Delivery Timestamps",
                         backgroundColor: tileColor,
                       )),
-                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.recipientAsPlaceholder.value = val;
@@ -84,7 +83,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         backgroundColor: tileColor,
                         isThreeLine: true,
                       )),
-                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.alwaysShowAvatars.value = val;
@@ -97,7 +96,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsWeb && !kIsDesktop)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -111,7 +110,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.repliesToPrevious.value = val;
@@ -124,7 +123,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsWeb)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
                     SettingsTile(
                       title: "Message Options Order",
@@ -139,7 +138,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       trailing: const NextButton(),
                     ),
                   if (!kIsWeb)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
                     SettingsTile(
                       title: "Sync Group Chat Icons",
@@ -170,7 +169,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       subtitle: "Note: Overrides any custom avatars set for group chats.",
                     ),
                   if (!kIsWeb)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -267,7 +266,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                 ],
                               ),
                       ),
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                       SettingsTile(
                         title: "${ss.settings.receiveSoundPath.value == null ? "Add" : "Change"} Receive Sound",
                         subtitle: ss.settings.receiveSoundPath.value != null
@@ -329,7 +328,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                 ],
                               ),
                       ),
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                       const SettingsTile(
                         title: "Send/Receive Sound Volume",
                         subtitle: "Controls the volume of the send and receive sounds",
@@ -365,7 +364,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -378,7 +377,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -391,7 +390,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -403,7 +402,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -415,7 +414,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.doubleTapForDetails.value = val;
@@ -431,7 +430,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsDesktop && !kIsWeb)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsDesktop && !kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -442,7 +441,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           title: "Send Message with Enter",
                           backgroundColor: tileColor,
                         )),
-                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.scrollToBottomOnSend.value = val;

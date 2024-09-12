@@ -1,5 +1,4 @@
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
@@ -163,7 +162,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     trailing: const NextButton(),
                   ),
                   if (Platform.isAndroid)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (Platform.isAndroid)
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
@@ -211,7 +210,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           }
                         }),
                   if (kIsDesktop)
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (kIsDesktop)
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
@@ -227,7 +226,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           }
                           await launchUrl(Uri.file(logFile.path));
                         }),
-                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.trash,
@@ -334,7 +333,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                                     ))
                                 : Icon(Icons.check,
                                     color: context.theme.colorScheme.outline))),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     SettingsTile(
                         title: "Sync Chat Info",
                         subtitle: "This will re-sync all chat data & icons from the server to ensure that you have the most up-to-date information.\n\nNote: This will overwrite any group chat icons that are not locked!",

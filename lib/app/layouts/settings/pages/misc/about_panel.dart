@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -55,7 +54,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       ),
                       trailing: const NextButton()
                     ),
-                    CupertinoSettingsDivider(tileColor: tileColor),
+                    const SettingsDivider(),
                     SettingsTile(
                       title: "Documentation",
                       subtitle: "RTFM: Read the [Fine] Manual and learn how to use BlueBubbles or fix common issues",
@@ -69,7 +68,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       ),
                       trailing: const NextButton()
                     ),
-                    CupertinoSettingsDivider(tileColor: tileColor),
+                    const SettingsDivider(),
                     SettingsTile(
                       title: "Source Code",
                       subtitle: "View the source code for BlueBubbles, and contribute!",
@@ -83,7 +82,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       ),
                       trailing: const NextButton()
                     ),
-                    CupertinoSettingsDivider(tileColor: tileColor),
+                    const SettingsDivider(),
                     SettingsTile(
                       title: "Report a Bug",
                       subtitle: "Found a bug? Report it here!",
@@ -172,7 +171,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                         containerColor: Colors.blueAccent,
                       ),
                     ),
-                    CupertinoSettingsDivider(tileColor: tileColor),
+                    const SettingsDivider(),
                     SettingsTile(
                       title: "Developers",
                       onTap: () {
@@ -225,7 +224,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                       ),
                     ),
                     if (kIsWeb || kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor),
+                      const SettingsDivider(),
                     if (kIsWeb || kIsDesktop)
                       SettingsTile(
                         title: "Keyboard Shortcuts",
@@ -380,7 +379,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> {
                           materialIcon: Icons.keyboard,
                         ),
                       ),
-                    CupertinoSettingsDivider(tileColor: tileColor),
+                    const SettingsDivider(),
                     SettingsTile(
                       title: "About",
                       subtitle: "Version and other information",

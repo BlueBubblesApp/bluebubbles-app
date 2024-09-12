@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
@@ -44,7 +43,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Show a visual status indicator when the app is not connected to the server",
                           backgroundColor: tileColor,
                         )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.showSyncIndicator.value = val;
@@ -57,7 +56,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.statusIndicatorsOnChats.value = val;
@@ -88,7 +87,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.filterUnknownSenders.value = val;
@@ -102,7 +101,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           isThreeLine: true,
                         )),
                     if (!kIsWeb)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
@@ -131,7 +130,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           subtitle: "Hides dividers between tiles",
                         )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.denseChatTiles.value = val;
@@ -143,7 +142,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Compresses chat tile size on the conversation list page",
                           isThreeLine: true,
                         )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop && !kIsWeb)
                       Obx(() {
                         if (iOS) {
@@ -256,7 +255,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                         }
                       }),
                     if (!kIsWeb)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (kIsDesktop)
                       Obx(() {
                         if (iOS) {
@@ -446,7 +445,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                       }),
                     if (kIsDesktop && iOS) const SizedBox(height: 24),
                     if (!kIsWeb)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Pinned Order",
@@ -536,7 +535,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           isThreeLine: true,
                         )),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {

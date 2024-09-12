@@ -1,10 +1,8 @@
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -42,7 +40,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.onlyWifiDownload.value = val;
@@ -53,7 +51,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           backgroundColor: tileColor,
                         )),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
@@ -67,7 +65,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                             isThreeLine: true,
                           )),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsTile(
                         title: "Save Media Location",
@@ -128,7 +126,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                         },
                       )),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsTile(
                         title: "Save Documents Location",
@@ -147,7 +145,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                         },
                       )),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
@@ -182,7 +180,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           title: "Mute in Attachment Preview",
                           backgroundColor: tileColor,
                         )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.startVideosMutedFullscreen.value = val;

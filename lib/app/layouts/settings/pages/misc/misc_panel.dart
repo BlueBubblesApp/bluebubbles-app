@@ -1,4 +1,3 @@
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/helpers/types/classes/language_codes.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -141,7 +140,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         }
                       }),
                     if (ss.canAuthenticate && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor),
+                      const SettingsDivider(),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) async {
@@ -161,7 +160,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             ),
                           )),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor),
+                      const SettingsDivider(),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) async {
@@ -210,7 +209,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           containerColor: Colors.green
                         ),
                       )),
-                  CupertinoSettingsDivider(tileColor: tileColor),
+                  const SettingsDivider(),
                   Obx(() {
                     if (iOS) {
                       return const SettingsTile(
@@ -296,7 +295,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                               .copyWith(color: context.theme.colorScheme.properOnSurface),
                         )),
                   ),
-                  CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 0),
+                  const SettingsDivider(padding: EdgeInsets.zero),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.cancelQueuedMessages.toggle();
@@ -381,7 +380,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       return const SizedBox.shrink();
                     }
                   }),
-                  CupertinoSettingsDivider(tileColor: tileColor),
+                  const SettingsDivider(),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.use24HrFormat.value = val;
@@ -396,7 +395,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           containerColor: Colors.blue
                         ),
                       )),
-                  CupertinoSettingsDivider(tileColor: tileColor),
+                  const SettingsDivider(),
                   if (Platform.isAndroid)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -419,7 +418,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           ),
                         )),
                   if (Platform.isAndroid)
-                    CupertinoSettingsDivider(tileColor: tileColor),
+                    const SettingsDivider(),
                   Obx(() {
                     if (iOS) {
                       return const SettingsTile(

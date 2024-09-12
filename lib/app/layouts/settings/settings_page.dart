@@ -4,7 +4,6 @@ import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dar
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -269,7 +268,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     );
                                   }),
                                   if (ss.serverDetailsSync().item4 >= 205)
-                                    CupertinoSettingsDivider(tileColor: tileColor),
+                                    const SettingsDivider(),
                                   if (ss.serverDetailsSync().item4 >= 205)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -290,7 +289,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       ),
                                     ),
                                   if (Platform.isAndroid)
-                                    CupertinoSettingsDivider(tileColor: tileColor),
+                                    const SettingsDivider(),
                                   if (Platform.isAndroid)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -371,7 +370,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                             Colors.deepPurpleAccent),
                                     trailing: const NextButton(),
                                   ),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Notification Settings",
@@ -389,7 +388,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     trailing: const NextButton(),
                                   ),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Chat List Settings",
@@ -407,7 +406,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     trailing: const NextButton(),
                                   ),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Conversation Settings",
@@ -425,7 +424,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     trailing: const NextButton(),
                                   ),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   if (kIsDesktop)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -444,7 +443,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       trailing: const NextButton(),
                                     ),
                                   if (kIsDesktop)
-                                    CupertinoSettingsDivider(tileColor: tileColor),
+                                    const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "More Settings",
@@ -505,7 +504,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                   : Colors.amber,
                                         ),
                                       )),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   Obx(() => SettingsTile(
                                         backgroundColor: tileColor,
                                         title: "Redacted Mode",
@@ -537,7 +536,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         ),
                                       )),
                                   if (Platform.isAndroid)
-                                    CupertinoSettingsDivider(tileColor: tileColor),
+                                    const SettingsDivider(),
                                   if (Platform.isAndroid)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -557,7 +556,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           containerColor: Colors.orangeAccent),
                                     ),
                                   if (Platform.isAndroid)
-                                    CupertinoSettingsDivider(tileColor: tileColor),
+                                    const SettingsDivider(),
                                   SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () async {
@@ -604,7 +603,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       subtitle:
                                           "Backup and restore all app settings and custom themes",
                                     ),
-                                    CupertinoSettingsDivider(tileColor: tileColor),
+                                    const SettingsDivider(),
                                     if (!kIsWeb && !kIsDesktop)
                                       SettingsTile(
                                         backgroundColor: tileColor,
@@ -787,7 +786,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     isThreeLine: false,
                                   ),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     title: "Make a Donation",
                                     subtitle: "Support the developers by making a one-time or recurring donation to the BlueBubbles Team!",
@@ -801,7 +800,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     isThreeLine: false,
                                   ),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     title: "Join Our Discord",
                                     subtitle: "Join our Discord server to chat with other BlueBubbles users and the developers",
@@ -814,7 +813,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       containerColor: HexColor('#7785CC'),
                                     ),
                                   ),
-                                  CupertinoSettingsDivider(tileColor: tileColor),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "About & More",
@@ -909,7 +908,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         subtitle: "Remove all attachments from this app",
                                       ),
                                     if (!kIsWeb)
-                                      CupertinoSettingsDivider(tileColor: tileColor),
+                                      const SettingsDivider(),
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () {

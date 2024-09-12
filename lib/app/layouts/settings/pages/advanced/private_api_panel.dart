@@ -1,6 +1,5 @@
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -123,7 +122,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                           ),
                         ),
                       if (ss.settings.serverPrivateAPI.value != true)
-                        CupertinoSettingsDivider(tileColor: tileColor),
+                        const SettingsDivider(),
                       Obx(
                         () => SettingsSwitch(
                           onChanged: (bool val) async {
@@ -169,7 +168,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                 ? Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      CupertinoSettingsDivider(tileColor: tileColor),
+                                      const SettingsDivider(),
                                       SettingsSwitch(
                                         onChanged: (bool val) {
                                           ss.settings.privateMarkChatAsRead.value = val;
@@ -199,7 +198,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                CupertinoSettingsDivider(tileColor: tileColor),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateManualMarkAsRead.value = val;
@@ -219,7 +218,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                               ],
                             ),
                           ),
-                          CupertinoSettingsDivider(tileColor: tileColor),
+                          const SettingsDivider(),
                           SettingsSwitch(
                             title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
                             initialVal: ss.settings.enableQuickTapback.value,
@@ -324,7 +323,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                CupertinoSettingsDivider(tileColor: tileColor),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   title: "Up Arrow for Quick Edit",
                                   initialVal: ss.settings.editLastSentMessageOnUpArrow.value,
@@ -343,7 +342,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                CupertinoSettingsDivider(tileColor: tileColor),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateSubjectLine.value = val;
@@ -368,7 +367,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                CupertinoSettingsDivider(tileColor: tileColor),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateAPISend.value = val;
@@ -393,7 +392,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                CupertinoSettingsDivider(tileColor: tileColor),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateAPIAttachmentSend.value = val;

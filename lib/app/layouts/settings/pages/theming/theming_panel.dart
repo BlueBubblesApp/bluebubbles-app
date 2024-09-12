@@ -1,5 +1,4 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/app/layouts/settings/widgets/content/cupertino_settings_divider.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -84,7 +83,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       secondaryColor: headerColor,
                     ),
                     if (!kIsWeb)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Advanced Theming",
@@ -99,7 +98,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           );
                         },
                       ),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Container(
                       padding: const EdgeInsets.only(left: 15, top: 10),
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
@@ -144,7 +143,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       secondaryColor: headerColor,
                     )),
                     if (!kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
@@ -160,7 +159,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         isThreeLine: true,
                       )),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
@@ -309,7 +308,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         },
                       )),
                     if (kIsDesktop && Platform.isWindows)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
                       Obx(() {
                         if (iOS) {
@@ -357,7 +356,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                           onChanged: (bool val) async {
@@ -410,7 +409,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme. Media art with mostly blacks or whites may not produce any change in theming.",
                       ),
                     if (!kIsWeb && !kIsDesktop)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
                         ss.settings.colorfulAvatars.value = val;
@@ -421,7 +420,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       backgroundColor: tileColor,
                       subtitle: "Gives letter avatars a splash of color",
                     )),
-                    CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
                         ss.settings.colorfulBubbles.value = val;
@@ -433,7 +432,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       subtitle: "Gives received message bubbles a splash of color",
                     )),
                     if (!kIsWeb)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Custom Avatar Colors",
@@ -447,7 +446,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         subtitle: "Customize the color for different avatars",
                       ),
                     if (!kIsWeb)
-                      CupertinoSettingsDivider(tileColor: tileColor, leftPadding: 16),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Custom Avatars",
