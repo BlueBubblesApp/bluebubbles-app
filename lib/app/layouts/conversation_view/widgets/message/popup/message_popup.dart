@@ -22,7 +22,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
