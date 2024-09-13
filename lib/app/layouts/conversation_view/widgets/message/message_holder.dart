@@ -158,7 +158,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         final updatedMessage = Message.fromMap(response.data['data']);
         ah.handleUpdatedMessage(chat, updatedMessage, null);
       }
-      if (kIsDesktop) {
+      if (ns.isTabletMode(context)) {
         Get.close(1);
       } else {
         Navigator.of(context).pop();
