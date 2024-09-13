@@ -175,6 +175,7 @@ class StartupTasks {
 }
 
 Future<void> reviewFlow() async {
+  if (!ls.isAlive) return;
   Logger.info('Checking if we should request a review');
 
   try {
