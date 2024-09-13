@@ -81,47 +81,45 @@ class _MessageOptionsOrderPanelState extends OptimizedState<MessageOptionsOrderP
               ),
             ),
           ),
-          body: SingleChildScrollView(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 30),
-              decoration: BoxDecoration(
-                color: tileColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Obx(
-                () => ReorderableListView.builder(
-                  shrinkWrap: true,
-                  onReorder: (start, end) {
-                    actionList.insert(end, actionList.elementAt(start));
-                    actionList.removeAt(start + (end < start ? 1 : 0));
-                    ss.settings.setDetailsMenuActions(actionList.toList());
-                  },
-                  buildDefaultDragHandles: false,
-                  itemBuilder: (context, index) {
-                    DetailsMenuAction action = actionList[index];
-                    return Row(
-                      key: Key(action.toString()),
-                      children: [
-                        Expanded(
-                          child: AbsorbPointer(
-                            child: DetailsMenuActionWidget(
-                              action: action,
-                            ),
+          body: Container(
+            color: tileColor,
+            child: Obx(
+              () => ReorderableListView.builder(
+                shrinkWrap: true,
+                onReorder: (start, end) {
+                  if (start == end) return;
+                  actionList.insert(end, actionList.elementAt(start));
+                  actionList.removeAt(start + (end < start ? 1 : 0));
+                  ss.settings.setDetailsMenuActions(actionList.toList());
+                },
+                buildDefaultDragHandles: false,
+                itemBuilder: (context, index) {
+                  DetailsMenuAction action = actionList[index];
+                  return Row(
+                    key: Key(action.toString()),
+                    children: [
+                      Expanded(
+                        child: AbsorbPointer(
+                          child: DetailsMenuActionWidget(
+                            action: action,
                           ),
                         ),
-                        MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: ReorderableDragStartListener(
-                            index: index,
-                            child: const Icon(Icons.drag_handle),
+                      ),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: ReorderableDragStartListener(
+                          index: index,
+                          child: Icon(
+                            Icons.drag_handle,
+                            color: context.theme.colorScheme.outline,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                      ],
-                    );
-                  },
-                  itemCount: actionList.length,
-                ),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                  );
+                },
+                itemCount: actionList.length,
               ),
             ),
           ),
