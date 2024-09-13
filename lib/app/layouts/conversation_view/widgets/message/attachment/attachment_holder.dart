@@ -66,6 +66,9 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
 
 
   void updateContent() async {
+    try {
+      if (content is AttachmentDownloadController && content.error != null) return;
+    } catch (ex) { /* lateInitializationException */ }
     content = as.getContent(attachment, onComplete: onComplete);
     // If we can download it, do so
     if (content is Attachment && message.error == 0 && !message.guid!.contains("temp") && await as.canAutoDownload()) {
