@@ -61,7 +61,9 @@ class SettingsService extends GetxService {
     // launch at startup
     if (kIsDesktop) {
       if (Platform.isWindows) {
-        _canAuthenticate = await LocalAuthentication().isDeviceSupported();
+        try {
+          _canAuthenticate = await LocalAuthentication().isDeviceSupported();
+        } catch (_) {}
       }
       ss.settings.launchAtStartup.value = await setupLaunchAtStartup(ss.settings.launchAtStartup.value, ss.settings.launchAtStartupMinimized.value);
     }
