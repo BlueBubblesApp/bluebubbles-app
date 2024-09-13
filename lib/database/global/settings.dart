@@ -101,6 +101,7 @@ class Settings {
   final RxBool privateAPISend = false.obs;
   final RxBool privateAPIAttachmentSend = false.obs;
   final RxBool editLastSentMessageOnUpArrow = false.obs;
+  final RxInt lastReviewRequestTimestamp = 0.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -358,6 +359,7 @@ class Settings {
       'useWindowsAccent': useWindowsAccent.value,
       'logLevel': logLevel.value.index,
       'hideNamesForReactions': hideNamesForReactions.value,
+      'lastReviewRequestTimestamp': lastReviewRequestTimestamp.value,
     };
     if (includeAll) {
       map.addAll({
@@ -631,6 +633,7 @@ class Settings {
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
+    s.lastReviewRequestTimestamp.value = map['lastReviewRequestTimestamp'] ?? 0;
     return s;
   }
 
