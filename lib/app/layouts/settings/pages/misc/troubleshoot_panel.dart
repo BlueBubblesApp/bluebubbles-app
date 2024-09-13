@@ -50,9 +50,11 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
     }
 
     // Check if battery optimizations are disabled
-    DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((value) {
-      optimizationsDisabled.value = value ?? false;
-    });
+    if (Platform.isAndroid) {
+      DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((value) {
+        optimizationsDisabled.value = value ?? false;
+      });
+    }
   }
 
   @override

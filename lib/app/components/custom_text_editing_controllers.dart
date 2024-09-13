@@ -16,7 +16,7 @@ class Mentionable {
   final Handle handle;
   String? customDisplayName;
 
-  String get displayName => customDisplayName ?? handle.displayName;
+  String get displayName => customDisplayName ?? handle.displayName.split(" ").first;
 
   String get address => handle.address;
 

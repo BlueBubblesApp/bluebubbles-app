@@ -22,6 +22,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
@@ -842,7 +843,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   Future<void> downloadLivePhoto() async {
     final RxBool downloadingAttachments = true.obs;
-    final RxnDouble progress = RxnDouble();
+    final RxnInt progress = RxnInt();
     final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
     final toDownload = part.attachments.where((element) => element.hasLivePhoto);
     final length = toDownload.length;
@@ -854,17 +855,17 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         content: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: <Widget>[
           Obx(
             () => Text(
-                '${progress.value != null && attachmentObs.value != null ? (progress.value! * attachmentObs.value!.totalBytes! / 1000).getFriendlySize(withSuffix: false) : ""} / ${(attachmentObs.value!.totalBytes!.toDouble() / 1000).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
-                style: context.theme.textTheme.bodyLarge),
+                progress.value?.toDouble().getFriendlySize() ?? "",
+                style: context.theme.textTheme.bodyLarge,
+            ),
           ),
           const SizedBox(height: 10.0),
-          Obx(
-            () => ClipRRect(
+          Obx(() => ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: LinearProgressIndicator(
                 backgroundColor: context.theme.colorScheme.outline,
                 valueColor: AlwaysStoppedAnimation<Color>(Get.context!.theme.colorScheme.primary),
-                value: progress.value,
+                value: downloadingAttachments.value ? null : 1,
                 minHeight: 5,
               ),
             ),
@@ -873,7 +874,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             height: 15.0,
           ),
           Obx(() => Text(
-                progress.value == 1
+                !downloadingAttachments.value
                     ? "Download Complete!"
                     : "You can close this dialog. The live photo(s) will continue to download in the background.",
                 maxLines: 2,
@@ -903,17 +904,15 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       for (Attachment? element in toDownload) {
         attachmentObs.value = element;
         final response = await http.downloadLivePhoto(element!.guid!,
-            onReceiveProgress: (count, total) =>
-                progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+            onReceiveProgress: (count, total) => progress.value = count);
         final nameSplit = element.transferName!.split(".");
         final file = PlatformFile(
           name: "${nameSplit.take(nameSplit.length - 1).join(".")}.mov",
           size: response.data.length,
           bytes: response.data,
         );
-        await as.saveToDisk(file);
+        await as.saveToDisk(file, isDocument: true);
       }
-      progress.value = 1;
       downloadingAttachments.value = false;
     } catch (ex, trace) {
       Logger.error("Failed to download live photo!", error: ex, trace: trace);

@@ -11,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   emoji_picker_flutter
   file_selector_windows
   flutter_acrylic
+  flutter_timezone
   geolocator_windows
   irondash_engine_context
   local_auth_windows

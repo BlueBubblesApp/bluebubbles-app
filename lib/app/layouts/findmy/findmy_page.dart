@@ -49,6 +49,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   StreamSubscription? locationSub;
   List<FindMyDevice> devices = [];
   List<FindMyFriend> friends = [];
+  List<FindMyFriend> friendsWithLocation = [];
+  List<FindMyFriend> friendsWithoutLocation = [];
   Map<String, Marker> markers = {};
   Position? location;
   bool? fetching = true;
@@ -72,6 +74,10 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
         if (existingFriend == null || existingFriend.status == null || friend.locatingInProgress || LocationStatus.values.indexOf(existingFriend.status!) <= LocationStatus.values.indexOf(friend.status ?? LocationStatus.legacy)) {
           Logger.info("Updating map for ${friend.handle?.address}");
           friends[existingFriendIndex] = friend;
+
+          friendsWithLocation = friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
+          friendsWithoutLocation = friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
+
           buildFriendMarker(friend);
           setState(() {});
         }
@@ -132,24 +138,12 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             .map((e) => FindMyFriend.fromJson(e))
             .toList()
             .cast<FindMyFriend>();
-        for (FindMyFriend e in friends.where((e) => (e.latitude ?? 0) != 0 && (e.longitude ?? 0) != 0)) {
-          markers[e.handle?.uniqueAddressAndService ?? randomString(6)] = Marker(
-            key: ValueKey('friend-${e.handle?.uniqueAddressAndService ?? randomString(6)}'),
-            point: LatLng(e.latitude!, e.longitude!),
-            width: 35,
-            height: 35,
-            child: Container(
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child:
-                  ContactAvatarWidget(editable: false, handle: e.handle ?? Handle(address: e.title ?? "Unknown")),
-                ),
-              ),
-            ),
-            alignment: Alignment.topCenter,
-          );
+
+        friendsWithLocation = friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
+        friendsWithoutLocation = friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
+
+        for (FindMyFriend e in friendsWithLocation) {
+          buildFriendMarker(e);
         }
         setState(() {
           fetching2 = false;
@@ -632,10 +626,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       ),
     ];
 
-    final friendsWithLocation =
-        friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
-    final friendsWithoutLocation =
-        friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
     final friendsBodySlivers = [
       SliverList(
         delegate: SliverChildListDelegate([
@@ -1007,6 +997,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   Widget buildDesktopTabBar() {
     return TabBar(
       controller: tabController,
+      dividerColor: context.theme.dividerColor.withOpacity(0.2),
       tabs: [
         Container(
           padding: const EdgeInsets.only(top: 8),
