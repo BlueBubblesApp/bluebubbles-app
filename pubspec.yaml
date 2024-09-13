@@ -192,6 +192,7 @@ dependencies:
   logger: ^2.4.0
   archive: ^3.6.1
   in_app_review: ^2.0.9
+  pull_down_button: ^0.10.1
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions

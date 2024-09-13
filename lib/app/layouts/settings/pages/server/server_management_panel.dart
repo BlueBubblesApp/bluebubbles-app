@@ -290,13 +290,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                         ));
                               },
                             ),
-                            Container(
-                              color: tileColor,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 65.0),
-                                child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                              ),
-                            )
+                            const SettingsDivider(),
                           ],
                         ))),
                     if (!ss.fcmData.isNull)
@@ -441,13 +435,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     backgroundColor: tileColor,
                     secondaryColor: headerColor,
                   ) : SizedBox.shrink()),
-                  Obx(() => controller.proxyService.value != null && !kIsWeb ? Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ) : SizedBox.shrink()),*/
+                  Obx(() => controller.proxyService.value != null && !kIsWeb ? const SettingsDivider(),*/
                   SettingsTile(
                     title: "Re-configure with BlueBubbles Server",
                     subtitle: kIsWeb || kIsDesktop
@@ -524,13 +512,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           },
                   ),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!kIsWeb)
                     Obx(
                       () => SettingsTile(
@@ -570,13 +552,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           }),
                     ),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.pencil, materialIcon: Icons.edit, containerColor: Colors.teal),
@@ -590,13 +566,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         }
                       }),
                   if (Platform.isAndroid)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (Platform.isAndroid)
                     Obx(() => SettingsSwitch(
                           initialVal: ss.settings.syncContactsAutomatically.value,
@@ -613,13 +583,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             containerColor: Colors.green,
                           ),
                         )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(),
                   SettingsTile(
                     leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.down_arrow,
@@ -637,13 +601,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     },
                   ),
                   if (!isSnap)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!isSnap)
                     SettingsTile(
                       leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -675,13 +633,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         materialSkin: const Icon(Icons.chevron_right),
                       ),
                     ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.refresh,
@@ -697,13 +649,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         socket.restartSocket();
                       }),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                           initialVal: ss.settings.localhostPort.value != null,
@@ -769,13 +715,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           },
                         )),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!kIsWeb)
                     Obx(() => ss.settings.localhostPort.value != null
                         ? SettingsSwitch(
@@ -848,13 +788,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             });
                           },
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                     Obx(() => SettingsTile(
                         title: "Restart iMessage",
                         subtitle: controller.isRestartingMessages.value && socket.state.value == SocketState.connected
@@ -901,13 +835,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   strokeWidth: 3,
                                   valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                                 ))))),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                     Obx(() => AnimatedSizeAndFade.showHide(
                           show: ss.settings.enablePrivateAPI.value && (controller.serverVersionCode.value ?? 0) >= 41,
                           child: Column(
@@ -962,7 +890,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               Container(
                                 color: tileColor,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 65.0),
+                                  padding: const EdgeInsets.only(left: 62.0),
                                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                 ),
                               )
@@ -1028,13 +956,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                color: tileColor,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 65.0),
-                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                ),
-                              ),
+                              const SettingsDivider(),
                               SettingsTile(
                                 title: "Check for Server Updates",
                                 subtitle: socket.state.value == SocketState.connected

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -42,13 +43,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Show a visual status indicator when the app is not connected to the server",
                           backgroundColor: tileColor,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.showSyncIndicator.value = val;
@@ -61,13 +56,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.statusIndicatorsOnChats.value = val;
@@ -98,13 +87,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.filterUnknownSenders.value = val;
@@ -118,13 +101,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           isThreeLine: true,
                         )),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
@@ -153,13 +130,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           subtitle: "Hides dividers between tiles",
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.denseChatTiles.value = val;
@@ -171,13 +142,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Compresses chat tile size on the conversation list page",
                           isThreeLine: true,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop && !kIsWeb)
                       Obx(() {
                         if (iOS) {
@@ -290,13 +255,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                         }
                       }),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (kIsDesktop)
                       Obx(() {
                         if (iOS) {
@@ -486,13 +445,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                       }),
                     if (kIsDesktop && iOS) const SizedBox(height: 24),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Pinned Order",
@@ -503,10 +456,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                             PinnedOrderPanel(),
                           );
                         },
-                        trailing: Icon(
-                          iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-                          color: context.theme.colorScheme.outline,
-                        ),
+                        trailing: const NextButton(),
                       ),
                   ],
                 ),
@@ -585,13 +535,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           isThreeLine: true,
                         )),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {

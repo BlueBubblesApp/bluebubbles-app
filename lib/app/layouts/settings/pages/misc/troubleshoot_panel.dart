@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/services/backend/sync/chat_sync_manager.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -58,19 +59,10 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final Widget nextIcon = Obx(() => ss.settings.skin.value != Skins.Material
-        ? Icon(
-            ss.settings.skin.value != Skins.Material
-                ? CupertinoIcons.chevron_right
-                : Icons.arrow_forward,
-            color: context.theme.colorScheme.outline,
-            size: iOS ? 18 : 24,
-          )
-        : const SizedBox.shrink());
-
+    bool isWebOrDesktop = kIsWeb || kIsDesktop;
     return SettingsScaffold(
         title: "Developer Tools",
-        initialHeader: (kIsWeb || kIsDesktop) ? "Contacts" : "Logging",
+        initialHeader: (isWebOrDesktop) ? "Contacts" : "Logging",
         iosSubtitle: iosSubtitle,
         materialSubtitle: materialSubtitle,
         tileColor: tileColor,
@@ -79,7 +71,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                if (kIsWeb || kIsDesktop)
+                if (isWebOrDesktop)
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
@@ -148,7 +140,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                       ),
                     ],
                   ),
-                if (kIsWeb || kIsDesktop)
+                if (isWebOrDesktop)
                   SettingsHeader(
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
@@ -169,8 +161,10 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                         LoggingPanel(),
                       );
                     },
-                    trailing: nextIcon,
+                    trailing: const NextButton(),
                   ),
+                  if (Platform.isAndroid)
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (Platform.isAndroid)
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
@@ -218,6 +212,8 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           }
                         }),
                   if (kIsDesktop)
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (kIsDesktop)
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.doc,
@@ -232,6 +228,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           }
                           await launchUrl(Uri.file(logFile.path));
                         }),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.trash,
@@ -290,7 +287,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                         title: "Disable Battery Optimizations",
                         subtitle: "Allow app to run in the background via the OS",
                         trailing: Obx(() => !optimizationsDisabled.value
-                            ? nextIcon
+                            ? const NextButton()
                             : Icon(Icons.check,
                                 color: context.theme.colorScheme.outline))),
                   ]),
@@ -338,6 +335,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                                     ))
                                 : Icon(Icons.check,
                                     color: context.theme.colorScheme.outline))),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     SettingsTile(
                         title: "Sync Chat Info",
                         subtitle: "This will re-sync all chat data & icons from the server to ensure that you have the most up-to-date information.\n\nNote: This will overwrite any group chat icons that are not locked!",

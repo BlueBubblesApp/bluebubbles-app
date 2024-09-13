@@ -122,13 +122,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                           ),
                         ),
                       if (ss.settings.serverPrivateAPI.value != true)
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        const SettingsDivider(),
                       Obx(
                         () => SettingsSwitch(
                           onChanged: (bool val) async {
@@ -174,13 +168,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                 ? Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Container(
-                                        color: tileColor,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 15.0),
-                                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                        ),
-                                      ),
+                                      const SettingsDivider(),
                                       SettingsSwitch(
                                         onChanged: (bool val) {
                                           ss.settings.privateMarkChatAsRead.value = val;
@@ -210,13 +198,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateManualMarkAsRead.value = val;
@@ -236,13 +218,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                               ],
                             ),
                           ),
-                          Container(
-                            color: tileColor,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 15.0),
-                              child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                            ),
-                          ),
+                          const SettingsDivider(),
                           SettingsSwitch(
                             title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
                             initialVal: ss.settings.enableQuickTapback.value,
@@ -347,13 +323,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   title: "Up Arrow for Quick Edit",
                                   initialVal: ss.settings.editLastSentMessageOnUpArrow.value,
@@ -372,13 +342,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateSubjectLine.value = val;
@@ -403,13 +367,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateAPISend.value = val;
@@ -434,13 +392,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateAPIAttachmentSend.value = val;
