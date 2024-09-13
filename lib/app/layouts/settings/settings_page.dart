@@ -767,26 +767,28 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               SettingsSection(
                                 backgroundColor: tileColor,
                                 children: [
-                                  SettingsTile(
-                                    title: "Leave Us a Review",
-                                    subtitle: "Enjoying the app? Leave us a review on the App Store or Google Play Store!",
-                                    onTap: () async {
-                                      final InAppReview inAppReview = InAppReview.instance;
-                                      final isAvailable = await inAppReview.isAvailable();
-                                      if (isAvailable) {
-                                          inAppReview.requestReview();
-                                      } else {
-                                        inAppReview.openStoreListing(microsoftStoreId: '9P3XF8KJ0LSM');
-                                      }
-                                    },
-                                    leading: const SettingsLeadingIcon(
-                                      iosIcon: CupertinoIcons.star_fill,
-                                      materialIcon: Icons.star,
-                                      containerColor: Colors.blue,
+                                  if (!kIsWeb && (Platform.isAndroid || Platform.isWindows))
+                                    SettingsTile(
+                                      title: "Leave Us a Review",
+                                      subtitle: "Enjoying the app? Leave us a review on the ${Platform.isAndroid ? 'Google Play Store' : 'Microsoft Store'}!",
+                                      onTap: () async {
+                                        final InAppReview inAppReview = InAppReview.instance;
+                                        final isAvailable = await inAppReview.isAvailable();
+                                        if (isAvailable) {
+                                            inAppReview.requestReview();
+                                        } else {
+                                          inAppReview.openStoreListing(microsoftStoreId: '9P3XF8KJ0LSM');
+                                        }
+                                      },
+                                      leading: const SettingsLeadingIcon(
+                                        iosIcon: CupertinoIcons.star_fill,
+                                        materialIcon: Icons.star,
+                                        containerColor: Colors.blue,
+                                      ),
+                                      isThreeLine: false,
                                     ),
-                                    isThreeLine: false,
-                                  ),
-                                  const SettingsDivider(),
+                                  if (!kIsWeb && (Platform.isAndroid || Platform.isWindows))
+                                    const SettingsDivider(),
                                   SettingsTile(
                                     title: "Make a Donation",
                                     subtitle: "Support the developers by making a one-time or recurring donation to the BlueBubbles Team!",
