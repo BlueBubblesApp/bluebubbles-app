@@ -71,7 +71,7 @@ class OverflowMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (ss.settings.skin.value == Skins.iOS) {
+      if (ss.settings.skin.value == Skins.iOS && !(kIsDesktop || kIsWeb)) {
         return CupertinoOverflowMenu(extraItems: extraItems, controller: controller);
       }
 
