@@ -275,7 +275,7 @@ class HttpService extends GetxService {
     });
   }
 
-  /// Get the attachment data for the specified [guid]
+  /// Get the live photo data for the specified [guid]
   Future<Response> downloadLivePhoto(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
