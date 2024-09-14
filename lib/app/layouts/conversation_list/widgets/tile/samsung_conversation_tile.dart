@@ -49,14 +49,14 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
               minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
               title: Obx(() => ChatTitle(
                     parentController: controller,
-                    style: context.theme.textTheme.bodyMedium!.copyWith(
+                    style: context.theme.textTheme.bodyLarge!.copyWith(
                       fontWeight: controller.shouldHighlight.value ? FontWeight.w600 : null,
                     ),
                   )),
               subtitle: controller.subtitle ??
                   Obx(() => ChatSubtitle(
                         parentController: controller,
-                        style: context.theme.textTheme.bodySmall!.copyWith(
+                        style: context.theme.textTheme.bodyMedium!.copyWith(
                           color: controller.shouldHighlight.value ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
                           height: 1.5,
                         ),
@@ -192,27 +192,30 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
           mainAxisAlignment: MainAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              (cachedLatestMessage?.error ?? 0) > 0 ? "Error" : "${indicatorText.isNotEmpty ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
-              textAlign: TextAlign.right,
-              style: context.theme.textTheme.bodySmall!.copyWith(
-                color: (cachedLatestMessage?.error ?? 0) > 0
-                    ? context.theme.colorScheme.error
-                    : controller.shouldHighlight.value || unread
-                        ? context.theme.colorScheme.onBackground
-                        : context.theme.colorScheme.outline,
-                fontWeight: controller.shouldHighlight.value ? FontWeight.w500 : null,
-              ),
-              overflow: TextOverflow.clip,
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Text(
+                (cachedLatestMessage?.error ?? 0) > 0 ? "Error" : "${indicatorText.isNotEmpty ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
+                textAlign: TextAlign.right,
+                style: context.theme.textTheme.bodySmall!.copyWith(
+                  color: (cachedLatestMessage?.error ?? 0) > 0
+                      ? context.theme.colorScheme.error
+                      : controller.shouldHighlight.value || unread
+                          ? context.theme.colorScheme.onBackground
+                          : context.theme.colorScheme.outline,
+                  fontWeight: controller.shouldHighlight.value ? FontWeight.w500 : null,
+                ),
+                overflow: TextOverflow.clip,
+              )
             ),
             if (controller.chat.isPinned!) const SizedBox(width: 5.0),
-            if (controller.chat.isPinned!) Icon(Icons.star, size: 15, color: context.theme.colorScheme.tertiary),
+            if (controller.chat.isPinned!) Icon(Icons.star, size: 16, color: context.theme.colorScheme.tertiary),
             if (muteType == "mute") const SizedBox(width: 5.0),
             if (muteType == "mute")
               Obx(() => Icon(
                     Icons.notifications_off,
                     color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
-                    size: 15,
+                    size: 16,
                   )),
           ],
         ),
