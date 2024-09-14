@@ -37,7 +37,7 @@ class HeaderText extends StatelessWidget {
             : "Messages",
         style: context.textTheme.headlineLarge!.copyWith(
           color: context.theme.colorScheme.onBackground,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
           fontSize: fontSize,
         ),
         maxLines: 1,
@@ -186,7 +186,7 @@ class MaterialOverflowMenu extends StatelessWidget {
       },
       icon: ss.settings.skin.value == Skins.Material ? Icon(
         Icons.more_vert,
-        color: context.theme.colorScheme.onBackground,
+        color: context.theme.colorScheme.properOnSurface,
         size: 25,
       ) : null,
       child: ss.settings.skin.value == Skins.Material
@@ -208,7 +208,7 @@ class MaterialOverflowMenu extends StatelessWidget {
             materialSkin: const SizedBox.shrink(),
             samsungSkin: Icon(
               Icons.more_vert,
-              color: context.theme.colorScheme.onBackground,
+              color: context.theme.colorScheme.properOnSurface,
               size: 25,
             ),
           ),

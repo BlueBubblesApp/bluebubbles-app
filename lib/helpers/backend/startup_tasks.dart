@@ -58,6 +58,7 @@ class StartupTasks {
     
     if (!kIsWeb) {
       await cs.init();
+      GlobalChatService;
     }
 
     await notif.init();

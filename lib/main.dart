@@ -501,20 +501,14 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           if (await temp.exists()) await temp.delete(recursive: true);
 
           /* ----- BADGE ICON LISTENER ----- */
-          int count = 0;
-          final unreadQuery = Database.chats.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
-          unreadQuery.listen((Query<Chat> query) async {
-            int c = query.count();
-            if (count != c) {
-              count = c;
-              if (count == 0) {
+          GlobalChatService.unreadCount.listen((count) async {
+            if (count == 0) {
                 await WindowsTaskbar.resetOverlayIcon();
               } else if (count <= 9) {
                 await WindowsTaskbar.setOverlayIcon(ThumbnailToolbarAssetIcon('assets/badges/badge-$count.ico'));
               } else {
                 await WindowsTaskbar.setOverlayIcon(ThumbnailToolbarAssetIcon('assets/badges/badge-10.ico'));
               }
-            }
           });
 
           /* ----- WINDOW EFFECT INITIALIZATION ----- */

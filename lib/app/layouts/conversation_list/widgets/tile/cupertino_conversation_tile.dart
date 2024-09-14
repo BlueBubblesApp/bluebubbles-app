@@ -271,8 +271,6 @@ class UnreadIcon extends CustomStateful<ConversationTileController> {
 }
 
 class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
-  bool unread = false;
-  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -281,48 +279,13 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    unread = controller.chat.hasUnreadMessage ?? false;
-    if (!kIsWeb) {
-      updateObx(() {
-        final unreadQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
-        sub = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null
-              ? null
-              : await runAsync(() {
-                  return Database.chats.get(controller.chat.id!);
-                });
-          if (chat == null) return;
-          if (chat.hasUnreadMessage != unread) {
-            setState(() {
-              unread = chat.hasUnreadMessage!;
-            });
-          }
-        });
-      });
-    } else {
-      sub = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          if (chat.hasUnreadMessage != unread) {
-            setState(() {
-              unread = chat.hasUnreadMessage!;
-            });
-          }
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: unread
+      child: Obx(() => GlobalChatService.unreadState(controller.chat.guid).value
           ? Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(35),
@@ -332,6 +295,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
               height: 10,
             )
           : const SizedBox(width: 10),
+      )
     );
   }
 }
