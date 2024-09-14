@@ -209,14 +209,14 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
               )
             ),
             if (controller.chat.isPinned!) const SizedBox(width: 5.0),
-            if (controller.chat.isPinned!) Icon(Icons.star, size: 16, color: context.theme.colorScheme.tertiary),
-            if (muteType == "mute") const SizedBox(width: 5.0),
             if (muteType == "mute")
               Obx(() => Icon(
                     Icons.notifications_off,
                     color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
                     size: 16,
                   )),
+            if (muteType == "mute") const SizedBox(width: 2.0),
+            if (controller.chat.isPinned!) Icon(Icons.star, size: 16, color: context.theme.colorScheme.tertiary),
           ],
         ),
       );

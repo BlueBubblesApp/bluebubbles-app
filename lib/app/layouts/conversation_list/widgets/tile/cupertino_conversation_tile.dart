@@ -77,7 +77,7 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
               child: controller.subtitle ??
                   ChatSubtitle(
                     parentController: controller,
-                    style: context.theme.textTheme.bodySmall!.copyWith(
+                    style: context.theme.textTheme.bodyMedium!.copyWith(
                       color: controller.shouldHighlight.value
                           ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
                           : context.theme.colorScheme.outline,
