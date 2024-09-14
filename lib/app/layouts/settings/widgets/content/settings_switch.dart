@@ -40,7 +40,7 @@ class SettingsSwitch extends StatelessWidget {
             style: context.theme.textTheme.bodyLarge,
           ),
           leading: leading == null ? null : Padding(
-            padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0, right: 5),
+            padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0, right: 5, left: 5),
             child: leading,
           ),
           trailing: Switch(

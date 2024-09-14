@@ -608,19 +608,32 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         Obx(() => Material(
                             shape: ss.settings.skin.value == Skins.Samsung
                                 ? SquircleBorder(
-                                    side: BorderSide(color: context.theme.colorScheme.outline, width: 3.0),
+                                    side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.5), width: 1.0),
                                   )
                                 : null,
                             color: Colors.transparent,
-                            borderRadius: ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(5) : null,
+                            borderRadius: ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(6) : null,
                             child: SizedBox(
-                                width: 33,
-                                height: 33,
+                                width: 31,
+                                height: 31,
                                 child: Center(
-                                    child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(5),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(6),
+                                        color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.5),
+                                            blurRadius: 0,
+                                            spreadRadius: 0.5,
+                                            offset: const Offset(0, 0),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
                                         child: Image.asset("assets/images/google-sign-in.png",
-                                            width: 33, fit: BoxFit.contain))))))
+                                            width: 33, fit: BoxFit.contain)))))))
                       ]),
                       title: "Sign in with Google",
                       subtitle: "Fetch Firebase Config by Signing in with Google",
