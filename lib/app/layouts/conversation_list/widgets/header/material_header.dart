@@ -27,7 +27,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
     return Stack(
       children: [
         Obx(() => Container(
-              height: controller.selectedChats.isEmpty ? 80 : null,
+              height: controller.selectedChats.isEmpty ? 100 : null,
               width: ns.width(context),
               color: ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.properSurface : Colors.transparent,
             )),
@@ -35,9 +35,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
           duration: const Duration(milliseconds: 500),
           child: controller.selectedChats.isEmpty
               ? SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 0),
-                    child: Obx(() {
+                  child: Obx(() {
                       ns.listener.value;
                       return Container(
                         decoration: BoxDecoration(
@@ -111,7 +109,6 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                             ),
                       );
                     }),
-                  ),
                 )
               : SafeArea(
                   child: Padding(

@@ -57,7 +57,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
           minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
           title: Obx(() => ChatTitle(
                 parentController: controller,
-                style: context.theme.textTheme.bodyMedium!
+                style: context.theme.textTheme.bodyLarge!
                     .copyWith(
                       fontWeight: controller.shouldHighlight.value
                           ? FontWeight.w600
@@ -72,7 +72,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
                 final unread = GlobalChatService.unreadState(controller.chat.guid).value;
                 return ChatSubtitle(
                     parentController: controller,
-                    style: context.theme.textTheme.bodySmall!
+                    style: context.theme.textTheme.bodyMedium!
                         .copyWith(
                           fontWeight: unread ? FontWeight.bold : null,
                           color: controller.shouldHighlight.value || unread ? context.textTheme.bodyMedium!.color : context.theme.colorScheme.outline,
