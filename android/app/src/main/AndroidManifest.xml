@@ -248,9 +248,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- <meta-data
+        <meta-data
             android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc"/> -->
+            android:resource="@xml/automotive_app_desc"/>
 
         <meta-data android:name="WindowManagerPreference:SuppressWindowControlNavigationButton" android:value="true" />
         <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="tablet" />
