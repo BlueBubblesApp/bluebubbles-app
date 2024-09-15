@@ -32,6 +32,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' hide context;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sprung/sprung.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -1021,6 +1022,17 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   Future<void> remindLater() async {
+    if (Platform.isAndroid) {
+      bool denied = await Permission.scheduleExactAlarm.isDenied;;
+      bool permanentlyDenied = await Permission.scheduleExactAlarm.isPermanentlyDenied;
+      if (denied && !permanentlyDenied) {
+        await Permission.scheduleExactAlarm.request();
+      } else if (permanentlyDenied) {
+        showSnackbar("Error", "You must enable the manage alarm permission to use this feature");
+        return;
+      }
+    }
+
     final finalDate = await showTimeframePicker("Select Reminder Time", context,
         presetsAhead: true, additionalTimeframes: {"3 Hours": 3, "6 Hours": 6}, useTodayYesterday: true);
     if (finalDate != null) {
