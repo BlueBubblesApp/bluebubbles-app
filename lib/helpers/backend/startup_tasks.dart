@@ -8,7 +8,9 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:on_exit/init.dart';
+import 'package:app_install_date/app_install_date.dart';
 import 'package:path/path.dart';
 import 'package:tuple/tuple.dart';
 import 'package:window_manager/window_manager.dart';
@@ -56,6 +58,7 @@ class StartupTasks {
     
     if (!kIsWeb) {
       await cs.init();
+      GlobalChatService;
     }
 
     await notif.init();
@@ -99,7 +102,7 @@ class StartupTasks {
 
     // We don't need to check for updates immediately, so delay it so other
     // code has a chance to run and we don't block the UI thread.
-    Future.delayed(const Duration(seconds: 10), () {
+    Future.delayed(const Duration(seconds: 30), () {
       try {
         ss.checkServerUpdate();
       } catch (ex, stack) {
@@ -112,6 +115,13 @@ class StartupTasks {
         Logger.warn("Failed to check for client update!", error: ex, trace: stack);
       }
     });
+
+    // Check if we need to request a review
+    if (Platform.isAndroid) {
+      Future.delayed(const Duration(minutes: 1), () async {
+        await reviewFlow();
+      });
+    }
   }
 
   static Future<void> checkInstanceLock() async {
@@ -162,5 +172,42 @@ class StartupTasks {
         }
       });
     });
+  }
+}
+
+Future<void> reviewFlow() async {
+  if (!ls.isAlive) return;
+  Logger.info('Checking if we should request a review');
+
+  try {
+    DateTime sinceDate = await AppInstallDate().installDate;
+    int lastReviewRequest = ss.settings.lastReviewRequestTimestamp.value;
+    if (lastReviewRequest > 0) {
+      sinceDate = DateTime.fromMillisecondsSinceEpoch(lastReviewRequest);
+    }
+
+    final DateTime now = DateTime.now();
+    final int days = now.difference(sinceDate).inDays;
+
+    // If the app has been installed for 7 days, request a review
+    // And if the user has not been asked for a review ever.
+    // If the user has already been asked, ask again after 30 days
+    if ((lastReviewRequest == 0 && days >= 7) || (lastReviewRequest > 0 && days >= 30)) {
+      ss.settings.lastReviewRequestTimestamp.value = now.millisecondsSinceEpoch;
+      await ss.settings.saveOne("lastReviewRequestTimestamp");
+      await requestReview();
+    } else {
+      Logger.info('Not requesting review, days since install/last request: $days');
+    }
+  } catch (e, st) {
+      Logger.warn("Failed to request app review", error: e, trace: st);
+  }
+}
+
+Future<void> requestReview() async {
+  Logger.info('Requesting in app review!');
+  final InAppReview inAppReview = InAppReview.instance;
+  if (await inAppReview.isAvailable()) {
+    await inAppReview.requestReview();
   }
 }

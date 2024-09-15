@@ -145,7 +145,7 @@ class Database {
 
   static void _performDatabaseMigrations({int? versionOverride}) {
     int version = versionOverride ?? ss.prefs.getInt('dbVersion') ?? (ss.settings.finishedSetup.value ? 1 : Database.version);
-    if (version > Database.version) return;
+    if (version <= Database.version) return;
 
     final Stopwatch s = Stopwatch();
     s.start();

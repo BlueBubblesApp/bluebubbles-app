@@ -520,10 +520,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                     ],
                   ),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Misc"),
-                SettingsSection(
+                Obx(() => SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    Obx(() => SettingsSwitch(
+                    if (ss.settings.skin.value == Skins.iOS)
+                      SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.moveChatCreatorToHeader.value = val;
                             saveSettings();
@@ -533,11 +534,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                           backgroundColor: tileColor,
                           isThreeLine: true,
-                        )),
-                    if (!kIsWeb && !kIsDesktop)
+                        ),
+                    if (ss.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop)
                       const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
-                      Obx(() => SettingsSwitch(
+                      SettingsSwitch(
                             onChanged: (bool val) {
                               ss.settings.cameraFAB.value = val;
                               saveSettings();
@@ -549,9 +550,9 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                 : "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                             backgroundColor: tileColor,
                             isThreeLine: true,
-                          )),
+                          ),
                   ],
-                ),
+                )),
               ],
             ),
           ),

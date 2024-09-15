@@ -63,9 +63,9 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           backgroundColor: backgroundColor,
           extendBodyBehindAppBar: true,
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
+          floatingActionButton: !showArchived && !showUnknown
               ? ConversationListFAB(parentController: controller)
-              : const SizedBox.shrink()),
+              : const SizedBox.shrink(),
           body: Obx(() {
             final _chats = chats.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown);
 

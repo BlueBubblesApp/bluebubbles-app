@@ -772,13 +772,10 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       title: "Leave Us a Review",
                                       subtitle: "Enjoying the app? Leave us a review on the ${Platform.isAndroid ? 'Google Play Store' : 'Microsoft Store'}!",
                                       onTap: () async {
+                                        // Just open the listing for now. We don't want to actually open the dialog here.
+                                        // If a review has been left, nothing will happen if tapped, which we don't want.
                                         final InAppReview inAppReview = InAppReview.instance;
-                                        final isAvailable = await inAppReview.isAvailable();
-                                        if (isAvailable) {
-                                            inAppReview.requestReview();
-                                        } else {
-                                          inAppReview.openStoreListing(microsoftStoreId: '9P3XF8KJ0LSM');
-                                        }
+                                        inAppReview.openStoreListing(microsoftStoreId: '9P3XF8KJ0LSM');
                                       },
                                       leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.star_fill,

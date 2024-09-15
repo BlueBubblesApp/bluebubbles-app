@@ -5,6 +5,7 @@
 import FlutterMacOS
 import Foundation
 
+import app_install_date
 import app_links
 import bitsdojo_window_macos
 import connectivity_plus
@@ -47,6 +48,7 @@ import wakelock_plus
 import window_manager
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+  AppInstallDatePlugin.register(with: registry.registrar(forPlugin: "AppInstallDatePlugin"))
   AppLinksMacosPlugin.register(with: registry.registrar(forPlugin: "AppLinksMacosPlugin"))
   BitsdojoWindowPlugin.register(with: registry.registrar(forPlugin: "BitsdojoWindowPlugin"))
   ConnectivityPlusPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlusPlugin"))
