@@ -131,7 +131,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
       final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
       String _subtitle = hideInfo ? fakeText : subtitle;
 
-      final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
       if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)) {
         return const SizedBox.shrink();
       }

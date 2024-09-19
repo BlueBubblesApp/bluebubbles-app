@@ -61,7 +61,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
                     .copyWith(
                       fontWeight: controller.shouldHighlight.value
                           ? FontWeight.w600
-                          : GlobalChatService.unreadState(controller.chat.guid).value
+                          : GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false
                               ? FontWeight.bold
                               : null,
                     )
@@ -69,7 +69,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
               )),
           subtitle: controller.subtitle ??
               Obx(() {
-                final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+                final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
                 return ChatSubtitle(
                     parentController: controller,
                     style: context.theme.textTheme.bodyMedium!
@@ -206,8 +206,8 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
     return Padding(
       padding: const EdgeInsets.only(right: 3),
       child: Obx(() {
-        final unread = GlobalChatService.unreadState(controller.chat.guid).value;
-        final muteType = GlobalChatService.muteState(controller.chat.guid).value;
+        final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
+        final muteType = GlobalChatService.getReactiveChat(controller.chat.guid)?.muteType.value ?? '';
 
         String indicatorText = "";
         if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
@@ -307,7 +307,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   Widget build(BuildContext context) {
     return Obx(() => Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: (GlobalChatService.unreadState(controller.chat.guid).value)
+      child: (GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false)
           ? Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(35),

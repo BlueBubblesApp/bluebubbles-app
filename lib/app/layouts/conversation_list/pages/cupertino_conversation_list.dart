@@ -75,7 +75,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                     if (!showArchived && !showUnknown) CupertinoHeader(controller: controller),
                     Obx(() {
                       ns.listener.value;
-                      final _chats = chats.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true);
+                      final _chats = GlobalChatService.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true);
 
                       if (_chats.isEmpty) {
                         return const SliverToBoxAdapter(child: SizedBox.shrink());

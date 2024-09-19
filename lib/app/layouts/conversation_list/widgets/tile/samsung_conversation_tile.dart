@@ -174,8 +174,8 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.unreadState(controller.chat.guid).value;
-      final muteType = GlobalChatService.muteState(controller.chat.guid).value;
+      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
+      final muteType = GlobalChatService.getReactiveChat(controller.chat.guid)?.muteType.value ?? '';
 
       String indicatorText = "";
       if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
@@ -245,7 +245,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
       return (unread)
           ? Container(
               decoration: BoxDecoration(

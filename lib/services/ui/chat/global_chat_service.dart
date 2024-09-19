@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:get/get.dart';
 
@@ -7,46 +10,87 @@ import 'package:get/get.dart';
 _GlobalChatService GlobalChatService = Get.isRegistered<_GlobalChatService>() ? Get.find<_GlobalChatService>() : Get.put(_GlobalChatService());
 
 class _GlobalChatService extends GetxService {
+  Timer? _chatDebounceTimer;
+
+  final RxList<Chat> chats = <Chat>[].obs;
+  final Map<String, ReactiveChat> _reactiveChats = <String, ReactiveChat>{}.obs;
+
   final RxInt _unreadCount = 0.obs;
-  final Map<String, RxBool> _unreadCountMap = <String, RxBool>{}.obs;
-  final Map<String, RxnString> _muteTypeMap = <String, RxnString>{}.obs;
-
-  RxInt get unreadCount => _unreadCount;
-
-  RxBool unreadState(String chatGuid) {
-    final map = _unreadCountMap[chatGuid];
-    if (map == null) {
-      _unreadCountMap[chatGuid] = false.obs;
-      return _unreadCountMap[chatGuid]!;
+  RxInt get unreadCount {
+    int count = 0;
+    for (ReactiveChat chat in _reactiveChats.values) {
+      if (chat.isUnread.value) {
+        count++;
+      }
     }
 
-    return map;
+    if (count != _unreadCount.value) {
+      _unreadCount.value = count;
+    }
+
+    return _unreadCount;
   }
 
-  RxnString muteState(String chatGuid) {
-    final map = _muteTypeMap[chatGuid];
-    if (map == null) {
-      _muteTypeMap[chatGuid] = RxnString();
-      return _muteTypeMap[chatGuid]!;
-    }
+  int initCount = 0;
 
-    return map;
+  ReactiveChat? getReactiveChat(String chatGuid) {
+    return _reactiveChats[chatGuid];
   }
 
   @override
   void onInit() {
     super.onInit();
-    watchChats();
+    reloadChats();
+    watchForChatUpdates();
   }
 
-  void watchChats() {
-    final query = Database.chats.query().watch(triggerImmediately: true);
+  void reloadChats() {
+    final chats = Database.chats.getAll();
+    initializeChats(chats);
+  }
+
+  void initializeChats(List<Chat> chats) {
+    // If we have't had a timer yet, initialize the chats immediately
+    if (_chatDebounceTimer == null) {
+      _initializeChats(chats);
+      
+      // Give it a value of 1 so we don't initialize again
+      _chatDebounceTimer = Timer(Duration.zero, () {});
+      return;
+    }
+
+    if (_chatDebounceTimer!.isActive) _chatDebounceTimer?.cancel();
+      _chatDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+        _initializeChats(chats);
+      });
+  }
+
+  void _initializeChats(List<Chat> chats) {
+    initCount += 1;
+    Logger.info("Initializing Chats #$initCount");
+
+    final stopwatch = Stopwatch()..start();
+    for (Chat chat in chats) {
+      if (!_reactiveChats.containsKey(chat.guid)) {
+        _reactiveChats[chat.guid] = ReactiveChat.fromChat(chat);
+        this.chats.add(chat);
+      }
+    }
+
+    // Detect changes and make updates
+    _evaluateTitleInfo(chats);
+    _evaluateUnreadInfo(chats);
+    _evaluateMuteInfo(chats);
+    
+    stopwatch.stop();
+    Logger.info("Finished initializing chats in ${stopwatch.elapsedMilliseconds}ms");
+  }
+
+  void watchForChatUpdates() {
+    final query = Database.chats.query().watch(triggerImmediately: false);
     query.listen((event) {
       final chats = event.find();
-
-      // Detect changes and make updates
-      _evaluateUnreadInfo(chats);
-      _evaluateMuteInfo(chats);
+      initializeChats(chats);
     });
   }
 
@@ -54,31 +98,47 @@ class _GlobalChatService extends GetxService {
     unreadCount.value = chats.where((element) => element.hasUnreadMessage ?? false).length;
 
     for (Chat chat in chats) {
-      final RxBool? currentUnreadStatus = _unreadCountMap[chat.guid];
+      final ReactiveChat? rChat = _reactiveChats[chat.guid];
+      if (rChat == null) continue;
       
       // Set the default value
-      if (currentUnreadStatus == null) {
-        _unreadCountMap[chat.guid] = RxBool(false);
-        _unreadCountMap[chat.guid]!.value = chat.hasUnreadMessage ?? false;
-      } else if (currentUnreadStatus.value != chat.hasUnreadMessage) {
-        Logger.debug("Updating Chat (${chat.guid}) Unread Status from ${currentUnreadStatus.value} to ${chat.hasUnreadMessage}");
-        _unreadCountMap[chat.guid]!.value = chat.hasUnreadMessage ?? false;
+      if (rChat.isUnread.value != chat.hasUnreadMessage && chat.hasUnreadMessage != null) {
+        Logger.debug("Updating Chat (${chat.guid}) Unread Status from ${rChat.isUnread} to ${chat.hasUnreadMessage}");
+        rChat.isUnread.value = chat.hasUnreadMessage ?? false;
       }
     }
   }
 
   void _evaluateMuteInfo(List<Chat> chats) {
     for (Chat chat in chats) {
-      final Rx<String?>? currentMuteStatus = _muteTypeMap[chat.guid];
-
-      // Set the default value
-      if (currentMuteStatus == null) {
-        _muteTypeMap[chat.guid] = RxnString();
-        _muteTypeMap[chat.guid]!.value = chat.muteType;
-      } else if (currentMuteStatus.value != chat.muteType) {
-        Logger.debug("Updating Chat (${chat.guid}) Mute Type from ${currentMuteStatus.value} to ${chat.muteType}");
-        _muteTypeMap[chat.guid]!.value = chat.muteType;
+      final ReactiveChat? rChat = _reactiveChats[chat.guid];
+      if (rChat == null) continue;
+      if (rChat.muteType.value != chat.muteType && chat.muteType != null) {
+        Logger.debug("Updating Chat (${chat.guid}) Mute Type from ${rChat.muteType.value} to ${chat.muteType}");
+        rChat.muteType.value = chat.muteType;
       }
     }
+  }
+
+  void _evaluateTitleInfo(List<Chat> chats) {
+    Logger.info("Evaluating Title Info");
+    final stopwatch = Stopwatch()..start();
+    for (Chat chat in chats) {
+      ReactiveChat? rChat = _reactiveChats[chat.guid];
+      if (rChat == null) continue;
+      
+      final newTitle = chat.getTitle();
+      if (rChat.title.value != newTitle) {
+        Logger.debug("Updating Chat (${chat.guid}) Title from ${rChat.title.value} to ${chat.getTitle()}");
+        rChat.title.value = newTitle;
+      }
+    }
+
+    stopwatch.stop();
+    Logger.info("Finished evaluating title info in ${stopwatch.elapsedMilliseconds}ms");
+  }
+
+  void dispose() {
+    _chatDebounceTimer?.cancel();
   }
 }

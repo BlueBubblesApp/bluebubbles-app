@@ -185,7 +185,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
       return unread ? Positioned(
         left: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
         top: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
@@ -226,8 +226,8 @@ class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileControl
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final muteType = controller.chat.muteType;
-      final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+      final muteType = GlobalChatService.getReactiveChat(controller.chat.guid)?.muteType.value ?? '';
+      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
 
       return muteType == "mute"
           ? Positioned(
@@ -452,7 +452,7 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
       return unread && !isNullOrEmpty(controller.chat.latestMessage.associatedMessageGuid) && !controller.chat.latestMessage.isFromMe!
           ? Positioned(
               top: -sqrt(widget.width / 2) + widget.width * 0.05,

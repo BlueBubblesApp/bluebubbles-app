@@ -285,7 +285,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: Obx(() => GlobalChatService.unreadState(controller.chat.guid).value
+      child: Obx(() => GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false 
           ? Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(35),
