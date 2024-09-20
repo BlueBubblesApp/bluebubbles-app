@@ -198,8 +198,9 @@ class ActionHandler extends GetxService {
   Future<void> sendMultipart(Chat c, Message m, Message? selected, String? r) async {
     final completer = Completer<void>();
 
-    List<Map<String, dynamic>> parts = m.attributedBody.first.runs.map((e) => {
-      "text": m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last),
+    List<AttributedBody> body = m.attributedBody.isEmpty ? [] : m.attributedBody;
+    List<Map<String, dynamic>> parts = body.first.runs.map((e) => {
+      "text": body.first.string.substring(e.range.first, e.range.first + e.range.last),
       "mention": e.attributes!.mention,
       "partIndex": e.attributes!.messagePart,
     }).toList();
