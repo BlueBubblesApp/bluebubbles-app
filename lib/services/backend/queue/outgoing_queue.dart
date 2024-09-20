@@ -16,6 +16,7 @@ class OutgoingQueue extends Queue {
     final item = _ as OutgoingItem;
 
     switch (item.type) {
+      case QueueType.sendMultipart:
       case QueueType.sendMessage:
         return await ah.prepMessage(item.chat, item.message, item.selected, item.reaction, clearNotificationsIfFromMe: !(item.customArgs?['notifReply'] ?? false));
       case QueueType.sendAttachment:
@@ -59,6 +60,9 @@ class OutgoingQueue extends Queue {
     switch (item.type) {
       case QueueType.sendMessage:
         await handleSend(() => ah.sendMessage(item.chat, item.message, item.selected, item.reaction), item.chat);
+        break;
+      case QueueType.sendMultipart:
+        await handleSend(() => ah.sendMultipart(item.chat, item.message, item.selected, item.reaction), item.chat);
         break;
       case QueueType.sendAttachment:
         await handleSend(() => ah.sendAttachment(item.chat, item.message, item.customArgs?['audio'] ?? false), item.chat);
