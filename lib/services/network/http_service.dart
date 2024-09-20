@@ -623,7 +623,7 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
-        //"ddScan": ddScan,
+        "ddScan": ddScan,
       });
 
       final response = await dio.post(
@@ -689,7 +689,7 @@ class HttpService extends GetxService {
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
         "parts": parts,
-        //"ddScan": ddScan,
+        "ddScan": ddScan,
       };
 
       final response = await dio.post(
