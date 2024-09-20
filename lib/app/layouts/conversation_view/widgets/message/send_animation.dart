@@ -96,9 +96,8 @@ class _SendAnimationState
     if (text.isNotEmpty || subject.isNotEmpty) {
       final textSplit = MentionTextEditingController.splitText(text);
       bool flag = false;
-      bool shouldUseMultipart = text.hasUrl && ss.settings.enablePrivateAPI.value && ss.settings.privateAPISend.value;
       final newText = [];
-      if (textSplit.length > 1 || shouldUseMultipart) {
+      if (textSplit.length > 1) {
         for (String word in textSplit) {
           if (word == MentionTextEditingController.escapingChar) flag = !flag;
           int? index = flag ? int.tryParse(word) : null;
@@ -127,10 +126,10 @@ class _SendAnimationState
         handleId: 0,
         hasDdResults: true,
         attributedBody: [
-          if (textSplit.length > 1 || shouldUseMultipart)
+          if (textSplit.length > 1)
             AttributedBody(
               string: text,
-              runs: newText.whereType<Mentionable>().isEmpty && !shouldUseMultipart
+              runs: newText.whereType<Mentionable>().isEmpty
                   ? []
                   : newText.map((e) {
                       if (e is Mentionable) {
@@ -158,9 +157,7 @@ class _SendAnimationState
       );
       _message.generateTempGuid();
       outq.queue(OutgoingItem(
-        type: (_message.attributedBody.isNotEmpty || shouldUseMultipart)
-            ? QueueType.sendMultipart
-            : QueueType.sendMessage,
+        type: (_message.attributedBody.isNotEmpty) ? QueueType.sendMultipart : QueueType.sendMessage,
         chat: controller.chat,
         message: _message,
       ));
