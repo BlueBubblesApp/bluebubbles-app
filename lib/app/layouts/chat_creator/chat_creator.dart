@@ -591,10 +591,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                       color: Colors.transparent,
                                       child: InkWell(
                                         onTap: () {
-                                          if (chat.isGroup) {
-                                            selectedContacts.clear();
-                                          }
-
                                           addSelectedList(chat.participants
                                               .where((e) =>
                                                   selectedContacts.firstWhereOrNull((c) => c.address == e.address) ==
