@@ -147,7 +147,7 @@ class ActionHandler extends GetxService {
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-        ddScan: m.text!.isURL,
+        ddScan: m.text!.hasUrl,
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
@@ -197,18 +197,22 @@ class ActionHandler extends GetxService {
 
   Future<void> sendMultipart(Chat c, Message m, Message? selected, String? r) async {
     final completer = Completer<void>();
+
+    List<Map<String, dynamic>> parts = m.attributedBody.first.runs.map((e) => {
+      "text": m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last),
+      "mention": e.attributes!.mention,
+      "partIndex": e.attributes!.messagePart,
+    }).toList();
+
     http.sendMultipart(
       c.guid,
       m.guid!,
-      m.attributedBody.first.runs.map((e) => {
-        "text": m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last),
-        "mention": e.attributes!.mention,
-        "partIndex": e.attributes!.messagePart,
-      }).toList(),
+      parts,
       subject: m.subject,
       selectedMessageGuid: m.threadOriginatorGuid,
       effectId: m.expressiveSendStyleId,
       partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
+      ddScan: parts.any((e) => e["text"].toString().hasUrl)
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
       try {

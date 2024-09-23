@@ -622,9 +622,12 @@ class HttpService extends GetxService {
         "effectId": effectId,
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
-        "partIndex": partIndex,
-        //"ddScan": ddScan,
+        "partIndex": partIndex
       });
+
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateAPISend.value && ss.isMinVenturaSync) {
+        data["ddScan"] = ddScan;
+      }
 
       final response = await dio.post(
           "$apiRoot/message/text",
@@ -688,9 +691,12 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
-        "parts": parts,
-        //"ddScan": ddScan,
+        "parts": parts
       };
+
+      if (ss.isMinVenturaSync) {
+        data["ddScan"] = ddScan;
+      }
 
       final response = await dio.post(
           "$apiRoot/message/multipart",

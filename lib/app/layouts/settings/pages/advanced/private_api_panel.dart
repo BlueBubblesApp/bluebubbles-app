@@ -333,6 +333,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   },
                                   subtitle: "Press the Up Arrow to begin editing the last message you sent",
                                   backgroundColor: tileColor,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.arrow_up_square,
+                                    materialIcon: Icons.arrow_circle_up,
+                                    containerColor: Colors.redAccent,
+                                  ),
                                 ),
                               ],
                             ),
