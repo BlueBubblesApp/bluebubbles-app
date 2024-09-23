@@ -44,7 +44,6 @@ class SocketIOForegroundService : Service() {
 
     private val eventBlacklist: Array<String> = arrayOf(
         "typing-indicator",
-        "chat-read-status-changed",
         "new-findmy-location",
         Socket.EVENT_CONNECT,
         Socket.EVENT_DISCONNECT
