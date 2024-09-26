@@ -453,8 +453,6 @@ class IGlobalChatService extends GetxService {
     BuildContext? ctx = context ?? Get.context;
     if (ctx == null) throw Exception("No context provided to open chat");
 
-    setActiveChat(chatGuid);
-
     // Code won't run after this call until the route is popped.
     await ns.pushAndRemoveUntil(
       context ?? Get.context!,
@@ -462,13 +460,7 @@ class IGlobalChatService extends GetxService {
         chatGuid: chatGuid,
         customService: customService,
         fromChatCreator: fromChatCreator,
-        onInit: () async {
-          // Call these before onInit() because we need to execute this after the route
-          // has loaded, but not before it's been pushed.
-          toggleReadStatus(chatGuid, isUnread: false);
-          await ss.prefs.setString('lastOpenedChat', chatGuid);
-          if (onInit != null) onInit();
-        }
+        onInit: onInit
       ),
       (route) => route.isFirst,
       closeActiveChat: closeActiveChat && _activeGuid.value != chatGuid,
@@ -509,6 +501,7 @@ class IGlobalChatService extends GetxService {
     _activeGuid.value = null;
 
     if (_activeController.value != null) {
+      print("Closing active controller");
       _activeController.value!.close();
     }
 

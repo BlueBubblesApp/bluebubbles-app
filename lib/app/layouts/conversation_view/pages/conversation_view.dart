@@ -44,12 +44,17 @@ class ConversationViewState extends OptimizedState<ConversationView> {
 
     Logger.debug("Initializing Conversation View for ${widget.chatGuid}");
     controller.fromChatCreator = widget.fromChatCreator;
-    GlobalChatService.closeChat(widget.chatGuid);
+    GlobalChatService.setActiveChat(widget.chatGuid);
     Logger.debug("Conversation View initialized for ${widget.chatGuid}");
 
-    if (widget.onInit != null) {
-      Future.delayed(Duration.zero, widget.onInit!);
-    }
+    Future.delayed(Duration.zero, () async {
+      GlobalChatService.toggleReadStatus(widget.chatGuid, isUnread: false);
+      await ss.prefs.setString('lastOpenedChat', widget.chatGuid);
+
+      if (widget.onInit != null) {
+        widget.onInit!();
+      }
+    });
   }
 
   @override

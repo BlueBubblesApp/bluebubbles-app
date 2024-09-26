@@ -151,6 +151,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.pause();
       a.player.dispose();
     }
+
     scrollController.dispose();
     super.onClose();
   }
