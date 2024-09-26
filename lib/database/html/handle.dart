@@ -115,7 +115,7 @@ class Handle {
 
   static Handle? findOne({int? id, int? originalROWID, Tuple2<String, String>? addressAndService}) {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return chats.webCachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.uniqueAddressAndService == "${addressAndService?.item1}/${addressAndService?.item2}");
+    return GlobalChatService.allHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.uniqueAddressAndService == "${addressAndService?.item1}/${addressAndService?.item2}");
   }
 
   static List<Handle> find() {

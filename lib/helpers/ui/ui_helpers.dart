@@ -282,8 +282,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                       TextButton(
                         child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         onPressed: () async {
-                          chats.removeChat(chat);
-                          Chat.softDelete(chat);
+                          GlobalChatService.removeChat(chat.guid, softDelete: true);
                           Navigator.pop(context); //Remove AlertDialog
                         },
                       ),

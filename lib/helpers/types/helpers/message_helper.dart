@@ -52,11 +52,7 @@ class MessageHelper {
 
       Message message = Message.fromMap(item);
       Message? existing = Message.findOne(guid: message.guid);
-      await msgChat.addMessage(
-        message,
-        changeUnreadStatus: false,
-        checkForMessageText: checkForLatestMessageText,
-      );
+      await GlobalChatService.addMessage(msgChat.guid, message, changeUnreadStatus: false, checkForMessageText: checkForLatestMessageText);
 
       // Artificial await to prevent lag
       await Future.delayed(const Duration(milliseconds: 10));
@@ -98,9 +94,9 @@ class MessageHelper {
     // if needing to mute
     if (chat.shouldMuteNotification(message)) return;
     // if the chat is active
-    if (ls.isAlive && cm.isChatActive(chat.guid)) return;
+    if (ls.isAlive && GlobalChatService.isChatActive(chat.guid)) return;
     // if app is alive, on chat list, but notifying on chat list is disabled
-    if (ls.isAlive && cm.activeChat == null && Get.rawRoute?.settings.name == "/" && !ss.settings.notifyOnChatList.value) return;
+    if (ls.isAlive && !GlobalChatService.hasActiveChat && Get.rawRoute?.settings.name == "/" && !ss.settings.notifyOnChatList.value) return;
     await notif.createNotification(chat, message);
   }
 

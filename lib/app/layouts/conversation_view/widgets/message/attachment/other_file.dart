@@ -36,7 +36,7 @@ class OtherFile extends StatelessWidget {
           Navigator.of(Get.context!).push(
             ThemeSwitcher.buildPageRoute(
               builder: (context) => FullscreenMediaHolder(
-                currentChat: cm.activeChat,
+                currentChat: GlobalChatService.activeGuid.value,
                 attachment: attachment,
                 showInteractions: true,
               ),

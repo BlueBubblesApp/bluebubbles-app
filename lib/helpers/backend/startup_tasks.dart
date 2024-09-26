@@ -89,7 +89,7 @@ class StartupTasks {
     if (!ss.settings.finishedSetup.value) return;
 
     if (!kIsDesktop) {
-      chats.init();
+      GlobalChatService.init();
       socket;
     }
 

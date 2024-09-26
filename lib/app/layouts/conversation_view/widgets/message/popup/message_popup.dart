@@ -82,7 +82,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         View.of(context).devicePixelRatio,
       ).bottom;
   late int numberToShow = 5;
-  late Chat? dmChat = chats.chats.firstWhereOrNull((chat) =>
+  late Chat? dmChat = GlobalChatService.chats.firstWhereOrNull((chat) =>
       !chat.isGroup &&
       chat.participants.firstWhereOrNull((handle) => handle.address == message.handle?.address) != null);
   String? selfReaction;
@@ -92,7 +92,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   MessagesService get service => ms(chat.guid);
 
-  Chat get chat => widget.cvController.chat;
+  Chat get chat => GlobalChatService.getChat(widget.cvController.chatGuid)!.chat;
 
   MessagePart get part => widget.part;
 
@@ -927,7 +927,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       cupertino.CupertinoPageRoute(
         builder: (BuildContext context) {
           return ConversationView(
-            chat: dmChat!,
+            chatGuid: dmChat!.guid,
           );
         },
       ),

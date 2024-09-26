@@ -120,7 +120,7 @@ class Share {
 
     bool send = false;
     if (kIsDesktop || kIsWeb) {
-      cvc(chat).showingOverlays = true;
+      cvc(chat.guid).showingOverlays = true;
     }
     await showDialog(
         context: Get.context!,
@@ -193,7 +193,7 @@ class Share {
               );
             }));
     if (kIsDesktop || kIsWeb) {
-      cvc(chat).showingOverlays = false;
+      cvc(chat.guid).showingOverlays = false;
     }
 
     if (!send) return;

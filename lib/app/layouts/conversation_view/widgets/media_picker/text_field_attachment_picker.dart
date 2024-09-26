@@ -256,7 +256,7 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                                 }
                                 return;
                               case 3:
-                                await Share.location(cm.activeChat!.chat);
+                                await Share.location(GlobalChatService.getChat(GlobalChatService.activeGuid.value!)!.chat);
                                 return;
                               case 4:
                                 if (controller.pickedAttachments.isNotEmpty) {
@@ -270,7 +270,8 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                                 }
                                 return;
                               case 5:
-                                Color selectedColor = context.theme.colorScheme.bubble(context, controller.chat.isIMessage);
+                                Color selectedColor = context.theme.colorScheme.bubble(
+                                  context, GlobalChatService.getChat(controller.chatGuid)!.chat.isIMessage);
                                 final result = (await ColorPicker(
                                   color: selectedColor,
                                   onColorChanged: (Color newColor) {

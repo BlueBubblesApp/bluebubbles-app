@@ -84,14 +84,14 @@ class ListItem extends StatelessWidget {
     return Obx(() {
       final tile = ConversationTile(
         key: Key(chat.guid),
-        chat: chat,
+        chatGuid: chat.guid,
         controller: controller,
         onSelect: (bool isSelected) {
           if (isSelected) {
-            controller.selectedChats.add(chat);
+            controller.selectedChats.add(chat.guid);
             controller.updateSelectedChats();
           } else {
-            controller.selectedChats.removeWhere((element) => element.guid == chat.guid);
+            controller.selectedChats.removeWhere((element) => element == chat.guid);
             controller.updateSelectedChats();
           }
         },
@@ -119,8 +119,7 @@ class ListItem extends StatelessWidget {
             } else if (action == MaterialSwipeAction.alerts) {
               chat.toggleMute(chat.muteType != "mute");
             } else if (action == MaterialSwipeAction.delete) {
-              chats.removeChat(chat);
-              Chat.softDelete(chat);
+              GlobalChatService.removeChat(chat.guid, softDelete: true);
             } else if (action == MaterialSwipeAction.mark_read) {
               chat.toggleHasUnread(!chat.hasUnreadMessage!);
             } else if (action == MaterialSwipeAction.archive) {

@@ -62,8 +62,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       : ss.settings.repliesToPrevious.value
       ? (service.struct.getPreviousReply(message.threadOriginatorGuid!, message.normalizedThreadPart, message.guid!) ?? service.struct.getThreadOriginator(message.threadOriginatorGuid!))
       : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
-  Chat get chat => widget.cvController.chat;
-  MessagesService get service => ms(widget.cvController.chat.guid);
+  Chat get chat => GlobalChatService.getChat(widget.cvController.chatGuid)!.chat;
+  MessagesService get service => ms(widget.cvController.chatGuid);
   bool get canSwipeToReply => ss.settings.enablePrivateAPI.value
       && ss.isMinBigSurSync
       && chat.isIMessage
@@ -71,7 +71,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       && !message.guid!.startsWith("temp")
       && !message.guid!.startsWith("error");
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
-      || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
+      || (olderMessage == null || !message.dateCreated.isWithin(olderMessage!.dateCreated, minutes: 30)));
   bool get showAvatar => chat.isGroup;
   bool isEditing(int part) => message.isFromMe! && widget.cvController.editing.firstWhereOrNull((e2) => e2.item1.guid == message.guid! && e2.item2.part == part) != null;
 

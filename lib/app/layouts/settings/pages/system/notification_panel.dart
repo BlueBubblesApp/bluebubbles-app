@@ -382,89 +382,73 @@ class ChatListState extends OptimizedState<ChatList> {
       controller: controller,
       physics: ThemeSwitcher.getScrollPhysics(),
       slivers: <Widget>[
-        Obx(() {
-          if (!chats.loadedChatBatch.value) {
-            return SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 50.0),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          "Loading chats...",
-                          style: context.theme.textTheme.labelLarge,
-                        ),
-                      ),
-                      buildProgressIndicator(context, size: 15),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }
-          if (chats.loadedChatBatch.value && chats.chats.isEmpty) {
-            return SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 50.0),
-                  child: Text(
-                    "You have no chats :(",
-                    style: context.theme.textTheme.labelLarge,
-                  ),
-                ),
-              ),
-            );
-          }
-
-          final _controller = ScrollController();
-
-          return SliverToBoxAdapter(
-            child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(25),
-                child: Container(
-                  height: context.height - 175,
-                  color: tileColor,
-                  child: ScrollbarWrapper(
-                    controller: _controller,
-                    child: ListView.builder(
-                      physics: ThemeSwitcher.getScrollPhysics(),
-                      shrinkWrap: true,
-                      controller: _controller,
-                      findChildIndexCallback: (key) => findChildIndexByKey(chats.chats, key, (item) => item.guid),
-                      itemBuilder: (context, index) {
-                        return ConversationTile(
-                          key: Key(chats.chats[index].guid.toString()),
-                          chat: chats.chats[index],
-                          controller: Get.put(
-                            ConversationListController(showUnknownSenders: true, showArchivedChats: true),
-                            tag: "notification-panel"
+        FutureBuilder(
+          future: GlobalChatService.chatsLoadedFuture.future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 50.0),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "Loading chats...",
+                            style: context.theme.textTheme.labelLarge,
                           ),
-                          inSelectMode: true,
-                          subtitle: Text(getSubtitle(chats.chats[index]),
-                              style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
-                          onSelect: (_) async {
-                            final chat = chats.chats[index];
-                            await showDialog(
-                              context: context,
-                              builder: (context) => NotificationSettingsDialog(chat, () {
-                                setState(() {});
-                              }),
-                            );
-                          },
-                        );
-                      },
-                      itemCount: chats.chats.length,
+                        ),
+                        buildProgressIndicator(context, size: 15),
+                      ],
                     ),
                   ),
                 ),
+              );
+            }
+
+            if (GlobalChatService.chatsLoaded && GlobalChatService.chats.isEmpty) {
+              return SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 50.0),
+                    child: Text(
+                      "You have no chats :(",
+                      style: context.theme.textTheme.labelLarge,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return ConversationTile(
+                    chatGuid: GlobalChatService.chats[index].guid,
+                    controller: Get.put(
+                      ConversationListController(showUnknownSenders: true, showArchivedChats: true),
+                      tag: "notification-panel"
+                    ),
+                    inSelectMode: true,
+                    subtitle: Text(getSubtitle(GlobalChatService.chats[index]),
+                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
+                    onSelect: (_) async {
+                      final chat = GlobalChatService.chats[index];
+                      await showDialog(
+                        context: context,
+                        builder: (context) => NotificationSettingsDialog(chat, () {
+                          setState(() {});
+                        }),
+                      );
+                    },
+                  );
+                },
+                childCount: GlobalChatService.chats.length,
               ),
-            ),
-          );
-        }),
+            );
+          },
+        ),
         const SliverPadding(
           padding: EdgeInsets.all(40),
         ),

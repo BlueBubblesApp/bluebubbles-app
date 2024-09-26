@@ -113,7 +113,6 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     final incrementalSyncManager = IncrementalSyncManager(
       startTimestamp: syncStart, startRowId: startRowId, saveMarker: true);
     await incrementalSyncManager.start();
-    chats.sort();
   } catch (ex, s) {
     Logger.error('Incremental sync failed!', error: ex, trace: s);
   }

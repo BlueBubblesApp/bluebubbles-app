@@ -279,7 +279,7 @@ class Chat {
 
   Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
     if (hasUnreadMessage == hasUnread && !force) return this;
-    if (!cm.isChatActive(guid) || !hasUnread || force) {
+    if (!GlobalChatService.isChatActive(guid) || !hasUnread || force) {
       hasUnreadMessage = hasUnread;
       save(updateHasUnreadMessage: true);
     }
@@ -315,13 +315,11 @@ class Chat {
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
     if ((newMessage?.id != null || kIsWeb) && checkForMessageText) {
-      isNewer = message.dateCreated!.isAfter(latest.dateCreated!)
+      isNewer = message.dateCreated.isAfter(latest.dateCreated)
           || (message.guid != latest.guid && message.dateCreated == latest.dateCreated);
       if (isNewer) {
         _latestMessage = message;
         dateDeleted = null;
-        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-        await chats.addChat(this);
       }
     }
 
@@ -340,8 +338,8 @@ class Chat {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
-        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe, force: cm.isChatActive(guid));
-      } else if (!cm.isChatActive(guid)) {
+        toggleHasUnread(false, clearLocalNotifications: clearNotificationsIfFromMe, force: GlobalChatService.isChatActive(guid));
+      } else if (!GlobalChatService.isChatActive(guid)) {
         toggleHasUnread(true);
       }
     }
@@ -393,7 +391,7 @@ class Chat {
 
   void webSyncParticipants() {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    _participants = chats.webCachedHandles.where((e) => _participants.map((e2) => e2.address).contains(e.address)).toList();
+    _participants = GlobalChatService.allHandles.where((e) => _participants.map((e2) => e2.address).contains(e.address)).toList();
   }
 
   Chat addParticipant(Handle participant) {
@@ -419,9 +417,6 @@ class Chat {
     this.isPinned = isPinned;
     _pinIndex.value = null;
     save();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    chats.updateChat(this);
-    chats.sort();
     return this;
   }
 
@@ -430,9 +425,6 @@ class Chat {
     muteType = isMuted ? "mute" : null;
     muteArgs = null;
     save();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    chats.updateChat(this);
-    chats.sort();
     return this;
   }
 
@@ -440,9 +432,6 @@ class Chat {
     if (id == null) return this;
     this.isArchived = isArchived;
     save();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    chats.updateChat(this);
-    chats.sort();
     return this;
   }
 
@@ -468,9 +457,9 @@ class Chat {
 
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
     if (guid != null) {
-      return chats.chats.firstWhereOrNull((e) => e.guid == guid) as Chat;
+      return GlobalChatService.chats.firstWhereOrNull((e) => e.guid == guid) as Chat;
     } else if (chatIdentifier != null) {
-      return chats.chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier) as Chat;
+      return GlobalChatService.chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier) as Chat;
     }
     return null;
   }
@@ -552,7 +541,7 @@ class Chat {
     if (a.isPinned! && !b.isPinned!) return -1;
 
     // Compare the last message dates
-    return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
+    return -(a.latestMessage.dateCreated).compareTo(b.latestMessage.dateCreated);
   }
 
   static Future<void> getIcon(Chat c, {bool force = false}) async {}

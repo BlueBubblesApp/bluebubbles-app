@@ -8,7 +8,6 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/network/http_overrides.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -164,7 +163,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
               await windowManager.show();
             }
             if (!(ss.canAuthenticate && ss.settings.shouldSecure.value)) {
-              chats.init();
+              GlobalChatService.init();
               socket;
             }
           });
@@ -372,7 +371,7 @@ class Main extends StatelessWidget {
                             SecureApplicationProvider.of(context, listen: false)!.authSuccess(unlock: true);
                             if (kIsDesktop) {
                               Future.delayed(Duration.zero, () {
-                                chats.init();
+                                GlobalChatService.init();
                                 socket;
                               });
                             }
@@ -411,7 +410,7 @@ class Main extends StatelessWidget {
                                         controller!.authSuccess(unlock: true);
                                         if (kIsDesktop) {
                                           Future.delayed(Duration.zero, () {
-                                            chats.init();
+                                            GlobalChatService.init();
                                             socket;
                                           });
                                         }

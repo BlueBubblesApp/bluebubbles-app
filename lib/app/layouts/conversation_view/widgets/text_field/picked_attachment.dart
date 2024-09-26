@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -150,8 +151,8 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
                             onPressed: () {
                               if (widget.controller != null) {
                                 widget.controller!.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
-                                widget.controller!.chat.textFieldAttachments.removeWhere((e) => e == widget.data.path);
-                                widget.controller!.chat.save(updateTextFieldAttachments: true);
+                                ReactiveChat chat = GlobalChatService.getChat(widget.controller!.chatGuid)!;
+                                chat.removePickedAttachment(widget.data.path!);
                               } else {
                                 widget.onRemove.call(widget.data);
                               }
@@ -185,10 +186,10 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
                   size: 18,
                 ),
                 onPressed: () {
-                  if (widget.controller != null) {
+                  if (widget.controller != null && widget.data.path != null) {
                     widget.controller!.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
-                    widget.controller!.chat.textFieldAttachments.removeWhere((e) => e == widget.data.path);
-                    widget.controller!.chat.save(updateTextFieldAttachments: true);
+                    ReactiveChat rChat = GlobalChatService.getChat(widget.controller!.chatGuid)!;
+                    rChat.removePickedAttachment(widget.data.path!);
                   } else {
                     widget.onRemove.call(widget.data);
                   }

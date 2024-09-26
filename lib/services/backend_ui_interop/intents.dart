@@ -1,6 +1,4 @@
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -23,9 +21,9 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
   @override
   Object? invoke(covariant OpenSettingsIntent intent) async {
     if (ss.settings.finishedSetup.value) {
-      final currentChat = cm.activeChat?.chat;
+      final currentChat = GlobalChatService.activeGuid.value;
       ns.closeAllConversationView(context);
-      await cm.setAllInactive();
+      await GlobalChatService.closeActiveChat();
       await Navigator.of(Get.context!).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -35,13 +33,7 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
       );
       if (currentChat != null) {
         if (ss.settings.tabletMode.value) {
-          ns.pushAndRemoveUntil(
-            context,
-            ConversationView(
-              chat: currentChat,
-            ),
-                (route) => route.isFirst,
-          );
+          GlobalChatService.openChat(currentChat, context: context);
         } else {
           cvc(currentChat).close();
         }
@@ -100,16 +92,16 @@ class ReplyRecentIntent extends Intent {
 }
 
 class ReplyRecentAction extends Action<ReplyRecentIntent> {
-  ReplyRecentAction(this.chat);
+  ReplyRecentAction(this.chatGuid);
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant ReplyRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecentReceived;
+    final message = ms(chatGuid).mostRecentReceived;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       final parts = mwc(message).parts;
-      cvc(chat).replyToMessage = Tuple2(message, parts.length - 1);
+      cvc(chatGuid).replyToMessage = Tuple2(message, parts.length - 1);
     }
     return null;
   }
@@ -120,15 +112,15 @@ class HeartRecentIntent extends Intent {
 }
 
 class HeartRecentAction extends Action<HeartRecentIntent> {
-  HeartRecentAction(this.chat);
+  HeartRecentAction(this.chatGuid);
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant HeartRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecent;
+    final message = ms(chatGuid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionTypes.LOVE);
+      _sendReactionHelper(chatGuid, message, ReactionTypes.LOVE);
     }
     return null;
   }
@@ -139,15 +131,15 @@ class LikeRecentIntent extends Intent {
 }
 
 class LikeRecentAction extends Action<LikeRecentIntent> {
-  LikeRecentAction(this.chat);
+  LikeRecentAction(this.chatGuid);
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant LikeRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecent;
+    final message = ms(chatGuid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionTypes.LIKE);
+      _sendReactionHelper(chatGuid, message, ReactionTypes.LIKE);
     }
     return null;
   }
@@ -158,15 +150,15 @@ class DislikeRecentIntent extends Intent {
 }
 
 class DislikeRecentAction extends Action<DislikeRecentIntent> {
-  DislikeRecentAction(this.chat);
+  DislikeRecentAction(this.chatGuid);
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant DislikeRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecent;
+    final message = ms(chatGuid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionTypes.DISLIKE);
+      _sendReactionHelper(chatGuid, message, ReactionTypes.DISLIKE);
     }
     return null;
   }
@@ -177,15 +169,15 @@ class LaughRecentIntent extends Intent {
 }
 
 class LaughRecentAction extends Action<LaughRecentIntent> {
-  LaughRecentAction(this.chat);
+  LaughRecentAction(this.chatGuid);
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant LaughRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecent;
+    final message = ms(chatGuid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionTypes.LAUGH);
+      _sendReactionHelper(chatGuid, message, ReactionTypes.LAUGH);
     }
     return null;
   }
@@ -196,15 +188,15 @@ class EmphasizeRecentIntent extends Intent {
 }
 
 class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
-  EmphasizeRecentAction(this.chat);
+  EmphasizeRecentAction(this.chatGuid);
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant EmphasizeRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecent;
+    final message = ms(chatGuid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionTypes.EMPHASIZE);
+      _sendReactionHelper(chatGuid, message, ReactionTypes.EMPHASIZE);
     }
     return null;
   }
@@ -215,15 +207,15 @@ class QuestionRecentIntent extends Intent {
 }
 
 class QuestionRecentAction extends Action<QuestionRecentIntent> {
-  QuestionRecentAction(this.chat);
+  QuestionRecentAction(this.chatGuid);
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant QuestionRecentIntent intent) async {
-    final message = ms(chat.guid).mostRecent;
+    final message = ms(chatGuid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionTypes.QUESTION);
+      _sendReactionHelper(chatGuid, message, ReactionTypes.QUESTION);
     }
     return null;
   }
@@ -240,19 +232,9 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
 
   @override
   Object? invoke(covariant OpenNextChatIntent intent) {
-    final chat = cm.activeChat?.chat;
-    if (chat != null) {
-      final index = chats.chats.indexWhere((e) => e.guid == chat.guid);
-      if (index > -1 && index < chats.chats.length - 1) {
-        final _chat = chats.chats[index + 1];
-        ns.pushAndRemoveUntil(
-          context,
-          ConversationView(
-            chat: _chat,
-          ),
-          (route) => route.isFirst,
-        );
-      }
+    final chatGuid = GlobalChatService.activeGuid.value;
+    if (chatGuid != null) {
+      GlobalChatService.openNextChat(chatGuid, context: context);
     }
     return null;
   }
@@ -269,20 +251,11 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
 
   @override
   Object? invoke(covariant OpenPreviousChatIntent intent) {
-    final chat = cm.activeChat?.chat;
-    if (chat != null) {
-      final index = chats.chats.indexWhere((e) => e.guid == chat.guid);
-      if (index > 0 && index < chats.chats.length) {
-        final _chat = chats.chats[index - 1];
-        ns.pushAndRemoveUntil(
-          context,
-          ConversationView(
-            chat: _chat,
-          ),
-          (route) => route.isFirst,
-        );
-      }
+    final chatGuid = GlobalChatService.activeGuid.value;
+    if (chatGuid != null) {
+      GlobalChatService.openPreviousChat(chatGuid, context: context);
     }
+
     return null;
   }
 }
@@ -292,17 +265,14 @@ class OpenChatDetailsIntent extends Intent {
 }
 
 class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
-  OpenChatDetailsAction(this.context, this.chat);
+  OpenChatDetailsAction(this.context, this.chatGuid);
 
   final BuildContext context;
-  final Chat chat;
+  final String chatGuid;
 
   @override
   Object? invoke(covariant OpenChatDetailsIntent intent) {
-    ns.push(
-      context,
-      ConversationDetails(chat: chat),
-    );
+    GlobalChatService.openChatDetails(chatGuid, context: context);
     return null;
   }
 }
@@ -339,7 +309,8 @@ class GoBackAction extends Action<GoBackIntent> {
   }
 }
 
-void _sendReactionHelper(Chat c, Message selected, String t) {
+void _sendReactionHelper(String chatGuid, Message selected, String t) {
+  final c = GlobalChatService.getChat(chatGuid)!.chat;
   outq.queue(OutgoingItem(
     type: QueueType.sendMessage,
     chat: c,

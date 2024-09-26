@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
@@ -10,8 +9,6 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_ti
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/database/database.dart';
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -20,17 +17,17 @@ import 'package:get/get.dart';
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   PinnedConversationTile({
     super.key,
-    required Chat chat,
+    required String chatGuid,
     required ConversationListController controller,
   }) : super(
-            parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
-                ? Get.find<ConversationTileController>(tag: chat.guid)
+            parentController: Get.isRegistered<ConversationTileController>(tag: chatGuid)
+                ? Get.find<ConversationTileController>(tag: chatGuid)
                 : Get.put(
                     ConversationTileController(
-                      chat: chat,
+                      chatGuid: chatGuid,
                       listController: controller,
                     ),
-                    tag: "${chat.guid}-pinned"));
+                    tag: "$chatGuid-pinned"));
 
   @override
   State<PinnedConversationTile> createState() => _PinnedConversationTileState();
@@ -44,18 +41,18 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
   void initState() {
     super.initState();
 
-    tag = "${controller.chat.guid}-pinned";
+    tag = "${controller.chatGuid}-pinned";
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
 
     if (kIsDesktop || kIsWeb) {
-      controller.shouldHighlight.value = cm.activeChat?.chat.guid == controller.chat.guid;
+      controller.shouldHighlight.value = GlobalChatService.activeGuid.value == controller.chatGuid;
     }
 
     eventDispatcher.stream.listen((event) {
       if (event.item1 == 'update-highlight' && mounted) {
-        if ((kIsDesktop || kIsWeb) && event.item2 == controller.chat.guid) {
+        if ((kIsDesktop || kIsWeb) && event.item2 == controller.chatGuid) {
           controller.shouldHighlight.value = true;
         } else if (controller.shouldHighlight.value) {
           controller.shouldHighlight.value = false;
@@ -81,7 +78,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
           onLongPress: kIsDesktop || kIsWeb
               ? null
               : () async {
-                  await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+                  await peekChat(context, controller.chatGuid, longPressPosition ?? Offset.zero);
                 },
           onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
           child: Obx(() {
@@ -176,7 +173,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   @override
   void initState() {
     super.initState();
-    tag = "${controller.chat.guid}-pinned";
+    tag = "${controller.chatGuid}-pinned";
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
@@ -185,7 +182,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
+      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
       return unread ? Positioned(
         left: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
         top: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
@@ -217,7 +214,7 @@ class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileControl
   @override
   void initState() {
     super.initState();
-    tag = "${controller.chat.guid}-pinned";
+    tag = "${controller.chatGuid}-pinned";
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
@@ -226,8 +223,8 @@ class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileControl
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final muteType = GlobalChatService.getReactiveChat(controller.chat.guid)?.muteType.value ?? '';
-      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
+      final muteType = GlobalChatService.getChat(controller.chatGuid)?.muteType.value ?? '';
+      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
 
       return muteType == "mute"
           ? Positioned(
@@ -262,69 +259,13 @@ class ChatTitle extends CustomStateful<ConversationTileController> {
 }
 
 class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileController> {
-  String title = "Unknown";
-  late final StreamSubscription sub;
-  String? cachedDisplayName = "";
-  List<Handle> cachedParticipants = [];
-
   @override
   void initState() {
     super.initState();
-    tag = "${controller.chat.guid}-pinned";
+    tag = "${controller.chatGuid}-pinned";
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    cachedDisplayName = controller.chat.displayName;
-    cachedParticipants = controller.chat.handles;
-    title = controller.chat.getTitle();
-    // run query after render has completed
-    if (!kIsWeb) {
-      updateObx(() {
-        final titleQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
-        sub = titleQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null
-              ? null
-              : await runAsync(() {
-                  return Database.chats.get(controller.chat.id!);
-                });
-          if (chat == null) return;
-          // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName || chat.handles.length != cachedParticipants.length) {
-            final newTitle = chat.getTitle();
-            if (newTitle != title) {
-              setState(() {
-                title = newTitle;
-              });
-            }
-          }
-          cachedDisplayName = chat.displayName;
-          cachedParticipants = chat.handles;
-        });
-      });
-    } else {
-      sub = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName
-              || chat.participants.length != cachedParticipants.length) {
-            final newTitle = chat.getTitle();
-            if (newTitle != title) {
-              setState(() {
-                title = newTitle;
-              });
-            }
-          }
-          cachedDisplayName = chat.displayName;
-          cachedParticipants = chat.participants;
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
   }
 
   @override
@@ -341,7 +282,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
               : context.theme.colorScheme.outline,
           fontSizeFactor: controller.chat.isPinned! ? 0.95 : 1,
         );
-        String _title = title;
+        String _title = controller.reactiveChat.title.value ?? "Unknown";
         if (hideInfo) {
           _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
         }
@@ -381,7 +322,7 @@ class PinnedIndicators extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final showTypingIndicator = cvc(controller.chat).showTypingIndicator.value;
+      final showTypingIndicator = cvc(controller.chatGuid).showTypingIndicator.value;
       if (showTypingIndicator) {
         return Positioned(
           top: -sqrt(width / 2) + width * 0.05,
@@ -395,7 +336,7 @@ class PinnedIndicators extends StatelessWidget {
         );
       }
 
-      final showMarker = controller.chat.latestMessage.indicatorToShow;
+      final showMarker = controller.reactiveChat.latestMessage.value ?? Indicator.NONE;
       if (ss.settings.statusIndicatorsOnChats.value && !controller.chat.isGroup && showMarker != Indicator.NONE) {
         return Positioned(
           left: sqrt(width) - width * 0.05 * sqrt(2),
@@ -443,7 +384,7 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
   @override
   void initState() {
     super.initState();
-    tag = "${controller.chat.guid}-pinned";
+    tag = "${controller.chatGuid}-pinned";
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
@@ -452,13 +393,15 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
-      return unread && !isNullOrEmpty(controller.chat.latestMessage.associatedMessageGuid) && !controller.chat.latestMessage.isFromMe!
+      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
+      final latestMsg = controller.reactiveChat.latestMessage.value;
+      final associatedMsg = latestMsg?.associatedMessageGuid;
+      return unread && !isNullOrEmpty(associatedMsg) && !(latestMsg?.isFromMe ?? false)
           ? Positioned(
               top: -sqrt(widget.width / 2) + widget.width * 0.05,
               right: -sqrt(widget.width / 2) + widget.width * 0.025,
               child: ReactionWidget(
-                reaction: controller.chat.latestMessage,
+                reaction: controller.reactiveChat.latestMessage.value!,
                 message: null,
               ),
             )

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
@@ -7,10 +5,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -22,6 +18,8 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
   const MaterialHeader({Key? key, required this.controller});
 
   final ConversationViewController controller;
+
+  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
 
   @override
   Widget build(BuildContext context) {
@@ -59,16 +57,16 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
         padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: controller.chat.isGroup ? () {
+          onTap: chat.isGroup ? () {
             Navigator.of(context).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationDetails(
-                  chat: controller.chat,
+                  chatGuid: chat.guid,
                 ),
               ),
             );
           } : () async {
-            final handle = controller.chat.participants.first;
+            final handle = chat.participants.first;
             final contact = handle.contact;
             if (contact == null) {
               await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
@@ -91,18 +89,18 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: ManualMark(controller: controller),
         ),
-        if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isPhoneNumber)
+        if (Platform.isAndroid && !chat.isGroup && chat.participants.first.address.isPhoneNumber)
           IconButton(
             icon: Icon(Icons.call_outlined, color: context.theme.colorScheme.onBackground),
             onPressed: () {
-              launchUrl(Uri(scheme: "tel", path: controller.chat.participants.first.address));
+              launchUrl(Uri(scheme: "tel", path: chat.participants.first.address));
             },
           ),
-        if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isEmail)
+        if (Platform.isAndroid && !chat.isGroup && chat.participants.first.address.isEmail)
           IconButton(
             icon: Icon(Icons.mail_outlined, color: context.theme.colorScheme.onBackground),
             onPressed: () {
-              launchUrl(Uri(scheme: "mailto", path: controller.chat.participants.first.address));
+              launchUrl(Uri(scheme: "mailto", path: chat.participants.first.address));
             },
           ),
         Padding(
@@ -119,12 +117,12 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                 Navigator.of(context).push(
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => ConversationDetails(
-                      chat: controller.chat,
+                      chatGuid: chat.guid,
                     ),
                   ),
                 );
               } else if (value == 1) {
-                controller.chat.toggleArchived(!controller.chat.isArchived!);
+                chat.toggleArchived(!chat.isArchived!);
                 if (Get.isSnackbarOpen) {
                   Get.closeAllSnackbars();
                 }
@@ -157,8 +155,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                         TextButton(
                           child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                           onPressed: () async {
-                            chats.removeChat(controller.chat);
-                            Chat.softDelete(controller.chat);
+                            GlobalChatService.removeChat(chat.guid, softDelete: true);
                             if (Get.isSnackbarOpen) {
                               Get.closeAllSnackbars();
                             }
@@ -186,7 +183,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   PopupMenuItem(
                     value: 1,
                     child: Text(
-                      controller.chat.isArchived! ? 'Unarchive' : 'Archive',
+                      chat.isArchived! ? 'Unarchive' : 'Archive',
                       style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                     ),
                   ),
@@ -217,11 +214,11 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
     )),
       Positioned(
         child: Obx(() => TweenAnimationBuilder<double>(
-          duration: controller.chat.sendProgress.value == 0 ? Duration.zero : controller.chat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
-          curve: controller.chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+          duration: chat.sendProgress.value == 0 ? Duration.zero : chat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
+          curve: chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
           tween: Tween<double>(
               begin: 0,
-              end: controller.chat.sendProgress.value,
+              end: chat.sendProgress.value,
           ),
           builder: (context, value, _) =>
               AnimatedOpacity(
@@ -253,68 +250,16 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 }
 
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
-  String title = "Unknown";
-  late final StreamSubscription sub;
-  String? cachedDisplayName = "";
-  List<Handle> cachedParticipants = [];
+
+  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
 
   @override
   void initState() {
     super.initState();
-    tag = controller.chat.guid;
+    tag = controller.chatGuid;
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    cachedDisplayName = controller.chat.displayName;
-    cachedParticipants = controller.chat.handles;
-    title = controller.chat.getTitle();
-    // run query after render has completed
-    if (!kIsWeb) {
-      updateObx(() {
-        final titleQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid))
-            .watch();
-        sub = titleQuery.listen((Query<Chat> query) async {
-          final chat = await runAsync(() {
-            return Database.chats.get(controller.chat.id!)!;
-          });
-          // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName
-              || chat.handles.length != cachedParticipants.length) {
-            final newTitle = chat.getTitle();
-            if (newTitle != title) {
-              setState(() {
-                title = newTitle;
-              });
-            }
-          }
-          cachedDisplayName = chat.displayName;
-          cachedParticipants = chat.handles;
-        });
-      });
-    } else {
-      sub = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName
-              || chat.participants.length != cachedParticipants.length) {
-            final newTitle = chat.getTitle();
-            if (newTitle != title) {
-              setState(() {
-                title = newTitle;
-              });
-            }
-          }
-          cachedDisplayName = chat.displayName;
-          cachedParticipants = chat.participants;
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
   }
 
   @override
@@ -328,40 +273,41 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           child: IgnorePointer(
             ignoring: true,
             child: ContactAvatarGroupWidget(
-              chat: controller.chat,
-              size: !controller.chat.isGroup ? 35 : 40,
+              chat: chat,
+              size: !chat.isGroup ? 35 : 40,
             ),
           ),
         ),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Obx(() {
-                String _title = title;
-                if (controller.inSelectMode.value) {
-                  _title = "${controller.selected.length} selected";
-                } else if (hideInfo) {
-                  _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
-                }
-                return Text(
-                  _title,
+          child: Obx(() {
+            String title = controller.reactiveChat.title.value ?? "";
+            if (controller.inSelectMode.value) {
+              title = "${controller.selected.length} selected";
+            } else if (hideInfo) {
+              title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
                   style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground, fontSizeFactor: 0.85),
                   maxLines: 1,
                   overflow: TextOverflow.fade,
-                );
-              }),
-              if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)) && !hideInfo)
-                Text(
-                  controller.chat.isGroup
-                    ? "${controller.chat.participants.length} recipients"
-                    : controller.chat.participants[0].address,
-                  style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
                 ),
-            ],
-          ),
+                if (samsung && (chat.isGroup || (!title.isPhoneNumber && !title.isEmail)) && !hideInfo)
+                  Text(
+                    chat.isGroup
+                      ? "${chat.participants.length} recipients"
+                      : chat.participants[0].address,
+                    style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                  ),
+              ],
+            );
+          }),
         ),
       ],
     );

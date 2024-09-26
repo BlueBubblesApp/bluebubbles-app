@@ -233,8 +233,8 @@ class FullSyncManager extends SyncManager {
     // handles and contacts are assumed new.
     await cs.refreshContacts();
     addToOutput("Reloading your chats...");
-    Get.reload<ChatsService>(force: true);
-    await chats.init(force: true);
+    Get.reload<IGlobalChatService>(force: true);
+    GlobalChatService.init();
     await super.complete();
   }
 }

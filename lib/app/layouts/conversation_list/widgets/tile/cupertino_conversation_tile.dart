@@ -1,11 +1,7 @@
-import 'dart:async';
-
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/database/database.dart';
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -25,7 +21,7 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
   @override
   void initState() {
     super.initState();
-    tag = controller.chat.guid;
+    tag = controller.chatGuid;
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
@@ -46,7 +42,7 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
         onLongPress: kIsDesktop || kIsWeb
             ? null
             : () async {
-                await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+                await peekChat(context, controller.chatGuid, longPressPosition ?? Offset.zero);
               },
         onTapDown: (details) {
           longPressPosition = details.globalPosition;
@@ -112,7 +108,7 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
                 onLongPress: kIsDesktop || kIsWeb
                     ? null
                     : () async {
-                        await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+                        await peekChat(context, controller.chatGuid, longPressPosition ?? Offset.zero);
                       },
                 onTapDown: (details) {
                   longPressPosition = details.globalPosition;
@@ -136,67 +132,14 @@ class CupertinoTrailing extends CustomStateful<ConversationTileController> {
 }
 
 class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, ConversationTileController> {
-  DateTime? dateCreated;
-  late final StreamSubscription sub;
-  String? cachedLatestMessageGuid = "";
-  Message? cachedLatestMessage;
 
   @override
   void initState() {
     super.initState();
-    tag = controller.chat.guid;
+    tag = controller.chatGuid;
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    cachedLatestMessage = controller.chat.latestMessage;
-    cachedLatestMessageGuid = cachedLatestMessage?.guid;
-    dateCreated = cachedLatestMessage?.dateCreated;
-    // run query after render has completed
-    if (!kIsWeb) {
-      updateObx(() {
-        final latestMessageQuery = (Database.messages.query(Message_.dateDeleted.isNull())
-              ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-              ..order(Message_.dateCreated, flags: Order.descending))
-            .watch();
-
-        sub = latestMessageQuery.listen((Query<Message> query) async {
-          final message = await runAsync(() {
-            return query.findFirst();
-          });
-          if (message != null &&
-              ss.settings.statusIndicatorsOnChats.value &&
-              (message.dateDelivered != cachedLatestMessage?.dateDelivered || message.dateRead != cachedLatestMessage?.dateRead)) {
-            setState(() {});
-          }
-          cachedLatestMessage = message;
-          // check if we really need to update this widget
-          if (message != null && message.guid != cachedLatestMessageGuid) {
-            if (dateCreated != message.dateCreated) {
-              setState(() {
-                dateCreated = message.dateCreated;
-              });
-            }
-          }
-          cachedLatestMessageGuid = message?.guid;
-        });
-      });
-    } else {
-      sub = WebListeners.newMessage.listen((tuple) {
-        if (tuple.item2?.guid == controller.chat.guid && (dateCreated == null || tuple.item1.dateCreated!.isAfter(dateCreated!))) {
-          cachedLatestMessage = tuple.item1;
-          setState(() {
-            dateCreated = tuple.item1.dateCreated;
-          });
-          cachedLatestMessageGuid = tuple.item1.guid;
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
   }
 
   @override
@@ -210,21 +153,23 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
         children: <Widget>[
           Obx(() {
             String indicatorText = "";
-            if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
-              Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
+            final latestMessage = controller.reactiveChat.latestMessage.value;
+            final dateCreated = latestMessage?.dateCreated ?? DateTime.now();
+            if (ss.settings.statusIndicatorsOnChats.value && (latestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
+              Indicator show = latestMessage?.indicatorToShow ?? Indicator.NONE;
               if (show != Indicator.NONE) {
                 indicatorText = show.name.toLowerCase().capitalizeFirst!;
               }
             }
 
             return Text(
-              (cachedLatestMessage?.error ?? 0) > 0
+              (latestMessage?.error ?? 0) > 0
                   ? "Error"
                   : "${indicatorText.isNotEmpty && indicatorText != "None" ? "$indicatorText\n" : ""}${buildDate(dateCreated)}",
               textAlign: TextAlign.right,
               style: context.theme.textTheme.bodySmall!
                   .copyWith(
-                    color: (cachedLatestMessage?.error ?? 0) > 0
+                    color: (latestMessage?.error ?? 0) > 0
                         ? context.theme.colorScheme.error
                         : controller.shouldHighlight.value
                             ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
@@ -275,7 +220,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   @override
   void initState() {
     super.initState();
-    tag = controller.chat.guid;
+    tag = controller.chatGuid;
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
@@ -285,7 +230,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: Obx(() => GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false 
+      child: Obx(() => GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false 
           ? Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(35),

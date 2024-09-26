@@ -80,88 +80,92 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
             child: ScrollbarWrapper(
               showScrollbar: true,
               controller: controller.samsungScrollController,
-              child: Obx(() {
-                final _chats = chats.chats
+              // Convert the below Obx to a Future Builder
+              child: FutureBuilder(
+                future: GlobalChatService.chatsLoadedFuture.future,
+                builder: (context, snapshot) {
+                  final _chats = GlobalChatService.chats
                     .archivedHelper(controller.showArchivedChats)
                     .unknownSendersHelper(controller.showUnknownSenders);
 
-                return CustomScrollView(
-                  physics: ThemeSwitcher.getScrollPhysics(),
-                  controller: controller.samsungScrollController,
-                  slivers: [
-                    SamsungHeader(parentController: controller),
-                    if (!chats.loadedChatBatch.value || _chats.bigPinHelper(false).isEmpty)
-                      SliverToBoxAdapter(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 50),
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    !chats.loadedChatBatch.value
-                                        ? "Loading chats..."
-                                        : showArchived
-                                            ? "You have no archived chats"
-                                            : showUnknown
-                                                ? "You have no messages from unknown senders :)"
-                                                : "You have no chats :(",
-                                    style: context.theme.textTheme.labelLarge,
-                                    textAlign: TextAlign.center,
+                  return CustomScrollView(
+                    physics: ThemeSwitcher.getScrollPhysics(),
+                    controller: controller.samsungScrollController,
+                    slivers: [
+                      SamsungHeader(parentController: controller),
+                      if (snapshot.connectionState != ConnectionState.done || _chats.bigPinHelper(false).isEmpty)
+                        SliverToBoxAdapter(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 50),
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      !GlobalChatService.chatsLoaded
+                                          ? "Loading chats..."
+                                          : showArchived
+                                              ? "You have no archived chats"
+                                              : showUnknown
+                                                  ? "You have no messages from unknown senders :)"
+                                                  : "You have no chats :(",
+                                      style: context.theme.textTheme.labelLarge,
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
-                                ),
-                                if (!chats.loadedChatBatch.value) buildProgressIndicator(context, size: 15),
-                              ],
+                                  if (!GlobalChatService.chatsLoaded) buildProgressIndicator(context, size: 15),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    if (_chats.bigPinHelper(true).isNotEmpty)
+                      if (_chats.bigPinHelper(true).isNotEmpty)
+                        SliverPadding(
+                          padding: const EdgeInsets.only(bottom: 15),
+                          sliver: SliverDecoration(
+                            color: _tileColor,
+                            borderRadius: BorderRadius.circular(25),
+                            sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final chat = _chats.bigPinHelper(true)[index];
+                                return ListItem(
+                                    chat: chat,
+                                    controller: controller,
+                                    update: () {
+                                      setState(() {});
+                                    });
+                              },
+                              childCount: _chats.bigPinHelper(true).length,
+                            )),
+                          ),
+                        ),
                       SliverPadding(
                         padding: const EdgeInsets.only(bottom: 15),
                         sliver: SliverDecoration(
                           color: _tileColor,
                           borderRadius: BorderRadius.circular(25),
                           sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final chat = _chats.bigPinHelper(true)[index];
-                              return ListItem(
-                                  chat: chat,
-                                  controller: controller,
-                                  update: () {
-                                    setState(() {});
-                                  });
-                            },
-                            childCount: _chats.bigPinHelper(true).length,
-                          )),
-                        ),
-                      ),
-                    SliverPadding(
-                      padding: const EdgeInsets.only(bottom: 15),
-                      sliver: SliverDecoration(
-                        color: _tileColor,
-                        borderRadius: BorderRadius.circular(25),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final chat = _chats.bigPinHelper(false)[index];
-                              return ListItem(
-                                  chat: chat,
-                                  controller: controller,
-                                  update: () {
-                                    setState(() {});
-                                  });
-                            },
-                            childCount: _chats.bigPinHelper(false).length,
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final chat = _chats.bigPinHelper(false)[index];
+                                return ListItem(
+                                    chat: chat,
+                                    controller: controller,
+                                    update: () {
+                                      setState(() {});
+                                    });
+                              },
+                              childCount: _chats.bigPinHelper(false).length,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              }),
+                    ],
+                  );
+                }
+              )
             ),
           ),
         ),

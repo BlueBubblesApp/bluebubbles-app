@@ -1,13 +1,10 @@
-import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:faker/faker.dart' hide Color;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,14 +26,7 @@ class PinnedTileTextBubble extends CustomStateful<ConversationTileController> {
 
 class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, ConversationTileController> {
   final bool leftSide = Random().nextBool();
-  Message? lastMessage;
-  String subtitle = "Unknown";
-  String fakeText = faker.lorem.words(1).join(" ");
-  late final StreamSubscription sub;
-  String? cachedLatestMessageGuid = "";
-  DateTime? cachedDateCreated;
-
-  Chat get chat => widget.chat;
+  Chat get chat => controller.reactiveChat.chat;
   double get size => widget.size;
   bool get showTail => !chat.isGroup;
 
@@ -44,81 +34,25 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   void initState() {
     super.initState();
 
-    tag = "${controller.chat.guid}-pinned";
+    tag = "${controller.chatGuid}-pinned";
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    subtitle = MessageHelper.getNotificationText(controller.chat.latestMessage);
-    lastMessage = controller.chat.latestMessage;
-    cachedLatestMessageGuid = controller.chat.latestMessage.guid!;
-    fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
-    // run query after render has completed
-    if (!kIsWeb) {
-      updateObx(() {
-        final latestMessageQuery = (Database.messages.query(Message_.dateDeleted.isNull())
-              ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
-              ..order(Message_.dateCreated, flags: Order.descending))
-            .watch();
-
-        sub = latestMessageQuery.listen((Query<Message> query) async {
-          final message = await runAsync(() {
-            return query.findFirst();
-          });
-          // check if we really need to update this widget
-          if (message != null && message.guid != cachedLatestMessageGuid) {
-            message.handle = message.getHandle();
-            lastMessage = message;
-            String newSubtitle = MessageHelper.getNotificationText(message);
-            if (newSubtitle != subtitle) {
-              setState(() {
-                subtitle = newSubtitle;
-                fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
-              });
-            }
-          }
-          cachedLatestMessageGuid = message?.guid;
-        });
-      });
-    } else {
-      sub = WebListeners.newMessage.listen((tuple) {
-        final message = tuple.item1;
-        if (tuple.item2?.guid == controller.chat.guid &&
-            (cachedDateCreated == null || message.dateCreated!.isAfter(cachedDateCreated!))) {
-          if (message.guid != cachedLatestMessageGuid) {
-            String newSubtitle = MessageHelper.getNotificationText(message);
-            if (newSubtitle != subtitle) {
-              setState(() {
-                subtitle = newSubtitle;
-                fakeText = faker.lorem.words(subtitle.split(" ").length).join(" ");
-              });
-            }
-          }
-          cachedDateCreated = message.dateCreated;
-          cachedLatestMessageGuid = message.guid;
-        }
-      });
-    }
   }
 
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
-  }
-
-  List<Color> getBubbleColors() {
+  List<Color> getBubbleColors(Message? lastMessage) {
     List<Color> bubbleColors = [
       context.theme.colorScheme.bubble(context, chat.isIMessage),
       context.theme.colorScheme.bubble(context, chat.isIMessage)
     ];
     if (lastMessage == null) return bubbleColors;
-    if (!ss.settings.colorfulAvatars.value && ss.settings.colorfulBubbles.value && !lastMessage!.isFromMe!) {
-      if (lastMessage!.handle?.color == null) {
-        bubbleColors = toColorGradient(lastMessage!.handle?.address);
+    if (!ss.settings.colorfulAvatars.value && ss.settings.colorfulBubbles.value && !(lastMessage.isFromMe ?? false)) {
+      if (lastMessage.handle?.color == null) {
+        bubbleColors = toColorGradient(lastMessage.handle?.address);
       } else {
         bubbleColors = [
-          HexColor(lastMessage!.handle!.color!),
-          HexColor(lastMessage!.handle!.color!).lightenAmount(0.075),
+          HexColor(lastMessage.handle!.color!),
+          HexColor(lastMessage.handle!.color!).lightenAmount(0.075),
         ];
       }
     }
@@ -129,14 +63,15 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   Widget build(BuildContext context) {
     return Obx(() {
       final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
-      String _subtitle = hideInfo ? fakeText : subtitle;
+      final latestMessage = controller.reactiveChat.latestMessage.value;
+      String _subtitle = (hideInfo ? latestMessage?.obfuscatedText : latestMessage?.notificationText) ?? "";
 
-      final unread = GlobalChatService.getReactiveChat(controller.chat.guid)?.isUnread.value ?? false;
-      if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)) {
+      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
+      if (!unread || latestMessage?.associatedMessageGuid != null || latestMessage!.isFromMe! || isNullOrEmpty(_subtitle)) {
         return const SizedBox.shrink();
       }
 
-      final background = getBubbleColors().first.withOpacity(0.7);
+      final background = getBubbleColors(latestMessage).first.withOpacity(0.7);
       return Align(
         alignment: showTail
             ? leftSide

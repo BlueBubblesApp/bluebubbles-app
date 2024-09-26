@@ -266,8 +266,8 @@ class HandleSyncManager extends SyncManager {
     rebuildRelationships(newHandles);
     addToOutput("Successfully synced $handlesSynced handle(s)!");
     addToOutput("Reloading your chats...");
-    Get.reload<ChatsService>(force: true);
-    await chats.init(force: true);
+    Get.reload<IGlobalChatService>(force: true);
+    GlobalChatService.init();
     await super.complete();
   }
 }

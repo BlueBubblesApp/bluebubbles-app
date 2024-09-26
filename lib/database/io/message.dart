@@ -9,6 +9,7 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
@@ -212,10 +213,10 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       if (messages.isNotEmpty) {
         final first = messages.first;
         if (first.id != null || kIsWeb) {
-          isNewer = first.dateCreated!.isAfter(inputChat.latestMessage.dateCreated!);
+          isNewer = inputChat.latestMessage == null || first.dateCreated.isAfter(inputChat.latestMessage!.dateCreated);
           if (isNewer) {
             inputChat.latestMessage = first;
-            if (!first.isFromMe! && !cm.isChatActive(inputChat.guid)) {
+            if (!first.isFromMe! && !GlobalChatService.isChatActive(inputChat.guid)) {
               inputChat.toggleHasUnread(true);
             }
           }
@@ -238,7 +239,7 @@ class Message {
   String? text;
   String? subject;
   String? country;
-  DateTime? dateCreated;
+  late DateTime dateCreated;
   bool? isFromMe;
   // Data detector results
   bool? hasDdResults;
@@ -312,6 +313,12 @@ class Message {
   set dbMetadata(String? json) => metadata = json == null
       ? null : jsonDecode(json) as Map<String, dynamic>;
 
+  String get obfuscatedText => faker.lorem.words((text ?? '').split(" ").length).join(" ");
+
+  String get obfuscatedSubject => faker.lorem.words((subject ?? '').split(" ").length).join(" ");
+
+  String get notificationText => MessageHelper.getNotificationText(this);
+
   Message({
     this.id,
     this.originalROWID,
@@ -322,7 +329,7 @@ class Message {
     this.subject,
     this.country,
     int? error,
-    this.dateCreated,
+    DateTime? dateCreated,
     DateTime? dateRead,
     DateTime? dateDelivered,
     bool? isDelievered,
@@ -355,6 +362,7 @@ class Message {
     this.didNotifyRecipient = false,
     this.isBookmarked = false,
   }) {
+      this.dateCreated = dateCreated ?? DateTime.now();
       if (error != null) _error.value = error;
       if (dateRead != null) _dateRead.value = dateRead;
       if (dateDelivered != null) _dateDelivered.value = dateDelivered;
@@ -606,7 +614,7 @@ class Message {
 
   /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
   /// or [fetchAttachmentsByMessagesAsync] when working with a list of messages.
-  List<Attachment?>? fetchAttachments({ChatLifecycleManager? currentChat}) {
+  List<Attachment?>? fetchAttachments() {
     if (attachments.isNotEmpty) {
       return attachments;
     }
@@ -697,16 +705,16 @@ class Message {
     late DateTime aDateToUse;
 
     if (a.dateDelivered == null) {
-      aDateToUse = a.dateCreated!;
+      aDateToUse = a.dateCreated;
     } else {
-      aDateToUse = a.dateCreated!.isBefore(a.dateDelivered!) ? a.dateCreated! : a.dateDelivered!;
+      aDateToUse = a.dateCreated.isBefore(a.dateDelivered!) ? a.dateCreated : a.dateDelivered!;
     }
 
     late DateTime bDateToUse;
     if (b.dateDelivered == null) {
-      bDateToUse = b.dateCreated!;
+      bDateToUse = b.dateCreated;
     } else {
-      bDateToUse = b.dateCreated!.isBefore(b.dateDelivered!) ? b.dateCreated! : b.dateDelivered!;
+      bDateToUse = b.dateCreated.isBefore(b.dateDelivered!) ? b.dateCreated : b.dateDelivered!;
     }
 
     return descending ? bDateToUse.compareTo(aDateToUse) : aDateToUse.compareTo(bDateToUse);
@@ -802,8 +810,8 @@ class Message {
     if (dateRead != null) return Indicator.READ;
     if (isDelivered) return Indicator.DELIVERED;
     if (dateDelivered != null) return Indicator.DELIVERED;
-    if (dateCreated != null) return Indicator.SENT;
-    return Indicator.NONE;
+    if (error != 0) return Indicator.NONE;
+    return Indicator.SENT;
   }
 
   bool get hasAudioTranscript => attributedBody.any((i) => i.runs.any((e) => e.attributes?.audioTranscript != null));
@@ -812,7 +820,7 @@ class Message {
     // if there is no newer, or if the newer is a different sender
     if (newer == null || !sameSender(newer) || newer.isGroupEvent) return true;
     // if newer is over a minute newer
-    return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1;
+    return newer.dateCreated.difference(dateCreated).inMinutes.abs() > 1;
   }
 
   bool sameSender(Message? other) {
@@ -976,10 +984,7 @@ class Message {
     existing.guid ??= newMessage.guid;
   
     // Update date created
-    if ((existing.dateCreated == null && newMessage.dateCreated != null) ||
-        (existing.dateCreated != null &&
-            newMessage.dateCreated != null &&
-            existing.dateCreated!.millisecondsSinceEpoch < newMessage.dateCreated!.millisecondsSinceEpoch)) {
+    if ((existing.dateCreated.millisecondsSinceEpoch < newMessage.dateCreated.millisecondsSinceEpoch)) {
       existing.dateCreated = newMessage.dateCreated;
     }
 
@@ -1117,8 +1122,6 @@ class Message {
     if (error == 0 && other.error != 0) return false;
 
     // Check null dates in order of what should be filled in first -> last
-    if (dateCreated == null && other.dateCreated != null) return false;
-    if (dateCreated != null && other.dateCreated == null) return true;
     if (!isDelivered && other.isDelivered) return false;
     if (isDelivered && !other.isDelivered) return true;
     if (dateDelivered == null && other.dateDelivered != null) return false;
@@ -1140,11 +1143,9 @@ class Message {
       return dateRead!.millisecondsSinceEpoch > other.dateRead!.millisecondsSinceEpoch;
     } else if (dateDelivered != null && other.dateDelivered != null) {
       return dateDelivered!.millisecondsSinceEpoch > other.dateDelivered!.millisecondsSinceEpoch;
-    } else if (dateCreated != null && other.dateCreated != null) {
-      return dateCreated!.millisecondsSinceEpoch > other.dateCreated!.millisecondsSinceEpoch;
     }
 
-    return false;
+    return dateCreated.millisecondsSinceEpoch > other.dateCreated.millisecondsSinceEpoch;
   }
 
   Map<String, dynamic> toMap({bool includeObjects = false}) {
@@ -1158,7 +1159,7 @@ class Message {
       "subject": subject,
       "country": country,
       "_error": _error.value,
-      "dateCreated": dateCreated?.millisecondsSinceEpoch,
+      "dateCreated": dateCreated.millisecondsSinceEpoch,
       "dateRead": _dateRead.value?.millisecondsSinceEpoch,
       "dateDelivered":  _dateDelivered.value?.millisecondsSinceEpoch,
       "isDelivered": _isDelivered.value,

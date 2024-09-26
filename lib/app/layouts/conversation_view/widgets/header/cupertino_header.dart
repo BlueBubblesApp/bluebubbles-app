@@ -7,7 +7,6 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.d
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,6 +21,8 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
   const CupertinoHeader({Key? key, required this.controller});
 
   final ConversationViewController controller;
+
+  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
 
   // simulate apple's saturatioon
   static const List<double> darkMatrix = <double>[
@@ -124,7 +125,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                                   Navigator.of(context).push(
                                     ThemeSwitcher.buildPageRoute(
                                       builder: (context) => ConversationDetails(
-                                        chat: controller.chat,
+                                        chatGuid: chat.guid,
                                       ),
                                     ),
                                   );
@@ -135,7 +136,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                               Navigator.of(context).push(
                                 ThemeSwitcher.buildPageRoute(
                                   builder: (context) => ConversationDetails(
-                                    chat: controller.chat,
+                                    chatGuid: chat.guid,
                                   ),
                                 ),
                               );
@@ -157,15 +158,15 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
               ),
               Positioned(
                 child: Obx(() => TweenAnimationBuilder<double>(
-                    duration: controller.chat.sendProgress.value == 0
+                    duration: chat.sendProgress.value == 0
                         ? Duration.zero
-                        : controller.chat.sendProgress.value == 1
+                        : chat.sendProgress.value == 1
                             ? const Duration(milliseconds: 250)
                             : const Duration(seconds: 10),
-                    curve: controller.chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+                    curve: chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
                     tween: Tween<double>(
                       begin: 0,
-                      end: controller.chat.sendProgress.value,
+                      end: chat.sendProgress.value,
                     ),
                     builder: (context, value, _) => AnimatedOpacity(
                           opacity: value == 1 ? 0 : 1,
@@ -270,87 +271,25 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 }
 
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
-  String title = "Unknown";
-  late final StreamSubscription sub;
-  String? cachedDisplayName = "";
-  List<Handle> cachedParticipants = [];
-  late String cachedGuid;
+
+  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
 
   @override
   void initState() {
     super.initState();
-    tag = controller.chat.guid;
+    tag = controller.chatGuid;
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    cachedDisplayName = controller.chat.displayName;
-    cachedParticipants = controller.chat.handles;
-    title = controller.chat.getTitle();
-    cachedGuid = controller.chat.guid;
-
-    // run query after render has completed
-    if (!kIsWeb) {
-      updateObx(() {
-        final titleQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid)).watch();
-        sub = titleQuery.listen((Query<Chat> query) async {
-          final chat = await runAsync(() {
-            final cquery = Database.chats.query(Chat_.guid.equals(cachedGuid)).build();
-            return cquery.findFirst();
-          });
-
-          // If we don't find a chat, return
-          if (chat == null) return;
-
-          // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName || chat.handles.length != cachedParticipants.length) {
-            final newTitle = chat.getTitle();
-            if (newTitle != title) {
-              setState(() {
-                title = newTitle;
-              });
-            }
-          }
-          cachedDisplayName = chat.displayName;
-          cachedParticipants = chat.handles;
-        });
-      });
-    } else {
-      sub = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName || chat.participants.length != cachedParticipants.length) {
-            final newTitle = chat.getTitle();
-            if (newTitle != title) {
-              setState(() {
-                title = newTitle;
-              });
-            }
-          }
-          cachedDisplayName = chat.displayName;
-          cachedParticipants = chat.participants;
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-    String _title = title;
-    if (hideInfo) {
-      _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
-    }
     final children = [
       IgnorePointer(
         ignoring: true,
         child: ContactAvatarGroupWidget(
-          chat: controller.chat,
+          chat: chat,
           size: 54,
         ),
       ),
@@ -360,18 +299,26 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           constraints: BoxConstraints(
             maxWidth: ns.width(context) / 2.5,
           ),
-          child: RichText(
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: context.theme.textTheme.bodyMedium,
-              children: MessageHelper.buildEmojiText(
-                _title,
-                context.theme.textTheme.bodyMedium!,
+          child: Obx(() {
+            final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+            String title = controller.reactiveChat.title.value ?? "";
+            if (hideInfo) {
+              title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+            }
+
+            return RichText(
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: context.theme.textTheme.bodyMedium,
+                children: MessageHelper.buildEmojiText(
+                  title,
+                  context.theme.textTheme.bodyMedium!,
+                ),
               ),
-            ),
-          ),
+            );
+          })
         ),
         Icon(
           CupertinoIcons.chevron_right,

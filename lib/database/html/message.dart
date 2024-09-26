@@ -24,7 +24,7 @@ class Message {
   String? text;
   String? subject;
   String? country;
-  DateTime? dateCreated;
+  late DateTime dateCreated;
   bool? isFromMe;
   // Data detector results
   bool? hasDdResults;
@@ -84,7 +84,7 @@ class Message {
     this.subject,
     this.country,
     int? error,
-    this.dateCreated,
+    DateTime? dateCreated,
     DateTime? dateRead,
     DateTime? dateDelivered,
     this.isFromMe = true,
@@ -117,6 +117,7 @@ class Message {
     this.isBookmarked = false,
   }) {
     if (error != null) _error.value = error;
+    this.dateCreated = dateCreated ?? DateTime.now().toUtc();
     if (dateRead != null) _dateRead.value = dateRead;
     if (dateDelivered != null) _dateDelivered.value = dateDelivered;
     if (dateEdited != null) _dateEdited.value = dateEdited;
@@ -261,7 +262,7 @@ class Message {
     return this;
   }
 
-  List<Attachment?>? fetchAttachments({ChatLifecycleManager? currentChat}) {
+  List<Attachment?>? fetchAttachments() {
     return attachments;
   }
 
@@ -286,7 +287,7 @@ class Message {
 
   Handle? getHandle() {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return chats.webCachedHandles.firstWhereOrNull((element) => element.originalROWID == handleId);
+    return GlobalChatService.allHandles.firstWhereOrNull((element) => element.originalROWID == handleId);
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
@@ -376,15 +377,15 @@ class Message {
     if (!isFromMe!) return Indicator.NONE;
     if (dateRead != null) return Indicator.READ;
     if (dateDelivered != null) return Indicator.DELIVERED;
-    if (dateCreated != null) return Indicator.SENT;
-    return Indicator.NONE;
+    if (error != 0) return Indicator.NONE;
+    return Indicator.SENT;
   }
 
   bool showTail(Message? newer) {
     // if there is no newer, or if the newer is a different sender
     if (newer == null || !sameSender(newer) || newer.isGroupEvent) return true;
     // if newer is over a minute newer
-    return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1;
+    return newer.dateCreated.difference(dateCreated).inMinutes.abs() > 1;
   }
 
   bool sameSender(Message? other) {
@@ -495,10 +496,7 @@ class Message {
     existing.guid ??= newMessage.guid;
 
     // Update date created
-    if ((existing.dateCreated == null && newMessage.dateCreated != null) ||
-        (existing.dateCreated != null &&
-            newMessage.dateCreated != null &&
-            existing.dateCreated!.millisecondsSinceEpoch < newMessage.dateCreated!.millisecondsSinceEpoch)) {
+    if (existing.dateCreated.millisecondsSinceEpoch < newMessage.dateCreated.millisecondsSinceEpoch) {
       existing.dateCreated = newMessage.dateCreated;
     }
 
@@ -616,7 +614,7 @@ class Message {
       "subject": subject,
       "country": country,
       "_error": _error.value,
-      "dateCreated": dateCreated?.millisecondsSinceEpoch,
+      "dateCreated": dateCreated.millisecondsSinceEpoch,
       "dateRead": _dateRead.value?.millisecondsSinceEpoch,
       "dateDelivered":  _dateDelivered.value?.millisecondsSinceEpoch,
       "isFromMe": isFromMe!,

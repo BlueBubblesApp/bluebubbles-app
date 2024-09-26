@@ -43,7 +43,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
         textStyle.apply(fontWeightDelta: 2),
         recognizer: TapGestureRecognizer()..onTap = () async {
           if (kIsDesktop || kIsWeb) return;
-          final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
+          final handle = GlobalChatService.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
           if (handle?.contact == null && handle != null) {
             await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
           } else if (handle?.contact != null) {
@@ -81,7 +81,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   // extract rich content
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
   final linkIndexMatches = <Tuple3<String, List<int>, List?>>[];
-  final controller = cvc(message.chat.target ?? cm.activeChat!.chat);
+  final controller = cvc(message.chat.target?.guid ?? GlobalChatService.activeGuid.value!);
   if (!isNullOrEmpty(part.text)) {
     if (!kIsWeb && !kIsDesktop && ss.settings.smartReply.value) {
       if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
@@ -169,7 +169,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
           textStyle.apply(fontWeightDelta: 2),
           recognizer: TapGestureRecognizer()..onTap = () async {
             if (kIsDesktop || kIsWeb) return;
-            final handle = cm.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == data!.first);
+            final handle = GlobalChatService.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == data!.first);
             if (handle?.contact == null && handle != null) {
               await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
             } else if (handle?.contact != null) {

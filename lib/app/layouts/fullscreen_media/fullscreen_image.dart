@@ -298,8 +298,8 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
                                         padding: const EdgeInsets.only(top: 2.0),
                                         child: Text(
                                             samsung
-                                                ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
-                                                : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!),
+                                                ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated)
+                                                : intl.DateFormat('EEE').add_jm().format(message!.dateCreated),
                                             style: context.theme.textTheme.bodyLarge!
                                                 .copyWith(color: samsung ? Colors.grey : Colors.white)),
                                       ),

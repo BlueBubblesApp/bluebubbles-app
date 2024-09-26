@@ -62,7 +62,7 @@ class PinnedOrderPanel extends StatelessWidget {
                             style:
                                 context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         onPressed: () {
-                          chats.removePinIndices();
+                          GlobalChatService.removePinIndices();
                         }),
                   ],
                 ),
@@ -79,67 +79,71 @@ class PinnedOrderPanel extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
-                  Obx(() {
-                    if (!chats.loadedChatBatch.value) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 50.0),
-                          child: Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  "Loading chats...",
-                                  style: context.theme.textTheme.labelLarge,
+                  // Convert the Obx below to a future builder
+                  FutureBuilder(
+                    future: GlobalChatService.chatsLoadedFuture.future,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 50.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    "Loading chats...",
+                                    style: context.theme.textTheme.labelLarge,
+                                  ),
                                 ),
-                              ),
-                              buildProgressIndicator(context, size: 15),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-                    if (chats.hasChats.value && chats.chats.bigPinHelper(true).isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 50.0),
-                          child: Text(
-                            "You have no pinned chats :(",
-                            style: context.theme.textTheme.labelLarge,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ReorderableListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      onReorder: chats.updateChatPinIndex,
-                      header: Padding(
-                        padding: const EdgeInsets.all(13.0),
-                        child: Text("Set the order of pinned chats by dragging the chat tile to the desired location.",
-                            style: context.theme.textTheme.bodyLarge),
-                      ),
-                      itemBuilder: (context, index) {
-                        return ReorderableDragStartListener(
-                          key: Key(chats.chats.bigPinHelper(true)[index].guid.toString()),
-                          index: index,
-                          child: AbsorbPointer(
-                            absorbing: true,
-                            child: ConversationTile(
-                              chat: chats.chats.bigPinHelper(true)[index],
-                              controller: Get.put(
-                                  ConversationListController(showUnknownSenders: true, showArchivedChats: true),
-                                  tag: "pinned-order-panel"),
-                              inSelectMode: true,
-                              onSelect: (_) {},
+                                buildProgressIndicator(context, size: 15),
+                              ],
                             ),
                           ),
                         );
-                      },
-                      itemCount: chats.chats.bigPinHelper(true).length,
-                    );
-                  }),
+                      }
+                      if (GlobalChatService.chats.isNotEmpty && GlobalChatService.chats.bigPinHelper(true).isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 50.0),
+                            child: Text(
+                              "You have no pinned chats :(",
+                              style: context.theme.textTheme.labelLarge,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ReorderableListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        onReorder: GlobalChatService.updateChatPinIndex,
+                        header: Padding(
+                          padding: const EdgeInsets.all(13.0),
+                          child: Text("Set the order of pinned chats by dragging the chat tile to the desired location.",
+                              style: context.theme.textTheme.bodyLarge),
+                        ),
+                        itemBuilder: (context, index) {
+                          return ReorderableDragStartListener(
+                            key: Key(GlobalChatService.chats.bigPinHelper(true)[index].guid.toString()),
+                            index: index,
+                            child: AbsorbPointer(
+                              absorbing: true,
+                              child: ConversationTile(
+                                chatGuid: GlobalChatService.chats.bigPinHelper(true)[index].guid,
+                                controller: Get.put(
+                                    ConversationListController(showUnknownSenders: true, showArchivedChats: true),
+                                    tag: "pinned-order-panel"),
+                                inSelectMode: true,
+                                onSelect: (_) {},
+                              ),
+                            ),
+                          );
+                        },
+                        itemCount: GlobalChatService.chats.bigPinHelper(true).length,
+                      );
+                    }
+                  )
                 ],
               ),
             ),

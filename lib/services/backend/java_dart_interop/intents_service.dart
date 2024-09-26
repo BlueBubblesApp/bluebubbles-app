@@ -9,7 +9,6 @@ import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -173,7 +172,7 @@ class IntentsService extends GetxService {
       );
     } else if (guid == "-1") {
       Logger.debug("Popping all routes...", tag: "IntentsService");
-      if (cm.activeChat != null) {
+      if (GlobalChatService.hasActiveChat) {
         Navigator.of(Get.context!).popUntil((route) => route.isFirst);
       }
     } else if (guid == "-2") {
@@ -202,16 +201,16 @@ class IntentsService extends GetxService {
         return;
       }
 
-      bool chatIsOpen = cm.activeChat?.chat.guid == guid;
+      bool chatIsOpen = GlobalChatService.isChatActive(guid);
       Logger.debug("Chat is active: $chatIsOpen", tag: "IntentsService");
 
       setPickedAttachments() {
         if (attachments.isNotEmpty) {
-          cvc(chat).pickedAttachments.value = attachments;
+          cvc(chat.guid).pickedAttachments.value = attachments;
         }
 
         if (text != null && text.isNotEmpty) {
-          cvc(chat).textController.text = text;
+          cvc(chat.guid).textController.text = text;
         }
       }
 
@@ -219,14 +218,7 @@ class IntentsService extends GetxService {
         Logger.debug("Navigating to conversation view...", tag: "IntentsService");
         await StartupTasks.waitForUI();
         await Future.delayed(const Duration(seconds: 1));
-        await ns.pushAndRemoveUntil(
-          Get.context!,
-          ConversationView(
-            chat: chat,
-            onInit: () => setPickedAttachments(),
-          ),
-          (route) => route.isFirst,
-        );
+        await GlobalChatService.openChat(chat.guid, context: Get.context!, onInit: () => setPickedAttachments());
       } else {
         Logger.debug("Chat is already open, not navigating", tag: "IntentsService");
         setPickedAttachments();

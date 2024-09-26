@@ -66,7 +66,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   String oldTextFieldText = "";
   TextSelection oldTextFieldSelection = const TextSelection.collapsed(offset: 0);
 
-  Chat get chat => controller.chat;
+  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
 
   String get chatGuid => chat.guid;
 
@@ -928,7 +928,7 @@ class TextFieldComponent extends StatelessWidget {
 
   bool get samsung => ss.settings.skin.value == Skins.Samsung;
 
-  Chat? get chat => controller?.chat;
+  Chat? get chat => controller == null ? null : GlobalChatService.getChat(controller!.chatGuid)?.chat;
 
   bool get isChatCreator => focusNode != null;
 

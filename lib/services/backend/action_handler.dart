@@ -56,11 +56,11 @@ class ActionHandler extends GetxService {
 
       for (Message message in messages) {
         message.generateTempGuid();
-        await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
+        await GlobalChatService.addMessage(c.guid, message, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       }
     } else {
       m.generateTempGuid();
-      await c.addMessage(m, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
+      await GlobalChatService.addMessage(c.guid, m, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       messages.add(m);
     }
     return messages;
@@ -163,7 +163,7 @@ class ActionHandler extends GetxService {
         final tempGuid = m.guid;
         m = handleSendError(error, m);
 
-        if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
+        if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
           await notif.createFailedToSend(c);
         }
         await Message.replaceMessage(tempGuid, m);
@@ -184,7 +184,7 @@ class ActionHandler extends GetxService {
         final tempGuid = m.guid;
         m = handleSendError(error, m);
 
-        if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
+        if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
           await notif.createFailedToSend(c);
         }
         await Message.replaceMessage(tempGuid, m);
@@ -227,7 +227,7 @@ class ActionHandler extends GetxService {
       final tempGuid = m.guid;
       m = handleSendError(error, m);
 
-      if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
+      if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
         await notif.createFailedToSend(c);
       }
       await Message.replaceMessage(tempGuid, m);
@@ -250,7 +250,8 @@ class ActionHandler extends GetxService {
       }
       await file.writeAsBytes(attachment.bytes!);
     }
-    await c.addMessage(m);
+
+    await GlobalChatService.addMessage(c.guid, m);
   }
 
   Future<void> sendAttachment(Chat c, Message m, bool isAudioMessage) async {
@@ -307,7 +308,7 @@ class ActionHandler extends GetxService {
       final tempGuid = m.guid;
       m = handleSendError(error, m);
 
-      if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
+      if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
         await notif.createFailedToSend(c);
       }
       await Message.replaceMessage(tempGuid, m);
@@ -337,7 +338,8 @@ class ActionHandler extends GetxService {
     if (!ls.isAlive) {
       await MessageHelper.handleNotification(m, c);
     }
-    await c.addMessage(m);
+
+    await GlobalChatService.addMessage(c.guid, m);
   }
 
   Future<void> handleUpdatedMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
@@ -484,9 +486,9 @@ class ActionHandler extends GetxService {
         }
         return;
       case "typing-indicator":
-        final chat = chats.chats.firstWhereOrNull((element) => element.guid == data["guid"]);
-        if (chat != null) {
-          final controller = cvc(chat);
+        final guid = data["guid"];
+        if (guid != null) {
+          final controller = cvc(guid);
           controller.showTypingIndicator.value = data["display"];
         }
         return;

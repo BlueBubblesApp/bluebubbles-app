@@ -21,7 +21,7 @@ class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
 
 class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, MessageWidgetController> {
   Message get message => controller.message;
-  bool get showAvatar => (controller.cvController?.chat ?? cm.activeChat!.chat).isGroup;
+  bool get showAvatar => GlobalChatService.isGroupChat(controller.cvController?.chatGuid) || GlobalChatService.isGroupChat(GlobalChatService.activeGuid.value);
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     if (controller.audioWasKept.value != null) return true;
     if (widget.forceShow || message.guid!.contains("temp")) return true;
     if ((!message.isFromMe! && iOS) || (controller.parts.lastOrNull?.isUnsent ?? false)) return false;
-    final messages = ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.messages
+    final messages = ms(controller.cvController?.chatGuid ?? GlobalChatService.activeGuid.value!).struct.messages
         .where((e) => (!iOS ? !e.isFromMe! : false) || (e.isFromMe! && (e.dateDelivered != null || e.dateRead != null)))
         .toList()..sort(Message.sort);
     final index = messages.indexWhere((e) => e.guid == message.guid);
@@ -80,7 +80,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       return buildTwoPiece("Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}", ss.settings.showDeliveryTimestamps.value || !iOS || widget.forceShow ? buildDate(message.dateDelivered) : null);
     } else if (message.isDelivered) {
       return buildTwoPiece("Delivered", null);
-    } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
+    } else if (message.guid!.contains("temp") && !showAvatar && !iOS) {
       return buildTwoPiece("Sending...", "");
     } else if (widget.forceShow) {
       return buildTwoPiece("Sent", buildDate(message.dateCreated));

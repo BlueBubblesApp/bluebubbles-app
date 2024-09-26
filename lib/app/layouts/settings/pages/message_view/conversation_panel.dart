@@ -157,7 +157,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                               : Icon(Icons.check, color: context.theme.colorScheme.outline)),
                       onTap: () async {
                         gettingIcons.value = true;
-                        for (Chat c in chats.chats.where((c) => c.isGroup)) {
+                        for (Chat c in GlobalChatService.chats.where((c) => c.isGroup)) {
                           await Chat.getIcon(c, force: true);
                         }
                         gettingIcons.value = false;

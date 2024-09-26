@@ -86,9 +86,10 @@ class NavigatorService extends GetxService {
   Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
       {bool closeActiveChat = true, PageRoute? customRoute}) async {
     if (Get.keys.containsKey(2) && isTabletMode(context)) {
-      if (closeActiveChat && cm.activeChat != null) {
-        Logger.debug("Closing active chat: ${cm.activeChat!.chat.guid}", tag: "NavigatorService");
-        cvc(cm.activeChat!.chat).close();
+      String? activeChat = GlobalChatService.activeGuid.value;
+      if (closeActiveChat && activeChat != null) {
+        Logger.debug("Closing active chat: $activeChat", tag: "NavigatorService");
+        cvc(activeChat).close();
       }
 
       await Get.offUntil(
@@ -154,8 +155,9 @@ class NavigatorService extends GetxService {
             id2result = true;
           }
           if (!(Get.global(2).currentState?.canPop() ?? true)) {
-            if (cm.activeChat != null) {
-              cvc(cm.activeChat!.chat).close();
+            String? activeChat = GlobalChatService.activeGuid.value;
+            if (activeChat != null) {
+              cvc(activeChat).close();
             }
             eventDispatcher.emit('update-highlight', null);
           }
@@ -180,7 +182,7 @@ class NavigatorService extends GetxService {
     }
   }
 
-  /// Remember to call `await cm.setAllInactive()` after calling this function
+  /// Remember to call `await GlobalChatService.closeActiveChat()` after calling this function
   void closeAllConversationView(BuildContext context) {
     if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && ns.isTabletMode(context)) {
       Get.until((route) {

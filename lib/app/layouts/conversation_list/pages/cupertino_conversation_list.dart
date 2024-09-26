@@ -116,7 +116,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                         heightFactor: 1,
                                         child: ConversationTile(
                                           key: Key(chat.guid),
-                                          chat: chat,
+                                          chatGuid: chat.guid,
                                           controller: controller,
                                         ),
                                       );
@@ -153,7 +153,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                             (_index) {
                                               return PinnedConversationTile(
                                                 key: Key(_chats[index * maxOnPage + _index].guid.toString()),
-                                                chat: _chats[index * maxOnPage + _index],
+                                                chatGuid: _chats[index * maxOnPage + _index].guid,
                                                 controller: controller,
                                               );
                                             },
@@ -196,70 +196,75 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                         ),
                       );
                     }),
-                    Obx(() {
-                      final _chats = chats.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false);
+                    FutureBuilder(
+                      future: GlobalChatService.chatsLoadedFuture.future,
+                      builder: (context, snapshot) {
+                        return Obx(() {
+                          final _chats = GlobalChatService.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false);
 
-                      if (!chats.loadedChatBatch.value || _chats.isEmpty) {
-                        return SliverToBoxAdapter(
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 50.0),
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      !chats.loadedChatBatch.value
-                                          ? "Loading chats..."
-                                          : showArchived
-                                              ? "You have no archived chats"
-                                              : showUnknown
-                                                  ? "You have no messages from unknown senders :)"
-                                                  : "You have no chats :(",
-                                      style: context.textTheme.labelLarge,
-                                      textAlign: TextAlign.center,
-                                    ),
+                          if (!GlobalChatService.chatsLoaded || _chats.isEmpty) {
+                            return SliverToBoxAdapter(
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 50.0),
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          !GlobalChatService.chatsLoaded
+                                              ? "Loading chats..."
+                                              : showArchived
+                                                  ? "You have no archived chats"
+                                                  : showUnknown
+                                                      ? "You have no messages from unknown senders :)"
+                                                      : "You have no chats :(",
+                                          style: context.textTheme.labelLarge,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      if (!GlobalChatService.chatsLoaded) buildProgressIndicator(context, size: 15),
+                                    ],
                                   ),
-                                  if (!chats.loadedChatBatch.value) buildProgressIndicator(context, size: 15),
-                                ],
+                                ),
                               ),
+                            );
+                          }
+
+                          return SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final chat = GlobalChatService.chats.firstWhere((e) => e.guid == _chats[index].guid);
+                                final child = ConversationTile(
+                                  key: Key(chat.guid.toString()),
+                                  chatGuid: chat.guid,
+                                  controller: controller,
+                                );
+                                final separator = Obx(() => !ss.settings.hideDividers.value
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(left: 20),
+                                        child: Divider(
+                                          color: context.theme.colorScheme.outline.withOpacity(0.5),
+                                          thickness: 0.5,
+                                          height: 0.5,
+                                        ),
+                                      )
+                                    : const SizedBox.shrink());
+
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    child,
+                                    separator,
+                                  ],
+                                );
+                              },
+                              childCount: _chats.length,
                             ),
-                          ),
-                        );
+                          );
+                        });
                       }
-
-                      return SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final chat = chats.chats.firstWhere((e) => e.guid == _chats[index].guid);
-                            final child = ConversationTile(
-                              key: Key(chat.guid.toString()),
-                              chat: chat,
-                              controller: controller,
-                            );
-                            final separator = Obx(() => !ss.settings.hideDividers.value
-                                ? Padding(
-                                    padding: const EdgeInsets.only(left: 20),
-                                    child: Divider(
-                                      color: context.theme.colorScheme.outline.withOpacity(0.5),
-                                      thickness: 0.5,
-                                      height: 0.5,
-                                    ),
-                                  )
-                                : const SizedBox.shrink());
-
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                child,
-                                separator,
-                              ],
-                            );
-                          },
-                          childCount: _chats.length,
-                        ),
-                      );
-                    }),
+                    )
                   ],
                 )),
           ),

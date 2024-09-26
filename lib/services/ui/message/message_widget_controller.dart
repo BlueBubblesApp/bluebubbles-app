@@ -40,9 +40,9 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
   }
 
   Message? get newMessage =>
-      newMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(newMessageGuid!);
+      newMessageGuid == null ? null : ms(cvController!.chatGuid).struct.getMessage(newMessageGuid!);
   Message? get oldMessage =>
-      oldMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(oldMessageGuid!);
+      oldMessageGuid == null ? null : ms(cvController!.chatGuid).struct.getMessage(oldMessageGuid!);
 
   @override
   void onInit() {
@@ -169,9 +169,9 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: e.isAttachment && (cvController?.chat != null || cm.activeChat != null)
+          attachments: e.isAttachment && (cvController?.chatGuid != null || GlobalChatService.hasActiveChat)
               ? [
-                  ms(cvController?.chat.guid ?? cm.activeChat!.chat.guid)
+                  ms(cvController?.chatGuid ?? GlobalChatService.activeGuid.value!)
                           .struct
                           .getAttachment(e.attributes!.attachmentGuid!) ??
                       Attachment.findOne(e.attributes!.attachmentGuid!)
@@ -193,7 +193,9 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
   }
 
   void updateMessage(Message newItem) {
-    final chat = message.chat.target?.guid ?? cvController?.chat.guid ?? cm.activeChat!.chat.guid;
+    final chat = message.chat.target?.guid ?? cvController?.chatGuid ?? GlobalChatService.activeGuid.value;
+    if (chat == null) return;
+
     final oldGuid = message.guid;
     if (newItem.guid != oldGuid && oldGuid!.contains("temp")) {
       message = Message.merge(newItem, message);

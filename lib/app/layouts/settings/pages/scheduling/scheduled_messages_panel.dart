@@ -150,7 +150,7 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                       findChildIndexCallback: (key) => findChildIndexByKey(oneTime, key, (item) => item.id.toString()),
                       itemBuilder: (context, index) {
                         final item = oneTime[index];
-                        final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
+                        final chat = GlobalChatService.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                         return ListTile(
                           key: ValueKey(item.id.toString()),
                           mouseCursor: SystemMouseCursors.click,
@@ -196,7 +196,7 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                       findChildIndexCallback: (key) => findChildIndexByKey(recurring, key, (item) => item.id.toString()),
                       itemBuilder: (context, index) {
                         final item = recurring[index];
-                        final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
+                        final chat = GlobalChatService.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                         return ListTile(
                           key: ValueKey(item.id.toString()),
                           mouseCursor: SystemMouseCursors.click,
@@ -241,7 +241,7 @@ class _ScheduledMessagesPanelState extends OptimizedState<ScheduledMessagesPanel
                     findChildIndexCallback: (key) => findChildIndexByKey(oneTimeCompleted, key, (item) => item.id.toString()),
                     itemBuilder: (context, index) {
                       final item = oneTimeCompleted[index];
-                      final chat = chats.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
+                      final chat = GlobalChatService.chats.firstWhereOrNull((e) => e.guid == item.payload.chatGuid);
                       return ListTile(
                         key: ValueKey(item.id.toString()),
                         title: Text(item.payload.message),

@@ -34,7 +34,7 @@ class ConversationListController extends StatefulController {
   final ScrollController iosScrollController = ScrollController();
   final ScrollController materialScrollController = ScrollController();
   final ScrollController samsungScrollController = ScrollController();
-  final List<Chat> selectedChats = [];
+  final List<String> selectedChats = [];
   bool showMaterialFABText = true;
   double materialScrollStartPosition = 0;
 
@@ -51,12 +51,12 @@ class ConversationListController extends StatefulController {
   }
 
   void clearSelectedChats() {
-    final copy = List.from(selectedChats);
-    for (Chat c in copy) {
-      selectedChats.removeWhere((element) => element.guid == c.guid);
-      Get.find<ConversationTileController>(tag: c.guid).updateWidgets<MaterialConversationTile>(null);
-      Get.find<ConversationTileController>(tag: c.guid).updateWidgets<SamsungConversationTile>(null);
+    for (String c in List<String>.from(selectedChats)) {
+      selectedChats.removeWhere((element) => element == c);
+      Get.find<ConversationTileController>(tag: c).updateWidgets<MaterialConversationTile>(null);
+      Get.find<ConversationTileController>(tag: c).updateWidgets<SamsungConversationTile>(null);
     }
+
     updateSelectedChats();
   }
 
@@ -143,18 +143,16 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     if (kIsDesktop || kIsWeb) {
       if (ss.prefs.getString('lastOpenedChat') != null &&
           showAltLayoutContextless &&
-          cm.activeChat?.chat.guid != ss.prefs.getString('lastOpenedChat') &&
+          GlobalChatService.activeGuid.value != ss.prefs.getString('lastOpenedChat') &&
           !ls.isBubble) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (kIsWeb) {
-            await chats.loadedAllChats.future;
+            await GlobalChatService.chatsLoadedFuture.future;
           }
           ns.pushAndRemoveUntil(
             context,
             ConversationView(
-                chat: kIsWeb
-                    ? (await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat')))!
-                    : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))!),
+                chatGuid: ss.prefs.getString('lastOpenedChat')!),
             (route) => route.isFirst,
           );
         });
@@ -201,8 +199,8 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                           id2result = true;
                         }
                         if (!(Get.global(2).currentState?.canPop() ?? true)) {
-                          if (cm.activeChat != null) {
-                            cvc(cm.activeChat!.chat).close();
+                          if (GlobalChatService.hasActiveChat) {
+                            cvc(GlobalChatService.activeGuid.value!).close();
                           }
                           eventDispatcher.emit('update-highlight', null);
                         }

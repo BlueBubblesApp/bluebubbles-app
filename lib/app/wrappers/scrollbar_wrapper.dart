@@ -32,8 +32,8 @@ class ScrollbarWrapper extends StatelessWidget {
                       !HardwareKeyboard.instance.isMetaPressed &&
                       !HardwareKeyboard.instance.isShiftPressed &&
                       event.physicalKey == PhysicalKeyboardKey.tab) {
-                    if (cm.activeChat != null) {
-                      cvc(cm.activeChat!.chat).lastFocusedNode.requestFocus();
+                    if (GlobalChatService.hasActiveChat) {
+                      cvc(GlobalChatService.activeGuid.value!).lastFocusedNode.requestFocus();
                       return KeyEventResult.handled;
                     }
                   }

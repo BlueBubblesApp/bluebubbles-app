@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart'
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,18 +18,18 @@ import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
-ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
-? Get.find<ConversationViewController>(tag: tag ?? chat.guid) : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
+ConversationViewController cvc(String chatGuid, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chatGuid)
+? Get.find<ConversationViewController>(tag: tag ?? chatGuid) : Get.put(ConversationViewController(chatGuid, tag_: tag), tag: tag ?? chatGuid);
 
 class ConversationViewController extends StatefulController with GetSingleTickerProviderStateMixin {
-  final Chat chat;
+  final String chatGuid;
   late final String tag;
   bool fromChatCreator = false;
   bool addedRecentPhotoReply = false;
   final AutoScrollController scrollController = AutoScrollController();
 
-  ConversationViewController(this.chat, {String? tag_}) {
-    tag = tag_ ?? chat.guid;
+  ConversationViewController(this.chatGuid, {String? tag_}) {
+    tag = tag_ ?? chatGuid;
   }
 
   // caching items
@@ -79,15 +80,15 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       lastFocusedNode.requestFocus();
     }
   }
-  late final mentionables = chat.participants.map((e) => Mentionable(
-    handle: e,
-  )).toList();
 
   bool keyboardOpen = false;
   double _keyboardOffset = 0;
   Timer? _scrollDownDebounce;
   Future<void> Function(Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, bool)? sendFunc;
   bool isProcessingImage = false;
+
+  ReactiveChat get reactiveChat => GlobalChatService.getChat(chatGuid)!;
+  List<Mentionable> get mentionables => GlobalChatService.getMentionablesForChat(chatGuid);
 
   @override
   void onInit() {
@@ -227,8 +228,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   }
 
   void close() {
-    eventDispatcher.emit("update-highlight", null);
-    cm.setAllInactiveSync();
+    GlobalChatService.closeChat(chatGuid);
     Get.delete<ConversationViewController>(tag: tag);
   }
 }

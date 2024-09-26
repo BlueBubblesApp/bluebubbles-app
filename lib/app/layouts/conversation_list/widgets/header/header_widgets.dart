@@ -1,7 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_page.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -102,7 +101,7 @@ class MaterialOverflowMenu extends StatelessWidget {
       ) : null,
       onSelected: (int value) async {
         if (value == 0) {
-          chats.markAllAsRead();
+          GlobalChatService.markAllAsRead();
         } else if (value == 1) {
           goToArchived(context);
         } else if (value == 2) {
@@ -258,7 +257,7 @@ class CupertinoOverflowMenu extends StatelessWidget {
         PullDownMenuItem(
           title: 'Mark All As Read',
           icon: CupertinoIcons.check_mark_circled,
-          onTap: chats.markAllAsRead,
+          onTap: GlobalChatService.markAllAsRead,
         ),
         PullDownMenuItem(
           title: 'Archived',
@@ -335,9 +334,9 @@ Future<void> goToSearch(BuildContext context) async {
 }
 
 Future<void> goToFindMy(BuildContext context) async {
-  final currentChat = cm.activeChat?.chat;
+  final currentChat = GlobalChatService.activeGuid.value;
   ns.closeAllConversationView(context);
-  await cm.setAllInactive();
+  await GlobalChatService.closeActiveChat();
   await Navigator.of(Get.context!).push(
     ThemeSwitcher.buildPageRoute(
       builder: (BuildContext context) {
@@ -346,15 +345,8 @@ Future<void> goToFindMy(BuildContext context) async {
     ),
   );
   if (currentChat != null) {
-    await cm.setActiveChat(currentChat);
     if (ss.settings.tabletMode.value) {
-      ns.pushAndRemoveUntil(
-        context,
-        ConversationView(
-          chat: currentChat,
-        ),
-            (route) => route.isFirst,
-      );
+      await GlobalChatService.openChat(currentChat, context: context);
     } else {
       cvc(currentChat).close();
     }
@@ -412,9 +404,9 @@ void goToUnknownSenders(BuildContext context) {
 }
 
 Future<void> goToSettings(BuildContext context) async {
-  final currentChat = cm.activeChat?.chat;
+  final currentChat = GlobalChatService.activeGuid.value;
   ns.closeAllConversationView(context);
-  await cm.setAllInactive();
+  await GlobalChatService.closeActiveChat();
   await Navigator.of(Get.context!).push(
     ThemeSwitcher.buildPageRoute(
       builder: (BuildContext context) {
@@ -423,15 +415,12 @@ Future<void> goToSettings(BuildContext context) async {
     ),
   );
   if (currentChat != null) {
-    await cm.setActiveChat(currentChat);
     if (ss.settings.tabletMode.value) {
-        ns.pushAndRemoveUntil(
-          context,
-          ConversationView(
-            chat: currentChat,
-          ),
-              (route) => route.isFirst,
-        ).onError((error, stackTrace) => cm.setAllInactiveSync());
+      try {
+        await GlobalChatService.openChat(currentChat, context: context);
+      } catch (e) {
+        GlobalChatService.closeActiveChat();
+      }
     } else {
       cvc(currentChat).close();
     }

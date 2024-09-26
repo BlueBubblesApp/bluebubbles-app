@@ -96,8 +96,8 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   widget.controller!.showRecording.toggle();
                   if (widget.controller!.showRecording.value) {
                     if (kIsDesktop) {
-                      File temp = File(join(fs.appDocDir.path, "temp", "recorder", "${widget.controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a"));
-                      await RecordPlatform.instance.start(widget.controller!.chat.guid, const RecordConfig(bitRate: 320000), path: temp.path);
+                      File temp = File(join(fs.appDocDir.path, "temp", "recorder", "${widget.controller!.chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a"));
+                      await RecordPlatform.instance.start(widget.controller!.chatGuid, const RecordConfig(bitRate: 320000), path: temp.path);
                       return;
                     }
                     await widget.recorderController!.record(
@@ -108,7 +108,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     late final String? path;
                     late final PlatformFile file;
                     if (kIsDesktop) {
-                      path = await RecordPlatform.instance.stop(widget.controller!.chat.guid);
+                      path = await RecordPlatform.instance.stop(widget.controller!.chatGuid);
                       if (path == null) return;
                       final _file = File(path);
                       file = PlatformFile(
@@ -193,7 +193,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     widget.subjectTextController.text.trim(),
                     widget.controller!.replyToMessage?.item1.guid,
                     widget.controller!.replyToMessage?.item2,
-                    widget.controller!.chat.guid,
+                    widget.controller!.chatGuid,
                     widget.sendMessage,
                     widget.textController is MentionTextEditingController ? (widget.textController as MentionTextEditingController).mentionables : [],
                   );

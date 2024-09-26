@@ -536,7 +536,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                             ns.pushAndRemoveUntil(
                               context,
                               ConversationView(
-                                chat: chat,
+                                chatGuid: chat.guid,
                                 customService: service,
                               ),
                               (route) => route.isFirst,

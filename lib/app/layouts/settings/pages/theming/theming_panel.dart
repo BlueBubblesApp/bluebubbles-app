@@ -130,7 +130,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       initial: ss.settings.skin.value,
                       onChanged: (val) async {
                         if (val == null) return;
-                        await cm.setAllInactive();
+                        await GlobalChatService.closeActiveChat();
                         ss.settings.skin.value = val;
                         saveSettings();
                         setState(() {});

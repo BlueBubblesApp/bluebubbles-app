@@ -85,12 +85,8 @@ class ContactsService extends GetxService {
       }
     }
     // load stored handles
-    final List<Handle> handles = [];
-    if (kIsWeb) {
-      handles.addAll(chats.webCachedHandles);
-    } else {
-      handles.addAll(Database.handles.getAll());
-    }
+    final List<Handle> handles = Database.handles.getAll();
+  
     // get formatted addresses
     for (Handle h in handles) {
       if (!h.address.contains("@") && h.formattedAddress == null) {
@@ -124,14 +120,6 @@ class ContactsService extends GetxService {
     }
     if (!kIsWeb) {
       Handle.bulkSave(handles, matchOnOriginalROWID: isMin1_5_2);
-    } else {
-      // dummy to make the full contacts UI refresh happen on web
-      changedIds.last.add(handles.length);
-      contacts = _contacts;
-      for (Chat c in chats.chats) {
-        c.webSyncParticipants();
-      }
-      chats.chats.refresh();
     }
 
     final endTime = DateTime.now().millisecondsSinceEpoch;
@@ -317,7 +305,8 @@ class ContactsService extends GetxService {
         logger?.call("Got exception: $e");
         logger?.call(s.toString());
       }
-      final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
+
+      final handlesToSearch = List<Handle>.from(GlobalChatService.allHandles);
       for (Contact c in contacts) {
         final handles = matchContactToHandles(c, handlesToSearch);
         final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();

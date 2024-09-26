@@ -306,12 +306,9 @@ class Chat {
   String? textFieldText;
   List<String> textFieldAttachments = [];
   Message? _latestMessage;
-  Message get latestMessage {
+  Message? get latestMessage {
     if (_latestMessage != null) return _latestMessage!;
-    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull ?? Message(
-      dateCreated: DateTime.fromMillisecondsSinceEpoch(0),
-      guid: guid,
-    );
+    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull;
     return _latestMessage!;
   }
   Message get dbLatestMessage {
@@ -321,7 +318,7 @@ class Chat {
     );
     return _latestMessage!;
   }
-  set latestMessage(Message m) => _latestMessage = m;
+  set latestMessage(Message? m) => _latestMessage = m;
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
@@ -481,7 +478,7 @@ class Chat {
         participants[i] = participants[i].save();
         _deduplicateParticipants();
       }
-      dbOnlyLatestMessageDate = dbLatestMessage.dateCreated!;
+      dbOnlyLatestMessageDate = dbLatestMessage.dateCreated;
       try {
         id = Database.chats.put(this);
         // make sure to add participant relation if its a new chat
@@ -600,9 +597,9 @@ class Chat {
   static void deleteChat(Chat chat) async {
     if (kIsWeb) return;
     // close the convo view page if open and wait for it to be disposed before deleting
-    if (cm.activeChat?.chat.guid == chat.guid) {
+    if (GlobalChatService.isChatActive(chat.guid)) {
       ns.closeAllConversationView(Get.context!);
-      await cm.setAllInactive();
+      await GlobalChatService.closeActiveChat();
       await Future.delayed(const Duration(milliseconds: 500));
     }
     List<Message> messages = Chat.getMessages(chat);
@@ -616,9 +613,9 @@ class Chat {
   static void softDelete(Chat chat) async {
     if (kIsWeb) return;
     // close the convo view page if open and wait for it to be disposed before deleting
-    if (cm.activeChat?.chat.guid == chat.guid) {
+    if (GlobalChatService.isChatActive(chat.guid)) {
       ns.closeAllConversationView(Get.context!);
-      await cm.setAllInactive();
+      await GlobalChatService.closeActiveChat();
       await Future.delayed(const Duration(milliseconds: 500));
     }
     Database.runInTransaction(TxMode.write, () {
@@ -643,11 +640,11 @@ class Chat {
     }
 
     if (hasUnreadMessage == hasUnread && !force) return this;
-    if (!cm.isChatActive(guid) || !hasUnread || force) {
+    if (!GlobalChatService.isChatActive(guid) || !hasUnread || force) {
       hasUnreadMessage = hasUnread;
       save(updateHasUnreadMessage: true);
     }
-    if (cm.isChatActive(guid) && hasUnread && !force) {
+    if (GlobalChatService.isChatActive(guid) && hasUnread && !force) {
       hasUnread = false;
       clearLocalNotifications = false;
     }
@@ -707,14 +704,14 @@ class Chat {
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
     if ((newMessage?.id != null || kIsWeb) && checkForMessageText) {
-      isNewer = message.dateCreated!.isAfter(latest.dateCreated!)
+      isNewer = latest == null || message.dateCreated.isAfter(latest.dateCreated)
           || (message.guid != latest.guid && message.dateCreated == latest.dateCreated);
       if (isNewer) {
         _latestMessage = message;
         if (dateDeleted != null) {
           dateDeleted = null;
           save(updateDateDeleted: true);
-          await chats.addChat(this);
+          GlobalChatService.syncChat(this);
         }
         if (isArchived! && !_latestMessage!.isFromMe! && ss.settings.unarchiveOnNewMessage.value) {
           toggleArchived(false);
@@ -731,16 +728,16 @@ class Chat {
     if (checkForMessageText && changeUnreadStatus && isNewer) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
-      if (message.isFromMe! || cm.isChatActive(guid)) {
+      if (message.isFromMe! || GlobalChatService.isChatActive(guid)) {
         // force if the chat is active to ensure private api mark read
         toggleHasUnread(
           false,
           clearLocalNotifications: clearNotificationsIfFromMe,
-          force: cm.isChatActive(guid),
+          force: GlobalChatService.isChatActive(guid),
           // only private mark if the chat is active
-          privateMark: cm.isChatActive(guid)
+          privateMark: GlobalChatService.isChatActive(guid)
         );
-      } else if (!cm.isChatActive(guid)) {
+      } else if (!GlobalChatService.isChatActive(guid)) {
         toggleHasUnread(true, privateMark: false);
       }
     }
@@ -853,8 +850,6 @@ class Chat {
     this.isPinned = isPinned;
     _pinIndex.value = null;
     save(updateIsPinned: true, updatePinIndex: true);
-    chats.updateChat(this);
-    chats.sort();
     return this;
   }
 
@@ -871,8 +866,6 @@ class Chat {
     isPinned = false;
     this.isArchived = isArchived;
     save(updateIsPinned: true, updateIsArchived: true);
-    chats.updateChat(this);
-    chats.sort();
     return this;
   }
 
@@ -1008,8 +1001,12 @@ class Chat {
     if (!a.isPinned! && b.isPinned!) return 1;
     if (a.isPinned! && !b.isPinned!) return -1;
 
+    if (a.latestMessage == null && b.latestMessage == null) return 0;
+    if (a.latestMessage == null) return 1;
+    if (b.latestMessage == null) return -1;
+
     // Compare the last message dates
-    return -(a.latestMessage.dateCreated)!.compareTo(b.latestMessage.dateCreated!);
+    return -(a.latestMessage!.dateCreated).compareTo(b.latestMessage!.dateCreated);
   }
 
   static Future<void> getIcon(Chat c, {bool force = false}) async {

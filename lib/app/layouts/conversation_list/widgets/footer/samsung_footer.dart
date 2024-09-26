@@ -1,6 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -25,55 +24,55 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           if (([0, controller.selectedChats.length])
-              .contains(controller.selectedChats.where((element) => element.hasUnreadMessage!).length))
+              .contains(controller.selectedChats.where((element) => GlobalChatService.isChatUnread(element)).length))
             IconButton(
               onPressed: () {
-                for (Chat element in controller.selectedChats) {
-                  element.toggleHasUnread(!element.hasUnreadMessage!);
+                for (String element in controller.selectedChats) {
+                  GlobalChatService.toggleReadStatus(element);
                 }
                 controller.clearSelectedChats();
               },
               icon: Icon(
-                controller.selectedChats[0].hasUnreadMessage!
+                GlobalChatService.isChatUnread(controller.selectedChats[0])
                     ? Icons.mark_chat_read_outlined
                     : Icons.mark_chat_unread_outlined,
                 color: context.theme.colorScheme.primary,
               ),
             ),
           if (([0, controller.selectedChats.length])
-              .contains(controller.selectedChats.where((element) => element.muteType == "mute").length))
+              .contains(controller.selectedChats.where((element) => GlobalChatService.isChatMuted(element)).length))
             IconButton(
               onPressed: () {
-                for (Chat element in controller.selectedChats) {
-                  element.toggleMute(element.muteType != "mute");
+                for (String element in controller.selectedChats) {
+                  GlobalChatService.toggleMuteStatus(element);
                 }
                 controller.clearSelectedChats();
               },
               icon: Icon(
-                controller.selectedChats[0].muteType == "mute"
+                GlobalChatService.isChatMuted(controller.selectedChats[0])
                     ? Icons.notifications_active_outlined
                     : Icons.notifications_off_outlined,
                 color: context.theme.colorScheme.primary,
               ),
             ),
           if (([0, controller.selectedChats.length])
-              .contains(controller.selectedChats.where((element) => element.isPinned!).length))
+              .contains(controller.selectedChats.where((element) => GlobalChatService.isChatPinned(element)).length))
             IconButton(
               onPressed: () {
-                for (Chat element in controller.selectedChats) {
-                  element.togglePin(!element.isPinned!);
+                for (String element in controller.selectedChats) {
+                  GlobalChatService.togglePinStatus(element);
                 }
                 controller.clearSelectedChats();
               },
               icon: Icon(
-                controller.selectedChats[0].isPinned! ? Icons.push_pin_outlined : Icons.push_pin,
+                GlobalChatService.isChatPinned(controller.selectedChats[0]) ? Icons.push_pin_outlined : Icons.push_pin,
                 color: context.theme.colorScheme.primary,
               ),
             ),
           IconButton(
             onPressed: () {
-              for (Chat element in controller.selectedChats) {
-                element.toggleArchived(!element.isArchived!);
+              for (String element in controller.selectedChats) {
+                GlobalChatService.toggleArchivedStatus(element);
               }
               controller.clearSelectedChats();
             },
@@ -84,9 +83,8 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
           ),
           IconButton(
             onPressed: () {
-              for (Chat element in controller.selectedChats) {
-                chats.removeChat(element);
-                Chat.softDelete(element);
+              for (String element in controller.selectedChats) {
+                GlobalChatService.removeChat(element);
               }
               controller.clearSelectedChats();
             },

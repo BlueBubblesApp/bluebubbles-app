@@ -115,7 +115,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     Logger.info("Sending reaction type: $reaction");
     outq.queue(OutgoingItem(
       type: QueueType.sendMessage,
-      chat: message.getChat() ?? cm.activeChat!.chat,
+      chat: message.getChat() ?? GlobalChatService.activeChat!.chat,
       message: Message(
         associatedMessageGuid: message.guid,
         associatedMessageType: reaction,
@@ -137,13 +137,13 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       onDoubleTap: widget.isEditing ? null
         : ss.settings.doubleTapForDetails.value || message.guid!.startsWith('temp')
         ? () => openPopup()
-        : ss.settings.enableQuickTapback.value && widget.cvController.chat.isIMessage
+        : ss.settings.enableQuickTapback.value && GlobalChatService.getChat(widget.cvController.chatGuid)!.chat.isIMessage
         ? () => sendTapback(null, widget.part.part)
         : null,
       onLongPress: widget.isEditing ? null
         : ss.settings.doubleTapForDetails.value &&
         ss.settings.enableQuickTapback.value &&
-        widget.cvController.chat.isIMessage &&
+        GlobalChatService.getChat(widget.cvController.chatGuid)!.chat.isIMessage &&
         !message.guid!.startsWith('temp')
         ? () => sendTapback(null, widget.part.part)
         : () => openPopup(),

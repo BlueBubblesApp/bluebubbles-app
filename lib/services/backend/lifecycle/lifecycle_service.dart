@@ -108,12 +108,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void open() {
-    if (!kIsDesktop || wasActiveAliveBefore != false) {
-      cm.setActiveToAlive();
-    }
-    if (cm.activeChat != null) {
-      cm.activeChat!.chat.toggleHasUnread(false);
-      ConversationViewController _cvc = cvc(cm.activeChat!.chat);
+    if (GlobalChatService.hasActiveChat) {
+      GlobalChatService.toggleReadStatus(GlobalChatService.activeGuid.value!, isUnread: false);
+      ConversationViewController _cvc = cvc(GlobalChatService.activeGuid.value!);
       if (!_cvc.showingOverlays && _cvc.editing.isEmpty) {
         _cvc.lastFocusedNode.requestFocus();
       }
@@ -143,18 +140,12 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void close() {
-    if (kIsDesktop) {
-      wasActiveAliveBefore = cm.activeChat?.isAlive;
-    }
-    if (!kIsDesktop || wasActiveAliveBefore != false) {
-      cm.setActiveToDead();
-    }
     if (!kIsDesktop && !kIsWeb) {
       IsolateNameServer.removePortNameMapping('bg_isolate');
       socket.disconnect();
     }
-    if (cm.activeChat != null) {
-      ConversationViewController _cvc = cvc(cm.activeChat!.chat);
+    if (GlobalChatService.hasActiveChat) {
+      ConversationViewController _cvc = cvc(GlobalChatService.activeGuid.value!);
       _cvc.lastFocusedNode.unfocus();
     }
     if (kIsDesktop) {
@@ -163,7 +154,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void closeBubble() {
-    cm.setActiveToDead();
+    GlobalChatService.closeActiveChat();
     socket.disconnect();
   }
 }

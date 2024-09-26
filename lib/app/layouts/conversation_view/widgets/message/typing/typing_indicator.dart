@@ -30,7 +30,7 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> {
   Widget build(BuildContext context) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
-      child: (widget.controller?.showTypingIndicator.value ?? widget.visible)! ? (iOS || cm.activeChat == null ? ClipPath(
+      child: (widget.controller?.showTypingIndicator.value ?? widget.visible)! ? (iOS || !GlobalChatService.hasActiveChat ? ClipPath(
         clipper: const TypingClipper(),
         child: Container(
           height: 50,
@@ -59,7 +59,7 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> {
           Padding(
             padding: const EdgeInsets.only(left: 10, right: 10),
             child: ContactAvatarWidget(
-              handle: cm.activeChat!.chat.participants.first,
+              handle: GlobalChatService.activeChat!.chat.participants.first,
               size: 25,
               fontSize: context.theme.textTheme.bodyMedium!.fontSize!,
               borderThickness: 0.1,

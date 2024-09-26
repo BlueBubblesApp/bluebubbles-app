@@ -90,7 +90,8 @@ class _SendAnimationState
       );
       message.generateTempGuid();
       message.attachments.first!.guid = message.guid;
-      await outq.queue(OutgoingItem(type: QueueType.sendAttachment, chat: controller.chat, message: message, customArgs: {"audio": isAudioMessage}));
+      Chat chat = GlobalChatService.getChat(controller.chatGuid)!.chat;
+      await outq.queue(OutgoingItem(type: QueueType.sendAttachment, chat: chat, message: message, customArgs: {"audio": isAudioMessage}));
     }
 
     if (text.isNotEmpty || subject.isNotEmpty) {
@@ -158,7 +159,7 @@ class _SendAnimationState
       _message.generateTempGuid();
       outq.queue(OutgoingItem(
         type: (_message.attributedBody.isNotEmpty) ? QueueType.sendMultipart : QueueType.sendMessage,
-        chat: controller.chat,
+        chat: GlobalChatService.getChat(controller.chatGuid)!.chat,
         message: _message,
       ));
       setState(() {

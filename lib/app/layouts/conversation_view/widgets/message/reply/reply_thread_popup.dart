@@ -22,7 +22,7 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
 
 void showBookmarksThread(ConversationViewController cvController, BuildContext context) async {
   final _messages = (Database.messages.query(Message_.isBookmarked.equals(true))
-    ..link(Message_.chat, Chat_.guid.equals(cvController.chat.guid))
+    ..link(Message_.chat, Chat_.guid.equals(cvController.chatGuid))
     ..order(Message_.dateCreated, flags: Order.descending)).build().find();
   if (_messages.isEmpty) {
     return showSnackbar("Error", "There are no bookmarked messages in this chat!");
@@ -105,7 +105,7 @@ void _buildThreadView(List<Message> _messages, int? originatorPart, Conversation
                                             // pop twice to remove convo details page
                                             Navigator.of(context).pop();
                                           }
-                                          ms(cvController.chat.guid).jumpToMessage.call(e.guid!);
+                                          ms(cvController.chatGuid).jumpToMessage.call(e.guid!);
                                         },
                                         child: AbsorbPointer(
                                           absorbing: true,

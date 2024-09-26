@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -16,8 +15,9 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
+Future<void> peekChat(BuildContext context, String chatGuid, Offset offset) async {
   HapticFeedback.mediumImpact();
+  final Chat c = GlobalChatService.getChat(chatGuid)!.chat;
   final messages = Chat.getMessages(c, getDetails: true).where((e) => e.associatedMessageGuid == null).toList();
   await Navigator.push(
     Get.context!,
@@ -26,7 +26,7 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
       pageBuilder: (context, animation, secondaryAnimation) {
         return FadeTransition(
           opacity: animation,
-          child: ConversationPeekView(position: offset, chat: c, messages: messages),
+          child: ConversationPeekView(position: offset, chatGuid: chatGuid, messages: messages),
         );
       },
       fullscreenDialog: true,
@@ -37,10 +37,10 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
 
 class ConversationPeekView extends StatefulWidget {
   final Offset position;
-  final Chat chat;
+  final String chatGuid;
   final List<Message> messages;
 
-  const ConversationPeekView({super.key, required this.position, required this.chat, required this.messages});
+  const ConversationPeekView({super.key, required this.position, required this.chatGuid, required this.messages});
 
   @override
   State<StatefulWidget> createState() => _ConversationPeekViewState();
@@ -48,15 +48,14 @@ class ConversationPeekView extends StatefulWidget {
 
 class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> with SingleTickerProviderStateMixin {
   late final AnimationController controller;
-  late final ConversationViewController cvController = cvc(widget.chat);
+  late final ConversationViewController cvController = cvc(widget.chatGuid);
   final double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
   bool disposed = false;
 
   @override
   void initState() {
     super.initState();
-    cm.setActiveChatSync(widget.chat, clearNotifications: false);
-    cm.activeChat!.controller = cvController;
+    GlobalChatService.closeChat(widget.chatGuid);
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -81,7 +80,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   void dispose() {
     if (!disposed) {
       cvController.close();
-      ms(widget.chat.guid).close();
+      ms(widget.chatGuid).close();
       for (Message m in widget.messages) {
         getActiveMwc(m.guid!)?.close();
       }
@@ -92,6 +91,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
 
   @override
   Widget build(BuildContext context) {
+    Chat chat = GlobalChatService.getChat(widget.chatGuid)!.chat;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value
@@ -103,10 +103,10 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
       child: Theme(
         data: context.theme.copyWith(
           // in case some components still use legacy theming
-          primaryColor: context.theme.colorScheme.bubble(context, widget.chat.isIMessage),
+          primaryColor: context.theme.colorScheme.bubble(context, chat.isIMessage),
           colorScheme: context.theme.colorScheme.copyWith(
-            primary: context.theme.colorScheme.bubble(context, widget.chat.isIMessage),
-            onPrimary: context.theme.colorScheme.onBubble(context, widget.chat.isIMessage),
+            primary: context.theme.colorScheme.bubble(context, chat.isIMessage),
+            onPrimary: context.theme.colorScheme.onBubble(context, chat.isIMessage),
             surface: ss.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
@@ -150,20 +150,14 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                           GestureDetector(
                             onTap: () async {
                               cvController.close();
-                              ms(widget.chat.guid).close();
+                              ms(widget.chatGuid).close();
                               for (Message m in widget.messages) {
                                 getActiveMwc(m.guid!)?.close();
                               }
                               controller.dispose();
                               disposed = true;
                               Navigator.of(context).pop();
-                              ns.pushAndRemoveUntil(
-                                Get.context!,
-                                ConversationView(
-                                  chat: widget.chat,
-                                ),
-                                (route) => route.isFirst,
-                              );
+                              await GlobalChatService.openChat(widget.chatGuid);
                             },
                             child: DeferredPointerHandler(
                               child: Container(
@@ -228,24 +222,25 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   Widget buildDetailsMenu(BuildContext context) {
     double maxMenuWidth = min(max(context.width * 3 / 5, 200), context.width * 4 / 5);
     bool ios = ss.settings.skin.value == Skins.iOS;
+    Chat chat = GlobalChatService.getChat(widget.chatGuid)!.chat;
 
     List<Widget> allActions = [
       Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            widget.chat.togglePin(!widget.chat.isPinned!);
+            chat.togglePin(!chat.isPinned!);
             popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
-              widget.chat.isPinned! ? "Unpin" : "Pin",
+              chat.isPinned! ? "Unpin" : "Pin",
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
-              widget.chat.isPinned!
+              chat.isPinned!
                   ? (ios ? cupertino.CupertinoIcons.pin_slash : Icons.star_outline)
                   : (ios ? cupertino.CupertinoIcons.pin : Icons.star),
               color: context.theme.colorScheme.properOnSurface
@@ -257,18 +252,18 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            widget.chat.toggleMute(widget.chat.muteType != "mute");
+            chat.toggleMute(chat.muteType != "mute");
             popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
-              widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+              chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
-              widget.chat.muteType == "mute"
+              chat.muteType == "mute"
                   ? (ios ? cupertino.CupertinoIcons.bell : Icons.notifications_active)
                   : (ios ? cupertino.CupertinoIcons.bell_slash : Icons.notifications_off),
               color: context.theme.colorScheme.properOnSurface
@@ -280,18 +275,18 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            widget.chat.toggleHasUnread(!widget.chat.hasUnreadMessage!, force: true);
+            chat.toggleHasUnread(!chat.hasUnreadMessage!, force: true);
             popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
-              widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+              chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
-              widget.chat.hasUnreadMessage!
+              chat.hasUnreadMessage!
                   ? (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                   : (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
               color: context.theme.colorScheme.properOnSurface
@@ -303,18 +298,18 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            widget.chat.toggleArchived(!widget.chat.isArchived!);
+            chat.toggleArchived(!chat.isArchived!);
             popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
-              widget.chat.isArchived! ? 'Unarchive' : 'Archive',
+              chat.isArchived! ? 'Unarchive' : 'Archive',
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
-              widget.chat.isArchived!
+              chat.isArchived!
                   ? (ios ? cupertino.CupertinoIcons.tray_arrow_up : Icons.unarchive)
                   : (ios ? cupertino.CupertinoIcons.tray_arrow_down : Icons.archive),
               color: context.theme.colorScheme.properOnSurface
@@ -350,8 +345,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                     TextButton(
                       child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                       onPressed: () async {
-                        chats.removeChat(widget.chat);
-                        Chat.softDelete(widget.chat);
+                        GlobalChatService.removeChat(widget.chatGuid, softDelete: true);
                         popPeekView();
                       },
                     ),

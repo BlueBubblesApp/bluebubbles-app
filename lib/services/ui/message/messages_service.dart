@@ -65,6 +65,8 @@ class MessagesService extends GetxController {
             event.limit = newCount - currentCount;
             final messages = event.find();
             event.limit = 0;
+
+            print("Handling new messages: ${messages.length}");
             for (Message message in messages) {
               await _handleNewMessage(message);
             }
@@ -205,7 +207,7 @@ class MessagesService extends GetxController {
     isFetching = true;
     List<Message> _messages = [];
     if (method == SearchMethod.local) {
-      _messages = await Chat.getMessagesAsync(chat, searchAround: around.dateCreated!.millisecondsSinceEpoch);
+      _messages = await Chat.getMessagesAsync(chat, searchAround: around.dateCreated.millisecondsSinceEpoch);
       _messages.add(around);
       _messages.sort(Message.sort);
       struct.addMessages(_messages);
@@ -213,13 +215,13 @@ class MessagesService extends GetxController {
       final beforeResponse = await cm.getMessages(
         chat.guid,
         limit: 25,
-        before: around.dateCreated!.millisecondsSinceEpoch,
+        before: around.dateCreated.millisecondsSinceEpoch,
       );
       final afterResponse = await cm.getMessages(
         chat.guid,
         limit: 25,
         sort: "ASC",
-        after: around.dateCreated!.millisecondsSinceEpoch,
+        after: around.dateCreated.millisecondsSinceEpoch,
       );
       beforeResponse.addAll(afterResponse);
       _messages = beforeResponse.map((e) => Message.fromMap(e)).toList();

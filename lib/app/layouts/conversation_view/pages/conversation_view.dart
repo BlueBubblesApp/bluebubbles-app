@@ -18,13 +18,13 @@ import 'package:get/get.dart';
 class ConversationView extends StatefulWidget {
   ConversationView({
     super.key,
-    required this.chat,
+    required this.chatGuid,
     this.customService,
     this.fromChatCreator = false,
     this.onInit,
   });
 
-  final Chat chat;
+  final String chatGuid;
   final MessagesService? customService;
   final bool fromChatCreator;
   final void Function()? onInit;
@@ -34,19 +34,18 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends OptimizedState<ConversationView> {
-  late final ConversationViewController controller = cvc(chat, tag: widget.customService?.tag);
+  late final ConversationViewController controller = cvc(widget.chatGuid, tag: widget.customService?.tag);
 
-  Chat get chat => widget.chat;
+  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
 
   @override
   void initState() {
     super.initState();
 
-    Logger.debug("Initializing Conversation View for ${chat.guid}");
+    Logger.debug("Initializing Conversation View for ${widget.chatGuid}");
     controller.fromChatCreator = widget.fromChatCreator;
-    cm.setActiveChatSync(chat);
-    cm.activeChat!.controller = controller;
-    Logger.debug("Conversation View initialized for ${chat.guid}");
+    GlobalChatService.closeChat(widget.chatGuid);
+    Logger.debug("Conversation View initialized for ${widget.chatGuid}");
 
     if (widget.onInit != null) {
       Future.delayed(Duration.zero, widget.onInit!);
@@ -114,20 +113,20 @@ class ConversationViewState extends OptimizedState<ConversationView> {
               body: Actions(
                 actions: {
                   if (ss.settings.enablePrivateAPI.value)
-                    ReplyRecentIntent: ReplyRecentAction(widget.chat),
+                    ReplyRecentIntent: ReplyRecentAction(widget.chatGuid),
                   if (ss.settings.enablePrivateAPI.value)
-                    HeartRecentIntent: HeartRecentAction(widget.chat),
+                    HeartRecentIntent: HeartRecentAction(widget.chatGuid),
                   if (ss.settings.enablePrivateAPI.value)
-                    LikeRecentIntent: LikeRecentAction(widget.chat),
+                    LikeRecentIntent: LikeRecentAction(widget.chatGuid),
                   if (ss.settings.enablePrivateAPI.value)
-                    DislikeRecentIntent: DislikeRecentAction(widget.chat),
+                    DislikeRecentIntent: DislikeRecentAction(widget.chatGuid),
                   if (ss.settings.enablePrivateAPI.value)
-                    LaughRecentIntent: LaughRecentAction(widget.chat),
+                    LaughRecentIntent: LaughRecentAction(widget.chatGuid),
                   if (ss.settings.enablePrivateAPI.value)
-                    EmphasizeRecentIntent: EmphasizeRecentAction(widget.chat),
+                    EmphasizeRecentIntent: EmphasizeRecentAction(widget.chatGuid),
                   if (ss.settings.enablePrivateAPI.value)
-                    QuestionRecentIntent: QuestionRecentAction(widget.chat),
-                  OpenChatDetailsIntent: OpenChatDetailsAction(context, widget.chat),
+                    QuestionRecentIntent: QuestionRecentAction(widget.chatGuid),
+                  OpenChatDetailsIntent: OpenChatDetailsAction(context, widget.chatGuid),
                 },
                 child: GradientBackground(
                   controller: controller,

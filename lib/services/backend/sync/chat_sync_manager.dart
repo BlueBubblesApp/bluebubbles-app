@@ -164,8 +164,8 @@ class ChatSyncManager extends SyncManager {
   Future<void> complete() async {
     addToOutput("Successfully synced $chatsSynced chats(s)!");
     addToOutput("Reloading your chats...");
-    Get.reload<ChatsService>(force: true);
-    await chats.init(force: true);
+    Get.reload<IGlobalChatService>(force: true);
+    GlobalChatService.init();
     await super.complete();
   }
 }

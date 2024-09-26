@@ -91,7 +91,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
             oldText = addressController.text;
             // if user has typed stuff, remove the message view and show filtered results
             if (addressController.text.isNotEmpty && fakeController.value != null) {
-              await cm.setAllInactive();
+              await GlobalChatService.closeActiveChat();
               oldController = fakeController.value;
               fakeController.value = null;
             }
@@ -131,12 +131,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
         contacts = query.find().toSet().toList();
         filteredContacts = List<Contact>.from(contacts);
       }
-      if (chats.loadedAllChats.isCompleted) {
-        existingChats = chats.chats;
+      if (GlobalChatService.chatsLoaded) {
+        existingChats = GlobalChatService.chats;
         filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
       } else {
-        chats.loadedAllChats.future.then((_) {
-          existingChats = chats.chats;
+        GlobalChatService.chatsLoadedFuture.future.then((_) {
+          existingChats = GlobalChatService.chats;
           setState(() {
             filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
           });
@@ -175,7 +175,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
   Future<Chat?> findExistingChat({bool checkDeleted = false, bool update = true}) async {
     // no selected items, remove message view
     if (selectedContacts.isEmpty) {
-      await cm.setAllInactive();
+      await GlobalChatService.closeActiveChat();
       fakeController.value = null;
       return null;
     }
@@ -235,34 +235,33 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
     // if match, show message view, otherwise hide it
     if (update) {
       if (existingChat != null) {
-        await cm.setActiveChat(existingChat, clearNotifications: false);
-        cm.activeChat!.controller = cvc(existingChat);
+        GlobalChatService.setActiveChat(existingChat.guid);
 
         if (widget.initialAttachments.isNotEmpty) {
-          cm.activeChat!.controller!.pickedAttachments.value = widget.initialAttachments;
+          GlobalChatService.activeController.value?.pickedAttachments.value = widget.initialAttachments;
         } else if (fakeController.value != null && fakeController.value!.pickedAttachments.isNotEmpty) {
-          cm.activeChat!.controller!.pickedAttachments.value = fakeController.value!.pickedAttachments;
+          GlobalChatService.activeController.value?.pickedAttachments.value = fakeController.value!.pickedAttachments;
         }
 
         if (widget.initialText != null && widget.initialText!.isNotEmpty) {
-          cm.activeChat!.controller!.textController.text = widget.initialText!;
+          GlobalChatService.activeController.value?.textController.text = widget.initialText!;
         } else if (fakeController.value?.textController.text != null && fakeController.value!.textController.text.isNotEmpty) {
-          cm.activeChat!.controller!.textController.text = fakeController.value!.textController.text;
+          GlobalChatService.activeController.value?.textController.text = fakeController.value!.textController.text;
         } else if (textController.text.isNotEmpty) {
-          cm.activeChat!.controller!.textController.text = textController.text;
+          GlobalChatService.activeController.value?.textController.text = textController.text;
         }
 
-        fakeController.value = cm.activeChat!.controller;
+        fakeController.value = GlobalChatService.activeController.value;
       } else {
-        await cm.setAllInactive();
+        await GlobalChatService.closeActiveChat();
         fakeController.value = null;
       }
     }
     if (checkDeleted && existingChat?.dateDeleted != null) {
       Chat.unDelete(existingChat!);
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      await chats.addChat(existingChat);
+      GlobalChatService.syncChatByGuid(existingChat.guid);
     }
+
     return existingChat;
   }
 
@@ -524,7 +523,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sms = false;
                         filteredChats = List<Chat>.from(existingChats.where((e) => e.isIMessage));
                       });
-                      await cm.setAllInactive();
+                      await GlobalChatService.closeActiveChat();
                       fakeController.value = null;
                     } else {
                       setState(() {
@@ -532,7 +531,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         sms = true;
                         filteredChats = List<Chat>.from(existingChats.where((e) => !e.isIMessage));
                       });
-                      await cm.setAllInactive();
+                      await GlobalChatService.closeActiveChat();
                       fakeController.value = null;
                     }
                   },
@@ -554,132 +553,137 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                           : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                     ),
                   ),
-                  child: Obx(() {
-                    return AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 150),
-                      child: fakeController.value == null
-                          ? CustomScrollView(
-                              shrinkWrap: true,
-                              physics: ThemeSwitcher.getScrollPhysics(),
-                              slivers: <Widget>[
-                                SliverList(
-                                  delegate: SliverChildBuilderDelegate((context, index) {
-                                    if (filteredChats.isEmpty) {
-                                      return Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              "Loading existing chats...",
-                                              style: context.theme.textTheme.labelLarge,
+                  child: FutureBuilder(
+                    future: GlobalChatService.chatsLoadedFuture.future,
+                    builder: (context, snapshot) {
+                      return Obx(() {
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 150),
+                          child: fakeController.value == null
+                              ? CustomScrollView(
+                                  shrinkWrap: true,
+                                  physics: ThemeSwitcher.getScrollPhysics(),
+                                  slivers: <Widget>[
+                                    SliverList(
+                                      delegate: SliverChildBuilderDelegate((context, index) {
+                                        if (filteredChats.isEmpty) {
+                                          return Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  "Loading existing chats...",
+                                                  style: context.theme.textTheme.labelLarge,
+                                                ),
+                                              ),
+                                              buildProgressIndicator(context, size: 15),
+                                            ],
+                                          );
+                                        }
+                                        final chat = filteredChats[index];
+                                        final hideInfo =
+                                            ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                                        String _title = chat.properTitle;
+                                        if (hideInfo) {
+                                          _title =
+                                              chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+                                        }
+                                        return Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () {
+                                              addSelectedList(chat.participants
+                                                  .where((e) =>
+                                                      selectedContacts.firstWhereOrNull((c) => c.address == e.address) ==
+                                                      null)
+                                                  .map((e) => SelectedContact(
+                                                        displayName: e.displayName,
+                                                        address: e.address,
+                                                        isIMessage: chat.isIMessage,
+                                                      )));
+                                            },
+                                            child: ChatCreatorTile(
+                                              key: ValueKey(chat.guid),
+                                              title: _title,
+                                              subtitle: hideInfo
+                                                  ? ""
+                                                  : !chat.isGroup && chat.participants.isNotEmpty
+                                                      ? (chat.participants.first.formattedAddress ??
+                                                          chat.participants.first.address)
+                                                      : chat.getChatCreatorSubtitle(),
+                                              chat: chat,
                                             ),
                                           ),
-                                          buildProgressIndicator(context, size: 15),
-                                        ],
-                                      );
-                                    }
-                                    final chat = filteredChats[index];
-                                    final hideInfo =
-                                        ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-                                    String _title = chat.properTitle;
-                                    if (hideInfo) {
-                                      _title =
-                                          chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
-                                    }
-                                    return Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () {
-                                          addSelectedList(chat.participants
-                                              .where((e) =>
-                                                  selectedContacts.firstWhereOrNull((c) => c.address == e.address) ==
-                                                  null)
-                                              .map((e) => SelectedContact(
-                                                    displayName: e.displayName,
-                                                    address: e.address,
-                                                    isIMessage: chat.isIMessage,
-                                                  )));
+                                        );
+                                      },
+                                          childCount: filteredChats.length
+                                              .clamp(GlobalChatService.chatsLoaded ? 0 : 1, double.infinity)
+                                              .toInt()),
+                                    ),
+                                    SliverList(
+                                      delegate: SliverChildBuilderDelegate(
+                                        (context, index) {
+                                          final contact = filteredContacts[index];
+                                          contact.phones = getUniqueNumbers(contact.phones);
+                                          contact.emails = getUniqueEmails(contact.emails);
+                                          final hideInfo =
+                                              ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                                          return Column(
+                                            key: ValueKey(contact.id),
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ...contact.phones.map((e) => Material(
+                                                    color: Colors.transparent,
+                                                    child: InkWell(
+                                                      onTap: () {
+                                                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) !=
+                                                            null) return;
+                                                        addSelected(
+                                                            SelectedContact(displayName: contact.displayName, address: e));
+                                                      },
+                                                      child: ChatCreatorTile(
+                                                        title: hideInfo ? "Contact" : contact.displayName,
+                                                        subtitle: hideInfo ? "" : e,
+                                                        contact: contact,
+                                                        format: true,
+                                                      ),
+                                                    ),
+                                                  )),
+                                              ...contact.emails.map((e) => Material(
+                                                    color: Colors.transparent,
+                                                    child: InkWell(
+                                                      onTap: () {
+                                                        if (selectedContacts.firstWhereOrNull((c) => c.address == e) !=
+                                                            null) return;
+                                                        addSelected(
+                                                            SelectedContact(displayName: contact.displayName, address: e));
+                                                      },
+                                                      child: ChatCreatorTile(
+                                                        title: hideInfo ? "Contact" : contact.displayName,
+                                                        subtitle: hideInfo ? "" : e,
+                                                        contact: contact,
+                                                      ),
+                                                    ),
+                                                  )),
+                                            ],
+                                          );
                                         },
-                                        child: ChatCreatorTile(
-                                          key: ValueKey(chat.guid),
-                                          title: _title,
-                                          subtitle: hideInfo
-                                              ? ""
-                                              : !chat.isGroup && chat.participants.isNotEmpty
-                                                  ? (chat.participants.first.formattedAddress ??
-                                                      chat.participants.first.address)
-                                                  : chat.getChatCreatorSubtitle(),
-                                          chat: chat,
-                                        ),
+                                        childCount: filteredContacts.length,
                                       ),
-                                    );
-                                  },
-                                      childCount: filteredChats.length
-                                          .clamp(chats.loadedAllChats.isCompleted ? 0 : 1, double.infinity)
-                                          .toInt()),
-                                ),
-                                SliverList(
-                                  delegate: SliverChildBuilderDelegate(
-                                    (context, index) {
-                                      final contact = filteredContacts[index];
-                                      contact.phones = getUniqueNumbers(contact.phones);
-                                      contact.emails = getUniqueEmails(contact.emails);
-                                      final hideInfo =
-                                          ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-                                      return Column(
-                                        key: ValueKey(contact.id),
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          ...contact.phones.map((e) => Material(
-                                                color: Colors.transparent,
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    if (selectedContacts.firstWhereOrNull((c) => c.address == e) !=
-                                                        null) return;
-                                                    addSelected(
-                                                        SelectedContact(displayName: contact.displayName, address: e));
-                                                  },
-                                                  child: ChatCreatorTile(
-                                                    title: hideInfo ? "Contact" : contact.displayName,
-                                                    subtitle: hideInfo ? "" : e,
-                                                    contact: contact,
-                                                    format: true,
-                                                  ),
-                                                ),
-                                              )),
-                                          ...contact.emails.map((e) => Material(
-                                                color: Colors.transparent,
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    if (selectedContacts.firstWhereOrNull((c) => c.address == e) !=
-                                                        null) return;
-                                                    addSelected(
-                                                        SelectedContact(displayName: contact.displayName, address: e));
-                                                  },
-                                                  child: ChatCreatorTile(
-                                                    title: hideInfo ? "Contact" : contact.displayName,
-                                                    subtitle: hideInfo ? "" : e,
-                                                    contact: contact,
-                                                  ),
-                                                ),
-                                              )),
-                                        ],
-                                      );
-                                    },
-                                    childCount: filteredContacts.length,
+                                    ),
+                                  ],
+                                )
+                              : Container(
+                                  color: Colors.transparent,
+                                  child: MessagesView(
+                                    controller: fakeController.value!,
                                   ),
                                 ),
-                              ],
-                            )
-                          : Container(
-                              color: Colors.transparent,
-                              child: MessagesView(
-                                controller: fakeController.value!,
-                              ),
-                            ),
-                    );
-                  }),
+                        );
+                      });
+                    }
+                  )
                 ),
               ),
               Padding(
@@ -718,8 +722,13 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                         initialAttachments: widget.initialAttachments,
                         sendMessage: ({String? effect}) async {
                           addressOnSubmitted();
-                          final chat =
-                              fakeController.value?.chat ?? await findExistingChat(checkDeleted: true, update: false);
+                          Chat? chat;
+                          if (fakeController.value?.chatGuid != null) {
+                            chat = GlobalChatService.getChat(fakeController.value!.chatGuid)?.chat;
+                          }
+
+                          chat ??= await findExistingChat(checkDeleted: true, update: false);
+
                           bool existsOnServer = false;
                           if (chat != null) {
                             // if we don't error, then the chat exists
@@ -729,29 +738,19 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             } catch (_) {}
                           }
                           if (chat != null && existsOnServer) {
-                            ns.pushAndRemoveUntil(
-                              Get.context!,
-                              ConversationView(chat: chat, fromChatCreator: true),
-                              (route) => route.isFirst,
-                              // don't force close the active chat in tablet mode
-                              closeActiveChat: false,
-                              // only used in non-tablet mode context
-                              customRoute: PageRouteBuilder(
-                                pageBuilder: (_, __, ___) =>
-                                    TitleBarWrapper(child: ConversationView(chat: chat, fromChatCreator: true)),
-                                transitionDuration: Duration.zero,
-                              ),
-                            );
+                            await GlobalChatService.openChat(chat.guid, fromChatCreator: true, closeActiveChat: false, customRoute: PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => TitleBarWrapper(child: ConversationView(chatGuid: chat!.guid, fromChatCreator: true)),
+                              transitionDuration: Duration.zero,
+                            ));
 
                             await Future.delayed(const Duration(milliseconds: 500));
                             print("Chat: ${chat.guid}");
                             if (fakeController.value == null) {
                               print("Controller is null");
-                              print(cm.activeChat!.controller?.pickedAttachments);
-                              await cm.setActiveChat(chat, clearNotifications: false);
-                              cm.activeChat!.controller = cvc(chat);
-                              cm.activeChat!.controller!.pickedAttachments.value = [];
-                              fakeController.value = cm.activeChat!.controller;
+                              print(GlobalChatService.activeController.value?.pickedAttachments);
+                              GlobalChatService.setActiveChat(chat.guid);
+                              GlobalChatService.activeController.value?.pickedAttachments.value = [];
+                              fakeController.value = GlobalChatService.activeController.value;
                             } else {
                               print("Controller is not null");
                               print(fakeController.value?.pickedAttachments);
@@ -778,8 +777,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             // hard delete a chat that exists on BB but not on the server to make way for the proper server data
                             if (chat != null) {
-                              chats.removeChat(chat);
-                              Chat.deleteChat(chat);
+                              GlobalChatService.removeChat(chat.guid, hardDelete: true);
                             }
                             createCompleter = Completer();
                             final participants = selectedContacts
@@ -821,10 +819,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               // Update the chat in the chat list.
                               // If it wasn't existing, add it.
                               newChat = saved;
-                              bool updated = chats.updateChat(newChat);
-                              if (!updated) {
-                                await chats.addChat(newChat);
-                              }
+                              GlobalChatService.syncChat(newChat);
 
                               // Fetch the last message for the chat and save it.
                               final messageRes = await http.chatMessages(newChat.guid, limit: 1);
@@ -837,21 +832,21 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                               // Force close the message service for the chat so it can be reloaded.
                               // If this isn't done, new messages will not show.
                               ms(newChat.guid).close(force: true);
-                              cvc(newChat).close();
+                              cvc(newChat.guid).close();
 
                               // Let awaiters know we completed
                               createCompleter?.complete();
 
                               // Navigate to the new chat
                               Navigator.of(context).pop();
-                              ns.pushAndRemoveUntil(
-                                Get.context!,
-                                ConversationView(chat: newChat),
-                                (route) => route.isFirst,
+                              await GlobalChatService.openChat(
+                                newChat.guid,
+                                fromChatCreator: true,
+                                closeActiveChat: false,
                                 customRoute: PageRouteBuilder(
                                   pageBuilder: (_, __, ___) => TitleBarWrapper(
                                     child: ConversationView(
-                                      chat: newChat,
+                                      chatGuid: newChat.guid,
                                       fromChatCreator: true,
                                     ),
                                   ),

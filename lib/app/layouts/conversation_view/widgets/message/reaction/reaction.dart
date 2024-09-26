@@ -256,13 +256,15 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                                 // Remove the original message and notification
                                 Navigator.of(context).pop();
                                 Message.delete(reaction.guid!);
-                                await notif.clearFailedToSend(cm.activeChat!.chat.id!);
+
+                                Chat chat = GlobalChatService.activeChat!.chat;
+                                await notif.clearFailedToSend(chat.id!);
                                 getActiveMwc(reaction.associatedMessageGuid!)?.removeAssociatedMessage(reaction);
                                 // Re-send
                                 final selected = getActiveMwc(reaction.associatedMessageGuid!)!.message;
                                 outq.queue(OutgoingItem(
                                   type: QueueType.sendMessage,
-                                  chat: cm.activeChat!.chat,
+                                  chat: chat,
                                   message: Message(
                                     associatedMessageGuid: selected.guid,
                                     associatedMessageType: reaction.associatedMessageType,
@@ -288,12 +290,10 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                                 Message.delete(reaction.guid!);
                                 // Remove the message from the Bloc
                                 getActiveMwc(reaction.associatedMessageGuid!)?.removeAssociatedMessage(reaction);
-                                final chat = cm.activeChat!.chat;
+                                final chat = GlobalChatService.activeChat!.chat;
                                 await notif.clearFailedToSend(chat.id!);
                                 // Get the "new" latest info
-                                List<Message> latest = Chat.getMessages(chat, limit: 1);
-                                chat.latestMessage = latest.first;
-                                chat.save();
+                                GlobalChatService.updateLatestMessage(GlobalChatService.activeGuid.value!);
                               },
                             ),
                             TextButton(
@@ -303,7 +303,8 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                               ),
                               onPressed: () async {
                                 Navigator.of(context).pop();
-                                await notif.clearFailedToSend(cm.activeChat!.chat.id!);
+                                final chat = GlobalChatService.activeChat!.chat;
+                                await notif.clearFailedToSend(chat.id!);
                               },
                             )
                           ],

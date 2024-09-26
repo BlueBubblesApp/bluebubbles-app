@@ -61,7 +61,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
   bool get showSmartReplies => ss.settings.smartReply.value && !kIsWeb && !kIsDesktop;
 
-  Chat get chat => controller.chat;
+  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
 
   @override
   void initState() {
@@ -184,7 +184,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     if (!showSmartReplies || isNullOrEmpty(_messages) || kIsWeb || kIsDesktop || !mounted || !ls.isAlive) return;
 
     if (updateConversation) {
-      _messages.reversed.where((e) => !isNullOrEmpty(e.fullText) && e.dateCreated != null).skip(max(_messages.length - 5, 0)).forEach((message) {
+      _messages.reversed.where((e) => !isNullOrEmpty(e.fullText)).skip(max(_messages.length - 5, 0)).forEach((message) {
         _addMessageToSmartReply(message);
       });
     }
@@ -202,10 +202,10 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
   void _addMessageToSmartReply(Message message) {
     if (message.isFromMe ?? false) {
-      smartReply.addMessageToConversationFromLocalUser(message.fullText, message.dateCreated!.millisecondsSinceEpoch);
+      smartReply.addMessageToConversationFromLocalUser(message.fullText, message.dateCreated.millisecondsSinceEpoch);
     } else {
       smartReply.addMessageToConversationFromRemoteUser(
-          message.fullText, message.dateCreated!.millisecondsSinceEpoch, message.handle?.address ?? "participant");
+          message.fullText, message.dateCreated.millisecondsSinceEpoch, message.handle?.address ?? "participant");
     }
   }
 
@@ -259,14 +259,14 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
 
     if (insertIndex == 0 && !message.isFromMe! && ss.settings.receiveSoundPath.value != null) {
-      if (kIsDesktop && (cm.getChatController(chat.guid)?.isActive ?? false)) {
+      if (kIsDesktop && GlobalChatService.isChatActive(chat.guid)) {
         Player player = Player();
         player.stream.completed
             .firstWhere((completed) => completed)
             .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
         await player.setVolume(ss.settings.soundVolume.value.toDouble());
         await player.open(Media(ss.settings.receiveSoundPath.value!));
-      } else if (cm.isChatActive(chat.guid)) {
+      } else if (GlobalChatService.isChatActive(chat.guid)) {
         PlayerController controller = PlayerController();
         await controller
             .preparePlayer(path: ss.settings.receiveSoundPath.value!, volume: ss.settings.soundVolume.value / 100)
@@ -309,7 +309,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
               () {
                 outq.queue(OutgoingItem(
                   type: QueueType.sendMessage,
-                  chat: controller.chat,
+                  chat: chat,
                   message: Message(
                     text: text,
                     dateCreated: DateTime.now(),

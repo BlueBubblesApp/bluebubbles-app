@@ -30,9 +30,9 @@ class NetworkTasks {
       }
 
       if (kIsWeb) {
-        if (chats.chats.isEmpty) {
-          Get.reload<ChatsService>(force: true);
-          await chats.init();
+        if (GlobalChatService.chats.isEmpty) {
+          Get.reload<IGlobalChatService>(force: true);
+          GlobalChatService.init();
         }
 
         if (cs.contacts.isEmpty) {

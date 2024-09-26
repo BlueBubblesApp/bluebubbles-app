@@ -66,68 +66,72 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           floatingActionButton: !showArchived && !showUnknown
               ? ConversationListFAB(parentController: controller)
               : const SizedBox.shrink(),
-          body: Obx(() {
-            final _chats = chats.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown);
-
-            if (!chats.loadedChatBatch.value || _chats.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 100),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          !chats.loadedChatBatch.value
-                              ? "Loading chats..."
-                              : showArchived
-                                  ? "You have no archived chats"
-                                  : showUnknown
-                                      ? "You have no messages from unknown senders :)"
-                                      : "You have no chats :(",
-                          style: context.theme.textTheme.labelLarge,
-                          textAlign: TextAlign.center,
-                        ),
+          body: FutureBuilder(
+            future: GlobalChatService.chatsLoadedFuture.future,
+            builder: (context, snapshot) {
+              return Obx(() {
+                final _chats = GlobalChatService.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown);
+                if (!GlobalChatService.chatsLoaded || _chats.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 100),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              !GlobalChatService.chatsLoaded
+                                  ? "Loading chats..."
+                                  : showArchived
+                                      ? "You have no archived chats"
+                                      : showUnknown
+                                          ? "You have no messages from unknown senders :)"
+                                          : "You have no chats :(",
+                              style: context.theme.textTheme.labelLarge,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          if (!GlobalChatService.chatsLoaded) buildProgressIndicator(context, size: 15),
+                        ],
                       ),
-                      if (!chats.loadedChatBatch.value) buildProgressIndicator(context, size: 15),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return NotificationListener(
-              onNotification: (notif) {
-                if (notif is ScrollStartNotification) {
-                  controller.materialScrollStartPosition = controller.materialScrollController.offset;
+                    ),
+                  );
                 }
-                return true;
-              },
-              child: ScrollbarWrapper(
-                showScrollbar: true,
-                controller: controller.materialScrollController,
-                child: Obx(() => ListView.builder(
-                      controller: controller.materialScrollController,
-                      physics: ThemeSwitcher.getScrollPhysics(),
-                      findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
-                      itemBuilder: (context, index) {
-                        final chat = _chats[index];
-                        return Container(
-                          key: ValueKey(chat.guid),
-                          child: ListItem(
-                            chat: chat,
-                            controller: controller,
-                            update: () {
-                              setState(() {});
-                            }
-                          )
-                        );
-                      },
-                      itemCount: _chats.length,
-                    )),
-              ),
-            );
-          }),
+
+                return NotificationListener(
+                  onNotification: (notif) {
+                    if (notif is ScrollStartNotification) {
+                      controller.materialScrollStartPosition = controller.materialScrollController.offset;
+                    }
+                    return true;
+                  },
+                  child: ScrollbarWrapper(
+                    showScrollbar: true,
+                    controller: controller.materialScrollController,
+                    child: Obx(() => ListView.builder(
+                          controller: controller.materialScrollController,
+                          physics: ThemeSwitcher.getScrollPhysics(),
+                          findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
+                          itemBuilder: (context, index) {
+                            final chat = _chats[index];
+                            return Container(
+                              key: ValueKey(chat.guid),
+                              child: ListItem(
+                                chat: chat,
+                                controller: controller,
+                                update: () {
+                                  setState(() {});
+                                }
+                              )
+                            );
+                          },
+                          itemCount: _chats.length,
+                        )),
+                  ),
+                );
+              });
+            }
+          )
         ),
       ),
     );

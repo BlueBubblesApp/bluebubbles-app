@@ -38,7 +38,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
   Message get message => controller.message;
   Message? get newerMessage => controller.newMessage;
   Attachment get attachment => message.attachments.firstWhereOrNull((e) => e?.id == part.attachments.first.id)
-      ?? ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.attachments.firstWhereOrNull((e) => e.id == part.attachments.first.id)
+      ?? ms(controller.cvController?.chatGuid ?? GlobalChatService.activeGuid.value!).struct.attachments.firstWhereOrNull((e) => e.id == part.attachments.first.id)
       ?? part.attachments.first;
   String? get audioTranscript => getAudioTranscriptsFromAttributedBody(message.attributedBody)[part.part];
   late dynamic content;
@@ -266,7 +266,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 useRootNavigator: true,
                                 openBuilder: (context, closeContainer) {
                                   return FullscreenMediaHolder(
-                                    currentChat: cm.activeChat,
+                                    currentChat: GlobalChatService.activeGuid.value,
                                     attachment: attachment,
                                     showInteractions: true,
                                   );
@@ -274,7 +274,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 closedBuilder: (context, openContainer) {
                                   return GestureDetector(
                                     onTap: () {
-                                      final _controller = controller.cvController ?? cvc(cm.activeChat!.chat);
+                                      final _controller = controller.cvController ?? cvc(GlobalChatService.activeGuid.value!);
                                       _controller.focusNode.unfocus();
                                       _controller.subjectFocusNode.unfocus();
                                       openContainer();
@@ -321,7 +321,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 padding: showTail ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0) : EdgeInsets.zero,
                                 child: UrlPreview(
                                   data: UrlPreviewData(
-                                    title: "Location from ${DateFormat.yMd().format(message.dateCreated!)}",
+                                    title: "Location from ${DateFormat.yMd().format(message.dateCreated)}",
                                     siteName: "Tap to open",
                                   ),
                                   message: message,

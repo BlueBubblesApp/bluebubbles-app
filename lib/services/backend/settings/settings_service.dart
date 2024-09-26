@@ -227,7 +227,7 @@ class SettingsService extends GetxService {
                                 Navigator.of(context).pop();
                                 ns.closeSettings(context);
                                 ns.closeAllConversationView(context);
-                                await cm.setAllInactive();
+                                await GlobalChatService.closeActiveChat();
                                 await Navigator.of(Get.context!).push(
                                   ThemeSwitcher.buildPageRoute(
                                     builder: (BuildContext context) {

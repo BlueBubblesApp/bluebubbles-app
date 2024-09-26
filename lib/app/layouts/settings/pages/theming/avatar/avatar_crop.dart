@@ -40,16 +40,17 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       Navigator.of(context).pop();
       showSnackbar("Notice", "User avatar saved successfully");
     } else if (widget.index != null) {
-      File file = File("$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
+      Chat chat = GlobalChatService.chats[widget.index!];
+      File file = File("$appDocPath/avatars/${chat.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar-${croppedData.length}.jpg");
       if (!(await file.exists())) {
         await file.create(recursive: true);
       }
-      if (chats.chats[widget.index!].customAvatarPath != null) {
-        await File(chats.chats[widget.index!].customAvatarPath!).delete();
+      if (chat.customAvatarPath != null) {
+        await File(chat.customAvatarPath!).delete();
       }
       await file.writeAsBytes(croppedData);
-      chats.chats[widget.index!].customAvatarPath = file.path;
-      chats.chats[widget.index!].save(updateCustomAvatarPath: true);
+      chat.customAvatarPath = file.path;
+      chat.save(updateCustomAvatarPath: true);
       Get.back();
       Navigator.of(context).pop();
       showSnackbar("Notice", "Custom chat avatar saved successfully");

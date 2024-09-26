@@ -104,7 +104,7 @@ class NotificationsService extends GetxService {
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
-        final activeChatFetching = cm.activeChat != null ? ms(cm.activeChat!.chat.guid).isFetching : false;
+        final activeChatFetching = GlobalChatService.hasActiveChat ? ms(GlobalChatService.activeGuid.value!).isFetching : false;
         if (ls.isAlive && (!sync.isIncrementalSyncing.value && !kIsDesktop) && !activeChatFetching && newCount > currentCount && currentCount != 0) {
           event.limit = newCount - currentCount;
           final messages = event.find();
@@ -126,7 +126,7 @@ class NotificationsService extends GetxService {
       });
     } else {
       countSub = WebListeners.newMessage.listen((tuple) {
-        final activeChatFetching = cm.activeChat != null ? ms(cm.activeChat!.chat.guid).isFetching : false;
+        final activeChatFetching = GlobalChatService.hasActiveChat ? ms(GlobalChatService.activeGuid.value!).isFetching : false;
         if (ls.isAlive && !activeChatFetching && tuple.item2 != null) {
           MessageHelper.handleNotification(tuple.item1, tuple.item2!, findExisting: false);
         }
@@ -213,7 +213,7 @@ class NotificationsService extends GetxService {
         "contact_avatar": contactIcon,
         "message_guid": message.guid!,
         "message_text": text,
-        "message_date": message.dateCreated!.millisecondsSinceEpoch,
+        "message_date": message.dateCreated.millisecondsSinceEpoch,
         "message_is_from_me": false,
       });
     }
@@ -427,12 +427,8 @@ class NotificationsService extends GetxService {
           return;
         }
 
-        if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
-          ns.pushAndRemoveUntil(
-            Get.context!,
-            ConversationView(chat: chat),
-            (route) => route.isFirst,
-          );
+        if (GlobalChatService.activeGuid.value != guid && Get.context != null) {
+          GlobalChatService.openChat(chat.guid, context: Get.context!);
         }
 
         await windowManager.show();
@@ -516,12 +512,8 @@ class NotificationsService extends GetxService {
           return;
         }
 
-        if (ChatManager().activeChat?.chat.guid != guid && Get.context != null) {
-          ns.pushAndRemoveUntil(
-            Get.context!,
-            ConversationView(chat: chat),
-            (route) => route.isFirst,
-          );
+        if (GlobalChatService.activeGuid.value != guid && Get.context != null) {
+          GlobalChatService.openChat(chat.guid, context: Get.context!);
         }
 
         await windowManager.show();
@@ -599,7 +591,7 @@ class NotificationsService extends GetxService {
       notifications = {};
       notificationCounts = {};
 
-      chats.markAllAsRead();
+      GlobalChatService.markAllAsRead();
     };
 
     allToast!.onClose = (reason) {
@@ -735,12 +727,12 @@ class NotificationsService extends GetxService {
             ),
           );
         } else {
-          bool chatIsOpen = cm.activeChat?.chat.guid == chat.guid;
+          bool chatIsOpen = GlobalChatService.activeGuid.value == chat.guid;
           if (!chatIsOpen) {
             ns.pushAndRemoveUntil(
               Get.context!,
               ConversationView(
-                chat: chat,
+                chatGuid: chat.guid,
               ),
               (route) => route.isFirst,
             );

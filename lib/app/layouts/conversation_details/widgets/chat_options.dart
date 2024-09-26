@@ -19,16 +19,16 @@ import 'package:printing/printing.dart';
 import 'package:universal_io/io.dart';
 
 class ChatOptions extends StatefulWidget {
-  const ChatOptions({super.key, required this.chat});
+  const ChatOptions({super.key, required this.chatGuid});
 
-  final Chat chat;
+  final String chatGuid;
 
   @override
   OptimizedState createState() => _ChatOptionsState();
 }
 
 class _ChatOptionsState extends OptimizedState<ChatOptions> {
-  Chat get chat => widget.chat;
+  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +137,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                         child: Icon(iOS ? CupertinoIcons.bookmark : Icons.bookmark),
                       ),
                       onTap: () async {
-                        showBookmarksThread(cvc(widget.chat), context);
+                        showBookmarksThread(cvc(widget.chatGuid), context);
                       }),
                 SettingsTile(
                     title: "Fetch Chat Details",
@@ -372,7 +372,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       );
                       final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                           .reversed
-                          .where((e) => e.dateCreated!.isAfter(date));
+                          .where((e) => e.dateCreated.isAfter(date));
                       if (messages.isEmpty) {
                         Get.back();
                         showSnackbar("Error", "No messages found!");
@@ -383,7 +383,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                         final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
                         final deliveredStr =
                             m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
-                        final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
+                        final sentStr = "Sent: ${buildFullDate(m.dateCreated)}";
                         final text = MessageHelper.getNotificationText(m, withSender: true);
                         final line = "($readStr$deliveredStr$sentStr) $text";
                         lines.add(line);
@@ -424,7 +424,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       );
                       final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                           .reversed
-                          .where((e) => e.dateCreated!.isAfter(date));
+                          .where((e) => e.dateCreated.isAfter(date));
                       if (messages.isEmpty) {
                         Get.back();
                         showSnackbar("Error", "No messages found!");
@@ -438,7 +438,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                         final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
                         final deliveredStr =
                             m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
-                        final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
+                        final sentStr = "Sent: ${buildFullDate(m.dateCreated)}";
                         if (m.hasAttachments) {
                           final attachments = m.attachments.where(
                               (e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));

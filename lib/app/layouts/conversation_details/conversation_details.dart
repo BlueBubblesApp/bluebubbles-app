@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/add_participant.dart';
@@ -24,9 +23,9 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ConversationDetails extends StatefulWidget {
-  final Chat chat;
+  final String chatGuid;
 
-  ConversationDetails({super.key, required this.chat});
+  ConversationDetails({super.key, required this.chatGuid});
 
   @override
   State<ConversationDetails> createState() => _ConversationDetailsState();
@@ -38,44 +37,22 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   List<Attachment> locations = <Attachment>[];
   List<Message> links = [];
   bool showMoreParticipants = false;
-  late Chat chat = widget.chat;
-  late StreamSubscription sub;
   final RxList<String> selected = <String>[].obs;
 
+  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
+
   bool get shouldShowMore => chat.participants.length > 5;
-  List<Handle> get clippedParticipants => showMoreParticipants
-      ? chat.participants
-      : chat.participants.take(5).toList();
+  List<Handle> get clippedParticipants {
+    List<Handle> _participants = chat.participants;
+    return showMoreParticipants
+      ? _participants
+      : _participants.take(5).toList();
+  }
 
   @override
   void initState() {
     super.initState();
-
-    cm.setActiveToDead();
-
-    if (!kIsWeb) {
-      final chatQuery = Database.chats.query(Chat_.guid.equals(chat.guid)).watch();
-      sub = chatQuery.listen((Query<Chat> query) async {
-        final _chat = await runAsync(() {
-          return Database.chats.get(chat.id!);
-        });
-        if (_chat != null) {
-          final update = _chat.getTitle() != chat.title || _chat.participants.length != chat.participants.length;
-          chat = _chat.merge(chat);
-          if (update) {
-            setState(() {});
-          }
-        }
-      });
-    } else {
-      sub = WebListeners.chatUpdate.listen((_chat) {
-        final update = _chat.getTitle() != chat.title || _chat.participants.length != chat.participants.length;
-        chat = _chat.merge(chat);
-        if (update) {
-          setState(() {});
-        }
-      });
-    }
+    GlobalChatService.activeChat?.setIsObscured(true);
 
     if (!kIsWeb) {
       updateObx(() {
@@ -87,11 +64,11 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
 
   @override
   void dispose() {
-    sub.cancel();
-    if (cm.activeChat != null) {
-      cm.setActiveToAlive();
-      cvc(cm.activeChat!.chat).lastFocusedNode.requestFocus();
+    if (GlobalChatService.hasActiveChat) {
+      GlobalChatService.activeChat?.setIsObscured(false);
+      cvc(GlobalChatService.activeGuid.value!).lastFocusedNode.requestFocus();
     }
+
     super.dispose();
   }
 
@@ -337,7 +314,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
             const SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 10),
             ),
-            ChatOptions(chat: chat),
+            ChatOptions(chatGuid: chat.guid),
             if (!kIsWeb && media.isNotEmpty)
               SliverPadding(
                 padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
@@ -497,7 +474,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                           child: Center(
                             child: UrlPreview(
                               data: UrlPreviewData(
-                                title: "Location from ${DateFormat.yMd().format(locations[index].message.target!.dateCreated!)}",
+                                title: "Location from ${DateFormat.yMd().format(locations[index].message.target!.dateCreated)}",
                                 siteName: "Tap to open",
                               ),
                               message: locations[index].message.target!,
