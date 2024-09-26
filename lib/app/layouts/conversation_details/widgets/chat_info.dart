@@ -168,7 +168,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                         }
                       : null,
                   child: ContactAvatarGroupWidget(
-                    chat: chat,
+                    chatGuid: chat.guid,
                     size: 100,
                     editable: !chat.isGroup,
                   ),
@@ -302,7 +302,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
           ContactTile(
             key: Key(chat.participants.first.address),
             handle: chat.participants.first,
-            chat: chat,
+            chatGuid: chat.guid,
             canBeRemoved: false,
           ),
         if (chat.isGroup && iOS)
@@ -333,13 +333,13 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
             child: Row(
               mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
               children: intersperse(const SizedBox(width: 5), [
-                if (canCall) CallButton(tileColor: tileColor, chat: chat, iOS: iOS),
-                VideoCallButton(tileColor: tileColor, chat: chat, iOS: iOS),
+                if (canCall) CallButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
+                VideoCallButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
                 if (chat.participants.isNotEmpty &&
                     ((chat.participants.first.contact?.emails.isNotEmpty ?? false) ||
                         chat.participants.first.address.contains("@")))
-                  MailButton(tileColor: tileColor, chat: chat, iOS: iOS),
-                if (!kIsWeb && !kIsDesktop) InfoButton(tileColor: tileColor, chat: chat, iOS: iOS),
+                  MailButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
+                if (!kIsWeb && !kIsDesktop) InfoButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
               ]).toList(),
             ),
           ),
@@ -358,58 +358,61 @@ class InfoButton extends StatelessWidget {
   const InfoButton({
     super.key,
     required this.tileColor,
-    required this.chat,
+    required this.chatGuid,
     required this.iOS,
   });
 
   final Color tileColor;
-  final Chat chat;
+  final String chatGuid;
   final bool iOS;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        borderRadius: BorderRadius.circular(15),
-        color: tileColor,
-        child: InkWell(
-          onTap: () async {
-            final contact = chat.participants.first.contact;
-            final handle = chat.participants.first;
-            if (contact == null) {
-              await mcs.invokeMethod("open-contact-form",
-                  {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
-            } else {
-              try {
-                await mcs.invokeMethod("view-contact-form", {'id': contact.id});
-              } catch (_) {
-                showSnackbar("Error", "Failed to find contact on device!");
-              }
-            }
-          },
+    return Obx(() {
+      final chat = GlobalChatService.getChat(chatGuid)!;
+      return Expanded(
+        child: Material(
           borderRadius: BorderRadius.circular(15),
-          child: SizedBox(
-            height: 60,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  chat.participants.isNotEmpty && chat.participants.first.contact != null
-                      ? (iOS ? CupertinoIcons.info : Icons.info)
-                      : (iOS ? CupertinoIcons.plus_circle : Icons.add_circle_outline),
-                  color: context.theme.colorScheme.onSurface,
-                  size: 20,
-                ),
-                const SizedBox(height: 7.5),
-                Text(chat.participants.isNotEmpty && chat.participants.first.contact != null ? "Info" : "Add Contact",
-                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
-              ],
+          color: tileColor,
+          child: InkWell(
+            onTap: () async {
+              final contact = chat.participants.first.contact;
+              final handle = chat.participants.first;
+              if (contact == null) {
+                await mcs.invokeMethod("open-contact-form",
+                    {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
+              } else {
+                try {
+                  await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+                } catch (_) {
+                  showSnackbar("Error", "Failed to find contact on device!");
+                }
+              }
+            },
+            borderRadius: BorderRadius.circular(15),
+            child: SizedBox(
+              height: 60,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    chat.participants.isNotEmpty && chat.participants.first.contact != null
+                        ? (iOS ? CupertinoIcons.info : Icons.info)
+                        : (iOS ? CupertinoIcons.plus_circle : Icons.add_circle_outline),
+                    color: context.theme.colorScheme.onSurface,
+                    size: 20,
+                  ),
+                  const SizedBox(height: 7.5),
+                  Text(chat.participants.isNotEmpty && chat.participants.first.contact != null ? "Info" : "Add Contact",
+                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -417,46 +420,49 @@ class MailButton extends StatelessWidget {
   const MailButton({
     super.key,
     required this.tileColor,
-    required this.chat,
+    required this.chatGuid,
     required this.iOS,
   });
 
   final Color tileColor;
-  final Chat chat;
+  final String chatGuid;
   final bool iOS;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        borderRadius: BorderRadius.circular(15),
-        color: tileColor,
-        child: InkWell(
-          onTap: () {
-            final contact = chat.participants.first.contact;
-            showAddressPicker(contact, chat.participants.first, context, isEmail: true);
-          },
-          onLongPress: () {
-            final contact = chat.participants.first.contact;
-            showAddressPicker(contact, chat.participants.first, context, isEmail: true, isLongPressed: true);
-          },
+    return Obx(() {
+      final chat = GlobalChatService.getChat(chatGuid)!;
+      return Expanded(
+        child: Material(
           borderRadius: BorderRadius.circular(15),
-          child: SizedBox(
-            height: 60,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(iOS ? CupertinoIcons.mail : Icons.email, color: context.theme.colorScheme.onSurface, size: 20),
-                const SizedBox(height: 7.5),
-                Text("Mail",
-                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
-              ],
+          color: tileColor,
+          child: InkWell(
+            onTap: () {
+              final contact = chat.participants.first.contact;
+              showAddressPicker(contact, chat.participants.first, context, isEmail: true);
+            },
+            onLongPress: () {
+              final contact = chat.participants.first.contact;
+              showAddressPicker(contact, chat.participants.first, context, isEmail: true, isLongPressed: true);
+            },
+            borderRadius: BorderRadius.circular(15),
+            child: SizedBox(
+              height: 60,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(iOS ? CupertinoIcons.mail : Icons.email, color: context.theme.colorScheme.onSurface, size: 20),
+                  const SizedBox(height: 7.5),
+                  Text("Mail",
+                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -464,47 +470,50 @@ class VideoCallButton extends StatelessWidget {
   const VideoCallButton({
     super.key,
     required this.tileColor,
-    required this.chat,
+    required this.chatGuid,
     required this.iOS,
   });
 
   final Color tileColor;
-  final Chat chat;
+  final String chatGuid;
   final bool iOS;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        borderRadius: BorderRadius.circular(15),
-        color: tileColor,
-        child: InkWell(
-          onTap: () {
-            final contact = chat.participants.first.contact;
-            showAddressPicker(contact, chat.participants.first, context, video: true);
-          },
-          onLongPress: () {
-            final contact = chat.participants.first.contact;
-            showAddressPicker(contact, chat.participants.first, context, isLongPressed: true, video: true);
-          },
+    return Obx(() {
+      final chat = GlobalChatService.getChat(chatGuid)!;
+      return Expanded(
+        child: Material(
           borderRadius: BorderRadius.circular(15),
-          child: SizedBox(
-            height: 60,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(iOS ? CupertinoIcons.video_camera : Icons.video_call_outlined,
-                    color: context.theme.colorScheme.onSurface, size: 25),
-                const SizedBox(height: 2.5),
-                Text("Video Call",
-                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
-              ],
+          color: tileColor,
+          child: InkWell(
+            onTap: () {
+              final contact = chat.participants.first.contact;
+              showAddressPicker(contact, chat.participants.first, context, video: true);
+            },
+            onLongPress: () {
+              final contact = chat.participants.first.contact;
+              showAddressPicker(contact, chat.participants.first, context, isLongPressed: true, video: true);
+            },
+            borderRadius: BorderRadius.circular(15),
+            child: SizedBox(
+              height: 60,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(iOS ? CupertinoIcons.video_camera : Icons.video_call_outlined,
+                      color: context.theme.colorScheme.onSurface, size: 25),
+                  const SizedBox(height: 2.5),
+                  Text("Video Call",
+                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -512,45 +521,48 @@ class CallButton extends StatelessWidget {
   const CallButton({
     super.key,
     required this.tileColor,
-    required this.chat,
+    required this.chatGuid,
     required this.iOS,
   });
 
   final Color tileColor;
-  final Chat chat;
+  final String chatGuid;
   final bool iOS;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        borderRadius: BorderRadius.circular(15),
-        color: tileColor,
-        child: InkWell(
-          onTap: () {
-            final contact = chat.participants.first.contact;
-            showAddressPicker(contact, chat.participants.first, context);
-          },
-          onLongPress: () {
-            final contact = chat.participants.first.contact;
-            showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
-          },
+    return Obx(() {
+      final chat = GlobalChatService.getChat(chatGuid)!;
+      return Expanded(
+        child: Material(
           borderRadius: BorderRadius.circular(15),
-          child: SizedBox(
-            height: 60,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(iOS ? CupertinoIcons.phone : Icons.call, color: context.theme.colorScheme.onSurface, size: 20),
-                const SizedBox(height: 7.5),
-                Text("Call",
-                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
-              ],
+          color: tileColor,
+          child: InkWell(
+            onTap: () {
+              final contact = chat.participants.first.contact;
+              showAddressPicker(contact, chat.participants.first, context);
+            },
+            onLongPress: () {
+              final contact = chat.participants.first.contact;
+              showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
+            },
+            borderRadius: BorderRadius.circular(15),
+            child: SizedBox(
+              height: 60,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(iOS ? CupertinoIcons.phone : Icons.call, color: context.theme.colorScheme.onSurface, size: 20),
+                  const SizedBox(height: 7.5),
+                  Text("Call",
+                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

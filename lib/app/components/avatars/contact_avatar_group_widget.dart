@@ -16,11 +16,11 @@ import 'package:universal_io/io.dart';
 class ContactAvatarGroupWidget extends StatefulWidget {
   ContactAvatarGroupWidget({
     super.key,
-    required this.chat,
+    required this.chatGuid,
     this.size = 40,
     this.editable = true,
   });
-  final Chat chat;
+  final String chatGuid;
   final double size;
   final bool editable;
 
@@ -29,7 +29,6 @@ class ContactAvatarGroupWidget extends StatefulWidget {
 }
 
 class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWidget> {
-  late final List<Handle> participants = widget.chat.participants;
   final Map materialGeneration = {
     2: [24.5/40, 10.5/40, [Alignment.topRight, Alignment.bottomLeft]],
     3: [21.5/40, 9/40, [Alignment.bottomRight, Alignment.bottomLeft, Alignment.topCenter]],
@@ -37,37 +36,26 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
   };
 
   @override
-  void initState() {
-    super.initState();
-    participants.sort((a, b) {
-      bool avatarA = a.contact?.avatar?.isNotEmpty ?? false;
-      bool avatarB = b.contact?.avatar?.isNotEmpty ?? false;
-      if (!avatarA && avatarB) return 1;
-      if (avatarA && !avatarB) return -1;
-      return 0;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (participants.isEmpty) {
-      return ContactAvatarWidget(
-        handle: Handle(address: ''),
-        size: widget.size * ss.settings.avatarScale.value,
-        editable: false,
-        scaleSize: false,
-      );
-    }
-
     return Obx(() {
+        final rChat = GlobalChatService.getChat(widget.chatGuid)!;
         final hide = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
         final avatarSize = widget.size * ss.settings.avatarScale.value;
         final maxAvatars = ss.settings.maxAvatarsInGroupWidget.value;
 
-        if (widget.chat.customAvatarPath != null && !hide) {
-          dynamic file = File(widget.chat.customAvatarPath!);
+        if (rChat.participants.isEmpty) {
+          return ContactAvatarWidget(
+            handle: Handle(address: ''),
+            size: widget.size * ss.settings.avatarScale.value,
+            editable: false,
+            scaleSize: false,
+          );
+        }
+
+        if (rChat.customAvatarPath.value != null && !hide) {
+          dynamic file = File(rChat.customAvatarPath.value!);
           return CircleAvatar(
-            key: ValueKey(widget.chat.customAvatarPath!),
+            key: ValueKey(rChat.customAvatarPath.value!),
             radius: avatarSize / 2,
             backgroundImage: FileImage(file),
             backgroundColor: Colors.transparent,
@@ -77,7 +65,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
         return Container(
           width: avatarSize,
           height: avatarSize,
-          child: participants.length > 1
+          child: rChat.participants.length > 1
               ? ThemeSwitcher(
                   iOSSkin: Stack(
                     children: [
@@ -90,10 +78,10 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                         ),
                       ),
                       ...List.generate(
-                        min(participants.length, maxAvatars),
+                        min(rChat.participants.length, maxAvatars),
                         (index) {
                           // Trig really paying off here
-                          int realLength = min(participants.length, maxAvatars);
+                          int realLength = min(rChat.participants.length, maxAvatars);
                           double padding = avatarSize * 0.08;
                           double angle = index / realLength * 2 * pi + pi / 4;
                           double adjustedWidth = avatarSize * (-0.07 * realLength + 1);
@@ -103,7 +91,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                           double right = (avatarSize / 2) + (innerRadius / 2) * cos(angle + pi) - size / 2;
 
                           // indicate more users than shown
-                          if (index == maxAvatars - 1 && participants.length > maxAvatars) {
+                          if (index == maxAvatars - 1 && rChat.participants.length > maxAvatars) {
                             return Positioned(
                               top: top,
                               right: right,
@@ -137,8 +125,8 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                             top: top,
                             right: right,
                             child: ContactAvatarWidget(
-                              key: Key("${participants[index].address}-contact-avatar-group-widget"),
-                              handle: participants[index],
+                              key: Key("${rChat.participants[index].address}-contact-avatar-group-widget"),
+                              handle: rChat.participants[index],
                               size: size,
                               borderThickness: avatarSize * 0.01,
                               fontSize: adjustedWidth * 0.3,
@@ -151,12 +139,12 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                     ],
                   ),
                   materialSkin: Stack(
-                    children: List.generate(min(participants.length, 4), (index) => Align(
-                      alignment: materialGeneration[min(participants.length, 4)][2][index],
+                    children: List.generate(min(rChat.participants.length, 4), (index) => Align(
+                      alignment: materialGeneration[min(rChat.participants.length, 4)][2][index],
                       child: ContactAvatarWidget(
-                        handle: participants[index],
-                        size: avatarSize * materialGeneration[min(participants.length, 4)][0],
-                        fontSize: avatarSize * materialGeneration[min(participants.length, 4)][1],
+                        handle: rChat.participants[index],
+                        size: avatarSize * materialGeneration[min(rChat.participants.length, 4)][0],
+                        fontSize: avatarSize * materialGeneration[min(rChat.participants.length, 4)][1],
                         editable: widget.editable,
                         scaleSize: false,
                       ),
@@ -164,7 +152,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                   ),
                 )
               : ContactAvatarWidget(
-                  handle: participants.first,
+                  handle: rChat.participants.first,
                   borderThickness: 0.1,
                   size: avatarSize,
                   preferHighResAvatar: true,

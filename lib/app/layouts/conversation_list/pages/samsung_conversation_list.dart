@@ -131,7 +131,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                               (context, index) {
                                 final chat = _chats.bigPinHelper(true)[index];
                                 return ListItem(
-                                    chat: chat,
+                                    chatGuid: chat.guid,
                                     controller: controller,
                                     update: () {
                                       setState(() {});
@@ -151,7 +151,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                               (context, index) {
                                 final chat = _chats.bigPinHelper(false)[index];
                                 return ListItem(
-                                    chat: chat,
+                                    chatGuid: chat.guid,
                                     controller: controller,
                                     update: () {
                                       setState(() {});

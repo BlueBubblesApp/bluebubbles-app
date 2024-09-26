@@ -641,7 +641,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                 ListTile(
                                   title: Text("Send location", style: Theme.of(context).textTheme.bodyLarge),
                                   onTap: () async {
-                                    Share.location(chat);
+                                    Share.location(chat.guid);
                                     Get.back();
                                   },
                                 ),
@@ -703,7 +703,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
                   onPressed: () async {
-                    await Share.location(chat);
+                    await Share.location(chat.guid);
                   },
                 ),
               Expanded(

@@ -256,7 +256,7 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                                 }
                                 return;
                               case 3:
-                                await Share.location(GlobalChatService.getChat(GlobalChatService.activeGuid.value!)!.chat);
+                                await Share.location(GlobalChatService.activeGuid.value!);
                                 return;
                               case 4:
                                 if (controller.pickedAttachments.isNotEmpty) {

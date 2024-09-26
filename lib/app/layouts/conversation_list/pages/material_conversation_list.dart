@@ -117,7 +117,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                             return Container(
                               key: ValueKey(chat.guid),
                               child: ListItem(
-                                chat: chat,
+                                chatGuid: chat.guid,
                                 controller: controller,
                                 update: () {
                                   setState(() {});

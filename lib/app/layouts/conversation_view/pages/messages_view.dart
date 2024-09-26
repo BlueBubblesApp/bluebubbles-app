@@ -309,7 +309,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
               () {
                 outq.queue(OutgoingItem(
                   type: QueueType.sendMessage,
-                  chat: chat,
+                  chatGuid: chat.guid,
                   message: Message(
                     text: text,
                     dateCreated: DateTime.now(),

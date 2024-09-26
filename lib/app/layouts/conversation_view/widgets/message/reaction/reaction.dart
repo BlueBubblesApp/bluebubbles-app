@@ -264,7 +264,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                                 final selected = getActiveMwc(reaction.associatedMessageGuid!)!.message;
                                 outq.queue(OutgoingItem(
                                   type: QueueType.sendMessage,
-                                  chat: chat,
+                                  chatGuid: chat.guid,
                                   message: Message(
                                     associatedMessageGuid: selected.guid,
                                     associatedMessageType: reaction.associatedMessageType,

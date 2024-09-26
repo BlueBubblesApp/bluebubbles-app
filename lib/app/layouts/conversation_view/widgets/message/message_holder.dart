@@ -759,13 +759,13 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   if (message.attachments.isNotEmpty) {
                                     outq.queue(OutgoingItem(
                                       type: QueueType.sendAttachment,
-                                      chat: chat,
+                                      chatGuid: chat.guid,
                                       message: message,
                                     ));
                                   } else {
                                     outq.queue(OutgoingItem(
                                       type: QueueType.sendMessage,
-                                      chat: chat,
+                                      chatGuid: chat.guid,
                                       message: message,
                                     ));
                                   }

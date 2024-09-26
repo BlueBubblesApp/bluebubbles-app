@@ -157,16 +157,18 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
               Positioned(
-                child: Obx(() => TweenAnimationBuilder<double>(
-                    duration: chat.sendProgress.value == 0
+                child: Obx(() {
+                  final rChat = GlobalChatService.getChat(controller.chatGuid)!;
+                  return TweenAnimationBuilder<double>(
+                    duration: rChat.sendProgress.value == 0
                         ? Duration.zero
-                        : chat.sendProgress.value == 1
+                        : rChat.sendProgress.value == 1
                             ? const Duration(milliseconds: 250)
                             : const Duration(seconds: 10),
-                    curve: chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+                    curve: rChat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
                     tween: Tween<double>(
                       begin: 0,
-                      end: chat.sendProgress.value,
+                      end: rChat.sendProgress.value,
                     ),
                     builder: (context, value, _) => AnimatedOpacity(
                           opacity: value == 1 ? 0 : 1,
@@ -176,7 +178,9 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                             backgroundColor: Colors.transparent,
                             minHeight: 3,
                           ),
-                        ))),
+                        )
+                  );
+                }),
                 bottom: 0,
                 left: 0,
                 right: 0,
@@ -289,7 +293,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
       IgnorePointer(
         ignoring: true,
         child: ContactAvatarGroupWidget(
-          chat: chat,
+          chatGuid: chat.guid,
           size: 54,
         ),
       ),

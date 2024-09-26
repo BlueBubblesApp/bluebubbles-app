@@ -20,7 +20,7 @@ class ActionHandler extends GetxService {
   final List<String> outOfOrderTempGuids = [];
   CancelToken? latestCancelToken;
   
-  Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
+  Future<List<Message>> prepMessage(String chatGuid, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
 
     final List<Message> messages = <Message>[];
@@ -56,11 +56,11 @@ class ActionHandler extends GetxService {
 
       for (Message message in messages) {
         message.generateTempGuid();
-        await GlobalChatService.addMessage(c.guid, message, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
+        await GlobalChatService.addMessage(chatGuid, message, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       }
     } else {
       m.generateTempGuid();
-      await GlobalChatService.addMessage(c.guid, m, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
+      await GlobalChatService.addMessage(chatGuid, m, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
       messages.add(m);
     }
     return messages;
@@ -130,7 +130,8 @@ class ActionHandler extends GetxService {
     }
   }
 
-  Future<void> sendMessage(Chat c, Message m, Message? selected, String? r) async {
+  Future<void> sendMessage(String chatGuid, Message m, Message? selected, String? r) async {
+    final c = GlobalChatService.getChat(chatGuid)!.chat;
     final completer = Completer<void>();
     if (r == null) {
       http.sendMessage(
@@ -195,7 +196,7 @@ class ActionHandler extends GetxService {
     return completer.future;
   }
 
-  Future<void> sendMultipart(Chat c, Message m, Message? selected, String? r) async {
+  Future<void> sendMultipart(String chatGuid, Message m, Message? selected, String? r) async {
     final completer = Completer<void>();
 
     List<Map<String, dynamic>> parts = m.attributedBody.first.runs.map((e) => {
@@ -204,6 +205,7 @@ class ActionHandler extends GetxService {
       "partIndex": e.attributes!.messagePart,
     }).toList();
 
+    final c = GlobalChatService.getChat(chatGuid)!.chat;
     http.sendMultipart(
       c.guid,
       m.guid!,
@@ -237,7 +239,7 @@ class ActionHandler extends GetxService {
     return completer.future;
   }
   
-  Future<void> prepAttachment(Chat c, Message m) async {
+  Future<void> prepAttachment(String chatGuid, Message m) async {
     final attachment = m.attachments.first!;
     final progress = Tuple2(attachment.guid!, 0.0.obs);
     attachmentProgress.add(progress);
@@ -251,15 +253,17 @@ class ActionHandler extends GetxService {
       await file.writeAsBytes(attachment.bytes!);
     }
 
-    await GlobalChatService.addMessage(c.guid, m);
+    await GlobalChatService.addMessage(chatGuid, m);
   }
 
-  Future<void> sendAttachment(Chat c, Message m, bool isAudioMessage) async {
+  Future<void> sendAttachment(String chatGuid, Message m, bool isAudioMessage) async {
     if (m.attachments.isEmpty || m.attachments.firstOrNull?.bytes == null) return;
     final attachment = m.attachments.first!;
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
     final completer = Completer<void>();
     latestCancelToken = CancelToken();
+
+    final c = GlobalChatService.getChat(chatGuid)!.chat;
     http.sendAttachment(
       c.guid,
       attachment.guid!,

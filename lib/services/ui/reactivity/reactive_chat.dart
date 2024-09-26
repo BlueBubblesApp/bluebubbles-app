@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -20,6 +22,7 @@ class ReactiveChat {
   final RxString _textFieldText = "".obs;
   final RxBool _isHighlighted = false.obs;
   final RxBool _isObscured = false.obs;
+  final RxDouble _sendProgress = 0.0.obs;
 
   RxnString get title {
     if (_title.value != null) {
@@ -66,6 +69,8 @@ class ReactiveChat {
 
   RxBool get isHighlighted => _isHighlighted;
 
+  RxDouble get sendProgress => _sendProgress;
+
   // The app currently has the chat opened
   bool get isOpen => GlobalChatService.activeGuid.value == chat.guid;
 
@@ -96,9 +101,9 @@ class ReactiveChat {
     _isDeleted.value = isDeleted;
     _pickedAttachments.value = pickedAttachments;
     _textFieldText.value = textFieldText ?? "";
-
-    _participants.value = participants;
     _latestMessage.value = latestMessage;
+
+    setParticipants(participants);
   }
 
   setIsUnread(bool value) {
@@ -114,11 +119,19 @@ class ReactiveChat {
 
   setParticipants(List<Handle> value) {
     _participants.value = value;
+    _participants.sort((a, b) {
+      bool avatarA = a.contact?.avatar?.isNotEmpty ?? false;
+      bool avatarB = b.contact?.avatar?.isNotEmpty ?? false;
+      if (!avatarA && avatarB) return 1;
+      if (avatarA && !avatarB) return -1;
+      return 0;
+    });
   }
 
   setLatestMessage(Message value) {
     _latestMessage.value = value;
     chat.latestMessage = value;
+    chat.dbOnlyLatestMessageDate = value.dateCreated;
     chat.save();
     GlobalChatService.sortChat(chat.guid);
   }
@@ -170,6 +183,18 @@ class ReactiveChat {
 
   setIsObscured(bool value) {
     _isObscured.value = value;
+  }
+
+  setSendProgress(double value) {
+    if (value < 0) value = 0;
+    if (value > 1) value = 1;
+    _sendProgress.value = value;
+
+    if (value == 1) {
+      Timer(const Duration(milliseconds: 500), () {
+        setSendProgress(0);
+      });
+    }
   }
 
   factory ReactiveChat.fromChat(Chat chat) {

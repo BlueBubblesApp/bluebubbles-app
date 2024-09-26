@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ListItem extends StatelessWidget {
-  final Chat chat;
+  final String chatGuid;
   final ConversationListController controller;
   final VoidCallback update;
-  ListItem({required this.chat, required this.controller, required this.update});
+  ListItem({required this.chatGuid, required this.controller, required this.update});
 
   MaterialSwipeAction get leftAction => ss.settings.materialLeftAction.value;
   MaterialSwipeAction get rightAction => ss.settings.materialRightAction.value;
@@ -82,6 +82,7 @@ class ListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final chat = GlobalChatService.getChat(chatGuid)!.chat;
       final tile = ConversationTile(
         key: Key(chat.guid),
         chatGuid: chat.guid,

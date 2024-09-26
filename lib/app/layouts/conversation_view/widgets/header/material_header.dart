@@ -213,24 +213,27 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
       ],
     )),
       Positioned(
-        child: Obx(() => TweenAnimationBuilder<double>(
-          duration: chat.sendProgress.value == 0 ? Duration.zero : chat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
-          curve: chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
-          tween: Tween<double>(
-              begin: 0,
-              end: chat.sendProgress.value,
-          ),
-          builder: (context, value, _) =>
-              AnimatedOpacity(
-                opacity: value == 1 ? 0 : 1,
-                duration: const Duration(milliseconds: 250),
-                child: LinearProgressIndicator(
-                  value: value,
-                  backgroundColor: Colors.transparent,
-                  minHeight: 3,
-                ),
-              )
-        )),
+        child: Obx(() {
+          final rChat = GlobalChatService.getChat(controller.chatGuid)!;
+          return TweenAnimationBuilder<double>(
+            duration: rChat.sendProgress.value == 0 ? Duration.zero : rChat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
+            curve: rChat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+            tween: Tween<double>(
+                begin: 0,
+                end: rChat.sendProgress.value,
+            ),
+            builder: (context, value, _) =>
+                AnimatedOpacity(
+                  opacity: value == 1 ? 0 : 1,
+                  duration: const Duration(milliseconds: 250),
+                  child: LinearProgressIndicator(
+                    value: value,
+                    backgroundColor: Colors.transparent,
+                    minHeight: 3,
+                  ),
+                )
+          );
+        }),
         bottom: 0,
         left: 0,
         right: 0,
@@ -273,7 +276,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           child: IgnorePointer(
             ignoring: true,
             child: ContactAvatarGroupWidget(
-              chat: chat,
+              chatGuid: chat.guid,
               size: !chat.isGroup ? 35 : 40,
             ),
           ),

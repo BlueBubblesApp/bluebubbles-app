@@ -36,7 +36,7 @@ class IncomingItem extends QueueItem {
 }
 
 class OutgoingItem extends QueueItem {
-  Chat chat;
+  String chatGuid;
   Message message;
   Message? selected;
   String? reaction;
@@ -45,7 +45,7 @@ class OutgoingItem extends QueueItem {
   OutgoingItem({
     required super.type,
     super.completer,
-    required this.chat,
+    required this.chatGuid,
     required this.message,
     this.selected,
     this.reaction,

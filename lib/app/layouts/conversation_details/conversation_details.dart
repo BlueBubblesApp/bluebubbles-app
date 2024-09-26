@@ -248,7 +248,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   return ContactTile(
                     key: Key(chat.participants[index].address),
                     handle: chat.participants[index],
-                    chat: chat,
+                    chatGuid: chat.guid,
                     canBeRemoved: chat.participants.length > 1
                         && ss.settings.enablePrivateAPI.value
                         && chat.isIMessage,

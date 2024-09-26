@@ -12,12 +12,12 @@ import 'package:get/get.dart';
 class PinnedTileTextBubble extends CustomStateful<ConversationTileController> {
   PinnedTileTextBubble({
     super.key,
-    required this.chat,
+    required this.chatGuid,
     required this.size,
     required super.parentController,
   });
 
-  final Chat chat;
+  final String chatGuid;
   final double size;
 
   @override

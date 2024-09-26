@@ -310,10 +310,9 @@ class GoBackAction extends Action<GoBackIntent> {
 }
 
 void _sendReactionHelper(String chatGuid, Message selected, String t) {
-  final c = GlobalChatService.getChat(chatGuid)!.chat;
   outq.queue(OutgoingItem(
     type: QueueType.sendMessage,
-    chat: c,
+    chatGuid: chatGuid,
     message: Message(
       associatedMessageGuid: selected.guid,
       associatedMessageType: t,

@@ -164,7 +164,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       context: context,
                       barrierDismissible: false,
                       builder: (context) => ChatSyncDialog(
-                        chat: chat,
+                        chatGuid: chat.guid,
                         withOffset: true,
                         initialMessage: "Fetching more messages...",
                         limit: 100,
@@ -184,7 +184,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                       context: context,
                       barrierDismissible: false,
                       builder: (context) =>
-                          ChatSyncDialog(chat: chat, initialMessage: "Resyncing messages...", limit: 25),
+                          ChatSyncDialog(chatGuid: chat.guid, initialMessage: "Resyncing messages...", limit: 25),
                     );
                   },
                 ),

@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_lis
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/cupertino_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/material_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/samsung_conversation_tile.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -50,13 +49,7 @@ class ConversationTileController extends StatefulController {
     if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
       onLongPress();
     } else if ((!kIsDesktop && !kIsWeb) || GlobalChatService.activeGuid.value != chatGuid) {
-      ns.pushAndRemoveUntil(
-        context,
-        ConversationView(
-          chatGuid: chatGuid,
-        ),
-        (route) => route.isFirst,
-      );
+      GlobalChatService.openChat(chatGuid);
     } else if (ns.isTabletMode(context) && !GlobalChatService.hasActiveChat) {
       // Pops chat details
       Get.back(id: 2);
@@ -314,7 +307,7 @@ class ChatLeadingState extends OptimizedState<ChatLeading> {
                     ),
                   ),
                 ) : ContactAvatarGroupWidget(
-                  chat: widget.controller.chat,
+                  chatGuid: widget.controller.chatGuid,
                   size: 40,
                   editable: false,
                 ),

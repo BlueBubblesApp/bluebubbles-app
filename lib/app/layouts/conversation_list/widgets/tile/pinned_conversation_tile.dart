@@ -125,7 +125,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                               clipBehavior: Clip.none,
                               children: <Widget>[
                                 ContactAvatarGroupWidget(
-                                  chat: controller.chat,
+                                  chatGuid: controller.chatGuid,
                                   size: maxWidth,
                                   editable: false,
                                 ),
@@ -142,7 +142,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                           bottom: context.textTheme.bodyMedium!.fontSize! * 3,
                           width: maxWidth,
                           child: PinnedTileTextBubble(
-                            chat: controller.chat,
+                            chatGuid: controller.chatGuid,
                             size: maxWidth,
                             parentController: controller,
                           ),

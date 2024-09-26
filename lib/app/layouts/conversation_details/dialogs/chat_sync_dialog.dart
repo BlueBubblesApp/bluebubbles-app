@@ -8,13 +8,13 @@ import 'package:get/get.dart';
 class ChatSyncDialog extends StatefulWidget {
   ChatSyncDialog({
     super.key,
-    required this.chat,
+    required this.chatGuid,
     this.initialMessage,
     this.withOffset = false,
     this.limit = 100
   });
 
-  final Chat chat;
+  final String chatGuid;
   final String? initialMessage;
   final bool withOffset;
   final int limit;
@@ -37,19 +37,21 @@ class _ChatSyncDialogState extends OptimizedState<ChatSyncDialog> {
   }
 
   void syncMessages() async {
+    final chat = GlobalChatService.getChat(widget.chatGuid)!.chat;
+
     int offset = 0;
     if (widget.withOffset) {
-      offset = Message.countForChat(widget.chat) ?? 0;
+      offset = Message.countForChat(chat) ?? 0;
     }
 
-    cm.getMessages(widget.chat.guid, offset: offset, limit: widget.limit).then((dynamic messages) {
+    cm.getMessages(chat.guid, offset: offset, limit: widget.limit).then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
         });
       }
 
-      MessageHelper.bulkAddMessages(widget.chat, messages, onProgress: (int progress, int length) {
+      MessageHelper.bulkAddMessages(chat, messages, onProgress: (int progress, int length) {
         if (progress == 0 || length == 0) {
           this.progress = null;
         } else {

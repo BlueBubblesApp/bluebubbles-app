@@ -180,7 +180,7 @@ class _CreateScheduledMessageState extends OptimizedState<CreateScheduledMessage
                   materialCustomWidgets: (chat) => Row(
                     children: [
                       ContactAvatarGroupWidget(
-                        chat: chat,
+                        chatGuid: chat.guid,
                         size: 35,
                         editable: false,
                       ),

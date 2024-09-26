@@ -36,6 +36,8 @@ IGlobalChatService GlobalChatService = Get.isRegistered<IGlobalChatService>() ? 
 /// Anytime you need to interact with a chat, you should use this service.
 /// If you do not, the UI may not update properly.
 class IGlobalChatService extends GetxService {
+  Timer? _syncAllDebounce;
+
   final Completer<void> _chatsLoaded = Completer<void>();
   bool get chatsLoaded => _chatsLoaded.isCompleted;
   Completer<void> get chatsLoadedFuture => _chatsLoaded;
@@ -171,6 +173,14 @@ class IGlobalChatService extends GetxService {
     final query = Database.chats.query().watch(triggerImmediately: false);
     query.listen((event) {
       final chats = event.find();
+      _syncAllChats(chats);
+    });
+  }
+
+  // The same as syncChats but with a debounce of 500ms
+  void _syncAllChats(List<Chat> chats) {
+    if (_syncAllDebounce?.isActive ?? false) _syncAllDebounce?.cancel();
+    _syncAllDebounce = Timer(const Duration(milliseconds: 500), () {
       _syncChats(chats);
     });
   }
@@ -350,7 +360,7 @@ class IGlobalChatService extends GetxService {
     final chat = _reactiveChats[chatGuid];
     if (chat == null) return;
 
-    final index = chats.indexWhere((element) => element.guid != chatGuid && Chat.sort(chat.chat, element) == -1);
+    final index = chats.indexWhere((element) => [0, 1].contains(Chat.sort(element, chat.chat)));
     if (index != -1) {
       chats.remove(chat.chat);
       chats.insert(index, chat.chat);
@@ -443,22 +453,27 @@ class IGlobalChatService extends GetxService {
     BuildContext? ctx = context ?? Get.context;
     if (ctx == null) throw Exception("No context provided to open chat");
 
+    setActiveChat(chatGuid);
+
+    // Code won't run after this call until the route is popped.
     await ns.pushAndRemoveUntil(
       context ?? Get.context!,
       ConversationView(
         chatGuid: chatGuid,
         customService: customService,
         fromChatCreator: fromChatCreator,
-        onInit: onInit
+        onInit: () async {
+          // Call these before onInit() because we need to execute this after the route
+          // has loaded, but not before it's been pushed.
+          toggleReadStatus(chatGuid, isUnread: false);
+          await ss.prefs.setString('lastOpenedChat', chatGuid);
+          if (onInit != null) onInit();
+        }
       ),
       (route) => route.isFirst,
       closeActiveChat: closeActiveChat && _activeGuid.value != chatGuid,
       customRoute: customRoute
     );
-
-    setActiveChat(chatGuid);
-    await ss.prefs.setString('lastOpenedChat', chatGuid);
-    toggleReadStatus(chatGuid, isUnread: false);
   }
 
   Future<void> openNextChat(String chatGuid, {BuildContext? context}) async {
@@ -569,5 +584,15 @@ class IGlobalChatService extends GetxService {
       Logger.debug("Updating Chat (${newChat.guid}) Deleted Status from ${rChat.isDeleted.value} to $isDeleted");
       rChat.isDeleted.value = isDeleted;
     }
+  }
+
+  void dispose() {
+    _syncAllDebounce?.cancel();
+    _reactiveChats.clear();
+    _chatParticipants.clear();
+    _reactiveHandles.clear();
+    _unreadCount.value = 0;
+    _activeGuid.value = null;
+    _activeController.value = null;
   }
 }

@@ -15,7 +15,7 @@ import 'package:universal_io/io.dart';
 
 class ContactTile extends StatelessWidget {
   final Handle handle;
-  final Chat chat;
+  final String chatGuid;
   final bool canBeRemoved;
 
   Contact? get contact => handle.contact;
@@ -23,7 +23,7 @@ class ContactTile extends StatelessWidget {
   ContactTile({
     super.key,
     required this.handle,
-    required this.chat,
+    required this.chatGuid,
     required this.canBeRemoved,
   });
 
@@ -170,6 +170,7 @@ class ContactTile extends StatelessWidget {
                 }
               );
 
+              final chat = GlobalChatService.getChat(chatGuid)!.chat;
               http.chatParticipant("remove", chat.guid, handle.address).then((response) async {
                 Get.back();
                 Logger.info("Removed participant ${handle.address}");

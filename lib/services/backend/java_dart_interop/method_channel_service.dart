@@ -206,7 +206,7 @@ class MethodChannelService extends GetxService {
         if (recentReplyGuid == data["messageGuid"] && recentReplyText == data["text"]) return Future.value(false);
         await ss.prefs.setString("recent-reply", "${data["messageGuid"]}/${data["text"]}");
         Logger.info("Updated recent reply cache to ${ss.prefs.getString("recent-reply")}");
-        Chat? chat = Chat.findOne(guid: data["chatGuid"]);
+        Chat? chat = GlobalChatService.getChat(data["chatGuid"])?.chat;
         if (chat == null) {
           return Future.value(false);
         } else {
@@ -214,7 +214,7 @@ class MethodChannelService extends GetxService {
           outq.queue(OutgoingItem(
             type: QueueType.sendMessage,
             completer: completer,
-            chat: chat,
+            chatGuid: chat.guid,
             message: Message(
               text: data['text'],
               dateCreated: DateTime.now(),

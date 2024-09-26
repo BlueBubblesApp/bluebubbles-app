@@ -27,7 +27,7 @@ class Share {
     sp.Share.share(text, subject: subject);
   }
 
-  static Future<void> location(Chat chat) async {
+  static Future<void> location(String chatGuid) async {
     bool _serviceEnabled;
     LocationPermission _permissionGranted;
     Position _locationData;
@@ -120,7 +120,7 @@ class Share {
 
     bool send = false;
     if (kIsDesktop || kIsWeb) {
-      cvc(chat.guid).showingOverlays = true;
+      cvc(chatGuid).showingOverlays = true;
     }
     await showDialog(
         context: Get.context!,
@@ -193,7 +193,7 @@ class Share {
               );
             }));
     if (kIsDesktop || kIsWeb) {
-      cvc(chat.guid).showingOverlays = false;
+      cvc(chatGuid).showingOverlays = false;
     }
 
     if (!send) return;
@@ -220,7 +220,7 @@ class Share {
 
     outq.queue(OutgoingItem(
       type: QueueType.sendAttachment,
-      chat: chat,
+      chatGuid: chatGuid,
       message: message,
     ));
   }

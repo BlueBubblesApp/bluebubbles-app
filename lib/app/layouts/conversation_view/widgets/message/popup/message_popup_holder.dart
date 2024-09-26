@@ -115,7 +115,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     Logger.info("Sending reaction type: $reaction");
     outq.queue(OutgoingItem(
       type: QueueType.sendMessage,
-      chat: message.getChat() ?? GlobalChatService.activeChat!.chat,
+      chatGuid: GlobalChatService.activeGuid.value ?? message.getChat()!.guid,
       message: Message(
         associatedMessageGuid: message.guid,
         associatedMessageType: reaction,

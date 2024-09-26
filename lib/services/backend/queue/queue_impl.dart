@@ -16,7 +16,7 @@ abstract class Queue extends GetxService {
     if (item is OutgoingItem && returned is List) {
       items.addAll(returned.map((e) => OutgoingItem(
         type: item.type,
-        chat: item.chat,
+        chatGuid: item.chatGuid,
         message: e,
         completer: item.completer,
         selected: item.selected,
@@ -42,7 +42,7 @@ abstract class Queue extends GetxService {
     try {
       await handleQueueItem(queued).catchError((err) async {
         if (queued is OutgoingItem && ss.settings.cancelQueuedMessages.value) {
-          final toCancel = List<OutgoingItem>.from(items.whereType<OutgoingItem>().where((e) => e.chat.guid == queued.chat.guid));
+          final toCancel = List<OutgoingItem>.from(items.whereType<OutgoingItem>().where((e) => e.chatGuid == queued.chatGuid));
           for (OutgoingItem i in toCancel) {
             items.remove(i);
             final m = i.message;

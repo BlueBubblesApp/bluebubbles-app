@@ -309,16 +309,11 @@ class Chat {
   Message? get latestMessage {
     if (_latestMessage != null) return _latestMessage!;
     _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull;
-    return _latestMessage!;
+    return _latestMessage;
   }
-  Message get dbLatestMessage {
-    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull ?? Message(
-      dateCreated: DateTime.fromMillisecondsSinceEpoch(0),
-      guid: guid,
-    );
-    return _latestMessage!;
-  }
+
   set latestMessage(Message? m) => _latestMessage = m;
+
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
   DateTime? dateDeleted;
@@ -334,9 +329,6 @@ class Chat {
   final RxnInt _pinIndex = RxnInt();
   int? get pinIndex => _pinIndex.value;
   set pinIndex(int? i) => _pinIndex.value = i;
-
-  @Transient()
-  RxDouble sendProgress = 0.0.obs;
 
   final handles = ToMany<Handle>();
 
@@ -478,7 +470,7 @@ class Chat {
         participants[i] = participants[i].save();
         _deduplicateParticipants();
       }
-      dbOnlyLatestMessageDate = dbLatestMessage.dateCreated;
+      dbOnlyLatestMessageDate = latestMessage?.dateCreated;
       try {
         id = Database.chats.put(this);
         // make sure to add participant relation if its a new chat

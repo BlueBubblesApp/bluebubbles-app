@@ -3,7 +3,6 @@ import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.da
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/handle_selector_view/handle_selector_view.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/database.dart';
@@ -519,7 +518,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                                     : 2,
                           ),
                           leading: ContactAvatarGroupWidget(
-                            chat: chat,
+                            chatGuid: chat.guid,
                             size: 40,
                             editable: false,
                           ),
@@ -533,14 +532,7 @@ class SearchViewState extends OptimizedState<SearchView> {
                             final service = ms(chat.guid);
                             service.method = local ? "local" : "network";
                             service.struct.addMessages([message]);
-                            ns.pushAndRemoveUntil(
-                              context,
-                              ConversationView(
-                                chatGuid: chat.guid,
-                                customService: service,
-                              ),
-                              (route) => route.isFirst,
-                            );
+                            GlobalChatService.openChat(chat.guid, customService: service);
                           },
                         ),
                       );

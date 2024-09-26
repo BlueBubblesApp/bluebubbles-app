@@ -18,35 +18,30 @@ class OutgoingQueue extends Queue {
     switch (item.type) {
       case QueueType.sendMultipart:
       case QueueType.sendMessage:
-        return await ah.prepMessage(item.chat, item.message, item.selected, item.reaction, clearNotificationsIfFromMe: !(item.customArgs?['notifReply'] ?? false));
+        return await ah.prepMessage(item.chatGuid, item.message, item.selected, item.reaction, clearNotificationsIfFromMe: !(item.customArgs?['notifReply'] ?? false));
       case QueueType.sendAttachment:
-        return await ah.prepAttachment(item.chat, item.message);
+        return await ah.prepAttachment(item.chatGuid, item.message);
       default:
         Logger.info("Unhandled queue event: ${item.type.name}");
         break;
     }
   }
 
-  Future<T> handleSend<T>(Future<T> Function() process, Chat chat) {
+  Future<T> handleSend<T>(Future<T> Function() process, String chatGuid) {
+    final rChat = GlobalChatService.getChat(chatGuid)!;
     var timer = Timer(const Duration(seconds: 5), () {
-      chat.sendProgress.value = .9;
+      rChat.setSendProgress(0.9);
     });
     var t = process();
     t.then((c) {
       timer.cancel();
-      if (chat.sendProgress.value != 0) {
-        chat.sendProgress.value = 1;
-        Timer(const Duration(milliseconds: 500), () {
-          chat.sendProgress.value = 0;
-        });
+      if (rChat.sendProgress.value != 0) {
+        rChat.setSendProgress(1);
       }
     }).catchError((c) {
       timer.cancel();
-      if (chat.sendProgress.value != 0) {
-        chat.sendProgress.value = 1;
-        Timer(const Duration(milliseconds: 500), () {
-          chat.sendProgress.value = 0;
-        });
+      if (rChat.sendProgress.value != 0) {
+        rChat.setSendProgress(1);
       }
     });
     return t;
@@ -59,13 +54,13 @@ class OutgoingQueue extends Queue {
 
     switch (item.type) {
       case QueueType.sendMessage:
-        await handleSend(() => ah.sendMessage(item.chat, item.message, item.selected, item.reaction), item.chat);
+        await handleSend(() => ah.sendMessage(item.chatGuid, item.message, item.selected, item.reaction), item.chatGuid);
         break;
       case QueueType.sendMultipart:
-        await handleSend(() => ah.sendMultipart(item.chat, item.message, item.selected, item.reaction), item.chat);
+        await handleSend(() => ah.sendMultipart(item.chatGuid, item.message, item.selected, item.reaction), item.chatGuid);
         break;
       case QueueType.sendAttachment:
-        await handleSend(() => ah.sendAttachment(item.chat, item.message, item.customArgs?['audio'] ?? false), item.chat);
+        await handleSend(() => ah.sendAttachment(item.chatGuid, item.message, item.customArgs?['audio'] ?? false), item.chatGuid);
         break;
       default:
         Logger.info("Unhandled queue event: ${item.type.name}");

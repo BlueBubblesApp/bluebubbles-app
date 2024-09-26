@@ -182,7 +182,7 @@ class NavigatorService extends GetxService {
     }
   }
 
-  /// Remember to call `await GlobalChatService.closeActiveChat()` after calling this function
+  /// Remember to call `await cm.setAllInactive()` after calling this function
   void closeAllConversationView(BuildContext context) {
     if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && ns.isTabletMode(context)) {
       Get.until((route) {

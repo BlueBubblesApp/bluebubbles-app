@@ -72,7 +72,7 @@ class _ChatCreatorTileState extends OptimizedState<ChatCreatorTile> with Automat
           padding: const EdgeInsets.only(right: 5.0),
           child: widget.chat != null
               ? ContactAvatarGroupWidget(
-                  chat: widget.chat!,
+                  chatGuid: widget.chat!.guid,
                   editable: false,
                 )
               : ContactAvatarWidget(

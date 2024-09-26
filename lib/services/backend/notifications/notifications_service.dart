@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -438,17 +437,14 @@ class NotificationsService extends GetxService {
         notifications[guid]!.remove(toast);
         notificationCounts[guid] = 0;
 
-        Chat? chat = Chat.findOne(guid: guid);
-        if (chat == null) return;
         if (actions[index] == "Mark Read" || multiple) {
-          chat.toggleHasUnread(false);
-          EventDispatcher().emit('refresh', null);
+          GlobalChatService.toggleReadStatus(guid, isUnread: false);
         } else if (ss.settings.enablePrivateAPI.value) {
           String reaction = ReactionTypes.emojiToReaction[actions[index]]!;
           outq.queue(
             OutgoingItem(
               type: QueueType.sendMessage,
-              chat: chat,
+              chatGuid: guid,
               message: Message(
                 associatedMessageGuid: message.guid,
                 associatedMessageType: reaction,
@@ -726,17 +722,8 @@ class NotificationsService extends GetxService {
               },
             ),
           );
-        } else {
-          bool chatIsOpen = GlobalChatService.activeGuid.value == chat.guid;
-          if (!chatIsOpen) {
-            ns.pushAndRemoveUntil(
-              Get.context!,
-              ConversationView(
-                chatGuid: chat.guid,
-              ),
-              (route) => route.isFirst,
-            );
-          }
+        } else if (!GlobalChatService.isChatActive(chat.guid)) {
+          GlobalChatService.openChat(chat.guid);
         }
       };
 
