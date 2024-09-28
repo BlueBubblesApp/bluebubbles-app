@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
@@ -120,7 +121,7 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
       );
 }
 
-Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
+Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, ChatGuid chatGuid, Offset tapPosition, TextTheme textTheme) async {
   bool ios = ss.settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
@@ -140,7 +141,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              chat.togglePin(!chat.isPinned!);
+              GlobalChatService.togglePinStatus(chatGuid);
               Navigator.pop(context);
             },
             child: Padding(
@@ -149,19 +150,19 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
-                    child: Icon(
-                      chat.isPinned!
+                    child: Obx(() => Icon(
+                      GlobalChatService.getChat(chatGuid)!.isPinned.value
                           ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline)
                           : (ios ? CupertinoIcons.pin : Icons.star),
                       color: context.theme.colorScheme.properOnSurface,
-                    ),
+                    )),
                   ),
-                  Text(
-                    chat.isPinned! ? "Unpin" : "Pin",
+                  Obx(() => Text(
+                    GlobalChatService.getChat(chatGuid)!.isPinned.value ? "Unpin" : "Pin",
                     style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                  ),
+                  )),
                 ],
-              ),
+              )
             ),
           ),
         ),
@@ -171,7 +172,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              chat.toggleMute(chat.muteType != "mute");
+              GlobalChatService.toggleMuteStatus(chatGuid);
               Navigator.pop(context);
             },
             child: Padding(
@@ -180,16 +181,19 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
-                    child: Icon(
-                      chat.muteType == "mute"
+                    child: Obx(() => Icon(
+                      GlobalChatService.getChat(chatGuid)!.muteType.value == "mute"
                           ? (ios ? CupertinoIcons.bell : Icons.notifications_active)
                           : (ios ? CupertinoIcons.bell_slash : Icons.notifications_off),
                       color: context.theme.colorScheme.properOnSurface,
-                    ),
+                    )),
                   ),
-                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+                  Obx(() => Text(
+                    GlobalChatService.getChat(chatGuid)!.muteType.value == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                  )),
                 ],
-              ),
+              )
             ),
           ),
         ),
@@ -198,7 +202,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
-            chat.toggleHasUnread(!chat.hasUnreadMessage!);
+            GlobalChatService.toggleReadStatus(chatGuid);
             Navigator.pop(context);
           },
           child: Padding(
@@ -207,14 +211,14 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: Icon(
-                    chat.hasUnreadMessage!
+                  child: Obx(() => Icon(
+                    GlobalChatService.getChat(chatGuid)!.isUnread.value
                         ? (ios ? CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                         : (ios ? CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
                     color: context.theme.colorScheme.properOnSurface,
-                  ),
+                  )),
                 ),
-                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+                Obx(() => Text(GlobalChatService.getChat(chatGuid)!.isUnread.value ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface))),
               ],
             ),
           ),
@@ -226,7 +230,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              chat.toggleArchived(!chat.isArchived!);
+              GlobalChatService.toggleArchivedStatus(chatGuid);
               Navigator.pop(context);
             },
             child: Padding(
@@ -235,17 +239,17 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
-                    child: Icon(
-                      chat.isArchived!
+                    child: Obx(() => Icon(
+                      GlobalChatService.getChat(chatGuid)!.isArchived.value
                           ? (ios ? CupertinoIcons.tray_arrow_up : Icons.unarchive)
                           : (ios ? CupertinoIcons.tray_arrow_down : Icons.archive),
                       color: context.theme.colorScheme.properOnSurface,
-                    ),
+                    )),
                   ),
-                  Text(
-                    chat.isArchived! ? 'Unarchive' : 'Archive',
+                  Obx(() => Text(
+                    GlobalChatService.getChat(chatGuid)!.isArchived.value ? 'Unarchive' : 'Archive',
                     style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                  ),
+                  )),
                 ],
               ),
             ),
@@ -282,7 +286,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                       TextButton(
                         child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         onPressed: () async {
-                          GlobalChatService.removeChat(chat.guid, softDelete: true);
+                          GlobalChatService.removeChat(chatGuid, softDelete: true);
                           Navigator.pop(context); //Remove AlertDialog
                         },
                       ),
@@ -373,15 +377,16 @@ Color getIndicatorColor(SocketState socketState) {
 }
 
 Future<Uint8List> avatarAsBytes({
-  required Chat chat,
+  required ChatGuid chatGuid,
   List<Handle>? participantsOverride,
   double quality = 256,
 }) async {
+  final chat = GlobalChatService.getChat(chatGuid)!.chat;
   final participants = participantsOverride ?? chat.participants;
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
 
-  await paintGroupAvatar(chat: chat, participants: participants, canvas: canvas, size: quality, usingParticipantsOverride: participantsOverride != null);
+  await paintGroupAvatar(chatGuid: chatGuid, participants: participants, canvas: canvas, size: quality, usingParticipantsOverride: participantsOverride != null);
 
   ui.Picture picture = pictureRecorder.endRecording();
   ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
@@ -392,7 +397,7 @@ Future<Uint8List> avatarAsBytes({
 }
 
 Future<void> paintGroupAvatar({
-  required Chat chat,
+  required ChatGuid chatGuid,
   required List<Handle>? participants,
   required Canvas canvas,
   required double size,
@@ -410,6 +415,7 @@ Future<void> paintGroupAvatar({
     theme = Get.context!.theme;
   }
 
+  final chat = GlobalChatService.getChat(chatGuid)!.chat;
   if (chat.customAvatarPath != null && !usingParticipantsOverride) {
     Uint8List? customAvatar;
     try {

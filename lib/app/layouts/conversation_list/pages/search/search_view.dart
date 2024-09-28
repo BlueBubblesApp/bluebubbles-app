@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/handle_selector_view/handle_selector_vie
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -21,7 +22,7 @@ import 'package:objectbox/src/native/query/query.dart' as obx;
 
 class SearchResult {
   final String search;
-  final String chatGuidFilter;
+  final ChatGuid chatGuidFilter;
   final String method;
   final List<Tuple2<Chat, Message>> results;
 

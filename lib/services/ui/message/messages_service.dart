@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/database/database.dart';
@@ -11,14 +12,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 
-MessagesService ms(String chatGuid) => Get.isRegistered<MessagesService>(tag: chatGuid)
+MessagesService ms(ChatGuid chatGuid) => Get.isRegistered<MessagesService>(tag: chatGuid)
     ? Get.find<MessagesService>(tag: chatGuid) : Get.put(MessagesService(chatGuid), tag: chatGuid);
 
-String? lastReloadedChat() => Get.isRegistered<String>(tag: 'lastReloadedChat') ? Get.find<String>(tag: 'lastReloadedChat') : null;
+ChatGuid? lastReloadedChat() => Get.isRegistered<ChatGuid>(tag: 'lastReloadedChat') ? Get.find<ChatGuid>(tag: 'lastReloadedChat') : null;
 
 class MessagesService extends GetxController {
   static final Map<String, Size> cachedBubbleSizes = {};
-  late Chat chat;
+  late ChatGuid chatGuid;
   late StreamSubscription countSub;
   final ChatMessages struct = ChatMessages();
   late Function(Message) newFunc;
@@ -43,9 +44,9 @@ class MessagesService extends GetxController {
   Message? get mostRecentReceived => (struct.messages.where((e) => !e.isFromMe!).toList()
     ..sort(Message.sort)).firstOrNull;
 
-  void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage, Function(String) jumpToMessageFunc) {
-    chat = c;
-    Get.put<String>(tag, tag: 'lastReloadedChat');
+  void init(ChatGuid chatGuid, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage, Function(String) jumpToMessageFunc) {
+    this.chatGuid = chatGuid;
+    Get.put<ChatGuid>(tag, tag: 'lastReloadedChat');
 
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
@@ -54,6 +55,7 @@ class MessagesService extends GetxController {
 
     // watch for new messages
     if (!_init) {
+      final chat = GlobalChatService.getChat(chatGuid)!.chat;
       if (chat.id != null) {
         final countQuery = (Database.messages.query(Message_.dateDeleted.isNull())
           ..link(Message_.chat, Chat_.id.equals(chat.id!))
@@ -153,6 +155,7 @@ class MessagesService extends GetxController {
     List<Message> _messages = [];
     offset = offset + struct.reactions.length;
     try {
+      final chat = GlobalChatService.getChat(chatGuid)!.chat;
       _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
       if (_messages.isEmpty) {
         // get from server and save
@@ -206,6 +209,7 @@ class MessagesService extends GetxController {
   Future<void> loadSearchChunk(Message around, SearchMethod method) async {
     isFetching = true;
     List<Message> _messages = [];
+    final chat = GlobalChatService.getChat(chatGuid)!.chat;
     if (method == SearchMethod.local) {
       _messages = await Chat.getMessagesAsync(chat, searchAround: around.dateCreated.millisecondsSinceEpoch);
       _messages.add(around);

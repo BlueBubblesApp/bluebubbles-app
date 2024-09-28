@@ -1414,7 +1414,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addOffset(5, textOffset);
           fbb.addOffset(6, subjectOffset);
           fbb.addOffset(7, countryOffset);
-          fbb.addInt64(8, object.dateCreated?.millisecondsSinceEpoch);
+          fbb.addInt64(8, object.dateCreated.millisecondsSinceEpoch);
           fbb.addInt64(9, object.dateRead?.millisecondsSinceEpoch);
           fbb.addInt64(10, object.dateDelivered?.millisecondsSinceEpoch);
           fbb.addBool(11, object.isFromMe);

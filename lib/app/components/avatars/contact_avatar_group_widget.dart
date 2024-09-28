@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -20,7 +21,7 @@ class ContactAvatarGroupWidget extends StatefulWidget {
     this.size = 40,
     this.editable = true,
   });
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final double size;
   final bool editable;
 

@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,7 @@ import 'package:get/get.dart';
 import 'package:slugify/slugify.dart';
 import 'package:tuple/tuple.dart';
 
-void showAddParticipant(BuildContext context, Chat chat) {
+void showAddParticipant(BuildContext context, ChatGuid chatGuid) {
   final TextEditingController participantController = TextEditingController();
   showDialog(
     context: context,
@@ -129,7 +130,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
                     );
                   }
               );
-              final response = await http.chatParticipant("add", chat.guid, participantController.text);
+              final response = await http.chatParticipant("add", chatGuid, participantController.text);
               if (response.statusCode == 200) {
                 Get.back();
                 Get.back();

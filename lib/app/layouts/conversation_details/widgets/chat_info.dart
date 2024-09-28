@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
@@ -16,16 +17,16 @@ import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
 class ChatInfo extends StatefulWidget {
-  const ChatInfo({super.key, required this.chat});
+  const ChatInfo({super.key, required this.chatGuid});
 
-  final Chat chat;
+  final ChatGuid chatGuid;
 
   @override
   OptimizedState createState() => _ChatInfoState();
 }
 
 class _ChatInfoState extends OptimizedState<ChatInfo> {
-  Chat get chat => widget.chat;
+  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
 
   Future<bool?> showMethodDialog(String title) async {
     return await showDialog<bool>(
@@ -247,9 +248,9 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                   }
                   if (papi == null) return;
                   if (!papi) {
-                    showChangeName(chat, "local", context);
+                    showChangeName(widget.chatGuid, "local", context);
                   } else {
-                    showChangeName(chat, "private-api", context);
+                    showChangeName(widget.chatGuid, "private-api", context);
                   }
                 },
                 title: RichText(
@@ -320,9 +321,9 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                 }
                 if (papi == null) return;
                 if (!papi) {
-                  showChangeName(chat, "local", context);
+                  showChangeName(widget.chatGuid, "local", context);
                 } else {
-                  showChangeName(chat, "private-api", context);
+                  showChangeName(widget.chatGuid, "private-api", context);
                 }
               },
             ),
@@ -363,7 +364,7 @@ class InfoButton extends StatelessWidget {
   });
 
   final Color tileColor;
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final bool iOS;
 
   @override
@@ -425,7 +426,7 @@ class MailButton extends StatelessWidget {
   });
 
   final Color tileColor;
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final bool iOS;
 
   @override
@@ -475,7 +476,7 @@ class VideoCallButton extends StatelessWidget {
   });
 
   final Color tileColor;
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final bool iOS;
 
   @override
@@ -526,7 +527,7 @@ class CallButton extends StatelessWidget {
   });
 
   final Color tileColor;
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final bool iOS;
 
   @override

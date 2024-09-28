@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -11,7 +12,7 @@ ChatManager cm = Get.isRegistered<ChatManager>() ? Get.find<ChatManager>() : Get
 
 class ChatManager extends GetxService {
   /// Fetch chat information from the server
-  Future<Chat?> fetchChat(String chatGuid, {withParticipants = true, withLastMessage = false}) async {
+  Future<Chat?> fetchChat(ChatGuid chatGuid, {withParticipants = true, withLastMessage = false}) async {
     Logger.info("Fetching full chat metadata from server.", tag: "Fetch-Chat");
 
     final withQuery = <String>[];

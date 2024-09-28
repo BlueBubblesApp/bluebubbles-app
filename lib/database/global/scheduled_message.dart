@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import '../../services/backend/settings/settings_service.dart';
 
 class ScheduledMessage {
@@ -55,7 +56,7 @@ class Payload {
     required this.method,
   });
 
-  String chatGuid;
+  ChatGuid chatGuid;
   String message;
   String method;
 

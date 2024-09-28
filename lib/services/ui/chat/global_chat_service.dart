@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/network/metadata_helper.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/services/backend/java_dart_interop/method_channel_service.dart';
@@ -95,11 +96,11 @@ class IGlobalChatService extends GetxService {
   /// Returns null if the chat does not exist.
   /// 
   /// You will be able to access the original Chat object within the ReactiveChat object.
-  ReactiveChat? getChat(String chatGuid) {
+  ReactiveChat? getChat(ChatGuid chatGuid) {
     return _reactiveChats[chatGuid];
   }
 
-  List<Handle> getChatParticipants(String chatGuid) {
+  List<Handle> getChatParticipants(ChatGuid chatGuid) {
     final addresses = _chatParticipants[chatGuid];
     if (addresses == null) return [];
     return _chatParticipants[chatGuid]!.map((address) => _reactiveHandles[address]!.handle).toList();
@@ -215,7 +216,7 @@ class IGlobalChatService extends GetxService {
   /// 
   /// If [clearNotificationsIfFromMe] is true, the chat's notifications will be cleared
   /// if the message is from the yourself
-  Future<Chat?> addMessage(String chatGuid, Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true, bool clearNotificationsIfFromMe = true}) async {
+  Future<Chat?> addMessage(ChatGuid chatGuid, Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true, bool clearNotificationsIfFromMe = true}) async {
     final chat = _reactiveChats[chatGuid];
     if (chat == null) return null;
   
@@ -243,7 +244,7 @@ class IGlobalChatService extends GetxService {
   /// Passing [isUnread] as true will mark the chat as unread,
   /// and the UI will show that the chat is unread. Passing false
   /// will mark the chat as read, and the UI will show that the chat is read.
-  void toggleReadStatus(String chatGuid, {bool? isUnread, bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
+  void toggleReadStatus(ChatGuid chatGuid, {bool? isUnread, bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null) {
       if (isUnread == null) {
@@ -286,24 +287,24 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  bool isChatUnread(String chatGuid) {
+  bool isChatUnread(ChatGuid chatGuid) {
     final chat = _reactiveChats[chatGuid];
     if (chat == null) return false;
     return chat.isUnread.value;
   }
 
-  void toggleMuteStatus(String chatGuid, {String? muteType}) {
+  void toggleMuteStatus(ChatGuid chatGuid, {String? muteType, String? muteArgs, bool force = false}) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null) {
-      if (muteType == null) {
-        chat.setMuteType(chat.muteType.value == "mute" ? "" : "mute");
-      } else if (chat.muteType.value != muteType) {
-        chat.setMuteType(muteType);
+      if (muteType == null && !force) {
+        chat.setMuteType(chat.muteType.value == "mute" ? "" : "mute", muteArgs: muteArgs);
+      } else if (chat.muteType.value != muteType || force) {
+        chat.setMuteType(muteType, muteArgs: muteArgs);
       }
     }
   }
 
-  void togglePinStatus(String chatGuid, {bool? isPinned}) {
+  void togglePinStatus(ChatGuid chatGuid, {bool? isPinned}) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null) {
       if (isPinned == null) {
@@ -314,7 +315,7 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  void toggleArchivedStatus(String chatGuid, {bool? isArchived}) {
+  void toggleArchivedStatus(ChatGuid chatGuid, {bool? isArchived}) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null) {
       if (isArchived == null) {
@@ -325,7 +326,7 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  bool isChatMuted(String chatGuid) {
+  bool isChatMuted(ChatGuid chatGuid) {
     final chat = _reactiveChats[chatGuid];
     if (chat == null) return false;
     return chat.muteType.value == "mute";
@@ -339,7 +340,7 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  removeChat(String chatGuid, {bool softDelete = true, bool hardDelete = false}) {
+  removeChat(ChatGuid chatGuid, {bool softDelete = true, bool hardDelete = false}) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null) {
       _reactiveChats.remove(chatGuid);
@@ -356,7 +357,7 @@ class IGlobalChatService extends GetxService {
 
   /// Sorts the chat by the Chat.sort static method,
   /// which compares two chats, returning 1, 0, or -1.
-  sortChat(String chatGuid) {
+  sortChat(ChatGuid chatGuid) {
     final chat = _reactiveChats[chatGuid];
     if (chat == null) return;
 
@@ -380,13 +381,13 @@ class IGlobalChatService extends GetxService {
     return chat.chat.isGroup;
   }
 
-  isChatPinned(String chatGuid) {
+  isChatPinned(ChatGuid chatGuid) {
     final chat = _reactiveChats[chatGuid];
     if (chat == null) return false;
     return chat.isPinned.value;
   }
 
-  updateLatestMessage(String chatGuid) {
+  updateLatestMessage(ChatGuid chatGuid) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null) {
       Message? latestMessage = Chat.getMessages(chat.chat, limit: 1, getDetails: true).firstOrNull;
@@ -431,7 +432,7 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  moveChat(String chatGuid, int newIndex) {
+  moveChat(ChatGuid chatGuid, int newIndex) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null) {
       final index = chats.indexWhere((element) => element.guid == chatGuid);
@@ -442,7 +443,7 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  Future<void> openChat(String chatGuid, {
+  Future<void> openChat(ChatGuid chatGuid, {
     BuildContext? context,
     MessagesService? customService,
     bool fromChatCreator = false,
@@ -468,7 +469,7 @@ class IGlobalChatService extends GetxService {
     );
   }
 
-  Future<void> openNextChat(String chatGuid, {BuildContext? context}) async {
+  Future<void> openNextChat(ChatGuid chatGuid, {BuildContext? context}) async {
     final index = GlobalChatService.chats.indexWhere((e) => e.guid == chatGuid);
     if (index > -1 && index < chats.length - 1) {
       final _chat = chats[index + 1];
@@ -476,7 +477,7 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  Future<void> openPreviousChat(String chatGuid, {BuildContext? context}) async {
+  Future<void> openPreviousChat(ChatGuid chatGuid, {BuildContext? context}) async {
     final index = GlobalChatService.chats.indexWhere((e) => e.guid == chatGuid);
     if (index > 0 && index < chats.length) {
       final _chat = chats[index - 1];
@@ -484,7 +485,7 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  Future<void> closeChat(String chatGuid, {bool clearNotifications = true}) async {
+  Future<void> closeChat(ChatGuid chatGuid, {bool clearNotifications = true}) async {
     if (_activeGuid.value != chatGuid) return;
 
     unsetActiveChat();
@@ -492,7 +493,7 @@ class IGlobalChatService extends GetxService {
     toggleHighlightChat(chatGuid, false);
   }
 
-  setActiveChat(String chatGuid) {
+  setActiveChat(ChatGuid chatGuid) {
     _activeGuid.value = chatGuid;
     _activeController.value = cvc(chatGuid);
   }
@@ -513,7 +514,7 @@ class IGlobalChatService extends GetxService {
     await closeChat(_activeGuid.value!);
   }
 
-  openChatDetails(String chatGuid, {BuildContext? context}) async {
+  openChatDetails(ChatGuid chatGuid, {BuildContext? context}) async {
     final ctx = context ?? Get.context;
     if (context == null) throw Exception("No context provided to open chat details");
     ns.push(ctx!, ConversationDetails(chatGuid: chatGuid));
@@ -525,11 +526,11 @@ class IGlobalChatService extends GetxService {
     }
   }
 
-  bool isChatActive(String chatGuid) {
+  bool isChatActive(ChatGuid chatGuid) {
     return _activeGuid.value == chatGuid;
   }
 
-  toggleHighlightChat(String chatGuid, bool highlight) {
+  toggleHighlightChat(ChatGuid chatGuid, bool highlight) {
     final chat = _reactiveChats[chatGuid];
     if (chat != null && chat.isHighlighted.value != highlight) {
       chat.isHighlighted.value = highlight;
@@ -537,7 +538,7 @@ class IGlobalChatService extends GetxService {
   }
 
   /// Gets the mentionables (handles) for a chat by the [chatGuid].
-  List<Mentionable> getMentionablesForChat(String chatGuid) {
+  List<Mentionable> getMentionablesForChat(ChatGuid chatGuid) {
     final addresses = _chatParticipants[chatGuid] ?? [];
     return addresses.map((address) {
       final handle = _reactiveHandles[address]!;

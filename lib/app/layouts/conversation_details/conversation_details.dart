@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_galle
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/contact_tile.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -23,7 +24,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ConversationDetails extends StatefulWidget {
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   ConversationDetails({super.key, required this.chatGuid});
 
@@ -176,7 +177,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
           ],
           bodySlivers: [
             SliverToBoxAdapter(
-              child: ChatInfo(chat: chat),
+              child: ChatInfo(chatGuid: chat.guid),
             ),
             if (chat.isGroup)
               SliverList(
@@ -199,7 +200,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       ),
                     ),
                     onTap: () {
-                      showAddParticipant(context, chat);
+                      showAddParticipant(context, chat.guid);
                     },
                   );
 

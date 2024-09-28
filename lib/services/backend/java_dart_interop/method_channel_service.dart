@@ -187,7 +187,7 @@ class MethodChannelService extends GetxService {
           final payload = ServerPayload.fromJson(data);
           Chat? chat = Chat.findOne(guid: payload.data["payload"]["chatGuid"]);
           if (chat != null) {
-            await notif.createFailedToSend(chat, scheduled: true);
+            await notif.createFailedToSend(chat.guid, scheduled: true);
           }
         } catch (e, s) {
           return Future.error(e, s);

@@ -437,7 +437,7 @@ class ChatListState extends OptimizedState<ChatList> {
                       final chat = GlobalChatService.chats[index];
                       await showDialog(
                         context: context,
-                        builder: (context) => NotificationSettingsDialog(chat, () {
+                        builder: (context) => NotificationSettingsDialog(chat.guid, () {
                           setState(() {});
                         }),
                       );

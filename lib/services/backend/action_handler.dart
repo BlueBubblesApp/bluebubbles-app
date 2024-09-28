@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -20,7 +21,7 @@ class ActionHandler extends GetxService {
   final List<String> outOfOrderTempGuids = [];
   CancelToken? latestCancelToken;
   
-  Future<List<Message>> prepMessage(String chatGuid, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
+  Future<List<Message>> prepMessage(ChatGuid chatGuid, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
 
     final List<Message> messages = <Message>[];
@@ -66,7 +67,7 @@ class ActionHandler extends GetxService {
     return messages;
   }
 
-  Future<void> matchMessageWithExisting(Chat chat, String existingGuid, Message replacement, {Message? existing}) async {
+  Future<void> matchMessageWithExisting(ChatGuid chatGuid, String existingGuid, Message replacement, {Message? existing}) async {
     // First, try to find a matching message with the replacement's GUID.
     // We check this first because if an event came in for that GUID, we should be able to ignore
     // the API response.
@@ -88,7 +89,7 @@ class ActionHandler extends GetxService {
         if (existingTempMessage != null) {
           Message.delete(existingTempMessage.guid!);
           if (existing != null) {
-            ms(chat.guid).removeMessage(existing);
+            ms(chatGuid).removeMessage(existing);
           }
         }
       }
@@ -103,7 +104,7 @@ class ActionHandler extends GetxService {
     }
   }
 
-  Future<void> matchAttachmentWithExisting(Chat chat, String existingGuid, Attachment replacement, {Attachment? existing}) async {
+  Future<void> matchAttachmentWithExisting(ChatGuid chatGuid, String existingGuid, Attachment replacement, {Attachment? existing}) async {
     // First, try to find a matching message with the replacement's GUID.
     // We check this first because if an event came in for that GUID, we should be able to ignore
     // the API response.
@@ -130,7 +131,7 @@ class ActionHandler extends GetxService {
     }
   }
 
-  Future<void> sendMessage(String chatGuid, Message m, Message? selected, String? r) async {
+  Future<void> sendMessage(ChatGuid chatGuid, Message m, Message? selected, String? r) async {
     final c = GlobalChatService.getChat(chatGuid)!.chat;
     final completer = Completer<void>();
     if (r == null) {
@@ -152,7 +153,7 @@ class ActionHandler extends GetxService {
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+          await matchMessageWithExisting(c.guid, m.guid!, newMessage, existing: m);
         } catch (ex) {
           Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: ex, tag: "MessageStatus");
         }
@@ -165,7 +166,7 @@ class ActionHandler extends GetxService {
         m = handleSendError(error, m);
 
         if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
-          await notif.createFailedToSend(c);
+          await notif.createFailedToSend(c.guid);
         }
         await Message.replaceMessage(tempGuid, m);
         completer.completeError(error);
@@ -174,7 +175,7 @@ class ActionHandler extends GetxService {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r, partIndex: m.associatedMessagePart).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
-          await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+          await matchMessageWithExisting(c.guid, m.guid!, newMessage, existing: m);
         } catch (ex) {
           Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: ex, tag: "MessageStatus");
         }
@@ -186,7 +187,7 @@ class ActionHandler extends GetxService {
         m = handleSendError(error, m);
 
         if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
-          await notif.createFailedToSend(c);
+          await notif.createFailedToSend(c.guid);
         }
         await Message.replaceMessage(tempGuid, m);
         completer.completeError(error);
@@ -196,7 +197,7 @@ class ActionHandler extends GetxService {
     return completer.future;
   }
 
-  Future<void> sendMultipart(String chatGuid, Message m, Message? selected, String? r) async {
+  Future<void> sendMultipart(ChatGuid chatGuid, Message m, Message? selected, String? r) async {
     final completer = Completer<void>();
 
     List<Map<String, dynamic>> parts = m.attributedBody.first.runs.map((e) => {
@@ -218,7 +219,7 @@ class ActionHandler extends GetxService {
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
       try {
-        await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+        await matchMessageWithExisting(c.guid, m.guid!, newMessage, existing: m);
       } catch (ex) {
         Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: ex, tag: "MessageStatus");
       }
@@ -230,7 +231,7 @@ class ActionHandler extends GetxService {
       m = handleSendError(error, m);
 
       if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
-        await notif.createFailedToSend(c);
+        await notif.createFailedToSend(c.guid);
       }
       await Message.replaceMessage(tempGuid, m);
       completer.completeError(error);
@@ -239,7 +240,7 @@ class ActionHandler extends GetxService {
     return completer.future;
   }
   
-  Future<void> prepAttachment(String chatGuid, Message m) async {
+  Future<void> prepAttachment(ChatGuid chatGuid, Message m) async {
     final attachment = m.attachments.first!;
     final progress = Tuple2(attachment.guid!, 0.0.obs);
     attachmentProgress.add(progress);
@@ -256,7 +257,7 @@ class ActionHandler extends GetxService {
     await GlobalChatService.addMessage(chatGuid, m);
   }
 
-  Future<void> sendAttachment(String chatGuid, Message m, bool isAudioMessage) async {
+  Future<void> sendAttachment(ChatGuid chatGuid, Message m, bool isAudioMessage) async {
     if (m.attachments.isEmpty || m.attachments.firstOrNull?.bytes == null) return;
     final attachment = m.attachments.first!;
     final progress = attachmentProgress.firstWhere((e) => e.item1 == attachment.guid);
@@ -287,7 +288,7 @@ class ActionHandler extends GetxService {
       for (Attachment? a in newMessage.attachments) {
         if (a == null) continue;
 
-        matchAttachmentWithExisting(c, m.guid!, a, existing: attachment)
+        matchAttachmentWithExisting(c.guid, m.guid!, a, existing: attachment)
           .then((_) {
             ms(c.guid).updateMessage(newMessage);
           })
@@ -298,7 +299,7 @@ class ActionHandler extends GetxService {
       }
 
       try {
-        await matchMessageWithExisting(c, m.guid!, newMessage, existing: m);
+        await matchMessageWithExisting(c.guid, m.guid!, newMessage, existing: m);
       } catch (e) {
         Logger.warn("Failed to find message match for ${m.guid} -> ${newMessage.guid}!", error: e, tag: "MessageStatus");
       }
@@ -313,7 +314,7 @@ class ActionHandler extends GetxService {
       m = handleSendError(error, m);
 
       if (!ls.isAlive || !GlobalChatService.hasActiveChat) {
-        await notif.createFailedToSend(c);
+        await notif.createFailedToSend(c.guid);
       }
       await Message.replaceMessage(tempGuid, m);
       attachmentProgress.removeWhere((e) => e.item1 == m.guid || e.item2 >= 1);
@@ -340,29 +341,29 @@ class ActionHandler extends GetxService {
     m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId) ?? Handle.findOne(originalROWID: m.handleId);
     // Display notification if needed and save everything to DB
     if (!ls.isAlive) {
-      await MessageHelper.handleNotification(m, c);
+      await MessageHelper.handleNotification(m, c.guid);
     }
 
     await GlobalChatService.addMessage(c.guid, m);
   }
 
-  Future<void> handleUpdatedMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
+  Future<void> handleUpdatedMessage(Chat chat, Message m, String? tempGuid, {bool checkExisting = true}) async {
     // sanity check
     if (checkExisting) {
       final existing = Message.findOne(guid: tempGuid ?? m.guid);
       if (existing == null) {
-        return await handleNewMessage(c, m, tempGuid, checkExisting: false);
+        return await handleNewMessage(chat, m, tempGuid, checkExisting: false);
       }
     }
-    Logger.info("Updated message: [${m.text}] ${m.getLastUpdate().toLowerCase()} - for chat [${c.guid}]", tag: "ActionHandler");
+    Logger.info("Updated message: [${m.text}] ${m.getLastUpdate().toLowerCase()} - for chat [${chat.guid}]", tag: "ActionHandler");
 
     // update any attachments
     for (Attachment? a in m.attachments) {
       if (a == null) continue;
 
-      matchAttachmentWithExisting(c, tempGuid ?? m.guid!, a)
+      matchAttachmentWithExisting(chat.guid, tempGuid ?? m.guid!, a)
         .then((_) {
-          ms(c.guid).updateMessage(m);
+          ms(chat.guid).updateMessage(m);
         })
         .catchError((e, stack) {
           Logger.warn("Failed to replace attachment ${a.guid}!", error: e, trace: stack, tag: "AttachmentStatus");
@@ -371,7 +372,7 @@ class ActionHandler extends GetxService {
     }
 
     // update the message in the DB
-    await matchMessageWithExisting(c, tempGuid ?? m.guid!, m);
+    await matchMessageWithExisting(chat.guid, tempGuid ?? m.guid!, m);
     eventDispatcher.emit("message-updated-${m.guid}");
   }
 

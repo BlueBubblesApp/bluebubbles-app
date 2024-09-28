@@ -1,49 +1,54 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/ui/chat/global_chat_service.dart';
+import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class NotificationSettingsDialog extends StatelessWidget {
-  NotificationSettingsDialog(this.chat, this.updateParent, {super.key});
-  final Chat chat;
+  NotificationSettingsDialog(this.chatGuid, this.updateParent, {super.key});
+  final ChatGuid chatGuid;
   final VoidCallback updateParent;
 
   @override
   Widget build(BuildContext context) {
+    ReactiveChat rChat = GlobalChatService.getChat(chatGuid)!;
     return AlertDialog(
       title: Text("Chat-Specific Settings", style: context.theme.textTheme.titleLarge),
       content: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            ListTile(
-              mouseCursor: MouseCursor.defer,
-              title: Text(chat.muteType == "mute" ? "Unmute" : "Mute",
-                  style: context.theme.textTheme.bodyLarge),
-              subtitle: Text(
-                "Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat",
-                style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
-              onTap: () async {
-                Get.back();
-                chat.toggleMute(chat.muteType != "mute");
-                chat.save();
-                updateParent.call();
-                eventDispatcher.emit("refresh", null);
-              },
-            ),
-            if (chat.isGroup)
-              ListTile(
+            Obx(() {
+              return ListTile(
+                mouseCursor: MouseCursor.defer,
+                title: Text(rChat.muteType.value == "mute" ? "Unmute" : "Mute",
+                    style: context.theme.textTheme.bodyLarge),
+                subtitle: Text(
+                  "Completely ${rChat.muteType.value == "mute" ? "unmute" : "mute"} this chat",
+                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
+                onTap: () async {
+                  Get.back();
+                  GlobalChatService.toggleMuteStatus(chatGuid);
+                  updateParent.call();
+                  eventDispatcher.emit("refresh", null);
+                },
+              );
+            }),
+            Obx(() {
+              if (!rChat.chat.isGroup) return const SizedBox.shrink();
+              return ListTile(
                 mouseCursor: MouseCursor.defer,
                 title: Text("Mute Individuals", style: context.theme.textTheme.bodyLarge),
                 subtitle: Text("Mute certain individuals in this chat",
                   style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                 onTap: () async {
                   Get.back();
-                  List<String?> names = chat.participants
+                  List<String?> names = rChat.participants
                       .map((e) => e.displayName)
                       .toList();
-                  List<String> existing = chat.muteArgs?.split(",") ?? [];
+                  List<String> existing = rChat.chat.muteArgs?.split(",") ?? [];
                   showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -67,27 +72,26 @@ class NotificationSettingsDialog extends StatelessWidget {
                                     ),
                                     child: ListView.builder(
                                       shrinkWrap: true,
-                                      itemCount: chat.participants.length,
-                                      findChildIndexCallback: (key) => findChildIndexByKey(chat.participants, key, (item) => item.address),
+                                      itemCount: rChat.participants.length,
+                                      findChildIndexCallback: (key) => findChildIndexByKey(rChat.participants, key, (item) => item.address),
                                       itemBuilder: (context, index) {
                                         return CheckboxListTile(
-                                          key: ValueKey(chat.participants[index].address),
+                                          key: ValueKey(rChat.participants[index].address),
                                           value: existing
-                                              .contains(chat.participants[index].address),
+                                              .contains(rChat.participants[index].address),
                                           onChanged: (val) {
                                             setState(() {
                                               if (val!) {
-                                                existing.add(chat.participants[index].address);
+                                                existing.add(rChat.participants[index].address);
                                               } else {
                                                 existing.removeWhere((element) =>
-                                                element ==
-                                                    chat.participants[index].address);
+                                                element == rChat.participants[index].address);
                                               }
                                             });
                                           },
                                           activeColor: context.theme.colorScheme.primary,
                                           title: Text(
-                                              names[index] ?? chat.participants[index].address,
+                                              names[index] ?? rChat.participants[index].address,
                                               style: context.theme.textTheme.bodyLarge),
                                         );
                                       },
@@ -106,11 +110,9 @@ class NotificationSettingsDialog extends StatelessWidget {
                                   showSnackbar("Error", "Please select at least one person!");
                                   return;
                                 }
-                                chat.toggleMute(false);
-                                chat.muteType = "mute_individuals";
-                                chat.muteArgs = existing.join(",");
+
+                                GlobalChatService.toggleMuteStatus(chatGuid, muteType: "mute_individuals", muteArgs: existing.join(","));
                                 Get.back();
-                                chat.save(updateMuteType: true, updateMuteArgs: true);
                                 updateParent.call();
                                 eventDispatcher.emit("refresh", null);
                               }
@@ -119,25 +121,24 @@ class NotificationSettingsDialog extends StatelessWidget {
                       )
                   );
                 },
-              ),
-            ListTile(
+              );
+            }),
+            Obx(() => ListTile(
               mouseCursor: MouseCursor.defer,
               title: Text(
-                  chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
+                  rChat.muteType.value == "temporary_mute" && shouldMuteDateTime(rChat.muteArgs.value)
                       ? "Delete Temporary Mute"
                       : "Temporary Mute",
                   style: context.theme.textTheme.bodyLarge),
               subtitle: Text(
-                chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
+                rChat.muteType.value == "temporary_mute" && shouldMuteDateTime(rChat.muteArgs.value)
                     ? ""
                     : "Mute this chat temporarily",
                 style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
               onTap: () async {
                 Get.back();
-                if (shouldMuteDateTime(chat.muteArgs)) {
-                  chat.muteType = null;
-                  chat.muteArgs = null;
-                  chat.save(updateMuteType: true, updateMuteArgs: true);
+                if (shouldMuteDateTime(rChat.chat.muteArgs)) {
+                  GlobalChatService.toggleMuteStatus(chatGuid, muteType: null, muteArgs: null, force: true);
                 } else {
                   final messageDate = await showDatePicker(
                       context: context,
@@ -150,17 +151,15 @@ class NotificationSettingsDialog extends StatelessWidget {
                     if (messageTime != null) {
                       final finalDate = DateTime(messageDate.year, messageDate.month,
                           messageDate.day, messageTime.hour, messageTime.minute);
-                      chat.toggleMute(false);
-                      chat.muteType = "temporary_mute";
-                      chat.muteArgs = finalDate.toIso8601String();
-                      chat.save(updateMuteType: true, updateMuteArgs: true);
+
+                      GlobalChatService.toggleMuteStatus(chatGuid, muteType: "temporary_mute", muteArgs: finalDate.toIso8601String());
                       updateParent.call();
                       eventDispatcher.emit("refresh", null);
                     }
                   }
                 }
               },
-            ),
+            )),
             ListTile(
               mouseCursor: MouseCursor.defer,
               title: Text("Text Detection", style: context.theme.textTheme.bodyLarge),
@@ -169,6 +168,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
               onTap: () async {
                 Get.back();
+                final chat = GlobalChatService.getChat(chatGuid)!.chat;
                 final TextEditingController controller = TextEditingController();
                 if (chat.muteType == "text_detection") {
                   controller.text = chat.muteArgs!;
@@ -177,10 +177,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                   context: context,
                   builder: (context) => TextDetectionDialog(controller)
                 );
-                chat.toggleMute(false);
-                chat.muteType = "text_detection";
-                chat.muteArgs = controller.text;
-                chat.save(updateMuteType: true, updateMuteArgs: true);
+                GlobalChatService.toggleMuteStatus(chatGuid, muteType: "text_detection", muteArgs: controller.text);
                 updateParent.call();
                 eventDispatcher.emit("refresh", null);
               },
@@ -193,10 +190,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
               onTap: () async {
                 Get.back();
-                chat.toggleMute(false);
-                chat.muteType = null;
-                chat.muteArgs = null;
-                chat.save(updateMuteType: true, updateMuteArgs: true);
+                GlobalChatService.toggleMuteStatus(chatGuid, muteType: null, muteArgs: null, force: true);
                 updateParent.call();
                 eventDispatcher.emit("refresh", null);
               },

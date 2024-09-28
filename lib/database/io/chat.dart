@@ -565,7 +565,7 @@ class Chat {
       DateTime time = DateTime.parse(muteArgs!);
       bool shouldMute = DateTime.now().toLocal().difference(time).inSeconds.isNegative;
       if (!shouldMute) {
-        toggleMute(false);
+        GlobalChatService.toggleMuteStatus(guid, muteType: null);
       }
       return shouldMute;
 
@@ -842,14 +842,6 @@ class Chat {
     this.isPinned = isPinned;
     _pinIndex.value = null;
     save(updateIsPinned: true, updatePinIndex: true);
-    return this;
-  }
-
-  Chat toggleMute(bool isMuted) {
-    if (id == null) return this;
-    muteType = isMuted ? "mute" : null;
-    muteArgs = null;
-    save(updateMuteType: true, updateMuteArgs: true);
     return this;
   }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/backend/queue/queue_impl.dart';
@@ -27,7 +28,7 @@ class OutgoingQueue extends Queue {
     }
   }
 
-  Future<T> handleSend<T>(Future<T> Function() process, String chatGuid) {
+  Future<T> handleSend<T>(Future<T> Function() process, ChatGuid chatGuid) {
     final rChat = GlobalChatService.getChat(chatGuid)!;
     var timer = Timer(const Duration(seconds: 5), () {
       rChat.setSendProgress(0.9);

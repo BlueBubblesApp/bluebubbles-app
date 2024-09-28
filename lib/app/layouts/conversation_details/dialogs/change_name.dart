@@ -1,10 +1,11 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-void showChangeName(Chat chat, String method, BuildContext context) {
+void showChangeName(ChatGuid chatGuid, String method, BuildContext context) {
+  final chat = GlobalChatService.getChat(chatGuid)!.chat;
   final controller = TextEditingController(text: chat.displayName);
   final node = FocusNode();
   showDialog(

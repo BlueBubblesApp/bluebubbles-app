@@ -2,13 +2,14 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ListItem extends StatelessWidget {
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final ConversationListController controller;
   final VoidCallback update;
   ListItem({required this.chatGuid, required this.controller, required this.update});
@@ -118,7 +119,7 @@ class ListItem extends StatelessWidget {
             if (action == MaterialSwipeAction.pin) {
               chat.togglePin(!chat.isPinned!);
             } else if (action == MaterialSwipeAction.alerts) {
-              chat.toggleMute(chat.muteType != "mute");
+              GlobalChatService.toggleMuteStatus(chat.guid);
             } else if (action == MaterialSwipeAction.delete) {
               GlobalChatService.removeChat(chat.guid, softDelete: true);
             } else if (action == MaterialSwipeAction.mark_read) {

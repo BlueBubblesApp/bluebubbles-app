@@ -1,4 +1,5 @@
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -609,7 +610,7 @@ class HttpService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
+  Future<Response> sendMessage(ChatGuid chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       Map<String, dynamic> data = {
         "chatGuid": chatGuid,
@@ -642,7 +643,7 @@ class HttpService extends GetxService {
   /// Send an attachment. [chatGuid] specifies the chat, [tempGuid] specifies a
   /// temporary guid to avoid duplicate messages being sent, [file] is the
   /// body of the message.
-  Future<Response> sendAttachment(String chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken}) async {
+  Future<Response> sendAttachment(ChatGuid chatGuid, String tempGuid, PlatformFile file, {void Function(int, int)? onSendProgress, String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? isAudioMessage, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final fileName = file.name;
       final formData = FormData.fromMap({
@@ -682,7 +683,7 @@ class HttpService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMultipart(String chatGuid, String tempGuid, List<Map<String, dynamic>> parts, {String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
+  Future<Response> sendMultipart(ChatGuid chatGuid, String tempGuid, List<Map<String, dynamic>> parts, {String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, bool? ddScan, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       Map<String, dynamic> data = {
         "chatGuid": chatGuid,
@@ -711,7 +712,7 @@ class HttpService extends GetxService {
   /// Send a reaction. [chatGuid] specifies the chat, [selectedMessageText]
   /// specifies the text of the message being reacted on, [selectedMessageGuid]
   /// is the guid of the message, and [reaction] is the reaction type.
-  Future<Response> sendTapback(String chatGuid, String selectedMessageText, String selectedMessageGuid, String reaction, {int? partIndex, CancelToken? cancelToken}) async {
+  Future<Response> sendTapback(ChatGuid chatGuid, String selectedMessageText, String selectedMessageGuid, String reaction, {int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/message/react",
@@ -1020,7 +1021,7 @@ class HttpService extends GetxService {
   }
 
   /// Create a scheduled message
-  Future<Response> createScheduled(String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
+  Future<Response> createScheduled(ChatGuid chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
         "$apiRoot/message/schedule",
@@ -1042,7 +1043,7 @@ class HttpService extends GetxService {
   }
 
   // Create a scheduled message
-  Future<Response> updateScheduled(int id, String chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
+  Future<Response> updateScheduled(int id, ChatGuid chatGuid, String message, DateTime date, Map<String, dynamic> schedule, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.put(
           "$apiRoot/message/schedule/$id",

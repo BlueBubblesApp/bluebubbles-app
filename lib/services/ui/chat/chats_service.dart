@@ -168,7 +168,7 @@
 //     return index != -1;
 //   }
 
-//   Future<void> addChat(String chatGuid) async {
+//   Future<void> addChat(ChatGuid chatGuid) async {
 //     chats.add(toAdd);
 //     cm.createChatController(toAdd);
 //     sort();

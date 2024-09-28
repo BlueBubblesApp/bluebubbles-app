@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_mess
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/database/database.dart';
@@ -117,7 +118,7 @@ class NotificationsService extends GetxService {
             MessageHelper.handleSummaryNotification(messages, findExisting: false);
           } else {
             for (Message message in messages) {
-              MessageHelper.handleNotification(message, message.chat.target!, findExisting: false);
+              MessageHelper.handleNotification(message, message.chat.target!.guid, findExisting: false);
             }
           }
         }
@@ -127,7 +128,7 @@ class NotificationsService extends GetxService {
       countSub = WebListeners.newMessage.listen((tuple) {
         final activeChatFetching = GlobalChatService.hasActiveChat ? ms(GlobalChatService.activeGuid.value!).isFetching : false;
         if (ls.isAlive && !activeChatFetching && tuple.item2 != null) {
-          MessageHelper.handleNotification(tuple.item1, tuple.item2!, findExisting: false);
+          MessageHelper.handleNotification(tuple.item1, tuple.item2!.guid, findExisting: false);
         }
       });
     }
@@ -169,7 +170,8 @@ class NotificationsService extends GetxService {
     );
   }
 
-  Future<void> createNotification(Chat chat, Message message) async {
+  Future<void> createNotification(ChatGuid chatGuid, Message message) async {
+    final chat = GlobalChatService.getChat(chatGuid)!.chat;
     if (chat.shouldMuteNotification(message) || message.isFromMe!) return;
     final isGroup = chat.isGroup;
     final guid = chat.guid;
@@ -179,12 +181,12 @@ class NotificationsService extends GetxService {
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid);
     final personIcon = (await rootBundle.load("assets/images/person64.png")).buffer.asUint8List();
 
-    Uint8List chatIcon = await avatarAsBytes(chat: chat, quality: 256);
+    Uint8List chatIcon = await avatarAsBytes(chatGuid: chatGuid, quality: 256);
     Uint8List contactIcon = message.isFromMe!
         ? personIcon
         : await avatarAsBytes(
             participantsOverride: !chat.isGroup ? null : chat.participants.where((e) => e.address == message.handle!.address).toList(),
-            chat: chat,
+            chatGuid: chatGuid,
             quality: 256);
     if (chatIcon.isEmpty) {
       chatIcon = personIcon;
@@ -199,7 +201,7 @@ class NotificationsService extends GetxService {
         await intents.openChat(guid);
       });
     } else if (kIsDesktop) {
-      _lock.synchronized(() async => await showDesktopNotif(message, text, chat, guid, title, contactName, isGroup, isReaction));
+      _lock.synchronized(() async => await showDesktopNotif(message, text, chatGuid, guid, title, contactName, isGroup, isReaction));
     } else {
       await mcs.invokeMethod("create-incoming-message-notification", {
         "channel_id": NEW_MESSAGE_CHANNEL,
@@ -322,7 +324,7 @@ class NotificationsService extends GetxService {
     facetimeNotifications.remove(callerUuid);
   }
 
-  Future<void> showDesktopNotif(Message message, String text, Chat chat, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
+  Future<void> showDesktopNotif(Message message, String text, ChatGuid chatGuid, String guid, String title, String contactName, bool isGroup, bool isReaction) async {
     List<int> selectedIndices = ss.settings.selectedActionIndices;
     List<String> _actions = ss.settings.actionList;
     final papi = ss.settings.enablePrivateAPI.value;
@@ -353,7 +355,7 @@ class NotificationsService extends GetxService {
       return await showSummaryNotifDesktop(notificationCounts.values.sum, _chats, showMarkRead);
     }
 
-    Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
+    Uint8List avatar = await avatarAsBytes(chatGuid: chatGuid, quality: 256);
 
     // Create a temp file with the avatar
     String path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");
@@ -701,7 +703,7 @@ class NotificationsService extends GetxService {
     }
   }
 
-  Future<void> createFailedToSend(Chat chat, {bool scheduled = false}) async {
+  Future<void> createFailedToSend(ChatGuid chatGuid, {bool scheduled = false}) async {
     final title = 'Failed to send${scheduled ? " scheduled" : ""} message';
     final subtitle = scheduled ? 'Tap to open scheduled messages list' : 'Tap to see more details or retry';
     if (kIsDesktop) {
@@ -722,14 +724,16 @@ class NotificationsService extends GetxService {
               },
             ),
           );
-        } else if (!GlobalChatService.isChatActive(chat.guid)) {
-          GlobalChatService.openChat(chat.guid);
+        } else if (!GlobalChatService.isChatActive(chatGuid)) {
+          GlobalChatService.openChat(chatGuid);
         }
       };
 
       await failedToast!.show();
       return;
     }
+
+    final chat = GlobalChatService.getChat(chatGuid)!.chat;
     await flnp.show(
       (chat.id!  + 75000) * (scheduled ? -1 : 1),
       title,
@@ -766,7 +770,7 @@ class NotificationsService extends GetxService {
     await flnp.cancel(id);
   }
 
-  Future<void> clearDesktopNotificationsForChat(String chatGuid) async {
+  Future<void> clearDesktopNotificationsForChat(ChatGuid chatGuid) async {
     await _lock.synchronized(() async {
       if (!notifications.containsKey(chatGuid)) return;
       List<LocalNotification> toasts = [...notifications[chatGuid]!];

@@ -10,6 +10,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.d
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
@@ -23,7 +24,7 @@ class ConversationTileController extends StatefulController {
   final RxBool shouldHighlight = false.obs;
   final RxBool shouldPartialHighlight = false.obs;
   final RxBool hoverHighlight = false.obs;
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final ConversationListController listController;
   final Function(bool)? onSelect;
   final bool inSelectMode;
@@ -66,7 +67,7 @@ class ConversationTileController extends StatefulController {
     await showConversationTileMenu(
       context,
       this,
-      chat,
+      chat.guid,
       details.globalPosition,
       context.textTheme,
     );
@@ -92,7 +93,7 @@ class ConversationTileController extends StatefulController {
 class ConversationTile extends CustomStateful<ConversationTileController> {
   ConversationTile({
     super.key,
-    required String chatGuid,
+    required ChatGuid chatGuid,
     required ConversationListController controller,
     Function(bool)? onSelect,
     bool inSelectMode = false,

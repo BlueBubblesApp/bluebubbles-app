@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,7 +15,7 @@ class ChatSyncDialog extends StatefulWidget {
     this.limit = 100
   });
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final String? initialMessage;
   final bool withOffset;
   final int limit;

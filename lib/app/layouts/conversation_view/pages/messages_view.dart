@@ -47,7 +47,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   RxMap<String, Widget> internalSmartReplies = <String, Widget>{}.obs;
 
   late final messageService = widget.customService ?? ms(chat.guid)
-    ..init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage, jumpToMessage);
+    ..init(controller.chatGuid, handleNewMessage, handleUpdatedMessage, handleDeletedMessage, jumpToMessage);
   final smartReply = GoogleMlKit.nlp.smartReply();
   final listKey = GlobalKey<SliverAnimatedListState>();
   final RxBool dragging = false.obs;
@@ -74,7 +74,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
         _messages = [];
         // Reload the state after refreshing
         messageService.reload();
-        messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage, jumpToMessage);
+        messageService.init(controller.chatGuid, handleNewMessage, handleUpdatedMessage, handleDeletedMessage, jumpToMessage);
         setState(() {});
       } else if (e.item1 == "add-custom-smartreply") {
         if (e.item2 != null && internalSmartReplies['attach-recent'] == null) {

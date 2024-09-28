@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -94,7 +95,7 @@ class ReplyRecentIntent extends Intent {
 class ReplyRecentAction extends Action<ReplyRecentIntent> {
   ReplyRecentAction(this.chatGuid);
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant ReplyRecentIntent intent) async {
@@ -114,7 +115,7 @@ class HeartRecentIntent extends Intent {
 class HeartRecentAction extends Action<HeartRecentIntent> {
   HeartRecentAction(this.chatGuid);
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant HeartRecentIntent intent) async {
@@ -133,7 +134,7 @@ class LikeRecentIntent extends Intent {
 class LikeRecentAction extends Action<LikeRecentIntent> {
   LikeRecentAction(this.chatGuid);
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant LikeRecentIntent intent) async {
@@ -152,7 +153,7 @@ class DislikeRecentIntent extends Intent {
 class DislikeRecentAction extends Action<DislikeRecentIntent> {
   DislikeRecentAction(this.chatGuid);
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant DislikeRecentIntent intent) async {
@@ -171,7 +172,7 @@ class LaughRecentIntent extends Intent {
 class LaughRecentAction extends Action<LaughRecentIntent> {
   LaughRecentAction(this.chatGuid);
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant LaughRecentIntent intent) async {
@@ -190,7 +191,7 @@ class EmphasizeRecentIntent extends Intent {
 class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
   EmphasizeRecentAction(this.chatGuid);
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant EmphasizeRecentIntent intent) async {
@@ -209,7 +210,7 @@ class QuestionRecentIntent extends Intent {
 class QuestionRecentAction extends Action<QuestionRecentIntent> {
   QuestionRecentAction(this.chatGuid);
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant QuestionRecentIntent intent) async {
@@ -268,7 +269,7 @@ class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
   OpenChatDetailsAction(this.context, this.chatGuid);
 
   final BuildContext context;
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   Object? invoke(covariant OpenChatDetailsIntent intent) {
@@ -309,7 +310,7 @@ class GoBackAction extends Action<GoBackIntent> {
   }
 }
 
-void _sendReactionHelper(String chatGuid, Message selected, String t) {
+void _sendReactionHelper(ChatGuid chatGuid, Message selected, String t) {
   outq.queue(OutgoingItem(
     type: QueueType.sendMessage,
     chatGuid: chatGuid,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 
 enum QueueType {newMessage, updatedMessage, sendMessage, sendAttachment, sendMultipart}
 
@@ -36,7 +37,7 @@ class IncomingItem extends QueueItem {
 }
 
 class OutgoingItem extends QueueItem {
-  String chatGuid;
+  ChatGuid chatGuid;
   Message message;
   Message? selected;
   String? reaction;

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:async_task/async_task.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/backend/sync/sync_helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/ui/chat/global_chat_service.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 
@@ -226,7 +228,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
   /// the input [lastMessage] object.
   /// 
   /// Returns a boolean determining if we've updated the latest message
-  bool tryUpdateLastMessage(Chat chat, Message? lastMessage, bool toggleUnread) {
+  bool tryUpdateLastMessage(ChatGuid chatguid, Message? lastMessage, bool toggleUnread) {
     // If we don't even have a last message, return false
     if (lastMessage == null) return false;
 
@@ -236,6 +238,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
 
     // If the dates are equal, check the text to see if we should update it.
     // AKA, check if the text matches
+    final chat = GlobalChatService.getChat(chatguid)!.chat;
     int currentMs = chat.latestMessage?.dateCreated.millisecondsSinceEpoch ?? 0;
     int lastMs = lastMessage.dateCreated.millisecondsSinceEpoch;
     if (currentMs <= lastMs) {
@@ -293,7 +296,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
         Chat current = existingChats.firstWhere((element) => element.id == i);
 
         // Try and update the last message info
-        bool didUpdate = tryUpdateLastMessage(current, latestMessage, toggleUnread);
+        bool didUpdate = tryUpdateLastMessage(current.guid, latestMessage, toggleUnread);
         if (didUpdate) {
           // Add to a list to be updated in the DB
           updatedChats.add(current);

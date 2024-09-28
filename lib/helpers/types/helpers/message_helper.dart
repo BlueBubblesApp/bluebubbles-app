@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -84,7 +85,8 @@ class MessageHelper {
     return _messages;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat, {bool findExisting = true}) async {
+  static Future<void> handleNotification(Message message, ChatGuid chatGuid, {bool findExisting = true}) async {
+    final chat = GlobalChatService.getChat(chatGuid)!.chat;
     // if from me
     if (message.isFromMe! || message.handle == null) return;
     // if it is a "kept audio" message
@@ -97,7 +99,7 @@ class MessageHelper {
     if (ls.isAlive && GlobalChatService.isChatActive(chat.guid)) return;
     // if app is alive, on chat list, but notifying on chat list is disabled
     if (ls.isAlive && !GlobalChatService.hasActiveChat && Get.rawRoute?.settings.name == "/" && !ss.settings.notifyOnChatList.value) return;
-    await notif.createNotification(chat, message);
+    await notif.createNotification(chatGuid, message);
   }
 
   static Future<void> handleSummaryNotification(List<Message> messages, {bool findExisting = true}) async {

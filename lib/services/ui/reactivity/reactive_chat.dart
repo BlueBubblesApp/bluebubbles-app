@@ -13,6 +13,7 @@ class ReactiveChat {
   final RxBool _isUnread = false.obs;
   final RxBool _isPinned = false.obs;
   final RxnString _muteType = RxnString();
+  final RxnString _muteArgs = RxnString();
   final RxnString _title = RxnString();
   final RxnString _subtitle = RxnString();
   final RxnString _customAvatarPath = RxnString();
@@ -57,6 +58,8 @@ class ReactiveChat {
 
   RxnString get muteType => _muteType;
 
+  RxnString get muteArgs => _muteArgs;
+
   RxList<Handle> get participants => _participants;
 
   Rxn<Message> get latestMessage => _latestMessage;
@@ -81,6 +84,7 @@ class ReactiveChat {
     bool isUnread = false,
     bool isPinned = false,
     String? muteType,
+    String? muteArgs,
     String? title,
     String? subtitle,
     String? customAvatarPath,
@@ -94,6 +98,7 @@ class ReactiveChat {
     _isUnread.value = isUnread;
     _isPinned.value = isPinned;
     _muteType.value = muteType;
+    _muteArgs.value = muteArgs;
     _title.value = title;
     _subtitle.value = subtitle;
     _customAvatarPath.value = customAvatarPath;
@@ -112,9 +117,21 @@ class ReactiveChat {
     chat.save(updateHasUnreadMessage: true);
   }
 
-  setMuteType(String? value) {
+  setMuteType(String? value, {String? muteArgs}) {
+    chat.muteType = value;
+    chat.muteArgs = muteArgs;
     _muteType.value = value;
-    chat.toggleMute(value == "mute");
+    _muteArgs.value = muteArgs;
+    chat.save(updateMuteType: true, updateMuteArgs: true);
+  }
+
+  toggleMuteType() {
+    String? muteType = chat.muteType;
+    if (muteType == "mute") {
+      setMuteType(null);
+    } else {
+      setMuteType("mute");
+    }
   }
 
   setParticipants(List<Handle> value) {
@@ -202,6 +219,7 @@ class ReactiveChat {
       chat,
       isUnread: chat.hasUnreadMessage ?? false,
       muteType: chat.muteType,
+      muteArgs: chat.muteArgs,
       title: null,
       subtitle: null,
       customAvatarPath: chat.customAvatarPath,

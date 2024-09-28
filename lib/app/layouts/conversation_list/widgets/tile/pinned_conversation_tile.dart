@@ -8,6 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversat
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,7 +18,7 @@ import 'package:get/get.dart';
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   PinnedConversationTile({
     super.key,
-    required String chatGuid,
+    required ChatGuid chatGuid,
     required ConversationListController controller,
   }) : super(
             parentController: Get.isRegistered<ConversationTileController>(tag: chatGuid)

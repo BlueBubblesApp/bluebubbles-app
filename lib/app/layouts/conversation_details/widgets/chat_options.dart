@@ -3,11 +3,13 @@ import 'package:bluebubbles/app/layouts/conversation_details/dialogs/chat_sync_d
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +23,7 @@ import 'package:universal_io/io.dart';
 class ChatOptions extends StatefulWidget {
   const ChatOptions({super.key, required this.chatGuid});
 
-  final String chatGuid;
+  final ChatGuid chatGuid;
 
   @override
   OptimizedState createState() => _ChatOptionsState();
@@ -29,6 +31,12 @@ class ChatOptions extends StatefulWidget {
 
 class _ChatOptionsState extends OptimizedState<ChatOptions> {
   Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
+
+  ReactiveChat? _rChat;
+  ReactiveChat get rChat {
+    _rChat ??= GlobalChatService.getChat(widget.chatGuid)!;
+    return _rChat!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -265,35 +273,32 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                   ),
                 if (chat.isGroup) const SettingsDivider(),
                 if (!kIsWeb)
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     title: "Pin Conversation",
                     initialVal: chat.isPinned!,
                     onChanged: (value) {
-                      chat.togglePin(!chat.isPinned!);
-                      setState(() {});
+                      GlobalChatService.togglePinStatus(widget.chatGuid);
                     },
                     backgroundColor: tileColor,
-                  ),
+                  )),
                 if (!kIsWeb)
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     title: "Mute Conversation",
-                    initialVal: chat.muteType == "mute",
+                    initialVal: rChat.muteType.value == "mute",
                     onChanged: (value) {
-                      chat.toggleMute(value);
-                      setState(() {});
+                      GlobalChatService.toggleMuteStatus(widget.chatGuid, muteType: value ? "mute" : "");
                     },
                     backgroundColor: tileColor,
-                  ),
+                  )),
                 if (!kIsWeb)
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     title: "Archive Conversation",
-                    initialVal: chat.isArchived!,
+                    initialVal: rChat.isArchived.value,
                     onChanged: (value) {
-                      chat.toggleArchived(value);
-                      setState(() {});
+                      GlobalChatService.toggleArchivedStatus(widget.chatGuid, isArchived: value);
                     },
                     backgroundColor: tileColor,
-                  ),
+                  )),
                 if (!kIsWeb)
                   SettingsTile(
                     title: "Clear Transcript",

@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
@@ -15,7 +16,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-Future<void> peekChat(BuildContext context, String chatGuid, Offset offset) async {
+Future<void> peekChat(BuildContext context, ChatGuid chatGuid, Offset offset) async {
   HapticFeedback.mediumImpact();
   final Chat c = GlobalChatService.getChat(chatGuid)!.chat;
   final messages = Chat.getMessages(c, getDetails: true).where((e) => e.associatedMessageGuid == null).toList();
@@ -37,7 +38,7 @@ Future<void> peekChat(BuildContext context, String chatGuid, Offset offset) asyn
 
 class ConversationPeekView extends StatefulWidget {
   final Offset position;
-  final String chatGuid;
+  final ChatGuid chatGuid;
   final List<Message> messages;
 
   const ConversationPeekView({super.key, required this.position, required this.chatGuid, required this.messages});
@@ -252,7 +253,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            chat.toggleMute(chat.muteType != "mute");
+            GlobalChatService.toggleMuteStatus(widget.chatGuid);
             popPeekView();
           },
           child: ListTile(

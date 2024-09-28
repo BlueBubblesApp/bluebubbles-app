@@ -1,4 +1,5 @@
 import 'package:async_task/async_task_extension.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
@@ -196,7 +197,7 @@ class FullSyncManager extends SyncManager {
     }
   }
 
-  Stream<Tuple2<double, List<Message>>> streamChatMessages(String chatGuid, int? count, {int batchSize = 25}) async* {
+  Stream<Tuple2<double, List<Message>>> streamChatMessages(ChatGuid chatGuid, int? count, {int batchSize = 25}) async* {
     // Set some default sync values
     int batches = 1;
     int countPerBatch = batchSize;

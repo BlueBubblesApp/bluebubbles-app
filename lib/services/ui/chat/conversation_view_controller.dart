@@ -5,6 +5,7 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:emojis/emoji.dart';
@@ -18,11 +19,11 @@ import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
-ConversationViewController cvc(String chatGuid, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chatGuid)
+ConversationViewController cvc(ChatGuid chatGuid, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chatGuid)
 ? Get.find<ConversationViewController>(tag: tag ?? chatGuid) : Get.put(ConversationViewController(chatGuid, tag_: tag), tag: tag ?? chatGuid);
 
 class ConversationViewController extends StatefulController with GetSingleTickerProviderStateMixin {
-  final String chatGuid;
+  final ChatGuid chatGuid;
   late final String tag;
   bool fromChatCreator = false;
   bool addedRecentPhotoReply = false;
