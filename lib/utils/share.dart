@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/foundation.dart';
@@ -27,7 +28,7 @@ class Share {
     sp.Share.share(text, subject: subject);
   }
 
-  static Future<void> location(String chatGuid) async {
+  static Future<void> location(ChatGuid chatGuid) async {
     bool _serviceEnabled;
     LocationPermission _permissionGranted;
     Position _locationData;
