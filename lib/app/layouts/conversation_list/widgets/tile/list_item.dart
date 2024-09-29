@@ -42,34 +42,34 @@ class ListItem extends StatelessWidget {
             const SizedBox(
               width: 20,
             ),
-            Icon(
+            Obx(() => Icon(
               action == MaterialSwipeAction.pin
-                  ? (chat.isPinned! ? Icons.star_outline : Icons.star)
+                  ? (chat.observables.isPinned.value ? Icons.star_outline : Icons.star)
                   : action == MaterialSwipeAction.alerts
-                  ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
+                  ? (chat.observables.muteType.value == "mute" ? Icons.notifications_active : Icons.notifications_off)
                   : action == MaterialSwipeAction.delete
                   ? Icons.delete_forever_outlined
                   : action == MaterialSwipeAction.mark_read
-                  ? (chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread)
-                  : (chat.isArchived! ? Icons.unarchive : Icons.archive),
+                  ? (chat.observables.isUnread.value ? Icons.mark_chat_read : Icons.mark_chat_unread)
+                  : (chat.observables.isArchived.value ? Icons.unarchive : Icons.archive),
               color: Colors.white,
-            ),
-            Text(
+            )),
+            Obx(() => Text(
               action == MaterialSwipeAction.pin
-                  ? (chat.isPinned! ? " Unpin" : " Pin")
+                  ? (chat.observables.isPinned.value ? " Unpin" : " Pin")
                   : action == MaterialSwipeAction.alerts
-                  ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
+                  ? (chat.observables.muteType.value == "mute" ? ' Show Alerts' : ' Hide Alerts')
                   : action == MaterialSwipeAction.delete
                   ? " Delete"
                   : action == MaterialSwipeAction.mark_read
-                  ? (chat.hasUnreadMessage! ? ' Mark Read' : ' Mark Unread')
-                  : (chat.isArchived! ? ' Unarchive' : ' Archive'),
+                  ? (chat.observables.isUnread.value ? ' Mark Read' : ' Mark Unread')
+                  : (chat.observables.isArchived.value ? ' Unarchive' : ' Archive'),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),
               textAlign: left ? TextAlign.right : TextAlign.left,
-            ),
+            )),
             const SizedBox(
               width: 20,
             ),
@@ -83,7 +83,7 @@ class ListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final chat = GlobalChatService.getChat(chatGuid)!.chat;
+      final chat = GlobalChatService.getChat(chatGuid)!;
       final tile = ConversationTile(
         key: Key(chat.guid),
         chatGuid: chat.guid,
@@ -117,15 +117,15 @@ class ListItem extends StatelessWidget {
             }
 
             if (action == MaterialSwipeAction.pin) {
-              chat.togglePin(!chat.isPinned!);
+              chat.toggleIsPinned(null);
             } else if (action == MaterialSwipeAction.alerts) {
-              GlobalChatService.toggleMuteStatus(chat.guid);
+              chat.toggleMuteType(null);
             } else if (action == MaterialSwipeAction.delete) {
-              GlobalChatService.removeChat(chat.guid, softDelete: true);
+              chat.toggleIsDeleted(null);
             } else if (action == MaterialSwipeAction.mark_read) {
-              chat.toggleHasUnread(!chat.hasUnreadMessage!);
+              chat.toggleUnreadStatus(null);
             } else if (action == MaterialSwipeAction.archive) {
-              chat.toggleArchived(!chat.isArchived!);
+              chat.toggleIsArchived(null);
             }
             update.call();
           },

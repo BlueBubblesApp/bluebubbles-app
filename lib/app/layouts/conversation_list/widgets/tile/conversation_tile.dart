@@ -13,7 +13,6 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,9 +32,11 @@ class ConversationTileController extends StatefulController {
   bool get isSelected => listController.selectedChats
       .firstWhereOrNull((e) => e == chatGuid) != null;
 
-  ReactiveChat get reactiveChat => GlobalChatService.getChat(chatGuid)!;
-
-  Chat get chat => reactiveChat.chat;
+  Chat? _chat;
+  Chat get chat {
+    _chat ??= GlobalChatService.getChat(chatGuid)!;
+    return _chat!;
+  }
 
   ConversationTileController({
     Key? key,
@@ -205,7 +206,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
   Widget build(BuildContext context) {
     return Obx(() {
       final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-      String _title = controller.reactiveChat.title.value ?? "Unknown";
+      String _title = controller.chat.observables.title.value ?? "Unknown";
       if (hideInfo) {
         _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
       }
@@ -247,7 +248,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   Widget build(BuildContext context) {
     return Obx(() {
       final hideContent = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
-      final latestMessage = controller.reactiveChat.latestMessage.value;
+      final latestMessage = controller.chat.observables.latestMessage.value;
       final isFromMe = latestMessage?.isFromMe ?? false;
       final isDelivered = controller.chat.isGroup || !isFromMe || latestMessage?.dateDelivered != null || latestMessage?.dateRead != null;
       String _subtitle = (hideContent ? latestMessage?.obfuscatedText : latestMessage?.notificationText) ?? "No messages";

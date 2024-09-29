@@ -26,7 +26,7 @@ class ChatInfo extends StatefulWidget {
 }
 
 class _ChatInfoState extends OptimizedState<ChatInfo> {
-  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
+  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!;
 
   Future<bool?> showMethodDialog(String title) async {
     return await showDialog<bool>(

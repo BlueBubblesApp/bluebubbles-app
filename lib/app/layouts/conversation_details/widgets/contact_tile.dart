@@ -171,7 +171,7 @@ class ContactTile extends StatelessWidget {
                 }
               );
 
-              final chat = GlobalChatService.getChat(chatGuid)!.chat;
+              final chat = GlobalChatService.getChat(chatGuid)!;
               http.chatParticipant("remove", chat.guid, handle.address).then((response) async {
                 Get.back();
                 Logger.info("Removed participant ${handle.address}");

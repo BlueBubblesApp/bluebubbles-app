@@ -29,7 +29,7 @@ class OutgoingQueue extends Queue {
   }
 
   Future<T> handleSend<T>(Future<T> Function() process, ChatGuid chatGuid) {
-    final rChat = GlobalChatService.getChat(chatGuid)!;
+    final rChat = GlobalChatService.getChat(chatGuid)!.observables;
     var timer = Timer(const Duration(seconds: 5), () {
       rChat.setSendProgress(0.9);
     });

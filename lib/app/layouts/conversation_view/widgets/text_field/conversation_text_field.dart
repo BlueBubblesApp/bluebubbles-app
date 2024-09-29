@@ -66,10 +66,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   String oldTextFieldText = "";
   TextSelection oldTextFieldSelection = const TextSelection.collapsed(offset: 0);
 
-  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
-
-  String get chatGuid => chat.guid;
-
   bool get showAttachmentPicker => controller.showAttachmentPicker;
 
   late final double emojiPickerHeight = max(256, context.height * 0.4);
@@ -130,7 +126,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   void getTextDraft({String? text}) {
     // Only change the text if the incoming text is different.
-    final incomingText = text ?? chat.textFieldText;
+    final incomingText = text ?? controller.chat.textFieldText;
     if (incomingText != null && incomingText.isNotEmpty && incomingText != controller.textController.text) {
       controller.textController.text = incomingText;
     }
@@ -138,7 +134,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   Future<void> getAttachmentDrafts({List<String> attachments = const []}) async {
     // Only change the attachments if the incoming attachments are different.
-    final incomingAttachments = attachments.isEmpty ? chat.textFieldAttachments : attachments;
+    final incomingAttachments = attachments.isEmpty ? controller.chat.textFieldAttachments : attachments;
     final currentPicked = controller.pickedAttachments.map((element) => element.path).toList();
     if (incomingAttachments.any((element) => !currentPicked.contains(element))) {
       controller.pickedAttachments.clear();
@@ -169,7 +165,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   void textListener(bool subject) {
     if (!subject && controller.textController.text.trim().isNotEmpty) {
-      chat.textFieldText = controller.textController.text;
+      controller.chat.textFieldText = controller.textController.text;
     }
 
     // Clean mentions
@@ -301,12 +297,12 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       _debounceTyping?.cancel();
       oldText = newText;
       // don't send a bunch of duplicate events for every typing change
-      if (ss.settings.enablePrivateAPI.value && (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
+      if (ss.settings.enablePrivateAPI.value && (controller.chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
         if (_debounceTyping == null) {
-          socket.sendMessage("started-typing", {"chatGuid": chatGuid});
+          socket.sendMessage("started-typing", {"chatGuid": controller.chatGuid});
         }
         _debounceTyping = Timer(const Duration(seconds: 3), () {
-          socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
+          socket.sendMessage("stopped-typing", {"chatGuid": controller.chatGuid});
           _debounceTyping = null;
         });
       }
@@ -421,20 +417,20 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   @override
   void dispose() {
     if (controller.textController.text.trim().isNotEmpty) {
-      chat.textFieldText = controller.textController.text;
+      controller.chat.textFieldText = controller.textController.text;
     } else {
-      chat.textFieldText = "";
+      controller.chat.textFieldText = "";
     }
-    chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
-    chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
+    controller.chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
+    controller.chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
 
     controller.focusNode.dispose();
     controller.subjectFocusNode.dispose();
     controller.textController.dispose();
     controller.subjectTextController.dispose();
     recorderController?.dispose();
-    if (chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value) {
-      socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
+    if (controller.chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value) {
+      socket.sendMessage("stopped-typing", {"chatGuid": controller.chatGuid});
     }
 
     super.dispose();
@@ -468,7 +464,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
           );
         },
       );
-      final response = await http.createScheduled(chat.guid, controller.textController.text, date.toUtc(), {"type": "once"});
+      final response = await http.createScheduled(controller.chatGuid, controller.textController.text, date.toUtc(), {"type": "once"});
       Navigator.of(context).pop();
       if (response.statusCode == 200 && response.data != null) {
         showSnackbar("Notice", "Message scheduled successfully for ${buildFullDate(date)}");
@@ -525,9 +521,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.scheduledDate.value = null;
     _debounceTyping = null;
     // Remove the saved text field draft
-    if ((chat.textFieldText ?? "").isNotEmpty) {
-      chat.textFieldText = "";
-      chat.save(updateTextFieldText: true);
+    if ((controller.chat.textFieldText ?? "").isNotEmpty) {
+      controller.chat.textFieldText = "";
+      controller.chat.save(updateTextFieldText: true);
     }
   }
 
@@ -641,7 +637,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                                 ListTile(
                                   title: Text("Send location", style: Theme.of(context).textTheme.bodyLarge),
                                   onTap: () async {
-                                    Share.location(chat.guid);
+                                    Share.location(controller.chatGuid);
                                     Get.back();
                                   },
                                 ),
@@ -703,7 +699,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                 IconButton(
                   icon: Icon(iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined, color: context.theme.colorScheme.outline, size: 28),
                   onPressed: () async {
-                    await Share.location(chat.guid);
+                    await Share.location(controller.chatGuid);
                   },
                 ),
               Expanded(
@@ -928,7 +924,7 @@ class TextFieldComponent extends StatelessWidget {
 
   bool get samsung => ss.settings.skin.value == Skins.Samsung;
 
-  Chat? get chat => controller == null ? null : GlobalChatService.getChat(controller!.chatGuid)?.chat;
+  Chat? get chat => controller == null ? null : GlobalChatService.getChat(controller!.chatGuid);
 
   bool get isChatCreator => focusNode != null;
 

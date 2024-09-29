@@ -24,10 +24,9 @@ class ManualMarkState extends OptimizedState<ManualMark> {
   bool marked = false;
   bool marking = false;
 
-  Chat get chat => GlobalChatService.getChat(widget.controller.chatGuid)!.chat;
-
   @override
   Widget build(BuildContext context) {
+    final chat = widget.controller.chat;
     final manualMark = ss.settings.enablePrivateAPI.value && ss.settings.privateManualMarkAsRead.value && !(chat.autoSendReadReceipts ?? false);
     return Obx(() {
       if (!manualMark && !widget.controller.inSelectMode.value) return const SizedBox.shrink();

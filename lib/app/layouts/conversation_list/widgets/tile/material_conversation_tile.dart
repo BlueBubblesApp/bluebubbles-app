@@ -57,7 +57,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
                     .copyWith(
                       fontWeight: controller.shouldHighlight.value
                           ? FontWeight.w600
-                          : GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false
+                          : controller.chat.observables.isUnread.value
                               ? FontWeight.bold
                               : null,
                     )
@@ -65,7 +65,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
               )),
           subtitle: controller.subtitle ??
               Obx(() {
-                final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
+                final unread = controller.chat.observables.isUnread.value;
                 return ChatSubtitle(
                     parentController: controller,
                     style: context.theme.textTheme.bodyMedium!
@@ -150,10 +150,9 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
     return Padding(
       padding: const EdgeInsets.only(right: 3),
       child: Obx(() {
-        final reactiveChat = GlobalChatService.getChat(controller.chatGuid);
-        final unread = reactiveChat?.isUnread.value ?? false;
-        final muteType = reactiveChat?.muteType.value ?? '';
-        final latestMessage = reactiveChat?.latestMessage.value;
+        final unread = controller.chat.observables.isUnread.value;
+        final muteType = controller.chat.observables.muteType.value;
+        final latestMessage = controller.chat.observables.latestMessage.value;
         final dateCreated = latestMessage?.dateCreated ?? DateTime.now();
 
         String indicatorText = "";
@@ -214,7 +213,8 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
               mainAxisAlignment: MainAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (controller.chat.isPinned!) Icon(Icons.push_pin_outlined, size: 15, color: context.theme.colorScheme.outline),
+                if (controller.chat.observables.isPinned.value)
+                  Icon(Icons.push_pin_outlined, size: 15, color: context.theme.colorScheme.outline),
                 if (muteType == "mute")
                   const SizedBox(width: 5),
                 if (muteType == "mute")
@@ -254,7 +254,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   Widget build(BuildContext context) {
     return Obx(() => Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: (GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false)
+      child: (controller.chat.observables.isUnread.value)
           ? Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(35),

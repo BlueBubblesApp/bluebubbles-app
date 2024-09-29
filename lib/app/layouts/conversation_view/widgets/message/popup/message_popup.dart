@@ -90,9 +90,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   ConversationViewController get cvController => widget.cvController;
 
-  MessagesService get service => ms(chat.guid);
+  Chat? _chat;
+  Chat get chat {
+    _chat ??= GlobalChatService.getChat(cvController.chatGuid)!;
+    return _chat!;
+  }
 
-  Chat get chat => GlobalChatService.getChat(widget.cvController.chatGuid)!.chat;
+  MessagesService get service => ms(chat.guid);
 
   MessagePart get part => widget.part;
 

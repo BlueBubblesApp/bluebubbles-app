@@ -228,7 +228,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
   /// the input [lastMessage] object.
   /// 
   /// Returns a boolean determining if we've updated the latest message
-  bool tryUpdateLastMessage(ChatGuid chatguid, Message? lastMessage, bool toggleUnread) {
+  bool tryUpdateLastMessage(ChatGuid chatGuid, Message? lastMessage, bool toggleUnread) {
     // If we don't even have a last message, return false
     if (lastMessage == null) return false;
 
@@ -238,7 +238,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
 
     // If the dates are equal, check the text to see if we should update it.
     // AKA, check if the text matches
-    final chat = GlobalChatService.getChat(chatguid)!.chat;
+    final chat = GlobalChatService.getChat(chatGuid)!;
     int currentMs = chat.latestMessage?.dateCreated.millisecondsSinceEpoch ?? 0;
     int lastMs = lastMessage.dateCreated.millisecondsSinceEpoch;
     if (currentMs <= lastMs) {
@@ -264,7 +264,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
       
       // Mark the chat as unread if we updated the last message & it's not from us
       if (toggleUnread && !(lastMessage.isFromMe ?? false)) {
-        chat.toggleHasUnread(true);
+        chat.toggleUnreadStatus(true);
       }
     }
 

@@ -132,7 +132,7 @@ class ActionHandler extends GetxService {
   }
 
   Future<void> sendMessage(ChatGuid chatGuid, Message m, Message? selected, String? r) async {
-    final c = GlobalChatService.getChat(chatGuid)!.chat;
+    final c = GlobalChatService.getChat(chatGuid)!;
     final completer = Completer<void>();
     if (r == null) {
       http.sendMessage(
@@ -206,7 +206,7 @@ class ActionHandler extends GetxService {
       "partIndex": e.attributes!.messagePart,
     }).toList();
 
-    final c = GlobalChatService.getChat(chatGuid)!.chat;
+    final c = GlobalChatService.getChat(chatGuid)!;
     http.sendMultipart(
       c.guid,
       m.guid!,
@@ -264,7 +264,7 @@ class ActionHandler extends GetxService {
     final completer = Completer<void>();
     latestCancelToken = CancelToken();
 
-    final c = GlobalChatService.getChat(chatGuid)!.chat;
+    final c = GlobalChatService.getChat(chatGuid)!;
     http.sendAttachment(
       c.guid,
       attachment.guid!,
@@ -487,7 +487,7 @@ class ActionHandler extends GetxService {
       case "chat-read-status-changed":
         Chat? chat = Chat.findOne(guid: data["chatGuid"]);
         if (chat != null && (data["read"] == true || data["read"] == false)) {
-          chat.toggleHasUnread(!data["read"]!, privateMark: false);
+          chat.toggleUnreadStatus(!data["read"]!, privateMark: false);
         }
         return;
       case "typing-indicator":

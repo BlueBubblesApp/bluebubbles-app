@@ -61,7 +61,11 @@ class MessagesViewState extends OptimizedState<MessagesView> {
 
   bool get showSmartReplies => ss.settings.smartReply.value && !kIsWeb && !kIsDesktop;
 
-  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
+  Chat? _chat;
+  Chat get chat {
+    _chat ??= GlobalChatService.getChat(controller.chatGuid)!;
+    return _chat!;
+  }
 
   @override
   void initState() {

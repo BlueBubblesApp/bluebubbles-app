@@ -171,7 +171,7 @@ class NotificationsService extends GetxService {
   }
 
   Future<void> createNotification(ChatGuid chatGuid, Message message) async {
-    final chat = GlobalChatService.getChat(chatGuid)!.chat;
+    final chat = GlobalChatService.getChat(chatGuid)!;
     if (chat.shouldMuteNotification(message) || message.isFromMe!) return;
     final isGroup = chat.isGroup;
     final guid = chat.guid;
@@ -531,7 +531,7 @@ class NotificationsService extends GetxService {
           return;
         }
 
-        chat.toggleHasUnread(false);
+        chat.toggleUnreadStatus(false);
         EventDispatcher().emit('refresh', null);
 
         await windowManager.show();
@@ -733,7 +733,7 @@ class NotificationsService extends GetxService {
       return;
     }
 
-    final chat = GlobalChatService.getChat(chatGuid)!.chat;
+    final chat = GlobalChatService.getChat(chatGuid)!;
     await flnp.show(
       (chat.id!  + 75000) * (scheduled ? -1 : 1),
       title,

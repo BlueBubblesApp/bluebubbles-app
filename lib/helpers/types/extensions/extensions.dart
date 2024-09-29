@@ -101,17 +101,17 @@ extension ChatListHelpers on RxList<Chat> {
   /// update without StreamBuilders
   RxList<Chat> archivedHelper(bool archived) {
     if (archived) {
-      return where((e) => e.isArchived ?? false).toList().obs;
+      return where((e) => e.isArchived).toList().obs;
     } else {
-      return where((e) => !(e.isArchived ?? false)).toList().obs;
+      return where((e) => !(e.isArchived)).toList().obs;
     }
   }
 
   RxList<Chat> bigPinHelper(bool pinned) {
     if (pinned) {
-      return where((e) => e.isPinned ?? false).toList().obs;
+      return where((e) => e.isPinned).toList().obs;
     } else {
-      return where((e) => !(e.isPinned ?? false)).toList().obs;
+      return where((e) => !(e.isPinned)).toList().obs;
     }
   }
 

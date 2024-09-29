@@ -22,8 +22,6 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
 
   final ConversationViewController controller;
 
-  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
-
   // simulate apple's saturatioon
   static const List<double> darkMatrix = <double>[
     1.385, -0.56, -0.112, 0.0, 0.3, //
@@ -125,7 +123,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                                   Navigator.of(context).push(
                                     ThemeSwitcher.buildPageRoute(
                                       builder: (context) => ConversationDetails(
-                                        chatGuid: chat.guid,
+                                        chatGuid: controller.chat.guid,
                                       ),
                                     ),
                                   );
@@ -136,7 +134,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                               Navigator.of(context).push(
                                 ThemeSwitcher.buildPageRoute(
                                   builder: (context) => ConversationDetails(
-                                    chatGuid: chat.guid,
+                                    chatGuid: controller.chat.guid,
                                   ),
                                 ),
                               );
@@ -158,17 +156,17 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
               ),
               Positioned(
                 child: Obx(() {
-                  final rChat = GlobalChatService.getChat(controller.chatGuid)!;
+                  final sendProgress = controller.chat.observables.sendProgress.value;
                   return TweenAnimationBuilder<double>(
-                    duration: rChat.sendProgress.value == 0
+                    duration: sendProgress == 0
                         ? Duration.zero
-                        : rChat.sendProgress.value == 1
+                        : sendProgress == 1
                             ? const Duration(milliseconds: 250)
                             : const Duration(seconds: 10),
-                    curve: rChat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+                    curve: sendProgress == 1 ? Curves.easeInOut : Curves.easeOutExpo,
                     tween: Tween<double>(
                       begin: 0,
-                      end: rChat.sendProgress.value,
+                      end: sendProgress,
                     ),
                     builder: (context, value, _) => AnimatedOpacity(
                           opacity: value == 1 ? 0 : 1,
@@ -276,8 +274,6 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
 
-  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
-
   @override
   void initState() {
     super.initState();
@@ -293,7 +289,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
       IgnorePointer(
         ignoring: true,
         child: ContactAvatarGroupWidget(
-          chatGuid: chat.guid,
+          chatGuid: controller.chat.guid,
           size: 54,
         ),
       ),
@@ -305,9 +301,10 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
           ),
           child: Obx(() {
             final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-            String title = controller.reactiveChat.title.value ?? "";
+            final participants = controller.chat.observables.participants;
+            String title = controller.chat.observables.title.value ?? "Unknown";
             if (hideInfo) {
-              title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+              title = participants.length > 1 ? "Group Chat" : participants[0].fakeName;
             }
 
             return RichText(

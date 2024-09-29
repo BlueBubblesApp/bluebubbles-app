@@ -7,7 +7,6 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -88,7 +87,12 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   Future<void> Function(Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, bool)? sendFunc;
   bool isProcessingImage = false;
 
-  ReactiveChat get reactiveChat => GlobalChatService.getChat(chatGuid)!;
+  Chat? _chat;
+  Chat get chat {
+    _chat ??= GlobalChatService.getChat(chatGuid);
+    return _chat!;
+  }
+
   List<Mentionable> get mentionables => GlobalChatService.getMentionablesForChat(chatGuid);
 
   @override

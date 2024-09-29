@@ -153,7 +153,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
         children: <Widget>[
           Obx(() {
             String indicatorText = "";
-            final latestMessage = controller.reactiveChat.latestMessage.value;
+            final latestMessage = controller.chat.observables.latestMessage.value;
             final dateCreated = latestMessage?.dateCreated ?? DateTime.now();
             if (ss.settings.statusIndicatorsOnChats.value && (latestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
               Indicator show = latestMessage?.indicatorToShow ?? Indicator.NONE;
@@ -230,7 +230,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: Obx(() => GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false 
+      child: Obx(() => controller.chat.observables.isUnread.value 
           ? Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(35),

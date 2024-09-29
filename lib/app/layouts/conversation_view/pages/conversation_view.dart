@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/screen_effects_widget.dart';
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
@@ -37,8 +36,6 @@ class ConversationView extends StatefulWidget {
 class ConversationViewState extends OptimizedState<ConversationView> {
   late final ConversationViewController controller = cvc(widget.chatGuid, tag: widget.customService?.tag);
 
-  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
-
   @override
   void initState() {
     super.initState();
@@ -49,7 +46,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
     Logger.debug("Conversation View initialized for ${widget.chatGuid}");
 
     Future.delayed(Duration.zero, () async {
-      GlobalChatService.toggleReadStatus(widget.chatGuid, isUnread: false);
+      controller.chat.toggleUnreadStatus(false);
       await ss.prefs.setString('lastOpenedChat', widget.chatGuid);
 
       if (widget.onInit != null) {
@@ -72,10 +69,10 @@ class ConversationViewState extends OptimizedState<ConversationView> {
       child: Theme(
         data: context.theme.copyWith(
           // in case some components still use legacy theming
-          primaryColor: context.theme.colorScheme.bubble(context, chat.isIMessage),
+          primaryColor: context.theme.colorScheme.bubble(context, controller.chat.isIMessage),
           colorScheme: context.theme.colorScheme.copyWith(
-            primary: context.theme.colorScheme.bubble(context, chat.isIMessage),
-            onPrimary: context.theme.colorScheme.onBubble(context, chat.isIMessage),
+            primary: context.theme.colorScheme.bubble(context, controller.chat.isIMessage),
+            onPrimary: context.theme.colorScheme.onBubble(context, controller.chat.isIMessage),
             surface: ss.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
@@ -149,7 +146,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                               child: Stack(
                                 children: [
                                   MessagesView(
-                                    key: Key(chat.guid),
+                                    key: Key(controller.chat.guid),
                                     customService: widget.customService,
                                     controller: controller,
                                   ),

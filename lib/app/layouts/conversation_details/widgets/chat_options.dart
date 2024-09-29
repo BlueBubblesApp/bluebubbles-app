@@ -9,7 +9,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
+import 'package:bluebubbles/services/ui/reactivity/observable_chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,11 +30,11 @@ class ChatOptions extends StatefulWidget {
 }
 
 class _ChatOptionsState extends OptimizedState<ChatOptions> {
-  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
+  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!;
 
-  ReactiveChat? _rChat;
-  ReactiveChat get rChat {
-    _rChat ??= GlobalChatService.getChat(widget.chatGuid)!;
+  ObservableChat? _rChat;
+  ObservableChat get rChat {
+    _rChat ??= GlobalChatService.getChat(widget.chatGuid)!.observables;
     return _rChat!;
   }
 
@@ -275,7 +275,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                 if (!kIsWeb)
                   Obx(() => SettingsSwitch(
                     title: "Pin Conversation",
-                    initialVal: chat.isPinned!,
+                    initialVal: chat.isPinned,
                     onChanged: (value) {
                       GlobalChatService.togglePinStatus(widget.chatGuid);
                     },

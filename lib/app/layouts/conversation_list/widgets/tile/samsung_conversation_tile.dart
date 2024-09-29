@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -118,20 +117,19 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = controller.reactiveChat.isUnread.value;
-      final muteType = controller.reactiveChat.muteType.value;
-      final latestMessage = controller.reactiveChat.latestMessage.value;
+      final unread = controller.chat.observables.isUnread.value;
+      final muteType = controller.chat.observables.muteType.value;
+      final latestMessage = controller.chat.observables.latestMessage.value;
       final dateCreated = latestMessage?.dateCreated ?? DateTime.now();
+      final isPinned = controller.chat.observables.isPinned.value;
 
       String indicatorText = "";
-      if (ss.settings.statusIndicatorsOnChats.value && (latestMessage?.isFromMe ?? false) && !GlobalChatService.isGroupChat(controller.chatGuid)) {
+      if (ss.settings.statusIndicatorsOnChats.value && (latestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
         Indicator show = latestMessage?.indicatorToShow ?? Indicator.NONE;
         if (show != Indicator.NONE) {
           indicatorText = show.name.toLowerCase().capitalizeFirst!;
         }
       }
-
-      ReactiveChat rChat = GlobalChatService.getChat(controller.chatGuid)!;
 
       return Padding(
         padding: const EdgeInsets.only(right: 3),
@@ -156,15 +154,15 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
                 overflow: TextOverflow.clip,
               )
             ),
-            if (rChat.isPinned.value) const SizedBox(width: 5.0),
+            if (isPinned) const SizedBox(width: 5.0),
             if (muteType == "mute")
-              Obx(() => Icon(
-                    Icons.notifications_off,
-                    color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
-                    size: 16,
-                  )),
+              Icon(
+                Icons.notifications_off,
+                color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.onBackground : context.theme.colorScheme.outline,
+                size: 16,
+              ),
             if (muteType == "mute") const SizedBox(width: 2.0),
-            if (rChat.isPinned.value) Icon(Icons.star, size: 16, color: context.theme.colorScheme.tertiary),
+            if (isPinned) Icon(Icons.star, size: 16, color: context.theme.colorScheme.tertiary),
           ],
         ),
       );
@@ -193,7 +191,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
+      final unread = controller.chat.observables.isUnread.value;
       return (unread)
           ? Container(
               decoration: BoxDecoration(

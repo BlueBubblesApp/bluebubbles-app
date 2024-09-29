@@ -217,7 +217,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
           if (isNewer) {
             inputChat.latestMessage = first;
             if (!first.isFromMe! && !GlobalChatService.isChatActive(inputChat.guid)) {
-              inputChat.toggleHasUnread(true);
+              inputChat.toggleUnreadStatus(true);
             }
           }
         }

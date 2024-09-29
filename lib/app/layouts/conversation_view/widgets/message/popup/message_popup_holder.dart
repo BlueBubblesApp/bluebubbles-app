@@ -137,13 +137,13 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       onDoubleTap: widget.isEditing ? null
         : ss.settings.doubleTapForDetails.value || message.guid!.startsWith('temp')
         ? () => openPopup()
-        : ss.settings.enableQuickTapback.value && GlobalChatService.getChat(widget.cvController.chatGuid)!.chat.isIMessage
+        : ss.settings.enableQuickTapback.value && widget.cvController.chat.isIMessage
         ? () => sendTapback(null, widget.part.part)
         : null,
       onLongPress: widget.isEditing ? null
         : ss.settings.doubleTapForDetails.value &&
         ss.settings.enableQuickTapback.value &&
-        GlobalChatService.getChat(widget.cvController.chatGuid)!.chat.isIMessage &&
+        widget.cvController.chat.isIMessage &&
         !message.guid!.startsWith('temp')
         ? () => sendTapback(null, widget.part.part)
         : () => openPopup(),

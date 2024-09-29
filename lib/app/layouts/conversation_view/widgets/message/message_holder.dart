@@ -62,17 +62,16 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       : ss.settings.repliesToPrevious.value
       ? (service.struct.getPreviousReply(message.threadOriginatorGuid!, message.normalizedThreadPart, message.guid!) ?? service.struct.getThreadOriginator(message.threadOriginatorGuid!))
       : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
-  Chat get chat => GlobalChatService.getChat(widget.cvController.chatGuid)!.chat;
   MessagesService get service => ms(widget.cvController.chatGuid);
   bool get canSwipeToReply => ss.settings.enablePrivateAPI.value
       && ss.isMinBigSurSync
-      && chat.isIMessage
+      && (controller.cvController?.chat.isIMessage ?? true)
       && !widget.isReplyThread
       && !message.guid!.startsWith("temp")
       && !message.guid!.startsWith("error");
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
       || (olderMessage == null || !message.dateCreated.isWithin(olderMessage!.dateCreated, minutes: 30)));
-  bool get showAvatar => chat.isGroup;
+  bool get showAvatar => controller.cvController?.chat.isGroup ?? false;
   bool isEditing(int part) => message.isFromMe! && widget.cvController.editing.firstWhereOrNull((e2) => e2.item1.guid == message.guid! && e2.item2.part == part) != null;
 
   List<MessagePart> messageParts = [];
@@ -154,9 +153,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         }
       );
       final response = await http.edit(message.guid!, newEdit, "Edited to: “$newEdit”", partIndex: part);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && controller.cvController != null) {
         final updatedMessage = Message.fromMap(response.data['data']);
-        ah.handleUpdatedMessage(chat, updatedMessage, null);
+        ah.handleUpdatedMessage(controller.cvController!.chat, updatedMessage, null);
       }
       if (ns.isTabletMode(context)) {
         Get.close(1);
@@ -281,14 +280,14 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   child: ReplyBubble(
                                     parentController: getActiveMwc(replyTo!.guid!)!,
                                     part: replyTo!.guid! == message.threadOriginatorGuid ? message.normalizedThreadPart : 0,
-                                    showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS) && !replyTo!.isFromMe!,
+                                    showAvatar: ((controller.cvController?.chat.isGroup ?? false) || ss.settings.alwaysShowAvatars.value || !iOS) && !replyTo!.isFromMe!,
                                     cvController: widget.cvController,
                                   ),
                                 ),
                               ),
                             ),
                           // show sender, if needed
-                          if (chat.isGroup
+                          if ((controller.cvController?.chat.isGroup ?? false)
                               && !message.isFromMe!
                               && showSender
                               && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
@@ -316,7 +315,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 child: ReplyBubble(
                                   parentController: getActiveMwc(replyTo!.guid!)!,
                                   part: replyTo!.guid! == message.threadOriginatorGuid ? message.normalizedThreadPart : 0,
-                                  showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
+                                  showAvatar: ((controller.cvController?.chat.isGroup ?? false) || ss.settings.alwaysShowAvatars.value || !iOS)
                                       && !replyTo!.isFromMe!,
                                   cvController: widget.cvController,
                                 ),
@@ -621,7 +620,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                                             alignment: Alignment.center,
                                                                                             child: Icon(
                                                                                               iOS ? CupertinoIcons.arrow_up : Icons.send_outlined,
-                                                                                              color: !iOS ? context.theme.extension<BubbleText>()!.bubbleText.color : context.theme.colorScheme.bubble(context, chat.isIMessage),
+                                                                                              color: !iOS ? context.theme.extension<BubbleText>()!.bubbleText.color : context.theme.colorScheme.bubble(context, (controller.cvController?.chat.isIMessage ?? true)),
                                                                                               size: iOS ? 18 : 26,
                                                                                             ),
                                                                                           ),
@@ -751,7 +750,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                     Attachment.delete(a.guid!);
                                     a.bytes = await File(a.path).readAsBytes();
                                   }
-                                  await notif.clearFailedToSend(chat.id!);
+                                  if (controller.cvController == null) return;
+                                  await notif.clearFailedToSend(controller.cvController!.chat.id!);
+          
                                   // Re-send
                                   message.id = null;
                                   message.error = 0;
@@ -759,13 +760,13 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   if (message.attachments.isNotEmpty) {
                                     outq.queue(OutgoingItem(
                                       type: QueueType.sendAttachment,
-                                      chatGuid: chat.guid,
+                                      chatGuid: controller.cvController!.chat.guid,
                                       message: message,
                                     ));
                                   } else {
                                     outq.queue(OutgoingItem(
                                       type: QueueType.sendMessage,
-                                      chatGuid: chat.guid,
+                                      chatGuid: controller.cvController!.chat.guid,
                                       message: message,
                                     ));
                                   }
@@ -782,6 +783,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   Message.delete(message.guid!);
                                   // Remove the message from the Bloc
                                   service.removeMessage(message);
+                                  if (controller.cvController == null) return;
+
+                                  Chat chat = controller.cvController!.chat;
                                   await notif.clearFailedToSend(chat.id!);
                                   // Get the "new" latest info
                                   List<Message> latest = Chat.getMessages(chat, limit: 1);
@@ -796,6 +800,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 ),
                                 onPressed: () async {
                                   Navigator.of(context).pop();
+                                  if (controller.cvController == null) return;
+                                  Chat chat = controller.cvController!.chat;
                                   await notif.clearFailedToSend(chat.id!);
                                 },
                               )

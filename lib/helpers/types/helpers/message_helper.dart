@@ -86,7 +86,7 @@ class MessageHelper {
   }
 
   static Future<void> handleNotification(Message message, ChatGuid chatGuid, {bool findExisting = true}) async {
-    final chat = GlobalChatService.getChat(chatGuid)!.chat;
+    final chat = GlobalChatService.getChat(chatGuid)!;
     // if from me
     if (message.isFromMe! || message.handle == null) return;
     // if it is a "kept audio" message

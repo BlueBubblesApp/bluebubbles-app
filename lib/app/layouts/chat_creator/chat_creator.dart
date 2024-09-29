@@ -724,7 +724,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                           addressOnSubmitted();
                           Chat? chat;
                           if (fakeController.value?.chatGuid != null) {
-                            chat = GlobalChatService.getChat(fakeController.value!.chatGuid)?.chat;
+                            chat = GlobalChatService.getChat(fakeController.value!.chatGuid);
                           }
 
                           chat ??= await findExistingChat(checkDeleted: true, update: false);

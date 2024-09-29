@@ -55,7 +55,7 @@ class MessagesService extends GetxController {
 
     // watch for new messages
     if (!_init) {
-      final chat = GlobalChatService.getChat(chatGuid)!.chat;
+      final chat = GlobalChatService.getChat(chatGuid)!;
       if (chat.id != null) {
         final countQuery = (Database.messages.query(Message_.dateDeleted.isNull())
           ..link(Message_.chat, Chat_.id.equals(chat.id!))
@@ -155,7 +155,7 @@ class MessagesService extends GetxController {
     List<Message> _messages = [];
     offset = offset + struct.reactions.length;
     try {
-      final chat = GlobalChatService.getChat(chatGuid)!.chat;
+      final chat = GlobalChatService.getChat(chatGuid)!;
       _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
       if (_messages.isEmpty) {
         // get from server and save
@@ -209,7 +209,7 @@ class MessagesService extends GetxController {
   Future<void> loadSearchChunk(Message around, SearchMethod method) async {
     isFetching = true;
     List<Message> _messages = [];
-    final chat = GlobalChatService.getChat(chatGuid)!.chat;
+    final chat = GlobalChatService.getChat(chatGuid)!;
     if (method == SearchMethod.local) {
       _messages = await Chat.getMessagesAsync(chat, searchAround: around.dateCreated.millisecondsSinceEpoch);
       _messages.add(around);

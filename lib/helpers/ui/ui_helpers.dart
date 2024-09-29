@@ -151,14 +151,14 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Obx(() => Icon(
-                      GlobalChatService.getChat(chatGuid)!.isPinned.value
+                      GlobalChatService.getChat(chatGuid)!.observables.isPinned.value
                           ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline)
                           : (ios ? CupertinoIcons.pin : Icons.star),
                       color: context.theme.colorScheme.properOnSurface,
                     )),
                   ),
                   Obx(() => Text(
-                    GlobalChatService.getChat(chatGuid)!.isPinned.value ? "Unpin" : "Pin",
+                    GlobalChatService.getChat(chatGuid)!.observables.isPinned.value ? "Unpin" : "Pin",
                     style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                   )),
                 ],
@@ -182,14 +182,14 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Obx(() => Icon(
-                      GlobalChatService.getChat(chatGuid)!.muteType.value == "mute"
+                      GlobalChatService.getChat(chatGuid)!.observables.muteType.value == "mute"
                           ? (ios ? CupertinoIcons.bell : Icons.notifications_active)
                           : (ios ? CupertinoIcons.bell_slash : Icons.notifications_off),
                       color: context.theme.colorScheme.properOnSurface,
                     )),
                   ),
                   Obx(() => Text(
-                    GlobalChatService.getChat(chatGuid)!.muteType.value == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                    GlobalChatService.getChat(chatGuid)!.observables.muteType.value == "mute" ? 'Show Alerts' : 'Hide Alerts',
                     style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                   )),
                 ],
@@ -212,13 +212,13 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                 Padding(
                   padding: const EdgeInsets.only(right: 10),
                   child: Obx(() => Icon(
-                    GlobalChatService.getChat(chatGuid)!.isUnread.value
+                    GlobalChatService.getChat(chatGuid)!.observables.isUnread.value
                         ? (ios ? CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                         : (ios ? CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
                     color: context.theme.colorScheme.properOnSurface,
                   )),
                 ),
-                Obx(() => Text(GlobalChatService.getChat(chatGuid)!.isUnread.value ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface))),
+                Obx(() => Text(GlobalChatService.getChat(chatGuid)!.observables.isUnread.value ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface))),
               ],
             ),
           ),
@@ -240,14 +240,14 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Obx(() => Icon(
-                      GlobalChatService.getChat(chatGuid)!.isArchived.value
+                      GlobalChatService.getChat(chatGuid)!.observables.isArchived.value
                           ? (ios ? CupertinoIcons.tray_arrow_up : Icons.unarchive)
                           : (ios ? CupertinoIcons.tray_arrow_down : Icons.archive),
                       color: context.theme.colorScheme.properOnSurface,
                     )),
                   ),
                   Obx(() => Text(
-                    GlobalChatService.getChat(chatGuid)!.isArchived.value ? 'Unarchive' : 'Archive',
+                    GlobalChatService.getChat(chatGuid)!.observables.isArchived.value ? 'Unarchive' : 'Archive',
                     style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                   )),
                 ],
@@ -381,7 +381,7 @@ Future<Uint8List> avatarAsBytes({
   List<Handle>? participantsOverride,
   double quality = 256,
 }) async {
-  final chat = GlobalChatService.getChat(chatGuid)!.chat;
+  final chat = GlobalChatService.getChat(chatGuid)!;
   final participants = participantsOverride ?? chat.participants;
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
@@ -415,7 +415,7 @@ Future<void> paintGroupAvatar({
     theme = Get.context!.theme;
   }
 
-  final chat = GlobalChatService.getChat(chatGuid)!.chat;
+  final chat = GlobalChatService.getChat(chatGuid)!;
   if (chat.customAvatarPath != null && !usingParticipantsOverride) {
     Uint8List? customAvatar;
     try {

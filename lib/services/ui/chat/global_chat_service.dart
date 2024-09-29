@@ -8,16 +8,11 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/network/metadata_helper.dart';
 import 'package:bluebubbles/helpers/types/classes/aliases.dart';
 import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
-import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
-import 'package:bluebubbles/services/backend/java_dart_interop/method_channel_service.dart';
-import 'package:bluebubbles/services/backend/lifecycle/lifecycle_service.dart';
-import 'package:bluebubbles/services/backend/notifications/notifications_service.dart';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
-import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:bluebubbles/services/ui/message/messages_service.dart';
 import 'package:bluebubbles/services/ui/navigator/navigator_service.dart';
-import 'package:bluebubbles/services/ui/reactivity/reactive_chat.dart';
+import 'package:bluebubbles/services/ui/reactivity/observable_chat.dart';
 import 'package:bluebubbles/services/ui/reactivity/reactive_handle.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -48,7 +43,7 @@ class IGlobalChatService extends GetxService {
 
   /// A map of all reactive chats
   /// You can access the original Chat within the ReactiveChat object
-  final Map<String, ReactiveChat> _reactiveChats = <String, ReactiveChat>{}.obs;
+  final Map<String, Chat> _chatMap = <String, Chat>{}.obs;
 
   /// A map of chat GUIDs to their participants
   final Map<String, RxList<String>> _chatParticipants = <String, RxList<String>>{}.obs;
@@ -69,14 +64,14 @@ class IGlobalChatService extends GetxService {
 
   RxnString get activeGuid => _activeGuid;
 
-  ReactiveChat? get activeChat => _activeGuid.value == null ? null : _reactiveChats[_activeGuid.value!];
+  ObservableChat? get activeChat => _activeGuid.value == null ? null : _chatMap[_activeGuid.value!]?.observables;
 
   /// Getter for the unread count.
   /// Calculates the unread count and upates the reactive variable if the count has changed.
   RxInt get unreadCount {
     int count = 0;
-    for (ReactiveChat chat in _reactiveChats.values) {
-      if (chat.isUnread.value) {
+    for (Chat chat in _chatMap.values) {
+      if (chat.hasUnreadMessage) {
         count++;
       }
     }
@@ -96,8 +91,8 @@ class IGlobalChatService extends GetxService {
   /// Returns null if the chat does not exist.
   /// 
   /// You will be able to access the original Chat object within the ReactiveChat object.
-  ReactiveChat? getChat(ChatGuid chatGuid) {
-    return _reactiveChats[chatGuid];
+  Chat? getChat(ChatGuid chatGuid) {
+    return _chatMap[chatGuid];
   }
 
   List<Handle> getChatParticipants(ChatGuid chatGuid) {
@@ -114,8 +109,8 @@ class IGlobalChatService extends GetxService {
   }
 
   /// Resyncs all of the chats directly from the database.
-  void reloadChats() {
-    final chats = Database.chats.getAll();
+  Future<void> reloadChats() async {
+    final chats = await Database.chats.getAllAsync();
     _syncChats(chats);
   }
 
@@ -128,8 +123,8 @@ class IGlobalChatService extends GetxService {
 
     for (Chat chat in chats) {
       // Save the chat globally
-      if (!_reactiveChats.containsKey(chat.guid)) {
-        _reactiveChats[chat.guid] = ReactiveChat.fromChat(chat);
+      if (!_chatMap.containsKey(chat.guid)) {
+        _chatMap[chat.guid] = chat;
 
         // Load the chat's last message
         chat.latestMessage;
@@ -152,14 +147,14 @@ class IGlobalChatService extends GetxService {
       }
 
       // Detect changes and make updates
-      ReactiveChat rChat = _reactiveChats[chat.guid]!;
-      _evaluateTitleInfo(chat, rChat);
-      _evaluateUnreadInfo(chat, rChat);
-      _evaluateMuteInfo(chat, rChat);
-      _evaluateDeletedInfo(chat, rChat);
+      Chat existing = _chatMap[chat.guid]!;
+      _evaluateTitleInfo(chat, existing);
+      _evaluateUnreadInfo(chat, existing);
+      _evaluateMuteInfo(chat, existing);
+      _evaluateDeletedInfo(chat, existing);
     }
 
-    int newUnread = this.chats.where((chat) => chat.hasUnreadMessage ?? false).length;
+    int newUnread = this.chats.where((chat) => chat.hasUnreadMessage).length;
     if (newUnread != unreadCount.value) {
       unreadCount.value = newUnread;
     }
@@ -172,8 +167,8 @@ class IGlobalChatService extends GetxService {
   /// Whenever a change is detected, the chat list will be evaluated and updated accordingly.
   void watchForChatUpdates() {
     final query = Database.chats.query().watch(triggerImmediately: false);
-    query.listen((event) {
-      final chats = event.find();
+    query.listen((event) async {
+      final chats = await event.findAsync();
       _syncAllChats(chats);
     });
   }
@@ -217,7 +212,7 @@ class IGlobalChatService extends GetxService {
   /// If [clearNotificationsIfFromMe] is true, the chat's notifications will be cleared
   /// if the message is from the yourself
   Future<Chat?> addMessage(ChatGuid chatGuid, Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true, bool clearNotificationsIfFromMe = true}) async {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat == null) return null;
   
     // If this is a message preview and we don't already have metadata for this, get it
@@ -231,13 +226,13 @@ class IGlobalChatService extends GetxService {
       });
     }
 
-    if (chat.latestMessage.value == null) {
+    if (chat.latestMessage == null) {
       chat.setLatestMessage(message);
-    } else if (message.dateCreated.isAfter(chat.latestMessage.value!.dateCreated)) {
+    } else if (message.dateCreated.isAfter(chat.latestMessage!.dateCreated)) {
       chat.setLatestMessage(message);
     }
 
-    return await chat.chat.addMessage(message, changeUnreadStatus: changeUnreadStatus, checkForMessageText: checkForMessageText, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
+    return await chat.addMessage(message, changeUnreadStatus: changeUnreadStatus, checkForMessageText: checkForMessageText, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
   }
 
   /// Toggles the unread status of a chat by the [chatGuid].
@@ -245,112 +240,64 @@ class IGlobalChatService extends GetxService {
   /// and the UI will show that the chat is unread. Passing false
   /// will mark the chat as read, and the UI will show that the chat is read.
   void toggleReadStatus(ChatGuid chatGuid, {bool? isUnread, bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat != null) {
-      if (isUnread == null) {
-        chat.setIsUnread(!chat.isUnread.value);
-      } else if (chat.isUnread.value != isUnread) {
-        chat.setIsUnread(isUnread);
-      }
-
-      bool currentlyUnread = chat.isUnread.value;
-      if (kIsDesktop && !currentlyUnread) {
-        notif.clearDesktopNotificationsForChat(chatGuid);
-      }
-
-      try {
-        if (clearLocalNotifications && !currentlyUnread && !ls.isBubble) {
-          mcs.invokeMethod(
-            "delete-notification",
-            {
-              "notification_id": chat.chat.id,
-              "tag": NotificationsService.NEW_MESSAGE_TAG
-            }
-          );
-        }
-
-        if (privateMark && ss.settings.enablePrivateAPI.value && (chat.chat.autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
-          if (!currentlyUnread) {
-            http.markChatRead(chatGuid);
-          } else if (currentlyUnread) {
-            http.markChatUnread(chatGuid);
-          }
-        }
-      } catch (_) {}
-
-      chat.chat.toggleHasUnread(
-        chat.isUnread.value,
-        force: force, 
-        clearLocalNotifications: clearLocalNotifications,
-        privateMark: privateMark
-      );
+      chat.toggleUnreadStatus(isUnread, force: force, clearLocalNotifications: clearLocalNotifications, privateMark: privateMark);
     }
   }
 
   bool isChatUnread(ChatGuid chatGuid) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat == null) return false;
-    return chat.isUnread.value;
+    return chat.hasUnreadMessage;
   }
 
-  void toggleMuteStatus(ChatGuid chatGuid, {String? muteType, String? muteArgs, bool force = false}) {
-    final chat = _reactiveChats[chatGuid];
+  void toggleMuteStatus(ChatGuid chatGuid, {String? muteType, String? muteArgs}) {
+    final chat = _chatMap[chatGuid];
     if (chat != null) {
-      if (muteType == null && !force) {
-        chat.setMuteType(chat.muteType.value == "mute" ? "" : "mute", muteArgs: muteArgs);
-      } else if (chat.muteType.value != muteType || force) {
-        chat.setMuteType(muteType, muteArgs: muteArgs);
-      }
+      chat.toggleMuteType(muteType, muteArgs: muteArgs,);
     }
   }
 
-  void togglePinStatus(ChatGuid chatGuid, {bool? isPinned}) {
-    final chat = _reactiveChats[chatGuid];
+  void togglePinStatus(ChatGuid chatGuid, {bool? isPinned, int? pinIndex}) {
+    final chat = _chatMap[chatGuid];
     if (chat != null) {
-      if (isPinned == null) {
-        chat.setPinned(!chat.isPinned.value);
-      } else if (chat.isPinned.value != isPinned) {
-        chat.setPinned(isPinned);
-      }
+      chat.toggleIsPinned(isPinned, pinIndex: pinIndex);
     }
   }
 
   void toggleArchivedStatus(ChatGuid chatGuid, {bool? isArchived}) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat != null) {
-      if (isArchived == null) {
-        chat.setIsArchived(!chat.isArchived.value);
-      } else if (chat.isArchived.value != isArchived) {
-        chat.setIsArchived(isArchived);
-      }
+      chat.toggleIsArchived(isArchived);
     }
   }
 
   bool isChatMuted(ChatGuid chatGuid) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat == null) return false;
-    return chat.muteType.value == "mute";
+    return chat.muteType == "mute";
   }
 
   void markAllAsRead() {
-    for (ReactiveChat chat in _reactiveChats.values) {
-      if (chat.isUnread.value) {
-        toggleReadStatus(chat.chat.guid, isUnread: false);
+    for (Chat chat in _chatMap.values) {
+      if (chat.hasUnreadMessage) {
+        toggleReadStatus(chat.guid, isUnread: false);
       }
     }
   }
 
   removeChat(ChatGuid chatGuid, {bool softDelete = true, bool hardDelete = false}) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat != null) {
-      _reactiveChats.remove(chatGuid);
+      _chatMap.remove(chatGuid);
       _chatParticipants.remove(chatGuid);
       chats.removeWhere((element) => element.guid == chatGuid);
 
       if (hardDelete) {
-        Chat.deleteChat(chat.chat);
+        Chat.deleteChat(chat);
       } else if (softDelete) {
-        Chat.softDelete(chat.chat); 
+        Chat.softDelete(chat); 
       }
     }
   }
@@ -358,15 +305,15 @@ class IGlobalChatService extends GetxService {
   /// Sorts the chat by the Chat.sort static method,
   /// which compares two chats, returning 1, 0, or -1.
   sortChat(ChatGuid chatGuid) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat == null) return;
 
-    final index = chats.indexWhere((element) => [0, 1].contains(Chat.sort(element, chat.chat)));
+    final index = chats.indexWhere((element) => [0, 1].contains(Chat.sort(element, chat)));
     if (index != -1) {
-      chats.remove(chat.chat);
-      chats.insert(index, chat.chat);
+      chats.remove(chat);
+      chats.insert(index, chat);
     } else {
-      chats.add(chat.chat);
+      chats.add(chat);
     }
   }
 
@@ -376,21 +323,21 @@ class IGlobalChatService extends GetxService {
 
   isGroupChat(String? chatGuid) {
     if (chatGuid == null) return false;
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat == null) return false;
-    return chat.chat.isGroup;
+    return chat.isGroup;
   }
 
   isChatPinned(ChatGuid chatGuid) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat == null) return false;
-    return chat.isPinned.value;
+    return chat.isPinned;
   }
 
   updateLatestMessage(ChatGuid chatGuid) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat != null) {
-      Message? latestMessage = Chat.getMessages(chat.chat, limit: 1, getDetails: true).firstOrNull;
+      Message? latestMessage = Chat.getMessages(chat, limit: 1, getDetails: true).firstOrNull;
       if (latestMessage != null) {
         chat.setLatestMessage(latestMessage);
       }
@@ -433,12 +380,12 @@ class IGlobalChatService extends GetxService {
   }
 
   moveChat(ChatGuid chatGuid, int newIndex) {
-    final chat = _reactiveChats[chatGuid];
+    final chat = _chatMap[chatGuid];
     if (chat != null) {
       final index = chats.indexWhere((element) => element.guid == chatGuid);
       if (index != -1) {
         chats.removeAt(index);
-        chats.insert(newIndex, chat.chat);
+        chats.insert(newIndex, chat);
       }
     }
   }
@@ -521,8 +468,8 @@ class IGlobalChatService extends GetxService {
   }
 
   clearHighlightedChats() {
-    for (ReactiveChat chat in _reactiveChats.values) {
-      chat.isHighlighted.value = false;
+    for (Chat chat in _chatMap.values) {
+      chat.observables.isHighlighted.value = false;
     }
   }
 
@@ -531,9 +478,9 @@ class IGlobalChatService extends GetxService {
   }
 
   toggleHighlightChat(ChatGuid chatGuid, bool highlight) {
-    final chat = _reactiveChats[chatGuid];
-    if (chat != null && chat.isHighlighted.value != highlight) {
-      chat.isHighlighted.value = highlight;
+    final chat = _chatMap[chatGuid];
+    if (chat != null && chat.observables.isHighlighted.value != highlight) {
+      chat.observables.isHighlighted.value = highlight;
     }
   }
 
@@ -546,43 +493,43 @@ class IGlobalChatService extends GetxService {
     }).toList();
   }
 
-  /// Evaluates to see if a reactive [rChat] needs to be updated with the [newChat] unread status.
-  void _evaluateUnreadInfo(Chat newChat, ReactiveChat rChat) {    
+  /// Evaluates to see if a reactive [existingChat] needs to be updated with the [newChat] unread status.
+  void _evaluateUnreadInfo(Chat newChat, Chat existingChat) {    
     // Set the default value
-    if (rChat.isUnread.value != newChat.hasUnreadMessage && newChat.hasUnreadMessage != null) {
-      Logger.debug("Updating Chat (${rChat.chat.guid}) Unread Status from ${rChat.isUnread} to ${newChat.hasUnreadMessage}");
-      rChat.setIsUnread(newChat.hasUnreadMessage ?? false);
+    if (existingChat.hasUnreadMessage != newChat.hasUnreadMessage && newChat.hasUnreadMessage) {
+      Logger.debug("Updating Chat (${existingChat.guid}) Unread Status from ${existingChat.hasUnreadMessage} to ${newChat.hasUnreadMessage}");
+      existingChat.toggleUnreadStatus(newChat.hasUnreadMessage);
     }
   }
 
-  /// Evaluates to see if a reactive [rChat] needs to be updated with the [newChat] mute type.
-  void _evaluateMuteInfo(Chat newChat, ReactiveChat rChat) {
-    if (rChat.muteType.value != newChat.muteType && newChat.muteType != null) {
-      Logger.debug("Updating Chat (${newChat.guid}) Mute Type from ${rChat.muteType.value} to ${newChat.muteType}");
-      rChat.setMuteType(newChat.muteType);
+  /// Evaluates to see if a reactive [existingChat] needs to be updated with the [newChat] mute type.
+  void _evaluateMuteInfo(Chat newChat, Chat existingChat) {
+    if (existingChat.muteType != newChat.muteType && newChat.muteType != null) {
+      Logger.debug("Updating Chat (${newChat.guid}) Mute Type from ${existingChat.muteType} to ${newChat.muteType}");
+      existingChat.toggleMuteType(newChat.muteType);
     }
   }
 
-  /// Evaluates to see if a reactive [rChat] needs to be updated with the [newChat] title.
-  void _evaluateTitleInfo(Chat newChat, ReactiveChat rChat) {
+  /// Evaluates to see if a reactive [existingChat] needs to be updated with the [newChat] title.
+  void _evaluateTitleInfo(Chat newChat, Chat existingChat) {
     final newTitle = newChat.getTitle();
-    if (rChat.title.value != newTitle) {
-      Logger.debug("Updating Chat (${newChat.guid}) Title from ${rChat.title.value} to ${newChat.getTitle()}");
-      rChat.title.value = newTitle;
+    if (existingChat.title != newTitle) {
+      Logger.debug("Updating Chat (${newChat.guid}) Title from ${existingChat.title} to ${newChat.getTitle()}");
+      existingChat.title = newTitle;
     }
   }
 
-  void _evaluateDeletedInfo(Chat newChat, ReactiveChat rChat) {
+  void _evaluateDeletedInfo(Chat newChat, Chat existingChat) {
     final isDeleted = (newChat.dateDeleted != null);
-    if (rChat.isDeleted.value != isDeleted) {
-      Logger.debug("Updating Chat (${newChat.guid}) Deleted Status from ${rChat.isDeleted.value} to $isDeleted");
-      rChat.isDeleted.value = isDeleted;
+    if ((existingChat.dateDeleted != null) != isDeleted) {
+      Logger.debug("Updating Chat (${newChat.guid}) Deleted Status from ${existingChat.dateDeleted != null} to $isDeleted");
+      existingChat.toggleIsDeleted(newChat.dateDeleted != null);
     }
   }
 
   void dispose() {
     _syncAllDebounce?.cancel();
-    _reactiveChats.clear();
+    _chatMap.clear();
     _chatParticipants.clear();
     _reactiveHandles.clear();
     _unreadCount.value = 0;

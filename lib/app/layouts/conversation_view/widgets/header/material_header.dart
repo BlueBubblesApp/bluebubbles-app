@@ -19,12 +19,10 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
 
   final ConversationViewController controller;
 
-  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
-
   @override
   Widget build(BuildContext context) {
     final Rx<Color> _backgroundColor = context.theme.colorScheme.background.withOpacity((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled) ? 0.4 : 1).obs;
-
+    Chat chat = controller.chat;
     return Stack(
           children: [Obx(() => AppBar(
       backgroundColor: _backgroundColor.value,
@@ -122,7 +120,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 );
               } else if (value == 1) {
-                chat.toggleArchived(!chat.isArchived!);
+                chat.toggleIsArchived(null);
                 if (Get.isSnackbarOpen) {
                   Get.closeAllSnackbars();
                 }
@@ -182,10 +180,10 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                 if (!ls.isBubble)
                   PopupMenuItem(
                     value: 1,
-                    child: Text(
-                      chat.isArchived! ? 'Unarchive' : 'Archive',
+                    child: Obx(() => Text(
+                      chat.isArchived ? 'Unarchive' : 'Archive',
                       style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                    ),
+                    )),
                   ),
                 if (!ls.isBubble)
                   PopupMenuItem(
@@ -214,13 +212,13 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
     )),
       Positioned(
         child: Obx(() {
-          final rChat = GlobalChatService.getChat(controller.chatGuid)!;
+          final sendProgress = controller.chat.observables.sendProgress.value;
           return TweenAnimationBuilder<double>(
-            duration: rChat.sendProgress.value == 0 ? Duration.zero : rChat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
-            curve: rChat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+            duration: sendProgress == 0 ? Duration.zero : sendProgress == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
+            curve: sendProgress == 1 ? Curves.easeInOut : Curves.easeOutExpo,
             tween: Tween<double>(
                 begin: 0,
-                end: rChat.sendProgress.value,
+                end: sendProgress,
             ),
             builder: (context, value, _) =>
                 AnimatedOpacity(
@@ -254,8 +252,6 @@ class _ChatIconAndTitle extends CustomStateful<ConversationViewController> {
 
 class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, ConversationViewController> {
 
-  Chat get chat => GlobalChatService.getChat(controller.chatGuid)!.chat;
-
   @override
   void initState() {
     super.initState();
@@ -268,6 +264,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
   @override
   Widget build(BuildContext context) {
     final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+    final chat = controller.chat;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -283,7 +280,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
         ),
         Expanded(
           child: Obx(() {
-            String title = controller.reactiveChat.title.value ?? "";
+            String title = chat.observables.title.value ?? "";
             if (controller.inSelectMode.value) {
               title = "${controller.selected.length} selected";
             } else if (hideInfo) {

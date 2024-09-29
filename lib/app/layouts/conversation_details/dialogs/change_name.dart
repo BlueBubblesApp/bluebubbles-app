@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 void showChangeName(ChatGuid chatGuid, String method, BuildContext context) {
-  final chat = GlobalChatService.getChat(chatGuid)!.chat;
+  final chat = GlobalChatService.getChat(chatGuid)!;
   final controller = TextEditingController(text: chat.displayName);
   final node = FocusNode();
   showDialog(

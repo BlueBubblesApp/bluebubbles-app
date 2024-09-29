@@ -48,7 +48,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
     forceDelete = false;
 
     if (kIsDesktop || kIsWeb) {
-      controller.shouldHighlight.value = GlobalChatService.activeGuid.value == controller.chatGuid;
+      controller.shouldHighlight.value = GlobalChatService.isChatActive(controller.chatGuid);
     }
 
     eventDispatcher.stream.listen((event) {
@@ -183,7 +183,7 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
+      final unread = controller.chat.observables.isUnread.value;
       return unread ? Positioned(
         left: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
         top: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
@@ -224,8 +224,8 @@ class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileControl
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final muteType = GlobalChatService.getChat(controller.chatGuid)?.muteType.value ?? '';
-      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
+      final muteType = controller.chat.observables.muteType.value ?? '';
+      final unread = controller.chat.observables.isUnread.value;
 
       return muteType == "mute"
           ? Positioned(
@@ -281,9 +281,9 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
           color: controller.shouldHighlight.value
               ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
               : context.theme.colorScheme.outline,
-          fontSizeFactor: controller.chat.isPinned! ? 0.95 : 1,
+          fontSizeFactor: controller.chat.isPinned ? 0.95 : 1,
         );
-        String _title = controller.reactiveChat.title.value ?? "Unknown";
+        String _title = controller.chat.observables.title.value ?? "Unknown";
         if (hideInfo) {
           _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
         }
@@ -337,7 +337,7 @@ class PinnedIndicators extends StatelessWidget {
         );
       }
 
-      final showMarker = controller.reactiveChat.latestMessage.value ?? Indicator.NONE;
+      final showMarker = controller.chat.observables.latestMessage.value ?? Indicator.NONE;
       if (ss.settings.statusIndicatorsOnChats.value && !controller.chat.isGroup && showMarker != Indicator.NONE) {
         return Positioned(
           left: sqrt(width) - width * 0.05 * sqrt(2),
@@ -394,15 +394,15 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
-      final latestMsg = controller.reactiveChat.latestMessage.value;
+      final unread = controller.chat.observables.isUnread.value;
+      final latestMsg = controller.chat.observables.latestMessage.value;
       final associatedMsg = latestMsg?.associatedMessageGuid;
-      return unread && !isNullOrEmpty(associatedMsg) && !(latestMsg?.isFromMe ?? false)
+      return unread && !isNullOrEmpty(associatedMsg) && latestMsg != null && !(latestMsg.isFromMe ?? false)
           ? Positioned(
               top: -sqrt(widget.width / 2) + widget.width * 0.05,
               right: -sqrt(widget.width / 2) + widget.width * 0.025,
               child: ReactionWidget(
-                reaction: controller.reactiveChat.latestMessage.value!,
+                reaction: latestMsg,
                 message: null,
               ),
             )

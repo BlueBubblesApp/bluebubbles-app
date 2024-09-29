@@ -27,9 +27,8 @@ class PinnedTileTextBubble extends CustomStateful<ConversationTileController> {
 
 class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, ConversationTileController> {
   final bool leftSide = Random().nextBool();
-  Chat get chat => controller.reactiveChat.chat;
   double get size => widget.size;
-  bool get showTail => !chat.isGroup;
+  bool get showTail => !controller.chat.isGroup;
 
   @override
   void initState() {
@@ -43,8 +42,8 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
 
   List<Color> getBubbleColors(Message? lastMessage) {
     List<Color> bubbleColors = [
-      context.theme.colorScheme.bubble(context, chat.isIMessage),
-      context.theme.colorScheme.bubble(context, chat.isIMessage)
+      context.theme.colorScheme.bubble(context, controller.chat.isIMessage),
+      context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
     ];
     if (lastMessage == null) return bubbleColors;
     if (!ss.settings.colorfulAvatars.value && ss.settings.colorfulBubbles.value && !(lastMessage.isFromMe ?? false)) {
@@ -64,10 +63,10 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   Widget build(BuildContext context) {
     return Obx(() {
       final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
-      final latestMessage = controller.reactiveChat.latestMessage.value;
+      final latestMessage = controller.chat.observables.latestMessage.value;
       String _subtitle = (hideInfo ? latestMessage?.obfuscatedText : latestMessage?.notificationText) ?? "";
 
-      final unread = GlobalChatService.getChat(controller.chatGuid)?.isUnread.value ?? false;
+      final unread = controller.chat.observables.isUnread.value;
       if (!unread || latestMessage?.associatedMessageGuid != null || latestMessage!.isFromMe! || isNullOrEmpty(_subtitle)) {
         return const SizedBox.shrink();
       }
@@ -129,7 +128,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
                         style: context.theme.textTheme.bodySmall!.copyWith(
                             fontSize: (size / 10).clamp(context.theme.textTheme.bodySmall!.fontSize!, double.infinity),
                             color: context.theme.colorScheme
-                                .onBubble(context, chat.isIMessage)
+                                .onBubble(context, controller.chat.isIMessage)
                                 .withOpacity(ss.settings.colorfulBubbles.value ? 1 : 0.85)),
                       ),
                     ),

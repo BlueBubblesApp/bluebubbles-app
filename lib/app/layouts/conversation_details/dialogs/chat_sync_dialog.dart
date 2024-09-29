@@ -38,7 +38,7 @@ class _ChatSyncDialogState extends OptimizedState<ChatSyncDialog> {
   }
 
   void syncMessages() async {
-    final chat = GlobalChatService.getChat(widget.chatGuid)!.chat;
+    final chat = GlobalChatService.getChat(widget.chatGuid)!;
 
     int offset = 0;
     if (widget.withOffset) {

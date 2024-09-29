@@ -206,7 +206,7 @@ class MethodChannelService extends GetxService {
         if (recentReplyGuid == data["messageGuid"] && recentReplyText == data["text"]) return Future.value(false);
         await ss.prefs.setString("recent-reply", "${data["messageGuid"]}/${data["text"]}");
         Logger.info("Updated recent reply cache to ${ss.prefs.getString("recent-reply")}");
-        Chat? chat = GlobalChatService.getChat(data["chatGuid"])?.chat;
+        Chat? chat = GlobalChatService.getChat(data["chatGuid"]);
         if (chat == null) {
           return Future.value(false);
         } else {
@@ -238,7 +238,7 @@ class MethodChannelService extends GetxService {
             Chat? chat = Chat.findOne(guid: data["chatGuid"]);
             if (chat != null) {
               // Don't clear local notifications because tapping Mark as Read should clear the notification automatically
-              chat.toggleHasUnread(false, clearLocalNotifications: false);
+              chat.toggleUnreadStatus(false, clearLocalNotifications: false);
               return Future.value(true);
             }
           }
@@ -260,7 +260,7 @@ class MethodChannelService extends GetxService {
             if (chat == null || (payload.data["read"] != true && payload.data["read"] != false)) {
               return Future.value(false);
             } else {
-              chat.toggleHasUnread(!payload.data["read"]!, privateMark: false);
+              chat.toggleUnreadStatus(!payload.data["read"]!, privateMark: false);
               return Future.value(true);
             }
           } else {

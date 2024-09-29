@@ -40,7 +40,11 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   bool showMoreParticipants = false;
   final RxList<String> selected = <String>[].obs;
 
-  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!.chat;
+  Chat? _chat;
+  Chat get chat {
+    _chat ??= GlobalChatService.getChat(widget.chatGuid)!;
+    return _chat!;
+  }
 
   bool get shouldShowMore => chat.participants.length > 5;
   List<Handle> get clippedParticipants {

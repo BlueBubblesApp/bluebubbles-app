@@ -271,7 +271,7 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
                                 return;
                               case 5:
                                 Color selectedColor = context.theme.colorScheme.bubble(
-                                  context, GlobalChatService.getChat(controller.chatGuid)!.chat.isIMessage);
+                                  context, widget.controller.chat.isIMessage);
                                 final result = (await ColorPicker(
                                   color: selectedColor,
                                   onColorChanged: (Color newColor) {

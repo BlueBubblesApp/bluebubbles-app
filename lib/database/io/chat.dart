@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:async_task/async_task.dart';
+import 'package:bluebubbles/services/ui/reactivity/observable_chat.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
@@ -280,11 +281,11 @@ class Chat {
   @Unique()
   String guid;
   String? chatIdentifier;
-  bool? isArchived;
+  bool isArchived;
   String? muteType;
   String? muteArgs;
-  bool? isPinned;
-  bool? hasUnreadMessage;
+  bool isPinned;
+  bool hasUnreadMessage;
   String? title;
   String get properTitle {
     if (ss.settings.redactedMode.value && ss.settings.hideContactInfo.value) {
@@ -295,17 +296,26 @@ class Chat {
   }
   String? displayName;
   List<Handle> _participants = [];
+
+  @Transient()
   List<Handle> get participants {
     if (_participants.isEmpty) {
       getParticipants();
     }
     return _participants;
   }
-  bool? autoSendReadReceipts;
+
+  bool? _autoSendReadReceipts;
+  bool? get autoSendReadReceipts => _autoSendReadReceipts ?? (ss.settings.privateMarkChatAsRead.value && ss.settings.enablePrivateAPI.value);
+  set autoSendReadReceipts(bool? value) => _autoSendReadReceipts = value;
+
   bool? autoSendTypingIndicators;
   String? textFieldText;
   List<String> textFieldAttachments = [];
+
   Message? _latestMessage;
+
+  @Transient()
   Message? get latestMessage {
     if (_latestMessage != null) return _latestMessage!;
     _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull;
@@ -335,6 +345,17 @@ class Chat {
   @Backlink('chat')
   final messages = ToMany<Message>();
 
+  ObservableChat? _observables;
+
+  @Transient()
+  ObservableChat get observables {
+    _observables ??= ObservableChat.fromChat(this);
+    return _observables!;
+  }
+
+  @Transient()
+  bool isObscured = false;
+
   Chat({
     this.id,
     required this.guid,
@@ -349,7 +370,7 @@ class Chat {
     int? pinnedIndex,
     List<Handle>? participants,
     Message? latestMessage,
-    this.autoSendReadReceipts,
+    bool? autoSendReadReceipts,
     this.autoSendTypingIndicators,
     this.textFieldText,
     this.textFieldAttachments = const [],
@@ -364,6 +385,7 @@ class Chat {
     if (textFieldAttachments.isEmpty) textFieldAttachments = [];
     _participants = participants ?? [];
     _latestMessage = latestMessage;
+    _autoSendReadReceipts = autoSendReadReceipts;
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
@@ -390,6 +412,183 @@ class Chat {
       lockChatIcon: json["lockChatIcon"] ?? false,
       lastReadMessageGuid: json["lastReadMessageGuid"],
     );
+  }
+
+  toggleMuteType(String? muteType, {String? muteArgs}) {
+    if (id == null) return this;
+    final newMuteType = muteType ?? (this.muteType == "mute" ? null : "mute");
+    if (newMuteType == this.muteType) return;
+
+    this.muteType = muteType;
+    this.muteArgs = muteArgs;
+    observables.muteType.value = muteType;
+    observables.muteArgs.value = muteArgs;
+  }
+
+  toggleUnreadStatus(bool? isUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
+    if (id == null) return this;
+
+    // If no value is passed, they just want to change it to the opposite
+    bool hasUnread = isUnread ?? !hasUnreadMessage;
+    observables.isUnread.value = hasUnread;
+    
+    if (kIsDesktop && !hasUnread) {
+      notif.clearDesktopNotificationsForChat(guid);
+    }
+
+    if (hasUnreadMessage == hasUnread && !force) return this;
+
+    final bool isChatActive = GlobalChatService.isChatActive(guid);
+    if (!isChatActive || !hasUnread || force) {
+      hasUnreadMessage = hasUnread;
+      observables.isUnread.value = hasUnread;
+      save(updateHasUnreadMessage: true);
+    }
+
+    if (GlobalChatService.isChatActive(guid) && hasUnread && !force) {
+      hasUnread = false;
+      clearLocalNotifications = false;
+    }
+
+    try {
+      if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
+        mcs.invokeMethod(
+          "delete-notification",
+          {
+            "notification_id": id,
+            "tag": NotificationsService.NEW_MESSAGE_TAG
+          }
+        );
+      }
+
+      if (privateMark && (autoSendReadReceipts ?? false)) {
+        if (!hasUnread) {
+          http.markChatRead(guid);
+        } else if (hasUnread) {
+          http.markChatUnread(guid);
+        }
+      }
+    } catch (_) {}
+  }
+
+  toggleIsArchived(bool? isArchived) {
+    if (id == null) return this;
+
+    final newIsArchived = isArchived ?? !this.isArchived;
+    if (newIsArchived == this.isArchived) return;
+
+    this.isArchived = newIsArchived;
+    observables.isArchived.value = newIsArchived;
+
+    if (newIsArchived) {
+      isPinned = false;
+      pinIndex = null;
+      
+      observables.isPinned.value = false;
+      observables.pinIndex.value = null;
+    }
+
+    save(updateIsArchived: true, updateIsPinned: newIsArchived, updatePinIndex: newIsArchived);
+  }
+
+  toggleIsDeleted(bool? isDeleted) {
+    if (id == null) return this;
+
+    final newIsDeleted = dateDeleted == null || isDeleted == true;
+    if (newIsDeleted && dateDeleted != null) return;
+
+    dateDeleted = newIsDeleted ? DateTime.now().toUtc() : null;
+    observables.isDeleted.value = newIsDeleted;
+
+    if (newIsDeleted) {
+      isPinned = false;
+      pinIndex = null;
+      
+      observables.isPinned.value = false;
+      observables.pinIndex.value = null;
+    }
+
+    save(updateDateDeleted: true, updateIsPinned: newIsDeleted, updatePinIndex: newIsDeleted);
+  }
+
+  toggleAutoRead(bool? autoRead) {
+    if (id == null) return this;
+
+    bool newAutoRead = autoRead ?? !(autoSendReadReceipts ?? false);
+    if (newAutoRead == autoSendReadReceipts) return;
+
+    autoSendReadReceipts = newAutoRead;
+    observables.autoSendReadReceipts.value = newAutoRead;
+    save(updateAutoSendReadReceipts: true);
+  }
+
+  toggleIsPinned(bool? isPinned, {int? pinIndex}) {
+    if (id == null) return this;
+
+    final newIsPinned = isPinned ?? !this.isPinned;
+    if (newIsPinned == this.isPinned) return;
+
+    this.isPinned = newIsPinned;
+    this.pinIndex = pinIndex;
+    observables.isPinned.value = newIsPinned;
+    observables.pinIndex.value = pinIndex;
+
+    // Unarchive or undelete the chat if it's pinned
+    if (newIsPinned) {
+      if (isArchived) {
+        isArchived = false;
+        observables.isArchived.value = false;
+      }
+
+      if (dateDeleted != null) {
+        dateDeleted = null;
+        observables.isDeleted.value = false;
+      }
+    }
+
+    save(updateIsPinned: true, updatePinIndex: true, updateIsArchived: newIsPinned, updateDateDeleted: newIsPinned);
+  }
+
+  setPinIndex(int? index) {
+    if (id == null) return this;
+
+    pinIndex = index;
+    observables.pinIndex.value = index;
+    save(updatePinIndex: true);
+  }
+
+  setCustomAvatar(String? path) {
+    if (id == null) return this;
+
+    customAvatarPath = path;
+    observables.customAvatarPath.value = path;
+    save(updateCustomAvatarPath: true);
+  }
+
+  setParticipants(List<Handle> value) {
+    _participants = value;
+    _participants.sort((a, b) {
+      bool avatarA = a.contact?.avatar?.isNotEmpty ?? false;
+      bool avatarB = b.contact?.avatar?.isNotEmpty ?? false;
+      if (!avatarA && avatarB) return 1;
+      if (avatarA && !avatarB) return -1;
+      return 0;
+    });
+
+    observables.setParticipants(value);
+  }
+
+  setLatestMessage(Message msg, {bool force = false}) {
+    if (id == null) return;
+
+    // Don't overwrite the latest message with an older one
+    if (msg.dateCreated.isBefore(latestMessage?.dateCreated ?? DateTime(0)) && !force) return;
+
+    latestMessage = msg;
+    dbOnlyLatestMessageDate = msg.dateCreated;
+    observables.latestMessage.value = msg;
+    save(updateLastReadMessageGuid: true);
+    GlobalChatService.sortChat(guid);
   }
 
   /// Save a chat to the DB
@@ -435,7 +634,7 @@ class Chat {
         hasUnreadMessage = existing?.hasUnreadMessage ?? hasUnreadMessage;
       }
       if (!updateAutoSendReadReceipts) {
-        autoSendReadReceipts = existing?.autoSendReadReceipts;
+        autoSendReadReceipts = existing?.autoSendReadReceipts ?? false;
       }
       if (!updateAutoSendTypingIndicators) {
         autoSendTypingIndicators = existing?.autoSendTypingIndicators;
@@ -626,43 +825,6 @@ class Chat {
     });
   }
 
-  Chat toggleHasUnread(bool hasUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
-    if (kIsDesktop && !hasUnread) {
-      notif.clearDesktopNotificationsForChat(guid);
-    }
-
-    if (hasUnreadMessage == hasUnread && !force) return this;
-    if (!GlobalChatService.isChatActive(guid) || !hasUnread || force) {
-      hasUnreadMessage = hasUnread;
-      save(updateHasUnreadMessage: true);
-    }
-    if (GlobalChatService.isChatActive(guid) && hasUnread && !force) {
-      hasUnread = false;
-      clearLocalNotifications = false;
-    }
-
-    try {
-      if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
-        mcs.invokeMethod(
-          "delete-notification",
-          {
-            "notification_id": id,
-            "tag": NotificationsService.NEW_MESSAGE_TAG
-          }
-        );
-      }
-      if (privateMark && ss.settings.enablePrivateAPI.value && (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value)) {
-        if (!hasUnread) {
-          http.markChatRead(guid);
-        } else if (hasUnread) {
-          http.markChatUnread(guid);
-        }
-      }
-    } catch (_) {}
-
-    return this;
-  }
-
   Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true, bool clearNotificationsIfFromMe = true}) async {
     // If this is a message preview and we don't already have metadata for this, get it
     if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata) && !message.hasApplePayloadData) {
@@ -705,8 +867,8 @@ class Chat {
           save(updateDateDeleted: true);
           GlobalChatService.syncChat(this);
         }
-        if (isArchived! && !_latestMessage!.isFromMe! && ss.settings.unarchiveOnNewMessage.value) {
-          toggleArchived(false);
+        if (isArchived && !_latestMessage!.isFromMe! && ss.settings.unarchiveOnNewMessage.value) {
+          toggleIsArchived(false);
         }
       }
     }
@@ -722,7 +884,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe! || GlobalChatService.isChatActive(guid)) {
         // force if the chat is active to ensure private api mark read
-        toggleHasUnread(
+        toggleUnreadStatus(
           false,
           clearLocalNotifications: clearNotificationsIfFromMe,
           force: GlobalChatService.isChatActive(guid),
@@ -730,7 +892,7 @@ class Chat {
           privateMark: GlobalChatService.isChatActive(guid)
         );
       } else if (!GlobalChatService.isChatActive(guid)) {
-        toggleHasUnread(true, privateMark: false);
+        toggleUnreadStatus(true, privateMark: false);
       }
     }
 
@@ -837,32 +999,6 @@ class Chat {
     _participants.retainWhere((element) => ids.remove(element.uniqueAddressAndService));
   }
 
-  Chat togglePin(bool isPinned) {
-    if (id == null) return this;
-    this.isPinned = isPinned;
-    _pinIndex.value = null;
-    save(updateIsPinned: true, updatePinIndex: true);
-    return this;
-  }
-
-  Chat toggleArchived(bool isArchived) {
-    if (id == null) return this;
-    isPinned = false;
-    this.isArchived = isArchived;
-    save(updateIsPinned: true, updateIsArchived: true);
-    return this;
-  }
-
-  Chat toggleAutoRead(bool? autoSendReadReceipts) {
-    if (id == null) return this;
-    this.autoSendReadReceipts = autoSendReadReceipts;
-    save(updateAutoSendReadReceipts: true);
-    if (autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value) {
-      http.markChatRead(guid);
-    }
-    return this;
-  }
-
   Chat toggleAutoType(bool? autoSendTypingIndicators) {
     if (id == null) return this;
     this.autoSendTypingIndicators = autoSendTypingIndicators;
@@ -944,46 +1080,46 @@ class Chat {
 
   bool get isGroup => participants.length > 1 || style == 43;
 
-  Chat merge(Chat other) {
-    id ??= other.id;
-    _customAvatarPath.value ??= other._customAvatarPath.value;
-    _pinIndex.value ??= other._pinIndex.value;
-    autoSendReadReceipts ??= other.autoSendReadReceipts;
-    autoSendTypingIndicators ??= other.autoSendTypingIndicators;
-    textFieldText ??= other.textFieldText;
-    if (textFieldAttachments.isEmpty) {
-      textFieldAttachments.addAll(other.textFieldAttachments);
-    }
-    chatIdentifier ??= other.chatIdentifier;
-    displayName ??= other.displayName;
-    if (handles.isEmpty) {
-      handles.addAll(other.handles);
-    }
-    hasUnreadMessage ??= other.hasUnreadMessage;
-    isArchived ??= other.isArchived;
-    isPinned ??= other.isPinned;
-    _latestMessage ??= other.latestMessage;
-    muteArgs ??= other.muteArgs;
-    title ??= other.title;
-    dateDeleted ??= other.dateDeleted;
-    style ??= other.style;
-    return this;
-  }
+  // Chat merge(Chat other) {
+  //   id ??= other.id;
+  //   _customAvatarPath.value ??= other._customAvatarPath.value;
+  //   _pinIndex.value ??= other._pinIndex.value;
+  //   autoSendReadReceipts ??= other.autoSendReadReceipts;
+  //   autoSendTypingIndicators ??= other.autoSendTypingIndicators;
+  //   textFieldText ??= other.textFieldText;
+  //   if (textFieldAttachments.isEmpty) {
+  //     textFieldAttachments.addAll(other.textFieldAttachments);
+  //   }
+  //   chatIdentifier ??= other.chatIdentifier;
+  //   displayName ??= other.displayName;
+  //   if (handles.isEmpty) {
+  //     handles.addAll(other.handles);
+  //   }
+  //   hasUnreadMessage ??= other.hasUnreadMessage;
+  //   isArchived ??= other.isArchived;
+  //   isPinned ??= other.isPinned;
+  //   _latestMessage ??= other.latestMessage;
+  //   muteArgs ??= other.muteArgs;
+  //   title ??= other.title;
+  //   dateDeleted ??= other.dateDeleted;
+  //   style ??= other.style;
+  //   return this;
+  // }
 
   static int sort(Chat? a, Chat? b) {
     // If they both are pinned & ordered, reflect the order
-    if (a!.isPinned! && b!.isPinned! && a.pinIndex != null && b.pinIndex != null) {
+    if (a!.isPinned && b!.isPinned && a.pinIndex != null && b.pinIndex != null) {
       return a.pinIndex!.compareTo(b.pinIndex!);
     }
 
     // If b is pinned & ordered, but a isn't either pinned or ordered, return accordingly
-    if (b!.isPinned! && b.pinIndex != null && (!a.isPinned! || a.pinIndex == null)) return 1;
+    if (b!.isPinned && b.pinIndex != null && (!a.isPinned || a.pinIndex == null)) return 1;
     // If a is pinned & ordered, but b isn't either pinned or ordered, return accordingly
-    if (a.isPinned! && a.pinIndex != null && (!b.isPinned! || b.pinIndex == null)) return -1;
+    if (a.isPinned && a.pinIndex != null && (!b.isPinned || b.pinIndex == null)) return -1;
 
     // Compare when one is pinned and the other isn't
-    if (!a.isPinned! && b.isPinned!) return 1;
-    if (a.isPinned! && !b.isPinned!) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    if (a.isPinned && !b.isPinned) return -1;
 
     if (a.latestMessage == null && b.latestMessage == null) return 0;
     if (a.latestMessage == null) return 1;
@@ -1024,13 +1160,13 @@ class Chat {
     "ROWID": id,
     "guid": guid,
     "chatIdentifier": chatIdentifier,
-    "isArchived": isArchived!,
+    "isArchived": isArchived,
     "muteType": muteType,
     "muteArgs": muteArgs,
-    "isPinned": isPinned!,
+    "isPinned": isPinned,
     "displayName": displayName,
     "participants": participants.map((item) => item.toMap()).toList(),
-    "hasUnreadMessage": hasUnreadMessage!,
+    "hasUnreadMessage": hasUnreadMessage,
     "_customAvatarPath": _customAvatarPath.value,
     "_pinIndex": _pinIndex.value,
     "autoSendReadReceipts": autoSendReadReceipts,

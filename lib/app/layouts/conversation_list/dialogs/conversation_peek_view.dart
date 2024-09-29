@@ -18,7 +18,7 @@ import 'package:get/get.dart';
 
 Future<void> peekChat(BuildContext context, ChatGuid chatGuid, Offset offset) async {
   HapticFeedback.mediumImpact();
-  final Chat c = GlobalChatService.getChat(chatGuid)!.chat;
+  final Chat c = GlobalChatService.getChat(chatGuid)!;
   final messages = Chat.getMessages(c, getDetails: true).where((e) => e.associatedMessageGuid == null).toList();
   await Navigator.push(
     Get.context!,
@@ -52,6 +52,12 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   late final ConversationViewController cvController = cvc(widget.chatGuid);
   final double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
   bool disposed = false;
+
+  Chat? _chat;
+  Chat get chat {
+    _chat ??= GlobalChatService.getChat(widget.chatGuid)!;
+    return _chat!;
+  }
 
   @override
   void initState() {
@@ -92,7 +98,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
 
   @override
   Widget build(BuildContext context) {
-    Chat chat = GlobalChatService.getChat(widget.chatGuid)!.chat;
+    Chat chat = GlobalChatService.getChat(widget.chatGuid)!;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value
@@ -223,29 +229,28 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   Widget buildDetailsMenu(BuildContext context) {
     double maxMenuWidth = min(max(context.width * 3 / 5, 200), context.width * 4 / 5);
     bool ios = ss.settings.skin.value == Skins.iOS;
-    Chat chat = GlobalChatService.getChat(widget.chatGuid)!.chat;
 
     List<Widget> allActions = [
       Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            chat.togglePin(!chat.isPinned!);
+            chat.toggleIsPinned(null);
             popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
-            title: Text(
-              chat.isPinned! ? "Unpin" : "Pin",
+            title: Obx(() => Text(
+              chat.observables.isPinned.value ? "Unpin" : "Pin",
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-            ),
-            trailing: Icon(
-              chat.isPinned!
+            )),
+            trailing: Obx(() => Icon(
+              chat.observables.isPinned.value
                   ? (ios ? cupertino.CupertinoIcons.pin_slash : Icons.star_outline)
                   : (ios ? cupertino.CupertinoIcons.pin : Icons.star),
               color: context.theme.colorScheme.properOnSurface
-            ),
+            )),
           ),
         ),
       ),
@@ -259,16 +264,16 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
-            title: Text(
-              chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+            title: Obx(() => Text(
+              chat.observables.muteType.value == "mute" ? 'Show Alerts' : 'Hide Alerts',
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-            ),
-            trailing: Icon(
-              chat.muteType == "mute"
+            )),
+            trailing: Obx(() => Icon(
+              chat.observables.muteType.value == "mute"
                   ? (ios ? cupertino.CupertinoIcons.bell : Icons.notifications_active)
                   : (ios ? cupertino.CupertinoIcons.bell_slash : Icons.notifications_off),
               color: context.theme.colorScheme.properOnSurface
-            ),
+            )),
           ),
         ),
       ),
@@ -276,22 +281,22 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            chat.toggleHasUnread(!chat.hasUnreadMessage!, force: true);
+            chat.toggleUnreadStatus(null);
             popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
-            title: Text(
-              chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+            title: Obx(() => Text(
+              chat.observables.isUnread.value ? 'Mark Read' : 'Mark Unread',
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-            ),
-            trailing: Icon(
-              chat.hasUnreadMessage!
+            )),
+            trailing: Obx(() => Icon(
+              chat.observables.isUnread.value
                   ? (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                   : (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
               color: context.theme.colorScheme.properOnSurface
-            ),
+            )),
           ),
         ),
       ),
@@ -299,22 +304,22 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            chat.toggleArchived(!chat.isArchived!);
+            chat.toggleIsArchived(null);
             popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             dense: !kIsDesktop && !kIsWeb,
-            title: Text(
-              chat.isArchived! ? 'Unarchive' : 'Archive',
+            title: Obx(() => Text(
+              chat.observables.isArchived.value ? 'Unarchive' : 'Archive',
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-            ),
-            trailing: Icon(
-              chat.isArchived!
+            )),
+            trailing: Obx(() => Icon(
+              chat.observables.isArchived.value
                   ? (ios ? cupertino.CupertinoIcons.tray_arrow_up : Icons.unarchive)
                   : (ios ? cupertino.CupertinoIcons.tray_arrow_down : Icons.archive),
               color: context.theme.colorScheme.properOnSurface
-            ),
+            )),
           ),
         ),
       ),
