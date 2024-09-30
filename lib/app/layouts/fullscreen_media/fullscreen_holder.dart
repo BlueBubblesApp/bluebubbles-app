@@ -159,6 +159,7 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                   reverse: ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
                   itemCount: attachments.length,
                   onPageChanged: (int val) {
+                    widget.videoController?.player.pause();
                     setState(() {
                       currentIndex = val;
                     });
