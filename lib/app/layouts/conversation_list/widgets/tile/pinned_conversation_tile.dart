@@ -281,7 +281,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
           color: controller.shouldHighlight.value
               ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
               : context.theme.colorScheme.outline,
-          fontSizeFactor: controller.chat.isPinned ? 0.95 : 1,
+          fontSizeFactor: controller.chat.observables.isPinned.value ? 0.95 : 1,
         );
         String _title = controller.chat.observables.title.value ?? "Unknown";
         if (hideInfo) {

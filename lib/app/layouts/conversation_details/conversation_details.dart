@@ -57,7 +57,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   @override
   void initState() {
     super.initState();
-    GlobalChatService.activeChat?.setIsObscured(true);
+    GlobalChatService.activeChat?.isObscured = true;
 
     if (!kIsWeb) {
       updateObx(() {
@@ -70,7 +70,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   @override
   void dispose() {
     if (GlobalChatService.hasActiveChat) {
-      GlobalChatService.activeChat?.setIsObscured(false);
+      GlobalChatService.activeChat?.isObscured = false;
       cvc(GlobalChatService.activeGuid.value!).lastFocusedNode.requestFocus();
     }
 
@@ -189,7 +189,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   final addMember = ListTile(
                     mouseCursor: MouseCursor.defer,
                     title: Text("Add ${iOS ? "Member" : "people"}", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                    leading: Container(
+                    leading: Obx(() => Container(
                       width: 40 * ss.settings.avatarScale.value,
                       height: 40 * ss.settings.avatarScale.value,
                       decoration: BoxDecoration(
@@ -202,7 +202,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                         color: context.theme.colorScheme.primary,
                         size: 20
                       ),
-                    ),
+                    )),
                     onTap: () {
                       showAddParticipant(context, chat.guid);
                     },
@@ -228,7 +228,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                           showMoreParticipants ? "Show less" : "Show more",
                           style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
                         ),
-                        leading: Container(
+                        leading: Obx(() => Container(
                           width: 40 * ss.settings.avatarScale.value,
                           height: 40 * ss.settings.avatarScale.value,
                           decoration: BoxDecoration(
@@ -240,7 +240,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                             Icons.more_horiz,
                             color: context.theme.colorScheme.primary,
                             size: 20
-                          ),
+                          )),
                         ),
                       );
                     } else if (ss.settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup) {
@@ -250,24 +250,24 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                     }
                   }
 
-                  return ContactTile(
-                    key: Key(chat.participants[index].address),
-                    handle: chat.participants[index],
+                  return Obx(() => ContactTile(
+                    key: Key(chat.observables.participants[index].address),
+                    handle: chat.observables.participants[index],
                     chatGuid: chat.guid,
-                    canBeRemoved: chat.participants.length > 1
+                    canBeRemoved: chat.observables.participants.length > 1
                         && ss.settings.enablePrivateAPI.value
                         && chat.isIMessage,
-                  );
+                  ));
                 }, childCount: clippedParticipants.length + 2),
               ),
-            if (chat.participants.length > 2 && ss.settings.enablePrivateAPI.value && ss.serverDetailsSync().item4 >= 226)
+            if (chat.observables.participants.length > 2 && ss.settings.enablePrivateAPI.value && ss.serverDetailsSync().item4 >= 226)
               SliverToBoxAdapter(
                 child: Builder(
                   builder: (context) {
                     return ListTile(
                       mouseCursor: MouseCursor.defer,
                       title: Text("Leave ${iOS ? "Chat" : "chat"}", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.error)),
-                      leading: Container(
+                      leading: Obx(() => Container(
                         width: 40 * ss.settings.avatarScale.value,
                         height: 40 * ss.settings.avatarScale.value,
                         decoration: BoxDecoration(
@@ -280,7 +280,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                           color: context.theme.colorScheme.error,
                           size: 20
                         ),
-                      ),
+                      )),
                       onTap: () async {
                         showDialog(
                           context: context,

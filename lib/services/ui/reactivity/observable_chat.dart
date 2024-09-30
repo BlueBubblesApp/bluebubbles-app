@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/services/backend/settings/settings_service.dart';
 import 'package:get/get.dart';
 
 class ObservableChat {
-  final Chat chat;
-
+  final RxnString _title = RxnString();
   final RxBool isDeleted = false.obs;
   final RxBool isArchived = false.obs;
   final RxBool isUnread = false.obs;
@@ -21,41 +20,36 @@ class ObservableChat {
   final RxBool isHighlighted = false.obs;
   final RxBool isPartiallyHighlighted = false.obs;
   final RxBool isObscured = false.obs;
-  final RxBool autoSendReadReceipts = false.obs;
+  final RxBool lockChatName = false.obs;
+  final RxBool lockChatIcon = false.obs;
+  final RxnBool autoSendReadReceipts = RxnBool();
+  final RxnBool autoSendTypingIndicators = RxnBool();
   final RxDouble sendProgress = 0.0.obs;
+  final RxnString _lastMessagePreview = RxnString();
 
-  final RxnString _title = RxnString();
   RxnString get title {
-    if (_title.value != null) {
-      return _title;
+    if (ss.settings.redactedMode.value && ss.settings.hideContactInfo.value) {
+      _title.value = participants.length > 1 ? "Group Chat" : participants[0].fakeName;
     }
 
-    _title.value = chat.getTitle();
     return _title;
   }
 
-  final RxnString _subtitle = RxnString();
-  RxnString get subtitle {
-    if (_subtitle.value != null) {
-      return _subtitle;
+  RxnString get lastMessagePreview {
+    if (_lastMessagePreview.value != null) {
+      return _lastMessagePreview;
     }
 
-    if (chat.latestMessage == null) {
-      _subtitle.value = "[ No messages ]";
+    if (latestMessage.value == null) {
+      _lastMessagePreview.value = "[ No messages ]";
     } else {
-      _subtitle.value = MessageHelper.getNotificationText(chat.latestMessage!);
+      _lastMessagePreview.value = MessageHelper.getNotificationText(latestMessage.value!);
     }
 
-    return _subtitle;
+    return _lastMessagePreview;
   }
 
-  // The app currently has the chat opened
-  bool get isOpen => GlobalChatService.activeGuid.value == chat.guid;
-
-  // Active means it's in the foreground
-  bool get isAlive => ls.isAlive && isOpen && !isObscured.value;
-
-  ObservableChat(this.chat, {
+  ObservableChat({
     bool isUnread = false,
     bool isPinned = false,
     int? pinIndex,
@@ -68,7 +62,10 @@ class ObservableChat {
     bool isDeleted = false,
     bool isHighlighted = false,
     bool isPartiallyHighlighted = false,
-    bool autoSendReadReceipts = false,
+    bool lockChatName = false,
+    bool lockChatIcon = false,
+    bool? autoSendReadReceipts,
+    bool? autoSendTypingIndicators,
     List<String> pickedAttachments = const [],
     String? textFieldText,
     List<Handle> participants = const [],
@@ -79,14 +76,17 @@ class ObservableChat {
     this.pinIndex.value = pinIndex;
     this.muteType.value = muteType;
     this.muteArgs.value = muteArgs;
-    _title.value = title;
-    _subtitle.value = subtitle;
+    this.title.value = title;
+    _lastMessagePreview.value = subtitle;
     this.customAvatarPath.value = customAvatarPath;
     this.isArchived.value = isArchived;
     this.isDeleted.value = isDeleted;
     this.isHighlighted.value = isHighlighted;
     this.isPartiallyHighlighted.value = isPartiallyHighlighted;
+    this.lockChatName.value = lockChatName;
+    this.lockChatIcon.value = lockChatIcon;
     this.autoSendReadReceipts.value = autoSendReadReceipts;
+    this.autoSendTypingIndicators.value = autoSendTypingIndicators;
     this.latestMessage.value = latestMessage;
 
     setParticipants(participants);
@@ -119,20 +119,40 @@ class ObservableChat {
     }
   }
 
+  overwrite(Chat chat) {
+    isUnread.value = chat.hasUnreadMessage;
+    isPinned.value = chat.isPinned;
+    pinIndex.value = chat.pinIndex;
+    muteType.value = chat.muteType;
+    muteArgs.value = chat.muteArgs;
+    title.value = chat.title;
+    customAvatarPath.value = chat.customAvatarPath;
+    isArchived.value = chat.isArchived;
+    isDeleted.value = chat.dateDeleted != null;
+    lockChatName.value = chat.lockChatName;
+    lockChatIcon.value = chat.lockChatIcon;
+    autoSendReadReceipts.value = chat.autoSendReadReceipts;
+    autoSendTypingIndicators.value = chat.autoSendTypingIndicators;
+    participants.value = chat.participants;
+    latestMessage.value = chat.latestMessage;
+  }
+
   factory ObservableChat.fromChat(Chat chat) {
     return ObservableChat(
-      chat,
       isUnread: chat.hasUnreadMessage,
       isPinned: chat.isPinned,
       pinIndex: chat.pinIndex,
       muteType: chat.muteType,
       muteArgs: chat.muteArgs,
-      title: null,
+      title: chat.title,
       subtitle: null,
       customAvatarPath: chat.customAvatarPath,
       isArchived: chat.isArchived,
       isDeleted: chat.dateDeleted != null,
-      autoSendReadReceipts: chat.autoSendReadReceipts ?? false,
+      lockChatName: chat.lockChatName,
+      lockChatIcon: chat.lockChatIcon,
+      autoSendReadReceipts: chat.autoSendReadReceipts,
+      autoSendTypingIndicators: chat.autoSendTypingIndicators,
       participants: chat.participants,
       latestMessage: chat.latestMessage,
     );

@@ -181,7 +181,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                   PopupMenuItem(
                     value: 1,
                     child: Obx(() => Text(
-                      chat.isArchived ? 'Unarchive' : 'Archive',
+                      chat.observables.isArchived.value ? 'Unarchive' : 'Archive',
                       style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                     )),
                   ),

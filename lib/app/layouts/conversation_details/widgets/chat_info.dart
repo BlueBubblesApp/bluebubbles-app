@@ -79,7 +79,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
       ),
     );
     if (result != null) {
-      chat.customAvatarPath = result;
+      chat.setCustomAvatar(result);
     }
     if (papi &&
         ss.settings.enablePrivateAPI.value &&
@@ -127,8 +127,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
       File file = File(chat.customAvatarPath!);
       file.delete();
     } catch (_) {}
-    chat.customAvatarPath = null;
-    chat.save(updateCustomAvatarPath: true);
+    chat.setCustomAvatar(null);
     if (papi && ss.settings.enablePrivateAPI.value && (await ss.isMinBigSur) && ss.serverDetailsSync().item4 >= 226) {
       final response = await http.deleteChatIcon(chat.guid);
       if (response.statusCode == 200) {
@@ -141,19 +140,6 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
 
   @override
   Widget build(BuildContext context) {
-    final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-    String _title = chat.properTitle;
-    if (hideInfo) {
-      _title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
-    }
-
-    bool canCall = !kIsWeb &&
-        !kIsDesktop &&
-        !chat.chatIdentifier!.startsWith("urn:biz") &&
-        (chat.participants.isNotEmpty &&
-            ((chat.participants.first.contact?.phones.isNotEmpty ?? false) ||
-                !chat.participants.first.address.contains("@")));
-
     return DeferredPointerHandler(
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 10),
@@ -174,7 +160,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                     editable: !chat.isGroup,
                   ),
                 ),
-                Obx(() => chat.customAvatarPath != null
+                Obx(() => chat.observables.customAvatarPath.value != null
                     ? Positioned(
                         right: -5,
                         top: -5,
@@ -218,7 +204,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                     color: context.theme.colorScheme.onBackground,
                   ),
                   children: MessageHelper.buildEmojiText(
-                    _title,
+                    chat.observables.title.value ?? "Unknown",
                     context.theme.textTheme.headlineMedium!.copyWith(
                       fontWeight: FontWeight.bold,
                       color: context.theme.colorScheme.onBackground,
@@ -257,7 +243,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                   text: TextSpan(
                     style: context.theme.textTheme.bodyLarge,
                     children: MessageHelper.buildEmojiText(
-                      _title,
+                      chat.observables.title.value ?? "Unknown",
                       context.theme.textTheme.bodyLarge!,
                     ),
                   ),
@@ -331,18 +317,27 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
         if (!chat.isGroup && iOS)
           Padding(
             padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
-            child: Row(
-              mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
-              children: intersperse(const SizedBox(width: 5), [
-                if (canCall) CallButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
-                VideoCallButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
-                if (chat.participants.isNotEmpty &&
-                    ((chat.participants.first.contact?.emails.isNotEmpty ?? false) ||
-                        chat.participants.first.address.contains("@")))
-                  MailButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
-                if (!kIsWeb && !kIsDesktop) InfoButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
-              ]).toList(),
-            ),
+            child: Obx(() {
+              final participants = chat.observables.participants;
+              bool canCall = !kIsWeb &&
+                !kIsDesktop &&
+                !chat.chatIdentifier!.startsWith("urn:biz") &&
+                (participants.isNotEmpty &&
+                    ((participants.first.contact?.phones.isNotEmpty ?? false) ||
+                        !participants.first.address.contains("@")));
+              return Row(
+                mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+                children: intersperse(const SizedBox(width: 5), [
+                  if (canCall) CallButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
+                  VideoCallButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
+                  if (chat.participants.isNotEmpty &&
+                      ((chat.participants.first.contact?.emails.isNotEmpty ?? false) ||
+                          chat.participants.first.address.contains("@")))
+                    MailButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
+                  if (!kIsWeb && !kIsDesktop) InfoButton(tileColor: tileColor, chatGuid: chat.guid, iOS: iOS),
+                ]).toList(),
+              );
+            }),
           ),
         if (chat.isGroup)
           Padding(
@@ -397,16 +392,16 @@ class InfoButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    chat.participants.isNotEmpty && chat.participants.first.contact != null
+                  Obx(() => Icon(
+                    chat.observables.participants.isNotEmpty && chat.observables.participants.first.contact != null
                         ? (iOS ? CupertinoIcons.info : Icons.info)
                         : (iOS ? CupertinoIcons.plus_circle : Icons.add_circle_outline),
                     color: context.theme.colorScheme.onSurface,
                     size: 20,
-                  ),
+                  )),
                   const SizedBox(height: 7.5),
-                  Text(chat.participants.isNotEmpty && chat.participants.first.contact != null ? "Info" : "Add Contact",
-                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+                  Obx(() => Text(chat.observables.participants.isNotEmpty && chat.observables.participants.first.contact != null ? "Info" : "Add Contact",
+                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface))),
                 ],
               ),
             ),

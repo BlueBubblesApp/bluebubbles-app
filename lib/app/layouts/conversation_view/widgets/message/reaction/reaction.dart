@@ -257,7 +257,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                                 Navigator.of(context).pop();
                                 Message.delete(reaction.guid!);
 
-                                Chat chat = GlobalChatService.activeChat!.chat;
+                                Chat chat = GlobalChatService.activeChat!;
                                 await notif.clearFailedToSend(chat.id!);
                                 getActiveMwc(reaction.associatedMessageGuid!)?.removeAssociatedMessage(reaction);
                                 // Re-send
@@ -290,7 +290,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                                 Message.delete(reaction.guid!);
                                 // Remove the message from the Bloc
                                 getActiveMwc(reaction.associatedMessageGuid!)?.removeAssociatedMessage(reaction);
-                                final chat = GlobalChatService.activeChat!.chat;
+                                final chat = GlobalChatService.activeChat!;
                                 await notif.clearFailedToSend(chat.id!);
                                 // Get the "new" latest info
                                 GlobalChatService.updateLatestMessage(GlobalChatService.activeGuid.value!);
@@ -303,7 +303,7 @@ class ReactionWidgetState extends OptimizedState<ReactionWidget> {
                               ),
                               onPressed: () async {
                                 Navigator.of(context).pop();
-                                final chat = GlobalChatService.activeChat!.chat;
+                                final chat = GlobalChatService.activeChat!;
                                 await notif.clearFailedToSend(chat.id!);
                               },
                             )

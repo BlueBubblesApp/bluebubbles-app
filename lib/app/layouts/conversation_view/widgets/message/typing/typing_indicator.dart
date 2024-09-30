@@ -58,12 +58,12 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 10, right: 10),
-            child: ContactAvatarWidget(
-              handle: GlobalChatService.activeChat!.chat.participants.first,
+            child: Obx(() => ContactAvatarWidget(
+              handle: GlobalChatService.activeChat!.observables.participants.first,
               size: 25,
               fontSize: context.theme.textTheme.bodyMedium!.fontSize!,
               borderThickness: 0.1,
-            ),
+            )),
           ),
           AnimatedDot(index: 2),
           AnimatedDot(index: 1),

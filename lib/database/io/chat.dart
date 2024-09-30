@@ -287,13 +287,6 @@ class Chat {
   bool isPinned;
   bool hasUnreadMessage;
   String? title;
-  String get properTitle {
-    if (ss.settings.redactedMode.value && ss.settings.hideContactInfo.value) {
-      return getTitle();
-    }
-    title ??= getTitle();
-    return title!;
-  }
   String? displayName;
   List<Handle> _participants = [];
 
@@ -305,10 +298,7 @@ class Chat {
     return _participants;
   }
 
-  bool? _autoSendReadReceipts;
-  bool? get autoSendReadReceipts => _autoSendReadReceipts ?? (ss.settings.privateMarkChatAsRead.value && ss.settings.enablePrivateAPI.value);
-  set autoSendReadReceipts(bool? value) => _autoSendReadReceipts = value;
-
+  bool? autoSendReadReceipts;
   bool? autoSendTypingIndicators;
   String? textFieldText;
   List<String> textFieldAttachments = [];
@@ -332,9 +322,7 @@ class Chat {
   bool lockChatIcon;
   String? lastReadMessageGuid;
 
-  final RxnString _customAvatarPath = RxnString();
-  String? get customAvatarPath => _customAvatarPath.value;
-  set customAvatarPath(String? s) => _customAvatarPath.value = s;
+  String? customAvatarPath;
 
   final RxnInt _pinIndex = RxnInt();
   int? get pinIndex => _pinIndex.value;
@@ -356,6 +344,14 @@ class Chat {
   @Transient()
   bool isObscured = false;
 
+  // The app currently has the chat opened
+  @Transient()
+  bool get isOpen => GlobalChatService.activeGuid.value == guid;
+
+  // Active means it's in the foreground
+  @Transient()
+  bool get isAlive => ls.isAlive && isOpen && !isObscured;
+
   Chat({
     this.id,
     required this.guid,
@@ -370,7 +366,7 @@ class Chat {
     int? pinnedIndex,
     List<Handle>? participants,
     Message? latestMessage,
-    bool? autoSendReadReceipts,
+    this.autoSendReadReceipts,
     this.autoSendTypingIndicators,
     this.textFieldText,
     this.textFieldAttachments = const [],
@@ -385,7 +381,6 @@ class Chat {
     if (textFieldAttachments.isEmpty) textFieldAttachments = [];
     _participants = participants ?? [];
     _latestMessage = latestMessage;
-    _autoSendReadReceipts = autoSendReadReceipts;
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
@@ -513,13 +508,42 @@ class Chat {
 
   toggleAutoRead(bool? autoRead) {
     if (id == null) return this;
+    if (autoRead == autoSendReadReceipts) return;
 
-    bool newAutoRead = autoRead ?? !(autoSendReadReceipts ?? false);
-    if (newAutoRead == autoSendReadReceipts) return;
-
-    autoSendReadReceipts = newAutoRead;
-    observables.autoSendReadReceipts.value = newAutoRead;
+    autoSendReadReceipts = autoRead;
+    observables.autoSendReadReceipts.value = autoRead;
     save(updateAutoSendReadReceipts: true);
+  }
+
+  toggleAutoType(bool? autoType) {
+    if (id == null) return this;
+    if (autoType == autoSendTypingIndicators) return;
+
+    autoSendTypingIndicators = autoType;
+    observables.autoSendTypingIndicators.value = autoType;
+    save(updateAutoSendTypingIndicators: true);
+  }
+
+  toggleLockChatName(bool? lockChatName) {
+    if (id == null) return this;
+
+    bool newLockChatName = lockChatName ?? !this.lockChatName;
+    if (newLockChatName == this.lockChatName) return;
+
+    this.lockChatName = newLockChatName;
+    observables.lockChatName.value = newLockChatName;
+    save(updateLockChatName: true);
+  }
+
+  toggleLockChatIcon(bool? lockChatIcon) {
+    if (id == null) return this;
+
+    bool newLockChatIcon = lockChatIcon ?? !this.lockChatIcon;
+    if (newLockChatIcon == this.lockChatIcon) return;
+
+    this.lockChatIcon = newLockChatIcon;
+    observables.lockChatIcon.value = newLockChatIcon;
+    save(updateLockChatIcon: true);
   }
 
   toggleIsPinned(bool? isPinned, {int? pinIndex}) {
@@ -999,16 +1023,6 @@ class Chat {
     _participants.retainWhere((element) => ids.remove(element.uniqueAddressAndService));
   }
 
-  Chat toggleAutoType(bool? autoSendTypingIndicators) {
-    if (id == null) return this;
-    this.autoSendTypingIndicators = autoSendTypingIndicators;
-    save(updateAutoSendTypingIndicators: true);
-    if (!(autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value)) {
-      socket.sendMessage("stopped-typing", {"chatGuid": guid});
-    }
-    return this;
-  }
-
   /// Finds a chat - only use this method on Flutter Web!!!
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
     return null;
@@ -1138,8 +1152,7 @@ class Chat {
     if (response.statusCode != 200 || isNullOrEmpty(response.data)) {
       if (c.customAvatarPath != null) {
         await File(c.customAvatarPath!).delete(recursive: true);
-        c.customAvatarPath = null;
-        c.save(updateCustomAvatarPath: true);
+        c.setCustomAvatar(null);
       }
     } else {
       Logger.debug("Got chat icon for chat ${c.getTitle()}");
@@ -1151,8 +1164,7 @@ class Chat {
         await file.delete();
       }
       await file.writeAsBytes(response.data);
-      c.customAvatarPath = file.path;
-      c.save(updateCustomAvatarPath: true);
+      c.setCustomAvatar(file.path);
     }
   }
 
@@ -1167,7 +1179,7 @@ class Chat {
     "displayName": displayName,
     "participants": participants.map((item) => item.toMap()).toList(),
     "hasUnreadMessage": hasUnreadMessage,
-    "_customAvatarPath": _customAvatarPath.value,
+    "_customAvatarPath": customAvatarPath,
     "_pinIndex": _pinIndex.value,
     "autoSendReadReceipts": autoSendReadReceipts,
     "autoSendTypingIndicators": autoSendTypingIndicators,

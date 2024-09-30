@@ -584,11 +584,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                         final chat = filteredChats[index];
                                         final hideInfo =
                                             ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-                                        String _title = chat.properTitle;
-                                        if (hideInfo) {
-                                          _title =
-                                              chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
-                                        }
                                         return Material(
                                           color: Colors.transparent,
                                           child: InkWell(
@@ -605,12 +600,12 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                             },
                                             child: ChatCreatorTile(
                                               key: ValueKey(chat.guid),
-                                              title: _title,
+                                              title: chat.observables.title.value ?? "Unknown",
                                               subtitle: hideInfo
                                                   ? ""
-                                                  : !chat.isGroup && chat.participants.isNotEmpty
-                                                      ? (chat.participants.first.formattedAddress ??
-                                                          chat.participants.first.address)
+                                                  : !chat.isGroup && chat.observables.participants.isNotEmpty
+                                                      ? (chat.observables.participants.first.formattedAddress ??
+                                                          chat.observables.participants.first.address)
                                                       : chat.getChatCreatorSubtitle(),
                                               chat: chat,
                                             ),
@@ -744,20 +739,11 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             ));
 
                             await Future.delayed(const Duration(milliseconds: 500));
-                            print("Chat: ${chat.guid}");
                             if (fakeController.value == null) {
-                              print("Controller is null");
-                              print(GlobalChatService.activeController.value?.pickedAttachments);
                               GlobalChatService.setActiveChat(chat.guid);
                               GlobalChatService.activeController.value?.pickedAttachments.value = [];
                               fakeController.value = GlobalChatService.activeController.value;
-                            } else {
-                              print("Controller is not null");
-                              print(fakeController.value?.pickedAttachments);
-                              print(fakeController.value?.textController.text);
                             }
-
-                            print("SENDING");
 
                             await fakeController.value!.send(
                               widget.initialAttachments,

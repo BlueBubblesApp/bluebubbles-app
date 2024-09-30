@@ -12,7 +12,6 @@ import 'package:bluebubbles/services/backend/settings/settings_service.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:bluebubbles/services/ui/message/messages_service.dart';
 import 'package:bluebubbles/services/ui/navigator/navigator_service.dart';
-import 'package:bluebubbles/services/ui/reactivity/observable_chat.dart';
 import 'package:bluebubbles/services/ui/reactivity/reactive_handle.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -64,7 +63,7 @@ class IGlobalChatService extends GetxService {
 
   RxnString get activeGuid => _activeGuid;
 
-  ObservableChat? get activeChat => _activeGuid.value == null ? null : _chatMap[_activeGuid.value!]?.observables;
+  Chat? get activeChat => _activeGuid.value == null ? null : _chatMap[_activeGuid.value!];
 
   /// Getter for the unread count.
   /// Calculates the unread count and upates the reactive variable if the count has changed.

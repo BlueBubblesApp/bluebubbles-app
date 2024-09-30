@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -355,27 +354,6 @@ class ChatList extends StatefulWidget {
 class ChatListState extends OptimizedState<ChatList> {
   final ScrollController controller = ScrollController();
 
-  String getSubtitle(Chat chat) {
-    if (chat.muteType == null) {
-      return "No settings set";
-    } else {
-      String muteArgsStr = "";
-      if (chat.muteArgs != null) {
-        if (chat.muteType == "mute_individuals") {
-          final participants =
-              chat.participants.where((element) => chat.muteArgs!.split(",").contains(element.address));
-          muteArgsStr = " - ${participants.length > 1 ? "${participants.length} people" : "1 person"}";
-        } else if (chat.muteType == "temporary_mute") {
-          final DateTime time = DateTime.parse(chat.muteArgs!).toLocal();
-          muteArgsStr = " until ${buildDate(time)}";
-        } else if (chat.muteType == "text_detection") {
-          muteArgsStr = " for words ${chat.muteArgs!.split(",").join(", ")}";
-        }
-      }
-      return "Mute type: ${chat.muteType!.split("_").join(" ").capitalizeFirst}$muteArgsStr";
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -431,8 +409,33 @@ class ChatListState extends OptimizedState<ChatList> {
                       tag: "notification-panel"
                     ),
                     inSelectMode: true,
-                    subtitle: Text(getSubtitle(GlobalChatService.chats[index]),
-                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
+                    subtitle: Obx(() {
+                      final chat = GlobalChatService.chats[index];
+                      String subtitle = "No settings set";
+
+                      final muteType = chat.observables.muteType.value;
+                      final muteArgs = chat.observables.muteArgs.value;
+                      if (muteType != null) {
+                        String muteArgsStr = "";
+                        if (muteArgs != null) {
+                          if (muteType == "mute_individuals") {
+                            final participants =
+                                chat.observables.participants.where((element) => muteArgs.split(",").contains(element.address));
+                            muteArgsStr = " - ${participants.length > 1 ? "${participants.length} people" : "1 person"}";
+                          } else if (muteType == "temporary_mute") {
+                            final DateTime time = DateTime.parse(muteArgs).toLocal();
+                            muteArgsStr = " until ${buildDate(time)}";
+                          } else if (muteType == "text_detection") {
+                            muteArgsStr = " for words ${muteArgs.split(",").join(", ")}";
+                          }
+                        }
+
+                        subtitle = "Mute type: ${muteType.split("_").join(" ").capitalizeFirst}$muteArgsStr";
+                      }
+
+                      return Text(subtitle,
+                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),);
+                    }),
                     onSelect: (_) async {
                       final chat = GlobalChatService.chats[index];
                       await showDialog(

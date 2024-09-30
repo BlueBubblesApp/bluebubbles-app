@@ -43,7 +43,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
         textStyle.apply(fontWeightDelta: 2),
         recognizer: TapGestureRecognizer()..onTap = () async {
           if (kIsDesktop || kIsWeb) return;
-          final handle = GlobalChatService.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
+          final handle = GlobalChatService.activeChat!.participants.firstWhereOrNull((e) => e.address == part.mentions[i].mentionedAddress);
           if (handle?.contact == null && handle != null) {
             await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
           } else if (handle?.contact != null) {
@@ -169,7 +169,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
           textStyle.apply(fontWeightDelta: 2),
           recognizer: TapGestureRecognizer()..onTap = () async {
             if (kIsDesktop || kIsWeb) return;
-            final handle = GlobalChatService.activeChat!.chat.participants.firstWhereOrNull((e) => e.address == data!.first);
+            final handle = GlobalChatService.activeChat!.participants.firstWhereOrNull((e) => e.address == data!.first);
             if (handle?.contact == null && handle != null) {
               await mcs.invokeMethod("open-contact-form", {'address': handle.address, 'address_type': handle.address.isEmail ? 'email' : 'phone'});
             } else if (handle?.contact != null) {

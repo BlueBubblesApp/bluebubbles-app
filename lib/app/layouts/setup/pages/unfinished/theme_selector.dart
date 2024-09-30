@@ -752,7 +752,6 @@ class TriangleBorder extends ShapeBorder {
 Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData theme) {
   Color backgroundColor = theme.colorScheme.background;
   Color? fontColor = theme.textTheme.headlineMedium!.color;
-  String? title = chat.title ?? chat.displayName;
   Skins skin = Skin.of(context)!.skin;
   if (skin == Skins.Material ||
       skin == Skins.Samsung) {
@@ -760,10 +759,10 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
       systemOverlayStyle: ThemeData.estimateBrightnessForColor(theme.colorScheme.background) == Brightness.dark
           ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       elevation: 0.0,
-      title: Text(
-        title!,
+      title: Obx(() => Text(
+        chat.observables.title.value ?? chat.displayName ?? "Unknown",
         style: theme.textTheme.headlineMedium!.apply(color: fontColor),
-      ),
+      )),
       bottom: PreferredSize(
         child: Container(
           color: theme.dividerColor,

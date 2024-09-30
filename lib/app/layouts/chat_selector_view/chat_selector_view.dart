@@ -162,11 +162,6 @@ class ChatSelectorViewState extends OptimizedState<ChatSelectorView> {
                                   }
                                   final chat = filteredChats[index];
                                   final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-                                  String _title = chat.properTitle;
-                                  if (hideInfo) {
-                                    _title =
-                                        chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
-                                  }
                                   return Material(
                                     color: Colors.transparent,
                                     child: InkWell(
@@ -176,12 +171,12 @@ class ChatSelectorViewState extends OptimizedState<ChatSelectorView> {
                                       },
                                       child: ChatCreatorTile(
                                         key: ValueKey(chat.guid),
-                                        title: _title,
+                                        title: chat.observables.title.value ?? "Unknown",
                                         subtitle: hideInfo
                                             ? ""
                                             : !chat.isGroup
-                                                ? (chat.participants.first.formattedAddress ??
-                                                    chat.participants.first.address)
+                                                ? (chat.observables.participants.first.formattedAddress ??
+                                                    chat.observables.participants.first.address)
                                                 : chat.getChatCreatorSubtitle(),
                                         chat: chat,
                                         showTrailing: false,

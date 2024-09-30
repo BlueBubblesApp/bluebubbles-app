@@ -1,3 +1,4 @@
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -68,8 +69,8 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> {
             }
 
             return SliverList(
-              delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+              delegate: SliverChildBuilderDelegate((context, index) {
+                  Chat chat = GlobalChatService.chats[index];
                   return ConversationTile(
                     key: Key(
                         GlobalChatService.chats[index].guid.toString()),
@@ -80,7 +81,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> {
                     ),
                     inSelectMode: true,
                     onSelect: (_) {
-                      if (GlobalChatService.chats[index].customAvatarPath != null) {
+                      if (chat.customAvatarPath != null) {
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -107,10 +108,9 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> {
                                   TextButton(
                                       child: Text("Reset", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                       onPressed: () {
-                                        File file = File(GlobalChatService.chats[index].customAvatarPath!);
+                                        File file = File(chat.customAvatarPath!);
                                         file.delete();
-                                        GlobalChatService.chats[index].customAvatarPath = null;
-                                        GlobalChatService.chats[index].save(updateCustomAvatarPath: true);
+                                        chat.setCustomAvatar(null);
                                         Get.back();
                                       }),
                                   TextButton(

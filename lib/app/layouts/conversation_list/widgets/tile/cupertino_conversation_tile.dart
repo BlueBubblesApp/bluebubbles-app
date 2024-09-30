@@ -180,7 +180,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
               overflow: TextOverflow.clip,
             );
           }),
-          Column(
+          Obx(() => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
@@ -190,7 +190,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
                     : context.theme.colorScheme.outline,
                 size: 15,
               ),
-              if (controller.chat.muteType == "mute")
+              if (controller.chat.observables.muteType.value == "mute")
                 Padding(
                     padding: const EdgeInsets.only(top: 5.0),
                     child: Icon(
@@ -201,7 +201,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
                       size: 12,
                     ))
             ],
-          ),
+          )),
         ],
       ),
     );

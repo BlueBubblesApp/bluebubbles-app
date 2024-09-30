@@ -9,7 +9,6 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/services/ui/reactivity/observable_chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,12 +29,10 @@ class ChatOptions extends StatefulWidget {
 }
 
 class _ChatOptionsState extends OptimizedState<ChatOptions> {
-  Chat get chat => GlobalChatService.getChat(widget.chatGuid)!;
-
-  ObservableChat? _rChat;
-  ObservableChat get rChat {
-    _rChat ??= GlobalChatService.getChat(widget.chatGuid)!.observables;
-    return _rChat!;
+  Chat? _chat;
+  Chat get chat {
+    _chat ??= GlobalChatService.getChat(widget.chatGuid)!;
+    return _chat!;
   }
 
   @override
@@ -113,8 +110,7 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                                     onPressed: () {
                                       File file = File(chat.customAvatarPath!);
                                       file.delete();
-                                      chat.customAvatarPath = null;
-                                      chat.save(updateCustomAvatarPath: true);
+                                      chat.setCustomAvatar(null);
                                       Get.back();
                                     },
                                   ),
@@ -198,105 +194,78 @@ class _ChatOptionsState extends OptimizedState<ChatOptions> {
                 ),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value) const SettingsDivider(),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     title: "Send Typing Indicators",
-                    initialVal: chat.autoSendTypingIndicators ?? ss.settings.privateSendTypingIndicators.value,
-                    onChanged: (value) {
-                      chat.toggleAutoType(value);
-                      setState(() {});
-                    },
+                    initialVal: chat.observables.autoSendTypingIndicators.value ?? ss.settings.privateSendTypingIndicators.value,
+                    onChanged: chat.toggleAutoType,
                     backgroundColor: tileColor,
-                  ),
+                  )),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
-                  SettingsSwitch(
+                  Obx(() {
+                    return SettingsSwitch(
                       title: "Follow Global Setting",
                       subtitle:
                           "Typing Indicators ${ss.settings.privateSendTypingIndicators.value ? "Enabled" : "Disabled"}",
-                      initialVal: chat.autoSendTypingIndicators == null,
+                      initialVal: chat.observables.autoSendTypingIndicators.value == null,
                       onChanged: (value) {
-                        if (!value) {
-                          chat.toggleAutoType(ss.settings.privateSendTypingIndicators.value);
-                        } else {
-                          chat.toggleAutoType(null);
-                        }
-                        setState(() {});
-                      }),
+                        chat.toggleAutoType(value ? null : ss.settings.privateSendTypingIndicators.value);
+                      }
+                    );
+                  }),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value) const SettingsDivider(),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     title: "${ss.settings.privateManualMarkAsRead.value ? "Automatically " : ""}Send Read Receipts",
-                    initialVal: chat.autoSendReadReceipts ?? ss.settings.privateMarkChatAsRead.value,
-                    onChanged: (value) {
-                      chat.toggleAutoRead(value);
-                      setState(() {});
-                    },
+                    initialVal: chat.observables.autoSendReadReceipts.value ?? ss.settings.privateMarkChatAsRead.value,
+                    onChanged: chat.toggleAutoRead,
                     backgroundColor: tileColor,
-                  ),
+                  )),
                 if (!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value)
-                  SettingsSwitch(
-                    title: "Follow Global Setting",
-                    subtitle:
-                        "${ss.settings.privateManualMarkAsRead.value ? "Automatic " : ""}Read Receipts ${ss.settings.privateMarkChatAsRead.value ? "Enabled" : "Disabled"}",
-                    initialVal: chat.autoSendReadReceipts == null,
-                    onChanged: (value) {
-                      if (!value) {
-                        chat.toggleAutoRead(ss.settings.privateMarkChatAsRead.value);
-                      } else {
-                        chat.toggleAutoRead(null);
-                      }
-                      setState(() {});
-                    },
-                  ),
+                  Obx(() => SettingsSwitch(
+                      title: "Follow Global Setting",
+                      subtitle:
+                          "${ss.settings.privateManualMarkAsRead.value ? "Automatic " : ""}Read Receipts ${ss.settings.privateMarkChatAsRead.value ? "Enabled" : "Disabled"}",
+                      initialVal: chat.observables.autoSendReadReceipts.value == null,
+                      onChanged: (value) {
+                        chat.toggleAutoRead(value ? null : ss.settings.privateMarkChatAsRead.value);
+                      },
+                  )),
                 if ((!kIsWeb && !chat.isGroup && ss.settings.enablePrivateAPI.value) || chat.isGroup)
                   const SettingsDivider(),
                 if (chat.isGroup)
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     title: "Lock Chat Name",
                     subtitle: "Keep the current chat name on this device, even if someone else in the chat changes it",
                     initialVal: chat.lockChatName,
-                    onChanged: (value) {
-                      chat.lockChatName = value;
-                      chat.save(updateLockChatName: true);
-                      setState(() {});
-                    },
-                  ),
+                    onChanged: chat.toggleLockChatName
+                  )),
                 if (chat.isGroup)
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     title: "Lock Chat Icon",
                     subtitle: "Keep the current chat icon on this device, even if someone else in the chat changes it",
                     initialVal: chat.lockChatIcon,
-                    onChanged: (value) {
-                      chat.lockChatIcon = value;
-                      chat.save(updateLockChatIcon: true);
-                      setState(() {});
-                    },
-                  ),
+                    onChanged: chat.toggleLockChatIcon
+                  )),
                 if (chat.isGroup) const SettingsDivider(),
                 if (!kIsWeb)
                   Obx(() => SettingsSwitch(
                     title: "Pin Conversation",
-                    initialVal: chat.isPinned,
-                    onChanged: (value) {
-                      GlobalChatService.togglePinStatus(widget.chatGuid);
-                    },
+                    initialVal: chat.observables.isPinned.value,
+                    onChanged: chat.toggleIsPinned,
                     backgroundColor: tileColor,
                   )),
                 if (!kIsWeb)
                   Obx(() => SettingsSwitch(
                     title: "Mute Conversation",
-                    initialVal: rChat.muteType.value == "mute",
-                    onChanged: (value) {
-                      GlobalChatService.toggleMuteStatus(widget.chatGuid, muteType: value ? "mute" : "");
-                    },
+                    initialVal: chat.observables.muteType.value == "mute",
+                    onChanged: (value) => chat.toggleMuteType(value ? "mute" : null),
                     backgroundColor: tileColor,
                   )),
                 if (!kIsWeb)
                   Obx(() => SettingsSwitch(
                     title: "Archive Conversation",
-                    initialVal: rChat.isArchived.value,
-                    onChanged: (value) {
-                      GlobalChatService.toggleArchivedStatus(widget.chatGuid, isArchived: value);
-                    },
+                    initialVal: chat.observables.isArchived.value,
+                    onChanged: chat.toggleIsArchived,
                     backgroundColor: tileColor,
                   )),
                 if (!kIsWeb)

@@ -49,8 +49,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
         await File(chat.customAvatarPath!).delete();
       }
       await file.writeAsBytes(croppedData);
-      chat.customAvatarPath = file.path;
-      chat.save(updateCustomAvatarPath: true);
+      chat.setCustomAvatar(file.path);
       Get.back();
       Navigator.of(context).pop();
       showSnackbar("Notice", "Custom chat avatar saved successfully");
@@ -63,8 +62,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
         await File(widget.chat!.customAvatarPath!).delete();
       }
       await file.writeAsBytes(croppedData);
-      widget.chat!.customAvatarPath = file.path;
-      widget.chat!.save(updateCustomAvatarPath: true);
+      widget.chat!.setCustomAvatar(file.path);
       Get.back();
       Navigator.of(context).pop(widget.chat!.customAvatarPath);
       showSnackbar("Notice", "Custom chat avatar saved successfully");

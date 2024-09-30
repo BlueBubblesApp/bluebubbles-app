@@ -456,11 +456,11 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                                                   color: context.theme.colorScheme.tertiaryContainer,
                                                 ),
                                               ),
-                                              Text(
-                                                " ${chat.title ?? "Recipient"} has notifications silenced",
+                                              Obx(() => Text(
+                                                " ${chat.observables.title.value ?? "Recipient"} has notifications silenced",
                                                 style:
                                                     context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.tertiaryContainer),
-                                              ),
+                                              )),
                                             ],
                                           ),
                                           Obx(() {

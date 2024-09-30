@@ -64,10 +64,10 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
           );
         }
 
-        return Container(
+        return Obx(() => Container(
           width: avatarSize,
           height: avatarSize,
-          child: chat.participants.length > 1
+          child: chat.observables.participants.length > 1
               ? ThemeSwitcher(
                   iOSSkin: Stack(
                     children: [
@@ -80,10 +80,10 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                         ),
                       ),
                       ...List.generate(
-                        min(chat.participants.length, maxAvatars),
+                        min(chat.observables.participants.length, maxAvatars),
                         (index) {
                           // Trig really paying off here
-                          int realLength = min(chat.participants.length, maxAvatars);
+                          int realLength = min(chat.observables.participants.length, maxAvatars);
                           double padding = avatarSize * 0.08;
                           double angle = index / realLength * 2 * pi + pi / 4;
                           double adjustedWidth = avatarSize * (-0.07 * realLength + 1);
@@ -93,7 +93,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                           double right = (avatarSize / 2) + (innerRadius / 2) * cos(angle + pi) - size / 2;
 
                           // indicate more users than shown
-                          if (index == maxAvatars - 1 && chat.participants.length > maxAvatars) {
+                          if (index == maxAvatars - 1 && chat.observables.participants.length > maxAvatars) {
                             return Positioned(
                               top: top,
                               right: right,
@@ -127,8 +127,8 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                             top: top,
                             right: right,
                             child: ContactAvatarWidget(
-                              key: Key("${chat.participants[index].address}-contact-avatar-group-widget"),
-                              handle: chat.participants[index],
+                              key: Key("${chat.observables.participants[index].address}-contact-avatar-group-widget"),
+                              handle: chat.observables.participants[index],
                               size: size,
                               borderThickness: avatarSize * 0.01,
                               fontSize: adjustedWidth * 0.3,
@@ -141,12 +141,12 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                     ],
                   ),
                   materialSkin: Stack(
-                    children: List.generate(min(chat.participants.length, 4), (index) => Align(
-                      alignment: materialGeneration[min(chat.participants.length, 4)][2][index],
+                    children: List.generate(min(chat.observables.participants.length, 4), (index) => Align(
+                      alignment: materialGeneration[min(chat.observables.participants.length, 4)][2][index],
                       child: ContactAvatarWidget(
-                        handle: chat.participants[index],
-                        size: avatarSize * materialGeneration[min(chat.participants.length, 4)][0],
-                        fontSize: avatarSize * materialGeneration[min(chat.participants.length, 4)][1],
+                        handle: chat.observables.participants[index],
+                        size: avatarSize * materialGeneration[min(chat.observables.participants.length, 4)][0],
+                        fontSize: avatarSize * materialGeneration[min(chat.observables.participants.length, 4)][1],
                         editable: widget.editable,
                         scaleSize: false,
                       ),
@@ -154,7 +154,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                   ),
                 )
               : ContactAvatarWidget(
-                  handle: chat.participants.first,
+                  handle: chat.observables.participants.first,
                   borderThickness: 0.1,
                   size: avatarSize,
                   preferHighResAvatar: true,
@@ -162,7 +162,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                   editable: widget.editable,
                   scaleSize: false,
                 ),
-        );
+        ));
       },
     );
   }
