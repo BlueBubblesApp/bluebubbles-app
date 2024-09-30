@@ -131,36 +131,16 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
                   child: Container(
                     height: 65,
                     padding: const EdgeInsets.only(right: 4.5, bottom: 9),
-                    child: FloatingActionButton.extended(
+                    child: FloatingActionButton(
                       backgroundColor: context.theme.colorScheme.primaryContainer,
-                      label: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 150),
-                        transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
-                          child: child,
-                          sizeFactor: animation,
-                          axis: Axis.horizontal,
-                        ),
-                        child: controller.showMaterialFABText ? Padding(
-                          padding: const EdgeInsets.only(left: 6.0),
-                          child: Text(
-                            "Start chat",
-                            style: TextStyle(
-                              color: context.theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ) : const SizedBox.shrink(),
-                      ),
-                      extendedIconLabelSpacing: 0,
-                      icon: Padding(
+                      shape: const CircleBorder(),
+                      child: Padding(
                         padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                         child: Icon(
                           CupertinoIcons.bubble_left,
                           color: context.theme.colorScheme.onPrimaryContainer,
                           size: 24,
                         ),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(17),
                       ),
                       onPressed: () => controller.openNewChatCreator(context),
                     ),
