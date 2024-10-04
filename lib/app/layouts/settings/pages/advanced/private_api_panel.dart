@@ -3,7 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reacti
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -122,13 +122,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                           ),
                         ),
                       if (ss.settings.serverPrivateAPI.value != true)
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        const SettingsDivider(),
                       Obx(
                         () => SettingsSwitch(
                           onChanged: (bool val) async {
@@ -163,19 +157,18 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             title: "Send Typing Indicators",
                             subtitle: "Sends typing indicators to other iMessage users",
                             backgroundColor: tileColor,
+                            leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.keyboard_chevron_compact_down,
+                              materialIcon: Icons.keyboard_alt_outlined,
+                              containerColor: Colors.green,
+                            ),
                           ),
                           AnimatedSizeAndFade(
                             child: !ss.settings.privateManualMarkAsRead.value
                                 ? Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Container(
-                                        color: tileColor,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 15.0),
-                                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                        ),
-                                      ),
+                                      const SettingsDivider(),
                                       SettingsSwitch(
                                         onChanged: (bool val) {
                                           ss.settings.privateMarkChatAsRead.value = val;
@@ -190,6 +183,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
                                         backgroundColor: tileColor,
                                         isThreeLine: true,
+                                        leading: const SettingsLeadingIcon(
+                                          iosIcon: CupertinoIcons.rectangle_fill_badge_checkmark,
+                                          materialIcon: Icons.playlist_add_check,
+                                          containerColor: Colors.blueAccent,
+                                        )
                                       ),
                                     ],
                                   )
@@ -200,13 +198,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateManualMarkAsRead.value = val;
@@ -217,17 +209,16 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   subtitle: "Only mark a chat read when pressing the manual mark read button",
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.check_mark_circled,
+                                    materialIcon: Icons.check_circle_outline,
+                                    containerColor: Colors.orange,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          Container(
-                            color: tileColor,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 15.0),
-                              child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                            ),
-                          ),
+                          const SettingsDivider(),
                           SettingsSwitch(
                             title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
                             initialVal: ss.settings.enableQuickTapback.value,
@@ -241,6 +232,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             subtitle: "Send a tapback of your choosing when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
                             backgroundColor: tileColor,
                             isThreeLine: true,
+                            leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.rays,
+                              materialIcon: Icons.touch_app_outlined,
+                              containerColor: Colors.purple,
+                            ),
                           ),
                           AnimatedSizeAndFade.showHide(
                             show: ss.settings.enableQuickTapback.value,
@@ -327,13 +323,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   title: "Up Arrow for Quick Edit",
                                   initialVal: ss.settings.editLastSentMessageOnUpArrow.value,
@@ -343,6 +333,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   },
                                   subtitle: "Press the Up Arrow to begin editing the last message you sent",
                                   backgroundColor: tileColor,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.arrow_up_square,
+                                    materialIcon: Icons.arrow_circle_up,
+                                    containerColor: Colors.redAccent,
+                                  ),
                                 ),
                               ],
                             ),
@@ -352,13 +347,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateSubjectLine.value = val;
@@ -366,7 +355,14 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   },
                                   initialVal: ss.settings.privateSubjectLine.value,
                                   title: "Send Subject Lines",
+                                  subtitle: "Show the subject line field when sending a message",
                                   backgroundColor: tileColor,
+                                  isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.textformat,
+                                    materialIcon: Icons.text_format_rounded,
+                                    containerColor: Colors.blueAccent,
+                                  ),
                                 ),
                               ],
                             ),
@@ -376,13 +372,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateAPISend.value = val;
@@ -393,6 +383,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   subtitle: "Send regular iMessages using the Private API for much faster speed",
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.bubble_right,
+                                    materialIcon: Icons.chat_bubble_outline,
+                                    containerColor: Colors.green,
+                                  ),
                                 ),
                               ],
                             ),
@@ -402,13 +397,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 15.0),
-                                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                  ),
-                                ),
+                                const SettingsDivider(),
                                 SettingsSwitch(
                                   onChanged: (bool val) {
                                     ss.settings.privateAPIAttachmentSend.value = val;
@@ -419,6 +408,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   subtitle: "Send attachments using the Private API",
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
+                                  leading: const SettingsLeadingIcon(
+                                    iosIcon: CupertinoIcons.paperclip,
+                                    materialIcon: Icons.attach_file_outlined,
+                                    containerColor: Colors.teal,
+                                  ),
                                 ),
                               ],
                             ),

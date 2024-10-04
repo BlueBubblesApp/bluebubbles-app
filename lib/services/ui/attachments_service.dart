@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:exif/exif.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
@@ -22,8 +22,7 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vcf_dart/vcf_dart.dart';
-import 'package:video_thumb_getter/index.dart';
-import 'package:video_thumb_getter/video_thumbnail.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<AttachmentsService>() : Get.put(AttachmentsService());
 
@@ -116,7 +115,7 @@ class AttachmentsService extends GetxService {
     );
     try {
       // contact_card.dart does real avatar parsing since no plugins can parse the photo correctly when the base64 is multiline
-      c.avatar = (isNullOrEmpty(contact.findFirstProperty(VConstants.photo)?.values.firstOrNull)! ? null : [0]) as Uint8List?;
+      c.avatar = (isNullOrEmpty(contact.findFirstProperty(VConstants.photo)?.values.firstOrNull) ? null : [0]) as Uint8List?;
     } catch (_) {}
     return c;
   }
@@ -219,17 +218,21 @@ class AttachmentsService extends GetxService {
           lockParentWindow: true,
         );
       } else {
-        if (!isDocument) {
-          try {
-            if (file.path == null && file.bytes != null) {
-              await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
-            } else {
-              await SaverGallery.saveFile(file: file.path!, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
-            }
-            return showSnackbar('Success', 'Saved attachment to gallery!');
-          } catch (_) {}
+        if (file.name.endsWith(".mov")) {
+          savePath = join("/storage/emulated/0/", ss.settings.autoSavePicsLocation.value);
+        } else {
+          if (!isDocument) {
+            try {
+              if (file.path == null && file.bytes != null) {
+                await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+              } else {
+                await SaverGallery.saveFile(file: file.path!, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+              }
+              return showSnackbar('Success', 'Saved attachment to gallery!');
+            } catch (_) {}
+          }
+          savePath = ss.settings.autoSaveDocsLocation.value;
         }
-        savePath = ss.settings.autoSaveDocsLocation.value;
       }
 
       if (savePath != null) {
@@ -260,15 +263,15 @@ class AttachmentsService extends GetxService {
   Future<void> redownloadAttachment(Attachment attachment, {Function(PlatformFile)? onComplete, Function()? onError}) async {
     if (!kIsWeb) {
       final file = File(attachment.path);
-      final jpgFile = File(attachment.convertedPath);
+      final pngFile = File(attachment.convertedPath);
       final thumbnail = File("${attachment.path}.thumbnail");
-      final jpgThumbnail = File("${attachment.convertedPath}.thumbnail");
+      final pngThumbnail = File("${attachment.convertedPath}.thumbnail");
 
       try {
         await file.delete();
-        await jpgFile.delete();
+        await pngFile.delete();
         await thumbnail.delete();
-        await jpgThumbnail.delete();
+        await pngThumbnail.delete();
       } catch(_) {}
     }
 
@@ -299,20 +302,19 @@ class AttachmentsService extends GetxService {
 
     final thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
-      imageFormat: ImageFormat.JPEG,
+      imageFormat: ImageFormat.PNG,
+      maxWidth: 128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
       quality: 25,
     );
-    if (!isNullOrEmpty(thumbnail)!) {
-      return thumbnail;
-    } else {
-      if (useCachedFile) {
-        await cachedFile.writeAsBytes(thumbnail);
-      }
-      return thumbnail;
+
+    if (!isNullOrEmpty(thumbnail) && useCachedFile) {
+      await cachedFile.writeAsBytes(thumbnail!);
     }
+
+    return thumbnail;
   }
 
-  Future<Uint8List?> loadAndGetProperties(Attachment attachment, {bool onlyFetchData = false, String? actualPath}) async {
+  Future<Uint8List?> loadAndGetProperties(Attachment attachment, {bool onlyFetchData = false, String? actualPath, bool isPreview = false}) async {
     if (kIsWeb || attachment.mimeType == null || !["image", "video"].contains(attachment.mimeStart)) return null;
 
     final filePath = actualPath ?? attachment.path;
@@ -323,29 +325,40 @@ class AttachmentsService extends GetxService {
 
     // Handle getting heic and tiff images
     if (attachment.mimeType!.contains('image/hei') && !kIsDesktop) {
-      if (await File("$filePath.jpg").exists()) {
-        originalFile = File("$filePath.jpg");
+      if (await File("$filePath.png").exists()) {
+        originalFile = File("$filePath.png");
       } else {
         try {
-          final file = await FlutterImageCompress.compressAndGetFile(
-            filePath,
-            "$filePath.jpg",
-            format: CompressFormat.jpeg,
-            keepExif: true,
-            quality: 100,
-          );
-          if (file == null) {
-            Logger.error("Failed to compress HEIC!");
-            throw Exception();
+          if (onlyFetchData) {
+            return await FlutterImageCompress.compressWithFile(
+              filePath,
+              format: CompressFormat.png,
+              keepExif: true,
+              quality: isPreview ? 25 : 100,
+            );
+          } else {
+            final file = await FlutterImageCompress.compressAndGetFile(
+              filePath,
+              "$filePath.png",
+              format: CompressFormat.png,
+              keepExif: true,
+              quality: isPreview ? 25 : 100,
+            );
+
+            if (file == null) {
+              Logger.error("Failed to compress HEIC!");
+              throw Exception();
+            }
+  
+            originalFile = File("$filePath.png");
           }
-          if (onlyFetchData) return await file.readAsBytes();
-          originalFile = File("$filePath.jpg");
         } catch (_) {}
       }
     }
+
     if (attachment.mimeType!.contains('image/tif')) {
-      if (await File("$filePath.jpg").exists()) {
-        originalFile = File("$filePath.jpg");
+      if (await File("$filePath.png").exists()) {
+        originalFile = File("$filePath.png");
       } else {
         final receivePort = ReceivePort();
         await Isolate.spawn(
@@ -363,7 +376,7 @@ class AttachmentsService extends GetxService {
         final image = await receivePort.first as Uint8List?;
         if (onlyFetchData) return image;
         if (image != null) {
-          final cacheFile = File("$filePath.jpg");
+          final cacheFile = File("$filePath.png");
           originalFile = await cacheFile.writeAsBytes(image);
         } else {
           return null;
@@ -382,8 +395,8 @@ class AttachmentsService extends GetxService {
             attachment.height = size.height.toInt();
           }
           attachment.save(null);
-        } catch (ex) {
-          Logger.error('Failed to get GIF dimensions! Error: ${ex.toString()}');
+        } catch (ex, stack) {
+          Logger.error('Failed to get GIF dimensions!', error: ex, trace: stack);
         }
       } else if (attachment.mimeStart == "image") {
         try {
@@ -393,8 +406,8 @@ class AttachmentsService extends GetxService {
             attachment.height = size.height.toInt();
           }
           attachment.save(null);
-        } catch (ex) {
-          Logger.error('Failed to get Image Properties! Error: ${ex.toString()}');
+        } catch (ex, stack) {
+          Logger.error('Failed to get Image Properties!', error: ex, trace: stack);
         }
       }
     }
@@ -409,8 +422,8 @@ class AttachmentsService extends GetxService {
           attachment.metadata![item.key] = item.value.printable;
         }
         attachment.save(null);
-      } catch (ex) {
-        Logger.error('Failed to read EXIF data: ${ex.toString()}');
+      } catch (ex, stack) {
+        Logger.error('Failed to read EXIF data!', error: ex, trace: stack);
       }
     }
 

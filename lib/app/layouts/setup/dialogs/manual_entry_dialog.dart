@@ -1,8 +1,9 @@
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/connecting_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -67,9 +68,9 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
       return;
     }
 
-    ss.settings.serverAddress.value = addr;
     ss.settings.guidAuthKey.value = password;
-    ss.settings.save();
+    await saveNewServerUrl(addr, restartSocket: false, force: true, saveAdditionalSettings: ["guidAuthKey"]);
+
     try {
       socket.restartSocket();
     } catch (e) {
@@ -84,7 +85,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     // we get 200 from the API.
     http.fcmClient().then((response) {
       Map<String, dynamic>? data = response.data["data"];
-      if (!isNullOrEmpty(data)!) {
+      if (!isNullOrEmpty(data)) {
         FCMData newData = FCMData.fromMap(data!);
         ss.saveFCMData(newData);
       }
@@ -190,6 +191,11 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
             },
           ),
         ],
+      );
+    } else if (error == 'Google Services file not found.') {
+      return const FailedToScanDialog(
+        title: "Connected! However...",
+        exception: 'Google Services file not found! If you plan to use Firebase for notifications, please setup Firebase via the BlueBubbles Server.'
       );
     } else if (error != null) {
       return FailedToScanDialog(

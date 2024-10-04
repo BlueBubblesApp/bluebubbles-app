@@ -1,13 +1,14 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/custom_avatar_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced_theming_panel.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -53,12 +54,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
 
   @override
   Widget build(BuildContext context) {
-    Widget nextIcon = Obx(() => ss.settings.skin.value != Skins.Material ? Icon(
-      ss.settings.skin.value != Skins.Material ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-      color: context.theme.colorScheme.outline,
-      size: iOS ? 18 : 24,
-    ) : const SizedBox.shrink());
-
     return Obx(
       () => SettingsScaffold(
         title: "Theming & Styles",
@@ -88,18 +83,12 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       secondaryColor: headerColor,
                     ),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Advanced Theming",
                         subtitle: "Customize app colors and font sizes with custom themes\n${ThemeStruct.getLightTheme().name}   |   ${ThemeStruct.getDarkTheme().name}",
-                        trailing: nextIcon,
+                        trailing: const NextButton(),
                         isThreeLine: true,
                         onTap: () async {
                           Navigator.of(context).push(
@@ -109,13 +98,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           );
                         },
                       ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Container(
                       padding: const EdgeInsets.only(left: 15, top: 10),
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
@@ -160,13 +143,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       secondaryColor: headerColor,
                     )),
                     if (!kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
@@ -182,13 +159,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         isThreeLine: true,
                       )),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
@@ -337,13 +308,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         },
                       )),
                     if (kIsDesktop && Platform.isWindows)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
                       Obx(() {
                         if (iOS) {
@@ -391,13 +356,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                           onChanged: (bool val) async {
@@ -450,13 +409,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme. Media art with mostly blacks or whites may not produce any change in theming.",
                       ),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
                         ss.settings.colorfulAvatars.value = val;
@@ -467,13 +420,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       backgroundColor: tileColor,
                       subtitle: "Gives letter avatars a splash of color",
                     )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
                         ss.settings.colorfulBubbles.value = val;
@@ -485,17 +432,11 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       subtitle: "Gives received message bubbles a splash of color",
                     )),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Custom Avatar Colors",
-                        trailing: nextIcon,
+                        trailing: const NextButton(),
                         onTap: () async {
                           ns.pushSettings(
                             context,
@@ -505,17 +446,11 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         subtitle: "Customize the color for different avatars",
                       ),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Custom Avatars",
-                        trailing: nextIcon,
+                        trailing: const NextButton(),
                         onTap: () async {
                           ns.pushSettings(
                             context,
@@ -607,7 +542,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                       children: <Widget>[
                                         Obx(
                                               () => Text(
-                                              '${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)} (${((controller.progress.value ?? 0) * 100).floor()}%)',
+                                              '${controller.progress.value != null && controller.totalSize.value != null ? (controller.progress.value! * controller.totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((controller.totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()} (${((controller.progress.value ?? 0) * 100).floor()}%)',
                                               style: context.theme.textTheme.bodyLarge),
                                         ),
                                         const SizedBox(height: 10.0),
@@ -659,9 +594,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                     controller.totalSize.value = total;
                                   }
                                 },
-                              ).catchError((err) {
-                                Logger.error(err.toString());
-                                showSnackbar("Error", "Failed to fetch font");
+                              ).catchError((err, stack) {
+                                Logger.error("Failed to fetch font!", error: err, trace: stack);
+                                showSnackbar("Error", "Failed to fetch font! Error: ${err.toString()}");
                                 return Response(requestOptions: RequestOptions(path: ''));
                               });
                               Get.back();
@@ -680,16 +615,16 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                   );
                                   await fontLoader.load();
                                   showSnackbar("Notice", "Font loaded");
-                                } catch (e) {
-                                  Logger.error(e);
-                                  showSnackbar("Error", "Something went wrong");
+                                } catch (e, stack) {
+                                  Logger.error("Failed to load font!", error: e, trace: stack);
+                                  showSnackbar("Error", "Failed to load font! Error: ${e.toString()}");
                                 }
                               } else {
                                 showSnackbar("Error", "Failed to fetch font");
                               }
                             },
                             title:
-                            kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
+                            kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? (controller.progress.value! * controller.totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((controller.totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
                             subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
                           );
                         } else {

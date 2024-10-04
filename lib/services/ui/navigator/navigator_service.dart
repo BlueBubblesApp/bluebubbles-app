@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,9 @@ class NavigatorService extends GetxService {
   set maxWidthLeft(double w) => _widthChatListLeft = w;
   set maxWidthRight(double w) => _widthChatListRight = w;
   set maxWidthSettings(double w) => _widthSettings = w;
+
+  /// Returns widthChatListLeft if in tablet mode, and 0 otherwise
+  double widthChatListLeft(BuildContext context) => isTabletMode(context) ? _widthChatListLeft ?? 0 : 0;
 
   bool isTabletMode(BuildContext context) => (!context.isPhone || context.width / context.height > 0.8) &&
       ss.settings.tabletMode.value && context.width > 600;
@@ -83,8 +87,10 @@ class NavigatorService extends GetxService {
       {bool closeActiveChat = true, PageRoute? customRoute}) async {
     if (Get.keys.containsKey(2) && isTabletMode(context)) {
       if (closeActiveChat && cm.activeChat != null) {
+        Logger.debug("Closing active chat: ${cm.activeChat!.chat.guid}", tag: "NavigatorService");
         cvc(cm.activeChat!.chat).close();
       }
+
       await Get.offUntil(
           GetPageRoute(
             page: () => widget,

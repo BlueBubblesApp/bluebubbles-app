@@ -55,7 +55,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         // check if the message has already been posted as a notification
         val notificationPostedAlready = notificationManager.activeNotifications.firstOrNull { it.notification.extras.getString("chatGuid") == chatGuid && it.notification.extras.getString("messageGuid") == messageGuid } != null
         // this is used to copy the style, since the notification already exists
-        val chatNotification = notificationManager.activeNotifications.lastOrNull { it.notification.extras.getString("chatGuid") == chatGuid }
+        val chatNotification = notificationManager.activeNotifications.lastOrNull { it.notification.extras.getString("chatGuid") == chatGuid && it.notification.extras.getString("channelId") == channelId }
         // don't double post a notification
         if (notificationPostedAlready) return result.success(null)
 
@@ -84,6 +84,8 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         val extras = Bundle()
         extras.putString("chatGuid", chatGuid)
         extras.putString("messageGuid", messageGuid)
+        extras.putString("channelId", channelId)
+        extras.putString("tag", Constants.newMessageNotificationTag)
 
         // intent to open the conversation in-app
         val openConversationIntent = PendingIntent.getActivity(

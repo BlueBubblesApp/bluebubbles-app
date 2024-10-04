@@ -26,12 +26,9 @@ class SamsungConversationList extends StatefulWidget {
 class _SamsungConversationListState extends OptimizedState<SamsungConversationList> {
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
-  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
-      ? headerColor
-      : Colors.transparent;
-  Color get _tileColor => ss.settings.windowEffect.value == WindowEffect.disabled
-      ? tileColor
-      : Colors.transparent;
+  Color get backgroundColor =>
+      ss.settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent;
+  Color get _tileColor => ss.settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent;
   ConversationListController get controller => widget.parentController;
 
   @override
@@ -53,92 +50,74 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
         if (controller.selectedChats.isNotEmpty) {
           controller.clearSelectedChats();
           return;
+        } else if (controller.showArchivedChats || controller.showUnknownSenders) {
+          // Pop the current page
+          Navigator.of(context).pop();
         }
       },
       child: Scaffold(
         backgroundColor: backgroundColor,
-        floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
-            && !showArchived && !showUnknown
+        floatingActionButton: !showArchived && !showUnknown
             ? ConversationListFAB(parentController: controller)
-            : const SizedBox.shrink()),
+            : const SizedBox.shrink(),
         body: SafeArea(
           child: NotificationListener<ScrollEndNotification>(
             onNotification: (_) {
               if (kIsWeb || kIsDesktop) return false;
               final scrollDistance = context.height / 3 - 57;
-              if (controller.samsungScrollController.offset > 0
-                  && controller.samsungScrollController.offset < scrollDistance
-                  && controller.samsungScrollController.offset != controller.samsungScrollController.position.maxScrollExtent) {
-                final double snapOffset = controller.samsungScrollController.offset / scrollDistance > 0.5 ? scrollDistance : 0;
+              if (controller.samsungScrollController.offset > 0 &&
+                  controller.samsungScrollController.offset < scrollDistance &&
+                  controller.samsungScrollController.offset !=
+                      controller.samsungScrollController.position.maxScrollExtent) {
+                final double snapOffset =
+                    controller.samsungScrollController.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
-                Future.microtask(
-                        () => controller.samsungScrollController.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
+                Future.microtask(() => controller.samsungScrollController
+                    .animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
               }
               return false;
             },
             child: ScrollbarWrapper(
               showScrollbar: true,
               controller: controller.samsungScrollController,
-                child: Obx(() {
-                  final _chats = chats.chats
-                      .archivedHelper(controller.showArchivedChats)
-                      .unknownSendersHelper(controller.showUnknownSenders);
+              child: Obx(() {
+                final _chats = chats.chats
+                    .archivedHelper(controller.showArchivedChats)
+                    .unknownSendersHelper(controller.showUnknownSenders);
 
-                  return CustomScrollView(
-                    physics: ThemeSwitcher.getScrollPhysics(),
-                    controller: controller.samsungScrollController,
-                    slivers: [
-                      SamsungHeader(parentController: controller),
-
-                      if (!chats.loadedChatBatch.value || _chats.bigPinHelper(false).isEmpty)
-                        SliverToBoxAdapter(
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 50),
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      !chats.loadedChatBatch.value
-                                          ? "Loading chats..."
-                                          : showArchived
-                                          ? "You have no archived chats"
-                                          : showUnknown
-                                          ? "You have no messages from unknown senders :)"
-                                          : "You have no chats :(",
-                                      style: context.theme.textTheme.labelLarge,
-                                      textAlign: TextAlign.center,
-                                    ),
+                return CustomScrollView(
+                  physics: ThemeSwitcher.getScrollPhysics(),
+                  controller: controller.samsungScrollController,
+                  slivers: [
+                    SamsungHeader(parentController: controller),
+                    if (!chats.loadedChatBatch.value || _chats.bigPinHelper(false).isEmpty)
+                      SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 50),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    !chats.loadedChatBatch.value
+                                        ? "Loading chats..."
+                                        : showArchived
+                                            ? "You have no archived chats"
+                                            : showUnknown
+                                                ? "You have no messages from unknown senders :)"
+                                                : "You have no chats :(",
+                                    style: context.theme.textTheme.labelLarge,
+                                    textAlign: TextAlign.center,
                                   ),
-                                  if (!chats.loadedChatBatch.value)
-                                    buildProgressIndicator(context, size: 15),
-                                ],
-                              ),
+                                ),
+                                if (!chats.loadedChatBatch.value) buildProgressIndicator(context, size: 15),
+                              ],
                             ),
                           ),
                         ),
-
-                      if (_chats.bigPinHelper(true).isNotEmpty)
-                        SliverPadding(
-                          padding: const EdgeInsets.only(bottom: 15),
-                          sliver: SliverDecoration(
-                            color: _tileColor,
-                            borderRadius: BorderRadius.circular(25),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final chat = _chats.bigPinHelper(true)[index];
-                                  return ListItem(chat: chat, controller: controller, update: () {
-                                    setState(() {});
-                                  });
-                                },
-                                childCount: _chats.bigPinHelper(true).length,
-                              )
-                            ),
-                          ),
-                        ),
-
+                      ),
+                    if (_chats.bigPinHelper(true).isNotEmpty)
                       SliverPadding(
                         padding: const EdgeInsets.only(bottom: 15),
                         sliver: SliverDecoration(
@@ -146,19 +125,42 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                           borderRadius: BorderRadius.circular(25),
                           sliver: SliverList(
                               delegate: SliverChildBuilderDelegate(
-                                    (context, index) {
-                                  final chat = _chats.bigPinHelper(false)[index];
-                                  return ListItem(chat: chat, controller: controller, update: () {
+                            (context, index) {
+                              final chat = _chats.bigPinHelper(true)[index];
+                              return ListItem(
+                                  chat: chat,
+                                  controller: controller,
+                                  update: () {
                                     setState(() {});
                                   });
-                                },
-                                childCount: _chats.bigPinHelper(false).length,
-                              ),
+                            },
+                            childCount: _chats.bigPinHelper(true).length,
+                          )),
+                        ),
+                      ),
+                    SliverPadding(
+                      padding: const EdgeInsets.only(bottom: 15),
+                      sliver: SliverDecoration(
+                        color: _tileColor,
+                        borderRadius: BorderRadius.circular(25),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final chat = _chats.bigPinHelper(false)[index];
+                              return ListItem(
+                                  chat: chat,
+                                  controller: controller,
+                                  update: () {
+                                    setState(() {});
+                                  });
+                            },
+                            childCount: _chats.bigPinHelper(false).length,
                           ),
                         ),
                       ),
-                    ],
-                  );
+                    ),
+                  ],
+                );
               }),
             ),
           ),

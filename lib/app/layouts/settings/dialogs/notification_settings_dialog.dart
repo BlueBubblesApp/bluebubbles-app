@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -68,8 +68,10 @@ class NotificationSettingsDialog extends StatelessWidget {
                                     child: ListView.builder(
                                       shrinkWrap: true,
                                       itemCount: chat.participants.length,
+                                      findChildIndexCallback: (key) => findChildIndexByKey(chat.participants, key, (item) => item.address),
                                       itemBuilder: (context, index) {
                                         return CheckboxListTile(
+                                          key: ValueKey(chat.participants[index].address),
                                           value: existing
                                               .contains(chat.participants[index].address),
                                           onChanged: (val) {

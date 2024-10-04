@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
@@ -82,21 +83,22 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
       error = "Authentication failed. Incorrect password!";
       ss.settings.serverAddress.value = oldAddr;
       ss.settings.guidAuthKey.value = oldPassword;
-      ss.settings.save();
+      await ss.settings.saveMany(["serverAddress", "guidAuthKey"]);
       return setState(() {});
     }
     if (serverResponse?.statusCode != 200) {
       error = "Failed to connect to $addr! Please ensure your Server's URL is accessible from your device.";
       ss.settings.serverAddress.value = oldAddr;
       ss.settings.guidAuthKey.value = oldPassword;
-      ss.settings.save();
+      await ss.settings.saveMany(["serverAddress", "guidAuthKey"]);
       return setState(() {});
     }
 
     error = "";
     setState(() {});
 
-    ss.settings.save();
+    await saveNewServerUrl(addr, restartSocket: false, force: true, saveAdditionalSettings: ["guidAuthKey"]);
+
     try {
       socket.restartSocket();
     } catch (e) {
@@ -198,6 +200,7 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                                   child: ListView.builder(
                                     shrinkWrap: true,
                                     itemCount: usableProjects.length,
+                                    findChildIndexCallback: (key) => findChildIndexByKey(usableProjects, key, (item) => item['projectId']),
                                     itemBuilder: (context, index) {
                                       return Obx(() {
                                         if (!triedConnecting[index].value) {
@@ -212,6 +215,7 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                                           });
                                         }
                                         return ClipRRect(
+                                          key: ValueKey(usableProjects[index]['projectId']),
                                           clipBehavior: Clip.antiAlias,
                                           borderRadius: BorderRadius.circular(20),
                                           child: ListTile(
@@ -283,15 +287,15 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                 padding: const EdgeInsets.all(2),
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                     ),
-                    backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                    shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                    maximumSize: MaterialStateProperty.all(buttonSize),
-                    minimumSize: MaterialStateProperty.all(buttonSize),
+                    backgroundColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                    shadowColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                    maximumSize: WidgetStateProperty.all(buttonSize),
+                    minimumSize: WidgetStateProperty.all(buttonSize),
                   ),
                   onPressed: () async {
                     setState(() {
@@ -320,15 +324,15 @@ class _OauthPanelState extends OptimizedState<OauthPanel> {
                 width: buttonSize.width,
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                     ),
-                    backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                    shadowColor: MaterialStateProperty.all(Colors.transparent),
-                    maximumSize: MaterialStateProperty.all(buttonSize),
-                    minimumSize: MaterialStateProperty.all(buttonSize),
+                    backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                    shadowColor: WidgetStateProperty.all(Colors.transparent),
+                    maximumSize: WidgetStateProperty.all(buttonSize),
+                    minimumSize: WidgetStateProperty.all(buttonSize),
                   ),
                   onPressed: () async {
                     token = await googleOAuth(context);

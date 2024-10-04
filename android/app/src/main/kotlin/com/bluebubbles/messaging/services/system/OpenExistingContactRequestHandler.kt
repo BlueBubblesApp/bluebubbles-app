@@ -2,6 +2,7 @@ package com.bluebubbles.messaging.services.system
 
 import android.content.Context
 import android.content.Intent
+import android.os.CancellationSignal
 import android.provider.ContactsContract
 import androidx.core.content.ContentResolverCompat
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
@@ -21,7 +22,15 @@ class OpenExistingContactRequestHandler: MethodCallHandlerImpl() {
     ) {
         val contactId: String = call.argument("id")!!
         // perform a manual lookup even though we have a contact ID because there is no guarantee the actual content URI will be based off the ID
-        val cursor = ContentResolverCompat.query(context.contentResolver, ContactsContract.Contacts.CONTENT_URI, null, "${ContactsContract.Contacts._ID} = ?", arrayOf(contactId), null, null)
+        val cursor = ContentResolverCompat.query(
+            context.contentResolver,
+            ContactsContract.Contacts.CONTENT_URI,
+            null,
+            "${ContactsContract.Contacts._ID} = ?",
+            arrayOf(contactId),
+            null,
+            null as android.os.CancellationSignal?
+        )
         if (cursor != null) {
             cursor.moveToFirst()
             val contactIdLong: Long = cursor.getLong(cursor.getColumnIndexOrThrow(ContactsContract.Contacts._ID))

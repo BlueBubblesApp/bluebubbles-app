@@ -1,4 +1,5 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -47,8 +48,9 @@ class SettingsTile extends StatelessWidget {
             enableFeedback: true,
             minVerticalPadding: 10,
             horizontalTitleGap: 10,
+            dense: ss.settings.skin.value == Skins.iOS ? true : false,
             leading: leading == null ? null : Padding(
-              padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0),
+              padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0, right: 5, left: 5),
               child: leading,
             ),
             title: title != null ? Text(
@@ -66,7 +68,7 @@ class SettingsTile extends StatelessWidget {
             ),
             subtitle: subtitle != null ? Text(
               subtitle!,
-              style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: 1.5),
+              style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface.withOpacity(0.75), height: 1.5),
             ) : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
           ),
