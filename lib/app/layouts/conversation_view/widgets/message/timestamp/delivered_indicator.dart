@@ -21,7 +21,7 @@ class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
 
 class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, MessageWidgetController> {
   Message get message => controller.message;
-  bool get showAvatar => GlobalChatService.isGroupChat(controller.cvController?.chatGuid) || GlobalChatService.isGroupChat(GlobalChatService.activeGuid.value);
+  bool get showAvatar => controller.cvController?.chat.isGroup ?? GlobalChatService.activeChat?.isGroup ?? false;
 
   @override
   void initState() {

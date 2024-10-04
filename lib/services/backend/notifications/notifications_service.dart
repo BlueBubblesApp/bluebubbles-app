@@ -440,7 +440,8 @@ class NotificationsService extends GetxService {
         notificationCounts[guid] = 0;
 
         if (actions[index] == "Mark Read" || multiple) {
-          GlobalChatService.toggleReadStatus(guid, isUnread: false);
+          Chat chat = GlobalChatService.getChat(guid)!;
+          chat.toggleUnreadStatus(false);
         } else if (ss.settings.enablePrivateAPI.value) {
           String reaction = ReactionTypes.emojiToReaction[actions[index]]!;
           outq.queue(

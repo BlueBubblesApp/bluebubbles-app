@@ -124,6 +124,7 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
 Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, ChatGuid chatGuid, Offset tapPosition, TextTheme textTheme) async {
   bool ios = ss.settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
+  Chat chat = GlobalChatService.getChat(chatGuid)!;
   await showMenu(
     color: context.theme.colorScheme.properSurface,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ios ? 10 : 0)),
@@ -141,7 +142,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              GlobalChatService.togglePinStatus(chatGuid);
+              chat.toggleIsPinned(null);
               Navigator.pop(context);
             },
             child: Padding(
@@ -172,7 +173,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              GlobalChatService.toggleMuteStatus(chatGuid);
+              chat.toggleMuteType(null);
               Navigator.pop(context);
             },
             child: Padding(
@@ -202,7 +203,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
-            GlobalChatService.toggleReadStatus(chatGuid);
+            chat.toggleUnreadStatus(null);
             Navigator.pop(context);
           },
           child: Padding(
@@ -230,7 +231,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              GlobalChatService.toggleArchivedStatus(chatGuid);
+              chat.toggleIsArchived(null);
               Navigator.pop(context);
             },
             child: Padding(

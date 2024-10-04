@@ -30,7 +30,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                   style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                 onTap: () async {
                   Get.back();
-                  GlobalChatService.toggleMuteStatus(chatGuid);
+                  chat.toggleMuteType(null);
                   updateParent.call();
                   eventDispatcher.emit("refresh", null);
                 },
@@ -111,7 +111,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                                   return;
                                 }
 
-                                GlobalChatService.toggleMuteStatus(chatGuid, muteType: "mute_individuals", muteArgs: existing.join(","));
+                                chat.toggleMuteType("mute_individuals", muteArgs: existing.join(","));
                                 Get.back();
                                 updateParent.call();
                                 eventDispatcher.emit("refresh", null);
@@ -152,7 +152,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                       final finalDate = DateTime(messageDate.year, messageDate.month,
                           messageDate.day, messageTime.hour, messageTime.minute);
 
-                      GlobalChatService.toggleMuteStatus(chatGuid, muteType: "temporary_mute", muteArgs: finalDate.toIso8601String());
+                      chat.toggleMuteType("temporary_mute", muteArgs: finalDate.toIso8601String());
                       updateParent.call();
                       eventDispatcher.emit("refresh", null);
                     }
@@ -176,7 +176,8 @@ class NotificationSettingsDialog extends StatelessWidget {
                   context: context,
                   builder: (context) => TextDetectionDialog(controller)
                 );
-                GlobalChatService.toggleMuteStatus(chatGuid, muteType: "text_detection", muteArgs: controller.text);
+
+                chat.toggleMuteType("text_detection", muteArgs: controller.text);
                 updateParent.call();
                 eventDispatcher.emit("refresh", null);
               },

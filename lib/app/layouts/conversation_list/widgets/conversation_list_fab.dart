@@ -1,6 +1,8 @@
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/io/chat.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:objectbox/objectbox.dart';
 
 class ConversationListFAB extends CustomStateful<ConversationListController> {
   const ConversationListFAB({Key? key, required super.parentController});
@@ -84,7 +87,13 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
               color: context.theme.colorScheme.onPrimary,
               size: 25
             ),
-            onPressed: () => controller.openNewChatCreator(context)
+            // onPressed: () => controller.openNewChatCreator(context)
+            onPressed: () async {
+              // sync.startIncrementalSync();
+              final chats = Database.chats.getAll();
+              final chatLastMessage = await Chat.getLatestMessages(chats.map((e) => e.id!).toList(), order: 0);
+              GlobalChatService.syncChats(chatLastMessage, updateLatestMessage: true, test: true);
+            },
           ),
         ),
       ],

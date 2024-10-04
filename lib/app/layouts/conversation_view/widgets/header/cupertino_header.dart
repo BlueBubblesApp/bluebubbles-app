@@ -255,7 +255,7 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
                       style: context.textTheme.bodyMedium!.copyWith(
                           color: context.theme.colorScheme.onPrimary,
                           fontSize: _count > 99
-                              ? context.textTheme.bodyMedium!.fontSize! - 1.0
+                              ? context.textTheme.bodyMedium!.fontSize! - 3.0
                               : context.textTheme.bodyMedium!.fontSize),
                     ),
                   )));

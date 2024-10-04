@@ -68,17 +68,7 @@ class IGlobalChatService extends GetxService {
   /// Getter for the unread count.
   /// Calculates the unread count and upates the reactive variable if the count has changed.
   RxInt get unreadCount {
-    int count = 0;
-    for (Chat chat in _chatMap.values) {
-      if (chat.hasUnreadMessage) {
-        count++;
-      }
-    }
-
-    if (count != _unreadCount.value) {
-      _unreadCount.value = count;
-    }
-
+    updateUnreadCount();
     return _unreadCount;
   }
 
@@ -110,23 +100,26 @@ class IGlobalChatService extends GetxService {
   /// Resyncs all of the chats directly from the database.
   Future<void> reloadChats() async {
     final chats = await Database.chats.getAllAsync();
-    _syncChats(chats);
+    await syncChats(chats);
   }
 
   /// Syncs a list of [chats] with the global chat service.
   /// Updates the reactive chat objects accordingly, and therefore
   /// updates the UI as well.
-  void _syncChats(List<Chat> chats) {
+  Future<void> syncChats(List<Chat> chats, {bool updateLatestMessage = false, bool test = false}) async {
     Logger.info("Syncing ${chats.length} chats with Global Chat Service");
     final stopwatch = Stopwatch()..start();
 
+    bool isFirst = _chatMap.isEmpty;
+    List<Chat> updatedChats = [];
     for (Chat chat in chats) {
       // Save the chat globally
       if (!_chatMap.containsKey(chat.guid)) {
         _chatMap[chat.guid] = chat;
 
-        // Load the chat's last message
-        chat.latestMessage;
+        if (isFirst) {
+          chat.getTitle();
+        }
 
         sortChat(chat.guid);
       }
@@ -147,10 +140,38 @@ class IGlobalChatService extends GetxService {
 
       // Detect changes and make updates
       Chat existing = _chatMap[chat.guid]!;
-      _evaluateTitleInfo(chat, existing);
-      _evaluateUnreadInfo(chat, existing);
-      _evaluateMuteInfo(chat, existing);
-      _evaluateDeletedInfo(chat, existing);
+      List<bool> checks = [
+        _evaluateTitleInfo(chat, existing),
+        _evaluateUnreadInfo(chat, existing),
+        _evaluateMuteInfo(chat, existing),
+        _evaluateDeletedInfo(chat, existing),
+      ];
+
+      if (checks.any((element) => element)) {
+        updatedChats.add(existing);
+      }
+    }
+
+    if (isFirst || updateLatestMessage) {
+      List<Chat> chatLastMessages = await Chat.getLatestMessages(chats.map((e) => e.id!).toList());
+      print("GOT CHAT LAST MESSAGES: ${chatLastMessages.length}");
+      for (Chat c in chatLastMessages) {
+        Chat existingChat = _chatMap[c.guid]!;
+        bool updated = _evaluateLatestMessage(c, existingChat, force: test);
+        if (updated && !updatedChats.contains(existingChat)) {
+          updatedChats.add(existingChat);
+        }
+      }
+      print("EVALED");
+    }
+
+    if (updatedChats.isNotEmpty) {
+      print("SORTING CHATS");
+      for (Chat chat in updatedChats) {
+        sortChat(chat.guid);
+      }
+
+      Database.chats.putMany(updatedChats, mode: PutMode.update);
     }
 
     int newUnread = this.chats.where((chat) => chat.hasUnreadMessage).length;
@@ -165,32 +186,32 @@ class IGlobalChatService extends GetxService {
   /// Watches for changes to the Chat database.
   /// Whenever a change is detected, the chat list will be evaluated and updated accordingly.
   void watchForChatUpdates() {
-    final query = Database.chats.query().watch(triggerImmediately: false);
-    query.listen((event) async {
-      final chats = await event.findAsync();
-      _syncAllChats(chats);
-    });
+    // final query = Database.chats.query().watch(triggerImmediately: false);
+    // query.listen((event) async {
+    //   final chats = await event.findAsync();
+    //   _syncAllChats(chats);
+    // });
   }
 
   // The same as syncChats but with a debounce of 500ms
   void _syncAllChats(List<Chat> chats) {
     if (_syncAllDebounce?.isActive ?? false) _syncAllDebounce?.cancel();
     _syncAllDebounce = Timer(const Duration(milliseconds: 500), () {
-      _syncChats(chats);
+      syncChats(chats);
     });
   }
 
   /// Syncs a single [chat] with the global chat service.
-  void syncChat(Chat chat) {
-    _syncChats([chat]);
+  Future<void> syncChat(Chat chat) async {
+    await syncChats([chat]);
   }
 
   /// Syncs a single chat by the [guid] with the global chat service.
   /// Since you are passing a GUID, it will fetch the chat from the database.
-  void syncChatByGuid(String guid) {
-    final chat = Database.chats.query(Chat_.guid.equals(guid)).build().findFirst();
+  Future<void> syncChatByGuid(String guid) async {
+    final chat = await Database.chats.query(Chat_.guid.equals(guid)).build().findFirstAsync();
     if (chat != null) {
-      syncChat(chat);
+      await syncChat(chat);
     }
   }
 
@@ -234,56 +255,20 @@ class IGlobalChatService extends GetxService {
     return await chat.addMessage(message, changeUnreadStatus: changeUnreadStatus, checkForMessageText: checkForMessageText, clearNotificationsIfFromMe: clearNotificationsIfFromMe);
   }
 
-  /// Toggles the unread status of a chat by the [chatGuid].
-  /// Passing [isUnread] as true will mark the chat as unread,
-  /// and the UI will show that the chat is unread. Passing false
-  /// will mark the chat as read, and the UI will show that the chat is read.
-  void toggleReadStatus(ChatGuid chatGuid, {bool? isUnread, bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
-    final chat = _chatMap[chatGuid];
-    if (chat != null) {
-      chat.toggleUnreadStatus(isUnread, force: force, clearLocalNotifications: clearLocalNotifications, privateMark: privateMark);
-    }
-  }
-
-  bool isChatUnread(ChatGuid chatGuid) {
-    final chat = _chatMap[chatGuid];
-    if (chat == null) return false;
-    return chat.hasUnreadMessage;
-  }
-
-  void toggleMuteStatus(ChatGuid chatGuid, {String? muteType, String? muteArgs}) {
-    final chat = _chatMap[chatGuid];
-    if (chat != null) {
-      chat.toggleMuteType(muteType, muteArgs: muteArgs,);
-    }
-  }
-
-  void togglePinStatus(ChatGuid chatGuid, {bool? isPinned, int? pinIndex}) {
-    final chat = _chatMap[chatGuid];
-    if (chat != null) {
-      chat.toggleIsPinned(isPinned, pinIndex: pinIndex);
-    }
-  }
-
-  void toggleArchivedStatus(ChatGuid chatGuid, {bool? isArchived}) {
-    final chat = _chatMap[chatGuid];
-    if (chat != null) {
-      chat.toggleIsArchived(isArchived);
-    }
-  }
-
-  bool isChatMuted(ChatGuid chatGuid) {
-    final chat = _chatMap[chatGuid];
-    if (chat == null) return false;
-    return chat.muteType == "mute";
-  }
-
   void markAllAsRead() {
+    List<Chat> updated = [];
     for (Chat chat in _chatMap.values) {
       if (chat.hasUnreadMessage) {
-        toggleReadStatus(chat.guid, isUnread: false);
+        chat.toggleUnreadStatus(false, force: true, save: false);
+        updated.add(chat);
       }
     }
+
+    if (updated.isNotEmpty) {
+      Database.chats.putMany(updated, mode: PutMode.update);
+    }
+
+    updateUnreadCount();
   }
 
   removeChat(ChatGuid chatGuid, {bool softDelete = true, bool hardDelete = false}) {
@@ -318,19 +303,6 @@ class IGlobalChatService extends GetxService {
 
   sortAll() {
     chats.sort(Chat.sort);
-  }
-
-  isGroupChat(String? chatGuid) {
-    if (chatGuid == null) return false;
-    final chat = _chatMap[chatGuid];
-    if (chat == null) return false;
-    return chat.isGroup;
-  }
-
-  isChatPinned(ChatGuid chatGuid) {
-    final chat = _chatMap[chatGuid];
-    if (chat == null) return false;
-    return chat.isPinned;
   }
 
   updateLatestMessage(ChatGuid chatGuid) {
@@ -492,38 +464,77 @@ class IGlobalChatService extends GetxService {
     }).toList();
   }
 
+  void updateUnreadCount() {
+    int count = 0;
+    for (Chat chat in _chatMap.values) {
+      if (chat.hasUnreadMessage) {
+        count++;
+      }
+    }
+
+    if (count != _unreadCount.value) {
+      _unreadCount.value = count;
+    }
+  }
+
   /// Evaluates to see if a reactive [existingChat] needs to be updated with the [newChat] unread status.
-  void _evaluateUnreadInfo(Chat newChat, Chat existingChat) {    
+  bool _evaluateUnreadInfo(Chat newChat, Chat existingChat) {    
     // Set the default value
     if (existingChat.hasUnreadMessage != newChat.hasUnreadMessage && newChat.hasUnreadMessage) {
       Logger.debug("Updating Chat (${existingChat.guid}) Unread Status from ${existingChat.hasUnreadMessage} to ${newChat.hasUnreadMessage}");
-      existingChat.toggleUnreadStatus(newChat.hasUnreadMessage);
+      existingChat.toggleUnreadStatus(newChat.hasUnreadMessage, save: false);
+      return true;
     }
+
+    return false;
   }
 
   /// Evaluates to see if a reactive [existingChat] needs to be updated with the [newChat] mute type.
-  void _evaluateMuteInfo(Chat newChat, Chat existingChat) {
+  bool _evaluateMuteInfo(Chat newChat, Chat existingChat) {
     if (existingChat.muteType != newChat.muteType && newChat.muteType != null) {
       Logger.debug("Updating Chat (${newChat.guid}) Mute Type from ${existingChat.muteType} to ${newChat.muteType}");
-      existingChat.toggleMuteType(newChat.muteType);
+      existingChat.toggleMuteType(newChat.muteType, save: false);
+      return true;
     }
+
+    return false;
   }
 
   /// Evaluates to see if a reactive [existingChat] needs to be updated with the [newChat] title.
-  void _evaluateTitleInfo(Chat newChat, Chat existingChat) {
+  bool _evaluateTitleInfo(Chat newChat, Chat existingChat) {
     final newTitle = newChat.getTitle();
     if (existingChat.title != newTitle) {
       Logger.debug("Updating Chat (${newChat.guid}) Title from ${existingChat.title} to ${newChat.getTitle()}");
       existingChat.title = newTitle;
+      return true;
     }
+
+    return false;
   }
 
-  void _evaluateDeletedInfo(Chat newChat, Chat existingChat) {
+  bool _evaluateDeletedInfo(Chat newChat, Chat existingChat) {
     final isDeleted = (newChat.dateDeleted != null);
     if ((existingChat.dateDeleted != null) != isDeleted) {
       Logger.debug("Updating Chat (${newChat.guid}) Deleted Status from ${existingChat.dateDeleted != null} to $isDeleted");
-      existingChat.toggleIsDeleted(newChat.dateDeleted != null);
+      existingChat.toggleIsDeleted(newChat.dateDeleted != null, save: false);
+      return true;
     }
+
+    return false;
+  }
+
+  bool _evaluateLatestMessage(Chat newChat, Chat existingChat, {bool force = false}) {
+    if (force || (existingChat.latestMessage == null && newChat.latestMessage != null)) {
+      Logger.debug("Setting Chat (${newChat.guid}) Latest Message to ${newChat.latestMessage?.dateCreated}");
+      existingChat.setLatestMessage(newChat.latestMessage, force: true, save: false);
+      return true;
+    } else if (existingChat.latestMessage != null && newChat.latestMessage != null && newChat.latestMessage!.dateCreated.isAfter(existingChat.latestMessage!.dateCreated)) {
+      Logger.debug("Updating Chat (${newChat.guid}) Latest Message from ${existingChat.latestMessage!.dateCreated} to ${newChat.latestMessage!.dateCreated}");
+      existingChat.setLatestMessage(newChat.latestMessage!, force: true, save: false);
+      return true;
+    }
+
+    return false;
   }
 
   void dispose() {

@@ -222,11 +222,6 @@ class IncrementalSyncManager extends SyncManager {
       if (messageCount == 0) break;
       await syncMessages(messagesResponse.data['data'], total);
     }
-
-    // If we've synced chats, we should also update the latest message
-    if (syncedChats.isNotEmpty) {
-      await Chat.syncLatestMessages(syncedChats.values.toList(), true);
-    }
   }
 
   Future<void> syncMessages(List<dynamic> messages, int total) async {

@@ -306,13 +306,7 @@ class Chat {
   Message? _latestMessage;
 
   @Transient()
-  Message? get latestMessage {
-    if (_latestMessage != null) return _latestMessage!;
-    _latestMessage = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull;
-    return _latestMessage;
-  }
-
-  set latestMessage(Message? m) => _latestMessage = m;
+  Message? latestMessage;
 
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
@@ -351,6 +345,9 @@ class Chat {
   // Active means it's in the foreground
   @Transient()
   bool get isAlive => ls.isAlive && isOpen && !isObscured;
+
+  @Transient()
+  bool get isChatMuted => ["mute", "temporary_mute"].contains(muteType);
 
   Chat({
     this.id,
@@ -409,18 +406,22 @@ class Chat {
     );
   }
 
-  toggleMuteType(String? muteType, {String? muteArgs}) {
+  toggleMuteType(String? muteType, {String? muteArgs, bool save = true}) {
     if (id == null) return this;
-    final newMuteType = muteType ?? (this.muteType == "mute" ? null : "mute");
+    final newMuteType = muteType ?? (["mute", "temporary_mute"].contains(this.muteType) ? null : "mute");
     if (newMuteType == this.muteType) return;
 
     this.muteType = muteType;
     this.muteArgs = muteArgs;
     observables.muteType.value = muteType;
     observables.muteArgs.value = muteArgs;
+
+    if (save) {
+      this.save(updateMuteType: true, updateMuteArgs: true);
+    }
   }
 
-  toggleUnreadStatus(bool? isUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) {
+  toggleUnreadStatus(bool? isUnread, {bool force = false, bool clearLocalNotifications = true, bool privateMark = true, bool save = true}) {
     if (id == null) return this;
 
     // If no value is passed, they just want to change it to the opposite
@@ -437,7 +438,10 @@ class Chat {
     if (!isChatActive || !hasUnread || force) {
       hasUnreadMessage = hasUnread;
       observables.isUnread.value = hasUnread;
-      save(updateHasUnreadMessage: true);
+
+      if (save) {
+        this.save(updateHasUnreadMessage: true);
+      }
     }
 
     if (GlobalChatService.isChatActive(guid) && hasUnread && !force) {
@@ -445,25 +449,27 @@ class Chat {
       clearLocalNotifications = false;
     }
 
-    try {
-      if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
-        mcs.invokeMethod(
-          "delete-notification",
-          {
-            "notification_id": id,
-            "tag": NotificationsService.NEW_MESSAGE_TAG
-          }
-        );
-      }
-
-      if (privateMark && (autoSendReadReceipts ?? false)) {
-        if (!hasUnread) {
-          http.markChatRead(guid);
-        } else if (hasUnread) {
-          http.markChatUnread(guid);
+    Future.delayed(Duration.zero, () {
+      try {
+        if (clearLocalNotifications && !hasUnread && !ls.isBubble) {
+          mcs.invokeMethod(
+            "delete-notification",
+            {
+              "notification_id": id,
+              "tag": NotificationsService.NEW_MESSAGE_TAG
+            }
+          );
         }
-      }
-    } catch (_) {}
+
+        if (privateMark && (autoSendReadReceipts ?? false)) {
+          if (!hasUnread) {
+            http.markChatRead(guid);
+          } else if (hasUnread) {
+            http.markChatUnread(guid);
+          }
+        }
+      } catch (_) {}
+    });
   }
 
   toggleIsArchived(bool? isArchived) {
@@ -486,7 +492,7 @@ class Chat {
     save(updateIsArchived: true, updateIsPinned: newIsArchived, updatePinIndex: newIsArchived);
   }
 
-  toggleIsDeleted(bool? isDeleted) {
+  toggleIsDeleted(bool? isDeleted, {bool save = true}) {
     if (id == null) return this;
 
     final newIsDeleted = dateDeleted == null || isDeleted == true;
@@ -503,7 +509,9 @@ class Chat {
       observables.pinIndex.value = null;
     }
 
-    save(updateDateDeleted: true, updateIsPinned: newIsDeleted, updatePinIndex: newIsDeleted);
+    if (save) {
+      this.save(updateDateDeleted: true, updateIsPinned: newIsDeleted, updatePinIndex: newIsDeleted);
+    }
   }
 
   toggleAutoRead(bool? autoRead) {
@@ -602,17 +610,39 @@ class Chat {
     observables.setParticipants(value);
   }
 
-  setLatestMessage(Message msg, {bool force = false}) {
+  Message? getLatestMessage({bool force = false, bool save = true}) {
+    if (_latestMessage != null && !force) return _latestMessage;
+    Message? latest = Chat.getMessages(this, limit: 1, getDetails: true).firstOrNull;
+    if (latest != null && save) {
+      setLatestMessage(latest, force: force);
+    }
+
+    return _latestMessage;
+  }
+
+  Future<Message?> getLatestMessageAsync({bool force = false}) async {
+    if (_latestMessage != null && !force) return _latestMessage;
+    Message? latest = (await Chat.getMessagesAsync(this, limit: 1)).firstOrNull;
+    if (latest != null) {
+      setLatestMessage(latest, force: force);
+    }
+
+    return _latestMessage;
+  }
+
+  setLatestMessage(Message? msg, {bool force = false, bool save = true}) {
     if (id == null) return;
 
     // Don't overwrite the latest message with an older one
-    if (msg.dateCreated.isBefore(latestMessage?.dateCreated ?? DateTime(0)) && !force) return;
+    if (!force && (msg?.dateCreated ?? DateTime(0)).isBefore(latestMessage?.dateCreated ?? DateTime(0))) return;
 
     latestMessage = msg;
-    dbOnlyLatestMessageDate = msg.dateCreated;
+    dbOnlyLatestMessageDate = msg?.dateCreated;
+    print("SETTING LATEST");
     observables.latestMessage.value = msg;
-    save(updateLastReadMessageGuid: true);
-    GlobalChatService.sortChat(guid);
+    if (save) {
+      this.save(updateLastReadMessageGuid: true);
+    }
   }
 
   /// Save a chat to the DB
@@ -722,12 +752,16 @@ class Chat {
   }
 
   /// Get a chat's title
-  String getTitle() {
+  String getTitle({bool force = false}) {
+    if (title != null && !force) return title!;
+
     if (isNullOrEmpty(displayName)) {
       title = getChatCreatorSubtitle();
     } else {
       title = displayName;
     }
+
+    observables.title.value = title;
     return title!;
   }
 
@@ -788,8 +822,9 @@ class Chat {
       DateTime time = DateTime.parse(muteArgs!);
       bool shouldMute = DateTime.now().toLocal().difference(time).inSeconds.isNegative;
       if (!shouldMute) {
-        GlobalChatService.toggleMuteStatus(guid, muteType: null);
+        toggleMuteType(null);
       }
+
       return shouldMute;
 
       /// Check if the chat has specific text detection and notify accordingly
@@ -889,7 +924,7 @@ class Chat {
         if (dateDeleted != null) {
           dateDeleted = null;
           save(updateDateDeleted: true);
-          GlobalChatService.syncChat(this);
+          await GlobalChatService.syncChat(this);
         }
         if (isArchived && !_latestMessage!.isFromMe! && ss.settings.unarchiveOnNewMessage.value) {
           toggleIsArchived(false);
@@ -951,14 +986,14 @@ class Chat {
 
   /// Gets messages synchronously - DO NOT use in performance-sensitive areas,
   /// otherwise prefer [getMessagesAsync]
-  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
+  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false, int? order}) {
     if (kIsWeb || chat.id == null) return [];
     return Database.runInTransaction(TxMode.read, () {
       final query = (Database.messages.query(includeDeleted
               ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
               : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
             ..link(Message_.chat, Chat_.id.equals(chat.id!))
-            ..order(Message_.dateCreated, flags: Order.descending))
+            ..order(Message_.dateCreated, flags: order ?? Order.descending))
           .build();
       query
         ..limit = limit
@@ -1052,10 +1087,10 @@ class Chat {
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 
-  static Future<List<Chat>> syncLatestMessages(List<Chat> chats, bool toggleUnread) async {
+  static Future<List<Chat>> getLatestMessages(List<int> chats, {int? order }) async {
     if (kIsWeb) throw Exception("Use socket to sync the last message on Web!");
 
-    final task = SyncLastMessages([chats, toggleUnread]);
+    final task = GetLatestMessages([chats, order ?? Order.descending]);
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 

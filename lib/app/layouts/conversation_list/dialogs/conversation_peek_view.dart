@@ -258,7 +258,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            GlobalChatService.toggleMuteStatus(widget.chatGuid);
+            chat.toggleMuteType(null);
             popPeekView();
           },
           child: ListTile(

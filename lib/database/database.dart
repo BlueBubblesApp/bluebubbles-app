@@ -224,6 +224,11 @@ class Database {
     return store.runInTransaction(mode, fn);
   }
 
+  /// Wrapper for store.runInTransactionAsync
+  static Future<R> runInTransactionAsync<R, P>(TxMode mode, R Function(Store, P) fn, P param) async {
+    return await store.runInTransactionAsync(mode, fn, param);
+  }
+
   static reset() {
     Database.attachments.removeAll();
     Database.chats.removeAll();

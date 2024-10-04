@@ -46,7 +46,8 @@ class ConversationViewState extends OptimizedState<ConversationView> {
     Logger.debug("Conversation View initialized for ${widget.chatGuid}");
 
     Future.delayed(Duration.zero, () async {
-      controller.chat.toggleUnreadStatus(false);
+      controller.chat.toggleUnreadStatus(false, force: true);
+      GlobalChatService.unreadCount.value -= 1;
       await ss.prefs.setString('lastOpenedChat', widget.chatGuid);
 
       if (widget.onInit != null) {

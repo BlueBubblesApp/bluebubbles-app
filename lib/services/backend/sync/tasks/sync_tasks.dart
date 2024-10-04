@@ -1,12 +1,9 @@
 import 'dart:async';
 
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/helpers/types/classes/aliases.dart';
-import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/backend/sync/sync_helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/services/ui/chat/global_chat_service.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 
@@ -209,14 +206,14 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
   }
 }
 
-class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
+class GetLatestMessages extends AsyncTask<List<dynamic>, List<Chat>> {
   final List<dynamic> params;
 
-  SyncLastMessages(this.params);
+  GetLatestMessages(this.params);
 
   @override
   AsyncTask<List<dynamic>, List<Chat>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
-    return SyncLastMessages(parameters);
+    return GetLatestMessages(parameters);
   }
 
   @override
@@ -224,92 +221,28 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
     return params;
   }
 
-  /// Tries to update the latest message for a [chat], based on
-  /// the input [lastMessage] object.
-  /// 
-  /// Returns a boolean determining if we've updated the latest message
-  bool tryUpdateLastMessage(ChatGuid chatGuid, Message? lastMessage, bool toggleUnread) {
-    // If we don't even have a last message, return false
-    if (lastMessage == null) return false;
-
-    // If the chat has no last message, but we now have a last message
-    bool didUpdate = false;
-    bool checkMessageText = false;
-
-    // If the dates are equal, check the text to see if we should update it.
-    // AKA, check if the text matches
-    final chat = GlobalChatService.getChat(chatGuid)!;
-    int currentMs = chat.latestMessage?.dateCreated.millisecondsSinceEpoch ?? 0;
-    int lastMs = lastMessage.dateCreated.millisecondsSinceEpoch;
-    if (currentMs <= lastMs) {
-      didUpdate = true;
-
-      if (currentMs == lastMs) {
-        checkMessageText = true;
-      }
-    }
-
-    // If we plan to update the message, but the dates are the same,
-    String? newMsgText;
-    if (didUpdate && checkMessageText) {
-      newMsgText = MessageHelper.getNotificationText(lastMessage);
-      if (chat.latestMessage != null && MessageHelper.getNotificationText(chat.latestMessage!) == newMsgText) {
-        didUpdate = false;
-      }
-    }
-
-    // If we still want to update the info, do so
-    if (didUpdate) {
-      chat.latestMessage = lastMessage;
-      
-      // Mark the chat as unread if we updated the last message & it's not from us
-      if (toggleUnread && !(lastMessage.isFromMe ?? false)) {
-        chat.toggleUnreadStatus(true);
-      }
-    }
-
-    return didUpdate;
-  }
-
   @override
   FutureOr<List<Chat>> run() {
     return Database.runInTransaction(TxMode.write, () {
       // Input variables
-      List<Chat> inputChats = params[0];
-      bool toggleUnread = params[1];
-      List<String> inputGuids = inputChats.map((e) => e.guid).toList();
+      List<int> inputChatIds = params[0];
+      int order = params[1];
 
       // Get the latest versions of the chats
-      final chatQuery = Database.chats.query(Chat_.guid.oneOf(inputGuids)).build();
-      List<Chat> existingChats = chatQuery.find();
-
-      // Pull the latest message for all of the chats.
-      List<int> chatIds = existingChats.map((e) => e.id!).toList();
-      List<Chat> updatedChats = [];
-      for (int i in chatIds) {
+      List<Chat> chats = (Database.chats.getMany(inputChatIds)).whereNotNull().toList();
+      for (Chat chat in chats) {
         // Fetch latest message for the chat
-        final latestMsgQuery = (Database.messages.query(Message_.chat.equals(i))..order(Message_.dateCreated, flags: Order.descending)).build();
+        final latestMsgQuery = (Database.messages.query(Message_.chat.equals(chat.id!))..order(Message_.dateCreated, flags: order)).build();
         Message? latestMessage = latestMsgQuery.findFirst();
         if (latestMessage?.handle == null && latestMessage?.handleId != null && latestMessage?.handleId != 0) {
           latestMessage!.handle = latestMessage.getHandle();
         }
-        Chat current = existingChats.firstWhere((element) => element.id == i);
 
-        // Try and update the last message info
-        bool didUpdate = tryUpdateLastMessage(current.guid, latestMessage, toggleUnread);
-        if (didUpdate) {
-          // Add to a list to be updated in the DB
-          updatedChats.add(current);
-        }
+        chat.latestMessage = latestMessage;
       }
 
-      // If we have updates to make, apply them
-      if (updatedChats.isNotEmpty) {
-        Database.chats.putMany(updatedChats, mode: PutMode.update);
-      }
-      
       // This will contain the updated chat values
-      return existingChats;
+      return chats;
     });
   }
 }

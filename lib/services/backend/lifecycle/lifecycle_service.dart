@@ -109,7 +109,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
 
   void open() {
     if (GlobalChatService.hasActiveChat) {
-      GlobalChatService.toggleReadStatus(GlobalChatService.activeGuid.value!, isUnread: false);
+      GlobalChatService.activeChat!.toggleUnreadStatus(false);
       ConversationViewController _cvc = cvc(GlobalChatService.activeGuid.value!);
       if (!_cvc.showingOverlays && _cvc.editing.isEmpty) {
         _cvc.lastFocusedNode.requestFocus();

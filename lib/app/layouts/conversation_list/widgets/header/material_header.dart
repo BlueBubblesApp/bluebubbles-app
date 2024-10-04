@@ -1,3 +1,4 @@
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
@@ -139,82 +140,85 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                             ),
                           ],
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (([0, controller.selectedChats.length])
-                                .contains(controller.selectedChats.where((element) => GlobalChatService.isChatUnread(element)).length))
-                              IconButton(
-                                onPressed: () {
-                                  for (String element in controller.selectedChats) {
-                                    GlobalChatService.toggleReadStatus(element);
-                                  }
-                                  controller.clearSelectedChats();
-                                },
-                                icon: Icon(
-                                  GlobalChatService.isChatUnread(controller.selectedChats[0]) ? Icons.mark_chat_read_outlined : Icons.mark_chat_unread_outlined,
-                                  color: context.theme.colorScheme.primary,
+                        Obx(() {
+                          List<Chat> selectedChats = controller.selectedChats.map((e) => GlobalChatService.getChat(e)!).toList();
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (([0, selectedChats.length])
+                                  .contains(selectedChats.where((element) => element.observables.isUnread.value).length))
+                                IconButton(
+                                  onPressed: () {
+                                    for (Chat element in selectedChats) {
+                                      element.toggleUnreadStatus(null);
+                                    }
+                                    controller.clearSelectedChats();
+                                  },
+                                  icon: Icon(
+                                    selectedChats.first.observables.isUnread.value ? Icons.mark_chat_read_outlined : Icons.mark_chat_unread_outlined,
+                                    color: context.theme.colorScheme.primary,
+                                  ),
                                 ),
-                              ),
-                            if (([0, controller.selectedChats.length])
-                                .contains(controller.selectedChats.where((element) => GlobalChatService.isChatMuted(element)).length))
+                              if (([0, selectedChats.length])
+                                  .contains(selectedChats.where((element) => element.isChatMuted).length))
+                                IconButton(
+                                  onPressed: () {
+                                    for (Chat element in selectedChats) {
+                                      element.toggleMuteType(null);
+                                    }
+
+                                    controller.clearSelectedChats();
+                                  },
+                                  icon: Icon(
+                                    selectedChats.first.isChatMuted
+                                        ? Icons.notifications_active_outlined
+                                        : Icons.notifications_off_outlined,
+                                    color: context.theme.colorScheme.primary,
+                                  ),
+                                ),
+                              if (([0, selectedChats.length])
+                                  .contains(selectedChats.where((element) => element.observables.isPinned.value).length))
+                                IconButton(
+                                  onPressed: () {
+                                    for (Chat element in selectedChats) {
+                                      element.toggleIsPinned(null);
+                                    }
+                                    controller.clearSelectedChats();
+                                  },
+                                  icon: Icon(
+                                    selectedChats.first.observables.isPinned.value ? Icons.push_pin_outlined : Icons.push_pin,
+                                    color: context.theme.colorScheme.primary,
+                                  ),
+                                ),
                               IconButton(
                                 onPressed: () {
-                                  for (String element in controller.selectedChats) {
-                                    GlobalChatService.toggleMuteStatus(element);
+                                  for (Chat element in selectedChats) {
+                                    element.toggleIsArchived(null);
                                   }
 
                                   controller.clearSelectedChats();
                                 },
                                 icon: Icon(
-                                  GlobalChatService.isChatMuted(controller.selectedChats[0])
-                                      ? Icons.notifications_active_outlined
-                                      : Icons.notifications_off_outlined,
+                                  showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
                                   color: context.theme.colorScheme.primary,
                                 ),
                               ),
-                            if (([0, controller.selectedChats.length])
-                                .contains(controller.selectedChats.where((element) => GlobalChatService.isChatPinned(element)).length))
                               IconButton(
                                 onPressed: () {
                                   for (String element in controller.selectedChats) {
-                                    GlobalChatService.togglePinStatus(element);
+                                    GlobalChatService.removeChat(element);
                                   }
+
                                   controller.clearSelectedChats();
                                 },
                                 icon: Icon(
-                                  GlobalChatService.isChatPinned(controller.selectedChats[0]) ? Icons.push_pin_outlined : Icons.push_pin,
+                                  Icons.delete_outlined,
                                   color: context.theme.colorScheme.primary,
                                 ),
                               ),
-                            IconButton(
-                              onPressed: () {
-                                for (String element in controller.selectedChats) {
-                                  GlobalChatService.toggleArchivedStatus(element);
-                                }
-
-                                controller.clearSelectedChats();
-                              },
-                              icon: Icon(
-                                showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
-                                color: context.theme.colorScheme.primary,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                for (String element in controller.selectedChats) {
-                                  GlobalChatService.removeChat(element);
-                                }
-
-                                controller.clearSelectedChats();
-                              },
-                              icon: Icon(
-                                Icons.delete_outlined,
-                                color: context.theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        )
+                            ],
+                          );
+                        })
                       ],
                     ),
                   ),
