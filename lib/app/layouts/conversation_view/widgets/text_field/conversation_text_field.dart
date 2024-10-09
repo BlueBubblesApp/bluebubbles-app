@@ -934,9 +934,9 @@ class TextFieldComponentState extends State<TextFieldComponent> {
   late final FocusNode? focusNode;
   late final RecorderController? recorderController;
   late final List<PlatformFile> initialAttachments;
-  late final TextEditingController textController;
-  late final TextEditingController subjectTextController;
-  late final Future<void> Function({String? effect}) sendMessage;
+  late final MentionTextEditingController textController;
+  late final SpellCheckTextEditingController subjectTextController;
+  late final sendMessage;
 
   late final ValueNotifier<bool> isRecordingNotifier;
   TextFieldComponentState() : isRecordingNotifier = ValueNotifier<bool>(false);
