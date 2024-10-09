@@ -915,8 +915,8 @@ class TextFieldComponent extends StatefulWidget {
     this.initialAttachments = const [],
   });
 
-  final TextEditingController subjectTextController;
-  final TextEditingController textController;
+  final SpellCheckTextEditingController subjectTextController;
+  final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
