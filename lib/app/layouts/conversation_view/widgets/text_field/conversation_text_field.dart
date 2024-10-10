@@ -1089,7 +1089,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                     hintText: isChatCreator
                         ? "New Message"
                         : ss.settings.recipientAsPlaceholder.value == true
-                            ? chat!.getTitle()
+                            ? isRecording ? "" : chat!.getTitle()
                             : (chat!.isTextForwarding && !isRecording)
                                 ? "Text Forwarding"
                                 : (!isRecording) // Only show iMessage when not recording
