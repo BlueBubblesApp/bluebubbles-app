@@ -432,7 +432,7 @@ class ActionHandler extends GetxService {
     }
   }
 
-  Future<void> handleSocketEvent(String event, Map<String, dynamic> data, String source, {bool useQueue = true}) async {
+  Future<void> handleEvent(String event, Map<String, dynamic> data, String source, {bool useQueue = true}) async {
     Logger.info("Received $event from $source");
     switch (event) {
       case "new-message":
