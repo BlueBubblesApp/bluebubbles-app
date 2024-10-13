@@ -1,10 +1,10 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:dlibphonenumber/dlibphonenumber.dart';
 import 'package:get/get.dart';
 
 Future<String> formatPhoneNumber(dynamic item) async {
-  String cc = countryCode ?? "US";
+  String cc = Get.deviceLocale?.countryCode ?? "US";
   String? address;
 
   // Set the address/country accordingly
@@ -18,7 +18,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   }
 
   // If we don't have a valid address, or it's an email, return it
-  if (isNullOrEmpty(address)! || address!.isEmail || address.contains("urn:biz")) return address ?? "Unknown";
+  if (isNullOrEmpty(address) || address!.isEmail || address.contains("urn:biz")) return address ?? "Unknown";
   address = address.trim();
 
   String? formatted;

@@ -91,15 +91,15 @@ class SyncSettings extends StatelessWidget {
         height: 40,
         child: ElevatedButton(
           style: ButtonStyle(
-            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+            shape: WidgetStateProperty.all<RoundedRectangleBorder>(
               RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0),
               ),
             ),
-            backgroundColor: MaterialStateProperty.all(Colors.transparent),
-            shadowColor: MaterialStateProperty.all(Colors.transparent),
-            maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-            minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+            backgroundColor: WidgetStateProperty.all(Colors.transparent),
+            shadowColor: WidgetStateProperty.all(Colors.transparent),
+            maximumSize: WidgetStateProperty.all(Size(context.width * 2 / 3, 36)),
+            minimumSize: WidgetStateProperty.all(Size(context.width * 2 / 3, 36)),
           ),
           onPressed: () {
             final numberOfMessagesPerPage = controller.numberToDownload.clamp(1, double.infinity).toInt();

@@ -10,8 +10,8 @@ import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_galle
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/contact_tile.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -54,10 +54,10 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
     cm.setActiveToDead();
 
     if (!kIsWeb) {
-      final chatQuery = chatBox.query(Chat_.guid.equals(chat.guid)).watch();
+      final chatQuery = Database.chats.query(Chat_.guid.equals(chat.guid)).watch();
       sub = chatQuery.listen((Query<Chat> query) async {
         final _chat = await runAsync(() {
-          return chatBox.get(chat.id!);
+          return Database.chats.get(chat.id!);
         });
         if (_chat != null) {
           final update = _chat.getTitle() != chat.title || _chat.participants.length != chat.participants.length;
@@ -123,7 +123,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   }
 
   void fetchLinks() {
-    final query = (messageBox.query(Message_.dateDeleted.isNull()
+    final query = (Database.messages.query(Message_.dateDeleted.isNull()
       & Message_.dbPayloadData.notNull()
       & Message_.balloonBundleId.contains("URLBalloonProvider"))
       ..link(Message_.chat, Chat_.id.equals(chat.id!))

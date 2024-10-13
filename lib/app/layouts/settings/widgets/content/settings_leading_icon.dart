@@ -7,10 +7,16 @@ class SettingsLeadingIcon extends StatelessWidget {
   final IconData iosIcon;
   final IconData materialIcon;
   final Color? containerColor;
+  final double? boxSize;
+  final double? iconSize;
+  final double? iconSizeMaterial;
 
   const SettingsLeadingIcon({
     required this.iosIcon,
     required this.materialIcon,
+    this.boxSize,
+    this.iconSize,
+    this.iconSizeMaterial,
     this.containerColor,
   });
 
@@ -30,14 +36,14 @@ class SettingsLeadingIcon extends StatelessWidget {
               ? containerColor ?? context.theme.colorScheme.outline
               : Colors.transparent,
           borderRadius: ss.settings.skin.value == Skins.iOS
-              ? BorderRadius.circular(5) : null,
+              ? BorderRadius.circular(6) : null,
           child: SizedBox(
-            width: 32,
-            height: 32,
+            width: boxSize ?? 30,
+            height: boxSize ?? 30,
             child: Center(
               child: Icon(ss.settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
                   color: ss.settings.skin.value != Skins.Material ? Colors.white : context.theme.colorScheme.outline,
-                  size: ss.settings.skin.value != Skins.Material ? 23 : 30),
+                  size: ss.settings.skin.value != Skins.Material ? iconSize ?? 21 : iconSizeMaterial ?? 28),
             ),
           ),
         )),

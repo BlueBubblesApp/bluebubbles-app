@@ -1,5 +1,5 @@
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -14,7 +14,7 @@ String? sanitizeServerAddress({String? address}) {
 
   Uri? uri = Uri.tryParse(sanitized);
   if (uri?.scheme.isEmpty ?? false) {
-    if (sanitized.contains("ngrok.io") || sanitized.contains("trycloudflare.com")) {
+    if (sanitized.contains("ngrok.io") || sanitized.contains("trycloudflare.com") || sanitized.contains("zrok.io")) {
       uri = Uri.tryParse("https://$sanitized");
     } else {
       uri = Uri.tryParse("http://$sanitized");
@@ -38,6 +38,7 @@ Future<String> getDeviceName() async {
     if (uniqueId == 0) {
       uniqueId = (DateTime.now().millisecondsSinceEpoch / 1000).round();
       ss.settings.firstFcmRegisterDate.value = uniqueId;
+      ss.settings.save();
     }
 
     if (Platform.isAndroid) {
@@ -57,9 +58,8 @@ Future<String> getDeviceName() async {
     if (items.isNotEmpty) {
       deviceName = items.join("_").toLowerCase().replaceAll(' ', '_');
     }
-  } catch (ex) {
-    Logger.error("Failed to get device name! Defaulting to 'bluebubbles-client'");
-    Logger.error(ex.toString());
+  } catch (ex, stack) {
+    Logger.error("Failed to get device name! Defaulting to 'bluebubbles-client'", error: ex, trace: stack);
   }
 
   return deviceName;

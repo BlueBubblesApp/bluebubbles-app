@@ -1,11 +1,13 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/services/ui/contact_service.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:idb_shim/idb.dart';
+import 'package:idb_shim/idb.dart' as idb;
 import 'package:idb_shim/idb_browser.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
@@ -19,10 +21,21 @@ class FilesystemService extends GetxService {
   late Directory appDocDir;
   late final PackageInfo packageInfo;
   AndroidDeviceInfo? androidInfo;
-  late final Database webDb;
+  late final idb.Database webDb;
   late final Uint8List noVideoPreviewIcon;
   late final Uint8List unplayableVideoIcon;
   final RxBool fontExistsOnDisk = false.obs;
+
+  Future<String> get downloadsDirectory async {
+    if (kIsWeb) throw "Cannot get downloads directory on web!";
+
+    String filePath = "/storage/emulated/0/Download/";
+    if (kIsDesktop) {
+      filePath = (await getDownloadsDirectory())!.path;
+    }
+
+    return filePath;
+  }
 
   Future<void> init({bool headless = false}) async {
     if (!kIsWeb) {
@@ -44,9 +57,9 @@ class FilesystemService extends GetxService {
         }
       }
       if (!headless) {
-        final file = await loadAsset("assets/images/no-video-preview.png");
+        final file = await rootBundle.load("assets/images/no-video-preview.png");
         noVideoPreviewIcon = file.buffer.asUint8List();
-        final file2 = await loadAsset("assets/images/unplayable-video.png");
+        final file2 = await rootBundle.load("assets/images/unplayable-video.png");
         unplayableVideoIcon = file2.buffer.asUint8List();
       }
     }
@@ -72,19 +85,19 @@ class FilesystemService extends GetxService {
       }
     } else {
       final idbFactory = idbFactoryBrowser;
-      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (VersionChangeEvent e) {
-        final db = (e.target as OpenDBRequest).result;
+      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (idb.VersionChangeEvent e) {
+        final db = (e.target as idb.OpenDBRequest).result;
         if (!db.objectStoreNames.contains("BBStore")) {
           db.createObjectStore("BBStore");
         }
       }).then((_db) async {
         webDb = _db;
-        final txn = webDb.transaction("BBStore", idbModeReadOnly);
+        final txn = webDb.transaction("BBStore", idb.idbModeReadOnly);
         final store = txn.objectStore("BBStore");
         Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
         await txn.completed;
 
-        if (!isNullOrEmpty(bytes)!) {
+        if (!isNullOrEmpty(bytes)) {
           fontExistsOnDisk.value = true;
           final fontLoader = FontLoader("Apple Color Emoji");
           final cachedFontBytes = ByteData.view(bytes!.buffer);
@@ -99,13 +112,8 @@ class FilesystemService extends GetxService {
 
   void deleteDB() {
     if (kIsWeb) return;
-    attachmentBox.removeAll();
-    chatBox.removeAll();
-    fcmDataBox.removeAll();
-    contactBox.removeAll();
-    handleBox.removeAll();
-    messageBox.removeAll();
-    themeBox.removeAll();
+    Database.reset();
+    cs.contacts.clear();
   }
 
   String uriToFilename(String? uri, String? mimeType) {
@@ -132,5 +140,29 @@ class FilesystemService extends GetxService {
 
     // Rebuild the filename
     return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
+  }
+
+  void copyDirectory(Directory source, Directory destination) =>
+    source.listSync(recursive: false).forEach((element) async {
+      if (element is Directory) {
+        Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
+        newDirectory.createSync();
+        Logger.info("Created new directory ${basename(element.path)}");
+
+        copyDirectory(element.absolute, newDirectory);
+      } else if (element is File) {
+        element.copySync(join(destination.path, basename(element.path)));
+        Logger.info("Created file ${basename(element.path)}");
+      }
+    });
+
+  Future<String> saveToDownloads(File file) async {
+    if (kIsWeb) throw "Cannot save file on web!";
+
+    final String filename = basename(file.path);
+    final String downloadsDir = await downloadsDirectory;
+    final String newPath = join(downloadsDir, filename);
+    await file.copy(newPath);
+    return newPath;
   }
 }

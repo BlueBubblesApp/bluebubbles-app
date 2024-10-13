@@ -1,5 +1,5 @@
-import 'package:bluebubbles/models/models.dart' hide Entity;
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/database/models.dart' hide Entity;
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -15,8 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class MentionEntity extends Entity {
   /// Constructor to create an instance of [AddressEntity].
-  MentionEntity(String rawValue)
-      : super(rawValue: rawValue, type: EntityType.unknown);
+  MentionEntity(String rawValue) : super(rawValue: rawValue, type: EntityType.unknown);
 }
 
 List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride, bool hideBodyText = false}) {
@@ -26,7 +25,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
     fontSizeFactor: message.isBigEmoji ? 3 : 1,
   );
 
-  if (!isNullOrEmpty(part.subject)!) {
+  if (!isNullOrEmpty(part.subject)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       "${part.displaySubject}${!hideBodyText ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
@@ -63,7 +62,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
         ));
       }
     });
-  } else if (!isNullOrEmpty(part.displayText)!) {
+  } else if (!isNullOrEmpty(part.displayText)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       part.displayText!,
       textStyle,
@@ -83,14 +82,14 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
   final linkIndexMatches = <Tuple3<String, List<int>, List?>>[];
   final controller = cvc(message.chat.target ?? cm.activeChat!.chat);
-  if (!isNullOrEmpty(part.text)!) {
+  if (!isNullOrEmpty(part.text)) {
     if (!kIsWeb && !kIsDesktop && ss.settings.smartReply.value) {
       if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
         try {
           controller.mlKitParsedText["${message.guid!}-${part.part}"] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english)
               .annotateText(part.text!);
-        } catch (ex) {
-          Logger.warn('Failed to extract entities using mlkit! Error: ${ex.toString()}');
+        } catch (ex, stack) {
+          Logger.warn('Failed to extract entities using mlkit!', error: ex, trace: stack);
         }
       }
       final entities = controller.mlKitParsedText["${message.guid!}-${part.part}"] ?? [];
@@ -146,7 +145,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
     }
   }
   // render subject
-  if (!isNullOrEmpty(part.subject)!) {
+  if (!isNullOrEmpty(part.subject)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       "${part.displaySubject}${!hideBodyText ? "\n" : ""}",
       textStyle.apply(fontWeightDelta: 2),
@@ -229,7 +228,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
         ));
       }
     });
-  } else if (!isNullOrEmpty(part.displayText)!) {
+  } else if (!isNullOrEmpty(part.displayText)) {
     textSpans.addAll(MessageHelper.buildEmojiText(
       part.displayText!,
       textStyle,

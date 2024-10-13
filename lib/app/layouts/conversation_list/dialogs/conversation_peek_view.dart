@@ -12,7 +12,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -179,6 +179,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                     shrinkWrap: true,
                                     reverse: true,
                                     physics: ThemeSwitcher.getScrollPhysics(),
+                                    findChildIndexCallback: (key) => findChildIndexByKey(widget.messages, key, (item) => item.guid),
                                     itemBuilder: (context, index) {
                                       return AbsorbPointer(
                                         absorbing: true,

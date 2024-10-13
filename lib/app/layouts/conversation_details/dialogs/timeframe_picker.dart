@@ -29,6 +29,29 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
       tmpDate = DateTime.now().toLocal().subtract(Duration(hours: entry.value));
     }
 
+    // Set the icon based on if it's one of the of the following:
+    // Morning, Afternoon, Evening, Night, based on the time of day.
+    // If it's > 1 day, show a calendar icon, if > 1 week show a week icon
+    // If it's a month, show a month icon
+    IconData icon = Icons.calendar_today;
+    if (entry.value >= 1 && entry.value < 24) {
+      if (tmpDate.hour >= 6 && tmpDate.hour < 12) {
+        icon = Icons.wb_sunny;
+      } else if (tmpDate.hour >= 12 && tmpDate.hour < 17) {
+        icon = Icons.wb_cloudy;
+      } else if (tmpDate.hour >= 17 && tmpDate.hour < 20) {
+        icon = Icons.brightness_3;
+      } else if (tmpDate.hour >= 20 || tmpDate.hour < 6) {
+        icon = Icons.nights_stay;
+      }
+    } else if (entry.value == 24) {
+      icon = Icons.calendar_today;
+    } else if (entry.value == 168) {
+      icon = Icons.calendar_view_week;
+    } else if (entry.value == 720) {
+      icon = Icons.calendar_view_month;
+    }
+
     return InkWell(
         onTap: () {
           finalDate = tmpDate;
@@ -41,8 +64,16 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("${entry.key}${(selectionSuffix != null ? " $selectionSuffix" : "")}",
-                    style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w400)),
+                Row(
+                  children: [
+                    Icon(icon, color: context.theme.colorScheme.secondary),
+                    Container(
+                      constraints: const BoxConstraints(minWidth: 5),
+                    ),
+                    Text("${entry.key}${(selectionSuffix != null ? " $selectionSuffix" : "")}",
+                        style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w400)),
+                  ],
+                ),
                 Container(
                   constraints: const BoxConstraints(minWidth: 20),
                 ),
@@ -85,6 +116,8 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
           if (finalDate != null) {
             Navigator.of(context).pop();
           }
+        } else if (finalDate != null) {
+          Navigator.of(context).pop();
         }
       },
       child: Container(
@@ -92,7 +125,18 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Custom Date", style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w400)),
+              Row(
+                children: [
+                  Icon(Icons.edit_calendar_outlined, color: context.theme.colorScheme.secondary),
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 5),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text("Custom Date",
+                          style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w400))),
+                ],
+              ),
               Icon(
                 Icons.arrow_forward_ios,
                 size: 14,

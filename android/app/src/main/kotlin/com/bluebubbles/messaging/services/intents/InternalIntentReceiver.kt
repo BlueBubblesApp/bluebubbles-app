@@ -31,13 +31,14 @@ class InternalIntentReceiver: BroadcastReceiver() {
         when (intent.type) {
             "DeleteNotification" -> {
                 val notificationId: Int = intent.getIntExtra("notificationId", 0)
-                DeleteNotificationHandler().deleteNotification(context, notificationId)
+                val tag: String? = intent.getStringExtra("tag")
+                DeleteNotificationHandler().deleteNotification(context, notificationId, tag)
             }
             "MarkChatRead" -> {
                 val notificationId: Int = intent.getIntExtra("notificationId", 0)
                 val chatGuid: String? = intent.getStringExtra("chatGuid")
-                DeleteNotificationHandler().deleteNotification(context, notificationId)
-
+                val tag: String? = intent.getStringExtra("tag")
+                DeleteNotificationHandler().deleteNotification(context, notificationId, tag)
                 DartWorkManager.createWorker(context, intent.type!!, hashMapOf("chatGuid" to chatGuid)) {}
             }
             "ReplyChat" -> {

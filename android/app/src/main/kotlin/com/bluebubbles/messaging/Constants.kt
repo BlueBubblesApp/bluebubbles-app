@@ -9,6 +9,8 @@ class Constants {
         const val newMessageNotificationTag = "com.bluebubbles.messaging.NEW_MESSAGE_NOTIFICATION"
         const val newFaceTimeNotificationTag = "com.bluebubbles.messaging.NEW_FACETIME_NOTIFICATION"
         const val notificationGroupKey = "com.bluebubbles.messaging.NOTIFICATION_GROUP_NEW_MESSAGES"
+        const val foregroundServiceNotificationChannel = "com.bluebubbles.messaging.foreground_service"
+        const val foregroundServiceNotificationId = 1
         const val dartWorkerTag = "DartWorker"
         const val pendingIntentOpenChatOffset = 0
         const val pendingIntentMarkReadOffset = 100000

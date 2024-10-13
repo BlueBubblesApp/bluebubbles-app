@@ -3,7 +3,6 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -41,13 +40,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.onlyWifiDownload.value = val;
@@ -58,13 +51,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           backgroundColor: tileColor,
                         )),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
@@ -77,6 +64,8 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                             backgroundColor: tileColor,
                             isThreeLine: true,
                           )),
+                    if (!kIsWeb && !kIsDesktop)
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsTile(
                         title: "Save Media Location",
@@ -137,6 +126,8 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                         },
                       )),
                     if (!kIsWeb && !kIsDesktop)
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                    if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsTile(
                         title: "Save Documents Location",
                         subtitle: "Saving documents and videos to ${ss.settings.autoSaveDocsLocation.value.replaceAll("/storage/emulated/0/", "")}",
@@ -154,13 +145,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                         },
                       )),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
@@ -195,13 +180,7 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
                           title: "Mute in Attachment Preview",
                           backgroundColor: tileColor,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.startVideosMutedFullscreen.value = val;

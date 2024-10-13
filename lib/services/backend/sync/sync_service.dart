@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/services/network/http_overrides.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
@@ -12,7 +13,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:get/get.dart' hide Response;
-import 'package:path/path.dart' show join;
 import 'package:universal_io/io.dart';
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
@@ -61,8 +61,8 @@ class SyncService extends GetxService {
       FlutterIsolate? isolate;
       try {
         isolate = await FlutterIsolate.spawn(incrementalSyncIsolate, [port.sendPort, http.originOverride]);
-      } catch (e) {
-        Logger.error('Got error when opening isolate: $e');
+      } catch (e, stack) {
+        Logger.error('Got error when opening isolate!', error: e, trace: stack);
         port.close();
       }
       result = await completer.future;
@@ -76,11 +76,11 @@ class SyncService extends GetxService {
             var map = c.toMap();
             _contacts.add(map);
           }
-          http.createContact(_contacts).catchError((err) {
+          http.createContact(_contacts).catchError((err, stack) {
             if (err is Response) {
-              Logger.error(err.data["error"]["message"].toString());
+              Logger.error(err.data["error"]["message"].toString(), error: err, trace: stack);
             } else {
-              Logger.error(err.toString());
+              Logger.error("Failed to create contacts!", error: err, trace: stack);
             }
             return Response(requestOptions: RequestOptions(path: ''));
           });
@@ -102,17 +102,9 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
       HttpOverrides.global = BadCertOverride();
-      ls.isUiThread = false;
-      await ss.init(headless: true);
-      await fs.init(headless: true);
-      store = Store.attach(getObjectBoxModel(), join(fs.appDocDir.path, 'objectbox'));
-      attachmentBox = store.box<Attachment>();
-      chatBox = store.box<Chat>();
-      contactBox = store.box<Contact>();
-      fcmDataBox = store.box<FCMData>();
-      handleBox = store.box<Handle>();
-      messageBox = store.box<Message>();
-      themeBox = store.box<ThemeStruct>();
+
+      await StartupTasks.initIncrementalSyncServices();
+
       http.originOverride = address;
     }
 
@@ -123,8 +115,7 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     await incrementalSyncManager.start();
     chats.sort();
   } catch (ex, s) {
-    Logger.error('Incremental sync failed! Error: $ex');
-    Logger.error(s.toString());
+    Logger.error('Incremental sync failed!', error: ex, trace: s);
   }
   Logger.info('Starting contact refresh');
   try {
@@ -132,8 +123,8 @@ Future<List<List<int>>> incrementalSyncIsolate(List? items) async {
     Logger.info('Finished contact refresh, shouldRefresh $refreshedItems');
     port?.send(refreshedItems);
     return refreshedItems;
-  } catch (ex) {
-    Logger.error('Contacts refresh failed! Error: $ex');
+  } catch (ex, stack) {
+    Logger.error('Contacts refresh failed!', error: ex, trace: stack);
     port?.send([]);
     return [];
   }

@@ -1,13 +1,13 @@
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
 import 'package:bluebubbles/app/wrappers/cupertino_icon_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -30,8 +30,8 @@ class TextFieldSuffix extends StatefulWidget {
     this.isChatCreator = false,
   });
 
-  final SpellCheckTextEditingController subjectTextController;
-  final MentionTextEditingController textController;
+  final TextEditingController subjectTextController;
+  final TextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
   final Future<void> Function({String? effect}) sendMessage;
@@ -73,7 +73,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                       ? null
                       : !isChatCreator && !showRecording
                       ? context.theme.colorScheme.outline
-                      : context.theme.colorScheme.primary,
+                      : context.theme.colorScheme.primary.withOpacity(0.4),
                   shape: const CircleBorder(),
                   padding: const EdgeInsets.all(0),
                   maximumSize: kIsDesktop ? const Size(40, 40) : const Size(32, 32),
@@ -83,12 +83,12 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                 child: isLinuxArm64 ? const SizedBox(height: 40) :
                   !isChatCreator && !showRecording
                   ? CupertinoIconWrapper(icon: Icon(
-                    iOS ? CupertinoIcons.mic : Icons.mic_none,
+                    iOS ? CupertinoIcons.waveform : Icons.mic_none,
                     color: iOS ? context.theme.colorScheme.outline : context.theme.colorScheme.properOnSurface,
-                    size: 20,
+                    size: iOS ? 24 : 20, // Waveform icon appears smaller, using size 24
                   )) : CupertinoIconWrapper(icon: Icon(
                     iOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
-                    color: iOS ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface,
+                    color: iOS ? context.theme.colorScheme.primary : context.theme.colorScheme.properOnSurface,
                     size: 15,
                   )),
                 onPressed: () async {
@@ -195,7 +195,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     widget.controller!.replyToMessage?.item2,
                     widget.controller!.chat.guid,
                     widget.sendMessage,
-                    widget.textController.mentionables,
+                    widget.textController is MentionTextEditingController ? (widget.textController as MentionTextEditingController).mentionables : [],
                   );
                 },
               ),

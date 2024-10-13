@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -116,9 +116,9 @@ class _UnsupportedInteractiveState extends OptimizedState<UnsupportedInteractive
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (!isNullOrEmpty(data?.userInfo?.caption)!)
+                    if (!isNullOrEmpty(data?.userInfo?.caption))
                       const SizedBox(height: 2.5),
-                    if (!isNullOrEmpty(data?.userInfo?.caption)!)
+                    if (!isNullOrEmpty(data?.userInfo?.caption))
                       Text(
                           data!.userInfo!.caption!,
                           maxLines: 3,

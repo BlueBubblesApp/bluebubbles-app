@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:desktop_webview_auth/desktop_webview_auth.dart';
 import 'package:desktop_webview_auth/google.dart';
 import 'package:flutter/foundation.dart';
@@ -28,20 +28,21 @@ Future<String?> googleOAuth(BuildContext context) async {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-              backgroundColor: context.theme.colorScheme.properSurface,
-              title: Text("Important Notice", style: context.theme.textTheme.titleLarge),
-              content: Text(
-                'Please make sure to allow BlueBubbles to see, edit, configure, and delete your Google Cloud data after signing in. BlueBubbles will only use this ability to find your server URL.',
-                style: context.theme.textTheme.bodyLarge,
+            backgroundColor: context.theme.colorScheme.properSurface,
+            title: Text("Important Notice", style: context.theme.textTheme.titleLarge),
+            content: Text(
+              'Please make sure to allow BlueBubbles to see, edit, configure, and delete your Google Cloud data after signing in. BlueBubbles will only use this ability to find your server URL.',
+              style: context.theme.textTheme.bodyLarge,
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ]);
+            ],
+          );
         },
       );
     }
@@ -72,8 +73,8 @@ Future<String?> googleOAuth(BuildContext context) async {
         // error if account is not present
         throw Exception("No account!");
       }
-    } catch (e) {
-      Logger.error(e);
+    } catch (e, stack) {
+      Logger.error("Failed to sign in with Google (Android/Web)", error: e, trace: stack);
       return null;
     }
     // desktop implementation
@@ -86,16 +87,19 @@ Future<String?> googleOAuth(BuildContext context) async {
     try {
       final width = ss.prefs.getDouble('window-width')?.toInt();
       final height = ss.prefs.getDouble('window-height')?.toInt();
-      final result = await DesktopWebviewAuth.signIn(args,
-          width: width != null ? (width * 0.9).ceil() : null, height: height != null ? (height * 0.9).ceil() : null);
+      final result = await DesktopWebviewAuth.signIn(
+        args,
+        width: width != null ? (width * 0.9).ceil() : null,
+        height: height != null ? (height * 0.9).ceil() : null,
+      );
       Future.delayed(const Duration(milliseconds: 500), () async => await windowManager.show());
       token = result?.accessToken;
       // error if token is not present
       if (token == null) {
         throw Exception("No access token!");
       }
-    } catch (e) {
-      Logger.error(e);
+    } catch (e, stack) {
+      Logger.error("Failed to sign in with Google (Desktop)", error: e, trace: stack);
       return null;
     }
   }
@@ -149,68 +153,65 @@ Future<void> requestPassword(BuildContext context, String serverUrl, Future<void
   final TextEditingController passController = TextEditingController();
   final RxBool enabled = false.obs;
   await showDialog(
-      context: context,
-      builder: (_) {
-        return Obx(
-          () => AlertDialog(
-            actions: [
-              TextButton(
-                child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                onPressed: () => Get.back(),
-              ),
-              AnimatedContainer(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                duration: const Duration(milliseconds: 100),
-                child: AbsorbPointer(
-                  absorbing: !enabled.value,
-                  child: TextButton(
-                    child: Text("OK",
-                        style: context.theme.textTheme.bodyLarge!.copyWith(
-                          color: enabled.value ? context.theme.colorScheme.primary : context.theme.disabledColor,
-                        )),
-                    onPressed: () async {
-                      if (passController.text.isEmpty) {
-                        return;
-                      }
-                      Get.back();
-                    },
-                  ),
-                ),
-              ),
-            ],
-            content: TextField(
-              controller: passController,
-              decoration: const InputDecoration(
-                labelText: "Password",
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
-              obscureText: true,
-              autofillHints: [AutofillHints.password],
-              onChanged: (str) {
-                if (enabled.value ^ str.isNotEmpty) {
-                  enabled.value = str.isNotEmpty;
-                }
-              },
-              onEditingComplete: () {
-                if (passController.text.isEmpty) {
-                  return;
-                }
-              },
-              onSubmitted: (str) {
-                if (passController.text.isEmpty) {
-                  return;
-                }
-                Get.back();
-              },
+    context: context,
+    builder: (_) {
+      return Obx(
+        () => AlertDialog(
+          actions: [
+            TextButton(
+              child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+              onPressed: () => Get.back(),
             ),
-            title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
-            backgroundColor: context.theme.colorScheme.properSurface,
+            AnimatedContainer(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              duration: const Duration(milliseconds: 100),
+              child: AbsorbPointer(
+                absorbing: !enabled.value,
+                child: TextButton(
+                  child: Text("OK",
+                    style: context.theme.textTheme.bodyLarge!.copyWith(
+                      color: enabled.value ? context.theme.colorScheme.primary : context.theme.disabledColor,
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (passController.text.isEmpty) {
+                      return;
+                    }
+                    Get.back();
+                  },
+                ),
+              ),
+            ),
+          ],
+          content: TextField(
+            controller: passController,
+            decoration: const InputDecoration(
+              labelText: "Password",
+              border: OutlineInputBorder(),
+            ),
+            autofocus: true,
+            obscureText: true,
+            autofillHints: [AutofillHints.password],
+            onChanged: (str) {
+              if (enabled.value ^ str.isNotEmpty) {
+                enabled.value = str.isNotEmpty;
+              }
+            },
+            onSubmitted: (str) {
+              if (passController.text.isEmpty) {
+                return;
+              }
+              Get.back();
+            },
           ),
-        );
-      });
+          title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
+          backgroundColor: context.theme.colorScheme.properSurface,
+        ),
+      );
+    },
+  );
 
   await connect(serverUrl, passController.text);
 }

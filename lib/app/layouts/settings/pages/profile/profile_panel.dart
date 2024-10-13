@@ -6,7 +6,7 @@ import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -36,13 +36,13 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
   void getDetails() async {
     try {
       final result = await http.getAccountInfo();
-      if (!isNullOrEmpty(result.data.isNotEmpty)!) {
+      if (!isNullOrEmpty(result.data.isNotEmpty)) {
         accountInfo.addAll(result.data['data']);
       }
       opacity.value = 1.0;
       if (ss.isMinBigSurSync) {
         final result2 = await http.getAccountContact();
-        if (!isNullOrEmpty(result2.data.isNotEmpty)!) {
+        if (!isNullOrEmpty(result2.data.isNotEmpty)) {
           accountContact.addAll(result2.data['data']);
         }
       }
@@ -382,19 +382,19 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
                         ),
                     ],
                   )),
-                if (!isNullOrEmpty(accountContact['name'])!)
+                if (!isNullOrEmpty(accountContact['name']))
                   SettingsHeader(
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "iMessage Contact Card"),
-                if (!isNullOrEmpty(accountContact['name'])!)
+                if (!isNullOrEmpty(accountContact['name']))
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
                         leading: (accountContact['avatar'] == null) ? const CircleAvatar() : ContactAvatarWidget(
                           handle: null,
-                          contact: isNullOrEmpty(accountContact['avatar'])! ? null : Contact(id: randomString(9), displayName: "", avatar: base64Decode(accountContact['avatar'])),
+                          contact: isNullOrEmpty(accountContact['avatar']) ? null : Contact(id: randomString(9), displayName: "", avatar: base64Decode(accountContact['avatar'])),
                         ),
                         title: accountContact['name'],
                         subtitle: "Your sharable iMessage contact card",

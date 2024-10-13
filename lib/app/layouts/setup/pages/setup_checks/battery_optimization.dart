@@ -1,4 +1,5 @@
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/material.dart';
@@ -44,22 +45,20 @@ class BatteryOptimizationCheck extends StatelessWidget {
                   height: 40,
                   child: ElevatedButton(
                     style: ButtonStyle(
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20.0),
                         ),
                       ),
-                      backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                      shadowColor: MaterialStateProperty.all(Colors.transparent),
-                      maximumSize: MaterialStateProperty.all(const Size(200, 36)),
-                      minimumSize: MaterialStateProperty.all(const Size(30, 30)),
+                      backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                      shadowColor: WidgetStateProperty.all(Colors.transparent),
+                      maximumSize: WidgetStateProperty.all(const Size(200, 36)),
+                      minimumSize: WidgetStateProperty.all(const Size(30, 30)),
                     ),
                     onPressed: () async {
-                      bool? isDisabled =
-                      await DisableBatteryOptimization.isAllBatteryOptimizationDisabled;
-                      if (isDisabled == null || !isDisabled) {
-                        isDisabled = await DisableBatteryOptimization
-                            .showDisableBatteryOptimizationSettings();
+                      final optimizationsDisabled = await disableBatteryOptimizations();
+                      if (!optimizationsDisabled) {
+                        showSnackbar("Error", "Battery optimizations were not disabled. Please try again.");
                       }
                     },
                     child: Shimmer.fromColors(

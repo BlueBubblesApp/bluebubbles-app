@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
@@ -63,7 +63,7 @@ class ContactsService extends GetxService {
 
     // compare loaded contacts to db contacts
     if (!kIsWeb) {
-      final dbContacts = contactBox.getAll();
+      final dbContacts = Database.contacts.getAll();
       // save any updated contacts
       for (Contact c in dbContacts) {
         final refreshedContact = _contacts.firstWhereOrNull((element) => element.id == c.id);
@@ -78,7 +78,7 @@ class ContactsService extends GetxService {
       // save any new contacts
       final newContacts = _contacts.where((e) => !dbContacts.map((e2) => e2.id).contains(e.id)).toList();
       if (newContacts.isNotEmpty) {
-        final ids = contactBox.putMany(newContacts);
+        final ids = Database.contacts.putMany(newContacts);
         for (int i = 0; i < newContacts.length; i++) {
           newContacts[i].dbId = ids[i];
         }
@@ -89,7 +89,7 @@ class ContactsService extends GetxService {
     if (kIsWeb) {
       handles.addAll(chats.webCachedHandles);
     } else {
-      handles.addAll(handleBox.getAll());
+      handles.addAll(Database.handles.getAll());
     }
     // get formatted addresses
     for (Handle h in handles) {
@@ -173,11 +173,7 @@ class ContactsService extends GetxService {
       // get avatars
       startTime = DateTime.now().millisecondsSinceEpoch;
       for (Contact c in _contacts) {
-        try {
-          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
-        } catch (_) {
-          c.avatar = await FastContacts.getContactImage(c.id);
-        }
+        c.avatar = await getContactAvatar(c.id);
       }
 
       endTime = DateTime.now().millisecondsSinceEpoch;
@@ -185,6 +181,26 @@ class ContactsService extends GetxService {
     }
 
     return _contacts;
+  }
+
+  Future<Uint8List?> getContactAvatar(String id) async {
+    Uint8List? avatar;
+
+    try {
+      avatar = await FastContacts.getContactImage(id, size: ContactImageSize.fullSize);
+    } catch (e) {
+      Logger.warn("Failed to get full size avatar for ID, $id!", error: e);
+    }
+
+    if (avatar == null) {
+      try {
+        avatar = await FastContacts.getContactImage(id);
+      } catch (e) {
+        Logger.warn("Failed to get small size avatar for ID, $id!", error: e);
+      }
+    }
+
+    return avatar;
   }
 
   void completeContactsRefresh(List<Contact> refreshedContacts, {List<List<int>>? reloadUI}) {
@@ -278,7 +294,7 @@ class ContactsService extends GetxService {
       try {
         final response = await http.contacts();
 
-        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
           logger?.call("Found contacts!");
 
           for (Map<String, dynamic> map in response.data['data']) {
@@ -322,9 +338,9 @@ class ContactsService extends GetxService {
       if (kIsWeb) {
         final response = await http.contacts(withAvatars: true);
 
-        if (!isNullOrEmpty(response.data['data'])!) {
+        if (!isNullOrEmpty(response.data['data'])) {
           logger?.call("Found contacts!");
-          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
+          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
             final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
             logger?.call("Adding avatar for contact: $displayName");
             final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
@@ -364,7 +380,7 @@ class ContactsService extends GetxService {
       } else {
         final response = await http.contacts(withAvatars: true);
 
-        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
           logger?.call("Found contacts!");
           for (Map<String, dynamic> map in response.data['data']) {
             final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
@@ -382,7 +398,7 @@ class ContactsService extends GetxService {
               displayName: displayName,
               emails: emails,
               phones: phones,
-              avatar: !isNullOrEmpty(map['avatar'])! ? base64Decode(map['avatar'].toString()) : null,
+              avatar: !isNullOrEmpty(map['avatar']) ? base64Decode(map['avatar'].toString()) : null,
             ));
           }
         } else {

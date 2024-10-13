@@ -1,4 +1,4 @@
-import 'package:bluebubbles/models/models.dart' hide Entity;
+import 'package:bluebubbles/database/models.dart' hide Entity;
 import 'package:emojis/emojis.dart';
 import 'package:flutter/foundation.dart';
 

@@ -1,8 +1,10 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
+import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart' hide PlatformFile;
+import 'package:bluebubbles/database/models.dart' hide PlatformFile;
 import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -69,13 +71,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         title: "Show Delivery Timestamps",
                         backgroundColor: tileColor,
                       )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.recipientAsPlaceholder.value = val;
@@ -87,13 +83,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         backgroundColor: tileColor,
                         isThreeLine: true,
                       )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.alwaysShowAvatars.value = val;
@@ -106,13 +96,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -126,13 +110,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.repliesToPrevious.value = val;
@@ -145,13 +123,22 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (!kIsWeb)
+                    SettingsTile(
+                      title: "Message Options Order",
+                      subtitle:
+                      "Set the order for the options when ${ss.settings.doubleTapForDetails.value ? "double-tapping" : "pressing and holding"} a message",
+                      onTap: () {
+                        ns.pushSettings(
+                          context,
+                          MessageOptionsOrderPanel(),
+                        );
+                      },
+                      trailing: const NextButton(),
                     ),
+                  if (!kIsWeb)
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
                     SettingsTile(
                       title: "Sync Group Chat Icons",
@@ -182,13 +169,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                       subtitle: "Note: Overrides any custom avatars set for group chats.",
                     ),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -201,10 +182,16 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                  if (!kIsWeb)
-                    const SettingsSubtitle(
-                      subtitle: "Note: Can result in degraded performance depending on how many unread messages there are.",
-                    ),
+                  Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        ss.settings.hideNamesForReactions.value = val;
+                        ss.settings.saveOne("hideNamesForReactions");
+                      },
+                      initialVal: ss.settings.hideNamesForReactions.value,
+                      title: "Hide Names in Reaction Details",
+                      subtitle: "Enable this to hide names under participant avatars when you view a message's reactions",
+                      backgroundColor: tileColor,
+                    )),
                 ],
               ),
               if (!kIsWeb)
@@ -279,13 +266,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                 ],
                               ),
                       ),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                       SettingsTile(
                         title: "${ss.settings.receiveSoundPath.value == null ? "Add" : "Change"} Receive Sound",
                         subtitle: ss.settings.receiveSoundPath.value != null
@@ -347,16 +328,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                                 ],
                               ),
                       ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                       const SettingsTile(
                         title: "Send/Receive Sound Volume",
                         subtitle: "Controls the volume of the send and receive sounds",
-                      ),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
                       ),
                       Obx(() => SettingsSlider(
                         startingVal: ss.settings.soundVolume.value.toDouble(),
@@ -389,13 +364,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -408,13 +377,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -427,13 +390,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -445,13 +402,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -463,13 +414,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           backgroundColor: tileColor,
                         )),
                   if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.doubleTapForDetails.value = val;
@@ -485,13 +430,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                         isThreeLine: true,
                       )),
                   if (!kIsDesktop && !kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsDesktop && !kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -502,13 +441,7 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> {
                           title: "Send Message with Enter",
                           backgroundColor: tileColor,
                         )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.scrollToBottomOnSend.value = val;

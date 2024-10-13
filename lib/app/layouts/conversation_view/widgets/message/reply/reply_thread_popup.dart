@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
@@ -21,7 +21,7 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
 }
 
 void showBookmarksThread(ConversationViewController cvController, BuildContext context) async {
-  final _messages = (messageBox.query(Message_.isBookmarked.equals(true))
+  final _messages = (Database.messages.query(Message_.isBookmarked.equals(true))
     ..link(Message_.chat, Chat_.guid.equals(cvController.chat.guid))
     ..order(Message_.dateCreated, flags: Order.descending)).build().find();
   if (_messages.isEmpty) {

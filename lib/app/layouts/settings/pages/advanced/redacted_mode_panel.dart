@@ -8,7 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/t
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -225,13 +225,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           backgroundColor: tileColor,
                           subtitle: "Replace message text with generated lorem ipsum",
                         ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                         SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.hideAttachments.value = val;
@@ -242,13 +236,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           backgroundColor: tileColor,
                           subtitle: "Replace attachments with placeholder boxes",
                         ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                         SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.hideContactInfo.value = val;

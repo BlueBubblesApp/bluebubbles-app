@@ -162,9 +162,9 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
 }
 
 extension ColorSchemeHelpers on ColorScheme {
-  Color get properSurface => surface.computeDifference(background) < 10 ? surfaceVariant : surface;
+  Color get properSurface => surface.computeDifference(background) < 8 ? surfaceVariant : surface;
 
-  Color get properOnSurface => surface.computeDifference(background) < 10 ? onSurfaceVariant : onSurface;
+  Color get properOnSurface => surface.computeDifference(background) < 8 ? onSurfaceVariant : onSurface;
 
   Color get iMessageBubble =>
       HSLColor.fromColor(primary).colorfulness < HSLColor.fromColor(primaryContainer).colorfulness ? primary : primaryContainer;
@@ -305,7 +305,7 @@ MaterialColor createMaterialColor(Color color) {
 }
 
 List<Color> toColorGradient(String? str) {
-  if (isNullOrEmpty(str)!) return [HexColor("686868"), HexColor("928E8E")];
+  if (isNullOrEmpty(str)) return [HexColor("686868"), HexColor("928E8E")];
 
   int total = 0;
   for (int i = 0; i < (str ?? "").length; i++) {

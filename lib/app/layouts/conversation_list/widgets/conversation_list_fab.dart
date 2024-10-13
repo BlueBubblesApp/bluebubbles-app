@@ -143,7 +143,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
                         child: controller.showMaterialFABText ? Padding(
                           padding: const EdgeInsets.only(left: 6.0),
                           child: Text(
-                            "Start Chat",
+                            "Start chat",
                             style: TextStyle(
                               color: context.theme.colorScheme.onPrimaryContainer,
                             ),
@@ -152,11 +152,11 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
                       ),
                       extendedIconLabelSpacing: 0,
                       icon: Padding(
-                        padding: const EdgeInsets.only(left: 5.0),
+                        padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                         child: Icon(
-                          Icons.message_outlined,
+                          CupertinoIcons.bubble_left,
                           color: context.theme.colorScheme.onPrimaryContainer,
-                          size: 25,
+                          size: 24,
                         ),
                       ),
                       shape: RoundedRectangleBorder(

@@ -1,19 +1,17 @@
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/utils/logger/task_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
-import 'package:video_player/video_player.dart';
 
-bool? isNullOrEmpty(dynamic input) {
+bool isNullOrEmpty(dynamic input) {
   if (input == null) return true;
   if (input is String) {
     input = input.trim();
   }
-
-  return GetUtils.isNullOrBlank(input);
+  return GetUtils.isNullOrBlank(input) ?? false;
 }
 
 bool isNullOrZero(dynamic input) {
@@ -41,45 +39,24 @@ Map<String, dynamic> mergeTopLevelDicts(Map<String, dynamic>? d1, Map<String, dy
 ///
 /// Used for heavy ObjectBox read/writes to avoid causing jank
 Future<T?> createAsyncTask<T>(AsyncTask<List<dynamic>, T> task) async {
-  final executor = AsyncExecutor(parallelism: 0, taskTypeRegister: () => [task]);
+  final executor = AsyncExecutor(
+    parallelism: 0,
+    taskTypeRegister: () => [task],
+    logger: asyncTaskLogger
+  );
   executor.logger.enabled = true;
   executor.logger.enabledExecution = true;
   await executor.execute(task);
   return task.result;
 }
 
-PlayerStatus getControllerStatus(VideoPlayerController controller) {
-  Duration currentPos = controller.value.position;
-  if (controller.value.duration == currentPos) {
-    return PlayerStatus.ENDED;
-  } else if (!controller.value.isPlaying && currentPos.inMilliseconds == 0) {
-    return PlayerStatus.STOPPED;
-  } else if (!controller.value.isPlaying && currentPos.inMilliseconds != 0) {
-    return PlayerStatus.PAUSED;
-  } else if (controller.value.isPlaying) {
-    return PlayerStatus.PLAYING;
-  }
-
-  return PlayerStatus.NONE;
-}
-
-PlayerStatus getDesktopControllerStatus(Player controller) {
-  Duration currentPos = controller.state.position;
-  if (controller.state.completed) {
-    return PlayerStatus.ENDED;
-  }
-  if (!controller.state.playing && currentPos.inMilliseconds == 0) {
-    return PlayerStatus.STOPPED;
-  }
-  if (!controller.state.playing) {
-    return PlayerStatus.PAUSED;
-  }
-  return PlayerStatus.PLAYING;
-}
-
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
 
-bool get isSnap => !kIsWeb && Platform.isLinux && Platform.environment['SNAP'] != null;
+bool get isSnap => !kIsWeb && Platform.isLinux && Platform.environment.containsKey('SNAP');
+
+bool get isFlatpak => !kIsWeb && Platform.isLinux && Platform.environment.containsKey('FLATPAK_ID');
+
+bool get isMsix => !kIsWeb && Platform.isWindows && Platform.resolvedExecutable.contains('WindowsApps') && Platform.resolvedExecutable.contains(msStorePackageName);
 
 /// From https://github.com/modulovalue/dart_intersperse/blob/master/lib/src/intersperse.dart
 Iterable<T> intersperse<T>(T element, Iterable<T> iterable) sync* {

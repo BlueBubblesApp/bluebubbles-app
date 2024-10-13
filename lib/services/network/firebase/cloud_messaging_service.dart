@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -47,7 +47,7 @@ class CloudMessagingService extends GetxService {
     }
 
     // If we've already got a token, re-register with this token
-    if (!isNullOrEmpty(token)!) {
+    if (!isNullOrEmpty(token)) {
       Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
       Logger.info('Registering device with server...', tag: 'FCM-Auth');
       await http.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
@@ -81,10 +81,10 @@ class CloudMessagingService extends GetxService {
       // First, try to auth with FCM with the current data
       Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
       result = await mcs.invokeMethod('firebase-auth', ss.fcmData.toMap());
-    } on PlatformException catch (ex) {
+    } on PlatformException catch (ex, stack) {
       // Don't try to re-auth if device is de-Googled
       if (ex.toString().contains("Google Play Services is not available")) return;
-      Logger.error('Failed to perform initial FCM authentication: ${ex.toString()}', tag: 'FCM-Auth');
+      Logger.error('Failed to perform initial FCM authentication!', error: ex, trace: stack, tag: 'FCM-Auth');
 
       // If the first try fails, let's try again with new FCM data from the server
       Logger.info('Fetching FCM data from the server...', tag: 'FCM-Auth');
@@ -106,23 +106,22 @@ class CloudMessagingService extends GetxService {
           FCMData fcmData = FCMData.fromMap(fcmMeta);
           ss.saveFCMData(fcmData);
           result = await mcs.invokeMethod('firebase-auth', fcmData.toMap());
-        } on PlatformException catch (e) {
+        } on PlatformException catch (e, stack) {
           // If we fail a second time, error out
-          Logger.error("Failed to register with FCM: $e", tag: 'FCM-Auth');
+          Logger.error("Failed to register with FCM", error: e, trace: stack, tag: 'FCM-Auth');
           completer?.completeError(e);
           return;
         }
       } else {
-        Logger.error('Failed to register with FCM - API error ${response.statusCode}: ${response.data}',
-            tag: 'FCM-Auth');
+        Logger.error('Failed to register with FCM - API error ${response.statusCode}: ${response.data}', tag: 'FCM-Auth');
         completer?.completeError("API Error ${response.statusCode}");
         return;
       }
     }
 
     // Make sure we got a valid response back from the FCM auth
-    if (isNullOrEmpty(result)!) {
-      Logger.error("Empty results, not registering device with the server.", tag: 'FCM-Auth');
+    if (isNullOrEmpty(result)) {
+      Logger.warn("Empty results, not registering device with the server.", tag: 'FCM-Auth');
       completer?.complete();
       return;
     }

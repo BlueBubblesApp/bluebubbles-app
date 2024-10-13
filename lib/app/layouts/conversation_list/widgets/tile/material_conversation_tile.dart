@@ -2,8 +2,8 @@ import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -23,9 +23,6 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
 
   bool get hoverHighlight => controller.hoverHighlight.value;
 
-  late bool unread = controller.chat.hasUnreadMessage ?? false;
-  late final StreamSubscription sub;
-
   @override
   void initState() {
     super.initState();
@@ -33,41 +30,6 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-
-    if (!kIsWeb) {
-      updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
-        sub = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null
-              ? null
-              : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
-                });
-          if (chat == null) return;
-          if (chat.hasUnreadMessage != unread) {
-            setState(() {
-              unread = chat.hasUnreadMessage!;
-            });
-          }
-        });
-      });
-    } else {
-      sub = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          if (chat.hasUnreadMessage != unread) {
-            setState(() {
-              unread = chat.hasUnreadMessage!;
-            });
-          }
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
   }
 
   @override
@@ -95,27 +57,30 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
           minVerticalPadding: ss.settings.denseChatTiles.value ? 7.5 : 10,
           title: Obx(() => ChatTitle(
                 parentController: controller,
-                style: context.theme.textTheme.bodyMedium!
+                style: context.theme.textTheme.bodyLarge!
                     .copyWith(
                       fontWeight: controller.shouldHighlight.value
                           ? FontWeight.w600
-                          : unread
+                          : GlobalChatService.unreadState(controller.chat.guid).value
                               ? FontWeight.bold
                               : null,
                     )
                     .apply(fontSizeFactor: 1.1),
               )),
           subtitle: controller.subtitle ??
-              Obx(() => ChatSubtitle(
+              Obx(() {
+                final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+                return ChatSubtitle(
                     parentController: controller,
-                    style: context.theme.textTheme.bodySmall!
+                    style: context.theme.textTheme.bodyMedium!
                         .copyWith(
                           fontWeight: unread ? FontWeight.bold : null,
                           color: controller.shouldHighlight.value || unread ? context.textTheme.bodyMedium!.color : context.theme.colorScheme.outline,
                           height: 1.5,
                         )
                         .apply(fontSizeFactor: 1.05),
-                  )),
+                  );
+      }),
           contentPadding: const EdgeInsets.only(left: 6, right: 16),
           leading: leading,
           trailing: MaterialTrailing(parentController: controller),
@@ -174,10 +139,7 @@ class MaterialTrailing extends CustomStateful<ConversationTileController> {
 
 class _MaterialTrailingState extends CustomState<MaterialTrailing, void, ConversationTileController> {
   DateTime? dateCreated;
-  bool unread = false;
-  String muteType = "";
   late final StreamSubscription sub;
-  late final StreamSubscription sub2;
   String? cachedLatestMessageGuid = "";
   Message? cachedLatestMessage;
 
@@ -194,7 +156,7 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        final latestMessageQuery = (Database.messages.query(Message_.dateDeleted.isNull())
               ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
               ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
@@ -219,32 +181,6 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
           }
           cachedLatestMessageGuid = message?.guid;
         });
-
-        final unreadQuery = chatBox
-            .query((Chat_.hasUnreadMessage.equals(true).or(Chat_.muteType.equals("mute"))).and(Chat_.guid.equals(controller.chat.guid)))
-            .watch();
-        sub2 = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null
-              ? null
-              : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
-                });
-          final newUnread = chat?.hasUnreadMessage ?? false;
-          final newMute = chat?.muteType ?? "";
-          if (chat != null && unread != newUnread) {
-            setState(() {
-              unread = newUnread;
-            });
-          } else if (chat == null && unread) {
-            setState(() {
-              unread = false;
-            });
-          } else if (muteType != newMute) {
-            setState(() {
-              muteType = newMute;
-            });
-          }
-        });
       });
     } else {
       sub = WebListeners.newMessage.listen((tuple) {
@@ -256,28 +192,12 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
           cachedLatestMessageGuid = tuple.item1.guid;
         }
       });
-      sub2 = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          final newUnread = chat.hasUnreadMessage ?? false;
-          final newMute = chat.muteType ?? "";
-          if (unread != newUnread) {
-            setState(() {
-              unread = newUnread;
-            });
-          } else if (muteType != newMute) {
-            setState(() {
-              muteType = newMute;
-            });
-          }
-        }
-      });
     }
   }
 
   @override
   void dispose() {
     sub.cancel();
-    sub2.cancel();
     super.dispose();
   }
 
@@ -285,25 +205,28 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 3),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Obx(() {
-                String indicatorText = "";
-                if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
-                  Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
-                  if (show != Indicator.NONE) {
-                    indicatorText = show.name.toLowerCase().capitalizeFirst!;
-                  }
-                }
+      child: Obx(() {
+        final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+        final muteType = GlobalChatService.muteState(controller.chat.guid).value;
 
-                return Text(
+        String indicatorText = "";
+        if (ss.settings.statusIndicatorsOnChats.value && (cachedLatestMessage?.isFromMe ?? false) && !controller.chat.isGroup) {
+          Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
+          if (show != Indicator.NONE) {
+            indicatorText = show.name.toLowerCase().capitalizeFirst!;
+          }
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
                   (cachedLatestMessage?.error ?? 0) > 0
                       ? "Error"
                       : "${indicatorText.isNotEmpty ? "$indicatorText\n" : ""}${buildChatListDateMaterial(dateCreated)}",
@@ -323,40 +246,41 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
                       )
                       .apply(fontSizeFactor: 1.1),
                   overflow: TextOverflow.clip,
-                );
-              }),
-              if (muteType != "mute" && unread)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: context.theme.colorScheme.primary,
-                    ),
-                  ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (controller.chat.isPinned!) Icon(Icons.push_pin_outlined, size: 15, color: context.theme.colorScheme.outline),
-              const SizedBox(width: 5),
-              if (muteType == "mute")
-                Obx(() => Icon(
-                      Icons.notifications_off_outlined,
-                      color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.primary : context.theme.colorScheme.outline,
-                      size: 15,
-                    )),
-            ],
-          ),
-        ],
-      ),
+                if (muteType != "mute" && unread) 
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: context.theme.colorScheme.primary,
+                      ),
+                    ),
+                  )
+              ],
+            ),
+            const SizedBox(height: 5),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (controller.chat.isPinned!) Icon(Icons.push_pin_outlined, size: 15, color: context.theme.colorScheme.outline),
+                if (muteType == "mute")
+                  const SizedBox(width: 5),
+                if (muteType == "mute")
+                  Obx(() => Icon(
+                        Icons.notifications_off_outlined,
+                        color: controller.shouldHighlight.value || unread ? context.theme.colorScheme.primary : context.theme.colorScheme.outline,
+                        size: 15,
+                      )),
+              ],
+            ),
+          ],
+        );
+    })
     );
   }
 }
@@ -369,8 +293,6 @@ class UnreadIcon extends CustomStateful<ConversationTileController> {
 }
 
 class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
-  bool unread = false;
-  late final StreamSubscription sub;
 
   @override
   void initState() {
@@ -379,48 +301,13 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
-    unread = controller.chat.hasUnreadMessage ?? false;
-    if (!kIsWeb) {
-      updateObx(() {
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
-        sub = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null
-              ? null
-              : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
-                });
-          if (chat == null) return;
-          if (chat.hasUnreadMessage != unread) {
-            setState(() {
-              unread = chat.hasUnreadMessage!;
-            });
-          }
-        });
-      });
-    } else {
-      sub = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          if (chat.hasUnreadMessage != unread) {
-            setState(() {
-              unread = chat.hasUnreadMessage!;
-            });
-          }
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Obx(() => Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-      child: (unread)
+      child: (GlobalChatService.unreadState(controller.chat.guid).value)
           ? Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(35),
@@ -430,6 +317,6 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
               height: 10,
             )
           : const SizedBox(width: 10),
-    );
+    ));
   }
 }

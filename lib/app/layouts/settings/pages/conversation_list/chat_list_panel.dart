@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -11,13 +12,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ChatListPanel extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() => _ChatListPanelState();
 }
 
 class _ChatListPanelState extends OptimizedState<ChatListPanel> {
-  
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -44,13 +43,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Show a visual status indicator when the app is not connected to the server",
                           backgroundColor: tileColor,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.showSyncIndicator.value = val;
@@ -63,30 +56,22 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.statusIndicatorsOnChats.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.statusIndicatorsOnChats.value,
-                      title: "Message Status Indicators",
-                      subtitle: "Adds status indicators to the chat list for the sent / delivered / read status of your most recent message",
-                      backgroundColor: tileColor,
-                      isThreeLine: true,
-                    )),
+                          onChanged: (bool val) {
+                            ss.settings.statusIndicatorsOnChats.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.statusIndicatorsOnChats.value,
+                          title: "Message Status Indicators",
+                          subtitle:
+                              "Adds status indicators to the chat list for the sent / delivered / read status of your most recent message",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        )),
                   ],
                 ),
-                SettingsHeader(
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Filtering"),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Filtering"),
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
@@ -102,13 +87,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.filterUnknownSenders.value = val;
@@ -122,52 +101,36 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           isThreeLine: true,
                         )),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          ss.settings.unarchiveOnNewMessage.value = val;
-                          saveSettings();
-                        },
-                        initialVal: ss.settings.unarchiveOnNewMessage.value,
-                        title: "Unarchive Chats On New Message",
-                        subtitle:
-                        "Automatically unarchive chats when a new message is received",
-                        backgroundColor: tileColor,
-                        isThreeLine: true,
-                      )),
+                            onChanged: (bool val) {
+                              ss.settings.unarchiveOnNewMessage.value = val;
+                              saveSettings();
+                            },
+                            initialVal: ss.settings.unarchiveOnNewMessage.value,
+                            title: "Unarchive Chats On New Message",
+                            subtitle: "Automatically unarchive chats when a new message is received",
+                            backgroundColor: tileColor,
+                            isThreeLine: true,
+                          )),
                   ],
                 ),
-                SettingsHeader(
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Appearance"),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Appearance"),
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        ss.settings.hideDividers.value = val;
-                        saveSettings();
-                      },
-                      initialVal: ss.settings.hideDividers.value,
-                      title: "Hide Dividers",
-                      backgroundColor: tileColor,
-                      subtitle: "Hides dividers between tiles",
-                    )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                          onChanged: (bool val) {
+                            ss.settings.hideDividers.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.hideDividers.value,
+                          title: "Hide Dividers",
+                          backgroundColor: tileColor,
+                          subtitle: "Hides dividers between tiles",
+                        )),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.denseChatTiles.value = val;
@@ -179,20 +142,13 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Compresses chat tile size on the conversation list page",
                           isThreeLine: true,
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop && !kIsWeb)
                       Obx(() {
                         if (iOS) {
-                          return SettingsTile(
-                            title: "Max Pin Rows",
-                            subtitle:
-                                "The maximum row count of pins displayed${kIsDesktop ? "" : " when using the app in the portrait orientation"}",
+                          return const SettingsTile(
+                            title: "Pin Configuration",
+                            subtitle: "The row and column count of the pin grid. ",
                             isThreeLine: true,
                           );
                         } else {
@@ -204,23 +160,25 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                         if (iOS) {
                           return Row(
                             children: <Widget>[
+                              const Padding(
+                                padding: EdgeInsets.only(left: 48),
+                                child: SizedBox(
+                                  width: 100,
+                                  child: Text("Row Count in Portrait"),
+                                ),
+                              ),
                               Flexible(
-                                child: SettingsSlider(
-                                  min: 1,
-                                  max: 4,
-                                  divisions: 3,
-                                  update: (double val) {
+                                child: SettingsOptions<int>(
+                                  onChanged: (int? val) {
+                                    if (val == null) return;
                                     ss.settings.pinRowsPortrait.value = val.toInt();
-                                  },
-                                  onChangeEnd: (double val) {
                                     saveSettings();
                                   },
-                                  startingVal: ss.settings.pinRowsPortrait.value.toDouble(),
-                                  backgroundColor: tileColor,
-                                  formatValue: (val) =>
-                                      "${ss.settings.pinRowsPortrait.value} row${ss.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${kIsDesktop
-                                          ? ss.settings.pinColumnsLandscape.value.toString()
-                                          : ss.settings.pinColumnsPortrait.value.toString()}",
+                                  options: List.generate(4, (index) => index + 1),
+                                  initial: ss.settings.pinRowsPortrait.value,
+                                  title: '',
+                                  secondaryColor: context.theme.colorScheme.secondary,
+                                  textProcessing: (val) => val.toString(),
                                 ),
                               ),
                               const SizedBox(width: 20),
@@ -230,6 +188,74 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           return const SizedBox.shrink();
                         }
                       }),
+                    if (!kIsDesktop && !kIsWeb)
+                      Obx(() {
+                        if (iOS) {
+                          return Row(
+                            children: <Widget>[
+                              const Padding(
+                                padding: EdgeInsets.only(left: 48),
+                                child: SizedBox(
+                                  width: 100,
+                                  child: Text("Row Count in Landscape"),
+                                ),
+                              ),
+                              Flexible(
+                                child: SettingsOptions<int>(
+                                  onChanged: (int? val) {
+                                    if (val == null) return;
+                                    ss.settings.pinRowsLandscape.value = val.toInt();
+                                    saveSettings();
+                                  },
+                                  options: List.generate(4, (index) => index + 1),
+                                  initial: ss.settings.pinRowsLandscape.value,
+                                  title: '',
+                                  secondaryColor: context.theme.colorScheme.secondary,
+                                  textProcessing: (val) => val.toString(),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                            ],
+                          );
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      }),
+                    if (!kIsDesktop && !kIsWeb)
+                      Obx(() {
+                        if (iOS) {
+                          return Row(
+                            children: <Widget>[
+                              const Padding(
+                                padding: EdgeInsets.only(left: 48),
+                                child: SizedBox(
+                                  width: 100,
+                                  child: Text("Column Count"),
+                                ),
+                              ),
+                              Flexible(
+                                child: SettingsOptions<int>(
+                                  onChanged: (int? val) {
+                                    if (val == null) return;
+                                    ss.settings.pinColumnsPortrait.value = val.toInt();
+                                    saveSettings();
+                                  },
+                                  options: List.generate(4, (index) => index + 1),
+                                  initial: ss.settings.pinColumnsPortrait.value,
+                                  title: '',
+                                  secondaryColor: context.theme.colorScheme.secondary,
+                                  textProcessing: (val) => val.toString(),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                            ],
+                          );
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      }),
+                    if (!kIsWeb)
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (kIsDesktop)
                       Obx(() {
                         if (iOS) {
@@ -237,7 +263,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                             title:
                                 "Pinned Chat Configuration (${ss.settings.pinRowsPortrait.value} row${ss.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${ss.settings.pinColumnsLandscape})",
                             subtitle:
-                                "Pinned chats will overflow onto multiple pages if they do not fit in this configuration. Keep in mind that you cannot access different pages of the pinned chats without a touchscreen or horizontal scrolling capability.",
+                                "Pinned chats will overflow onto multiple pages if they do not fit in this configuration.",
                           );
                         } else {
                           return const SizedBox.shrink();
@@ -338,68 +364,51 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                                                     Obx(
                                                       () => Expanded(
                                                         flex: ss.settings.pinRowsPortrait.value *
-                                                            (width -
-                                                                ns.width(context) /
-                                                                    context.width *
-                                                                    width) ~/
+                                                            (width - ns.width(context) / context.width * width) ~/
                                                             ss.settings.pinColumnsLandscape.value,
                                                         child: GridView.custom(
                                                           shrinkWrap: true,
                                                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                            crossAxisCount:
-                                                                ss.settings.pinColumnsLandscape.value,
+                                                            crossAxisCount: ss.settings.pinColumnsLandscape.value,
                                                           ),
                                                           physics: const NeverScrollableScrollPhysics(),
                                                           childrenDelegate: SliverChildBuilderDelegate(
                                                             (context, index) => Container(
                                                               margin: EdgeInsets.all(2 /
-                                                                  max(
-                                                                      ss.settings.pinRowsPortrait.value,
-                                                                      ss
-                                                                          .settings
-                                                                          .pinColumnsLandscape
-                                                                          .value)),
+                                                                  max(ss.settings.pinRowsPortrait.value,
+                                                                      ss.settings.pinColumnsLandscape.value)),
                                                               decoration: BoxDecoration(
                                                                   borderRadius: BorderRadius.circular(50 /
-                                                                      max(
-                                                                          ss
-                                                                              .settings
-                                                                              .pinRowsPortrait
-                                                                              .value,
-                                                                          ss
-                                                                              .settings
-                                                                              .pinColumnsLandscape
-                                                                              .value)),
+                                                                      max(ss.settings.pinRowsPortrait.value,
+                                                                          ss.settings.pinColumnsLandscape.value)),
                                                                   color: context.theme.colorScheme.secondary
                                                                       .lightenOrDarken(10)),
                                                             ),
-                                                            childCount:
-                                                                ss.settings.pinColumnsLandscape.value *
-                                                                    ss.settings.pinRowsPortrait.value,
+                                                            childCount: ss.settings.pinColumnsLandscape.value *
+                                                                ss.settings.pinRowsPortrait.value,
                                                           ),
                                                         ),
                                                       ),
                                                     ),
                                                     if (ss.settings.pinRowsPortrait.value *
-                                                            (width -
-                                                                ns.width(context) /
-                                                                    context.width *
-                                                                    width) /
+                                                            (width - ns.width(context) / context.width * width) /
                                                             ss.settings.pinColumnsLandscape.value <
                                                         96)
                                                       Expanded(
                                                         flex: 96 -
                                                             ss.settings.pinRowsPortrait.value *
-                                                                (width -
-                                                                    ns.width(context) /
-                                                                        context.width *
-                                                                        width) ~/
+                                                                (width - ns.width(context) / context.width * width) ~/
                                                                 ss.settings.pinColumnsLandscape.value,
                                                         child: ListView.builder(
                                                             padding: const EdgeInsets.only(top: 2),
                                                             physics: const NeverScrollableScrollPhysics(),
                                                             shrinkWrap: true,
+                                                            findChildIndexCallback: (key) {
+                                                              final index = 8 - ss.settings.pinRowsPortrait.value;
+                                                              return index == -1 ? null : index;
+                                                            },
                                                             itemBuilder: (context, index) => Container(
+                                                                key: ValueKey(index),
                                                                 height: 12,
                                                                 margin: const EdgeInsets.symmetric(vertical: 1),
                                                                 decoration: BoxDecoration(
@@ -434,14 +443,9 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           return const SizedBox.shrink();
                         }
                       }),
+                    if (kIsDesktop && iOS) const SizedBox(height: 24),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Pinned Order",
@@ -452,32 +456,26 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                             PinnedOrderPanel(),
                           );
                         },
-                        trailing: Icon(
-                          iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-                          color: context.theme.colorScheme.outline,
-                        ),
+                        trailing: const NextButton(),
                       ),
                   ],
                 ),
                 if (!kIsWeb && !kIsDesktop && !iOS)
-                  SettingsHeader(
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Swipe Actions"),
+                  SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Swipe Actions"),
                 if (!kIsWeb && !kIsDesktop && !iOS)
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          ss.settings.swipableConversationTiles.value = val;
-                          saveSettings();
-                        },
-                        initialVal: ss.settings.swipableConversationTiles.value,
-                        title: "Swipe Actions for Conversation Tiles",
-                        subtitle: "Enables swipe actions for conversation tiles when using Material theme",
-                        backgroundColor: tileColor,
-                      )),
+                            onChanged: (bool val) {
+                              ss.settings.swipableConversationTiles.value = val;
+                              saveSettings();
+                            },
+                            initialVal: ss.settings.swipableConversationTiles.value,
+                            title: "Swipe Actions for Conversation Tiles",
+                            subtitle: "Enables swipe actions for conversation tiles when using Material theme",
+                            backgroundColor: tileColor,
+                          )),
                       Obx(() {
                         if (ss.settings.swipableConversationTiles.value) {
                           return Container(
@@ -521,14 +519,12 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                       }),
                     ],
                   ),
-                SettingsHeader(
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Misc"),
-                SettingsSection(
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Misc"),
+                Obx(() => SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    Obx(() => SettingsSwitch(
+                    if (ss.settings.skin.value == Skins.iOS)
+                      SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.moveChatCreatorToHeader.value = val;
                             saveSettings();
@@ -538,33 +534,25 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> {
                           subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                           backgroundColor: tileColor,
                           isThreeLine: true,
-                        )),
-                    if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
-                      ),
+                    if (ss.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop)
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
-                      Obx(() => SettingsSwitch(
+                      SettingsSwitch(
                             onChanged: (bool val) {
                               ss.settings.cameraFAB.value = val;
                               saveSettings();
                             },
                             initialVal: ss.settings.cameraFAB.value,
-                            title: ss.settings.skin.value != Skins.iOS
-                                ? "Long Press for Camera"
-                                : "Add Camera Button",
+                            title: ss.settings.skin.value != Skins.iOS ? "Long Press for Camera" : "Add Camera Button",
                             subtitle: ss.settings.skin.value != Skins.iOS
                                 ? "Long press the start chat button to easily send a picture to a chat"
                                 : "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                             backgroundColor: tileColor,
                             isThreeLine: true,
-                          )),
+                          ),
                   ],
-                ),
+                )),
               ],
             ),
           ),

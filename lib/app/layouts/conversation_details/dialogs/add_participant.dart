@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/string_utils.dart';
 import 'package:flutter/material.dart';
@@ -70,8 +70,10 @@ void showAddParticipant(BuildContext context, Chat chat) {
                               child: ListView.builder(
                                 shrinkWrap: true,
                                 itemCount: contacts.length,
+                                findChildIndexCallback: (key) => findChildIndexByKey(contacts, key, (item) => "${item.item1}-${item.item2}"),
                                 itemBuilder: (context, index) {
                                   return ListTile(
+                                    key: ValueKey("${contacts[index].item1}-${contacts[index].item2}"),
                                     mouseCursor: MouseCursor.defer,
                                     title: Text(contacts[index].item2),
                                     subtitle: Text(contacts[index].item1),

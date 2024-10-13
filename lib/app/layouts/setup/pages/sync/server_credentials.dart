@@ -7,9 +7,9 @@ import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/helpers/ui/oauth_helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart';
@@ -112,6 +112,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 child: ListView.builder(
                                   shrinkWrap: true,
                                   itemCount: usableProjects.length,
+                                  findChildIndexCallback: (key) => findChildIndexByKey(usableProjects, key, (item) => item['projectId']),
                                   itemBuilder: (context, index) {
                                     return Obx(() {
                                       if (!triedConnecting[index].value) {
@@ -126,6 +127,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                         });
                                       }
                                       return ClipRRect(
+                                        key: ValueKey(usableProjects[index]['projectId']),
                                         clipBehavior: Clip.antiAlias,
                                         borderRadius: BorderRadius.circular(20),
                                         child: ListTile(
@@ -194,15 +196,15 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               padding: const EdgeInsets.all(2),
               child: ElevatedButton(
                 style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                   ),
-                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  maximumSize: MaterialStateProperty.all(buttonSize),
-                  minimumSize: MaterialStateProperty.all(buttonSize),
+                  backgroundColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                  shadowColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                  maximumSize: WidgetStateProperty.all(buttonSize),
+                  minimumSize: WidgetStateProperty.all(buttonSize),
                 ),
                 onPressed: () async {
                   setState(() {
@@ -230,15 +232,15 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               height: 40,
               child: ElevatedButton(
                 style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                   ),
-                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                  shadowColor: MaterialStateProperty.all(Colors.transparent),
-                  maximumSize: MaterialStateProperty.all(buttonSize),
-                  minimumSize: MaterialStateProperty.all(buttonSize),
+                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                  shadowColor: WidgetStateProperty.all(Colors.transparent),
+                  maximumSize: WidgetStateProperty.all(buttonSize),
+                  minimumSize: WidgetStateProperty.all(buttonSize),
                 ),
                 onPressed: () async {
                   token = await googleOAuth(context);
@@ -285,15 +287,15 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               height: 40,
               child: ElevatedButton(
                 style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                   ),
-                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                  shadowColor: MaterialStateProperty.all(Colors.transparent),
-                  maximumSize: MaterialStateProperty.all(buttonSize),
-                  minimumSize: MaterialStateProperty.all(buttonSize),
+                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                  shadowColor: WidgetStateProperty.all(Colors.transparent),
+                  maximumSize: WidgetStateProperty.all(buttonSize),
+                  minimumSize: WidgetStateProperty.all(buttonSize),
                 ),
                 onPressed: scanQRCode,
                 child: Row(
@@ -323,15 +325,15 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               padding: const EdgeInsets.all(2),
               child: ElevatedButton(
                 style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                   ),
-                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                  maximumSize: MaterialStateProperty.all(buttonSize),
-                  minimumSize: MaterialStateProperty.all(buttonSize),
+                  backgroundColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                  shadowColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                  maximumSize: WidgetStateProperty.all(buttonSize),
+                  minimumSize: WidgetStateProperty.all(buttonSize),
                 ),
                 onPressed: () async {
                   setState(() {
@@ -449,15 +451,15 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 padding: const EdgeInsets.all(2),
                                 child: ElevatedButton(
                                   style: ButtonStyle(
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20.0),
                                       ),
                                     ),
-                                    backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                                    shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
-                                    maximumSize: MaterialStateProperty.all(const Size(200, 36)),
-                                    minimumSize: MaterialStateProperty.all(const Size(30, 30)),
+                                    backgroundColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                                    shadowColor: WidgetStateProperty.all(context.theme.colorScheme.background),
+                                    maximumSize: WidgetStateProperty.all(const Size(200, 36)),
+                                    minimumSize: WidgetStateProperty.all(const Size(30, 30)),
                                   ),
                                   onPressed: () async {
                                     setState(() {
@@ -487,15 +489,15 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                                 height: 40,
                                 child: ElevatedButton(
                                   style: ButtonStyle(
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20.0),
                                       ),
                                     ),
-                                    backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                                    shadowColor: MaterialStateProperty.all(Colors.transparent),
-                                    maximumSize: MaterialStateProperty.all(const Size(200, 36)),
-                                    minimumSize: MaterialStateProperty.all(const Size(30, 30)),
+                                    backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                                    shadowColor: WidgetStateProperty.all(Colors.transparent),
+                                    maximumSize: WidgetStateProperty.all(const Size(200, 36)),
+                                    minimumSize: WidgetStateProperty.all(const Size(30, 30)),
                                   ),
                                   onPressed: () async {
                                     ss.settings.customHeaders.value = {};
@@ -565,7 +567,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
         ),
       );
 
-      if (isNullOrEmpty(response)!) {
+      if (isNullOrEmpty(response)) {
         throw Exception("No data was scanned, please try again.");
       } else {
         final List result = jsonDecode(response);
@@ -633,9 +635,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       return;
     }
 
-    ss.settings.serverAddress.value = addr;
     ss.settings.guidAuthKey.value = password;
-    ss.settings.save();
+    await saveNewServerUrl(addr, saveAdditionalSettings: ["guidAuthKey"]);
 
     // Request data from the API
     showDialog(
@@ -690,7 +691,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     }
     // Ignore any other server errors unless user is using ngrok or cloudflare
     final data = fcmResponse?.data;
-    if ((data == null || isNullOrEmpty(data["data"])!) && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+    if ((data == null || isNullOrEmpty(data["data"])) && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
       return controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
     } else {
       try {
@@ -708,7 +709,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   style: context.theme.textTheme.titleLarge,
                 ),
                 content: Text(
-                  "We couldn't find a Firebase setup on your server. To receive notifications, please enable the foreground service option from Settings > Misc & Advanced.",
+                  "We couldn't find a Firebase setup on your server. To receive notifications, please enable the background service option from Settings > Misc & Advanced.",
                   style: context.theme.textTheme.bodyLarge,
                 ),
                 backgroundColor: context.theme.colorScheme.properSurface,
