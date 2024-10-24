@@ -124,6 +124,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         if (kIsDesktop) {
           /* ----- WINDOW INITIALIZATION ----- */
           await windowManager.ensureInitialized();
+          await windowManager.setPreventClose(ss.settings.closeToTray.value);
           await windowManager.setTitle('BlueBubbles');
           await Window.initialize();
           if (Platform.isWindows) {
@@ -159,9 +160,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
             await ss.prefs.setDouble("window-y", posY);
 
             await windowManager.setTitle('BlueBubbles');
-            if (arguments.firstOrNull == "minimized") {
-              await windowManager.hide();
-            } else {
+            if (arguments.firstOrNull != "minimized") {
               await windowManager.show();
             }
             if (!(ss.canAuthenticate && ss.settings.shouldSecure.value)) {
@@ -244,6 +243,13 @@ class DesktopWindowListener extends WindowListener {
       case "show":
         await setSystemTrayContextMenu(windowHidden: false);
         break;
+    }
+  }
+
+  @override
+  void onWindowClose() async {
+    if (await windowManager.isPreventClose()) {
+      await windowManager.hide();
     }
   }
 }
@@ -547,6 +553,9 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayL
         await windowManager.hide();
         break;
       case 'close_app':
+        if (await windowManager.isPreventClose()) {
+          await windowManager.setPreventClose(false);
+        }
         await windowManager.close();
         break;
     }
@@ -679,6 +688,9 @@ Future<void> setSystemTrayContextMenu({bool windowHidden = false}) async {
       st.MenuItemLabel(
         label: 'Close App',
         onClicked: (_) async {
+          if (await windowManager.isPreventClose()) {
+            await windowManager.setPreventClose(false);
+          }
           await windowManager.close();
         },
       ),
