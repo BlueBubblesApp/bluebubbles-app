@@ -82,19 +82,19 @@ class SocketService extends GetxService {
     // custom events
     // only listen to these events from socket on web/desktop (FCM handles on Android)
     if (kIsWeb || kIsDesktop) {
-      socket.on("group-name-change", (data) => ah.handleSocketEvent("group-name-change", data, 'DartSocket'));
-      socket.on("participant-removed", (data) => ah.handleSocketEvent("participant-removed", data, 'DartSocket'));
-      socket.on("participant-added", (data) => ah.handleSocketEvent("participant-added", data, 'DartSocket'));
-      socket.on("participant-left", (data) => ah.handleSocketEvent("participant-left", data, 'DartSocket'));
-      socket.on("incoming-facetime", (data) => ah.handleSocketEvent("incoming-facetime", jsonDecode(data), 'DartSocket'));
+      socket.on("group-name-change", (data) => ah.handleEvent("group-name-change", data, 'DartSocket'));
+      socket.on("participant-removed", (data) => ah.handleEvent("participant-removed", data, 'DartSocket'));
+      socket.on("participant-added", (data) => ah.handleEvent("participant-added", data, 'DartSocket'));
+      socket.on("participant-left", (data) => ah.handleEvent("participant-left", data, 'DartSocket'));
+      socket.on("incoming-facetime", (data) => ah.handleEvent("incoming-facetime", jsonDecode(data), 'DartSocket'));
     }
 
-    socket.on("ft-call-status-changed", (data) => ah.handleSocketEvent("ft-call-status-changed", data, 'DartSocket'));
-    socket.on("new-message", (data) => ah.handleSocketEvent("new-message", data, 'DartSocket'));
-    socket.on("updated-message", (data) => ah.handleSocketEvent("updated-message", data, 'DartSocket'));
-    socket.on("typing-indicator", (data) => ah.handleSocketEvent("typing-indicator", data, 'DartSocket'));
-    socket.on("chat-read-status-changed", (data) => ah.handleSocketEvent("chat-read-status-changed", data, 'DartSocket'));
-    socket.on("imessage-aliases-removed", (data) => ah.handleSocketEvent("imessage-aliases-removed", data, 'DartSocket'));
+    socket.on("ft-call-status-changed", (data) => ah.handleEvent("ft-call-status-changed", data, 'DartSocket'));
+    socket.on("new-message", (data) => ah.handleEvent("new-message", data, 'DartSocket'));
+    socket.on("updated-message", (data) => ah.handleEvent("updated-message", data, 'DartSocket'));
+    socket.on("typing-indicator", (data) => ah.handleEvent("typing-indicator", data, 'DartSocket'));
+    socket.on("chat-read-status-changed", (data) => ah.handleEvent("chat-read-status-changed", data, 'DartSocket'));
+    socket.on("imessage-aliases-removed", (data) => ah.handleEvent("imessage-aliases-removed", data, 'DartSocket'));
 
     socket.connect();
   }

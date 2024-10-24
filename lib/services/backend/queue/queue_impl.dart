@@ -15,7 +15,7 @@ abstract class Queue extends GetxService {
     // we may get a link split into 2 messages
     if (item is OutgoingItem && returned is List) {
       items.addAll(returned.map((e) => OutgoingItem(
-        type: QueueType.sendMessage,
+        type: item.type,
         chat: item.chat,
         message: e,
         completer: item.completer,

@@ -53,8 +53,8 @@ class ChatCreator extends StatefulWidget {
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
   final messageNode = FocusNode();
-  late final TextEditingController textController = SpellCheckTextEditingController(text: widget.initialText, focusNode: messageNode);
-  final TextEditingController subjectController = TextEditingController(); // Chat creator doesn't have subject line
+  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText, focusNode: messageNode);
+  final SpellCheckTextEditingController subjectController = SpellCheckTextEditingController(); // Chat creator doesn't have subject line
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -591,10 +591,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                       color: Colors.transparent,
                                       child: InkWell(
                                         onTap: () {
-                                          if (chat.isGroup) {
-                                            selectedContacts.clear();
-                                          }
-
                                           addSelectedList(chat.participants
                                               .where((e) =>
                                                   selectedContacts.firstWhereOrNull((c) => c.address == e.address) ==

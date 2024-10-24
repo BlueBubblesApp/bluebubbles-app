@@ -62,13 +62,16 @@ class MethodChannelService extends GetxService {
           socket.restartSocket();
         }
         return Future.value(true);
-      case "new-message":
+      case "new-message":  // FCM message
         await Database.waitForInit();
         Logger.info("Received new message from MethodChannel");
 
         // The socket will handle this event if the app is alive
         if (ls.isAlive && socket.socket.connected) {
           Logger.debug("App is alive, ignoring new message...");
+          return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
           return Future.value(true);
         }
 
@@ -95,6 +98,9 @@ class MethodChannelService extends GetxService {
         // The socket will handle this event if the app is alive
         if (ls.isAlive && socket.socket.connected) {
           Logger.debug("App is alive, ignoring updated message...");
+          return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
           return Future.value(true);
         }
 
@@ -140,6 +146,9 @@ class MethodChannelService extends GetxService {
         if (ls.isAlive && socket.socket.connected) {
           Logger.debug("App is alive, ignoring updated message...");
           return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
+          return Future.value(true);
         }
 
         try {
@@ -161,6 +170,9 @@ class MethodChannelService extends GetxService {
         // The socket will handle this event if the app is alive
         if (ls.isAlive && socket.socket.connected) {
           Logger.debug("App is alive, ignoring updated message...");
+          return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
           return Future.value(true);
         }
 
@@ -337,7 +349,7 @@ class MethodChannelService extends GetxService {
 
         try {
           final Map<String, dynamic> jsonData = jsonDecode(data['data']);
-          await ah.handleSocketEvent(data['event'], jsonData, 'MethodChannel', useQueue: false);
+          await ah.handleEvent(data['event'], jsonData, 'MethodChannel', useQueue: false);
         } catch (e, s) {
           return Future.error(e, s);
         }

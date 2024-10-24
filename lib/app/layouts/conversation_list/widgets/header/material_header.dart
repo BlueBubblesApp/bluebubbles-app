@@ -8,6 +8,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class MaterialHeader extends CustomStateful<ConversationListController> {
@@ -56,10 +57,14 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                     ),
                                   if (!ns.isAvatarOnly(context))
                                     Padding(
-                                      padding: const EdgeInsets.only(left: 15, right: 20),
+                                      padding: const EdgeInsets.only(left: 18, right: 20),
                                       child: (!showArchived && !showUnknown)
-                                          ? Image.asset("assets/icon/icon.png", width: 34, fit: BoxFit.contain)
-                                          : IconButton(
+                                          ? SvgPicture.asset(
+                                              'assets/icon/bb-icon.svg',
+                                              width: 26,
+                                              height: 26,
+                                              colorFilter: ColorFilter.mode(context.theme.colorScheme.properOnSurface, BlendMode.srcIn)
+                                          ) : IconButton(
                                               onPressed: () async {
                                                 Navigator.of(context).pop();
                                               },

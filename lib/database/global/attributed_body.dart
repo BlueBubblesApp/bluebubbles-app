@@ -61,10 +61,13 @@ class Attributes {
     audioTranscript: json["IMAudioTranscription"]
   );
 
-  Map<String, dynamic> toMap() => {
-    "__kIMMessagePartAttributeName": messagePart,
-    "__kIMFileTransferGUIDAttributeName": attachmentGuid,
-    "__kIMMentionConfirmedMention": mention,
-    "IMAudioTranscription": audioTranscript
-  };
+  Map<String, dynamic> toMap() {
+    // Only include non-null values
+    final Map<String, dynamic> map = {};
+    if (messagePart != null) map["__kIMMessagePartAttributeName"] = messagePart;
+    if (attachmentGuid != null) map["__kIMFileTransferGUIDAttributeName"] = attachmentGuid;
+    if (mention != null) map["__kIMMentionConfirmedMention"] = mention;
+    if (audioTranscript != null) map["IMAudioTranscription"] = audioTranscript;
+    return map;
+  }
 }
