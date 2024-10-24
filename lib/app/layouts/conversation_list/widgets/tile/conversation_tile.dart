@@ -178,7 +178,7 @@ class ChatTitle extends CustomStateful<ConversationTileController> {
 
 class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileController> {
   String title = "Unknown";
-  late final StreamSubscription sub;
+  StreamSubscription? sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -263,7 +263,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    if (!kIsWeb) sub?.cancel();
     super.dispose();
   }
 
@@ -301,7 +301,7 @@ class ChatSubtitle extends CustomStateful<ConversationTileController> {
 class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTileController> {
   String subtitle = "Unknown";
   String fakeText = faker.lorem.words(1).join(" ");
-  late final StreamSubscription sub;
+  StreamSubscription? sub;
   String? cachedLatestMessageGuid = "";
   DateTime? cachedDateCreated;
   DateTime? cachedDateEdited;
@@ -400,7 +400,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
 
   @override
   void dispose() {
-    sub.cancel();
+    sub?.cancel();
     super.dispose();
   }
 
