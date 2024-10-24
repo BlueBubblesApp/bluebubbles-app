@@ -1,7 +1,10 @@
 import "package:bluebubbles/helpers/helpers.dart";
 import "package:bluebubbles/database/models.dart";
 import "package:bluebubbles/services/services.dart";
+import 'package:bluebubbles/utils/emoji.dart';
+import "package:bluebubbles/utils/emoticons.dart";
 import "package:collection/collection.dart";
+import "package:emojis/emoji.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:get/get.dart";
@@ -37,9 +40,7 @@ class SpellCheckTextEditingController extends TextEditingController {
     _languageCheckService =
         DebounceLangToolService(LangToolService(LanguageToolClient(language: ss.settings.spellcheckLanguage.value)),
             const Duration(milliseconds: 500));
-    if (text.isNotEmpty) {
-      _processMistakes(text);
-    }
+    _processMistakes(text);
   }
 
   /// focusNode
@@ -67,11 +68,52 @@ class SpellCheckTextEditingController extends TextEditingController {
 
   @override
   set value(TextEditingValue newValue) {
+    String origText = newValue.text;
+    int origOffset = newValue.selection.start;
+    String newText = newValue.text;
+    int newOffset = newValue.selection.start;
+
+    if (ss.settings.replaceEmoticonsWithEmoji.value) {
+      List<(int, int)> offsetsAndDifferences;
+      (newText, offsetsAndDifferences) = replaceEmoticons(newText);
+
+      if (offsetsAndDifferences.isNotEmpty) {
+        // Add all differences before the cursor and subtract from offset
+        for (final (_offset, difference) in offsetsAndDifferences) {
+          if (_offset < newOffset) {
+            newOffset -= difference;
+          }
+        }
+      }
+    }
+
+    final regExp = RegExp(r"(?<=^|[^a-zA-Z\d]):[^: \n]{2,}:", multiLine: true);
+    final matches = regExp.allMatches(newText);
+    if (matches.isNotEmpty) {
+      RegExpMatch match = matches.lastWhere((m) => m.start < newOffset);
+      // Full emoji text (do not search for partial matches)
+      String emojiName = newText.substring(match.start + 1, match.end - 1).toLowerCase();
+      if (emojiNames.keys.contains(emojiName)) {
+        // We can replace the :emoji: with the actual emoji here
+        final emoji = Emoji.byShortName(emojiName)!;
+        newText = newText.substring(0, match.start) + emoji.char + newText.substring(match.end);
+        newOffset = match.start + emoji.char.length;
+      }
+    }
+
+    if (newText != origText || newOffset != origOffset) {
+      newValue = newValue.copyWith(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newOffset),
+      );
+    }
+
     if (kIsDesktop || kIsWeb) {
       _handleTextChange(newValue.text);
       _mistakeTooltip?.remove();
       _mistakeTooltip = null;
     }
+
     super.value = newValue;
   }
 
@@ -129,7 +171,7 @@ class SpellCheckTextEditingController extends TextEditingController {
   }
 
   Future<void> _processMistakes(String newText) async {
-    if (!ss.settings.spellcheck.value) {
+    if (!ss.settings.spellcheck.value || newText.isEmpty) {
       _mistakes.clear();
       _mistakeTooltip?.remove();
       _mistakeTooltip = null;
@@ -147,7 +189,7 @@ class SpellCheckTextEditingController extends TextEditingController {
     final mistakes = mistakesWrapper.result();
     _fetchError = mistakesWrapper.error;
 
-    _mistakes = mistakes;
+    _mistakes = List.from(mistakes);
     notifyListeners();
   }
 
@@ -387,12 +429,11 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
 
   List<Mentionable> mentionables;
 
-  // mention cache
-  Iterable<int> mentionedIndices = <int>[];
+  void processMentions() => _processMentions(text);
 
-  void processMentions() {
+  void _processMentions(String text) {
     final matches = escapingRegex.allMatches(text);
-    mentionedIndices = matches.map((m) => int.tryParse(text.substring(m.start + 1, m.end - 1))).whereNotNull();
+    Iterable<int> mentionedIndices = matches.map((m) => int.tryParse(text.substring(m.start + 1, m.end - 1))).whereNotNull();
     mentionables.forEachIndexed((i, m) {
       if (!mentionedIndices.contains(i)) {
         m.customDisplayName = null;
@@ -473,6 +514,59 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
       textSplit.add(text.substring(start));
     }
     return textSplit;
+  }
+
+  @override
+  set value(TextEditingValue newValue) {
+    String newText = newValue.text;
+    int newOffset = newValue.selection.start;
+
+    // Need fewer chars for anything bad to happen
+    if (newText.length < text.length) {
+      // Search for the new state in the old state starting from the old selection's end
+      String textSearchPart = text.substring(selection.end);
+      int indexInNew = textSearchPart == "" || newValue.selection.end == -1
+          ? newText.length
+          : newText.indexOf(textSearchPart, newValue.selection.end);
+      if (indexInNew == -1) {
+        // This means that the cursor was behind the deleted portion (user used delete key probably)
+        textSearchPart = text.substring(0, selection.start);
+        indexInNew = textSearchPart == "" ? 0 : newText.indexOf(textSearchPart);
+        indexInNew += textSearchPart.length;
+      }
+
+      if (indexInNew != -1) {
+        // Just in case
+        bool deletingBadMention = false;
+
+        String textPart1 = newText.substring(0, indexInNew);
+        String textPart2 = newText.substring(indexInNew);
+
+        if (MentionTextEditingController.escapingChar.allMatches(textPart1).length % 2 != 0) {
+          final badMentionIndex = textPart1.lastIndexOf(MentionTextEditingController.escapingChar);
+          textPart1 = textPart1.substring(0, badMentionIndex);
+          deletingBadMention = true;
+        }
+        if (MentionTextEditingController.escapingChar.allMatches(textPart2).length % 2 != 0) {
+          final badMentionIndex = textPart2.indexOf(MentionTextEditingController.escapingChar);
+          textPart2 = textPart2.substring(badMentionIndex + 1);
+          deletingBadMention = true;
+        }
+
+        if (deletingBadMention) {
+          newText = textPart1 + textPart2;
+          newOffset = textPart1.length;
+          _processMentions(newText);
+
+          newValue = newValue.copyWith(
+            text: newText,
+            selection: TextSelection.collapsed(offset: newOffset),
+          );
+        }
+      }
+    }
+
+    super.value = newValue;
   }
 
   @override

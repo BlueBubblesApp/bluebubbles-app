@@ -15,6 +15,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/emoji.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:chunked_stream/chunked_stream.dart';
@@ -55,16 +56,11 @@ class ConversationTextField extends CustomStateful<ConversationViewController> {
 class ConversationTextFieldState extends CustomState<ConversationTextField, void, ConversationViewController> with TickerProviderStateMixin {
   final recorderController = kIsWeb ? null : RecorderController();
 
-  // emoji
-  final Map<String, Emoji> emojiNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.shortName, e)));
-  final Map<String, Emoji> emojiFullNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.name, e)));
-
   // typing indicators
   String oldText = "\n";
   Timer? _debounceTyping;
 
   // previous text state
-  String oldTextFieldText = "";
   TextSelection oldTextFieldSelection = const TextSelection.collapsed(offset: 0);
 
   Chat get chat => controller.chat;
@@ -90,7 +86,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.textController.processMentions();
 
     // Save state
-    oldTextFieldText = controller.textController.text;
     oldTextFieldSelection = controller.textController.selection;
 
     if (controller.fromChatCreator) {
@@ -173,59 +168,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       chat.textFieldText = controller.textController.text;
     }
 
-    // Clean mentions
     if (!subject) {
-      // After each edit, the worst that can happen is a chunk gets removed,
-      // so we can figure out exactly what changed by searching for where the chunk could be removed from
-      // along with the old selection data
-
-      String nText = controller.textController.text;
-      String oText = oldTextFieldText;
-
-      // Need fewer chars for anything bad to happen
-      if (nText.length < oText.length) {
-        // Search for the new state in the old state starting from the old selection's end
-        String textSearchPart = oText.substring(oldTextFieldSelection.end);
-        int indexInNew = textSearchPart == "" || controller.textController.selection.end == -1
-            ? nText.length
-            : nText.indexOf(textSearchPart, controller.textController.selection.end);
-        if (indexInNew == -1) {
-          // This means that the cursor was behind the deleted portion (user used delete key probably)
-          textSearchPart = oText.substring(0, oldTextFieldSelection.start);
-          indexInNew = textSearchPart == "" ? 0 : nText.indexOf(textSearchPart);
-          indexInNew += textSearchPart.length;
-        }
-
-        if (indexInNew != -1) {
-          // Just in case
-          bool deletingBadMention = false;
-
-          String textPart1 = nText.substring(0, indexInNew);
-          String textPart2 = nText.substring(indexInNew);
-
-          if (MentionTextEditingController.escapingChar.allMatches(textPart1).length % 2 != 0) {
-            final badMentionIndex = textPart1.lastIndexOf(MentionTextEditingController.escapingChar);
-            textPart1 = textPart1.substring(0, badMentionIndex);
-            deletingBadMention = true;
-          }
-          if (MentionTextEditingController.escapingChar.allMatches(textPart2).length % 2 != 0) {
-            final badMentionIndex = textPart2.indexOf(MentionTextEditingController.escapingChar);
-            textPart2 = textPart2.substring(badMentionIndex + 1);
-            deletingBadMention = true;
-          }
-
-          if (deletingBadMention) {
-            oldTextFieldText = textPart1 + textPart2;
-            oldTextFieldSelection = TextSelection.collapsed(offset: textPart1.length);
-            controller.textController.value =
-                TextEditingValue(text: textPart1 + textPart2, selection: TextSelection.collapsed(offset: textPart1.length));
-            controller.textController.processMentions();
-            return;
-          }
-        }
-      }
-
-      // Also handle people arrow-keying or clicking into mentions
+      // Handle people arrow-keying or clicking into mentions
       String text = controller.textController.text;
       TextSelection selection = controller.textController.selection;
       if (selection.isCollapsed && selection.start != -1) {
@@ -292,7 +236,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         }
       }
 
-      oldTextFieldText = controller.textController.text;
       oldTextFieldSelection = controller.textController.selection;
     }
 
@@ -323,18 +266,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       if (matches.isNotEmpty && matches.first.start < _controller.selection.start) {
         RegExpMatch match = matches.lastWhere((m) => m.start < _controller.selection.start);
         if (newEmojiText[match.end - 1] == ":") {
-          // Full emoji text (do not search for partial matches)
-          emojiName = newEmojiText.substring(match.start + 1, match.end - 1).toLowerCase();
-          if (emojiNames.keys.contains(emojiName)) {
-            allMatches = [Emoji.byShortName(emojiName)!];
-            // We can replace the :emoji: with the actual emoji here
-            String _text = newEmojiText.substring(0, match.start) + allMatches.first.char + newEmojiText.substring(match.end);
-            _controller.value = TextEditingValue(
-                text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length)));
-            allMatches.clear();
-          } else {
-            allMatches = Emoji.byKeyword(emojiName).toList();
-          }
+          // This will get handled by the text field controller
         } else if (match.end >= _controller.selection.start) {
           emojiName = newEmojiText.substring(match.start + 1, match.end).toLowerCase();
           Iterable<Emoji> emojiExactlyMatches = emojiNames.containsKey(emojiName) ? [emojiNames[emojiName]!] : [];
@@ -441,22 +373,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     super.dispose();
   }
 
-  String Function(dynamic) replaceEmoji(String emoji) {
-    return (match) {
-      if (match.group(1) == "\\") {
-        return '${match.group(2)}${match.group(3)}';
-      }
-      return '${match.group(1)}$emoji${match.group(3)}';
-    };
-  }
-
   Future<void> sendMessage({String? effect}) async {
-    final text = controller.textController.text
-        .replaceAllMapped(RegExp(r'([\s\\])(:\))(\s|$)'), replaceEmoji("🙂"))
-        .replaceAllMapped(RegExp(r'([\s\\])(:P)(\s|$)'), replaceEmoji("😛"))
-        .replaceAllMapped(RegExp(r'([\s\\])(XD)(\s|$)'), replaceEmoji("😆"))
-        .replaceAllMapped(RegExp(r'([\s\\])(;\))(\s|$)'), replaceEmoji("😉"))
-        .replaceAllMapped(RegExp(r'([\s\\])(:D)(\s|$)'), replaceEmoji("😀"));
+    final text = controller.textController.text;
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
       if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
@@ -1348,13 +1266,13 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         TextEditingController textField =
             controller!.subjectFocusNode.hasPrimaryFocus ? controller!.subjectTextController : controller!.textController;
         String text = textField.text;
-        RegExp regExp = RegExp(r":[^: \n]+([ \n:]|$)", multiLine: true);
+        RegExp regExp = RegExp(r":[^: \n]{2,}(?=[ \n]|$)", multiLine: true);
         Iterable<RegExpMatch> matches = regExp.allMatches(text);
         if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
           RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
           String char = controller!.emojiMatches[index].char;
           String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
-          textField.value = TextEditingValue(text: _text, selection: TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1)));
+          textField.value = TextEditingValue(text: _text, selection: TextSelection.collapsed(offset: match.start + char.length + 1));
         } else {
           // If the user moved the cursor before trying to insert an emoji, reset the picker
           controller!.emojiScrollController.jumpTo(0);
