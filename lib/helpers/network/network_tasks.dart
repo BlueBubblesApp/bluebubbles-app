@@ -17,7 +17,8 @@ class NetworkTasks {
     if (ss.settings.finishedSetup.value) {
       // Only start incremental sync if the app is active and
       // the previous state wasn't just hidden
-      if (ls.currentState == AppLifecycleState.resumed && (ls.resumeFromPause == null || ls.resumeFromPause == true)) {
+      // or if the app was never resumed before
+      if (ls.resumeFromPause == null || (ls.currentState == AppLifecycleState.resumed && ls.resumeFromPause!)) {
         await sync.startIncrementalSync();
       } else {
         print(
