@@ -71,7 +71,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   late final double emojiPickerHeight = max(256, context.height * 0.4);
   late final emojiColumns = ns.width(context) ~/ 56; // Intentionally not responsive to prevent rebuilds when resizing
-  RxBool showEmojiPicker = false.obs;
+  RxBool get showEmojiPicker => controller.showEmojiPicker;
 
   final proxyController = TextEditingController();
 
@@ -1305,6 +1305,10 @@ class TextFieldComponentState extends State<TextFieldComponent> {
       }
       if (controller!.emojiMatches.isNotEmpty) {
         controller!.emojiMatches.value = <Emoji>[];
+        return KeyEventResult.handled;
+      }
+      if (controller!.showEmojiPicker.value) {
+        controller!.showEmojiPicker.value = false;
         return KeyEventResult.handled;
       }
       if (controller!.replyToMessage != null) {
