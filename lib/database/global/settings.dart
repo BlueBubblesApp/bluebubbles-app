@@ -312,8 +312,6 @@ class Settings {
       'repliesToPrevious': repliesToPrevious.value,
       'useLocalhost': localhostPort.value,
       'useLocalIpv6': useLocalIpv6.value,
-      'sendSoundPath': sendSoundPath.value,
-      'receiveSoundPath': receiveSoundPath.value,
       'soundVolume': soundVolume.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
@@ -373,6 +371,8 @@ class Settings {
         'monetTheming': monetTheming.value.index,
         'userAvatarPath': userAvatarPath.value,
         'firstFcmRegisterDate': firstFcmRegisterDate.value,
+        'sendSoundPath': sendSoundPath.value,
+        'receiveSoundPath': receiveSoundPath.value,
       });
     }
     return map;
