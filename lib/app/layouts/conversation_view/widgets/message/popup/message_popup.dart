@@ -197,10 +197,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 appBar: iOS
                     ? null
                     : AppBar(
-                        backgroundColor: ((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled)
-                                ? context.theme.colorScheme.background.withOpacity(0.6)
-                                : context.theme.colorScheme.background)
-                            .oppositeLightenOrDarken(5),
+                        backgroundColor: context.theme.colorScheme.background.oppositeLightenOrDarken(5),
                         systemOverlayStyle:
                             context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                         automaticallyImplyLeading: false,
