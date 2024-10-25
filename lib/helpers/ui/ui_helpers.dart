@@ -24,32 +24,39 @@ class BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return XGestureDetector(
-      supportTouch: true,
-      onTap: !kIsDesktop ? null : (details) {
-        final result = onPressed?.call() ?? false;
-        if (!result) {
-          if (Get.isSnackbarOpen) {
-            Get.closeAllSnackbars();
-          }
-          Navigator.of(context).pop();
-        }
-      },
-      child: IconButton(
-        icon: Obx(() => Icon(
-          ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-          color: color ?? context.theme.colorScheme.primary,
-        )),
-        iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
-        onPressed: kIsDesktop ? null : () {
-          final result = onPressed?.call() ?? false;
-          if (!result) {
-            if (Get.isSnackbarOpen) {
-              Get.closeAllSnackbars();
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: 48,
+        child: XGestureDetector(
+          supportTouch: true,
+          onTap: !kIsDesktop ? null : (details) {
+            final result = onPressed?.call() ?? false;
+            if (!result) {
+              if (Get.isSnackbarOpen) {
+                Get.closeAllSnackbars();
+              }
+              Navigator.of(context).pop();
             }
-            Navigator.of(context).pop();
-          }
-        },
+          },
+          child: IconButton(
+            icon: Obx(() => Icon(
+              ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+              color: color ?? context.theme.colorScheme.primary,
+            )),
+            iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
+            onPressed: () {
+              if (kIsDesktop) return;
+              final result = onPressed?.call() ?? false;
+              if (!result) {
+                if (Get.isSnackbarOpen) {
+                  Get.closeAllSnackbars();
+                }
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+        ),
       ),
     );
   }
@@ -99,8 +106,7 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
   return ss.settings.skin.value == Skins.iOS
       ? Theme(
           data: ThemeData(
-            cupertinoOverrideTheme:
-                CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background)),
+            cupertinoOverrideTheme: CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background)),
           ),
           child: CupertinoActivityIndicator(
             radius: size / 2,
@@ -110,17 +116,18 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
           alignment: Alignment.center,
           constraints: BoxConstraints(maxHeight: size, maxWidth: size),
           child: SizedBox(
-              width: size,
-              height: size,
-              child: CircularProgressIndicator(
-                strokeWidth: strokeWidth,
-                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-              ),
+            width: size,
+            height: size,
+            child: CircularProgressIndicator(
+              strokeWidth: strokeWidth,
+              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+            ),
           ),
-      );
+        );
 }
 
-Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
+Future<void> showConversationTileMenu(
+    BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
   bool ios = ss.settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
@@ -150,9 +157,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Icon(
-                      chat.isPinned!
-                          ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline)
-                          : (ios ? CupertinoIcons.pin : Icons.star),
+                      chat.isPinned! ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline) : (ios ? CupertinoIcons.pin : Icons.star),
                       color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
@@ -187,7 +192,8 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                       color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
-                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                      style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                 ],
               ),
             ),
@@ -214,7 +220,8 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                     color: context.theme.colorScheme.properOnSurface,
                   ),
                 ),
-                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               ],
             ),
           ),
@@ -267,10 +274,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                       "Are you sure?",
                       style: context.theme.textTheme.titleLarge,
                     ),
-                    content: Text(
-                        "This chat will be deleted from this device only",
-                        style: context.theme.textTheme.bodyLarge
-                    ),
+                    content: Text("This chat will be deleted from this device only", style: context.theme.textTheme.bodyLarge),
                     backgroundColor: context.theme.colorScheme.properSurface,
                     actions: <Widget>[
                       TextButton(
@@ -318,9 +322,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
 
 IconData getAttachmentIcon(String mimeType) {
   if (mimeType.isEmpty) {
-    return ss.settings.skin.value == Skins.iOS
-        ? CupertinoIcons.arrow_up_right_square
-        : Icons.open_in_new;
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
   }
   if (mimeType == "application/pdf") {
     return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
@@ -335,9 +337,7 @@ IconData getAttachmentIcon(String mimeType) {
   } else if (mimeType.startsWith("text")) {
     return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
   }
-  return ss.settings.skin.value == Skins.iOS
-      ? CupertinoIcons.arrow_up_right_square
-      : Icons.open_in_new;
+  return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
 }
 
 void showSnackbar(String title, String message, {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
@@ -353,9 +353,10 @@ void showSnackbar(String title, String message, {int animationMs = 250, int dura
     duration: Duration(milliseconds: durationMs),
     animationDuration: Duration(milliseconds: animationMs),
     mainButton: button,
-    onTap: onTap ?? (GetSnackBar bar) {
-      if (Get.isSnackbarOpen) Get.back();
-    },
+    onTap: onTap ??
+        (GetSnackBar bar) {
+          if (Get.isSnackbarOpen) Get.back();
+        },
   );
 }
 
@@ -382,7 +383,8 @@ Future<Uint8List> avatarAsBytes({
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
 
-  await paintGroupAvatar(chat: chat, participants: participants, canvas: canvas, size: quality, usingParticipantsOverride: participantsOverride != null);
+  await paintGroupAvatar(
+      chat: chat, participants: participants, canvas: canvas, size: quality, usingParticipantsOverride: participantsOverride != null);
 
   ui.Picture picture = pictureRecorder.endRecording();
   ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
@@ -475,16 +477,11 @@ Future<void> paintGroupAvatar({
         ..textAlign = TextAlign.center
         ..text = TextSpan(
             text: String.fromCharCode(icon.codePoint),
-            style: TextStyle(
-                fontSize: adjustedWidth * 0.3,
-                fontFamily: icon.fontFamily,
-                color: theme.colorScheme.properOnSurface.withOpacity(0.8)))
+            style: TextStyle(fontSize: adjustedWidth * 0.3, fontFamily: icon.fontFamily, color: theme.colorScheme.properOnSurface.withOpacity(0.8)))
         ..layout()
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {
-      Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung
-            ? theme.colorScheme.secondary
-            : theme.colorScheme.background;
+      Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung ? theme.colorScheme.secondary : theme.colorScheme.background;
       canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
       await paintAvatar(
         handle: participants[index],
@@ -501,18 +498,17 @@ Future<void> paintGroupAvatar({
 
 Future<void> paintAvatar(
     {required Handle? handle,
-      required Canvas canvas,
-      required Offset offset,
-      required double size,
-      double? fontSize,
-      double? borderWidth,
-      bool inGroup=false}) async {
+    required Canvas canvas,
+    required Offset offset,
+    required double size,
+    double? fontSize,
+    double? borderWidth,
+    bool inGroup = false}) async {
   fontSize ??= size * 0.5;
   borderWidth ??= size * 0.05;
   Contact? contact = handle?.contact ?? (handle != null ? cs.getContact(handle.address) : null);
   if (contact?.avatar != null) {
-    Uint8List? contactAvatar =
-    await clip(contact!.avatar ?? contact.avatar!, size: size.toInt(), circle: kIsDesktop || inGroup);
+    Uint8List? contactAvatar = await clip(contact!.avatar ?? contact.avatar!, size: size.toInt(), circle: kIsDesktop || inGroup);
     if (contactAvatar != null) {
       canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
       return;
@@ -534,19 +530,18 @@ Future<void> paintAvatar(
 
   Paint paint = Paint();
   paint.isAntiAlias = true;
-  paint.shader =
-      ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
-        !ss.settings.colorfulAvatars.value
-            ? HexColor("928E8E")
-            : colors.isNotEmpty
+  paint.shader = ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
+    !ss.settings.colorfulAvatars.value
+        ? HexColor("928E8E")
+        : colors.isNotEmpty
             ? colors[1]
             : HexColor("928E8E"),
-        !ss.settings.colorfulAvatars.value
-            ? HexColor("686868")
-            : colors.isNotEmpty
+    !ss.settings.colorfulAvatars.value
+        ? HexColor("686868")
+        : colors.isNotEmpty
             ? colors[0]
             : HexColor("686868"),
-      ]);
+  ]);
 
   Offset _offset = Offset(dx + size * 0.5, dy + size * 0.5);
   double radius = size * 0.5;
@@ -564,8 +559,7 @@ Future<void> paintAvatar(
     TextPainter()
       ..textDirection = TextDirection.rtl
       ..textAlign = TextAlign.center
-      ..text = TextSpan(
-          text: String.fromCharCode(icon.codePoint), style: TextStyle(fontSize: fontSize, fontFamily: icon.fontFamily))
+      ..text = TextSpan(text: String.fromCharCode(icon.codePoint), style: TextStyle(fontSize: fontSize, fontFamily: icon.fontFamily))
       ..layout()
       ..paint(canvas, Offset(dx + size * 0.25, dy + size * 0.25));
   } else {
@@ -624,12 +618,7 @@ Future<ui.Image> loadImage(Uint8List data) async {
   return completer.future;
 }
 
-AlertDialog areYouSure(BuildContext context, {
-  Widget? content,
-  String? title = "Are you sure?",
-  required Function onNo,
-  required Function onYes
-}) {
+AlertDialog areYouSure(BuildContext context, {Widget? content, String? title = "Are you sure?", required Function onNo, required Function onYes}) {
   return AlertDialog(
     title: Text(
       title ?? "Are you sure?",
