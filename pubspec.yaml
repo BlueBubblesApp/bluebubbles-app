@@ -124,10 +124,7 @@ dependencies:
   metadata_fetch: ^0.4.1
   mime_type: ^1.0.0
   mobile_scanner: ^5.1.1 # no desktop support
-  msix:
-    git:
-      url: https://github.com/BlueBubblesApp/msix.git
-      ref: main
+  msix: ^3.16.8
   multi_value_listenable_builder: ^0.0.2
   network_info_plus: ^6.0.1
   network_tools: ^5.0.2
