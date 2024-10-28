@@ -56,7 +56,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
       widget.cvController.showingOverlays = true;
     }
     final result = await Navigator.push(
-      context,
+      iOS ? Get.context! : context,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 150),
         pageBuilder: (ctx, animation, secondaryAnimation) {
