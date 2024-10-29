@@ -17,8 +17,11 @@ import 'package:universal_io/io.dart';
 class Attachment {
   int? id;
   int? originalROWID;
+
+  @Index(type: IndexType.value)
   @Unique()
   String? guid;
+
   String? uti;
   String? mimeType;
   bool? isOutgoing;

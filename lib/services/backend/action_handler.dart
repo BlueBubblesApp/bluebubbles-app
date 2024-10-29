@@ -18,7 +18,21 @@ ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>()
 class ActionHandler extends GetxService {
   final RxList<Tuple2<String, RxDouble>> attachmentProgress = <Tuple2<String, RxDouble>>[].obs;
   final List<String> outOfOrderTempGuids = [];
+  final List<String> handledNewMessages = [];
   CancelToken? latestCancelToken;
+
+  /// Checks if a GUID has been handled.
+  /// After each check, before returning, trim the list of GUIDs to the last 100.
+  bool shouldNotifyForNewMessageGuid(String guid) {
+    if (handledNewMessages.contains(guid)) return false;
+    handledNewMessages.add(guid);
+
+    if (handledNewMessages.length > 100) {
+      handledNewMessages.removeRange(0, handledNewMessages.length - 100);
+    }
+
+    return true;
+  }
   
   Future<List<Message>> prepMessage(Chat c, Message m, Message? selected, String? r, {bool clearNotificationsIfFromMe = true}) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
@@ -333,8 +347,14 @@ class ActionHandler extends GetxService {
     c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : kIsWeb ? c : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
     // Get the message handle
     m.handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId) ?? Handle.findOne(originalROWID: m.handleId);
+    
     // Display notification if needed and save everything to DB
-    if (!ls.isAlive) {
+    bool shouldNotify = shouldNotifyForNewMessageGuid(m.guid!);
+    if (!shouldNotify) {
+      Logger.info("Not notifying for already handled new message with GUID ${m.guid}...", tag: "ActionHandler");
+    }
+
+    if (!ls.isAlive && shouldNotify) {
       await MessageHelper.handleNotification(m, c);
     }
     await c.addMessage(m);
