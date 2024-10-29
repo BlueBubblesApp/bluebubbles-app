@@ -402,8 +402,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     if (!iOS && ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
                       Positioned(
                         left: !message.isFromMe!
-                            ? widget.childPosition.dx + widget.size.width + (reactions.isNotEmpty ? 25 : 10)
-                            : widget.childPosition.dx - 45,
+                            ? widget.childPosition.dx + widget.size.width + (reactions.isNotEmpty ? 20 : 5)
+                            : widget.childPosition.dx - 55,
                         top: materialOffset,
                         child: Material(
                           color: context.theme.colorScheme.primary,

@@ -43,7 +43,7 @@ class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
     final size = globalKey.currentContext?.size;
     Offset? childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
     if (size == null || childPos == null) return;
-    childPos = Offset(childPos.dx - MediaQueryData.fromView(View.of(context)).padding.left, childPos.dy);
+    childPos = Offset(childPos.dx - MediaQueryData.fromView(View.of(context)).padding.left - (iOS ? 0 : ns.widthChatListLeft(context)), childPos.dy);
     final tuple = await ss.getServerDetails();
     final version = tuple.item4;
     final minSierra = await ss.isMinSierra;
