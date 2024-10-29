@@ -95,7 +95,7 @@ class WindowButtons extends StatelessWidget {
         ),
         CloseWindowButton(
           colors: closeButtonColors,
-          onPressed: () async => ss.settings.closeToTray.value ? await windowManager.hide() : await windowManager.close(),
+          onPressed: () async => await windowManager.close(),
           animate: true,
         ),
       ],

@@ -322,6 +322,17 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      ss.settings.replaceEmoticonsWithEmoji.value = val;
+                      saveSettings();
+                    },
+                    initialVal: ss.settings.replaceEmoticonsWithEmoji.value,
+                    title: "Replace Emoticons with Emoji",
+                    subtitle: "Replace emoticons like :), :D, etc. with their corresponding emojis",
+                    backgroundColor: tileColor,
+                  )),
+                  const SettingsDivider(),
                   if (kIsDesktop || kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -346,6 +357,8 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       textProcessing: (val) => val.$1,
                       capitalize: false,
                     ) : const SizedBox.shrink()),
+                  if (kIsDesktop || kIsWeb)
+                    const SettingsDivider(),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.sendDelay.value = val ? 3 : 0;

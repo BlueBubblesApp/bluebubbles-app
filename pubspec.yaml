@@ -124,10 +124,7 @@ dependencies:
   metadata_fetch: ^0.4.1
   mime_type: ^1.0.0
   mobile_scanner: ^5.1.1 # no desktop support
-  msix:
-    git:
-      url: https://github.com/BlueBubblesApp/msix.git
-      ref: main
+  msix: ^3.16.8
   multi_value_listenable_builder: ^0.0.2
   network_info_plus: ^6.0.1
   network_tools: ^5.0.2
@@ -172,6 +169,7 @@ dependencies:
       url: https://github.com/ravitejaavv/store_checker
       ref: master
   synchronized: ^3.1.0+1
+  system_tray: ^2.0.3
   super_drag_and_drop: ^0.8.20
   supercharged: ^2.1.1
   system_info2: ^4.0.0
@@ -320,7 +318,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.12.102.0
+  msix_version: 1.13.100.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

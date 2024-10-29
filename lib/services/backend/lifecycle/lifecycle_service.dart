@@ -57,13 +57,16 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
 
     if (state == AppLifecycleState.paused) {
       wasPaused = true;
+      resumeFromPause = false;
     } else if (state == AppLifecycleState.resumed) {
       if (wasPaused) {
         wasPaused = false;
         resumeFromPause = true;
-      } else {
+      } else if (resumeFromPause == true) { // Don't set to false if it was null
         resumeFromPause = false;
       }
+    } else {
+      wasPaused = false;
     }
 
     if (state == AppLifecycleState.resumed) {

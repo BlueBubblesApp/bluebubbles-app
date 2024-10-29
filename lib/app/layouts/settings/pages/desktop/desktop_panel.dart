@@ -94,7 +94,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                       initialVal: ss.settings.useCustomTitleBar.value,
                       title: "Use Custom TitleBar",
                       subtitle:
-                          "Enable the custom titlebar. This is necessary on non-GNOME systems, and will not look good on GNOME systems. This is also necessary for 'Close to Tray' and 'Minimize to Tray' to work correctly.",
+                          "Enable the custom titlebar. This is necessary on non-GNOME systems, and will not look good on GNOME systems. This is also necessary for 'Minimize to Tray' to work correctly.",
                       backgroundColor: tileColor,
                     )),
                   Obx(() {
@@ -118,15 +118,14 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                         },
                         initialVal: ss.settings.minimizeToTray.value,
                         title: "Minimize to Tray",
-                        subtitle:
-                            "When enabled, clicking the minimize button will minimize the app to the system tray",
+                        subtitle: "When enabled, clicking the minimize button will minimize the app to the system tray",
                         backgroundColor: tileColor,
                       );
                     }
                     return const SizedBox.shrink();
                   }),
                   Obx(() {
-                    if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
+                    if (ss.settings.useCustomTitleBar.value) {
                       return Container(
                         color: tileColor,
                         child: Padding(
@@ -137,21 +136,17 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     }
                     return const SizedBox.shrink();
                   }),
-                  Obx(() {
-                    if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
-                      return SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) async {
                           ss.settings.closeToTray.value = val;
+                          await windowManager.setPreventClose(val);
                           saveSettings();
                         },
                         initialVal: ss.settings.closeToTray.value,
                         title: "Close to Tray",
                         subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
                         backgroundColor: tileColor,
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
+                  )),
                 ],
               ),
               SettingsHeader(
