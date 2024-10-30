@@ -92,6 +92,7 @@ parts:
   fmedia:
     source:
       - on amd64: https://github.com/stsaz/fmedia/releases/download/v1.31/fmedia-1.31-linux-amd64.tar.xz
+      - on arm64: ""
     plugin: dump
     override-build: |
       arch=$(uname -i)
