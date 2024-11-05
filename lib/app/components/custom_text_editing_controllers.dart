@@ -1,3 +1,5 @@
+import "dart:math";
+
 import "package:bluebubbles/helpers/helpers.dart";
 import "package:bluebubbles/database/models.dart";
 import "package:bluebubbles/services/services.dart";
@@ -535,7 +537,9 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         indexInNew += textSearchPart.length;
       }
 
-      if (indexInNew != -1 && indexInNew < newText.length) {
+      indexInNew = min(indexInNew, newText.length - 1);
+
+      if (indexInNew != -1) {
         // Just in case
         bool deletingBadMention = false;
 
