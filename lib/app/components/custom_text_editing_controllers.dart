@@ -537,7 +537,7 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         indexInNew += textSearchPart.length;
       }
 
-      indexInNew = min(indexInNew, newText.length - 1);
+      indexInNew = min(indexInNew, newText.length);
 
       if (indexInNew != -1) {
         // Just in case
