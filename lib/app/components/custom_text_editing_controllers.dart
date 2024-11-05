@@ -535,7 +535,7 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         indexInNew += textSearchPart.length;
       }
 
-      if (indexInNew != -1) {
+      if (indexInNew != -1 && indexInNew < newText.length) {
         // Just in case
         bool deletingBadMention = false;
 
