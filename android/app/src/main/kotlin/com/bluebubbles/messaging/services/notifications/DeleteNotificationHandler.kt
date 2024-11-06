@@ -53,7 +53,7 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
 
                 // If the number of notifications is 1 and the ID of the notification is 0, it's a summary notification.
                 // We should cancel it.
-                if (leftoverNotification.size == 0 || (leftoverNotifications.size == 1 && leftoverNotifications.first().id == 0)) {
+                if (leftoverNotifications.size == 0 || (leftoverNotifications.size == 1 && leftoverNotifications.first().id == 0)) {
                     Log.d(Constants.logTag, "Cancelling notification summary")
                     notificationManager.cancel(channelTag, 0)
                 }
