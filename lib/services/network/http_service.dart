@@ -213,7 +213,7 @@ class HttpService extends GetxService {
   }
 
   /// Get server logs, [count] defines the length of logs
-  Future<Response> serverLogs({int count = 100, CancelToken? cancelToken}) async {
+  Future<Response> serverLogs({int count = 10000, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/server/logs",
