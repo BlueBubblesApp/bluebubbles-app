@@ -298,6 +298,21 @@ class SettingsService extends GetxService {
     return val.item1 >= 12;
   }
 
+  Future<bool> get isMinVentura async {
+    final val = await getServerDetails();
+    return val.item1 >= 13;
+  }
+
+  Future<bool> get isMinSonoma async {
+    final val = await getServerDetails();
+    return val.item1 >= 14;
+  }
+
+  Future<bool> get isMinSequioa async {
+    final val = await getServerDetails();
+    return val.item1 >= 15;
+  }
+
   bool get isMinMontereySync {
     return (prefs.getInt("macos-version") ?? 11) >= 12;
   }
@@ -312,6 +327,14 @@ class SettingsService extends GetxService {
 
   bool get isMinCatalinaSync {
     return (prefs.getInt("macos-minor-version") ?? 11) >= 15 || isMinBigSurSync;
+  }
+
+  bool get isMinSonomaSync {
+    return (prefs.getInt("macos-version") ?? 11) >= 14;
+  }
+
+  bool get isMinSequioaSync {
+    return (prefs.getInt("macos-version") ?? 11) >= 15;
   }
 
   /// Group chats can be created on macOS <= Catalina or
