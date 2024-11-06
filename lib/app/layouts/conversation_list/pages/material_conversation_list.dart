@@ -43,7 +43,8 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) async {
+      onPopInvoked: (bool didPop) async {
+        if (didPop) return;
         if (controller.selectedChats.isNotEmpty) {
           controller.clearSelectedChats();
           return;
