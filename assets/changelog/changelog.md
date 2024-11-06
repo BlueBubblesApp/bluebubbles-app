@@ -2,6 +2,59 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.14.0
+
+This update brings a ton of QOL improvements and bug fixes.
+
+### Big Stuff
+
+- BlueBubbles can now run as a true background service
+- Settings redesign
+- Ability to re-order message details context menu
+
+### Improvements
+
+- Tons of UI tweaks for iOS, Material, and Samsung
+- Slightly new send animation
+- New overflow menu for iOS
+- Improvements to how smooth the app runs
+- Lowers average battery utilization by fixing some possible leaks
+- Audio transcripts (when available)
+- Video player UX improvements
+
+### Bug Fixes
+
+- Fixes issues where the unread indicators would not update in a timely manner
+- Fixes issue causing duplicate images in your gallery due to HEIC images
+- Fixes issue where downloading an original video would cause the app to crash on Samsung devices
+- Fixes FCM registration issue where your app would try to re-register itself using a new ID
+- Fixes issue with the Tasker Intent being incorrect
+- Fixes issue using the universal back button when viewing archived chas
+- Fixes issue where the date picker would not close properly when time selection was disabled
+- Fixes issue where selecting a group chat in the new chat creator would append participants rather than replace the existing selection
+- Fixes rendering issues on a handful of pages
+- Fixes issues displaying URL previews
+- Fixes issues sharing to an already open chat
+- Fixes issue showing digital touch messages in the message view
+- Fixes issue where downloading a live photo would crash the app
+- Fixes issue where send/receive sounds would be backed-up causing a missing file path issue when restored
+
+### Desktop Specific
+
+- Fixes issue where the system tray icon would not display properly for Flatpak installs
+- Improves spellcheck
+- Adds emoji picker
+- Fixes issue launching from startup for Microsoft Store installs
+- Escape key now closes the emoji picker
+
+### Developer Specific
+
+- Complete refactor of startup logic
+- Unified logging across the codebase
+- Flutter upgrade to v3.24.4
+- Tons of dependency upgrades
+- Adds indexes to the ObjectBox database to improve read speeds
+
 ## v1.13.3
 
 This is a hotfix release
