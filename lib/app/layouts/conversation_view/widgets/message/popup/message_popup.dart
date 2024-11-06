@@ -501,7 +501,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         content: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: <Widget>[
           Obx(
             () => Text(
-                '${progress.value != null && attachmentObs.value != null ? (progress.value! * attachmentObs.value!.totalBytes! / 1000).getFriendlySize(withSuffix: false) : ""} / ${(attachmentObs.value!.totalBytes!.toDouble() / 1000).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
+                '${progress.value != null && attachmentObs.value != null ? (progress.value! * attachmentObs.value!.totalBytes!).getFriendlySize() : ""} / ${(attachmentObs.value!.totalBytes!.toDouble()).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
                 style: context.theme.textTheme.bodyLarge),
           ),
           const SizedBox(height: 10.0),
@@ -554,6 +554,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           size: response.data.length,
           bytes: response.data,
         );
+
         await as.saveToDisk(file, isDocument: element.mimeStart != "image" && element.mimeStart != "video");
       }
       progress.value = 1;

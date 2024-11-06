@@ -218,7 +218,7 @@ class AttachmentsService extends GetxService {
           lockParentWindow: true,
         );
       } else {
-        if (file.name.endsWith(".mov")) {
+        if (file.name.toLowerCase().endsWith(".mov")) {
           savePath = join("/storage/emulated/0/", ss.settings.autoSavePicsLocation.value);
         } else {
           if (!isDocument) {
@@ -236,7 +236,7 @@ class AttachmentsService extends GetxService {
       }
 
       if (savePath != null) {
-        final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+        final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
         await File(join(savePath, file.name)).writeAsBytes(bytes);
         showSnackbar('Success', 'Saved attachment to ${savePath.replaceAll("/storage/emulated/0/", "")} folder!');
       } else {
