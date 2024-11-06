@@ -135,7 +135,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
                       backgroundColor: context.theme.colorScheme.primaryContainer,
                       shape: const CircleBorder(),
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                        padding: const EdgeInsets.only(left: 5.0, right: 5.0, top: 2),
                         child: Icon(
                           CupertinoIcons.bubble_left,
                           color: context.theme.colorScheme.onPrimaryContainer,
