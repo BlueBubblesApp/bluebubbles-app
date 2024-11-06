@@ -94,7 +94,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     });
   }
 
-  void getLocations({bool refresh = false}) async {
+  void getLocations({bool refresh = true}) async {
     if (!(Platform.isLinux && !kIsWeb)) {
       LocationPermission granted = await Geolocator.checkPermission();
       if (granted == LocationPermission.denied) {
@@ -876,7 +876,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                           refreshing = true;
                                           refreshing2 = true;
                                         });
-                                        getLocations(refresh: true);
+                                        getLocations();
                                       },
                                     ),
                             ),
@@ -1193,7 +1193,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                 refreshing = true;
                                 refreshing2 = true;
                               });
-                              getLocations(refresh: true);
+                              getLocations();
                             },
                           ),
                   ),
@@ -1266,7 +1266,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         refreshing = true;
                         refreshing2 = true;
                       });
-                      getLocations(refresh: true);
+                      getLocations();
                     },
                   ),
           ),

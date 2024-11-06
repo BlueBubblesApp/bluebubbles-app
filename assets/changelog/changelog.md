@@ -38,6 +38,7 @@ This update brings a ton of QOL improvements and bug fixes.
 - Fixes issue showing digital touch messages in the message view
 - Fixes issue where downloading a live photo would crash the app
 - Fixes issue where send/receive sounds would be backed-up causing a missing file path issue when restored
+- Fixes issue where the FindMy page's initial location refresh may not update locations properly
 
 ### Desktop Specific
 
