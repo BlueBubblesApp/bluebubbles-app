@@ -1,10 +1,12 @@
 #!/bin/bash
 trap "exit" INT
+if [ -z ${FLUTTER_CMD+x} ]; then FLUTTER_CMD="flutter"; fi
 set -eux
 
 cd "$(dirname "$0")/.."
-flutter pub get
-flutter build linux --release -v
+
+"$FLUTTER_CMD" pub get
+"$FLUTTER_CMD" build linux --release -v
 
 arch=$(uname -m)
 if [[ $arch == "x86_64" ]]; then
