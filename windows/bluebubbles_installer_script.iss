@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BlueBubbles"
-#define MyAppVersion "1.13.100.0"
+#define MyAppVersion "1.14.0.0"
 #define MyAppPublisher "BlueBubbles"
 #define MyAppURL "https://bluebubbles.app/"
 #define MyAppExeName "bluebubbles_app.exe"
