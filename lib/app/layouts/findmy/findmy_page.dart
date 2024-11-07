@@ -94,7 +94,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     });
   }
 
-  void getLocations({bool refresh = true}) async {
+  void getLocations({bool refreshFriends = true, bool refreshDevices = false}) async {
     if (!(Platform.isLinux && !kIsWeb)) {
       LocationPermission granted = await Geolocator.checkPermission();
       if (granted == LocationPermission.denied) {
@@ -111,14 +111,14 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               });
             });
           }
-          if (!refresh) {
+          if (!refreshFriends) {
             mapController.move(LatLng(location!.latitude, location!.longitude), 10);
           }
         });
       }
     }
 
-    final response2 = refresh
+    final response2 = refreshFriends
         ? await http.refreshFindMyFriends().catchError((_) async {
       setState(() {
         refreshing2 = false;
@@ -164,7 +164,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       });
     }
 
-    final response = refresh
+    final response = refreshDevices
         ? await http.refreshFindMyDevices().catchError((_) async {
             setState(() {
               refreshing = false;
@@ -237,7 +237,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     }
 
     // Call the FindMy Friends refresh anyways so that new data comes through the socket
-    if (!refresh) {
+    if (!refreshFriends) {
       http.refreshFindMyFriends();
     } else {
       setState(() {
@@ -1193,7 +1193,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                 refreshing = true;
                                 refreshing2 = true;
                               });
-                              getLocations();
+                              getLocations(refreshDevices: true);
                             },
                           ),
                   ),
@@ -1266,7 +1266,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         refreshing = true;
                         refreshing2 = true;
                       });
-                      getLocations();
+                      getLocations(refreshDevices: true);
                     },
                   ),
           ),
