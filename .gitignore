@@ -52,3 +52,7 @@ pubspeck.lock
 *.env
 .vscode/launch.json
 /lib/models/html/giphy.dart
+android/.settings/org.eclipse.buildship.core.prefs
+android/.project
+android/.project
+android/.settings/org.eclipse.buildship.core.prefs
