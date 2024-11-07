@@ -18,7 +18,7 @@ fi
 # Inject version number into version.json
 tmp=$(mktemp)
 chmod 644 "$tmp"
-jq '.version = "1.13.100.0"' build/linux/$folder/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/$folder/release/bundle/data/flutter_assets/version.json
+jq '.version = "1.14.0.0"' build/linux/$folder/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/$folder/release/bundle/data/flutter_assets/version.json
 chmod +x build/linux/$folder/release/bundle/bluebubbles
 
 tar cvf bluebubbles-linux-"$arch".tar -C build/linux/$folder/release/bundle .
