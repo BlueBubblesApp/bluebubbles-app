@@ -852,7 +852,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     );
   }
 
-  get _allActions => [
+  get _allActions {
+    final canEdit = (message.dateCreated?.toUtc().isWithin(DateTime.now().toUtc(), minutes: 15) ?? false);
+    return [
         if (ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
           DetailsMenuActionWidget(
             onTap: reply,
@@ -939,6 +941,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             (part.text?.isNotEmpty ?? false))
           DetailsMenuActionWidget(
             onTap: edit,
+            customTitle: canEdit ? 'Edit' : 'Edit (too old)',
+            shouldDisableBtn: !canEdit,
             action: DetailsMenuAction.Edit,
           ),
         if (!ls.isBubble && !message.isInteractive)
@@ -974,6 +978,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           action: DetailsMenuAction.MessageInfo,
         ),
       ].sorted((a, b) => ss.settings.detailsMenuActions.indexOf(a.action).compareTo(ss.settings.detailsMenuActions.indexOf(b.action)));
+  }
 
   Widget buildDetailsMenu(BuildContext context) {
     double maxMenuWidth = min(max(ns.width(widthContext) * 3 / 5, 200), ns.width(widthContext) * 4 / 5);
@@ -1027,11 +1032,17 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
     return [
       ...allActions.slice(0, numberToShow - 1).map((action) {
+        bool isDisabled = false;
+        if (action.action == DetailsMenuAction.Edit) {
+          isDisabled = !((message.dateCreated?.toUtc().isWithin(DateTime.now().toUtc(), minutes: 15) ?? false));
+        }
+  
+        Color color = isDisabled ? context.theme.colorScheme.properOnSurface.withOpacity(0.5) : context.theme.colorScheme.properOnSurface;
         return Padding(
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: IconButton(
-            icon: Icon(action.nonIosIcon, color: context.theme.colorScheme.properOnSurface),
-            onPressed: action.onTap,
+            icon: Icon(action.nonIosIcon, color: color),
+            onPressed: isDisabled ? null : action.onTap,
             tooltip: action.title,
           )
         );
