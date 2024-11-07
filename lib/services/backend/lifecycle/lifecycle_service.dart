@@ -69,9 +69,6 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
       statesSinceLastResume.add(state);
     }
 
-    print("States since last resume:");
-    print(statesSinceLastResume);
-
     if (state == AppLifecycleState.resumed) {
       await Database.waitForInit();
       open();
