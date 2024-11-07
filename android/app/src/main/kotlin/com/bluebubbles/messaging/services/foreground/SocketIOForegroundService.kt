@@ -18,6 +18,7 @@ import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
 import io.socket.client.IO
 import io.socket.client.Socket
 import java.net.URISyntaxException
+import java.net.URLEncoder
 import org.json.JSONObject
 
 
@@ -95,7 +96,8 @@ class SocketIOForegroundService : Service() {
             Log.d(Constants.logTag, "Foreground Service is connecting to: $serverUrl")
 
             val opts = IO.Options()
-            opts.query = "password=$storedPassword"
+            val encodedPw = URLEncoder.encode(storedPassword, "UTF-8")
+            opts.query = "password=$encodedPw"
             mSocket = IO.socket(serverUrl, opts)
             mSocket!!.connect()
 
