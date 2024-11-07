@@ -8,6 +8,7 @@ import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
@@ -43,7 +44,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didPop) async {
+      onPopInvokedWithResult: <T>(bool didPop, T? other) {
         if (didPop) return;
         if (controller.selectedChats.isNotEmpty) {
           controller.clearSelectedChats();
@@ -51,6 +52,9 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
         } else if (controller.showArchivedChats || controller.showUnknownSenders) {
           // Pop the current page
           Navigator.of(context).pop();
+        } else {
+          // Pop the app to exit the app
+          SystemNavigator.pop();
         }
       },
       child: Container(

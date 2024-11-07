@@ -161,7 +161,7 @@ class ActionHandler extends GetxService {
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-        ddScan: m.text!.hasUrl,
+        ddScan: !ss.isMinSonomaSync && m.text!.hasUrl,
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
@@ -226,7 +226,7 @@ class ActionHandler extends GetxService {
       selectedMessageGuid: m.threadOriginatorGuid,
       effectId: m.expressiveSendStyleId,
       partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-      ddScan: parts.any((e) => e["text"].toString().hasUrl)
+      ddScan: !ss.isMinSonomaSync && parts.any((e) => e["text"].toString().hasUrl)
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
       try {
