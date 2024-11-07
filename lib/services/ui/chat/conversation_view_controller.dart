@@ -14,6 +14,7 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
@@ -231,5 +232,28 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     eventDispatcher.emit("update-highlight", null);
     cm.setAllInactiveSync();
     Get.delete<ConversationViewController>(tag: tag);
+  }
+
+  Future<void> saveReplyToMessageState() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (replyToMessage != null) {
+      await prefs.setString('replyToMessage_${chat.guid}', replyToMessage!.item1.guid!);
+      await prefs.setInt('replyToMessagePart_${chat.guid}', replyToMessage!.item2);
+    } else {
+      await prefs.remove('replyToMessage_${chat.guid}');
+      await prefs.remove('replyToMessagePart_${chat.guid}');
+    }
+  }
+
+  Future<void> loadReplyToMessageState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final replyToMessageGuid = prefs.getString('replyToMessage_${chat.guid}');
+    final replyToMessagePart = prefs.getInt('replyToMessagePart_${chat.guid}');
+    if (replyToMessageGuid != null && replyToMessagePart != null) {
+      final message = Message.findOne(guid: replyToMessageGuid);
+      if (message != null) {
+        replyToMessage = Tuple2(message, replyToMessagePart);
+      }
+    }
   }
 }
