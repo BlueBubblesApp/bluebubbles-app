@@ -4,12 +4,14 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.R
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
@@ -69,9 +71,11 @@ class SocketIOForegroundService : Service() {
 
         // Create notification for foreground service
         createNotificationChannel()
-        startForeground(
+        ServiceCompat.startForeground(
+            this,
             Constants.foregroundServiceNotificationId,
-            createNotification(DEFAULT_NOTIFICATION)
+            createNotification(DEFAULT_NOTIFICATION),
+            FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
         )
 
         // if the service is enabled, but the server URL is missing, update the notification
