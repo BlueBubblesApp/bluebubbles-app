@@ -123,6 +123,9 @@ class Handle {
       }
       try {
         id = Database.handles.put(this);
+        if (contactRelation.target != null) {
+          contactRelation.target!.save();
+        }
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -150,6 +153,9 @@ class Handle {
       List<int> insertedIds = Database.handles.putMany(handles);
       for (int i = 0; i < insertedIds.length; i++) {
         handles[i].id = insertedIds[i];
+        if (handles[i].contactRelation.target != null) {
+          handles[i].contactRelation.target!.save();
+        }
       }
     });
 

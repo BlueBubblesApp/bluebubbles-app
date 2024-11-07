@@ -388,6 +388,13 @@ class Chat {
   }
 
   Chat getParticipants() {
+    if (kIsWeb || id == null) return this;
+    Database.runInTransaction(TxMode.read, () {
+      /// Find the handles themselves
+      _participants = List<Handle>.from(handles);
+    });
+
+    _deduplicateParticipants();
     return this;
   }
 
