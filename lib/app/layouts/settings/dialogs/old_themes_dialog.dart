@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
@@ -38,8 +38,10 @@ class OldThemesDialog extends StatelessWidget {
                   child: ListView.builder(
                     shrinkWrap: true,
                     itemCount: oldThemes.length,
+                    findChildIndexCallback: (key) => findChildIndexByKey(oldThemes, key, (item) => item.name),
                     itemBuilder: (context, index) {
                       return ListTile(
+                        key: ValueKey(oldThemes[index].name),
                         mouseCursor: MouseCursor.defer,
                         title: Text(
                             oldThemes[index].name ?? "Unknown Theme",
@@ -61,9 +63,11 @@ class OldThemesDialog extends StatelessWidget {
                                         child: ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: 4,
+                                          findChildIndexCallback: (key) => findChildIndexByKey(ThemeColors.Colors.toList(), key, (item) => item),
                                           itemBuilder: (context, index2) {
                                             final hex = oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex;
                                             return ListTile(
+                                                key: ValueKey(ThemeColors.Colors.reversed.toList()[index2]),
                                                 mouseCursor: SystemMouseCursors.click,
                                                 title: Text(
                                                     ThemeColors.Colors.reversed.toList()[index2],
@@ -116,8 +120,8 @@ class OldThemesDialog extends StatelessWidget {
         TextButton(
             child: Text("Delete Old", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
             onPressed: () {
-              themeObjectBox.removeAll();
-              themeEntryBox.removeAll();
+              Database.themeObjects.removeAll();
+              Database.themeEntries.removeAll();
               clearOld();
               Navigator.of(context).pop();
             }

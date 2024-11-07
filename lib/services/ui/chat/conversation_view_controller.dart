@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
@@ -47,7 +47,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxDouble timestampOffset = 0.0.obs;
   final RxBool inSelectMode = false.obs;
   final RxList<Message> selected = <Message>[].obs;
-  final RxList<Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode?>> editing = <Tuple4<Message, MessagePart, SpellCheckTextEditingController, FocusNode?>>[].obs;
+  final RxList<Tuple3<Message, MessagePart, SpellCheckTextEditingController>> editing = <Tuple3<Message, MessagePart, SpellCheckTextEditingController>>[].obs;
   final GlobalKey focusInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
   bool showingOverlays = false;
@@ -58,10 +58,13 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   // text field items
   bool showAttachmentPicker = false;
+  RxBool showEmojiPicker = false.obs;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
-  final textController = MentionTextEditingController();
-  final subjectTextController = SpellCheckTextEditingController();
+  final focusNode = FocusNode();
+  final subjectFocusNode = FocusNode();
+  late final textController = MentionTextEditingController(focusNode: focusNode);
+  late final subjectTextController = SpellCheckTextEditingController(focusNode: subjectFocusNode);
   final RxBool showRecording = false.obs;
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
@@ -77,8 +80,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       lastFocusedNode.requestFocus();
     }
   }
-  final focusNode = FocusNode();
-  final subjectFocusNode = FocusNode();
   late final mentionables = chat.participants.map((e) => Mentionable(
     handle: e,
   )).toList();
@@ -145,6 +146,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     }
     for (Player a in audioPlayersDesktop.values) {
       a.dispose();
+    }
+    for (VideoController a in videoPlayers.values) {
+      a.player.pause();
+      a.player.dispose();
     }
     scrollController.dispose();
     super.onClose();

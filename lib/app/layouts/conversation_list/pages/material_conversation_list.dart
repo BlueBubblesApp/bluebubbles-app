@@ -43,10 +43,14 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) async {
+      onPopInvoked: (bool didPop) async {
+        if (didPop) return;
         if (controller.selectedChats.isNotEmpty) {
           controller.clearSelectedChats();
           return;
+        } else if (controller.showArchivedChats || controller.showUnknownSenders) {
+          // Pop the current page
+          Navigator.of(context).pop();
         }
       },
       child: Container(
@@ -60,14 +64,11 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           backgroundColor: backgroundColor,
           extendBodyBehindAppBar: true,
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value
-              && !showArchived && !showUnknown
+          floatingActionButton: !showArchived && !showUnknown
               ? ConversationListFAB(parentController: controller)
-              : const SizedBox.shrink()),
+              : const SizedBox.shrink(),
           body: Obx(() {
-            final _chats = chats.chats
-                .archivedHelper(showArchived)
-                .unknownSendersHelper(showUnknown);
+            final _chats = chats.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown);
 
             if (!chats.loadedChatBatch.value || _chats.isEmpty) {
               return Center(
@@ -81,16 +82,15 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                           !chats.loadedChatBatch.value
                               ? "Loading chats..."
                               : showArchived
-                              ? "You have no archived chats"
-                              : showUnknown
-                              ? "You have no messages from unknown senders :)"
-                              : "You have no chats :(",
+                                  ? "You have no archived chats"
+                                  : showUnknown
+                                      ? "You have no messages from unknown senders :)"
+                                      : "You have no chats :(",
                           style: context.theme.textTheme.labelLarge,
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      if (!chats.loadedChatBatch.value)
-                        buildProgressIndicator(context, size: 15),
+                      if (!chats.loadedChatBatch.value) buildProgressIndicator(context, size: 15),
                     ],
                   ),
                 ),
@@ -108,16 +108,24 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                 showScrollbar: true,
                 controller: controller.materialScrollController,
                 child: Obx(() => ListView.builder(
-                  controller: controller.materialScrollController,
-                  physics: ThemeSwitcher.getScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final chat = _chats[index];
-                    return ListItem(chat: chat, controller: controller, update: () {
-                      setState(() {});
-                    });
-                  },
-                  itemCount: _chats.length,
-                )),
+                      controller: controller.materialScrollController,
+                      physics: ThemeSwitcher.getScrollPhysics(),
+                      findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
+                      itemBuilder: (context, index) {
+                        final chat = _chats[index];
+                        return Container(
+                          key: ValueKey(chat.guid),
+                          child: ListItem(
+                            chat: chat,
+                            controller: controller,
+                            update: () {
+                              setState(() {});
+                            }
+                          )
+                        );
+                      },
+                      itemCount: _chats.length,
+                    )),
               ),
             );
           }),

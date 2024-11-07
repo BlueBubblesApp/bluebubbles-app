@@ -1,12 +1,12 @@
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -21,11 +21,15 @@ class FullscreenMediaHolder extends StatefulWidget {
     required this.attachment,
     required this.showInteractions,
     this.currentChat,
+    this.videoController,
+    this.mute
   });
 
   final ChatLifecycleManager? currentChat;
   final Attachment attachment;
   final bool showInteractions;
+  final VideoController? videoController;
+  final RxBool? mute;
 
   @override
   FullscreenMediaHolderState createState() => FullscreenMediaHolderState();
@@ -43,8 +47,6 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
   ScrollPhysics? physics;
   Attachment get attachment => widget.attachment;
   bool showAppBar = true;
-  // bool showOverlay = true;
-  // StreamSubscription<Tuple2<String, dynamic>>? overlaySub;
 
   @override
   void initState() {
@@ -61,23 +63,11 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
       }
       controller = PageController(initialPage: currentIndex);
     }
-
-    // overlaySub = eventDispatcher.stream.listen((event) {
-    //   if (!mounted || event.item1 != 'overlay-toggle') return;
-    //   if (event.item2 == showOverlay) return;
-    //   setState(() {
-    //     showOverlay = event.item2;
-    //   });
-    // });
   }
 
   @override
   void dispose() {
     controller.dispose();
-    // if (overlaySub != null) {
-    //   overlaySub!.cancel();
-    // }
-
     super.dispose();
   }
 
@@ -169,6 +159,7 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                   reverse: ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
                   itemCount: attachments.length,
                   onPageChanged: (int val) {
+                    widget.videoController?.player.pause();
                     setState(() {
                       currentIndex = val;
                     });
@@ -208,6 +199,8 @@ class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
                           file: content,
                           attachment: attachment,
                           showInteractions: widget.showInteractions,
+                          videoController: widget.videoController,
+                          mute: widget.mute,
                         );
                       } else {
                         return const SizedBox.shrink();

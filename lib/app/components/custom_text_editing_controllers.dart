@@ -1,6 +1,12 @@
+import "dart:math";
+
 import "package:bluebubbles/helpers/helpers.dart";
-import "package:bluebubbles/models/models.dart";
+import "package:bluebubbles/database/models.dart";
+import "package:bluebubbles/services/services.dart";
+import 'package:bluebubbles/utils/emoji.dart';
+import "package:bluebubbles/utils/emoticons.dart";
 import "package:collection/collection.dart";
+import "package:emojis/emoji.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:get/get.dart";
@@ -15,12 +21,13 @@ class Mentionable {
   final Handle handle;
   String? customDisplayName;
 
-  String get displayName => customDisplayName ?? handle.displayName;
+  String get displayName => customDisplayName ?? handle.displayName.split(" ").first;
 
   String get address => handle.address;
 
   @override
-  bool operator ==(Object other) => identical(this, other) || other is Mentionable && runtimeType == other.runtimeType && address == other.address;
+  bool operator ==(Object other) =>
+      identical(this, other) || other is Mentionable && runtimeType == other.runtimeType && address == other.address;
 
   @override
   int get hashCode => address.hashCode;
@@ -30,12 +37,17 @@ class Mentionable {
 }
 
 class SpellCheckTextEditingController extends TextEditingController {
-  SpellCheckTextEditingController({super.text}) {
-    _languageCheckService = DebounceLangToolService(LangToolService(LanguageToolClient()), const Duration(milliseconds: 500));
-    if (text.isNotEmpty) {
-      _processMistakes(text);
-    }
+  SpellCheckTextEditingController({super.text, this.focusNode}) {
+    assert(focusNode != null || !(kIsDesktop || kIsWeb));
+    _languageCheckService =
+        DebounceLangToolService(LangToolService(LanguageToolClient(language: ss.settings.spellcheckLanguage.value)),
+            const Duration(milliseconds: 500));
+    _processMistakes(text);
   }
+
+  /// focusNode
+  /// Required for spellcheck replacement to work
+  FocusNode? focusNode;
 
   /// Language tool configs
   final HighlightStyle highlightStyle = const HighlightStyle();
@@ -53,11 +65,57 @@ class SpellCheckTextEditingController extends TextEditingController {
   /// An error that may have occurred during the API fetch.
   Object? get fetchError => _fetchError;
 
+  /// Mistake tooltip
+  OverlayEntry? _mistakeTooltip;
+
   @override
   set value(TextEditingValue newValue) {
+    String origText = newValue.text;
+    int origOffset = newValue.selection.start;
+    String newText = newValue.text;
+    int newOffset = newValue.selection.start;
+
+    if (ss.settings.replaceEmoticonsWithEmoji.value) {
+      List<(int, int)> offsetsAndDifferences;
+      (newText, offsetsAndDifferences) = replaceEmoticons(newText);
+
+      if (offsetsAndDifferences.isNotEmpty) {
+        // Add all differences before the cursor and subtract from offset
+        for (final (_offset, difference) in offsetsAndDifferences) {
+          if (_offset < newOffset) {
+            newOffset -= difference;
+          }
+        }
+      }
+    }
+
+    final regExp = RegExp(r"(?<=^|[^a-zA-Z\d]):[^: \n]{2,}:", multiLine: true);
+    final matches = regExp.allMatches(newText);
+    if (matches.isNotEmpty) {
+      RegExpMatch match = matches.lastWhere((m) => m.start < newOffset);
+      // Full emoji text (do not search for partial matches)
+      String emojiName = newText.substring(match.start + 1, match.end - 1).toLowerCase();
+      if (emojiNames.keys.contains(emojiName)) {
+        // We can replace the :emoji: with the actual emoji here
+        final emoji = Emoji.byShortName(emojiName)!;
+        newText = newText.substring(0, match.start) + emoji.char + newText.substring(match.end);
+        newOffset = match.start + emoji.char.length;
+      }
+    }
+
+    if (newText != origText || newOffset != origOffset) {
+      newValue = newValue.copyWith(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newOffset),
+      );
+    }
+
     if (kIsDesktop || kIsWeb) {
       _handleTextChange(newValue.text);
+      _mistakeTooltip?.remove();
+      _mistakeTooltip = null;
     }
+
     super.value = newValue;
   }
 
@@ -72,6 +130,8 @@ class SpellCheckTextEditingController extends TextEditingController {
   @override
   void dispose() {
     _languageCheckService.dispose();
+    _mistakeTooltip?.remove();
+    _mistakeTooltip = null;
     super.dispose();
   }
 
@@ -84,6 +144,7 @@ class SpellCheckTextEditingController extends TextEditingController {
     Future.microtask.call(() {
       final newOffset = mistake.offset + replacement.length;
       selection = TextSelection.fromPosition(TextPosition(offset: newOffset));
+      focusNode?.requestFocus();
     });
   }
 
@@ -92,7 +153,7 @@ class SpellCheckTextEditingController extends TextEditingController {
   Future<void> _handleTextChange(String newText) async {
     ///set value triggers each time, even when cursor changes its location
     ///so this check avoid cleaning Mistake list when text wasn't really changed
-    if (newText == text || newText.isEmpty) return;
+    if (newText == text) return;
 
     await _processMistakes(newText);
   }
@@ -102,7 +163,8 @@ class SpellCheckTextEditingController extends TextEditingController {
       _selectedMistakeIndex = -1;
       return;
     }
-    final mistakeIndex = _mistakes.indexWhere((e) => (e.offset == newSelection.baseOffset) && (e.endOffset == newSelection.extentOffset));
+    final mistakeIndex = _mistakes
+        .indexWhere((e) => (e.offset == newSelection.baseOffset) && (e.endOffset == newSelection.extentOffset));
     if (mistakeIndex != -1) {
       _selectedMistakeIndex = mistakeIndex;
     } else {
@@ -111,18 +173,25 @@ class SpellCheckTextEditingController extends TextEditingController {
   }
 
   Future<void> _processMistakes(String newText) async {
+    if (!ss.settings.spellcheck.value || newText.isEmpty) {
+      _mistakes.clear();
+      _mistakeTooltip?.remove();
+      _mistakeTooltip = null;
+      notifyListeners();
+      return;
+    }
     final filteredMistakes = _filterMistakesOnChanged(newText);
     _mistakes = filteredMistakes.toList();
 
     final mistakesWrapper = await _latestResponseService.processLatestOperation(
-      () => _languageCheckService.findMistakes(newText),
+          () => _languageCheckService.findMistakes(newText),
     );
     if (mistakesWrapper == null || !mistakesWrapper.hasResult) return;
 
     final mistakes = mistakesWrapper.result();
     _fetchError = mistakesWrapper.error;
 
-    _mistakes = mistakes;
+    _mistakes = List.from(mistakes);
     notifyListeners();
   }
 
@@ -137,13 +206,13 @@ class SpellCheckTextEditingController extends TextEditingController {
 
       newMistake = isSelectionRangeEmpty
           ? _adjustMistakeOffsetWithCaretCursor(
-              mistake: mistake,
-              lengthDiscrepancy: lengthDiscrepancy,
-            )
+        mistake: mistake,
+        lengthDiscrepancy: lengthDiscrepancy,
+      )
           : _adjustMistakeOffsetWithSelectionRange(
-              mistake: mistake,
-              lengthDiscrepancy: lengthDiscrepancy,
-            );
+        mistake: mistake,
+        lengthDiscrepancy: lengthDiscrepancy,
+      );
 
       if (newMistake != null) yield newMistake;
     }
@@ -209,6 +278,74 @@ class SpellCheckTextEditingController extends TextEditingController {
     }
   }
 
+  OverlayEntry _createTooltip(BuildContext context, Offset offset, Mistake mistake, String mistakeText) {
+    final Color color = _getMistakeColor(mistake.type);
+    Iterable<String> replacements = mistake.replacements.take(15);
+    return OverlayEntry(
+      builder: (context) =>
+          Positioned(
+            left: offset.dx - 100,
+            width: 200,
+            bottom: (context.height - offset.dy) ~/ 60 * 60 + 60,
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: context.theme.colorScheme.properSurface,
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                padding: const EdgeInsets.all(8.0),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(mistake.type.value.capitalizeFirst!,
+                          style: context.textTheme.titleSmall!.copyWith(color: color)),
+                      Text(
+                        "\"$mistakeText\"",
+                        style: context.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
+                      ),
+                      const SizedBox(height: 8.0),
+                      replacements.isEmpty
+                          ? Text(
+                        "No Replacements",
+                        style: context.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
+                      )
+                          : Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4.0,
+                        runSpacing: 4.0,
+                        children: List.generate(replacements.length, (index) {
+                          final replacement = mistake.replacements[index];
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(8.0),
+                            hoverColor: color.withOpacity(0.2),
+                            onTapDown: (_) {
+                              replaceMistake(mistake, replacement);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4.0),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: context.theme.colorScheme.outline),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Text(replacement, style: context.textTheme.bodySmall),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+
   /// Builds a TextSpan with mistakes highlighted
   /// [chunk] - the text chunk to build TextSpan for
   /// [offset] - the offset of the chunk in the whole text
@@ -248,6 +385,14 @@ class SpellCheckTextEditingController extends TextEditingController {
             TextSpan(
               text: mistakeText,
               style: mistakeStyle,
+              onEnter: (event) {
+                if (_mistakeTooltip != null) {
+                  _mistakeTooltip!.remove();
+                }
+                _mistakeTooltip = _createTooltip(context,
+                    Offset(event.position.dx - ns.widthChatListLeft(context), event.position.dy), mistake, mistakeText);
+                Overlay.of(context).insert(_mistakeTooltip!);
+              },
             ),
           );
 
@@ -276,6 +421,7 @@ class SpellCheckTextEditingController extends TextEditingController {
 class MentionTextEditingController extends SpellCheckTextEditingController {
   MentionTextEditingController({
     super.text,
+    super.focusNode,
     this.mentionables = const <Mentionable>[],
   });
 
@@ -285,12 +431,11 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
 
   List<Mentionable> mentionables;
 
-  // mention cache
-  Iterable<int> mentionedIndices = <int>[];
+  void processMentions() => _processMentions(text);
 
-  void processMentions() {
+  void _processMentions(String text) {
     final matches = escapingRegex.allMatches(text);
-    mentionedIndices = matches.map((m) => int.tryParse(text.substring(m.start + 1, m.end - 1))).whereNotNull();
+    Iterable<int> mentionedIndices = matches.map((m) => int.tryParse(text.substring(m.start + 1, m.end - 1))).whereNotNull();
     mentionables.forEachIndexed((i, m) {
       if (!mentionedIndices.contains(i)) {
         m.customDisplayName = null;
@@ -303,7 +448,11 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     final atIndex = text.substring(0, indexSelection).lastIndexOf("@");
     final index = mentionables.indexOf(mentionable);
     if (index == -1 || atIndex == -1) return;
-    List<String> textParts = [text.substring(0, atIndex), text.substring(atIndex, indexSelection), text.substring(indexSelection)];
+    List<String> textParts = [
+      text.substring(0, atIndex),
+      text.substring(atIndex, indexSelection),
+      text.substring(indexSelection)
+    ];
     final addSpace = !textParts[2].startsWith(" ");
     final replacement = "$escapingChar$index$escapingChar${addSpace ? " " : ""}";
     text = textParts[0] + textParts[1].replaceFirst(candidate, replacement) + textParts[2];
@@ -370,6 +519,61 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   }
 
   @override
+  set value(TextEditingValue newValue) {
+    String newText = newValue.text;
+    int newOffset = newValue.selection.start;
+
+    // Need fewer chars for anything bad to happen
+    if (newText.length < text.length) {
+      // Search for the new state in the old state starting from the old selection's end
+      String textSearchPart = text.substring(selection.end);
+      int indexInNew = textSearchPart == "" || newValue.selection.end == -1
+          ? newText.length
+          : newText.indexOf(textSearchPart, newValue.selection.end);
+      if (indexInNew == -1) {
+        // This means that the cursor was behind the deleted portion (user used delete key probably)
+        textSearchPart = text.substring(0, selection.start);
+        indexInNew = textSearchPart == "" ? 0 : newText.indexOf(textSearchPart);
+        indexInNew += textSearchPart.length;
+      }
+
+      indexInNew = min(indexInNew, newText.length);
+
+      if (indexInNew != -1) {
+        // Just in case
+        bool deletingBadMention = false;
+
+        String textPart1 = newText.substring(0, indexInNew);
+        String textPart2 = newText.substring(indexInNew);
+
+        if (MentionTextEditingController.escapingChar.allMatches(textPart1).length % 2 != 0) {
+          final badMentionIndex = textPart1.lastIndexOf(MentionTextEditingController.escapingChar);
+          textPart1 = textPart1.substring(0, badMentionIndex);
+          deletingBadMention = true;
+        }
+        if (MentionTextEditingController.escapingChar.allMatches(textPart2).length % 2 != 0) {
+          final badMentionIndex = textPart2.indexOf(MentionTextEditingController.escapingChar);
+          textPart2 = textPart2.substring(badMentionIndex + 1);
+          deletingBadMention = true;
+        }
+
+        if (deletingBadMention) {
+          newText = textPart1 + textPart2;
+          newOffset = textPart1.length;
+          _processMentions(newText);
+
+          newValue = newValue.copyWith(
+            text: newText,
+            selection: TextSelection.collapsed(offset: newOffset),
+          );
+        }
+      }
+    }
+
+    super.value = newValue;
+  }
+
+  @override
   TextSpan buildTextSpan({
     required BuildContext context,
     TextStyle? style,
@@ -380,7 +584,10 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     int mentionIndexLength = 0;
     return TextSpan(
       children: textSplit.mapIndexed((idx, word) {
-        int offset = textSplit.slice(0, idx).join("").length;
+        int offset = textSplit
+            .slice(0, idx)
+            .join("")
+            .length;
 
         if (word == escapingChar) flag = !flag;
         int? index = flag ? int.tryParse(word) : null;
@@ -398,11 +605,15 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
               },
               child: ShaderMask(
                 blendMode: BlendMode.srcIn,
-                shaderCallback: (bounds) => LinearGradient(
-                  colors: <Color>[context.theme.colorScheme.primary.darkenPercent(20), context.theme.colorScheme.primary.lightenPercent(20)],
-                ).createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                ),
+                shaderCallback: (bounds) =>
+                    LinearGradient(
+                      colors: <Color>[
+                        context.theme.colorScheme.primary.darkenPercent(20),
+                        context.theme.colorScheme.primary.lightenPercent(20)
+                      ],
+                    ).createShader(
+                      Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                    ),
                 child: Text(
                   mention.displayName,
                   style: style!.copyWith(fontWeight: FontWeight.bold).apply(heightFactor: 1.1),

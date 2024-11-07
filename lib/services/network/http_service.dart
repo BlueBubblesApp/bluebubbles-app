@@ -1,5 +1,5 @@
-import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -113,13 +113,27 @@ class HttpService extends GetxService {
   }
 
   /// Get server metadata like server version, macOS version, current URL, etc
+  Response? _serverInfoCache;
+  DateTime? _lastServerInfoFetch;
   Future<Response> serverInfo({CancelToken? cancelToken}) async {
+    final now = DateTime.now();
+    if (_serverInfoCache != null && _lastServerInfoFetch != null && now.difference(_lastServerInfoFetch!) < const Duration(minutes: 1)) {
+      Logger.debug("Server info was recently fetched. Using cache...");
+      return _serverInfoCache!;
+    }
+
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/server/info",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
+
+      if (response.statusCode == 200) {
+        _serverInfoCache = response;
+        _lastServerInfoFetch = now;
+      }
+
       return returnSuccessOrError(response);
     });
   }
@@ -199,7 +213,7 @@ class HttpService extends GetxService {
   }
 
   /// Get server logs, [count] defines the length of logs
-  Future<Response> serverLogs({int count = 100, CancelToken? cancelToken}) async {
+  Future<Response> serverLogs({int count = 10000, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/server/logs",
@@ -261,7 +275,7 @@ class HttpService extends GetxService {
     });
   }
 
-  /// Get the attachment data for the specified [guid]
+  /// Get the live photo data for the specified [guid]
   Future<Response> downloadLivePhoto(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
@@ -608,9 +622,12 @@ class HttpService extends GetxService {
         "effectId": effectId,
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
-        "partIndex": partIndex,
-        //"ddScan": ddScan,
+        "partIndex": partIndex
       });
+
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateAPISend.value && ss.isMinVenturaSync) {
+        data["ddScan"] = ddScan;
+      }
 
       final response = await dio.post(
           "$apiRoot/message/text",
@@ -674,9 +691,12 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
-        "parts": parts,
-        //"ddScan": ddScan,
+        "parts": parts
       };
+
+      if (ss.isMinVenturaSync) {
+        data["ddScan"] = ddScan;
+      }
 
       final response = await dio.post(
           "$apiRoot/message/multipart",
@@ -1342,22 +1362,31 @@ class ApiInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    Logger.info("PATH: ${options.path}", tag: "REQUEST[${options.method}]");
+    Logger.info("Request: [${options.method}] ${options.path}", tag: "HTTP Service");
     return super.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    Logger.info("PATH: ${response.requestOptions.path}", tag: "RESPONSE[${response.statusCode}]");
+    Logger.info("Response: [${response.statusCode}] ${response.requestOptions.path}", tag: "HTTP Service");
     return super.onResponse(response, handler);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    Logger.error("PATH: ${err.requestOptions.path}", tag: "ERROR[${err.response?.statusCode}]");
-    Logger.error(err.error, tag: "ERROR[${err.response?.statusCode}]");
-    Logger.error(err.requestOptions.contentType, tag: "ERROR[${err.response?.statusCode}]");
-    Logger.error(err.response?.data, tag: "ERROR[${err.response?.statusCode}]");
+    // Get params without sensitive info
+    final params = err.requestOptions.queryParameters;
+    params.remove("guid");
+    params.remove("password");
+
+    // Make a nice log of what failed
+    Logger.error("""Failed Request: [${err.requestOptions.method}] ${err.requestOptions.path}
+  -> Error: ${err.error ?? 'No Error'}
+  -> Request Params: ${params.toString()}
+  -> Request Data: ${err.requestOptions.data ?? 'No Data'}
+  -> Response Status: ${err.response?.statusCode ?? 'No Response'}
+  -> Response Data: ${err.response?.data ?? 'No Data'}""", tag: "HTTP Service");
+
     if (err.response != null && err.response!.data is Map) return handler.resolve(err.response!);
     if (err.response != null) {
       return handler.resolve(Response(data: {

@@ -2,9 +2,9 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
@@ -34,8 +34,8 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
       if (metadata == null) {
         try {
           metadata = await MetadataHelper.fetchMetadata(message);
-        } catch (ex) {
-          Logger.error("Failed to fetch metadata! Error: ${ex.toString()}");
+        } catch (ex, stack) {
+          Logger.error("Failed to fetch metadata!", error: ex, trace: stack);
           return;
         }
         // If the data isn't empty, save/update it in the DB
@@ -101,26 +101,26 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  !isNullOrEmpty(metadata?.title)! && metadata?.title != "www"
+                  !isNullOrEmpty(metadata?.title) && metadata?.title != "www"
                       ? metadata!.title!
-                      : !isNullOrEmpty(siteText)!
+                      : !isNullOrEmpty(siteText)
                       ? siteText! : message.text!,
                   style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (!isNullOrEmpty(metadata?.description)!)
+                if (!isNullOrEmpty(metadata?.description))
                   const SizedBox(height: 5),
-                if (!isNullOrEmpty(metadata?.description)!)
+                if (!isNullOrEmpty(metadata?.description))
                   Text(
                     metadata!.description!,
                     maxLines: ReplyScope.maybeOf(context) == null ? 3 : 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal)
                   ),
-                if (!isNullOrEmpty(siteText)!)
+                if (!isNullOrEmpty(siteText))
                   const SizedBox(height: 5),
-                if (!isNullOrEmpty(siteText)!)
+                if (!isNullOrEmpty(siteText))
                   Text(
                     siteText!,
                     style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),

@@ -61,23 +61,55 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
                     initNewEngine()
                 }
             }
-            Log.d(Constants.logTag, "Sending method $method to Dart")
-            suspendCoroutine { cont ->
-                MethodChannel((engine ?: workerEngine)!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.getParameterized(HashMap::class.java, String::class.java, Any::class.java).type), object : MethodChannel.Result {
-                    override fun success(result: Any?) {
-                        Log.d(Constants.logTag, "Worker with method $method completed successfully")
-                        cont.resume(Result.success())
-                        closeEngineIfNeeded()
+            Log.d(Constants.logTag, "Sending event, '$method' to Dart")
+
+            try {
+                var engineToUse: FlutterEngine? = engine ?: workerEngine
+                if (engineToUse == null) {
+                    Log.d(Constants.logTag, "Engine is null, cannot send method $method to Dart")
+                    return@future Result.failure()
+                }
+
+                Log.d(Constants.logTag, "Registering engine lifecycle listener")
+
+                engineToUse!!.addEngineLifecycleListener ( object : FlutterEngine.EngineLifecycleListener {
+                    override fun onPreEngineRestart() {
+                        Log.d(Constants.logTag, "Engine is restarting")
                     }
 
-                    override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-                        Log.e(Constants.logTag, "Worker with method $method failed!")
-                        cont.resume(Result.failure())
-                        closeEngineIfNeeded()
+                    override fun onEngineWillDestroy() {
+                        Log.d(Constants.logTag, "Engine is being destroyed")
                     }
-
-                    override fun notImplemented() { }
                 })
+
+                Log.d(Constants.logTag, "Invoking method channel...")
+                suspendCoroutine { cont ->
+                    MethodChannel(engineToUse!!.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.getParameterized(HashMap::class.java, String::class.java, Any::class.java).type), object : MethodChannel.Result {
+                        override fun success(result: Any?) {
+                            Log.d(Constants.logTag, "Worker with method $method completed successfully")
+                            cont.resume(Result.success())
+                            closeEngineIfNeeded()
+                        }
+    
+                        override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                            Log.e(Constants.logTag, "Worker with method $method failed!")
+                            cont.resume(Result.failure())
+                            closeEngineIfNeeded()
+                        }
+    
+                        override fun notImplemented() {
+                            Log.e(Constants.logTag, "Worker with method $method not implemented on Dart side")
+                            cont.resume(Result.failure())
+                            closeEngineIfNeeded()
+                        }
+                    })
+                }
+
+                Log.d(Constants.logTag, "Worker with method $method completed successfully")
+                return@future Result.success()
+            } catch (e: Exception) {
+                Log.d(Constants.logTag, "Error sending method $method to Dart: ${e.message}")
+                return@future Result.failure()
             }
         }
     }
@@ -97,6 +129,7 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
             MethodChannel(workerEngine!!.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
                 call, result -> run {
                     if (call.method == "ready") {
+                        Log.d(Constants.logTag, "Dart engine is ready!")
                         cont.resume(Unit)
                     } else {
                         MethodCallHandler().methodCallHandler(call, result, applicationContext)
@@ -121,8 +154,8 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
                 // This must be run on main thread
                 CoroutineScope(Dispatchers.Main).launch {
                     workerEngine?.destroy()
+                    workerEngine = null
                 }
-                workerEngine = null
             }
         }
     }

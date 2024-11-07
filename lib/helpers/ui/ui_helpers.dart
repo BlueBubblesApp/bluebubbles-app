@@ -4,9 +4,9 @@ import 'dart:ui' as ui;
 
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,48 +24,15 @@ class BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return XGestureDetector(
-      supportTouch: true,
-      onTap: !kIsDesktop ? null : (details) {
-        final result = onPressed?.call() ?? false;
-        if (!result) {
-          if (Get.isSnackbarOpen) {
-            Get.closeAllSnackbars();
-          }
-          Navigator.of(context).pop();
-        }
-      },
-      child: IconButton(
-        icon: Obx(() => Icon(
-              ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-              color: color ?? context.theme.colorScheme.primary,
-            )),
-        iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
-        onPressed: kIsDesktop ? null : () {
-          final result = onPressed?.call() ?? false;
-          if (!result) {
-            if (Get.isSnackbarOpen) {
-              Get.closeAllSnackbars();
-            }
-            Navigator.of(context).pop();
-          }
-        },
-      ),
-    );
-  }
-}
-
-Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
-  return Material(
+    return Material(
       color: Colors.transparent,
       child: Container(
-        padding: padding,
         width: 48,
         child: XGestureDetector(
           supportTouch: true,
           onTap: !kIsDesktop ? null : (details) {
-            final result = callback?.call() ?? true;
-            if (result) {
+            final result = onPressed?.call() ?? false;
+            if (!result) {
               if (Get.isSnackbarOpen) {
                 Get.closeAllSnackbars();
               }
@@ -73,15 +40,15 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
             }
           },
           child: IconButton(
-            iconSize: iconSize ?? (ss.settings.skin.value != Skins.Material ? 30 : 24),
-            icon: skin != null
-                ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
-                : Obx(() => Icon(ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-                    color: context.theme.colorScheme.primary)),
+            icon: Obx(() => Icon(
+              ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+              color: color ?? context.theme.colorScheme.primary,
+            )),
+            iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
             onPressed: () {
               if (kIsDesktop) return;
-              final result = callback?.call() ?? true;
-              if (result) {
+              final result = onPressed?.call() ?? false;
+              if (!result) {
                 if (Get.isSnackbarOpen) {
                   Get.closeAllSnackbars();
                 }
@@ -90,15 +57,56 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
             },
           ),
         ),
-      ));
+      ),
+    );
+  }
+}
+
+// todo remove
+Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
+  return Material(
+    color: Colors.transparent,
+    child: Container(
+      padding: padding,
+      width: 48,
+      child: XGestureDetector(
+        supportTouch: true,
+        onTap: !kIsDesktop ? null : (details) {
+          final result = callback?.call() ?? true;
+          if (result) {
+            if (Get.isSnackbarOpen) {
+              Get.closeAllSnackbars();
+            }
+            Navigator.of(context).pop();
+          }
+        },
+        child: IconButton(
+          iconSize: iconSize ?? (ss.settings.skin.value != Skins.Material ? 30 : 24),
+          icon: skin != null
+              ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
+              : Obx(() => Icon(ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+                  color: context.theme.colorScheme.primary)),
+          onPressed: () {
+            if (kIsDesktop) return;
+            final result = callback?.call() ?? true;
+            if (result) {
+              if (Get.isSnackbarOpen) {
+                Get.closeAllSnackbars();
+              }
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+      ),
+    ),
+  );
 }
 
 Widget buildProgressIndicator(BuildContext context, {double size = 20, double strokeWidth = 2}) {
   return ss.settings.skin.value == Skins.iOS
       ? Theme(
           data: ThemeData(
-            cupertinoOverrideTheme:
-                CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background)),
+            cupertinoOverrideTheme: CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background)),
           ),
           child: CupertinoActivityIndicator(
             radius: size / 2,
@@ -108,42 +116,18 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
           alignment: Alignment.center,
           constraints: BoxConstraints(maxHeight: size, maxWidth: size),
           child: SizedBox(
-              width: size,
-              height: size,
-              child: CircularProgressIndicator(
-                strokeWidth: strokeWidth,
-                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-              ),
+            width: size,
+            height: size,
+            child: CircularProgressIndicator(
+              strokeWidth: strokeWidth,
+              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+            ),
           ),
-      );
+        );
 }
 
-Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget child, {bool isLoaded = false}) {
-  double placeholderWidth = 200;
-  double placeholderHeight = 150;
-
-  // If the image doesn't have a valid size, show the loader with static height/width
-  if (!attachment.hasValidSize) {
-    return Container(
-        width: placeholderWidth, height: placeholderHeight, color: context.theme.colorScheme.properSurface, child: child);
-  }
-
-  // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
-  // Calculate the aspect ratio for the placeholders
-  double ratio = attachment.aspectRatio;
-  double height = attachment.height?.toDouble() ?? placeholderHeight;
-  double width = attachment.width?.toDouble() ?? placeholderWidth;
-
-  // YES, this countainer surrounding the AspectRatio is needed.
-  // If not there, the box may be too large
-  return Container(
-      constraints: BoxConstraints(maxHeight: height, maxWidth: width),
-      child: AspectRatio(
-          aspectRatio: ratio,
-          child: Container(width: width, height: height, color: context.theme.colorScheme.properSurface, child: child)));
-}
-
-Future<void> showConversationTileMenu(BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
+Future<void> showConversationTileMenu(
+    BuildContext context, ConversationTileController _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
   bool ios = ss.settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
@@ -173,9 +157,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Icon(
-                      chat.isPinned!
-                          ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline)
-                          : (ios ? CupertinoIcons.pin : Icons.star),
+                      chat.isPinned! ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline) : (ios ? CupertinoIcons.pin : Icons.star),
                       color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
@@ -210,7 +192,8 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                       color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
-                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                      style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                 ],
               ),
             ),
@@ -237,7 +220,8 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                     color: context.theme.colorScheme.properOnSurface,
                   ),
                 ),
-                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               ],
             ),
           ),
@@ -280,6 +264,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () async {
+              Navigator.pop(context); // Remove PopupMenuItem
               showDialog(
                 barrierDismissible: false,
                 context: context,
@@ -289,16 +274,13 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                       "Are you sure?",
                       style: context.theme.textTheme.titleLarge,
                     ),
-                    content: Text(
-                        "This chat will be deleted from this device only",
-                        style: context.theme.textTheme.bodyLarge
-                    ),
+                    content: Text("This chat will be deleted from this device only", style: context.theme.textTheme.bodyLarge),
                     backgroundColor: context.theme.colorScheme.properSurface,
                     actions: <Widget>[
                       TextButton(
                         child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); //Remove AlertDialog
                         },
                       ),
                       TextButton(
@@ -306,7 +288,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
                         onPressed: () async {
                           chats.removeChat(chat);
                           Chat.softDelete(chat);
-                          Navigator.pop(context);
+                          Navigator.pop(context); //Remove AlertDialog
                         },
                       ),
                     ],
@@ -340,9 +322,7 @@ Future<void> showConversationTileMenu(BuildContext context, ConversationTileCont
 
 IconData getAttachmentIcon(String mimeType) {
   if (mimeType.isEmpty) {
-    return ss.settings.skin.value == Skins.iOS
-        ? CupertinoIcons.arrow_up_right_square
-        : Icons.open_in_new;
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
   }
   if (mimeType == "application/pdf") {
     return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
@@ -357,37 +337,31 @@ IconData getAttachmentIcon(String mimeType) {
   } else if (mimeType.startsWith("text")) {
     return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
   }
-  return ss.settings.skin.value == Skins.iOS
-      ? CupertinoIcons.arrow_up_right_square
-      : Icons.open_in_new;
+  return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
 }
 
-void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
-  Get.snackbar(title, message,
-      snackPosition: SnackPosition.BOTTOM,
-      colorText: Get.theme.colorScheme.onInverseSurface,
-      backgroundColor: Get.theme.colorScheme.inverseSurface,
-      margin: const EdgeInsets.only(bottom: 10),
-      maxWidth: Get.width - 20,
-      isDismissible: false,
-      duration: Duration(milliseconds: durationMs),
-      animationDuration: Duration(milliseconds: animationMs),
-      mainButton: button,
-      onTap: onTap ??
-              (GetSnackBar bar) {
-            if (Get.isSnackbarOpen) Get.back();
-          });
+void showSnackbar(String title, String message, {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
+  Get.snackbar(
+    title,
+    message,
+    snackPosition: SnackPosition.BOTTOM,
+    colorText: Get.theme.colorScheme.onInverseSurface,
+    backgroundColor: Get.theme.colorScheme.inverseSurface,
+    margin: const EdgeInsets.only(bottom: 10),
+    maxWidth: Get.width - 20,
+    isDismissible: false,
+    duration: Duration(milliseconds: durationMs),
+    animationDuration: Duration(milliseconds: animationMs),
+    mainButton: button,
+    onTap: onTap ??
+        (GetSnackBar bar) {
+          if (Get.isSnackbarOpen) Get.back();
+        },
+  );
 }
 
 Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
-  if (socketState == SocketState.connecting) {
-    return Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-  } else if (socketState == SocketState.connected) {
-    return Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
-  } else {
-    return Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
-  }
+  return Icon(Icons.fiber_manual_record, color: getIndicatorColor(socketState).withAlpha(showAlpha ? 200 : 255), size: size);
 }
 
 Color getIndicatorColor(SocketState socketState) {
@@ -409,7 +383,8 @@ Future<Uint8List> avatarAsBytes({
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
 
-  await paintGroupAvatar(chat: chat, participants: participants, canvas: canvas, size: quality, usingParticipantsOverride: participantsOverride != null);
+  await paintGroupAvatar(
+      chat: chat, participants: participants, canvas: canvas, size: quality, usingParticipantsOverride: participantsOverride != null);
 
   ui.Picture picture = pictureRecorder.endRecording();
   ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
@@ -442,8 +417,8 @@ Future<void> paintGroupAvatar({
     Uint8List? customAvatar;
     try {
       customAvatar = await clip(await File(chat.customAvatarPath!).readAsBytes(), size: size.toInt(), circle: true);
-    } catch (e) {
-      Logger.error(e);
+    } catch (e, stack) {
+      Logger.warn("Failed to load/clip custom avatar!", error: e, trace: stack);
     }
     if (customAvatar != null) {
       canvas.drawImage(await loadImage(customAvatar), const Offset(0, 0), Paint());
@@ -502,16 +477,11 @@ Future<void> paintGroupAvatar({
         ..textAlign = TextAlign.center
         ..text = TextSpan(
             text: String.fromCharCode(icon.codePoint),
-            style: TextStyle(
-                fontSize: adjustedWidth * 0.3,
-                fontFamily: icon.fontFamily,
-                color: theme.colorScheme.properOnSurface.withOpacity(0.8)))
+            style: TextStyle(fontSize: adjustedWidth * 0.3, fontFamily: icon.fontFamily, color: theme.colorScheme.properOnSurface.withOpacity(0.8)))
         ..layout()
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {
-      Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung
-            ? theme.colorScheme.secondary
-            : theme.colorScheme.background;
+      Paint paint = Paint()..color = ss.settings.skin.value == Skins.Samsung ? theme.colorScheme.secondary : theme.colorScheme.background;
       canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
       await paintAvatar(
         handle: participants[index],
@@ -528,18 +498,17 @@ Future<void> paintGroupAvatar({
 
 Future<void> paintAvatar(
     {required Handle? handle,
-      required Canvas canvas,
-      required Offset offset,
-      required double size,
-      double? fontSize,
-      double? borderWidth,
-      bool inGroup=false}) async {
+    required Canvas canvas,
+    required Offset offset,
+    required double size,
+    double? fontSize,
+    double? borderWidth,
+    bool inGroup = false}) async {
   fontSize ??= size * 0.5;
   borderWidth ??= size * 0.05;
   Contact? contact = handle?.contact ?? (handle != null ? cs.getContact(handle.address) : null);
   if (contact?.avatar != null) {
-    Uint8List? contactAvatar =
-    await clip(contact!.avatar ?? contact.avatar!, size: size.toInt(), circle: kIsDesktop || inGroup);
+    Uint8List? contactAvatar = await clip(contact!.avatar ?? contact.avatar!, size: size.toInt(), circle: kIsDesktop || inGroup);
     if (contactAvatar != null) {
       canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
       return;
@@ -561,19 +530,18 @@ Future<void> paintAvatar(
 
   Paint paint = Paint();
   paint.isAntiAlias = true;
-  paint.shader =
-      ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
-        !ss.settings.colorfulAvatars.value
-            ? HexColor("928E8E")
-            : colors.isNotEmpty
+  paint.shader = ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
+    !ss.settings.colorfulAvatars.value
+        ? HexColor("928E8E")
+        : colors.isNotEmpty
             ? colors[1]
             : HexColor("928E8E"),
-        !ss.settings.colorfulAvatars.value
-            ? HexColor("686868")
-            : colors.isNotEmpty
+    !ss.settings.colorfulAvatars.value
+        ? HexColor("686868")
+        : colors.isNotEmpty
             ? colors[0]
             : HexColor("686868"),
-      ]);
+  ]);
 
   Offset _offset = Offset(dx + size * 0.5, dy + size * 0.5);
   double radius = size * 0.5;
@@ -591,8 +559,7 @@ Future<void> paintAvatar(
     TextPainter()
       ..textDirection = TextDirection.rtl
       ..textAlign = TextAlign.center
-      ..text = TextSpan(
-          text: String.fromCharCode(icon.codePoint), style: TextStyle(fontSize: fontSize, fontFamily: icon.fontFamily))
+      ..text = TextSpan(text: String.fromCharCode(icon.codePoint), style: TextStyle(fontSize: fontSize, fontFamily: icon.fontFamily))
       ..layout()
       ..paint(canvas, Offset(dx + size * 0.25, dy + size * 0.25));
   } else {
@@ -651,12 +618,7 @@ Future<ui.Image> loadImage(Uint8List data) async {
   return completer.future;
 }
 
-AlertDialog areYouSure(BuildContext context, {
-  Widget? content,
-  String? title = "Are you sure?",
-  required Function onNo,
-  required Function onYes
-}) {
+AlertDialog areYouSure(BuildContext context, {Widget? content, String? title = "Are you sure?", required Function onNo, required Function onYes}) {
   return AlertDialog(
     title: Text(
       title ?? "Are you sure?",
@@ -688,4 +650,23 @@ extension VideoAspectRatio on VideoController {
 
     return _rect.width / _rect.height;
   }
+}
+
+int? findChildIndexByKey<T>(List<T> input, Key key, Function(T) getField) {
+  int index = -1;
+  if (key is UniqueKey) {
+    index = input.indexWhere((item) => getField(item) == key.toString());
+  } else if (key is ObjectKey) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  } else if (key is GlobalKey) {
+    index = input.indexWhere((item) => getField(item) == key.toString());
+  } else if (key is ValueKey<String>) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  } else if (key is ValueKey<int>) {
+    index = input.indexWhere((item) => getField(item) == key.value.toString());
+  } else if (key is ValueKey) {
+    index = input.indexWhere((item) => getField(item) == key.value);
+  }
+
+  return index == -1 ? null : index;
 }

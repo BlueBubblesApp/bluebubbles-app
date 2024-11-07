@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/fullscreen_media/dialogs/metadata_dialog.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 
 // (needed for custom back button)
@@ -21,11 +21,16 @@ class FullscreenVideo extends StatefulWidget {
     required this.file,
     required this.attachment,
     required this.showInteractions,
+    this.videoController,
+    this.mute,
   });
 
   final PlatformFile file;
   final Attachment attachment;
   final bool showInteractions;
+
+  final VideoController? videoController;
+  final RxBool? mute;
 
   @override
   OptimizedState createState() => _FullscreenVideoState();
@@ -34,7 +39,6 @@ class FullscreenVideo extends StatefulWidget {
 class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with AutomaticKeepAliveClientMixin {
   Timer? hideOverlayTimer;
 
-  late Player player;
   late VideoController videoController;
 
   bool hasListener = false;
@@ -46,45 +50,57 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
   @override
   void initState() {
     super.initState();
+
+    if (widget.mute != null) {
+      muted.value = widget.mute!.value;
+    }
+
     initControllers();
   }
 
   void initControllers() async {
-    player = Player();
-    videoController = VideoController(player);
-
-    late final Media media;
-    if (widget.file.path == null) {
-      final blob = html.Blob([widget.file.bytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      media = Media(url);
+    if (widget.videoController != null) {
+      videoController = widget.videoController!;
     } else {
-      media = Media(widget.file.path!);
+      videoController = VideoController(Player());
+
+      late final Media media;
+      if (widget.file.path == null) {
+        final blob = html.Blob([widget.file.bytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        media = Media(url);
+      } else {
+        media = Media(widget.file.path!);
+      }
+      
+      await videoController.player.setPlaylistMode(PlaylistMode.none);
+      await videoController.player.open(media, play: false);
+      await videoController.player.setVolume(muted.value ? 0 : 100);
     }
     
-    await player.setPlaylistMode(PlaylistMode.none);
-    await player.open(media, play: false);
-    await player.setVolume(muted.value ? 0 : 100);
-    createListener(videoController, player);
+    createListener(videoController);
     showPlayPauseOverlay.value = true;
     setState(() {});
   }
 
-  void createListener(VideoController controller, Player player) {
+  void createListener(VideoController controller) {
     if (hasListener) return;
+
     controller.rect.addListener(() {
       aspectRatio.value = controller.aspectRatio;
     });
-    player.stream.completed.listen((completed) async {
+
+    controller.player.stream.completed.listen((completed) async {
       // If the status is ended, restart
       if (completed && !hasDisposed) {
-        await player.pause();
-        await player.seek(Duration.zero);
-        await player.pause();
+        await controller.player.pause();
+        await controller.player.seek(Duration.zero);
+        await controller.player.pause();
         showPlayPauseOverlay.value = true;
         showPlayPauseOverlay.refresh();
       }
     });
+
     hasListener = true;
   }
 
@@ -92,7 +108,12 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
   void dispose() {
     hasDisposed = true;
     hideOverlayTimer?.cancel();
-    player.dispose();
+    
+    // Only dispose the player if one was not passed in (via a controller)
+    if (widget.videoController == null) {
+      videoController.player.dispose();
+    }
+
     super.dispose();
   }
 
@@ -109,10 +130,10 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
       } else {
         media = Media(widget.file.path!);
       }
-      await player.open(media, play: false);
-      await player.setVolume(muted.value ? 0 : 100);
-      createListener(videoController, player);
-      showPlayPauseOverlay.value = !player.state.playing;
+      await videoController.player.open(media, play: false);
+      await videoController.player.setVolume(muted.value ? 0 : 100);
+      createListener(videoController);
+      showPlayPauseOverlay.value = !videoController.player.state.playing;
     });
   }
 
@@ -162,7 +183,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
                         label: 'Refresh'),
                     NavigationDestination(
                         icon: Icon(
-                          player.state.volume == 0.0
+                          muted.value
                               ? iOS
                                   ? CupertinoIcons.volume_mute
                                   : Icons.volume_mute
@@ -181,7 +202,8 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
                     } else if (value == 2) {
                       refreshAttachment();
                     } else if (value == 3) {
-                      await player.setVolume(player.state.volume != 0.0 ? 0.0 : 100.0);
+                      muted.toggle();
+                      await videoController.player.setVolume(muted.value ? 0.0 : 100.0);
                       setState(() {});
                     }
                   },
@@ -189,7 +211,7 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
               ),
         body: MouseRegion(
           onEnter: (event) => showPlayPauseOverlay.value = true,
-          onExit: (event) => showPlayPauseOverlay.value = !player.state.playing,
+          onExit: (event) => showPlayPauseOverlay.value = !videoController.player.state.playing,
           child: Obx(() {
             return SafeArea(
               child: Center(
@@ -224,11 +246,11 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(40),
                                   onTap: () async {
-                                    if (player.state.playing) {
-                                      await player.pause();
+                                    if (videoController.player.state.playing) {
+                                      await videoController.player.pause();
                                       showPlayPauseOverlay.value = true;
                                     } else {
-                                      await player.play();
+                                      await videoController.player.play();
                                       showPlayPauseOverlay.value = false;
                                     }
                                   },
@@ -242,13 +264,13 @@ class _FullscreenVideoState extends OptimizedState<FullscreenVideo> with Automat
                                     clipBehavior: Clip.antiAlias,
                                     child: Padding(
                                       padding: EdgeInsets.only(
-                                        left: ss.settings.skin.value == Skins.iOS && !player.state.playing ? 17 : 10,
+                                        left: ss.settings.skin.value == Skins.iOS && !videoController.player.state.playing ? 17 : 10,
                                         top: ss.settings.skin.value == Skins.iOS ? 13 : 10,
                                         right: 10,
                                         bottom: 10,
                                       ),
                                       child: Obx(
-                                        () => player.state.playing
+                                        () => videoController.player.state.playing
                                             ? Icon(
                                                 ss.settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
                                                 color: context.iconColor,

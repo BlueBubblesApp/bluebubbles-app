@@ -3,11 +3,11 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:faker/faker.dart';
+import 'package:faker/faker.dart' hide Color;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -35,8 +35,6 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
   late final StreamSubscription sub;
   String? cachedLatestMessageGuid = "";
   DateTime? cachedDateCreated;
-  late bool unread = chat.hasUnreadMessage ?? false;
-  late final StreamSubscription sub2;
 
   Chat get chat => widget.chat;
   double get size => widget.size;
@@ -57,7 +55,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        final latestMessageQuery = (Database.messages.query(Message_.dateDeleted.isNull())
               ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
               ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
@@ -80,25 +78,6 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
           }
           cachedLatestMessageGuid = message?.guid;
         });
-
-        final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid)).watch();
-        sub2 = unreadQuery.listen((Query<Chat> query) async {
-          final chat = controller.chat.id == null
-              ? null
-              : await runAsync(() {
-                  return chatBox.get(controller.chat.id!);
-                });
-          final newUnread = chat?.hasUnreadMessage ?? false;
-          if (chat != null && unread != newUnread) {
-            setState(() {
-              unread = newUnread;
-            });
-          } else if (chat == null && unread) {
-            setState(() {
-              unread = false;
-            });
-          }
-        });
       });
     } else {
       sub = WebListeners.newMessage.listen((tuple) {
@@ -118,23 +97,12 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
           cachedLatestMessageGuid = message.guid;
         }
       });
-      sub2 = WebListeners.chatUpdate.listen((chat) {
-        if (chat.guid == controller.chat.guid) {
-          final newUnread = chat.hasUnreadMessage ?? false;
-          if (unread != newUnread) {
-            setState(() {
-              unread = newUnread;
-            });
-          }
-        }
-      });
     }
   }
 
   @override
   void dispose() {
     sub.cancel();
-    sub2.cancel();
     super.dispose();
   }
 
@@ -159,80 +127,84 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
 
   @override
   Widget build(BuildContext context) {
-    final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
-    String _subtitle = hideInfo ? fakeText : subtitle;
+    return Obx(() {
+      final hideInfo = ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
+      String _subtitle = hideInfo ? fakeText : subtitle;
 
-    if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)!) {
-      return const SizedBox.shrink();
-    }
-    final background = getBubbleColors().first.withOpacity(0.7);
-    return Align(
-      alignment: showTail
-          ? leftSide
-              ? Alignment.centerLeft
-              : Alignment.centerRight
-          : Alignment.center,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: showTail
-              ? leftSide
-                  ? size * 0.06
-                  : size * 0.02
-              : size * 0.04,
-          right: showTail
-              ? leftSide
-                  ? size * 0.02
-                  : size * 0.06
-              : size * 0.04,
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: <Widget>[
-            if (showTail)
-              Positioned(
-                top: -size * 0.08,
-                right: leftSide ? null : size * 0.05,
-                left: leftSide ? size * 0.05 : null,
-                child: CustomPaint(
-                  size: Size(size * 0.21, size * 0.105),
-                  painter: TailPainter(leftSide: leftSide, background: background),
+      final unread = GlobalChatService.unreadState(controller.chat.guid).value;
+      if (!unread || lastMessage?.associatedMessageGuid != null || lastMessage!.isFromMe! || isNullOrEmpty(_subtitle)) {
+        return const SizedBox.shrink();
+      }
+
+      final background = getBubbleColors().first.withOpacity(0.7);
+      return Align(
+        alignment: showTail
+            ? leftSide
+                ? Alignment.centerLeft
+                : Alignment.centerRight
+            : Alignment.center,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: showTail
+                ? leftSide
+                    ? size * 0.06
+                    : size * 0.02
+                : size * 0.04,
+            right: showTail
+                ? leftSide
+                    ? size * 0.02
+                    : size * 0.06
+                : size * 0.04,
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              if (showTail)
+                Positioned(
+                  top: -size * 0.08,
+                  right: leftSide ? null : size * 0.05,
+                  left: leftSide ? size * 0.05 : null,
+                  child: CustomPaint(
+                    size: Size(size * 0.21, size * 0.105),
+                    painter: TailPainter(leftSide: leftSide, background: background),
+                  ),
                 ),
-              ),
-            ConstrainedBox(
-              constraints: BoxConstraints(minWidth: showTail ? size * 0.3 : 0),
-              child: ClipRRect(
-                clipBehavior: Clip.antiAlias,
-                borderRadius: BorderRadius.circular(size * 0.125),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 3.0,
-                      horizontal: 6.0,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(size * 0.125),
-                      color: background,
-                    ),
-                    child: Text(
-                      _subtitle,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: clampDouble((size ~/ 30).toDouble(), 1, 3).toInt(),
-                      textAlign: TextAlign.center,
-                      style: context.theme.textTheme.bodySmall!.copyWith(
-                          fontSize: (size / 10).clamp(context.theme.textTheme.bodySmall!.fontSize!, double.infinity),
-                          color: context.theme.colorScheme
-                              .onBubble(context, chat.isIMessage)
-                              .withOpacity(ss.settings.colorfulBubbles.value ? 1 : 0.85)),
+              ConstrainedBox(
+                constraints: BoxConstraints(minWidth: showTail ? size * 0.3 : 0),
+                child: ClipRRect(
+                  clipBehavior: Clip.antiAlias,
+                  borderRadius: BorderRadius.circular(size * 0.125),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 3.0,
+                        horizontal: 6.0,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(size * 0.125),
+                        color: background,
+                      ),
+                      child: Text(
+                        _subtitle,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: clampDouble((size ~/ 30).toDouble(), 1, 3).toInt(),
+                        textAlign: TextAlign.center,
+                        style: context.theme.textTheme.bodySmall!.copyWith(
+                            fontSize: (size / 10).clamp(context.theme.textTheme.bodySmall!.fontSize!, double.infinity),
+                            color: context.theme.colorScheme
+                                .onBubble(context, chat.isIMessage)
+                                .withOpacity(ss.settings.colorfulBubbles.value ? 1 : 0.85)),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 

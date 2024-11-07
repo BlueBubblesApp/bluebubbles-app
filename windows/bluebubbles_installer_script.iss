@@ -2,11 +2,13 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BlueBubbles"
-#define MyAppVersion "1.12.100.0"
+#define MyAppVersion "1.13.100.0"
 #define MyAppPublisher "BlueBubbles"
 #define MyAppURL "https://bluebubbles.app/"
 #define MyAppExeName "bluebubbles_app.exe"
 #define ProjectRoot ".."
+
+#include "CodeDependencies.iss"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -31,6 +33,19 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 
+[Code]
+function InitializeSetup: Boolean;
+begin
+  if not IsMsiProductInstalled('{36F68A90-239C-34DF-B58C-64B30153CE35}', PackVersionComponents(14, 40, 33810, 0)) then begin
+    Dependency_Add('vcredist2022 (x64).exe',
+      '/passive /norestart',
+      'Visual C++ 2015-2022 Redistributable (x64)',
+      'https://aka.ms/vs/17/release/vc_redist.x64.exe',
+      '', False, False);
+  end;
+  Result := True;
+end;
+
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
@@ -42,7 +57,7 @@ Source: "{#ProjectRoot}\build\windows\x64\runner\Release\{#MyAppExeName}"; DestD
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.lib"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.exp"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#ProjectRoot}\windows\dlls\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+// Source: "{#ProjectRoot}\windows\dlls\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

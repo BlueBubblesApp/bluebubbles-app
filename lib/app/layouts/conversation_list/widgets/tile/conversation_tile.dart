@@ -10,8 +10,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -178,7 +178,7 @@ class ChatTitle extends CustomStateful<ConversationTileController> {
 
 class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileController> {
   String title = "Unknown";
-  late final StreamSubscription sub;
+  StreamSubscription? sub;
   String? cachedDisplayName = "";
   List<Handle> cachedParticipants = [];
 
@@ -195,11 +195,11 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+        final titleQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid))
             .watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = controller.chat.id == null ? null : await runAsync(() {
-            return chatBox.get(controller.chat.id!);
+            return Database.chats.get(controller.chat.id!);
           });
           if (chat == null) return;
           // check if we really need to update this widget
@@ -224,11 +224,11 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
           for (Handle h in controller.chat.participants) {
             if (event.item2.first.contains(h.contactRelation.targetId)) {
               changed = true;
-              h.contactRelation.target = contactBox.get(h.contactRelation.targetId);
+              h.contactRelation.target = Database.contacts.get(h.contactRelation.targetId);
             }
             if (event.item2.last.contains(h.id)) {
               changed = true;
-              h = handleBox.get(h.id!)!;
+              h = Database.handles.get(h.id!)!;
             }
           }
           if (changed) {
@@ -263,7 +263,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
 
   @override
   void dispose() {
-    if (!kIsWeb) sub.cancel();
+    if (!kIsWeb) sub?.cancel();
     super.dispose();
   }
 
@@ -301,7 +301,7 @@ class ChatSubtitle extends CustomStateful<ConversationTileController> {
 class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTileController> {
   String subtitle = "Unknown";
   String fakeText = faker.lorem.words(1).join(" ");
-  late final StreamSubscription sub;
+  StreamSubscription? sub;
   String? cachedLatestMessageGuid = "";
   DateTime? cachedDateCreated;
   DateTime? cachedDateEdited;
@@ -325,7 +325,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final latestMessageQuery = (messageBox.query(Message_.dateDeleted.isNull())
+        final latestMessageQuery = (Database.messages.query(Message_.dateDeleted.isNull())
           ..link(Message_.chat, Chat_.guid.equals(controller.chat.guid))
           ..order(Message_.dateCreated, flags: Order.descending))
             .watch();
@@ -400,7 +400,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
 
   @override
   void dispose() {
-    sub.cancel();
+    sub?.cancel();
     super.dispose();
   }
 

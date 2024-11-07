@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +27,12 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   void initState() {
     forceDelete = false;
     super.initState();
+
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == "message-updated-${message.guid}") {
+        setState(() {});
+      }
+    });
   }
 
   bool get shouldShow {
@@ -53,23 +59,34 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
     return false;
   }
 
-  String getText() {
-    String text = "";
+  List<InlineSpan> buildTwoPiece(String action, String? date) {
+    return [
+      TextSpan(text: "$action ",
+        style: context.theme.textTheme.labelSmall!.copyWith(fontWeight: FontWeight.w600, color: context.theme.colorScheme.outline),),
+      if (date != null)
+        TextSpan(text: date,
+          style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal))
+    ];
+  }
+
+  List<InlineSpan> getText() {
     if (controller.audioWasKept.value != null) {
-      text = "Kept ${buildDate(controller.audioWasKept.value!)}";
+      return buildTwoPiece("Kept", buildDate(controller.audioWasKept.value!));
     } else if (!(message.isFromMe ?? false)) {
-      text = "Received ${buildDate(message.dateCreated)}";
+      return buildTwoPiece("Received", buildDate(message.dateCreated));
     } else if (message.dateRead != null) {
-      text = "Read ${buildDate(message.dateRead)}";
+      return buildTwoPiece("Read", buildDate(message.dateRead));
     } else if (message.dateDelivered != null) {
-      text = "Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}${ss.settings.showDeliveryTimestamps.value || !iOS || widget.forceShow ? " ${buildDate(message.dateDelivered)}" : ""}";
+      return buildTwoPiece("Delivered${message.wasDeliveredQuietly && !message.didNotifyRecipient ? " Quietly" : ""}", ss.settings.showDeliveryTimestamps.value || !iOS || widget.forceShow ? buildDate(message.dateDelivered) : null);
+    } else if (message.isDelivered) {
+      return buildTwoPiece("Delivered", null);
     } else if (message.guid!.contains("temp") && !(controller.cvController?.chat ?? cm.activeChat!.chat).isGroup && !iOS) {
-      text = "Sending...";
+      return buildTwoPiece("Sending...", "");
     } else if (widget.forceShow) {
-      text = "Sent ${buildDate(message.dateCreated)}";
+      return buildTwoPiece("Sent", buildDate(message.dateCreated));
     }
 
-    return text;
+    return [];
   }
 
   @override
@@ -83,10 +100,9 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
           top: 3,
           left: showAvatar || ss.settings.alwaysShowAvatars.value ? 35 : 0)
         ),
-        child: Text(
-          getText(),
-          style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
-        ),
+        child: Text.rich(TextSpan(
+          children: getText(),
+        )),
       ) : const SizedBox.shrink()),
     );
   }

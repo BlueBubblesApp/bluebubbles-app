@@ -5,15 +5,16 @@ import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_p
 import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/oauth_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/services/network/http_overrides.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/manual_entry_dialog.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
@@ -81,23 +82,20 @@ class ServerManagementPanelController extends StatefulController {
 
       final subsequentRequests = <Future>[];
 
-      subsequentRequests.add(  
-        http.serverStatTotals().then((response) {
-          if (response.data['status'] == 200) {
-            stats.addAll(response.data['data'] ?? {});
-            http.serverStatMedia().then((response) {
-              if (response.data['status'] == 200) {
-                stats.addAll(response.data['data'] ?? {});
-              }
-            });
-          }
-        }).catchError((_) {
-          showSnackbar("Error", "Failed to load server statistics!");
-        })
-      );
+      subsequentRequests.add(http.serverStatTotals().then((response) {
+        if (response.data['status'] == 200) {
+          stats.addAll(response.data['data'] ?? {});
+          http.serverStatMedia().then((response) {
+            if (response.data['status'] == 200) {
+              stats.addAll(response.data['data'] ?? {});
+            }
+          });
+        }
+      }).catchError((_) {
+        showSnackbar("Error", "Failed to load server statistics!");
+      }));
 
-      Future.wait(subsequentRequests)
-        .whenComplete(() => opacity.value = 1.0);
+      Future.wait(subsequentRequests).whenComplete(() => opacity.value = 1.0);
     }).catchError((_) {
       showSnackbar("Error", "Failed to load server details!");
       hasCheckedStats.value = null;
@@ -137,100 +135,115 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       bool redact = ss.settings.redactedMode.value;
                       return Container(
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                            child: AnimatedOpacity(
-                              duration: const Duration(milliseconds: 300),
-                              opacity: controller.opacity.value,
-                              child: SelectableText.rich(
-                                TextSpan(children: [
-                                  const TextSpan(text: "API Connection: "),
-                                  TextSpan(
-                                      text: (controller.hasCheckedStats.value == null
-                                              ? 'Disconnected'
-                                              : controller.hasCheckedStats.value == true
-                                                  ? 'Connected'
-                                                  : 'Connecting')
-                                          .toUpperCase(),
-                                      style: TextStyle(
-                                          color: getIndicatorColor(controller.hasCheckedStats.value == null
-                                              ? SocketState.disconnected
-                                              : controller.hasCheckedStats.value == true
-                                                  ? SocketState.connected
-                                                  : SocketState.connecting))),
-                                  const TextSpan(text: "\n\n"),
-                                  const TextSpan(text: "Socket Connection: "),
-                                  TextSpan(
-                                      text: socket.state.value.name.toUpperCase(),
-                                      style: TextStyle(color: getIndicatorColor(socket.state.value))),
-                                  // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
-                                  //   const TextSpan(text: "\n"),
-                                  // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
-                                  //   TextSpan(text: " (${socket.lastError.value})", style: TextStyle(color: getIndicatorColor(socket.state.value))),
-                                  const TextSpan(text: "\n\n"),
-                                  if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "Private API Status: "),
-                                  if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                    TextSpan(
-                                        text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED",
-                                        style: TextStyle(
-                                            color: getIndicatorColor(
-                                                controller.privateAPIStatus.value ? SocketState.connected : SocketState.disconnected))),
-                                  if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "\n\n"),
-                                  if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "Private API Helper Bundle Status: "),
-                                  if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                    TextSpan(
-                                        text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED",
-                                        style: TextStyle(
-                                            color: getIndicatorColor(
-                                                controller.helperBundleStatus.value ? SocketState.connected : SocketState.disconnected))),
-                                  if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "\n\n"),
-                                  TextSpan(
-                                      text: "Server URL: ${redact ? "Redacted" : http.origin}",
-                                      recognizer: TapGestureRecognizer()
-                                        ..onTap = () {
-                                          Clipboard.setData(ClipboardData(text: http.origin));
-                                          if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
-                                            showSnackbar("Copied", "Server address copied to clipboard!");
-                                          }
-                                        }),
-                                  if (hasBadCert)
-                                    TextSpan(
-                                        text: "Server URL has a bad certificate!",
-                                        style: TextStyle(color: getIndicatorColor(SocketState.disconnected))),
-                                  const TextSpan(text: "\n\n"),
-                                  if (!ss.fcmData.isNull)
-                                    TextSpan(text: "Firebase Database: ${isNullOrEmptyString(ss.fcmData.firebaseURL) ? "Firestore" : "Realtime"}"),
-                                  if (!ss.fcmData.isNull) const TextSpan(text: "\n\n"),
-                                  if (hasBadCert) const TextSpan(text: "\n\n"),
-                                  TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
-                                  const TextSpan(text: "\n\n"),
-                                  TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
-                                  const TextSpan(text: "\n\n"),
-                                  TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
-                                  if (controller.iCloudAccount.value != null) const TextSpan(text: "\n\n"),
-                                  if (controller.iCloudAccount.value != null)
-                                    TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
-                                  if (controller.proxyService.value != null) const TextSpan(text: "\n\n"),
-                                  if (controller.proxyService.value != null)
-                                    TextSpan(text: "Proxy Service: ${controller.proxyService.value!.capitalizeFirst}"),
-                                  if (controller.timeSync.value != null) const TextSpan(text: "\n\n"),
-                                  if (controller.timeSync.value != null) const TextSpan(text: "Server Time Sync: "),
-                                  if (controller.timeSync.value != null)
-                                    TextSpan(
-                                        text: "${controller.timeSync.value!.toStringAsFixed(3)}s",
-                                        style: TextStyle(
-                                            color: getIndicatorColor(
-                                                controller.timeSync.value! < 1 ? SocketState.connected : SocketState.disconnected))),
-                                  const TextSpan(text: "\n\n"),
-                                  const TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
-                                ]),
-                                onTap: () {
-                                  if (socket.state.value != SocketState.connected) return;
-                                  controller.opacity.value = 0.0;
-                                  controller.getServerStats();
-                                },
-                              ),
-                            ),
-                          ));
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          opacity: controller.opacity.value,
+                          child: SelectableText.rich(
+                            TextSpan(children: [
+                              const TextSpan(text: "API Connection: "),
+                              TextSpan(
+                                  text: (controller.hasCheckedStats.value == null
+                                          ? 'Disconnected'
+                                          : controller.hasCheckedStats.value == true
+                                              ? 'Connected'
+                                              : 'Connecting')
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                      color: getIndicatorColor(controller.hasCheckedStats.value == null
+                                          ? SocketState.disconnected
+                                          : controller.hasCheckedStats.value == true
+                                              ? SocketState.connected
+                                              : SocketState.connecting))),
+                              const TextSpan(text: "\n\n"),
+                              const TextSpan(text: "Socket Connection: "),
+                              TextSpan(
+                                  text: socket.state.value.name.toUpperCase(),
+                                  style: TextStyle(color: getIndicatorColor(socket.state.value))),
+                              // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                              //   const TextSpan(text: "\n"),
+                              // if (socket.lastError.value.isNotEmpty && (socket.state.value == SocketState.error || socket.state.value == SocketState.disconnected))
+                              //   TextSpan(text: " (${socket.lastError.value})", style: TextStyle(color: getIndicatorColor(socket.state.value))),
+                              const TextSpan(text: "\n\n"),
+                              if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                const TextSpan(text: "Private API Status: "),
+                              if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                TextSpan(
+                                    text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED",
+                                    style: TextStyle(
+                                        color: getIndicatorColor(controller.privateAPIStatus.value
+                                            ? SocketState.connected
+                                            : SocketState.disconnected))),
+                              if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "\n\n"),
+                              if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                const TextSpan(text: "Private API Helper Bundle Status: "),
+                              if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                TextSpan(
+                                    text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED",
+                                    style: TextStyle(
+                                        color: getIndicatorColor(controller.helperBundleStatus.value
+                                            ? SocketState.connected
+                                            : SocketState.disconnected))),
+                              if ((controller.serverVersionCode.value ?? 0) >= 42) const TextSpan(text: "\n\n"),
+                              TextSpan(
+                                  text: "Server URL: ${redact ? "Redacted" : http.origin}",
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Clipboard.setData(ClipboardData(text: http.origin));
+                                      if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+                                        showSnackbar("Copied", "Server address copied to clipboard!");
+                                      }
+                                    }),
+                              if (hasBadCert)
+                                TextSpan(
+                                    text: "Server URL has a bad certificate!",
+                                    style: TextStyle(color: getIndicatorColor(SocketState.disconnected))),
+                              const TextSpan(text: "\n\n"),
+                              if (!ss.fcmData.isNull)
+                                TextSpan(
+                                    text:
+                                        "Firebase Database: ${isNullOrEmptyString(ss.fcmData.firebaseURL) ? "Firestore" : "Realtime"}"),
+                              if (!ss.fcmData.isNull) const TextSpan(text: "\n\n"),
+                              if (hasBadCert) const TextSpan(text: "\n\n"),
+                              TextSpan(
+                                  text:
+                                      "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
+                              const TextSpan(text: "\n\n"),
+                              TextSpan(
+                                  text:
+                                      "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
+                              const TextSpan(text: "\n\n"),
+                              TextSpan(
+                                  text:
+                                      "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                              if (controller.iCloudAccount.value != null) const TextSpan(text: "\n\n"),
+                              if (controller.iCloudAccount.value != null)
+                                TextSpan(
+                                    text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
+                              if (controller.proxyService.value != null) const TextSpan(text: "\n\n"),
+                              if (controller.proxyService.value != null)
+                                TextSpan(text: "Proxy Service: ${controller.proxyService.value!.capitalizeFirst}"),
+                              if (controller.timeSync.value != null) const TextSpan(text: "\n\n"),
+                              if (controller.timeSync.value != null) const TextSpan(text: "Server Time Sync: "),
+                              if (controller.timeSync.value != null)
+                                TextSpan(
+                                    text: "${controller.timeSync.value!.toStringAsFixed(3)}s",
+                                    style: TextStyle(
+                                        color: getIndicatorColor(controller.timeSync.value! < 1
+                                            ? SocketState.connected
+                                            : SocketState.disconnected))),
+                              const TextSpan(text: "\n\n"),
+                              const TextSpan(
+                                  text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                            ]),
+                            onTap: () {
+                              if (socket.state.value != SocketState.connected) return;
+                              controller.opacity.value = 0.0;
+                              controller.getServerStats();
+                            },
+                          ),
+                        ),
+                      ));
                     }),
                     Obx(() => AnimatedSizeAndFade.showHide(
                         show: (controller.serverVersionCode.value ?? 0) >= 42 && controller.stats.isNotEmpty,
@@ -244,6 +257,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               leading: const SettingsLeadingIcon(
                                 iosIcon: CupertinoIcons.chart_bar_square,
                                 materialIcon: Icons.stacked_bar_chart,
+                                containerColor: Colors.green,
                               ),
                               onTap: () {
                                 showDialog(
@@ -266,7 +280,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           actions: <Widget>[
                                             TextButton(
                                               child: Text("Dismiss",
-                                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                                  style: context.theme.textTheme.bodyLarge!
+                                                      .copyWith(color: context.theme.colorScheme.primary)),
                                               onPressed: () {
                                                 Navigator.of(context).pop();
                                               },
@@ -275,13 +290,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                         ));
                               },
                             ),
-                            Container(
-                              color: tileColor,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 65.0),
-                                child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                              ),
-                            )
+                            const SettingsDivider(),
                           ],
                         ))),
                     if (!ss.fcmData.isNull)
@@ -291,6 +300,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.qrcode,
                           materialIcon: Icons.qr_code,
+                          containerColor: Colors.black,
                         ),
                         onTap: () {
                           List<dynamic> json = [
@@ -320,7 +330,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           gapless: true,
                                           backgroundColor: context.theme.colorScheme.properSurface,
                                           eyeStyle: QrEyeStyle(color: context.theme.colorScheme.properOnSurface),
-                                          dataModuleStyle: QrDataModuleStyle(color: context.theme.colorScheme.properOnSurface),
+                                          dataModuleStyle:
+                                              QrDataModuleStyle(color: context.theme.colorScheme.properOnSurface),
                                         ),
                                       ),
                                     ),
@@ -328,7 +339,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                     actions: <Widget>[
                                       TextButton(
                                         child: Text("Dismiss",
-                                            style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                            style: context.theme.textTheme.bodyLarge!
+                                                .copyWith(color: context.theme.colorScheme.primary)),
                                         onPressed: () {
                                           Navigator.of(context).pop();
                                         },
@@ -339,10 +351,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       ),
                   ],
                 ),
-                SettingsHeader(
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Connection & Sync"),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Connection & Sync"),
                 SettingsSection(backgroundColor: tileColor, children: [
                   /*Obx(() {
                     if (controller.proxyService.value != null && iOS)
@@ -426,20 +435,17 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     backgroundColor: tileColor,
                     secondaryColor: headerColor,
                   ) : SizedBox.shrink()),
-                  Obx(() => controller.proxyService.value != null && !kIsWeb ? Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ) : SizedBox.shrink()),*/
+                  Obx(() => controller.proxyService.value != null && !kIsWeb ? const SettingsDivider(),*/
                   SettingsTile(
                     title: "Re-configure with BlueBubbles Server",
-                    subtitle: kIsWeb || kIsDesktop ? "Click for manual entry" : "Tap to scan QR code\nLong press for manual entry",
+                    subtitle: kIsWeb || kIsDesktop
+                        ? "Click for manual entry"
+                        : "Tap to scan QR code\nLong press for manual entry",
                     isThreeLine: kIsWeb || kIsDesktop ? false : true,
                     leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
+                      containerColor: Colors.blueAccent,
                     ),
                     onLongPress: kIsWeb || kIsDesktop
                         ? null
@@ -485,7 +491,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             } catch (e) {
                               return;
                             }
-                            if (fcmData != null && fcmData[0] != null && sanitizeServerAddress(address: fcmData[1]) != null) {
+                            if (fcmData != null &&
+                                fcmData[0] != null &&
+                                sanitizeServerAddress(address: fcmData[1]) != null) {
                               final data = FCMData(
                                 projectID: fcmData[2],
                                 storageBucket: fcmData[3],
@@ -494,32 +502,29 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                 clientID: fcmData[6],
                                 applicationID: fcmData[7],
                               );
-                              ss.settings.guidAuthKey.value = fcmData[0];
-                              ss.settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
 
-                              ss.saveSettings();
+                              ss.settings.guidAuthKey.value = fcmData[0];
+
+                              // This will restart the socket & foreground service
+                              await saveNewServerUrl(fcmData[1]);
                               ss.saveFCMData(data);
-                              socket.restartSocket();
                             }
                           },
                   ),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!kIsWeb)
                     Obx(
                       () => SettingsTile(
                           title: "Manually Sync Messages",
-                          subtitle: socket.state.value == SocketState.connected ? "Tap to sync messages" : "Disconnected, cannot sync",
+                          subtitle: socket.state.value == SocketState.connected
+                              ? "Tap to sync messages"
+                              : "Disconnected, cannot sync",
                           backgroundColor: tileColor,
-                          leading: const SettingsLeadingIcon(
+                          leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.arrow_2_circlepath,
                             materialIcon: Icons.sync,
+                            containerColor: Colors.yellow[700],
                           ),
                           onTap: () async {
                             if (socket.state.value != SocketState.connected) return;
@@ -547,15 +552,10 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           }),
                     ),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   SettingsTile(
-                      leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.pencil, materialIcon: Icons.edit),
+                      leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.pencil, materialIcon: Icons.edit, containerColor: Colors.teal),
                       title: "Configure Custom Headers",
                       subtitle: "Add or edit custom headers to connect to your server",
                       backgroundColor: tileColor,
@@ -566,13 +566,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         }
                       }),
                   if (Platform.isAndroid)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (Platform.isAndroid)
                     Obx(() => SettingsSwitch(
                           initialVal: ss.settings.syncContactsAutomatically.value,
@@ -583,16 +577,18 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             ss.settings.syncContactsAutomatically.value = val;
                             ss.saveSettings();
                           },
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.person_2,
+                            materialIcon: Icons.people,
+                            containerColor: Colors.green,
+                          ),
                         )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(),
                   SettingsTile(
-                    leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.down_arrow, materialIcon: Icons.download),
+                    leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.down_arrow,
+                        materialIcon: Icons.download,
+                        containerColor: Colors.orange),
                     title: "Fetch Firebase Config",
                     subtitle: socket.state.value == SocketState.connected
                         ? "Forcefully fetch current Firebase Config from server"
@@ -605,28 +601,39 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     },
                   ),
                   if (!isSnap)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!isSnap)
                     SettingsTile(
                       leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Obx(() => Material(
                             shape: ss.settings.skin.value == Skins.Samsung
                                 ? SquircleBorder(
-                                    side: BorderSide(color: context.theme.colorScheme.outline, width: 3.0),
+                                    side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.5), width: 1.0),
                                   )
                                 : null,
-                            color: ss.settings.skin.value != Skins.Material ? context.theme.colorScheme.outline : Colors.transparent,
-                            borderRadius: ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(5) : null,
+                            color: Colors.transparent,
+                            borderRadius: ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(6) : null,
                             child: SizedBox(
-                                width: 32,
-                                height: 32,
-                                child: Center(child: Image.asset("assets/images/google-sign-in.png", width: 30, fit: BoxFit.contain)))))
+                                width: 31,
+                                height: 31,
+                                child: Center(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(6),
+                                        color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.5),
+                                            blurRadius: 0,
+                                            spreadRadius: 0.5,
+                                            offset: const Offset(0, 0),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Image.asset("assets/images/google-sign-in.png",
+                                            width: 33, fit: BoxFit.contain)))))))
                       ]),
                       title: "Sign in with Google",
                       subtitle: "Fetch Firebase Config by Signing in with Google",
@@ -639,15 +646,12 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         materialSkin: const Icon(Icons.chevron_right),
                       ),
                     ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(),
                   SettingsTile(
-                      leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.refresh, materialIcon: Icons.refresh),
+                      leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.refresh,
+                          materialIcon: Icons.refresh,
+                          containerColor: Colors.blueAccent),
                       title: "Fetch Latest URL",
                       subtitle: "Forcefully fetch latest URL from Firebase",
                       backgroundColor: tileColor,
@@ -658,13 +662,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         socket.restartSocket();
                       }),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                           initialVal: ss.settings.localhostPort.value != null,
@@ -673,6 +671,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               ? "Configured Port: ${ss.settings.localhostPort.value}"
                               : "Look up localhost address for a faster direct connection",
                           backgroundColor: tileColor,
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.wifi,
+                            materialIcon: Icons.network_check,
+                            containerColor: Colors.green,
+                          ),
                           onChanged: (bool val) async {
                             if (val) {
                               final TextEditingController portController = TextEditingController();
@@ -683,12 +686,14 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                       actions: [
                                         TextButton(
                                           child: Text("Cancel",
-                                              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                              style: context.theme.textTheme.bodyLarge!
+                                                  .copyWith(color: context.theme.colorScheme.primary)),
                                           onPressed: () => Get.back(),
                                         ),
                                         TextButton(
                                           child: Text("OK",
-                                              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                              style: context.theme.textTheme.bodyLarge!
+                                                  .copyWith(color: context.theme.colorScheme.primary)),
                                           onPressed: () async {
                                             if (portController.text.isEmpty || !portController.text.isNumericOnly) {
                                               showSnackbar("Error", "Enter a valid port!");
@@ -723,13 +728,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           },
                         )),
                   if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   if (!kIsWeb)
                     Obx(() => ss.settings.localhostPort.value != null
                         ? SettingsSwitch(
@@ -744,17 +743,16 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           )
                         : const SizedBox.shrink()),
                 ]),
-                SettingsHeader(
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Server Actions"),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Server Actions"),
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsTile(
                           title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
                           subtitle: controller.fetchStatus.value ??
-                              (socket.state.value == SocketState.connected ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
+                              (socket.state.value == SocketState.connected
+                                  ? "Tap to fetch logs"
+                                  : "Disconnected, cannot fetch logs"),
                           backgroundColor: tileColor,
                           leading: const SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.doc_plaintext,
@@ -776,7 +774,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               if (kIsWeb) {
                                 final bytes = utf8.encode(response.data['data']);
                                 final content = base64.encode(bytes);
-                                html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                                html.AnchorElement(
+                                    href: "data:application/octet-stream;charset=utf-16le;base64,$content")
                                   ..setAttribute("download", "main.log")
                                   ..click();
                                 controller.fetchStatus.value = null;
@@ -802,13 +801,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             });
                           },
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                     Obx(() => SettingsTile(
                         title: "Restart iMessage",
                         subtitle: controller.isRestartingMessages.value && socket.state.value == SocketState.connected
@@ -820,6 +813,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.chat_bubble,
                           materialIcon: Icons.sms,
+                          containerColor: Colors.blueAccent,
                         ),
                         onTap: () async {
                           if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value) {
@@ -830,7 +824,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
 
                           // Prevent restarting more than once every 30 seconds
                           int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                          if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30) return;
+                          if (controller.lastRestartMessages != null &&
+                              now - controller.lastRestartMessages! < 1000 * 30) return;
 
                           // Save the last time we restarted
                           controller.lastRestartMessages = now;
@@ -853,13 +848,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   strokeWidth: 3,
                                   valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                                 ))))),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                     Obx(() => AnimatedSizeAndFade.showHide(
                           show: ss.settings.enablePrivateAPI.value && (controller.serverVersionCode.value ?? 0) >= 41,
                           child: Column(
@@ -867,24 +856,27 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             children: [
                               SettingsTile(
                                   title: "Restart Private API & Services",
-                                  subtitle: controller.isRestartingPrivateAPI.value && socket.state.value == SocketState.connected
+                                  subtitle: controller.isRestartingPrivateAPI.value &&
+                                          socket.state.value == SocketState.connected
                                       ? "Restart in progress..."
                                       : socket.state.value == SocketState.connected
                                           ? "Restart the Private API"
                                           : "Disconnected, cannot restart",
                                   backgroundColor: tileColor,
                                   leading: const SettingsLeadingIcon(
-                                    iosIcon: CupertinoIcons.exclamationmark_shield,
-                                    materialIcon: Icons.gpp_maybe,
-                                  ),
+                                      iosIcon: CupertinoIcons.exclamationmark_shield,
+                                      materialIcon: Icons.gpp_maybe,
+                                      containerColor: Colors.orange),
                                   onTap: () async {
-                                    if (socket.state.value != SocketState.connected || controller.isRestartingPrivateAPI.value) return;
+                                    if (socket.state.value != SocketState.connected ||
+                                        controller.isRestartingPrivateAPI.value) return;
 
                                     controller.isRestartingPrivateAPI.value = true;
 
                                     // Prevent restarting more than once every 30 seconds
                                     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                    if (controller.lastRestartPrivateAPI != null && now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
+                                    if (controller.lastRestartPrivateAPI != null &&
+                                        now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
 
                                     // Save the last time we restarted
                                     controller.lastRestartPrivateAPI = now;
@@ -905,12 +897,13 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           ),
                                           child: CircularProgressIndicator(
                                             strokeWidth: 3,
-                                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                                           ))),
                               Container(
                                 color: tileColor,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 65.0),
+                                  padding: const EdgeInsets.only(left: 62.0),
                                   child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                                 ),
                               )
@@ -919,10 +912,13 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         )),
                     Obx(() => SettingsTile(
                         title: "Restart BlueBubbles Server",
-                        subtitle: (controller.isRestarting.value) ? "Restart in progress..." : "This will briefly disconnect you",
+                        subtitle: (controller.isRestarting.value)
+                            ? "Restart in progress..."
+                            : "This will briefly disconnect you",
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.desktopcomputer,
                           materialIcon: Icons.dvr,
+                          containerColor: Colors.redAccent,
                         ),
                         onTap: () async {
                           if (controller.isRestarting.value) return;
@@ -938,14 +934,14 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           try {
                             if (Platform.isAndroid) {
                               try {
-                                await mcs.invokeMethod("set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
+                                await mcs.invokeMethod(
+                                    "set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
                               } catch (e, s) {
-                                Logger.error(e);
-                                Logger.error(s);
+                                Logger.error("Failed to update Firebase Database!", error: e, trace: s);
                                 showSnackbar("Error", "Something went wrong when updating Firebase Database!");
                               }
                             } else {
-                              if (!isNullOrEmpty(ss.fcmData.firebaseURL)!) {
+                              if (!isNullOrEmpty(ss.fcmData.firebaseURL)) {
                                 var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
                                 var ref = db.reference().child('config').child('nextRestart');
                                 await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
@@ -973,13 +969,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                color: tileColor,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 65.0),
-                                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                                ),
-                              ),
+                              const SettingsDivider(),
                               SettingsTile(
                                 title: "Check for Server Updates",
                                 subtitle: socket.state.value == SocketState.connected
@@ -987,9 +977,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                     : "Disconnected, cannot check for updates",
                                 backgroundColor: tileColor,
                                 leading: const SettingsLeadingIcon(
-                                  iosIcon: CupertinoIcons.desktopcomputer,
-                                  materialIcon: Icons.dvr,
-                                ),
+                                    iosIcon: CupertinoIcons.desktopcomputer,
+                                    materialIcon: Icons.dvr,
+                                    containerColor: Colors.green),
                                 onTap: () async {
                                   if (socket.state.value != SocketState.connected) return;
 

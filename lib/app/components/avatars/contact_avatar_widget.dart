@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -97,7 +97,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
     // Check if the color is the same as the real gradient, and if so, set it to null
     // Because it is not custom, then just use the regular gradient
     List gradient = toColorGradient(widget.handle?.address ?? "");
-    if (!isNullOrEmpty(gradient)! && gradient[0] == color) {
+    if (!isNullOrEmpty(gradient) && gradient[0] == color) {
       widget.handle!.color = null;
     } else {
       widget.handle!.color = color.value.toRadixString(16);
@@ -148,18 +148,15 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
               height: size,
               padding: widget.padding,
               decoration: BoxDecoration(
-                color: iOS ? null : (!ss.settings.colorfulAvatars.value ? HexColor("686868") : colors[0]),
-                gradient: !iOS
-                    ? null
-                    : LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        end: AlignmentDirectional.bottomEnd,
-                        colors: [
-                          !ss.settings.colorfulAvatars.value ? HexColor("928E8E") : colors[1],
-                          !ss.settings.colorfulAvatars.value ? HexColor("686868") : colors[0]
-                        ],
-                        stops: [0.3, 0.9],
-                      ),
+                gradient: LinearGradient(
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
+                  colors: [
+                    !ss.settings.colorfulAvatars.value ? HexColor("928E8E") : (iOS ? colors[1] : colors[0]),
+                    !ss.settings.colorfulAvatars.value ? HexColor("686868") : colors[0]
+                  ],
+                  stops: [0.3, 0.9],
+                ),
                 border: Border.all(
                     color: ss.settings.skin.value == Skins.Samsung ? tileColor : context.theme.colorScheme.background,
                     width: widget.borderThickness,
@@ -180,9 +177,9 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                     backgroundImage: FileImage(file),
                     backgroundColor: Colors.transparent,
                   );
-                } else if (isNullOrEmpty(avatar)! || hide) {
+                } else if (isNullOrEmpty(avatar) || hide) {
                   String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
-                  if (!isNullOrEmpty(initials)! && !hide) {
+                  if (!isNullOrEmpty(initials) && !hide) {
                     return Text(
                       initials!,
                       key: Key("$keyPrefix-avatar-text"),

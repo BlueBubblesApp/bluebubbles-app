@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:ui';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -14,23 +16,18 @@ import 'package:network_tools/network_tools.dart'
 class NetworkTasks {
   static Future<void> onConnect() async {
     if (ss.settings.finishedSetup.value) {
-      if (cm.activeChat != null) {
-        socket.sendMessage("update-typing-status", {"chatGuid": cm.activeChat!.chat.guid});
-      }
-      await fcm.registerDevice();
-      await ss.getServerDetails(refresh: true);
-      await sync.startIncrementalSync();
-
-      try {
-        ss.checkServerUpdate();
-      } catch (ex) {
-        Logger.warn("Failed to check for server update: ${ex.toString()}");
-      }
-
-      try {
-        ss.checkClientUpdate();
-      } catch (ex) {
-        Logger.warn("Failed to check for client update: ${ex.toString()}");
+      
+      // Separate functionality for android vs. other
+      if (!Platform.isAndroid) {
+        // Only start incremental sync if the app is active and the previous state wasn't just hidden
+        // or if the app was never resumed before
+        if (!ls.hasResumed || (ls.currentState == AppLifecycleState.resumed && (ls.wasPaused || ls.wasHidden))) {
+          await sync.startIncrementalSync();
+        }
+      } else {
+        if (!ls.hasResumed || (ls.currentState == AppLifecycleState.resumed && ls.wasPaused)) {
+          await sync.startIncrementalSync();
+        }
       }
 
       // scan if server is on localhost
@@ -38,12 +35,15 @@ class NetworkTasks {
         detectLocalhost();
       }
 
-      if (kIsWeb && chats.chats.isEmpty) {
-        Get.reload<ChatsService>(force: true);
-        await chats.init();
-      }
-      if (kIsWeb && cs.contacts.isEmpty) {
-        await cs.refreshContacts();
+      if (kIsWeb) {
+        if (chats.chats.isEmpty) {
+          Get.reload<ChatsService>(force: true);
+          await chats.init();
+        }
+
+        if (cs.contacts.isEmpty) {
+          await cs.refreshContacts();
+        }
       }
     }
   }

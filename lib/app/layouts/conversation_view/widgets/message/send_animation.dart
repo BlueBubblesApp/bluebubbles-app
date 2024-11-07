@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
+import 'package:async_task/async_task_extension.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -58,7 +60,7 @@ class _SendAnimationState
         await player.open(Media(ss.settings.sendSoundPath.value!));
         player.stream.completed
             .firstWhere((completed) => completed)
-            .then((_) async => Future.delayed(const Duration(milliseconds: 500), () async => await player.dispose()));
+            .then((_) async => Future.delayed(const Duration(milliseconds: 450), () async => await player.dispose()));
       } else {
         PlayerController controller = PlayerController();
         controller.preparePlayer(path: ss.settings.sendSoundPath.value!, volume: ss.settings.soundVolume.value / 100).then((_) => controller.startPlayer());
@@ -155,7 +157,7 @@ class _SendAnimationState
       );
       _message.generateTempGuid();
       outq.queue(OutgoingItem(
-        type: QueueType.sendMessage,
+        type: (_message.attributedBody.isNotEmpty) ? QueueType.sendMultipart : QueueType.sendMessage,
         chat: controller.chat,
         message: _message,
       ));
@@ -174,11 +176,15 @@ class _SendAnimationState
   @override
   Widget build(BuildContext context) {
     final typicalWidth = message?.isBigEmoji ?? false ? ns.width(context) : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 40;
+    const duration = 450;
+    const curve = Curves.easeInOut;
+    const buttonSize = 88;
+    final messageBoxSize = ns.width(context) - buttonSize;
     return AnimatedPositioned(
-      duration: Duration(milliseconds: message != null ? 400 : 0),
+      duration: Duration(milliseconds: message != null ? duration : 0),
       bottom: message != null ? textFieldSize + focusInfoSize + 17.5 + (controller.showTypingIndicator.value ? 50 : 0) + (!iOS ? 15 : 0) : 0,
       right: samsung ? -37.5 : 5,
-      curve: Curves.easeInOutCubic,
+      curve: curve,
       onEnd: () async {
         if (message != null) {
           await Future.delayed(const Duration(milliseconds: 100));
@@ -194,41 +200,49 @@ class _SendAnimationState
         child: CustomAnimationBuilder<double>(
           control: control,
           tween: tween,
-          duration: Duration(milliseconds: message != null ? 150 : 0),
-          curve: Curves.linear,
-          builder: (context, value, child) {
-            return ClipPath(
-              clipper: TailClipper(
-                isFromMe: true,
-                showTail: true,
-                connectLower: false,
-                connectUpper: false,
-              ),
-              child: AnimatedContainer(
-                  constraints: BoxConstraints(
-                    maxWidth: max(ns.width(context) * value, typicalWidth),
-                    minWidth: ns.width(context) * value > typicalWidth ? ns.width(context) * value : 0.0,
-                    minHeight: 40,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(
-                      left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10, right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0)),
-                  color: !message!.isBigEmoji ? context.theme.colorScheme.primary.darkenAmount(0.2) : null,
-                  duration: Duration(milliseconds: ns.width(context) * value > typicalWidth ? 0 : 150),
-                  child: Center(
-                    widthFactor: 1,
-                    child: Padding(
-                      padding: message!.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
-                      child: RichText(
-                        text: TextSpan(
-                          children: buildMessageSpans(
-                            context,
-                            MessagePart(part: 0, text: message!.text, subject: message!.subject),
-                            message!,
+          duration: Duration(milliseconds: message != null ? duration : 0),
+          builder: (context, linear, child) {
+            var value = curve.transform(linear);
+            var exp = Curves.easeIn.transform(linear);
+            return Transform.scale(
+              scale: (1-value) < .5 ? lerpDouble(1.1, .9, (1-value) / .5) : lerpDouble(.9, 1, (.5-value) / .5),
+              alignment: Alignment.centerRight,
+              child: ClipPath(
+                clipper: TailClipper(
+                  isFromMe: true,
+                  showTail: true,
+                  connectLower: false,
+                  connectUpper: false,
+                ),
+                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: max(messageBoxSize * exp, typicalWidth),
+                        minWidth: messageBoxSize * exp,
+                        minHeight: 40,
+                      ),
+                      color: !message!.isBigEmoji ? context.theme.colorScheme.primary.darkenAmount(0.2) : null,
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(
+                        left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10, right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0)),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: 1,
+                        child: Padding(
+                          padding: message!.fullText.length == 1 ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
+                          child: RichText(
+                            text: TextSpan(
+                              children: buildMessageSpans(
+                                context,
+                                MessagePart(part: 0, text: message!.text, subject: message!.subject),
+                                message!,
+                                colorOverride: Color.lerp(context.theme.colorScheme.properOnSurface, context.theme.colorScheme.onPrimary, 1 - value)
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  )),
+                      )
+                    ),),
+              ),
             );
           },
         ),

@@ -3,7 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/video_player.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -114,7 +114,7 @@ class _EmbeddedMediaState extends CustomState<EmbeddedMedia, void, MessageWidget
               child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
             ),
           ),
-        if (content is PlatformFile && content.bytes != null && content.name.endsWith(".mov") && !kIsDesktop)
+        if (content is PlatformFile && content.bytes != null && content.name.toLowerCase().endsWith(".mov") && !kIsDesktop)
           VideoPlayer(
             file: content,
             attachment: Attachment(
@@ -123,7 +123,7 @@ class _EmbeddedMediaState extends CustomState<EmbeddedMedia, void, MessageWidget
             controller: controller.cvController,
             isFromMe: message.isFromMe!,
           ),
-        if (content is PlatformFile && content.bytes != null && content.name.endsWith(".mov") && kIsDesktop)
+        if (content is PlatformFile && content.bytes != null && content.name.toLowerCase().endsWith(".mov") && kIsDesktop)
           OtherFile(
             attachment: Attachment(
               guid: message.guid,

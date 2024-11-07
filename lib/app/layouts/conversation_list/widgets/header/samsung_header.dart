@@ -1,14 +1,9 @@
-import 'dart:async';
-
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
@@ -120,31 +115,30 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                             mainAxisAlignment: MainAxisAlignment.end,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              !showArchived && !showUnknown ? IconButton(
-                                onPressed: () async {
-                                  ns.pushLeft(
-                                    context,
-                                    SearchView(),
-                                  );
-                                },
-                                icon: Icon(
-                                  Icons.search,
-                                  color: context.theme.colorScheme.properOnSurface,
-                                ),
-                              ) : const SizedBox.shrink(),
-                              Obx(() => ss.settings.moveChatCreatorToHeader.value
-                                  && !showArchived
-                                  && !showUnknown ? InkWell(
-                                onLongPress: ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop
-                                    ? () => controller.openCamera(context) : null,
-                                child: IconButton(
-                                  onPressed: () => controller.openNewChatCreator(context),
+                              if (!showArchived && !showUnknown)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 2),
+                                  child: IconButton(
+                                    onPressed: () async {
+                                      controller.openCamera(context);
+                                    },
+                                    icon: Icon(
+                                      Icons.camera_alt_outlined,
+                                      color: context.theme.colorScheme.properOnSurface,
+                                    ),
+                                  )),
+                              if (!showArchived && !showUnknown)
+                                IconButton(
+                                  onPressed: () async {
+                                    ns.pushLeft(
+                                      context,
+                                      SearchView(),
+                                    );
+                                  },
                                   icon: Icon(
-                                    Icons.create_outlined,
+                                    Icons.search,
                                     color: context.theme.colorScheme.properOnSurface,
-                                  ),
-                                ),
-                              ) : const SizedBox.shrink()),
+                                  )),
                               if (!showArchived && !showUnknown)
                                 const Padding(
                                   padding: EdgeInsets.only(right: 8.0),
@@ -182,48 +176,23 @@ class ExpandedHeaderText extends CustomStateful<ConversationListController> {
 }
 
 class _ExpandedHeaderTextState extends CustomState<ExpandedHeaderText, void, ConversationListController> {
-  int unreadChats = -1;
-  late final StreamSubscription<Query<Chat>> sub;
-
-  @override
-  void initState() {
-    super.initState();
-    if (!kIsWeb) {
-      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true))
-          .watch(triggerImmediately: true);
-      sub = unreadQuery.listen((Query<Chat> query) {
-        final count = query.count();
-        if (unreadChats == -1) {
-          unreadChats = count;
-        } else if (unreadChats != count) {
-          setState(() {
-            unreadChats = count;
-          });
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    if (!kIsWeb) sub.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Text(
-        controller.selectedChats.isNotEmpty
-            ? "${controller.selectedChats.length} selected"
-            : controller.showArchivedChats
-            ? "Archived"
-            : controller.showUnknownSenders
-            ? "Unknown Senders"
-            : unreadChats > 0
-            ? "$unreadChats unread message${unreadChats > 1 ? "s" : ""}"
-            : "Messages",
-        style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground),
-      textAlign: TextAlign.center,
-    );
+    return Obx(() {
+      final unreadChats = GlobalChatService.unreadCount.value;
+      return Text(
+          controller.selectedChats.isNotEmpty
+              ? "${controller.selectedChats.length} selected"
+              : controller.showArchivedChats
+              ? "Archived"
+              : controller.showUnknownSenders
+              ? "Unknown Senders"
+              : unreadChats > 0
+              ? "$unreadChats unread message${unreadChats > 1 ? "s" : ""}"
+              : "Messages",
+          style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground),
+        textAlign: TextAlign.center,
+      );
+    });
   }
 }

@@ -11,7 +11,8 @@ import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart'
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/helpers/ui/attributed_body_helpers.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
   Attachment get attachment => message.attachments.firstWhereOrNull((e) => e?.id == part.attachments.first.id)
       ?? ms(controller.cvController?.chat.guid ?? cm.activeChat!.chat.guid).struct.attachments.firstWhereOrNull((e) => e.id == part.attachments.first.id)
       ?? part.attachments.first;
+  String? get audioTranscript => getAudioTranscriptsFromAttributedBody(message.attributedBody)[part.part];
   late dynamic content;
   late bool selected = controller.cvController?.isSelected(message.guid!) ?? false;
 
@@ -64,6 +66,9 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
 
 
   void updateContent() async {
+    try {
+      if (content is AttachmentDownloadController && content.error != null) return;
+    } catch (ex) { /* lateInitializationException */ }
     content = as.getContent(attachment, onComplete: onComplete);
     // If we can download it, do so
     if (content is Attachment && message.error == 0 && !message.guid!.contains("temp") && await as.canAutoDownload()) {
@@ -154,7 +159,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                     ),
                                     const SizedBox(height: 10),
                                     Text(
-                                      "${(attachment.totalBytes! * min(_content.item2.value, 1.0)).toDouble().getFriendlySize(withPostfix: false)} / ${attachment.getFriendlySize()}",
+                                      "${(attachment.totalBytes! * min(_content.item2.value, 1.0)).toDouble().getFriendlySize(withSuffix: false)} / ${attachment.getFriendlySize()}",
                                       style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -305,6 +310,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               return Padding(
                                 padding: showTail ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0) : EdgeInsets.zero,
                                 child: AudioPlayer(
+                                  transcript: audioTranscript,
                                   attachment: attachment,
                                   file: _content,
                                   controller: controller.cvController,

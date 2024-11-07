@@ -1,7 +1,7 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
-import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -174,8 +174,8 @@ class ContactTile extends StatelessWidget {
                 Get.back();
                 Logger.info("Removed participant ${handle.address}");
                 showSnackbar("Notice", "Removed participant from chat!");
-              }).catchError((err) {
-                Logger.error("Failed to remove participant ${handle.address}");
+              }).catchError((err, stack) {
+                Logger.error("Failed to remove participant ${handle.address}", error: err, trace: stack);
                 late final String error;
                 if (err is Response) {
                   error = err.data["error"]["message"].toString();

@@ -8,9 +8,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   desktop_webview_auth
   dynamic_color
+  emoji_picker_flutter
   file_selector_windows
   flutter_acrylic
+  flutter_timezone
   geolocator_windows
+  irondash_engine_context
   local_auth_windows
   local_notifier
   maps_launcher
@@ -25,7 +28,9 @@ list(APPEND FLUTTER_PLUGIN_LIST
   screen_retriever
   secure_application
   share_plus
+  super_native_extensions
   system_tray
+  tray_manager
   url_launcher_windows
   window_manager
   windows_taskbar

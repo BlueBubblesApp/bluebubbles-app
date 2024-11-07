@@ -6,8 +6,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/m
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -49,11 +49,11 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
     super.onInit();
     buildMessageParts();
     if (!kIsWeb && message.id != null) {
-      final messageQuery = messageBox.query(Message_.id.equals(message.id!)).watch();
+      final messageQuery = Database.messages.query(Message_.id.equals(message.id!)).watch();
       sub = messageQuery.listen((Query<Message> query) async {
         if (message.id == null) return;
         final _message = await runAsync(() {
-          return messageBox.get(message.id!);
+          return Database.messages.get(message.id!);
         });
         if (_message != null) {
           if (_message.hasAttachments) {
@@ -130,7 +130,12 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
               attachments: [e!],
               part: index,
             )));
+      } else if (message.isInteractive) {
+        parts.add(MessagePart(
+          part: 0,
+        ));
       }
+
       if (message.fullText.isNotEmpty || message.isGroupEvent) {
         parts.add(MessagePart(
           subject: message.subject,
@@ -164,7 +169,7 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: e.isAttachment
+          attachments: e.isAttachment && (cvController?.chat != null || cm.activeChat != null)
               ? [
                   ms(cvController?.chat.guid ?? cm.activeChat!.chat.guid)
                           .struct

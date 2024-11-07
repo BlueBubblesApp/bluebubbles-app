@@ -7,8 +7,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
@@ -25,18 +25,19 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _backgroundColor = context.theme.colorScheme.background.withOpacity((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled) ? 0.4 : ss.settings.skin.value == Skins.Samsung ? 1 : 0.95).obs;
+    final Rx<Color> _backgroundColor = context.theme.colorScheme.background.withOpacity((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled) ? 0.4 : 1).obs;
 
-    return Obx(() => AppBar(
+    return Stack(
+          children: [Obx(() => AppBar(
       backgroundColor: _backgroundColor.value,
       systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
       automaticallyImplyLeading: false,
       toolbarHeight: (kIsDesktop ? 25 : 0) + kToolbarHeight,
-      leadingWidth: 40,
+      leadingWidth: 30,
       leading: Padding(
-        padding: EdgeInsets.only(left: 10.0, top: kIsDesktop ? 20 : 0),
+        padding: EdgeInsets.only(left: 5.0, top: kIsDesktop ? 20 : 0),
         child: BackButton(
           color: context.theme.colorScheme.onBackground,
           onPressed: () {
@@ -213,7 +214,31 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
         )
       ],
-    ));
+    )),
+      Positioned(
+        child: Obx(() => TweenAnimationBuilder<double>(
+          duration: controller.chat.sendProgress.value == 0 ? Duration.zero : controller.chat.sendProgress.value == 1 ? const Duration(milliseconds: 250) : const Duration(seconds: 10),
+          curve: controller.chat.sendProgress.value == 1 ? Curves.easeInOut : Curves.easeOutExpo,
+          tween: Tween<double>(
+              begin: 0,
+              end: controller.chat.sendProgress.value,
+          ),
+          builder: (context, value, _) =>
+              AnimatedOpacity(
+                opacity: value == 1 ? 0 : 1,
+                duration: const Duration(milliseconds: 250),
+                child: LinearProgressIndicator(
+                  value: value,
+                  backgroundColor: Colors.transparent,
+                  minHeight: 3,
+                ),
+              )
+        )),
+        bottom: 0,
+        left: 0,
+        right: 0,
+      ),
+    ]);
   }
 
   @override
@@ -246,11 +271,11 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
     // run query after render has completed
     if (!kIsWeb) {
       updateObx(() {
-        final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+        final titleQuery = Database.chats.query(Chat_.guid.equals(controller.chat.guid))
             .watch();
         sub = titleQuery.listen((Query<Chat> query) async {
           final chat = await runAsync(() {
-            return chatBox.get(controller.chat.id!)!;
+            return Database.chats.get(controller.chat.id!)!;
           });
           // check if we really need to update this widget
           if (chat.displayName != cachedDisplayName
@@ -321,7 +346,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
                 }
                 return Text(
                   _title,
-                  style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
+                  style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground, fontSizeFactor: 0.85),
                   maxLines: 1,
                   overflow: TextOverflow.fade,
                 );

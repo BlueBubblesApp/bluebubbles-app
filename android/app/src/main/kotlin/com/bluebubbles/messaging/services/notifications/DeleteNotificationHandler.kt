@@ -19,7 +19,8 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
         context: Context
     ) {
         val notificationId: Int = call.argument("notification_id")!!
-        val success = deleteNotification(context, notificationId)
+        val tag: String? = call.argument("tag")
+        val success = deleteNotification(context, notificationId, tag)
         if (success) {
             result.success(null)
         } else {
@@ -27,22 +28,41 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
         }
     }
 
-    fun deleteNotification(context: Context, notificationId: Int): Boolean {
-        Log.d(Constants.logTag, "Cancelling notification with ID $notificationId")
+    fun deleteNotification(context: Context, notificationId: Int, tag: String?): Boolean {
+        Log.d(Constants.logTag, "Attempting to delete notification with ID, $notificationId from tag, $tag")
         val notificationManager = context.getSystemService(NotificationManager::class.java)
-        return try {
-            // We don't know what type of notification is being cancelled so explicitly do both
-            notificationManager.cancel(Constants.newMessageNotificationTag, notificationId)
-            notificationManager.cancel(Constants.newFaceTimeNotificationTag, notificationId)
-            // cancel the summary if needed
-            if (notificationManager.activeNotifications.size == 1 && notificationManager.activeNotifications.first().id == 0) {
-                Log.d(Constants.logTag, "Cancelling notification summary")
-                notificationManager.cancel(Constants.newMessageNotificationTag, 0)
+
+        try {
+            // Get the notification by ID
+            val notification = notificationManager.activeNotifications.firstOrNull { it.id == notificationId }
+
+            // If it's null, we can't cancel it.
+            // Return true cuz there wasn't technically an issue.
+            if (notification == null) {
+                Log.d(Constants.logTag, "Notification with ID $notificationId not found!")
+            } else {
+                Log.d(Constants.logTag, "Cancelling notification with ID, ${notificationId}")
+                notificationManager.cancel(notification.tag, notificationId)
             }
-            true
+
+            val channelTag: String? = notification?.tag ?: tag
+            Log.d(Constants.logTag, "Using Channel Tag: $channelTag (Notif: ${notification?.tag}; Param: $tag)")
+            if (channelTag != null) {
+                // Get all notifications of the same tag/channel
+                val leftoverNotifications = notificationManager.activeNotifications.filter { it.tag == channelTag }
+
+                // If the number of notifications is 1 and the ID of the notification is 0, it's a summary notification.
+                // We should cancel it.
+                if (leftoverNotifications.size == 0 || (leftoverNotifications.size == 1 && leftoverNotifications.first().id == 0)) {
+                    Log.d(Constants.logTag, "Cancelling notification summary")
+                    notificationManager.cancel(channelTag, 0)
+                }
+            }
         } catch (exception: Exception) {
             Log.e(Constants.logTag, "Failed to cancel notification with ID $notificationId!")
-            false
+            return false
         }
+        
+        return true
     }
 }
