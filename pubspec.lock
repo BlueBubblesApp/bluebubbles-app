@@ -534,6 +534,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.2"
+  dependency_validator:
+    dependency: transitive
+    description:
+      name: dependency_validator
+      sha256: f727a5627aa405965fab4aef4f468e50a9b632ba0737fd2f98c932fec6d712b9
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.3"
   desktop_webview_auth:
     dependency: "direct main"
     description:
@@ -3009,6 +3017,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.1"
+  unifiedpush:
+    dependency: "direct main"
+    description:
+      name: unifiedpush
+      sha256: ef7f3ae6139d27169604e3844379ef7929af573a2be21d9e82187f44ab7b9a32
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.1"
+  unifiedpush_android:
+    dependency: transitive
+    description:
+      name: unifiedpush_android
+      sha256: "610ad746294541f56d632adf9afba5d1c164c44e23ec0dd2162a41a6ff00a00e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.3"
+  unifiedpush_platform_interface:
+    dependency: transitive
+    description:
+      name: unifiedpush_platform_interface
+      sha256: "7782b18a15d22bb184fa766ef1e0c675eef862055ff815453df7041dfd026146"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   universal_html:
     dependency: "direct main"
     description:
