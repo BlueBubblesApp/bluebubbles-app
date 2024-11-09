@@ -45,6 +45,8 @@ class SocketIOForegroundService : Service() {
 
     private var isBeingDestroyed: Boolean = false
 
+    private var hasStarted: Boolean = false
+
     private val eventBlacklist: Array<String> = arrayOf(
         "typing-indicator",
         "new-findmy-location",
@@ -56,43 +58,45 @@ class SocketIOForegroundService : Service() {
         super.onCreate()
         isBeingDestroyed = false
 
-        val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
-        val serverUrl: String? = prefs.getString("flutter.serverAddress", null)
-        val keepAppAlive: Boolean = prefs.getBoolean("flutter.keepAppAlive", false)
-        val storedPassword: String? = prefs.getString("flutter.guidAuthKey", null)
-
-        // Make sure the user has enabled the service
-        if (!keepAppAlive) {
-            Log.d(Constants.logTag, DISABLED)
-            
-            // Stop the service
-            stopSelf()
-            return
-        }
-
-        // Create notification for foreground service
-        createNotificationChannel()
-        ServiceCompat.startForeground(
-            this,
-            Constants.foregroundServiceNotificationId,
-            createNotification(DEFAULT_NOTIFICATION),
-            FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
-        )
-
-        // if the service is enabled, but the server URL is missing, update the notification
-        if (serverUrl == null || serverUrl.isEmpty()) {
-            updateNotification(MISSING_SERVER_URL)
-            return
-        }
-
-        // if the service is enabled, but the password is missing, update the notification
-        if (storedPassword == null || storedPassword.isEmpty()) {
-            updateNotification(MISSING_PASSWORD)
-            return
-        }
-
-        // Initialize socket.io connection
         try {
+            val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
+            val serverUrl: String? = prefs.getString("flutter.serverAddress", null)
+            val keepAppAlive: Boolean = prefs.getBoolean("flutter.keepAppAlive", false)
+            val storedPassword: String? = prefs.getString("flutter.guidAuthKey", null)
+
+            // Make sure the user has enabled the service
+            if (!keepAppAlive) {
+                Log.d(Constants.logTag, DISABLED)
+                
+                // Stop the service
+                stopSelf()
+                return
+            }
+
+            // Create notification for foreground service
+            createNotificationChannel()
+            ServiceCompat.startForeground(
+                this,
+                Constants.foregroundServiceNotificationId,
+                createNotification(DEFAULT_NOTIFICATION),
+                FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+            )
+
+            hasStarted = true
+
+            // if the service is enabled, but the server URL is missing, update the notification
+            if (serverUrl == null || serverUrl.isEmpty()) {
+                updateNotification(MISSING_SERVER_URL)
+                return
+            }
+
+            // if the service is enabled, but the password is missing, update the notification
+            if (storedPassword == null || storedPassword.isEmpty()) {
+                updateNotification(MISSING_PASSWORD)
+                return
+            }
+
+            // Initialize socket.io connection
             Log.d(Constants.logTag, "Foreground Service is connecting to: $serverUrl")
 
             val opts = IO.Options()
@@ -156,7 +160,10 @@ class SocketIOForegroundService : Service() {
 
             Log.e(Constants.logTag, "Socket.io unhandled error occurred!", e)
             updateNotification(UNHANDLED_ERROR)
-            tryReconnect()
+
+            if (hasStarted) {
+                tryReconnect()
+            }
         }
     }
 
@@ -232,6 +239,7 @@ class SocketIOForegroundService : Service() {
 
     override fun onDestroy() {
         isBeingDestroyed = true
+        hasStarted = false
         Log.d(Constants.logTag, "BlueBubbles Service is being destroyed!")
 
         super.onDestroy()
