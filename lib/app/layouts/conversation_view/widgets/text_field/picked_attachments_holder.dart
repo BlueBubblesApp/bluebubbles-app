@@ -220,6 +220,7 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                                 selectedTileColor: context.theme.colorScheme.properSurface.oppositeLightenOrDarken(20),
                                 selected: widget.controller!.mentionSelectedIndex.value == index,
                                 title: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: <Widget>[
                                     ContactAvatarWidget(
                                       handle: widget.controller!.mentionMatches[index].handle,
@@ -232,12 +233,16 @@ class _PickedAttachmentsHolderState extends OptimizedState<PickedAttachmentsHold
                                       widget.controller!.mentionMatches[index].displayName,
                                       style:
                                       context.textTheme.labelLarge!,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      widget.controller!.mentionMatches[index].address,
-                                      style: context.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
-                                    ),
+                                    if (widget.controller!.mentionMatches[index].displayName != widget.controller!.mentionMatches[index].address)
+                                      const SizedBox(width: 8),
+                                    if (widget.controller!.mentionMatches[index].displayName != widget.controller!.mentionMatches[index].address)
+                                      Text(
+                                        widget.controller!.mentionMatches[index].address,
+                                        style: context.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                   ],
                                 )),
                             ),

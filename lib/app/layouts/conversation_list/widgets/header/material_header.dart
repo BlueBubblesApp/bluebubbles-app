@@ -8,6 +8,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class MaterialHeader extends CustomStateful<ConversationListController> {
@@ -27,40 +28,25 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
     return Stack(
       children: [
         Obx(() => Container(
-              height: controller.selectedChats.isEmpty ? 80 : null,
+              height: controller.selectedChats.isEmpty ? 100 : null,
               width: ns.width(context),
-              color: ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent,
+              color: ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.properSurface : Colors.transparent,
             )),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: controller.selectedChats.isEmpty
               ? SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5),
-                    child: Obx(() {
+                  child: Obx(() {
                       ns.listener.value;
                       return Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
                           color: !ns.isAvatarOnly(context) && !showArchived && !showUnknown ? context.theme.colorScheme.properSurface
                               .withOpacity(ss.settings.windowEffect.value == WindowEffect.disabled ? 1 : 0.7) : Colors.transparent,
                         ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: !ns.isAvatarOnly(context) && !showArchived && !showUnknown
-                                ? () {
-                                    ns.pushLeft(
-                                      context,
-                                      SearchView(),
-                                    );
-                                  }
-                                : null,
-                            borderRadius: BorderRadius.circular(25),
-                            child: Padding(
+                        child: Padding(
                               padding: const EdgeInsets.only(left: 5.0, top: 5.0, bottom: 5.0),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   if (ns.isAvatarOnly(context))
                                     Material(
@@ -70,75 +56,64 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                       child: OverflowMenu(extraItems: true, controller: controller),
                                     ),
                                   if (!ns.isAvatarOnly(context))
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          (!showArchived && !showUnknown)
-                                              ? IconButton(
-                                                  onPressed: () async {
-                                                    ns.pushLeft(
-                                                      context,
-                                                      SearchView(),
-                                                    );
-                                                  },
-                                                  icon: Icon(
-                                                    Icons.search,
-                                                    color: context.theme.colorScheme.properOnSurface,
-                                                  ),
-                                                )
-                                              : IconButton(
-                                                  onPressed: () async {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  padding: EdgeInsets.zero,
-                                                  icon: Icon(
-                                                    Icons.arrow_back,
-                                                    color: context.theme.colorScheme.properOnSurface,
-                                                  ),
-                                                ),
-                                          const SizedBox(width: 5),
-                                          Stack(
-                                            alignment: Alignment.centerLeft,
-                                            children: [
-                                              SyncIndicator(),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 18, right: 20),
+                                      child: (!showArchived && !showUnknown)
+                                          ? SvgPicture.asset(
+                                              'assets/icon/bb-icon.svg',
+                                              width: 26,
+                                              height: 26,
+                                              colorFilter: ColorFilter.mode(context.theme.colorScheme.properOnSurface, BlendMode.srcIn)
+                                          ) : IconButton(
+                                              onPressed: () async {
+                                                Navigator.of(context).pop();
+                                              },
+                                              padding: EdgeInsets.zero,
+                                              icon: Icon(
+                                                Icons.arrow_back,
+                                                color: context.theme.colorScheme.properOnSurface,
+                                              ),
+                                            ),
                                     ),
-                                  if (!ns.isAvatarOnly(context)) HeaderText(controller: controller, fontSize: 23),
-                                  if (!ns.isAvatarOnly(context))
+                                  if (!ns.isAvatarOnly(context)) HeaderText(controller: controller, fontSize: 20),
+                                  if (!ns.isAvatarOnly(context) && !showArchived && !showUnknown)
                                     Expanded(
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Obx(() => ss.settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
-                                              ? GestureDetector(
-                                                  onLongPress: ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop
-                                                      ? () => controller.openCamera(context) : null,
-                                                  child: IconButton(
-                                                    onPressed: () => controller.openNewChatCreator(context),
-                                                    icon: Icon(
-                                                      Icons.create_outlined,
-                                                      color: context.theme.colorScheme.properOnSurface,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox.shrink()),
-                                          if (!showArchived && !showUnknown) const OverflowMenu(),
+                                          IconButton(
+                                            onPressed: () async {
+                                              controller.openCamera(context);
+                                            },
+                                            icon: Icon(
+                                              Icons.camera_alt_outlined,
+                                              color: context.theme.colorScheme.properOnSurface,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 2),
+                                            child: IconButton(
+                                            onPressed: () async {
+                                              ns.pushLeft(
+                                                context,
+                                                SearchView(),
+                                              );
+                                            },
+                                            icon: Icon(
+                                              Icons.search_rounded,
+                                              color: context.theme.colorScheme.properOnSurface,
+                                            ),
+                                          )),
+                                          const OverflowMenu(),
                                         ],
                                       ),
                                     ),
                                 ],
                               ),
                             ),
-                          ),
-                        ),
                       );
                     }),
-                  ),
                 )
               : SafeArea(
                   child: Padding(

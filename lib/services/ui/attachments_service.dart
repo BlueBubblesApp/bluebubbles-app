@@ -218,21 +218,25 @@ class AttachmentsService extends GetxService {
           lockParentWindow: true,
         );
       } else {
-        if (!isDocument) {
-          try {
-            if (file.path == null && file.bytes != null) {
-              await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
-            } else {
-              await SaverGallery.saveFile(file: file.path!, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
-            }
-            return showSnackbar('Success', 'Saved attachment to gallery!');
-          } catch (_) {}
+        if (file.name.toLowerCase().endsWith(".mov")) {
+          savePath = join("/storage/emulated/0/", ss.settings.autoSavePicsLocation.value);
+        } else {
+          if (!isDocument) {
+            try {
+              if (file.path == null && file.bytes != null) {
+                await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+              } else {
+                await SaverGallery.saveFile(file: file.path!, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+              }
+              return showSnackbar('Success', 'Saved attachment to gallery!');
+            } catch (_) {}
+          }
+          savePath = ss.settings.autoSaveDocsLocation.value;
         }
-        savePath = ss.settings.autoSaveDocsLocation.value;
       }
 
       if (savePath != null) {
-        final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+        final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
         await File(join(savePath, file.name)).writeAsBytes(bytes);
         showSnackbar('Success', 'Saved attachment to ${savePath.replaceAll("/storage/emulated/0/", "")} folder!');
       } else {

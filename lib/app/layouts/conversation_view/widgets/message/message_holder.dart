@@ -158,7 +158,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         final updatedMessage = Message.fromMap(response.data['data']);
         ah.handleUpdatedMessage(chat, updatedMessage, null);
       }
-      if (kIsDesktop) {
+      if (ns.isTabletMode(context)) {
         Get.close(1);
       } else {
         Navigator.of(context).pop();
@@ -494,7 +494,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                                           child: Container(
                                                                             decoration: BoxDecoration(
                                                                               color: !message.isBigEmoji
-                                                                                  ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.1 : 0)
+                                                                                  ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0)
                                                                                   : context.theme.colorScheme.background,
                                                                             ),
                                                                             constraints: BoxConstraints(

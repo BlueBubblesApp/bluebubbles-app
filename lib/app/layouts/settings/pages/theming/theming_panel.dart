@@ -1,4 +1,5 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -53,12 +54,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
 
   @override
   Widget build(BuildContext context) {
-    Widget nextIcon = Obx(() => ss.settings.skin.value != Skins.Material ? Icon(
-      ss.settings.skin.value != Skins.Material ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-      color: context.theme.colorScheme.outline,
-      size: iOS ? 18 : 24,
-    ) : const SizedBox.shrink());
-
     return Obx(
       () => SettingsScaffold(
         title: "Theming & Styles",
@@ -88,18 +83,12 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       secondaryColor: headerColor,
                     ),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Advanced Theming",
                         subtitle: "Customize app colors and font sizes with custom themes\n${ThemeStruct.getLightTheme().name}   |   ${ThemeStruct.getDarkTheme().name}",
-                        trailing: nextIcon,
+                        trailing: const NextButton(),
                         isThreeLine: true,
                         onTap: () async {
                           Navigator.of(context).push(
@@ -109,13 +98,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           );
                         },
                       ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Container(
                       padding: const EdgeInsets.only(left: 15, top: 10),
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
@@ -160,13 +143,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       secondaryColor: headerColor,
                     )),
                     if (!kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
@@ -182,13 +159,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         isThreeLine: true,
                       )),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
@@ -337,13 +308,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         },
                       )),
                     if (kIsDesktop && Platform.isWindows)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
                       Obx(() {
                         if (iOS) {
@@ -391,13 +356,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop && ts.monetPalette != null)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                           onChanged: (bool val) async {
@@ -450,13 +409,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme. Media art with mostly blacks or whites may not produce any change in theming.",
                       ),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
                         ss.settings.colorfulAvatars.value = val;
@@ -467,13 +420,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       backgroundColor: tileColor,
                       subtitle: "Gives letter avatars a splash of color",
                     )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
                         ss.settings.colorfulBubbles.value = val;
@@ -485,17 +432,11 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       subtitle: "Gives received message bubbles a splash of color",
                     )),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Custom Avatar Colors",
-                        trailing: nextIcon,
+                        trailing: const NextButton(),
                         onTap: () async {
                           ns.pushSettings(
                             context,
@@ -505,17 +446,11 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         subtitle: "Customize the color for different avatars",
                       ),
                     if (!kIsWeb)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Custom Avatars",
-                        trailing: nextIcon,
+                        trailing: const NextButton(),
                         onTap: () async {
                           ns.pushSettings(
                             context,

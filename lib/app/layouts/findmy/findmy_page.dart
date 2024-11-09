@@ -49,6 +49,8 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   StreamSubscription? locationSub;
   List<FindMyDevice> devices = [];
   List<FindMyFriend> friends = [];
+  List<FindMyFriend> friendsWithLocation = [];
+  List<FindMyFriend> friendsWithoutLocation = [];
   Map<String, Marker> markers = {};
   Position? location;
   bool? fetching = true;
@@ -72,6 +74,10 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
         if (existingFriend == null || existingFriend.status == null || friend.locatingInProgress || LocationStatus.values.indexOf(existingFriend.status!) <= LocationStatus.values.indexOf(friend.status ?? LocationStatus.legacy)) {
           Logger.info("Updating map for ${friend.handle?.address}");
           friends[existingFriendIndex] = friend;
+
+          friendsWithLocation = friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
+          friendsWithoutLocation = friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
+
           buildFriendMarker(friend);
           setState(() {});
         }
@@ -88,7 +94,13 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     });
   }
 
-  void getLocations({bool refresh = false}) async {
+  /// Fetches the FindMy data from the server.
+  /// The toggles for refresh friends & devices are separate due to an inconsistency in the server API.
+  /// As of v1.9.7 (server), the refresh devices endpoint doesn't return the devices data,
+  /// however, the refresh friends endpoint does. The way this was coded assumes that the server
+  /// will return the data for both endpoints. A server update will fix this, but for now,
+  /// we will "patch" it by only "refreshing" devices when the user manually refreshes the data.
+  void getLocations({bool refreshFriends = true, bool refreshDevices = false}) async {
     if (!(Platform.isLinux && !kIsWeb)) {
       LocationPermission granted = await Geolocator.checkPermission();
       if (granted == LocationPermission.denied) {
@@ -105,14 +117,14 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
               });
             });
           }
-          if (!refresh) {
+          if (!refreshFriends) {
             mapController.move(LatLng(location!.latitude, location!.longitude), 10);
           }
         });
       }
     }
 
-    final response2 = refresh
+    final response2 = refreshFriends
         ? await http.refreshFindMyFriends().catchError((_) async {
       setState(() {
         refreshing2 = false;
@@ -132,24 +144,12 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
             .map((e) => FindMyFriend.fromJson(e))
             .toList()
             .cast<FindMyFriend>();
-        for (FindMyFriend e in friends.where((e) => (e.latitude ?? 0) != 0 && (e.longitude ?? 0) != 0)) {
-          markers[e.handle?.uniqueAddressAndService ?? randomString(6)] = Marker(
-            key: ValueKey('friend-${e.handle?.uniqueAddressAndService ?? randomString(6)}'),
-            point: LatLng(e.latitude!, e.longitude!),
-            width: 35,
-            height: 35,
-            child: Container(
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child:
-                  ContactAvatarWidget(editable: false, handle: e.handle ?? Handle(address: e.title ?? "Unknown")),
-                ),
-              ),
-            ),
-            alignment: Alignment.topCenter,
-          );
+
+        friendsWithLocation = friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
+        friendsWithoutLocation = friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
+
+        for (FindMyFriend e in friendsWithLocation) {
+          buildFriendMarker(e);
         }
         setState(() {
           fetching2 = false;
@@ -170,7 +170,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       });
     }
 
-    final response = refresh
+    final response = refreshDevices
         ? await http.refreshFindMyDevices().catchError((_) async {
             setState(() {
               refreshing = false;
@@ -243,7 +243,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
     }
 
     // Call the FindMy Friends refresh anyways so that new data comes through the socket
-    if (!refresh) {
+    if (!refreshFriends) {
       http.refreshFindMyFriends();
     } else {
       setState(() {
@@ -632,10 +632,6 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
       ),
     ];
 
-    final friendsWithLocation =
-        friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
-    final friendsWithoutLocation =
-        friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
     final friendsBodySlivers = [
       SliverList(
         delegate: SliverChildListDelegate([
@@ -886,7 +882,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                           refreshing = true;
                                           refreshing2 = true;
                                         });
-                                        getLocations(refresh: true);
+                                        getLocations();
                                       },
                                     ),
                             ),
@@ -1007,6 +1003,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
   Widget buildDesktopTabBar() {
     return TabBar(
       controller: tabController,
+      dividerColor: context.theme.dividerColor.withOpacity(0.2),
       tabs: [
         Container(
           padding: const EdgeInsets.only(top: 8),
@@ -1202,7 +1199,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                                 refreshing = true;
                                 refreshing2 = true;
                               });
-                              getLocations(refresh: true);
+                              getLocations(refreshDevices: true);
                             },
                           ),
                   ),
@@ -1275,7 +1272,7 @@ class _FindMyPageState extends OptimizedState<FindMyPage> with SingleTickerProvi
                         refreshing = true;
                         refreshing2 = true;
                       });
-                      getLocations(refresh: true);
+                      getLocations(refreshDevices: true);
                     },
                   ),
           ),

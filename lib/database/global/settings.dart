@@ -88,6 +88,7 @@ class Settings {
   final RxString userName = "You".obs;
   final RxnString userAvatarPath = RxnString();
   final RxBool hideNamesForReactions = false.obs;
+  final RxBool replaceEmoticonsWithEmoji = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -101,6 +102,7 @@ class Settings {
   final RxBool privateAPISend = false.obs;
   final RxBool privateAPIAttachmentSend = false.obs;
   final RxBool editLastSentMessageOnUpArrow = false.obs;
+  final RxInt lastReviewRequestTimestamp = 0.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -315,8 +317,6 @@ class Settings {
       'repliesToPrevious': repliesToPrevious.value,
       'useLocalhost': localhostPort.value,
       'useLocalIpv6': useLocalIpv6.value,
-      'sendSoundPath': sendSoundPath.value,
-      'receiveSoundPath': receiveSoundPath.value,
       'soundVolume': soundVolume.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
@@ -364,6 +364,8 @@ class Settings {
       'useWindowsAccent': useWindowsAccent.value,
       'logLevel': logLevel.value.index,
       'hideNamesForReactions': hideNamesForReactions.value,
+      'replaceEmoticonsWithEmoji': replaceEmoticonsWithEmoji.value,
+      'lastReviewRequestTimestamp': lastReviewRequestTimestamp.value,
     };
     if (includeAll) {
       map.addAll({
@@ -377,6 +379,8 @@ class Settings {
         'monetTheming': monetTheming.value.index,
         'userAvatarPath': userAvatarPath.value,
         'firstFcmRegisterDate': firstFcmRegisterDate.value,
+        'sendSoundPath': sendSoundPath.value,
+        'receiveSoundPath': receiveSoundPath.value,
       });
     }
     return map;
@@ -503,6 +507,7 @@ class Settings {
     ss.settings.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     ss.settings.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     ss.settings.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
+    ss.settings.replaceEmoticonsWithEmoji.value = map['replaceEmoticonsWithEmoji'] ?? false;
     ss.settings.save();
 
     eventDispatcher.emit("theme-update", null);
@@ -641,6 +646,8 @@ class Settings {
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
+    s.replaceEmoticonsWithEmoji.value = map['replaceEmoticonsWithEmoji'] ?? false;
+    s.lastReviewRequestTimestamp.value = map['lastReviewRequestTimestamp'] ?? 0;
     return s;
   }
 

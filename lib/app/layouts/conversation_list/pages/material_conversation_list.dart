@@ -8,6 +8,7 @@ import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
@@ -43,13 +44,17 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) async {
+      onPopInvokedWithResult: <T>(bool didPop, T? other) {
+        if (didPop) return;
         if (controller.selectedChats.isNotEmpty) {
           controller.clearSelectedChats();
           return;
         } else if (controller.showArchivedChats || controller.showUnknownSenders) {
           // Pop the current page
           Navigator.of(context).pop();
+        } else {
+          // Pop the app to exit the app
+          SystemNavigator.pop();
         }
       },
       child: Container(
@@ -63,9 +68,9 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           backgroundColor: backgroundColor,
           extendBodyBehindAppBar: true,
           floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: Obx(() => !ss.settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
+          floatingActionButton: !showArchived && !showUnknown
               ? ConversationListFAB(parentController: controller)
-              : const SizedBox.shrink()),
+              : const SizedBox.shrink(),
           body: Obx(() {
             final _chats = chats.chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown);
 

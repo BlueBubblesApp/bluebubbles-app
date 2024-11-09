@@ -140,13 +140,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                         }
                       }),
                     if (ss.canAuthenticate && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) async {
@@ -166,13 +160,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                             ),
                           )),
                     if (!kIsWeb && !kIsDesktop)
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      ),
+                      const SettingsDivider(),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) async {
@@ -221,19 +209,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           containerColor: Colors.green
                         ),
                       )),
-                  Obx(() {
-                    if (iOS) {
-                      return Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  }),
+                  const SettingsDivider(),
                   Obx(() {
                     if (iOS) {
                       return const SettingsTile(
@@ -319,13 +295,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                               .copyWith(color: context.theme.colorScheme.properOnSurface),
                         )),
                   ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(padding: EdgeInsets.zero),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.cancelQueuedMessages.toggle();
@@ -352,6 +322,17 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      ss.settings.replaceEmoticonsWithEmoji.value = val;
+                      saveSettings();
+                    },
+                    initialVal: ss.settings.replaceEmoticonsWithEmoji.value,
+                    title: "Replace Emoticons with Emoji",
+                    subtitle: "Replace emoticons like :), :D, etc. with their corresponding emojis",
+                    backgroundColor: tileColor,
+                  )),
+                  const SettingsDivider(),
                   if (kIsDesktop || kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -376,6 +357,8 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       textProcessing: (val) => val.$1,
                       capitalize: false,
                     ) : const SizedBox.shrink()),
+                  if (kIsDesktop || kIsWeb)
+                    const SettingsDivider(),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.sendDelay.value = val ? 3 : 0;
@@ -410,13 +393,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       return const SizedBox.shrink();
                     }
                   }),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           ss.settings.use24HrFormat.value = val;
@@ -431,13 +408,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           containerColor: Colors.blue
                         ),
                       )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 15.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ),
+                  const SettingsDivider(),
                   if (Platform.isAndroid)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
@@ -460,13 +431,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           ),
                         )),
                   if (Platform.isAndroid)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
+                    const SettingsDivider(),
                   Obx(() {
                     if (iOS) {
                       return const SettingsTile(

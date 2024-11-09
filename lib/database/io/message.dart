@@ -231,14 +231,20 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
 class Message {
   int? id;
   int? originalROWID;
+
+  @Index(type: IndexType.value)
   @Unique()
   String? guid;
+
   int? handleId;
   int? otherHandle;
   String? text;
   String? subject;
   String? country;
+
+  @Index()
   DateTime? dateCreated;
+
   bool? isFromMe;
   // Data detector results
   bool? hasDdResults;

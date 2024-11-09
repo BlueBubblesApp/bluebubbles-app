@@ -203,8 +203,8 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
             .setContentIntent(openSummaryIntent)
             .setColor(4888294)
 
-        notificationManager.notify(Constants.newMessageNotificationTag, notificationId, notificationBuilder.build())
         notificationManager.notify(Constants.newMessageNotificationTag, 0, summaryNotificationBuilder.build())
+        notificationManager.notify(Constants.newMessageNotificationTag, notificationId, notificationBuilder.build())
         result.success(null)
     }
 }

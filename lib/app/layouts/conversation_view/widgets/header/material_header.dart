@@ -25,7 +25,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _backgroundColor = context.theme.colorScheme.background.withOpacity((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled) ? 0.4 : ss.settings.skin.value == Skins.Samsung ? 1 : 0.95).obs;
+    final Rx<Color> _backgroundColor = context.theme.colorScheme.background.withOpacity((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled) ? 0.4 : 1).obs;
 
     return Stack(
           children: [Obx(() => AppBar(
@@ -35,9 +35,9 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           : SystemUiOverlayStyle.dark,
       automaticallyImplyLeading: false,
       toolbarHeight: (kIsDesktop ? 25 : 0) + kToolbarHeight,
-      leadingWidth: 40,
+      leadingWidth: 30,
       leading: Padding(
-        padding: EdgeInsets.only(left: 10.0, top: kIsDesktop ? 20 : 0),
+        padding: EdgeInsets.only(left: 5.0, top: kIsDesktop ? 20 : 0),
         child: BackButton(
           color: context.theme.colorScheme.onBackground,
           onPressed: () {
@@ -346,7 +346,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
                 }
                 return Text(
                   _title,
-                  style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
+                  style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground, fontSizeFactor: 0.85),
                   maxLines: 1,
                   overflow: TextOverflow.fade,
                 );

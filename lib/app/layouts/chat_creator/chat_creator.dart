@@ -53,8 +53,8 @@ class ChatCreator extends StatefulWidget {
 class ChatCreatorState extends OptimizedState<ChatCreator> {
   final TextEditingController addressController = TextEditingController();
   final messageNode = FocusNode();
-  late final TextEditingController textController = SpellCheckTextEditingController(text: widget.initialText, focusNode: messageNode);
-  final TextEditingController subjectController = TextEditingController(); // Chat creator doesn't have subject line
+  late final MentionTextEditingController textController = MentionTextEditingController(text: widget.initialText, focusNode: messageNode);
+  final SpellCheckTextEditingController subjectController = SpellCheckTextEditingController(); // Chat creator doesn't have subject line
   final FocusNode addressNode = FocusNode();
   final ScrollController addressScrollController = ScrollController();
 
@@ -591,10 +591,6 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                       color: Colors.transparent,
                                       child: InkWell(
                                         onTap: () {
-                                          if (chat.isGroup) {
-                                            selectedContacts.clear();
-                                          }
-
                                           addSelectedList(chat.participants
                                               .where((e) =>
                                                   selectedContacts.firstWhereOrNull((c) => c.address == e.address) ==
@@ -733,51 +729,51 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                             } catch (_) {}
                           }
                           if (chat != null && existsOnServer) {
+                            sendInitialMessage() async {
+                              if (fakeController.value == null) {
+                                await cm.setActiveChat(chat, clearNotifications: false);
+                                cm.activeChat!.controller = cvc(chat);
+                                cm.activeChat!.controller!.pickedAttachments.value = [];
+                                fakeController.value = cm.activeChat!.controller;
+                              } else {
+                                fakeController.value!.textController.text = textController.text;
+                                fakeController.value!.pickedAttachments.value = widget.initialAttachments;
+                                fakeController.value!.subjectTextController.text = subjectController.text;
+                              }
+
+                              await fakeController.value!.send(
+                                widget.initialAttachments,
+                                fakeController.value!.textController.text,
+                                subjectController.text,
+                                fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ??
+                                    fakeController.value!.replyToMessage?.item1.guid,
+                                fakeController.value!.replyToMessage?.item2,
+                                effect,
+                                false,
+                              );
+
+                              fakeController.value!.replyToMessage = null;
+                              fakeController.value!.pickedAttachments.clear();
+                              fakeController.value!.textController.clear();
+                              fakeController.value!.subjectTextController.clear();
+                            }
+
                             ns.pushAndRemoveUntil(
                               Get.context!,
-                              ConversationView(chat: chat, fromChatCreator: true),
+                              ConversationView(chat: chat, fromChatCreator: true, onInit: sendInitialMessage),
                               (route) => route.isFirst,
                               // don't force close the active chat in tablet mode
                               closeActiveChat: false,
                               // only used in non-tablet mode context
                               customRoute: PageRouteBuilder(
                                 pageBuilder: (_, __, ___) =>
-                                    TitleBarWrapper(child: ConversationView(chat: chat, fromChatCreator: true)),
+                                    TitleBarWrapper(child: ConversationView(chat: chat, fromChatCreator: true, onInit: sendInitialMessage)),
                                 transitionDuration: Duration.zero,
                               ),
                             );
 
                             await Future.delayed(const Duration(milliseconds: 500));
-                            print("Chat: ${chat.guid}");
-                            if (fakeController.value == null) {
-                              print("Controller is null");
-                              print(cm.activeChat!.controller?.pickedAttachments);
-                              await cm.setActiveChat(chat, clearNotifications: false);
-                              cm.activeChat!.controller = cvc(chat);
-                              cm.activeChat!.controller!.pickedAttachments.value = [];
-                              fakeController.value = cm.activeChat!.controller;
-                            } else {
-                              print("Controller is not null");
-                              print(fakeController.value?.pickedAttachments);
-                              print(fakeController.value?.textController.text);
-                            }
-
-                            print("SENDING");
-
-                            await fakeController.value!.send(
-                              widget.initialAttachments,
-                              fakeController.value!.textController.text,
-                              subjectController.text,
-                              fakeController.value!.replyToMessage?.item1.threadOriginatorGuid ??
-                                  fakeController.value!.replyToMessage?.item1.guid,
-                              fakeController.value!.replyToMessage?.item2,
-                              effect,
-                              false,
-                            );
-
-                            fakeController.value!.replyToMessage = null;
-                            fakeController.value!.pickedAttachments.clear();
-                            fakeController.value!.textController.clear();
+                            
                           } else {
                             if (!(createCompleter?.isCompleted ?? true)) return;
                             // hard delete a chat that exists on BB but not on the server to make way for the proper server data

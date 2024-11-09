@@ -148,18 +148,15 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
               height: size,
               padding: widget.padding,
               decoration: BoxDecoration(
-                color: iOS ? null : (!ss.settings.colorfulAvatars.value ? HexColor("686868") : colors[0]),
-                gradient: !iOS
-                    ? null
-                    : LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        end: AlignmentDirectional.bottomEnd,
-                        colors: [
-                          !ss.settings.colorfulAvatars.value ? HexColor("928E8E") : colors[1],
-                          !ss.settings.colorfulAvatars.value ? HexColor("686868") : colors[0]
-                        ],
-                        stops: [0.3, 0.9],
-                      ),
+                gradient: LinearGradient(
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
+                  colors: [
+                    !ss.settings.colorfulAvatars.value ? HexColor("928E8E") : (iOS ? colors[1] : colors[0]),
+                    !ss.settings.colorfulAvatars.value ? HexColor("686868") : colors[0]
+                  ],
+                  stops: [0.3, 0.9],
+                ),
                 border: Border.all(
                     color: ss.settings.skin.value == Skins.Samsung ? tileColor : context.theme.colorScheme.background,
                     width: widget.borderThickness,

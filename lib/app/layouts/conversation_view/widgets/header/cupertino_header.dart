@@ -201,29 +201,8 @@ class _UnreadIcon extends StatefulWidget {
 }
 
 class _UnreadIconState extends OptimizedState<_UnreadIcon> {
-  int count = 0;
   late final StreamSubscription<Query<Chat>> sub;
   bool hasStream = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (!kIsWeb) {
-      updateObx(() {
-        final unreadQuery = Database.chats.query(Chat_.hasUnreadMessage.equals(true)).watch(triggerImmediately: true);
-        sub = unreadQuery.listen((Query<Chat> query) {
-          final c = query.count();
-          if (count != c) {
-            setState(() {
-              count = c;
-            });
-          }
-        });
-
-        hasStream = true;
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -253,7 +232,7 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
         ),
         const SizedBox(width: 2),
         Obx(() {
-          final _count = widget.controller.inSelectMode.value ? widget.controller.selected.length : count;
+          final _count = widget.controller.inSelectMode.value ? widget.controller.selected.length : GlobalChatService.unreadCount.value;
           if (_count == 0) return const SizedBox.shrink();
           return Padding(
               padding: const EdgeInsets.only(top: 3),

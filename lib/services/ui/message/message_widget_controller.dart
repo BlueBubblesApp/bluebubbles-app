@@ -130,7 +130,12 @@ class MessageWidgetController extends StatefulController with GetSingleTickerPro
               attachments: [e!],
               part: index,
             )));
+      } else if (message.isInteractive) {
+        parts.add(MessagePart(
+          part: 0,
+        ));
       }
+
       if (message.fullText.isNotEmpty || message.isGroupEvent) {
         parts.add(MessagePart(
           subject: message.subject,

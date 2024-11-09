@@ -32,6 +32,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' hide context;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sprung/sprung.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -81,9 +82,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         View.of(context).devicePixelRatio,
       ).bottom;
   late int numberToShow = 5;
-  late Chat? dmChat = chats.chats.firstWhereOrNull((chat) =>
-      !chat.isGroup &&
-      chat.participants.firstWhereOrNull((handle) => handle.address == message.handle?.address) != null);
+  late Chat? dmChat = chats.chats
+      .firstWhereOrNull((chat) => !chat.isGroup && chat.participants.firstWhereOrNull((handle) => handle.address == message.handle?.address) != null);
   String? selfReaction;
   String? currentlySelectedReaction = "init";
 
@@ -100,9 +100,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   bool get isSent => !message.guid!.startsWith('temp') && !message.guid!.startsWith('error');
 
   bool get showDownload =>
-      (isSent &&
-          part.attachments.isNotEmpty &&
-          part.attachments.where((element) => as.getContent(element) is PlatformFile).isNotEmpty) ||
+      (isSent && part.attachments.isNotEmpty && part.attachments.where((element) => as.getContent(element) is PlatformFile).isNotEmpty) ||
       isEmbeddedMedia;
 
   late bool isEmbeddedMedia = (message.balloonBundleId == "com.apple.Handwriting.HandwritingProvider" ||
@@ -121,15 +119,18 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   void initState() {
     super.initState();
     controller.forward();
-    final remainingHeight = max(Get.height - Get.statusBarHeight - 135 - widget.size.height, itemHeight);
-    numberToShow = min(remainingHeight ~/ itemHeight, 5);
+    if (iOS) {
+      final remainingHeight = max(Get.height - Get.statusBarHeight - 135 - widget.size.height, itemHeight);
+      numberToShow = min(remainingHeight ~/ itemHeight, 5);
+    } else {
+      // Potentially make this dynamic in the future
+      numberToShow = 5;
+    }
 
     updateObx(() {
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
-          .where((e) =>
-              ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) &&
-              (e.associatedMessagePart ?? 0) == part.part)
+          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) && (e.associatedMessagePart ?? 0) == part.part)
           .toList());
       final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
       if (!(self?.contains("-") ?? true)) {
@@ -168,9 +169,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: ss.settings.immersiveMode.value
-            ? Colors.transparent
-            : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness.opposite,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -182,9 +181,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           colorScheme: context.theme.colorScheme.copyWith(
             primary: context.theme.colorScheme.bubble(context, chat.isIMessage),
             onPrimary: context.theme.colorScheme.onBubble(context, chat.isIMessage),
-            surface: ss.settings.monetTheming.value == Monet.full
-                ? null
-                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+            surface:
+                ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
             onSurface: ss.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
@@ -199,13 +197,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 appBar: iOS
                     ? null
                     : AppBar(
-                        backgroundColor: ((kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled)
-                                ? context.theme.colorScheme.background.withOpacity(0.6)
-                                : context.theme.colorScheme.background)
-                            .oppositeLightenOrDarken(5),
-                        systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
-                            ? SystemUiOverlayStyle.light
-                            : SystemUiOverlayStyle.dark,
+                        backgroundColor: context.theme.colorScheme.background.oppositeLightenOrDarken(5),
+                        systemOverlayStyle:
+                            context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                         automaticallyImplyLeading: false,
                         leadingWidth: 40,
                         toolbarHeight: kIsDesktop ? 80 : null,
@@ -219,254 +213,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                             },
                           ),
                         ),
-                        actions: [
-                            //copy
-                            //delete
-                            //snooze
-                            //popup: share, forward, details
-                            if (showDownload)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.file_download, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: download,
-                                ),
-                              ),
-                            if ((part.text?.hasUrl ?? false) && !kIsWeb && !kIsDesktop && !ls.isBubble)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.open_in_browser, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: openLink,
-                                ),
-                              ),
-                            if (showDownload && kIsWeb && part.attachments.firstOrNull?.webUrl != null)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.open_in_browser, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: openAttachmentWeb,
-                                ),
-                              ),
-                            if (!isNullOrEmptyString(part.fullText))
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: GestureDetector(
-                                  onLongPress: copySelection,
-                                  child: IconButton(
-                                    icon: Icon(Icons.content_copy, color: context.theme.colorScheme.properOnSurface),
-                                    onPressed: copyText,
-                                  ),
-                                ),
-                              ),
-                            if (chat.isGroup && !message.isFromMe! && dmChat != null && !ls.isBubble)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.open_in_new, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: openDm,
-                                ),
-                              ),
-                            if (message.threadOriginatorGuid != null ||
-                                service.struct.threads(message.guid!, part.part, returnOriginator: false).isNotEmpty)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.forum_outlined, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: showThread,
-                                ),
-                              ),
-                            if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.message_outlined, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: newConvo,
-                                ),
-                              ),
-                            if (showDownload)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.refresh, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: redownload,
-                                ),
-                              ),
-                            if (!kIsWeb && !kIsDesktop)
-                              Padding(
-                                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                                child: IconButton(
-                                  icon: Icon(Icons.alarm, color: context.theme.colorScheme.properOnSurface),
-                                  onPressed: remindLater,
-                                ),
-                              ),
-                            Padding(
-                              padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                              child: IconButton(
-                                icon: Icon(Icons.delete_outlined, color: context.theme.colorScheme.properOnSurface),
-                                onPressed: delete,
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-                              child: PopupMenuButton<int>(
-                                color: context.theme.colorScheme.properSurface,
-                                shape: ss.settings.skin.value != Skins.Material
-                                    ? const RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(20.0),
-                                        ),
-                                      )
-                                    : null,
-                                onSelected: (int value) {
-                                  if (value == 0) {
-                                    share();
-                                  } else if (value == 1) {
-                                    forward();
-                                  } else if (value == 2) {
-                                    selectMultiple();
-                                  } else if (value == 3) {
-                                    messageInfo();
-                                  } else if (value == 4) {
-                                    downloadOriginal();
-                                  } else if (value == 5) {
-                                    createContact();
-                                  } else if (value == 6) {
-                                    unsend();
-                                  } else if (value == 7) {
-                                    edit();
-                                  } else if (value == 8) {
-                                    downloadLivePhoto();
-                                  } else if (value == 9) {
-                                    toggleBookmark();
-                                  } else if (value == 10) {
-                                    copySelection();
-                                  }
-                                },
-                                itemBuilder: (context) {
-                                  return <PopupMenuItem<int>>[
-                                    if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) ||
-                                        (part.text!.isNotEmpty && !kIsDesktop))
-                                      PopupMenuItem(
-                                        value: 0,
-                                        child: Text(
-                                          'Share',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                    if (!ls.isBubble && !message.isInteractive)
-                                      PopupMenuItem(
-                                        value: 1,
-                                        child: Text(
-                                          'Forward',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                    if (ss.isMinVenturaSync &&
-                                        message.isFromMe! &&
-                                        !message.guid!.startsWith("temp") &&
-                                        ss.serverDetailsSync().item4 >= 148)
-                                      PopupMenuItem(
-                                        value: 6,
-                                        child: Text(
-                                          'Undo Send',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                    if (ss.isMinVenturaSync &&
-                                        message.isFromMe! &&
-                                        !message.guid!.startsWith("temp") &&
-                                        ss.serverDetailsSync().item4 >= 148 &&
-                                        (part.text?.isNotEmpty ?? false))
-                                      PopupMenuItem(
-                                        value: 7,
-                                        child: Text(
-                                          'Edit',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                    if (!message.isFromMe! && message.handle != null && message.handle!.contact == null)
-                                      PopupMenuItem(
-                                        value: 5,
-                                        child: Text(
-                                          'Create Contact',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                    PopupMenuItem(
-                                      value: 2,
-                                      child: Text(
-                                        'Select Multiple',
-                                        style: context.textTheme.bodyLarge!
-                                            .apply(color: context.theme.colorScheme.properOnSurface),
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 9,
-                                      child: Text(
-                                        message.isBookmarked ? 'Remove Bookmark' : 'Add Bookmark',
-                                        style: context.textTheme.bodyLarge!
-                                            .apply(color: context.theme.colorScheme.properOnSurface),
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 3,
-                                      child: Text(
-                                        'Message Info',
-                                        style: context.textTheme.bodyLarge!
-                                            .apply(color: context.theme.colorScheme.properOnSurface),
-                                      ),
-                                    ),
-                                    if (showDownload &&
-                                        supportsOriginalDownload &&
-                                        part.attachments
-                                            .where((element) =>
-                                                (element.uti?.contains("heic") ?? false) ||
-                                                (element.uti?.contains("heif") ?? false) ||
-                                                (element.uti?.contains("quicktime") ?? false) ||
-                                                (element.uti?.contains("coreaudio") ?? false) ||
-                                                (element.uti?.contains("tiff") ?? false))
-                                            .isNotEmpty)
-                                      PopupMenuItem(
-                                        value: 4,
-                                        child: Text(
-                                          'Save Original',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                    if (showDownload && part.attachments.where((e) => e.hasLivePhoto).isNotEmpty)
-                                      PopupMenuItem(
-                                        value: 8,
-                                        child: Text(
-                                          'Save Live Photo',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                    if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
-                                      PopupMenuItem(
-                                        value: 10,
-                                        child: Text(
-                                          'Copy Selection',
-                                          style: context.textTheme.bodyLarge!
-                                              .apply(color: context.theme.colorScheme.properOnSurface),
-                                        ),
-                                      ),
-                                  ];
-                                },
-                                icon: Icon(
-                                  Icons.more_vert,
-                                  color: context.theme.colorScheme.onBackground,
-                                ),
-                              ),
-                            )
-                          ]),
+                        actions: buildMaterialDetailsMenu(context),
+                ),
                 body: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -477,12 +225,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                               ? Container(color: context.theme.colorScheme.background.withOpacity(0.8))
                               : BackdropFilter(
                                   filter: ImageFilter.blur(
-                                      sigmaX: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled
-                                          ? 10
-                                          : 30,
-                                      sigmaY: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled
-                                          ? 10
-                                          : 30),
+                                      sigmaX: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30,
+                                      sigmaY: kIsDesktop && ss.settings.windowEffect.value != WindowEffect.disabled ? 10 : 30),
                                   child: Container(
                                     color: context.theme.colorScheme.properSurface.withOpacity(0.3),
                                   ),
@@ -499,8 +243,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                           tween: Tween<double>(begin: 0.8, end: 1),
                           curve: Curves.easeOutBack,
                           duration: const Duration(milliseconds: 500),
-                          child: ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: widget.size.width), child: widget.child),
+                          child: ConstrainedBox(constraints: BoxConstraints(maxWidth: widget.size.width), child: widget.child),
                           builder: (context, size, child) {
                             return Transform.scale(
                               scale: size.clamp(1, double.infinity),
@@ -524,9 +267,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       ),
                     if (ss.settings.enablePrivateAPI.value && isSent && minSierra && chat.isIMessage)
                       Positioned(
-                        bottom: (iOS
-                                ? itemHeight * numberToShow + 35 + widget.size.height
-                                : context.height - materialOffset)
+                        bottom: (iOS ? itemHeight * numberToShow + 35 + widget.size.height : context.height - materialOffset)
                             .clamp(0, context.height - (narrowScreen ? 200 : 125)),
                         right: message.isFromMe! ? 15 : null,
                         left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
@@ -539,9 +280,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                               : ClipShadowPath(
                                   shadow: iOS
                                       ? BoxShadow(
-                                          color: context.theme.colorScheme.properSurface
-                                              .withAlpha(iOS ? 150 : 255)
-                                              .lightenOrDarken(iOS ? 0 : 10))
+                                          color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).lightenOrDarken(iOS ? 0 : 10))
                                       : BoxShadow(
                                           color: context.theme.colorScheme.shadow,
                                           blurRadius: 2,
@@ -554,9 +293,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                                     child: Container(
                                       padding: const EdgeInsets.all(5).add(const EdgeInsets.only(bottom: 15)),
-                                      color: context.theme.colorScheme.properSurface
-                                          .withAlpha(iOS ? 150 : 255)
-                                          .lightenOrDarken(iOS ? 0 : 10),
+                                      color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).lightenOrDarken(iOS ? 0 : 10),
                                       child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: List.generate(narrowScreen ? 2 : 1, (index) {
@@ -564,17 +301,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                               mainAxisSize: MainAxisSize.min,
                                               mainAxisAlignment: MainAxisAlignment.start,
                                               children: ReactionTypes.toList()
-                                                  .slice(narrowScreen && index == 1 ? 3 : 0,
-                                                      narrowScreen && index == 0 ? 3 : null)
+                                                  .slice(narrowScreen && index == 1 ? 3 : 0, narrowScreen && index == 0 ? 3 : null)
                                                   .map((e) {
                                                 return Padding(
-                                                  padding: iOS
-                                                      ? const EdgeInsets.all(5.0)
-                                                      : const EdgeInsets.symmetric(horizontal: 5),
+                                                  padding: iOS ? const EdgeInsets.all(5.0) : const EdgeInsets.symmetric(horizontal: 5),
                                                   child: Material(
-                                                    color: currentlySelectedReaction == e
-                                                        ? context.theme.colorScheme.primary
-                                                        : Colors.transparent,
+                                                    color: currentlySelectedReaction == e ? context.theme.colorScheme.primary : Colors.transparent,
                                                     borderRadius: BorderRadius.circular(20),
                                                     child: SizedBox(
                                                       width: iOS ? 35 : null,
@@ -593,8 +325,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                           popDetails();
                                                         },
                                                         child: Padding(
-                                                          padding: const EdgeInsets.all(6.5)
-                                                              .add(EdgeInsets.only(right: e == "emphasize" ? 2.5 : 0)),
+                                                          padding: const EdgeInsets.all(6.5).add(EdgeInsets.only(right: e == "emphasize" ? 2.5 : 0)),
                                                           child: iOS
                                                               ? SvgPicture.asset(
                                                                   'assets/reactions/$e-black.svg',
@@ -610,9 +341,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                                                   child: Builder(builder: (context) {
                                                                     final text = Text(
                                                                       ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                                      style: const TextStyle(
-                                                                          fontSize: 18,
-                                                                          fontFamily: 'Apple Color Emoji'),
+                                                                      style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
                                                                       textAlign: TextAlign.center,
                                                                     );
                                                                     // rotate thumbs down to match iOS
@@ -673,8 +402,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     if (!iOS && ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
                       Positioned(
                         left: !message.isFromMe!
-                            ? widget.childPosition.dx + widget.size.width + (reactions.isNotEmpty ? 25 : 10)
-                            : widget.childPosition.dx - 45,
+                            ? widget.childPosition.dx + widget.size.width + (reactions.isNotEmpty ? 20 : 5)
+                            : widget.childPosition.dx - 55,
                         top: materialOffset,
                         child: Material(
                           color: context.theme.colorScheme.primary,
@@ -715,8 +444,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       }
       if (content is PlatformFile) {
         popDetails();
-        await as.saveToDisk(content,
-            isDocument: part.attachments.first.mimeStart != "image" && part.attachments.first.mimeStart != "video");
+        await as.saveToDisk(content, isDocument: part.attachments.first.mimeStart != "image" && part.attachments.first.mimeStart != "video");
       }
     } catch (ex, trace) {
       Logger.error("Error downloading attachment: ${ex.toString()}", error: ex, trace: trace);
@@ -773,7 +501,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         content: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: <Widget>[
           Obx(
             () => Text(
-                '${progress.value != null && attachmentObs.value != null ? (progress.value! * attachmentObs.value!.totalBytes! / 1000).getFriendlySize(withSuffix: false) : ""} / ${(attachmentObs.value!.totalBytes!.toDouble() / 1000).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
+                '${progress.value != null && attachmentObs.value != null ? (progress.value! * attachmentObs.value!.totalBytes!).getFriendlySize() : ""} / ${(attachmentObs.value!.totalBytes!.toDouble()).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
                 style: context.theme.textTheme.bodyLarge),
           ),
           const SizedBox(height: 10.0),
@@ -805,9 +533,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             () => downloadingAttachments.value
                 ? Container(height: 0, width: 0)
                 : TextButton(
-                    child: Text("Close",
-                        style:
-                            context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                    child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                     onPressed: () async {
                       Get.closeAllSnackbars();
                       Navigator.of(context).pop();
@@ -822,14 +548,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
       for (Attachment? element in toDownload) {
         attachmentObs.value = element;
         final response = await http.downloadAttachment(element!.guid!,
-            original: true,
-            onReceiveProgress: (count, total) =>
-                progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+            original: true, onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
         final file = PlatformFile(
           name: element.transferName!,
           size: response.data.length,
           bytes: response.data,
         );
+
         await as.saveToDisk(file, isDocument: element.mimeStart != "image" && element.mimeStart != "video");
       }
       progress.value = 1;
@@ -842,7 +567,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   Future<void> downloadLivePhoto() async {
     final RxBool downloadingAttachments = true.obs;
-    final RxnDouble progress = RxnDouble();
+    final RxnInt progress = RxnInt();
     final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
     final toDownload = part.attachments.where((element) => element.hasLivePhoto);
     final length = toDownload.length;
@@ -854,8 +579,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         content: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: <Widget>[
           Obx(
             () => Text(
-                '${progress.value != null && attachmentObs.value != null ? (progress.value! * attachmentObs.value!.totalBytes! / 1000).getFriendlySize(withSuffix: false) : ""} / ${(attachmentObs.value!.totalBytes!.toDouble() / 1000).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
-                style: context.theme.textTheme.bodyLarge),
+              progress.value?.toDouble().getFriendlySize() ?? "",
+              style: context.theme.textTheme.bodyLarge,
+            ),
           ),
           const SizedBox(height: 10.0),
           Obx(
@@ -864,7 +590,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               child: LinearProgressIndicator(
                 backgroundColor: context.theme.colorScheme.outline,
                 valueColor: AlwaysStoppedAnimation<Color>(Get.context!.theme.colorScheme.primary),
-                value: progress.value,
+                value: downloadingAttachments.value ? null : 1,
                 minHeight: 5,
               ),
             ),
@@ -873,7 +599,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             height: 15.0,
           ),
           Obx(() => Text(
-                progress.value == 1
+                !downloadingAttachments.value
                     ? "Download Complete!"
                     : "You can close this dialog. The live photo(s) will continue to download in the background.",
                 maxLines: 2,
@@ -886,9 +612,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             () => downloadingAttachments.value
                 ? Container(height: 0, width: 0)
                 : TextButton(
-                    child: Text("Close",
-                        style:
-                            context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                    child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                     onPressed: () async {
                       Get.closeAllSnackbars();
                       Navigator.of(context).pop();
@@ -902,18 +626,15 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     try {
       for (Attachment? element in toDownload) {
         attachmentObs.value = element;
-        final response = await http.downloadLivePhoto(element!.guid!,
-            onReceiveProgress: (count, total) =>
-                progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+        final response = await http.downloadLivePhoto(element!.guid!, onReceiveProgress: (count, total) => progress.value = count);
         final nameSplit = element.transferName!.split(".");
         final file = PlatformFile(
           name: "${nameSplit.take(nameSplit.length - 1).join(".")}.mov",
           size: response.data.length,
           bytes: response.data,
         );
-        await as.saveToDisk(file);
+        await as.saveToDisk(file, isDocument: true);
       }
-      progress.value = 1;
       downloadingAttachments.value = false;
     } catch (ex, trace) {
       Logger.error("Failed to download live photo!", error: ex, trace: trace);
@@ -937,8 +658,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   void createContact() async {
     popDetails();
-    await mcs.invokeMethod("open-contact-form",
-        {'address': message.handle!.address, 'address_type': message.handle!.address.isEmail ? 'email' : 'phone'});
+    await mcs
+        .invokeMethod("open-contact-form", {'address': message.handle!.address, 'address_type': message.handle!.address.isEmail ? 'email' : 'phone'});
   }
 
   void showThread() {
@@ -1023,6 +744,18 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   }
 
   Future<void> remindLater() async {
+    if (Platform.isAndroid) {
+      bool denied = await Permission.scheduleExactAlarm.isDenied;
+      ;
+      bool permanentlyDenied = await Permission.scheduleExactAlarm.isPermanentlyDenied;
+      if (denied && !permanentlyDenied) {
+        await Permission.scheduleExactAlarm.request();
+      } else if (permanentlyDenied) {
+        showSnackbar("Error", "You must enable the manage alarm permission to use this feature");
+        return;
+      }
+    }
+
     final finalDate = await showTimeframePicker("Select Reminder Time", context,
         presetsAhead: true, additionalTimeframes: {"3 Hours": 3, "6 Hours": 6}, useTodayYesterday: true);
     if (finalDate != null) {
@@ -1075,20 +808,16 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     const encoder = JsonEncoder.withIndent("     ");
     Map map = message.toMap(includeObjects: true);
     if (map["dateCreated"] is int) {
-      map["dateCreated"] =
-          DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateCreated"]));
+      map["dateCreated"] = DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateCreated"]));
     }
     if (map["dateDelivered"] is int) {
-      map["dateDelivered"] =
-          DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateDelivered"]));
+      map["dateDelivered"] = DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateDelivered"]));
     }
     if (map["dateRead"] is int) {
-      map["dateRead"] =
-          DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateRead"]));
+      map["dateRead"] = DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateRead"]));
     }
     if (map["dateEdited"] is int) {
-      map["dateEdited"] =
-          DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateEdited"]));
+      map["dateEdited"] = DateFormat("MMMM d, yyyy h:mm:ss a").format(DateTime.fromMillisecondsSinceEpoch(map["dateEdited"]));
     }
     String str = encoder.convert(map);
     showDialog(
@@ -1104,8 +833,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           height: context.height * 1 / 4,
           child: Container(
             padding: const EdgeInsets.all(10.0),
-            decoration: BoxDecoration(
-                color: context.theme.colorScheme.background, borderRadius: const BorderRadius.all(Radius.circular(10))),
+            decoration: BoxDecoration(color: context.theme.colorScheme.background, borderRadius: const BorderRadius.all(Radius.circular(10))),
             child: SingleChildScrollView(
               child: SelectableText(
                 str,
@@ -1116,8 +844,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         ),
         actions: [
           TextButton(
-            child: Text("Close",
-                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+            child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
@@ -1125,138 +852,138 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     );
   }
 
+  get _allActions {
+    final canEdit = (message.dateCreated?.toUtc().isWithin(DateTime.now().toUtc(), minutes: 15) ?? false);
+    return [
+        if (ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
+          DetailsMenuActionWidget(
+            onTap: reply,
+            action: DetailsMenuAction.Reply,
+          ),
+        if (showDownload)
+          DetailsMenuActionWidget(
+            onTap: download,
+            action: DetailsMenuAction.Save,
+          ),
+        if ((part.text?.hasUrl ?? false) && !kIsWeb && !kIsDesktop && !ls.isBubble)
+          DetailsMenuActionWidget(
+            onTap: openLink,
+            action: DetailsMenuAction.OpenInBrowser,
+          ),
+        if (showDownload && kIsWeb && part.attachments.firstOrNull?.webUrl != null)
+          DetailsMenuActionWidget(
+            onTap: openAttachmentWeb,
+            action: DetailsMenuAction.OpenInNewTab,
+          ),
+        if (!isNullOrEmptyString(part.fullText))
+          DetailsMenuActionWidget(
+            onTap: copyText,
+            action: DetailsMenuAction.CopyText,
+          ),
+        if (showDownload &&
+            supportsOriginalDownload &&
+            part.attachments
+                .where((element) =>
+                    (element.uti?.contains("heic") ?? false) ||
+                    (element.uti?.contains("heif") ?? false) ||
+                    (element.uti?.contains("quicktime") ?? false) ||
+                    (element.uti?.contains("coreaudio") ?? false) ||
+                    (element.uti?.contains("tiff") ?? false))
+                .isNotEmpty)
+          DetailsMenuActionWidget(
+            onTap: downloadOriginal,
+            action: DetailsMenuAction.SaveOriginal,
+          ),
+        if (showDownload && part.attachments.where((e) => e.hasLivePhoto).isNotEmpty)
+          DetailsMenuActionWidget(
+            onTap: downloadLivePhoto,
+            action: DetailsMenuAction.SaveLivePhoto,
+          ),
+        if (chat.isGroup && !message.isFromMe! && dmChat != null && !ls.isBubble)
+          DetailsMenuActionWidget(
+            onTap: openDm,
+            action: DetailsMenuAction.OpenDirectMessage,
+          ),
+        if (message.threadOriginatorGuid != null || service.struct.threads(message.guid!, part.part, returnOriginator: false).isNotEmpty)
+          DetailsMenuActionWidget(
+            onTap: showThread,
+            action: DetailsMenuAction.ViewThread,
+          ),
+        if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (!kIsWeb && !kIsDesktop && !isNullOrEmpty(part.text)))
+          DetailsMenuActionWidget(
+            onTap: share,
+            action: DetailsMenuAction.Share,
+          ),
+        if (showDownload)
+          DetailsMenuActionWidget(
+            onTap: redownload,
+            action: DetailsMenuAction.ReDownloadFromServer,
+          ),
+        if (!kIsWeb && !kIsDesktop)
+          DetailsMenuActionWidget(
+            onTap: remindLater,
+            action: DetailsMenuAction.RemindLater,
+          ),
+        if (!kIsWeb && !kIsDesktop && !message.isFromMe! && message.handle != null && message.handle!.contact == null)
+          DetailsMenuActionWidget(
+            onTap: createContact,
+            action: DetailsMenuAction.CreateContact,
+          ),
+        if (ss.isMinVenturaSync && message.isFromMe! && !message.guid!.startsWith("temp") && ss.serverDetailsSync().item4 >= 148)
+          DetailsMenuActionWidget(
+            onTap: unsend,
+            action: DetailsMenuAction.UndoSend,
+          ),
+        if (ss.isMinVenturaSync &&
+            message.isFromMe! &&
+            !message.guid!.startsWith("temp") &&
+            ss.serverDetailsSync().item4 >= 148 &&
+            (part.text?.isNotEmpty ?? false))
+          DetailsMenuActionWidget(
+            onTap: edit,
+            customTitle: canEdit ? 'Edit' : 'Edit (too old)',
+            shouldDisableBtn: !canEdit,
+            action: DetailsMenuAction.Edit,
+          ),
+        if (!ls.isBubble && !message.isInteractive)
+          DetailsMenuActionWidget(
+            onTap: forward,
+            action: DetailsMenuAction.Forward,
+          ),
+        if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
+          DetailsMenuActionWidget(
+            onTap: newConvo,
+            action: DetailsMenuAction.StartConversation,
+          ),
+        if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
+          DetailsMenuActionWidget(
+            onTap: copySelection,
+            action: DetailsMenuAction.CopySelection,
+          ),
+        DetailsMenuActionWidget(
+          onTap: delete,
+          action: DetailsMenuAction.Delete,
+        ),
+        DetailsMenuActionWidget(
+          onTap: toggleBookmark,
+          action: DetailsMenuAction.Bookmark,
+          customTitle: message.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+        ),
+        DetailsMenuActionWidget(
+          onTap: selectMultiple,
+          action: DetailsMenuAction.SelectMultiple,
+        ),
+        DetailsMenuActionWidget(
+          onTap: messageInfo,
+          action: DetailsMenuAction.MessageInfo,
+        ),
+      ].sorted((a, b) => ss.settings.detailsMenuActions.indexOf(a.action).compareTo(ss.settings.detailsMenuActions.indexOf(b.action)));
+  }
+
   Widget buildDetailsMenu(BuildContext context) {
     double maxMenuWidth = min(max(ns.width(widthContext) * 3 / 5, 200), ns.width(widthContext) * 4 / 5);
 
-    List<DetailsMenuActionWidget> allActions = [
-      if (ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
-        DetailsMenuActionWidget(
-          onTap: reply,
-          action: DetailsMenuAction.Reply,
-        ),
-      if (showDownload)
-        DetailsMenuActionWidget(
-          onTap: download,
-          action: DetailsMenuAction.Save,
-        ),
-      if ((part.text?.hasUrl ?? false) && !kIsWeb && !kIsDesktop && !ls.isBubble)
-        DetailsMenuActionWidget(
-          onTap: openLink,
-          action: DetailsMenuAction.OpenInBrowser,
-        ),
-      if (showDownload && kIsWeb && part.attachments.firstOrNull?.webUrl != null)
-        DetailsMenuActionWidget(
-          onTap: openAttachmentWeb,
-          action: DetailsMenuAction.OpenInNewTab,
-        ),
-      if (!isNullOrEmptyString(part.fullText))
-        DetailsMenuActionWidget(
-          onTap: copyText,
-          action: DetailsMenuAction.CopyText,
-        ),
-      if (showDownload &&
-          supportsOriginalDownload &&
-          part.attachments
-              .where((element) =>
-                  (element.uti?.contains("heic") ?? false) ||
-                  (element.uti?.contains("heif") ?? false) ||
-                  (element.uti?.contains("quicktime") ?? false) ||
-                  (element.uti?.contains("coreaudio") ?? false) ||
-                  (element.uti?.contains("tiff") ?? false))
-              .isNotEmpty)
-        DetailsMenuActionWidget(
-          onTap: downloadOriginal,
-          action: DetailsMenuAction.SaveOriginal,
-        ),
-      if (showDownload && part.attachments.where((e) => e.hasLivePhoto).isNotEmpty)
-        DetailsMenuActionWidget(
-          onTap: downloadLivePhoto,
-          action: DetailsMenuAction.SaveLivePhoto,
-        ),
-      if (chat.isGroup && !message.isFromMe! && dmChat != null && !ls.isBubble)
-        DetailsMenuActionWidget(
-          onTap: openDm,
-          action: DetailsMenuAction.OpenDirectMessage,
-        ),
-      if (message.threadOriginatorGuid != null ||
-          service.struct.threads(message.guid!, part.part, returnOriginator: false).isNotEmpty)
-        DetailsMenuActionWidget(
-          onTap: showThread,
-          action: DetailsMenuAction.ViewThread,
-        ),
-      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) ||
-          (!kIsWeb && !kIsDesktop && !isNullOrEmpty(part.text)))
-        DetailsMenuActionWidget(
-          onTap: share,
-          action: DetailsMenuAction.Share,
-        ),
-      if (showDownload)
-        DetailsMenuActionWidget(
-          onTap: redownload,
-          action: DetailsMenuAction.ReDownloadFromServer,
-        ),
-      if (!kIsWeb && !kIsDesktop)
-        DetailsMenuActionWidget(
-          onTap: remindLater,
-          action: DetailsMenuAction.RemindLater,
-        ),
-      if (!kIsWeb && !kIsDesktop && !message.isFromMe! && message.handle != null && message.handle!.contact == null)
-        DetailsMenuActionWidget(
-          onTap: createContact,
-          action: DetailsMenuAction.CreateContact,
-        ),
-      if (ss.isMinVenturaSync &&
-          message.isFromMe! &&
-          !message.guid!.startsWith("temp") &&
-          ss.serverDetailsSync().item4 >= 148)
-        DetailsMenuActionWidget(
-          onTap: unsend,
-          action: DetailsMenuAction.UndoSend,
-        ),
-      if (ss.isMinVenturaSync &&
-          message.isFromMe! &&
-          !message.guid!.startsWith("temp") &&
-          ss.serverDetailsSync().item4 >= 148 &&
-          (part.text?.isNotEmpty ?? false))
-        DetailsMenuActionWidget(
-          onTap: edit,
-          action: DetailsMenuAction.Edit,
-        ),
-      if (!ls.isBubble && !message.isInteractive)
-        DetailsMenuActionWidget(
-          onTap: forward,
-          action: DetailsMenuAction.Forward,
-        ),
-      if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
-        DetailsMenuActionWidget(
-          onTap: newConvo,
-          action: DetailsMenuAction.StartConversation,
-        ),
-      if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
-        DetailsMenuActionWidget(
-          onTap: copySelection,
-          action: DetailsMenuAction.CopySelection,
-        ),
-      DetailsMenuActionWidget(
-        onTap: delete,
-        action: DetailsMenuAction.Delete,
-      ),
-      DetailsMenuActionWidget(
-        onTap: toggleBookmark,
-        action: DetailsMenuAction.Bookmark,
-        customTitle: message.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
-      ),
-      DetailsMenuActionWidget(
-        onTap: selectMultiple,
-        action: DetailsMenuAction.SelectMultiple,
-      ),
-      DetailsMenuActionWidget(
-        onTap: messageInfo,
-        action: DetailsMenuAction.MessageInfo,
-      ),
-    ];
-
-    allActions.sort((a, b) => ss.settings.detailsMenuActions.indexOf(a.action).compareTo(ss.settings.detailsMenuActions.indexOf(b.action)));
+    List<DetailsMenuActionWidget> allActions = _allActions;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(10.0),
@@ -1298,6 +1025,52 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
         ),
       ),
     );
+  }
+
+  List<Widget> buildMaterialDetailsMenu(BuildContext context) {
+    List<DetailsMenuActionWidget> allActions = _allActions;
+
+    return [
+      ...allActions.slice(0, numberToShow - 1).map((action) {
+        bool isDisabled = false;
+        if (action.action == DetailsMenuAction.Edit) {
+          isDisabled = !((message.dateCreated?.toUtc().isWithin(DateTime.now().toUtc(), minutes: 15) ?? false));
+        }
+  
+        Color color = isDisabled ? context.theme.colorScheme.properOnSurface.withOpacity(0.5) : context.theme.colorScheme.properOnSurface;
+        return Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          child: IconButton(
+            icon: Icon(action.nonIosIcon, color: color),
+            onPressed: isDisabled ? null : action.onTap,
+            tooltip: action.title,
+          )
+        );
+      }),
+      Padding(
+        padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+        child: PopupMenuButton<int>(
+          color: context.theme.colorScheme.properSurface,
+          shape: ss.settings.skin.value != Skins.Material ? const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+          ) : null,
+          onSelected: (int value) {
+            allActions[value + numberToShow - 1].onTap?.call();
+          },
+          itemBuilder: (context) {
+            return allActions.slice(numberToShow - 1).mapIndexed((index, action) {
+              return PopupMenuItem(
+                value: index,
+                child: Text(
+                  action.title,
+                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                ),
+              );
+            }).toList();
+          }
+        )
+      )
+    ];
   }
 }
 
@@ -1349,8 +1122,7 @@ class ReactionDetails extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Text(
                           message.isFromMe! ? ss.settings.userName.value : (message.handle?.displayName ?? "Unknown"),
-                          style: context.theme.textTheme.bodySmall!
-                              .copyWith(color: context.theme.colorScheme.properOnSurface),
+                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                         ),
                       ),
                     if (ss.settings.hideNamesForReactions.value)
@@ -1362,9 +1134,7 @@ class ReactionDetails extends StatelessWidget {
                       width: 28,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(100),
-                        color: message.isFromMe!
-                            ? context.theme.colorScheme.primary
-                            : context.theme.colorScheme.properSurface,
+                        color: message.isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
                         boxShadow: [
                           BoxShadow(
                             blurRadius: 1.0,

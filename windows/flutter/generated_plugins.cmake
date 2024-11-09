@@ -11,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   emoji_picker_flutter
   file_selector_windows
   flutter_acrylic
+  flutter_timezone
   geolocator_windows
   irondash_engine_context
   local_auth_windows
@@ -28,6 +29,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   secure_application
   share_plus
   super_native_extensions
+  system_tray
   tray_manager
   url_launcher_windows
   window_manager

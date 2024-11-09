@@ -277,8 +277,11 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
 @Entity()
 class Chat {
   int? id;
+
+  @Index(type: IndexType.value)
   @Unique()
   String guid;
+
   String? chatIdentifier;
   bool? isArchived;
   String? muteType;

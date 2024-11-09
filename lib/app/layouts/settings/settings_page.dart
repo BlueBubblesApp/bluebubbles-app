@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/advanced/unified_push.dar
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
@@ -79,16 +80,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Widget nextIcon = Obx(() => ss.settings.skin.value != Skins.Material
-        ? Icon(
-            ss.settings.skin.value != Skins.Material
-                ? CupertinoIcons.chevron_right
-                : Icons.arrow_forward,
-            color: context.theme.colorScheme.outline,
-            size: iOS ? 18 : 24,
-          )
-        : const SizedBox.shrink());
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value
@@ -114,7 +105,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                   left: SettingsScaffold(
                       title: "Settings",
                       initialHeader:
-                          kIsWeb ? "Server & Message Management" : "Profile",
+                          kIsWeb ? "Server & Message Management" : (!iOS) ? "Profile" : null,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       tileColor: tileColor,
@@ -123,7 +114,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                         SliverList(
                           delegate: SliverChildListDelegate(
                             <Widget>[
-                              if (!kIsWeb)
+                              if (!kIsWeb && !iOS)
                                 SettingsSection(
                                   backgroundColor: tileColor,
                                   children: [
@@ -148,7 +139,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         fontSize: 22,
                                         size: 50,
                                       ),
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                     ),
                                   ],
                                 ),
@@ -173,7 +164,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         subtitle = "Error";
                                         break;
                                       case SocketState.connecting:
-                                        subtitle = "Connecting...";
+                                        subtitle = "Connecting";
                                         break;
                                       default:
                                         subtitle = "Error";
@@ -183,7 +174,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     return SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Connection & Server",
-                                      subtitle: subtitle,
                                       onTap: () async {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -265,27 +255,25 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           ),
                                         ],
                                       ),
-                                      trailing: nextIcon,
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            subtitle,
+                                            style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          const NextButton(),
+                                        ]
+                                      )
                                     );
                                   }),
                                   if (ss.serverDetailsSync().item4 >= 205)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    const SettingsDivider(),
                                   if (ss.serverDetailsSync().item4 >= 205)
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Scheduled Messages",
-                                      subtitle:
-                                          "Schedule your server to send a message in the future or at set intervals",
-                                      isThreeLine: true,
                                       onTap: () {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -293,7 +281,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           (route) => route.isFirst,
                                         );
                                       },
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.calendar,
                                         materialIcon:
@@ -302,22 +290,11 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       ),
                                     ),
                                   if (Platform.isAndroid)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    const SettingsDivider(),
                                   if (Platform.isAndroid)
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Message Reminders",
-                                      subtitle:
-                                          "View and manage your upcoming message reminders",
                                       onTap: () {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -325,7 +302,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           (route) => route.isFirst,
                                         );
                                       },
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.alarm_fill,
                                         materialIcon: Icons.alarm,
@@ -344,8 +321,6 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Appearance Settings",
-                                    subtitle:
-                                        "${ss.settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
                                     onTap: () {
                                       ns.pushAndRemoveSettingsUntil(
                                         context,
@@ -353,7 +328,17 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         (route) => route.isFirst,
                                       );
                                     },
-                                    trailing: nextIcon,
+                                    trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            "${ss.settings.skin.value.toString().split(".").last}  |  ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!}",
+                                            style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          const NextButton(),
+                                        ]
+                                      ),
                                     leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.paintbrush_fill,
                                         materialIcon: Icons.palette,
@@ -384,18 +369,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         iconSize: 18,
                                         containerColor:
                                             Colors.deepPurpleAccent),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Notification Settings",
@@ -411,18 +387,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       materialIcon: Icons.notifications_on,
                                       containerColor: Colors.redAccent,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Chat List Settings",
@@ -438,18 +405,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       materialIcon: Icons.list,
                                       containerColor: Colors.blueAccent,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "Conversation Settings",
@@ -465,18 +423,9 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       materialIcon: Icons.sms,
                                       containerColor: Colors.green,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  const SettingsDivider(),
                                   if (kIsDesktop)
                                     SettingsTile(
                                       backgroundColor: tileColor,
@@ -492,19 +441,10 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         iosIcon: CupertinoIcons.desktopcomputer,
                                         materialIcon: Icons.desktop_windows,
                                       ),
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                     ),
                                   if (kIsDesktop)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "More Settings",
@@ -519,7 +459,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       iosIcon: CupertinoIcons.ellipsis_circle_fill,
                                       materialIcon: Icons.more_vert,
                                     ),
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                   ),
                                 ],
                               ),
@@ -533,9 +473,17 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                   Obx(() => SettingsTile(
                                         backgroundColor: tileColor,
                                         title: "Private API Features",
-                                        subtitle:
-                                            "Private API is ${ss.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}${ss.settings.enablePrivateAPI.value && ss.settings.serverPrivateAPI.value == false ? " but not set up!" : ""}",
-                                        trailing: nextIcon,
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              ss.settings.enablePrivateAPI.value ? ss.settings.serverPrivateAPI.value == false ? "Not Set Up" : "Enabled" : "Disabled",
+                                              style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            const NextButton(),
+                                          ]
+                                        ),
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
                                             context,
@@ -557,22 +505,21 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                   : Colors.amber,
                                         ),
                                       )),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  const SettingsDivider(),
                                   Obx(() => SettingsTile(
                                         backgroundColor: tileColor,
                                         title: "Redacted Mode",
-                                        subtitle:
-                                            "Redacted Mode is ${ss.settings.redactedMode.value ? "Enabled" : "Disabled"}",
-                                        trailing: nextIcon,
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              ss.settings.redactedMode.value ? "Enabled" : "Disabled",
+                                              style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.outline.withOpacity(0.85)),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            const NextButton(),
+                                          ]
+                                        ),
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
                                             context,
@@ -590,23 +537,12 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         ),
                                       )),
                                   if (Platform.isAndroid)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    const SettingsDivider(),
                                   if (Platform.isAndroid)
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       title: "Tasker Integration",
-                                      subtitle:
-                                          "Control integrations with Tasker",
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       onTap: () async {
                                         ns.pushAndRemoveSettingsUntil(
                                           context,
@@ -621,21 +557,14 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           containerColor: Colors.orangeAccent),
                                     ),
                                   if (Platform.isAndroid)
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant))),
+                                    const SettingsDivider(),
                                   if (Platform.isAndroid)
                                     SettingsTile(
                                         backgroundColor: tileColor,
                                         title: "UnifiedPush",
                                         subtitle:
                                             "UnifiedPush ${ss.settings.enableUnifiedPush.value ? "Enabled" : "Disabled"}",
-                                        trailing: nextIcon,
+                                        trailing: const NextButton(),
                                         onTap: () async {
                                           ns.pushAndRemoveSettingsUntil(
                                               context,
@@ -652,6 +581,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     .value
                                                 ? SocketState.connected
                                                 : SocketState.connecting))),
+                                  if (Platform.isAndroid)
+                                    const SettingsDivider(),
                                   SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () async {
@@ -668,7 +599,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       ),
                                       title: "Developer Tools",
                                       subtitle: "View logs, troubleshoot bugs, and more",
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                     )
                                 ],
                               ),
@@ -688,7 +619,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           (route) => route.isFirst,
                                         );
                                       },
-                                      trailing: nextIcon,
+                                      trailing: const NextButton(),
                                       leading: const SettingsLeadingIcon(
                                         iosIcon: CupertinoIcons.cloud_upload_fill,
                                         materialIcon: Icons.backup,
@@ -698,16 +629,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       subtitle:
                                           "Backup and restore all app settings and custom themes",
                                     ),
-                                    Container(
-                                      color: tileColor,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 65.0),
-                                        child: SettingsDivider(
-                                            color: context.theme.colorScheme
-                                                .surfaceVariant),
-                                      ),
-                                    ),
+                                    const SettingsDivider(),
                                     if (!kIsWeb && !kIsDesktop)
                                       SettingsTile(
                                         backgroundColor: tileColor,
@@ -861,7 +783,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                             containerColor: Colors.green),
                                         title: "Export Contacts",
                                         subtitle:
-                                            "Send contacts to server for use on webapp and desktop app",
+                                            "Send contacts to server for use on the desktop app",
                                       ),
                                   ]),
                               SettingsHeader(
@@ -871,35 +793,25 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                               SettingsSection(
                                 backgroundColor: tileColor,
                                 children: [
-                                  SettingsTile(
-                                    title: "Leave Us a Review",
-                                    subtitle: "Enjoying the app? Leave us a review on the App Store or Google Play Store!",
-                                    onTap: () async {
-                                      final InAppReview inAppReview = InAppReview.instance;
-                                      final isAvailable = await inAppReview.isAvailable();
-                                      if (isAvailable) {
-                                          inAppReview.requestReview();
-                                      } else {
+                                  if (!kIsWeb && (Platform.isAndroid || Platform.isWindows))
+                                    SettingsTile(
+                                      title: "Leave Us a Review",
+                                      subtitle: "Enjoying the app? Leave us a review on the ${Platform.isAndroid ? 'Google Play Store' : 'Microsoft Store'}!",
+                                      onTap: () async {
+                                        // Just open the listing for now. We don't want to actually open the dialog here.
+                                        // If a review has been left, nothing will happen if tapped, which we don't want.
+                                        final InAppReview inAppReview = InAppReview.instance;
                                         inAppReview.openStoreListing(microsoftStoreId: '9P3XF8KJ0LSM');
-                                      }
-                                    },
-                                    leading: const SettingsLeadingIcon(
-                                      iosIcon: CupertinoIcons.star_fill,
-                                      materialIcon: Icons.star,
-                                      containerColor: Colors.blue,
+                                      },
+                                      leading: const SettingsLeadingIcon(
+                                        iosIcon: CupertinoIcons.star_fill,
+                                        materialIcon: Icons.star,
+                                        containerColor: Colors.blue,
+                                      ),
+                                      isThreeLine: false,
                                     ),
-                                    isThreeLine: false,
-                                  ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  if (!kIsWeb && (Platform.isAndroid || Platform.isWindows))
+                                    const SettingsDivider(),
                                   SettingsTile(
                                     title: "Make a Donation",
                                     subtitle: "Support the developers by making a one-time or recurring donation to the BlueBubbles Team!",
@@ -913,16 +825,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                     ),
                                     isThreeLine: false,
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     title: "Join Our Discord",
                                     subtitle: "Join our Discord server to chat with other BlueBubbles users and the developers",
@@ -935,16 +838,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                       containerColor: HexColor('#7785CC'),
                                     ),
                                   ),
-                                  Container(
-                                    color: tileColor,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 65.0),
-                                      child: SettingsDivider(
-                                          color: context.theme.colorScheme
-                                              .surfaceVariant),
-                                    ),
-                                  ),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                     backgroundColor: tileColor,
                                     title: "About & More",
@@ -956,7 +850,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         (route) => route.isFirst,
                                       );
                                     },
-                                    trailing: nextIcon,
+                                    trailing: const NextButton(),
                                     leading: const SettingsLeadingIcon(
                                       iosIcon: CupertinoIcons.info_circle_fill,
                                       materialIcon: Icons.info,
@@ -1039,16 +933,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                         subtitle: "Remove all attachments from this app",
                                       ),
                                     if (!kIsWeb)
-                                      Container(
-                                        color: tileColor,
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 65.0),
-                                          child: SettingsDivider(
-                                              color: context.theme.colorScheme
-                                                  .surfaceVariant),
-                                        ),
-                                      ),
+                                      const SettingsDivider(),
                                     SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () {

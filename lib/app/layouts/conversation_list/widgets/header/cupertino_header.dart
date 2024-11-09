@@ -66,7 +66,7 @@ class CupertinoHeader extends StatelessWidget {
                             width: 30,
                             height: 30,
                             child: InkWell(
-                              child: Icon(CupertinoIcons.search, color: context.theme.colorScheme.properOnSurface, size: 20),
+                              child: Icon(CupertinoIcons.search, color: context.theme.colorScheme.properOnSurface, size: 18),
                               onTap: () {
                                 ns.pushLeft(context, SearchView());
                               },

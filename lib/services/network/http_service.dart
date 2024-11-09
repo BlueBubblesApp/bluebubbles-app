@@ -213,7 +213,7 @@ class HttpService extends GetxService {
   }
 
   /// Get server logs, [count] defines the length of logs
-  Future<Response> serverLogs({int count = 100, CancelToken? cancelToken}) async {
+  Future<Response> serverLogs({int count = 10000, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$apiRoot/server/logs",
@@ -275,7 +275,7 @@ class HttpService extends GetxService {
     });
   }
 
-  /// Get the attachment data for the specified [guid]
+  /// Get the live photo data for the specified [guid]
   Future<Response> downloadLivePhoto(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
@@ -622,9 +622,12 @@ class HttpService extends GetxService {
         "effectId": effectId,
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
-        "partIndex": partIndex,
-        //"ddScan": ddScan,
+        "partIndex": partIndex
       });
+
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateAPISend.value && ss.isMinVenturaSync) {
+        data["ddScan"] = ddScan;
+      }
 
       final response = await dio.post(
           "$apiRoot/message/text",
@@ -688,9 +691,12 @@ class HttpService extends GetxService {
         "subject": subject,
         "selectedMessageGuid": selectedMessageGuid,
         "partIndex": partIndex,
-        "parts": parts,
-        //"ddScan": ddScan,
+        "parts": parts
       };
+
+      if (ss.isMinVenturaSync) {
+        data["ddScan"] = ddScan;
+      }
 
       final response = await dio.post(
           "$apiRoot/message/multipart",

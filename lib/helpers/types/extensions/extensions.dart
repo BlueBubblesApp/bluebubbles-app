@@ -19,15 +19,15 @@ extension DateHelpers on DateTime {
   bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours, int? days}) {
     Duration diff = difference(other);
     if (ms != null) {
-      return diff.inMilliseconds < ms;
+      return diff.inMilliseconds.abs() < ms;
     } else if (seconds != null) {
-      return diff.inSeconds < seconds;
+      return diff.inSeconds.abs() < seconds;
     } else if (minutes != null) {
-      return diff.inMinutes < minutes;
+      return diff.inMinutes.abs() < minutes;
     } else if (hours != null) {
-      return diff.inHours < hours;
+      return diff.inHours.abs() < hours;
     } else if (days != null) {
-      return diff.inDays < days;
+      return diff.inDays.abs() < days;
     } else {
       throw Exception("No timerange specified!");
     }

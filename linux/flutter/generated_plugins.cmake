@@ -21,6 +21,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   record_linux
   screen_retriever
   super_native_extensions
+  system_tray
   tray_manager
   url_launcher_linux
   window_manager

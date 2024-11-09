@@ -77,13 +77,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                       : "Click to enable notifications",
                   backgroundColor: tileColor,
                 ),
-              Container(
-                color: tileColor,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15.0),
-                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                ),
-              ),
+              const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
               Obx(() => SettingsSwitch(
                 onChanged: (bool val) {
                   ss.settings.notifyReactions.value = val;
@@ -94,13 +88,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                 subtitle: "Sends notifications for incoming reactions",
                 backgroundColor: tileColor,
               )),
-              Container(
-                color: tileColor,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15.0),
-                  child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                ),
-              ),
+              const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
               /*if (!kIsWeb)
                                     Obx(() {
                                       if (iOS)
@@ -170,13 +158,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                   subtitle: "Replaces message text with 'iMessage' in notifications",
                   backgroundColor: tileColor,
                 )),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                  ),
-                ),
+                const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
                     ss.settings.showIncrementalSync.value = val;

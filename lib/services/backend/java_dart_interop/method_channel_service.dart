@@ -46,9 +46,14 @@ class MethodChannelService extends GetxService {
 
   Future<bool> _callHandler(MethodCall call) async {
     final Map<String, dynamic>? arguments = call.arguments is String ? jsonDecode(call.arguments) : call.arguments?.cast<String, Object>();
+    
+    // ONLY RETURN Future.value or Future.error
+    // Future.value(false) will have the engine retry the call
+    // Future.value(true) will have the engine stop trying to call the method
+    
     switch (call.method) {
       case "NewServerUrl":
-        if (arguments == null) return false;
+        if (arguments == null) return Future.value(false);
         await Database.waitForInit();
 
         String address = arguments["server_url"];
@@ -56,15 +61,18 @@ class MethodChannelService extends GetxService {
         if (updated && !background) {
           socket.restartSocket();
         }
-        return true;
-      case "new-message":
+        return Future.value(true);
+      case "new-message":  // FCM message
         await Database.waitForInit();
         Logger.info("Received new message from MethodChannel");
 
         // The socket will handle this event if the app is alive and unifiedpush is not enabled
         if (ls.isAlive && socket.socket.connected && ss.settings.endpointUnifiedPush.value == "") {
           Logger.debug("App is alive, ignoring new message...");
-          return true;
+          return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
+          return Future.value(true);
         }
 
         try {
@@ -81,7 +89,8 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "updated-message":
         await Database.waitForInit();
         Logger.info("Received updated message from MethodChannel");
@@ -89,7 +98,10 @@ class MethodChannelService extends GetxService {
         // The socket will handle this event if the app is alive
         if (ls.isAlive && socket.socket.connected) {
           Logger.debug("App is alive, ignoring updated message...");
-          return true;
+          return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
+          return Future.value(true);
         }
 
         try {
@@ -107,7 +119,7 @@ class MethodChannelService extends GetxService {
                 payload.data['chats'] = [existingMsg.chat.target!.toMap()];
               } else {
                 Logger.warn("No chat data found, and unable to find chat from message guid");
-                return false;
+                return Future.value(false);
               }
             }
 
@@ -121,7 +133,8 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "group-name-change":
       case "participant-removed":
       case "participant-added":
@@ -132,11 +145,13 @@ class MethodChannelService extends GetxService {
         // The socket will handle this event if the app is alive
         if (ls.isAlive && socket.socket.connected) {
           Logger.debug("App is alive, ignoring updated message...");
-          return true;
+          return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
+          return Future.value(true);
         }
 
         try {
-          
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
@@ -146,7 +161,8 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "group-icon-changed":
         await Database.waitForInit();
         Logger.info("Received group icon change from MethodChannel");
@@ -154,7 +170,10 @@ class MethodChannelService extends GetxService {
         // The socket will handle this event if the app is alive
         if (ls.isAlive && socket.socket.connected) {
           Logger.debug("App is alive, ignoring updated message...");
-          return true;
+          return Future.value(true);
+        } else if (!ls.isAlive && ss.settings.keepAppAlive.value) {
+          Logger.debug("Ignoring FCM message while app is not alive, but keepAppAlive is enabled");
+          return Future.value(true);
         }
 
         try {
@@ -170,12 +189,13 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "scheduled-message-error":
         Logger.info("Received scheduled message error from FCM");
         try {
           Map<String, dynamic>? data = arguments;
-          if (data == null) return true;
+          if (data == null) return Future.value(true);
           final payload = ServerPayload.fromJson(data);
           Chat? chat = Chat.findOne(guid: payload.data["payload"]["chatGuid"]);
           if (chat != null) {
@@ -184,21 +204,23 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "ReplyChat":
         await Database.waitForInit();
         Logger.info("Received reply to message from Kotlin");
         final Map<String, dynamic>? data = arguments;
-        if (data == null) return false;
+        if (data == null) return Future.value(true);
+
         // check and make sure that we aren't sending a duplicate reply
         final recentReplyGuid = ss.prefs.getString("recent-reply")?.split("/").first;
         final recentReplyText = ss.prefs.getString("recent-reply")?.split("/").last;
-        if (recentReplyGuid == data["messageGuid"] && recentReplyText == data["text"]) return false;
+        if (recentReplyGuid == data["messageGuid"] && recentReplyText == data["text"]) return Future.value(false);
         await ss.prefs.setString("recent-reply", "${data["messageGuid"]}/${data["text"]}");
         Logger.info("Updated recent reply cache to ${ss.prefs.getString("recent-reply")}");
         Chat? chat = Chat.findOne(guid: data["chatGuid"]);
         if (chat == null) {
-          return false;
+          return Future.value(false);
         } else {
           final Completer<void> completer = Completer();
           outq.queue(OutgoingItem(
@@ -215,12 +237,13 @@ class MethodChannelService extends GetxService {
             customArgs: {'notifReply': true}
           ));
           await completer.future;
-          return true;
+          return Future.value(true);
         }
       case "MarkChatRead":
-        if (ls.isAlive) return true;
+        if (ls.isAlive) return Future.value(true);
         await Database.waitForInit();
         Logger.info("Received markAsRead from Kotlin");
+
         try {
           final Map<String, dynamic>? data = arguments;
           if (data != null) {
@@ -228,43 +251,47 @@ class MethodChannelService extends GetxService {
             if (chat != null) {
               // Don't clear local notifications because tapping Mark as Read should clear the notification automatically
               chat.toggleHasUnread(false, clearLocalNotifications: false);
-              return true;
+              return Future.value(true);
             }
           }
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return false;
+
+        return Future.value(false);
       case "chat-read-status-changed":
-        if (ls.isAlive) return true;
+        if (ls.isAlive) return Future.value(true);
         await Database.waitForInit();
         Logger.info("Received chat status change from FCM");
+
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
             final payload = ServerPayload.fromJson(data!);
             Chat? chat = Chat.findOne(guid: payload.data["chatGuid"]);
             if (chat == null || (payload.data["read"] != true && payload.data["read"] != false)) {
-              return false;
+              return Future.value(false);
             } else {
               chat.toggleHasUnread(!payload.data["read"]!, privateMark: false);
-              return true;
+              return Future.value(true);
             }
           } else {
-            return false;
+            return Future.value(false);
           }
         } catch (e, s) {
           return Future.error(e, s);
         }
       case "MediaColors":
         await Database.waitForInit();
-        if (!ss.settings.colorsFromMedia.value) return false;
+        if (!ss.settings.colorsFromMedia.value) return Future.value(true);
+
         final Uint8List art = call.arguments["albumArt"];
         if (Get.context != null && (!isRunning || art != previousArt)) {
           ts.updateMusicTheme(Get.context!, art);
           isRunning = false;
         }
-        return true;
+
+        return Future.value(true);
       case "incoming-facetime":
         await Database.waitForInit();
         Logger.info("Received legacy incoming facetime from FCM");
@@ -277,11 +304,13 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "ft-call-status-changed":
-        if (ls.isAlive) return true;
+        if (ls.isAlive) return Future.value(true);
         await Database.waitForInit();
         Logger.info("Received facetime call status change from FCM");
+
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
@@ -291,13 +320,14 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "answer-facetime":
         Logger.info("Answering FaceTime call");
         final Map<String, dynamic>? data = arguments;
-        if (data == null) return false;
+        if (data == null) return Future.value(true);
         await intents.answerFaceTime(data["callUuid"]);
-        return true;
+        return Future.value(true);
       case "imessage-aliases-removed":
         Map<String, dynamic>? data = arguments;
         try {
@@ -311,19 +341,20 @@ class MethodChannelService extends GetxService {
         } catch (e, s) {
           return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       case "socket-event":
         Map<String, dynamic>? data = arguments;
-        if (data == null) return false;
+        if (data == null) return Future.value(true);
 
         try {
           final Map<String, dynamic> jsonData = jsonDecode(data['data']);
-          await ah.handleSocketEvent(data['event'], jsonData, 'MethodChannel', useQueue: false);
+          await ah.handleEvent(data['event'], jsonData, 'MethodChannel', useQueue: false);
         } catch (e, s) {
           return Future.error(e, s);
         }
 
-        return true;
+        return Future.value(true);
       case "unifiedpush-settings":
         Map<String, dynamic>? data = arguments;
         if (data == null) return false;
@@ -334,9 +365,10 @@ class MethodChannelService extends GetxService {
         } catch(e, s) {
             return Future.error(e, s);
         }
-        return true;
+
+        return Future.value(true);
       default:
-        return true;
+        return Future.value(true);
     }
   }
 

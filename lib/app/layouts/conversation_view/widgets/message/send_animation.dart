@@ -157,7 +157,7 @@ class _SendAnimationState
       );
       _message.generateTempGuid();
       outq.queue(OutgoingItem(
-        type: QueueType.sendMessage,
+        type: (_message.attributedBody.isNotEmpty) ? QueueType.sendMultipart : QueueType.sendMessage,
         chat: controller.chat,
         message: _message,
       ));
@@ -221,7 +221,7 @@ class _SendAnimationState
                         minWidth: messageBoxSize * exp,
                         minHeight: 40,
                       ),
-                      color: !message!.isBigEmoji ? context.theme.colorScheme.primary.withAlpha(((1 - value) * 255).toInt()) : null,
+                      color: !message!.isBigEmoji ? context.theme.colorScheme.primary.darkenAmount(0.2) : null,
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(
                         left: message!.isFromMe! || message!.isBigEmoji ? 0 : 10, right: message!.isFromMe! && !message!.isBigEmoji ? 10 : 0)),
                       child: Align(

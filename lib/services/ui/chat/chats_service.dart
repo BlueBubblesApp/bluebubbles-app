@@ -120,7 +120,7 @@ class ChatsService extends GetxService {
     if (kIsDesktop && Platform.isWindows) {
       /* ----- IMESSAGE:// HANDLER ----- */
       final _appLinks = AppLinks();
-      _appLinks.allStringLinkStream.listen((String string) async {
+      _appLinks.stringLinkStream.listen((String string) async {
         if (!string.startsWith("imessage://")) return;
         final uri = Uri.tryParse(string
             .replaceFirst("imessage://", "imessage:")

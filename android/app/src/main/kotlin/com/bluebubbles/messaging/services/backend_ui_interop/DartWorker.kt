@@ -74,11 +74,11 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
 
                 engineToUse!!.addEngineLifecycleListener ( object : FlutterEngine.EngineLifecycleListener {
                     override fun onPreEngineRestart() {
-                        Log.d(Constants.logTag, "Engine is restarting, closing engine")
+                        Log.d(Constants.logTag, "Engine is restarting")
                     }
 
                     override fun onEngineWillDestroy() {
-                        Log.d(Constants.logTag, "Engine is being destroyed, closing engine")
+                        Log.d(Constants.logTag, "Engine is being destroyed")
                     }
                 })
 
@@ -154,8 +154,8 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
                 // This must be run on main thread
                 CoroutineScope(Dispatchers.Main).launch {
                     workerEngine?.destroy()
+                    workerEngine = null
                 }
-                workerEngine = null
             }
         }
     }

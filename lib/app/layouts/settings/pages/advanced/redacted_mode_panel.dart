@@ -225,13 +225,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           backgroundColor: tileColor,
                           subtitle: "Replace message text with generated lorem ipsum",
                         ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                         SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.hideAttachments.value = val;
@@ -242,13 +236,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           backgroundColor: tileColor,
                           subtitle: "Replace attachments with placeholder boxes",
                         ),
-                        Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0),
-                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                          ),
-                        ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                         SettingsSwitch(
                           onChanged: (bool val) {
                             ss.settings.hideContactInfo.value = val;

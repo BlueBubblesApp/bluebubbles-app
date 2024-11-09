@@ -61,7 +61,9 @@ class SettingsService extends GetxService {
     // launch at startup
     if (kIsDesktop) {
       if (Platform.isWindows) {
-        _canAuthenticate = await LocalAuthentication().isDeviceSupported();
+        try {
+          _canAuthenticate = await LocalAuthentication().isDeviceSupported();
+        } catch (_) {}
       }
       ss.settings.launchAtStartup.value = await setupLaunchAtStartup(ss.settings.launchAtStartup.value, ss.settings.launchAtStartupMinimized.value);
     }
@@ -82,6 +84,7 @@ class SettingsService extends GetxService {
       return false;
     } else if (launchAtStartup) {
       /// Copied from https://github.com/Merrit/nyrna/pull/172/files
+      /// Custom because LaunchAtStartup's implementation doesn't support args yet.
       String script = '''
         \$TargetPath = "shell:AppsFolder\\$windowsAppPackageName"
         \$ShortcutFile = "\$env:USERPROFILE\\Start Menu\\Programs\\Startup\\$appName.lnk"
@@ -295,6 +298,21 @@ class SettingsService extends GetxService {
     return val.item1 >= 12;
   }
 
+  Future<bool> get isMinVentura async {
+    final val = await getServerDetails();
+    return val.item1 >= 13;
+  }
+
+  Future<bool> get isMinSonoma async {
+    final val = await getServerDetails();
+    return val.item1 >= 14;
+  }
+
+  Future<bool> get isMinSequioa async {
+    final val = await getServerDetails();
+    return val.item1 >= 15;
+  }
+
   bool get isMinMontereySync {
     return (prefs.getInt("macos-version") ?? 11) >= 12;
   }
@@ -309,6 +327,14 @@ class SettingsService extends GetxService {
 
   bool get isMinCatalinaSync {
     return (prefs.getInt("macos-minor-version") ?? 11) >= 15 || isMinBigSurSync;
+  }
+
+  bool get isMinSonomaSync {
+    return (prefs.getInt("macos-version") ?? 11) >= 14;
+  }
+
+  bool get isMinSequioaSync {
+    return (prefs.getInt("macos-version") ?? 11) >= 15;
   }
 
   /// Group chats can be created on macOS <= Catalina or

@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -55,7 +56,11 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
     return InkWell(
         onTap: () {
           finalDate = tmpDate;
-          Navigator.of(context).pop();
+          if (ns.isTabletMode(context)){
+            Get.close(1);
+          } else {
+            Navigator.of(context).pop();
+          }
         },
         child: Container(
             padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -145,6 +150,8 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
             ],
           ))));
 
+  final ScrollController controller = ScrollController();
+
   await showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -156,8 +163,10 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Scrollbar(
             thumbVisibility: true,
+            controller: controller,
             radius: const Radius.circular(10.0),
             child: SingleChildScrollView(
+              controller: controller,
                 child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Column(mainAxisSize: MainAxisSize.min, children: selections)))),

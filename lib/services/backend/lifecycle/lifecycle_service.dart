@@ -25,8 +25,12 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
         || IsolateNameServer.lookupPortByName('bg_isolate') != null);
 
   AppLifecycleState? get currentState => WidgetsBinding.instance.lifecycleState;
-  bool wasPaused = false;
-  bool? resumeFromPause;
+
+  List<AppLifecycleState> statesSinceLastResume = [];
+
+  bool get wasPaused => statesSinceLastResume.contains(AppLifecycleState.paused);
+  bool get wasHidden => statesSinceLastResume.contains(AppLifecycleState.inactive) || statesSinceLastResume.contains(AppLifecycleState.detached);
+  bool get hasResumed => statesSinceLastResume.contains(AppLifecycleState.resumed);
 
   @override
   void onInit() {
@@ -55,15 +59,14 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     Logger.debug("App State changed to $state");
 
-    if (state == AppLifecycleState.paused) {
-      wasPaused = true;
-    } else if (state == AppLifecycleState.resumed) {
-      if (wasPaused) {
-        wasPaused = false;
-        resumeFromPause = true;
-      } else {
-        resumeFromPause = false;
+    // If the current state is resume, and we've already had a resume, remove all states up to the last resume.
+    if (state == AppLifecycleState.resumed && statesSinceLastResume.contains(AppLifecycleState.resumed)) {
+      // Remove states up to the last resume
+      while (statesSinceLastResume.isNotEmpty && statesSinceLastResume.first != AppLifecycleState.resumed) {
+        statesSinceLastResume.removeAt(0);
       }
+    } else {
+      statesSinceLastResume.add(state);
     }
 
     if (state == AppLifecycleState.resumed) {
