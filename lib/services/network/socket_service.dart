@@ -29,7 +29,11 @@ class SocketService extends GetxService {
   late Socket socket;
 
   String get serverAddress => http.origin;
+  String get serverAddressSecondary => ss.settings.fallbackServerUrl.value; // Added secondary server URL
   String get password => ss.settings.guidAuthKey.value;
+
+  int _currentServerIndex = 0;
+  List<String> get serverAddresses => [serverAddress, serverAddressSecondary];
 
   @override
   void onInit() {
@@ -55,16 +59,20 @@ class SocketService extends GetxService {
   }
 
   void startSocket() {
+    _currentServerIndex = 0; // Start with primary server
+    _connectToServer(serverAddresses[_currentServerIndex]);
+  }
+
+  void _connectToServer(String address) {
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": password})
         .setTransports(['websocket', 'polling'])
         .setExtraHeaders(http.headers)
-        // Disable so that we can create the listeners first
         .disableAutoConnect()
         .enableReconnection();
-    socket = io(serverAddress, options.build());
-    // placed here so that [socket] is still initialized
-    if (isNullOrEmpty(serverAddress)) return;
+    socket = io(address, options.build());
+
+    if (isNullOrEmpty(address)) return;
 
     socket.onConnect((data) => handleStatusUpdate(SocketState.connected, data));
     socket.onReconnect((data) => handleStatusUpdate(SocketState.connected, data));
@@ -100,26 +108,27 @@ class SocketService extends GetxService {
   }
 
   void disconnect() {
-    if (isNullOrEmpty(serverAddress)) return;
+    if (serverAddresses.isEmpty) return;
     socket.disconnect();
     state.value = SocketState.disconnected;
   }
 
   void reconnect() {
-    if (state.value == SocketState.connected || isNullOrEmpty(serverAddress)) return;
+    if (state.value == SocketState.connected || serverAddresses.isEmpty) return;
     state.value = SocketState.connecting;
     socket.connect();
   }
 
   void closeSocket() {
-    if (isNullOrEmpty(serverAddress)) return;
+    if (serverAddresses.isEmpty) return;
     socket.dispose();
     state.value = SocketState.disconnected;
   }
 
   void restartSocket() {
     closeSocket();
-    startSocket();
+    _currentServerIndex = (_currentServerIndex + 1) % serverAddresses.length; // Switch to next server
+    _connectToServer(serverAddresses[_currentServerIndex]);
   }
 
   void forgetConnection() {
@@ -155,39 +164,35 @@ class SocketService extends GetxService {
         _reconnectTimer = null;
         NetworkTasks.onConnect();
         notif.clearSocketError();
-        return;
+        break;
       case SocketState.disconnected:
         Logger.info("Disconnected from socket...");
         state.value = SocketState.disconnected;
-        return;
+        break;
       case SocketState.connecting:
         Logger.info("Connecting to socket...");
         state.value = SocketState.connecting;
-        return;
+        break;
       case SocketState.error:
-        Logger.info("Socket connect error, fetching new URL...");
+        Logger.info("Socket connect error, switching server...");
 
         if (data is SocketException) {
           handleSocketException(data);
         }
 
         state.value = SocketState.error;
-        // After 5 seconds of an error, we should retry the connection
-        _reconnectTimer = Timer(const Duration(seconds: 5), () async {
+        _reconnectTimer ??= Timer(const Duration(seconds: 5), () {
           if (state.value == SocketState.connected) return;
 
-          await fdb.fetchNewUrl();
           restartSocket();
 
-          if (state.value == SocketState.connected) return;
-
-          if (!ss.settings.keepAppAlive.value) {
+          if (state.value != SocketState.connected && !ss.settings.keepAppAlive.value) {
             notif.createSocketError();
           }
         });
-        return;
+        break;
       default:
-        return;
+        break;
     }
   }
 
