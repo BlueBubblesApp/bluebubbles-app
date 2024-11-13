@@ -2,6 +2,30 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.15.0
+
+### Enhancements
+
+- Support for the Unified Push protocol (thanks @Garland-g)
+- New `Notification Providers` settings page
+    - You'll be able to manage all of the different providers for notifications (i.e. Firebase, Background Service, or Unified Push)
+    - Better tools to manage your Firebase configuration
+- Editing a message will be disabled for messages older than 15 minutes
+- Adds the ability for the app to remember the reply-state for chats (thanks @cameronaaron)
+- Adds troubleshooting tool to clear the last opened chat "state"
+    - This is useful for users who run into the bug where the app will get stuck opening the same chat
+- Adds support for setting custom headers during the setup process
+- Adds support for using custom headers when connecting to the server's websocket via the background service
+
+### Fixes
+
+- Fixes app crash when background service is enabled and your password includes a `%` in it
+- Fixes issue sending links on macOS Sonoma+
+- Fixes issue where the app would not exit from the chat list, when using the Material or Samsung themes
+- Improved background service error handling
+- Fixes issue where Firebase tokens would not be revoked when resetting the app.
+- Fixes issue loading FindMy devices from the server
+
 ## v1.14.0
 
 This update brings a ton of QOL improvements and bug fixes.
