@@ -970,30 +970,20 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     fs.deleteDB();
                                                     socket.forgetConnection();
                                                     ss.settings = Settings();
-                                                    ss.fcmData = FCMData();
+                                                    await ss.settings.saveAsync();
+
                                                     await ss.prefs.clear();
-                                                    await ss.prefs.setString(
-                                                        "selected-dark",
-                                                        "OLED Dark");
-                                                    await ss.prefs.setString(
-                                                        "selected-light",
-                                                        "Bright White");
-                                                    Database.themes.putMany(
-                                                        ts.defaultThemes);
-                                                    await ts
-                                                        .changeTheme(context);
+                                                    await ss.prefs.setString("selected-dark", "OLED Dark");
+                                                    await ss.prefs.setString("selected-light", "Bright White");
+                                                    Database.themes.putMany(ts.defaultThemes);
                                                     
                                                     // Clear the FCM data from the database, shared preferences, and locally
-                                                    if (!ss.fcmData.isNull) {
-                                                      await FCMData.deleteFcmData();
+                                                    await FCMData.deleteFcmData();
 
-                                                      // Delete the Firebase FCM token
-                                                      await mcs.invokeMethod("firebase-delete-token");
-                                                    }
+                                                    // Delete the Firebase FCM token
+                                                    await mcs.invokeMethod("firebase-delete-token");
 
-                                                    ss.settings.firstFcmRegisterDate.value = 0;
-                                                    await ss.settings.saveOne('firstFcmRegisterDate');
-
+                                                    // Fully close the app
                                                     exit(0);
                                                   },
                                                 ),
