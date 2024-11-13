@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -5,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 Future<bool> showCustomHeadersDialog(BuildContext context) async {
-  int headers = ss.settings.customHeaders.length.clamp(1, 100);
+  RxInt headers = ss.settings.customHeaders.length.clamp(0, 100).obs;
   List<TextEditingController> keyControllers = [];
   List<TextEditingController> valueControllers = [];
   if (ss.settings.customHeaders.isNotEmpty) {
@@ -34,15 +36,17 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
                   constraints: BoxConstraints(
                     maxHeight: context.mediaQuery.size.height * 0.2,
                   ),
-                  child: ListView.builder(
+                  child: Obx(() {
+                    return ListView.builder(
                     shrinkWrap: true,
-                    itemCount: headers,
+                    itemCount: headers.value,
                     findChildIndexCallback: (key) => findChildIndexByKey(ss.settings.customHeaders.keys.toList(), key, (item) => item),
                     itemBuilder: (context, index) {
                       return Row(
-                          key: ValueKey(ss.settings.customHeaders.keys.toList()[index]),
+                          key: ValueKey(index),
                           children: [
                             Flexible(
+                              flex: 1,
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
@@ -55,9 +59,9 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
                               ),
                             ),
                             Flexible(
-                              flex: 2,
+                              flex: 1,
                               child: Padding(
-                                padding: const EdgeInsets.all(8.0),
+                                padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
                                 child: TextField(
                                   controller: valueControllers[index],
                                   decoration: const InputDecoration(
@@ -67,9 +71,20 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
                                 ),
                               ),
                             ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () {
+                                keyControllers.removeAt(index);
+                                valueControllers.removeAt(index);
+                                setState(() {
+                                  headers.value -= 1;
+                                });
+                              },
+                            ),
                           ]
                       );
                     },
+                  );}
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -78,7 +93,7 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
                     keyControllers.add(TextEditingController());
                     valueControllers.add(TextEditingController());
                     setState(() {
-                      headers++;
+                      headers.value += 1;
                     });
                   },
                   icon: const Icon(
@@ -101,7 +116,7 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
         ),
         TextButton(
             child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-            onPressed: () {
+            onPressed: () async {
               final map = <String, String>{};
               keyControllers.forEachIndexed((index, element) {
                 final keyController = element;
@@ -110,8 +125,10 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
                   map.addEntries([MapEntry(keyController.text, valueController.text)]);
                 }
               });
+
               ss.settings.customHeaders.value = map;
-              ss.settings.save();
+              await ss.settings.saveOne('customHeaders');
+              await ss.prefs.setString('customHeaders', jsonEncode(http.headers));
               http.onInit();
               Navigator.of(context).pop(true);
             }

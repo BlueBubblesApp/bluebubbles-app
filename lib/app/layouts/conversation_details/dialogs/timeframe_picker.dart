@@ -53,6 +53,13 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
       icon = Icons.calendar_view_month;
     }
 
+    String dateStr;
+    if (tmpDate.isToday()) {
+      dateStr = buildTime(tmpDate);
+    } else {
+      dateStr = buildFullDate(tmpDate, includeTime: tmpDate.isToday(), useTodayYesterday: useTodayYesterday);
+    }
+
     return InkWell(
         onTap: () {
           finalDate = tmpDate;
@@ -82,8 +89,8 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
                 Container(
                   constraints: const BoxConstraints(minWidth: 20),
                 ),
-                Text(buildFullDate(tmpDate, includeTime: tmpDate.isToday(), useTodayYesterday: useTodayYesterday),
-                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.secondary)),
+                Text(dateStr,
+                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.secondary), overflow: TextOverflow.fade),
               ],
             )));
   }).toList();

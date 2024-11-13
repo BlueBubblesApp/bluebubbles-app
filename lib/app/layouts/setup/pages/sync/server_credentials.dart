@@ -49,7 +49,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       title: "Server Connection",
       subtitle: kIsWeb || kIsDesktop
           ? "Enter your server URL and password to access your messages."
-          : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
+          : "We've created a QR code on your server that you can scan with your phone for easy setup.\nAlternatively, you can manually input your URL and password.",
       contentWrapper: (child) => AnimatedSize(
         duration: const Duration(milliseconds: 200),
         child: !showLoginButtons && context.isPhone ? const SizedBox.shrink() : child,
@@ -187,6 +187,18 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                     ),
             ),
           if (token != null) const SizedBox(height: 10),
+          Container(
+              height: 40,
+              padding: const EdgeInsets.all(2),
+              child: TextButton(
+                onPressed: () async {
+                  await showCustomHeadersDialog(context);
+                },
+                child: Text("Enter Custom Headers",
+                        style: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.primary)),
+              ),
+            ),
+          const SizedBox(height: 10),
           if (token != null)
             Container(
               decoration: BoxDecoration(
@@ -696,7 +708,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     } else {
       try {
         FCMData fcmData = FCMData.fromMap(data["data"]);
-        ss.saveFCMData(fcmData);
+        await ss.saveFCMData(fcmData);
       } catch (_) {
         if (Platform.isAndroid) {
           showDialog(

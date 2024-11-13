@@ -38,13 +38,13 @@ class FCMData {
     );
   }
 
-  FCMData save() {
+  Future<FCMData> save({bool wait = false}) async {
     if (kIsWeb) return this;
     List<FCMData> data = Database.fcmData.getAll();
     if (data.length > 1) data.removeRange(1, data.length); // These were being ignored anyway
     id = !Database.fcmData.isEmpty() ? data.first.id : null;
     Database.fcmData.put(this);
-    Future(() async {
+    final future = Future(() async {
       if (projectID != null) {
         await ss.prefs.setString('projectID', projectID!);
       } else {
@@ -76,11 +76,16 @@ class FCMData {
         await ss.prefs.remove('applicationID');
       }
     });
+
+    if (wait) {
+      await future;
+    }
+
     ss.fcmData = this;
     return this;
   }
 
-  static void deleteFcmData() async {
+  static Future<void> deleteFcmData() async {
     Database.fcmData.removeAll();
     await ss.prefs.remove('projectID');
     await ss.prefs.remove('storageBucket');

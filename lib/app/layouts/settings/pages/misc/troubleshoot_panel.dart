@@ -285,11 +285,32 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           containerColor: optimizationsDisabled.value ? Colors.green : Colors.redAccent,
                         )),
                         title: "Disable Battery Optimizations",
-                        subtitle: "Allow app to run in the background via the OS",
+                        subtitle: "Allow app to run in the background via the OS. This may not do anything on some devices.",
                         trailing: Obx(() => !optimizationsDisabled.value
                             ? const NextButton()
                             : Icon(Icons.check,
                                 color: context.theme.colorScheme.outline))),
+                  ]),
+                SettingsHeader(
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Troubleshooting"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    SettingsTile(
+                        onTap: () async {
+                          await ss.prefs.remove("lastOpenedChat");
+                          showSnackbar("Success", "Successfully cleared the last opened chat!");
+                        },
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.rectangle_badge_xmark,
+                          materialIcon: Icons.folder_delete_outlined,
+                          containerColor: Colors.orange,
+                        ),
+                        title: "Clear Last Opened Chat",
+                        subtitle: "Use this if you are experiencing the app opening an incorrect chat"
+                    )
                   ]),
                 if (!kIsWeb)
                   SettingsHeader(

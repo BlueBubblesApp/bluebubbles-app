@@ -161,7 +161,7 @@ class ActionHandler extends GetxService {
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-        ddScan: m.text!.hasUrl,
+        ddScan: !ss.isMinSonomaSync && m.text!.hasUrl,
       ).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
@@ -226,7 +226,7 @@ class ActionHandler extends GetxService {
       selectedMessageGuid: m.threadOriginatorGuid,
       effectId: m.expressiveSendStyleId,
       partIndex: int.tryParse(m.threadOriginatorPart?.split(":").firstOrNull ?? ""),
-      ddScan: parts.any((e) => e["text"].toString().hasUrl)
+      ddScan: !ss.isMinSonomaSync && parts.any((e) => e["text"].toString().hasUrl)
     ).then((response) async {
       final newMessage = Message.fromMap(response.data['data']);
       try {
@@ -354,7 +354,7 @@ class ActionHandler extends GetxService {
       Logger.info("Not notifying for already handled new message with GUID ${m.guid}...", tag: "ActionHandler");
     }
 
-    if (!ls.isAlive && shouldNotify) {
+    if ((!ls.isAlive || ss.settings.endpointUnifiedPush.value != "") && shouldNotify) {
       await MessageHelper.handleNotification(m, c);
     }
     await c.addMessage(m);

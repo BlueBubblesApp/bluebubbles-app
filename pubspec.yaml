@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 1.14.0+69
+version: 1.15.0+70
 publish_to: none
 
 environment:
@@ -175,6 +175,7 @@ dependencies:
   system_info2: ^4.0.0
   tray_manager: ^0.2.3
   tuple: ^2.0.2
+  unifiedpush: ^5.0.1
   universal_html: ^2.2.4 # cross-platform dart:html implementation
   universal_io: ^2.2.2 # cross-platform dart:io implementation
   url_launcher: ^6.2.5
@@ -318,7 +319,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.14.0.0
+  msix_version: 1.15.0.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

@@ -232,4 +232,25 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     cm.setAllInactiveSync();
     Get.delete<ConversationViewController>(tag: tag);
   }
+
+  Future<void> saveReplyToMessageState() async {
+    if (replyToMessage != null) {
+      await ss.prefs.setString('replyToMessage_${chat.guid}', replyToMessage!.item1.guid!);
+      await ss.prefs.setInt('replyToMessagePart_${chat.guid}', replyToMessage!.item2);
+    } else {
+      await ss.prefs.remove('replyToMessage_${chat.guid}');
+      await ss.prefs.remove('replyToMessagePart_${chat.guid}');
+    }
+  }
+
+  Future<void> loadReplyToMessageState() async {
+    final replyToMessageGuid = ss.prefs.getString('replyToMessage_${chat.guid}');
+    final replyToMessagePart = ss.prefs.getInt('replyToMessagePart_${chat.guid}');
+    if (replyToMessageGuid != null && replyToMessagePart != null) {
+      final message = Message.findOne(guid: replyToMessageGuid);
+      if (message != null) {
+        replyToMessage = Tuple2(message, replyToMessagePart);
+      }
+    }
+  }
 }

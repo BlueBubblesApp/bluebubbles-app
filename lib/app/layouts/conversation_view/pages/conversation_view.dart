@@ -51,6 +51,14 @@ class ConversationViewState extends OptimizedState<ConversationView> {
     if (widget.onInit != null) {
       Future.delayed(Duration.zero, widget.onInit!);
     }
+
+    controller.loadReplyToMessageState(); // P224b
+  }
+
+  @override
+  void dispose() {
+    controller.saveReplyToMessageState(); // P8bda
+    super.dispose();
   }
 
   @override

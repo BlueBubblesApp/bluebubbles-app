@@ -147,6 +147,7 @@ class CustomDetailsMenuActionWidget extends StatelessWidget {
   final String title;
   final IconData iosIcon;
   final IconData nonIosIcon;
+  final bool? shouldDisable;
 
   CustomDetailsMenuActionWidget({
     super.key,
@@ -154,40 +155,48 @@ class CustomDetailsMenuActionWidget extends StatelessWidget {
     required this.title,
     required this.iosIcon,
     required this.nonIosIcon,
+    this.shouldDisable,
   });
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: ListTile(
-            mouseCursor: SystemMouseCursors.click,
-            dense: !kIsDesktop && !kIsWeb,
-            title: Text(
-              title,
-              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-            ),
-            trailing: Icon(
-              ss.settings.skin.value == Skins.iOS ? iosIcon : nonIosIcon,
-              color: context.theme.colorScheme.properOnSurface,
-            ),
+  Widget build(BuildContext context) {
+    bool isDisabled = shouldDisable ?? false;
+    Color color = isDisabled ? Colors.grey : context.theme.colorScheme.properOnSurface;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isDisabled ? null : onTap,
+        child: ListTile(
+          mouseCursor: SystemMouseCursors.click,
+          dense: !kIsDesktop && !kIsWeb,
+          title: Text(
+            title,
+            style: context.theme.textTheme.bodyLarge!.copyWith(color: color),
+          ),
+          trailing: Icon(
+            ss.settings.skin.value == Skins.iOS ? iosIcon : nonIosIcon,
+            color: color,
           ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class DetailsMenuActionWidget extends CustomDetailsMenuActionWidget {
   final DetailsMenuAction action;
   final String? customTitle;
+  final bool? shouldDisableBtn;
 
   DetailsMenuActionWidget({
     super.key,
     super.onTap,
     this.customTitle,
     required this.action,
+    this.shouldDisableBtn,
   }) : super(
             title: customTitle ?? _actionToText[action]!,
             iosIcon: _actionToIcon[action]!.$1,
-            nonIosIcon: _actionToIcon[action]!.$2);
+            nonIosIcon: _actionToIcon[action]!.$2,
+            shouldDisable: shouldDisableBtn);
 }

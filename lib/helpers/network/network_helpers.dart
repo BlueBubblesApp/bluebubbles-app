@@ -38,7 +38,7 @@ Future<String> getDeviceName() async {
     if (uniqueId == 0) {
       uniqueId = (DateTime.now().millisecondsSinceEpoch / 1000).round();
       ss.settings.firstFcmRegisterDate.value = uniqueId;
-      ss.settings.save();
+      await ss.settings.saveOne('firstFcmRegisterDate');
     }
 
     if (Platform.isAndroid) {

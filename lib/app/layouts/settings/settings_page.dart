@@ -1,5 +1,6 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/advanced/notification_providers_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
@@ -21,9 +22,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_mess
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theming_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/troubleshoot_panel.dart';
-import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -555,8 +554,22 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                               Icons.electric_bolt_outlined,
                                           containerColor: Colors.orangeAccent),
                                     ),
-                                  if (Platform.isAndroid)
-                                    const SettingsDivider(),
+                                  const SettingsDivider(),
+                                  SettingsTile(
+                                      backgroundColor: tileColor,
+                                      title: "Notification Providers",
+                                      trailing: const NextButton(),
+                                      onTap: () async {
+                                        ns.pushAndRemoveSettingsUntil(
+                                            context,
+                                            NotificationProvidersPanel(),
+                                            (route) => route.isFirst);
+                                      },
+                                      leading: const SettingsLeadingIcon(
+                                          iosIcon: CupertinoIcons.bell,
+                                          materialIcon: Icons.notifications,
+                                          containerColor: Colors.green)),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () async {
@@ -922,7 +935,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     .theme.textTheme.titleLarge,
                                               ),
                                               content: Text(
-                                                "This will delete all app data, including your settings, messages, attachments, and more. This action cannot be undone. It is recommended that you take a backup of your settings before proceeding.",
+                                                "This will delete all app data, including your settings, messages, attachments, and more. This action cannot be undone. It is recommended that you take a backup of your settings before proceeding. This will also close the app once the process is complete.",
                                                 style: context
                                                     .theme.textTheme.bodyLarge,
                                               ),
@@ -955,28 +968,27 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     fs.deleteDB();
                                                     socket.forgetConnection();
                                                     ss.settings = Settings();
-                                                    ss.fcmData = FCMData();
+                                                    await ss.settings.saveAsync();
+
                                                     await ss.prefs.clear();
-                                                    await ss.prefs.setString(
-                                                        "selected-dark",
-                                                        "OLED Dark");
-                                                    await ss.prefs.setString(
-                                                        "selected-light",
-                                                        "Bright White");
-                                                    Database.themes.putMany(
-                                                        ts.defaultThemes);
-                                                    await ts
-                                                        .changeTheme(context);
-                                                    Get.offAll(
-                                                        () => PopScope(
-                                                              canPop: false,
-                                                              child: TitleBarWrapper(
-                                                                  child:
-                                                                      SetupView()),
-                                                            ),
-                                                        duration: Duration.zero,
-                                                        transition: Transition
-                                                            .noTransition);
+                                                    await ss.prefs.setString("selected-dark", "OLED Dark");
+                                                    await ss.prefs.setString("selected-light", "Bright White");
+                                                    Database.themes.putMany(ts.defaultThemes);
+                                                    
+                                                    // Clear the FCM data from the database, shared preferences, and locally
+                                                    await FCMData.deleteFcmData();
+
+                                                    // Delete the Firebase FCM token
+                                                    try {
+                                                      if (fcm.token != null) {
+                                                        await mcs.invokeMethod("firebase-delete-token");
+                                                      }
+                                                    } catch (e, s) {
+                                                      Logger.error("Failed to delete Firebase FCM token", error: e, trace: s);
+                                                    }
+
+                                                    // Fully close the app
+                                                    exit(0);
                                                   },
                                                 ),
                                               ],

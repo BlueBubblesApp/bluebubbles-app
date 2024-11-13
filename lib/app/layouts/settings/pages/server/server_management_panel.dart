@@ -507,7 +507,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
 
                               // This will restart the socket & foreground service
                               await saveNewServerUrl(fcmData[1]);
-                              ss.saveFCMData(data);
+                              await ss.saveFCMData(data);
                             }
                           },
                   ),
@@ -583,23 +583,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             containerColor: Colors.green,
                           ),
                         )),
-                  const SettingsDivider(),
-                  SettingsTile(
-                    leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.down_arrow,
-                        materialIcon: Icons.download,
-                        containerColor: Colors.orange),
-                    title: "Fetch Firebase Config",
-                    subtitle: socket.state.value == SocketState.connected
-                        ? "Forcefully fetch current Firebase Config from server"
-                        : "Disconnected, cannot fetch",
-                    backgroundColor: tileColor,
-                    onTap: () async {
-                      if (socket.state.value != SocketState.connected) return;
-
-                      await fdb.fetchFirebaseConfig();
-                    },
-                  ),
                   if (!isSnap)
                     const SettingsDivider(),
                   if (!isSnap)
@@ -719,7 +702,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             } else {
                               ss.settings.localhostPort.value = null;
                             }
-                            ss.settings.save();
+
+                            await ss.settings.saveOne('localhostPort');
                             if (ss.settings.localhostPort.value == null) {
                               http.originOverride = null;
                             } else {
