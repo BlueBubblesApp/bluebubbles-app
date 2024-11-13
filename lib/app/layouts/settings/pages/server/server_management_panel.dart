@@ -702,7 +702,8 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             } else {
                               ss.settings.localhostPort.value = null;
                             }
-                            ss.settings.save();
+
+                            await ss.settings.saveOne('localhostPort');
                             if (ss.settings.localhostPort.value == null) {
                               http.originOverride = null;
                             } else {

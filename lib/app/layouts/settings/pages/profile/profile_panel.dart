@@ -54,14 +54,14 @@ class _ProfilePanelState extends OptimizedState<ProfilePanel> with WidgetsBindin
 
   void updateName() async {
     final nameController = TextEditingController(text: ss.settings.userName.value);
-    done() {
+    done() async {
       if (nameController.text.isEmpty) {
         showSnackbar("Error", "Enter a name!");
         return;
       }
       Get.back();
       ss.settings.userName.value = nameController.text;
-      ss.settings.save();
+      await ss.settings.saveOne("userName");
       setState(() {});
     }
     await showDialog(

@@ -35,7 +35,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> {
       }
       await file.writeAsBytes(croppedData);
       ss.settings.userAvatarPath.value = file.path;
-      ss.settings.save();
+      await ss.settings.saveOne("userAvatarPath");
       Get.back();
       Navigator.of(context).pop();
       showSnackbar("Notice", "User avatar saved successfully");
