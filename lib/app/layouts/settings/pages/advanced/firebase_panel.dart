@@ -193,6 +193,7 @@ class _FirebasePanelState extends OptimizedState<FirebasePanel> {
                               );
                             },
                           );
+
                           await fdb.fetchFirebaseConfig();
                           await fcm.registerDevice();
                         },

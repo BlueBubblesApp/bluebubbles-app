@@ -937,7 +937,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     .theme.textTheme.titleLarge,
                                               ),
                                               content: Text(
-                                                "This will delete all app data, including your settings, messages, attachments, and more. This action cannot be undone. It is recommended that you take a backup of your settings before proceeding.",
+                                                "This will delete all app data, including your settings, messages, attachments, and more. This action cannot be undone. It is recommended that you take a backup of your settings before proceeding. This will also close the app once the process is complete.",
                                                 style: context
                                                     .theme.textTheme.bodyLarge,
                                               ),
@@ -982,16 +982,19 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                         ts.defaultThemes);
                                                     await ts
                                                         .changeTheme(context);
-                                                    Get.offAll(
-                                                        () => PopScope(
-                                                              canPop: false,
-                                                              child: TitleBarWrapper(
-                                                                  child:
-                                                                      SetupView()),
-                                                            ),
-                                                        duration: Duration.zero,
-                                                        transition: Transition
-                                                            .noTransition);
+                                                    
+                                                    // Clear the FCM data from the database, shared preferences, and locally
+                                                    if (!ss.fcmData.isNull) {
+                                                      await FCMData.deleteFcmData();
+
+                                                      // Delete the Firebase FCM token
+                                                      await mcs.invokeMethod("firebase-delete-token");
+                                                    }
+
+                                                    ss.settings.firstFcmRegisterDate.value = 0;
+                                                    await ss.settings.saveOne('firstFcmRegisterDate');
+
+                                                    exit(0);
                                                   },
                                                 ),
                                               ],
