@@ -696,7 +696,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     } else {
       try {
         FCMData fcmData = FCMData.fromMap(data["data"]);
-        ss.saveFCMData(fcmData);
+        await ss.saveFCMData(fcmData);
       } catch (_) {
         if (Platform.isAndroid) {
           showDialog(

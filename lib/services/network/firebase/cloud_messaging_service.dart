@@ -37,7 +37,6 @@ class CloudMessagingService extends GetxService {
     }
 
     // Get a unique name for this device
-    String deviceName = await getDeviceName();
     bool closeCompleter = false;
 
     // Make sure FCM data is available
@@ -50,6 +49,7 @@ class CloudMessagingService extends GetxService {
     if (!isNullOrEmpty(token)) {
       Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
       Logger.info('Registering device with server...', tag: 'FCM-Auth');
+      String deviceName = await getDeviceName();
       await http.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
         Logger.info('Device registration successful!', tag: 'FCM-Auth');
         completer?.complete();
@@ -104,7 +104,7 @@ class CloudMessagingService extends GetxService {
         try {
           // Parse and save new FCM data, then retry auth with FCM
           FCMData fcmData = FCMData.fromMap(fcmMeta);
-          ss.saveFCMData(fcmData);
+          await ss.saveFCMData(fcmData);
           result = await mcs.invokeMethod('firebase-auth', fcmData.toMap());
         } on PlatformException catch (e, stack) {
           // If we fail a second time, error out
@@ -129,6 +129,7 @@ class CloudMessagingService extends GetxService {
     // Register the FCM device to the server
     token = result;
     Logger.info('Registering device with server...', tag: 'FCM-Auth');
+    String deviceName = await getDeviceName();
     await http.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
       Logger.info('Device registration successful!', tag: 'FCM-Auth');
       completer?.complete();

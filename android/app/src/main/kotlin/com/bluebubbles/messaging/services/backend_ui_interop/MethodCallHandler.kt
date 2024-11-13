@@ -6,6 +6,7 @@ import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.MainActivity.Companion.engine
 import com.bluebubbles.messaging.services.filesystem.GetContentUriPathHandler
 import com.bluebubbles.messaging.services.firebase.FirebaseAuthHandler
+import com.bluebubbles.messaging.services.firebase.FirebaseDeleteTokenHandler
 import com.bluebubbles.messaging.services.firebase.ServerUrlRequestHandler
 import com.bluebubbles.messaging.services.firebase.UpdateNextRestartHandler
 import com.bluebubbles.messaging.services.notifications.CreateIncomingFaceTimeNotification
@@ -45,6 +46,7 @@ class MethodCallHandler {
         when(call.method) {
             UnifiedPushHandler.tag -> UnifiedPushHandler().handleMethodCall(call, result, context)
             FirebaseAuthHandler.tag -> FirebaseAuthHandler().handleMethodCall(call, result, context)
+            FirebaseDeleteTokenHandler.tag -> FirebaseDeleteTokenHandler().handleMethodCall(call, result, context)
             NotificationChannelHandler.tag -> NotificationChannelHandler().handleMethodCall(call, result, context)
             ServerUrlRequestHandler.tag -> ServerUrlRequestHandler().handleMethodCall(call, result, context)
             UpdateNextRestartHandler.tag -> UpdateNextRestartHandler().handleMethodCall(call, result, context)

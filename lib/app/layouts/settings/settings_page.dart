@@ -1,7 +1,7 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/advanced/notification_providers_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
-import 'package:bluebubbles/app/layouts/settings/pages/advanced/unified_push.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/message_reminders_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
@@ -556,33 +556,22 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                               Icons.electric_bolt_outlined,
                                           containerColor: Colors.orangeAccent),
                                     ),
-                                  if (Platform.isAndroid)
-                                    const SettingsDivider(),
-                                  if (Platform.isAndroid)
-                                    SettingsTile(
-                                        backgroundColor: tileColor,
-                                        title: "UnifiedPush",
-                                        subtitle:
-                                            "UnifiedPush ${ss.settings.enableUnifiedPush.value ? "Enabled" : "Disabled"}",
-                                        trailing: const NextButton(),
-                                        onTap: () async {
-                                          ns.pushAndRemoveSettingsUntil(
-                                              context,
-                                              UnifiedPushPanel(),
-                                              (route) => route.isFirst);
-                                        },
-                                        leading: SettingsLeadingIcon(
-                                            iosIcon: CupertinoIcons.bell_circle,
-                                            materialIcon:
-                                                Icons.doorbell_outlined,
-                                            containerColor: getIndicatorColor(ss
-                                                    .settings
-                                                    .enableUnifiedPush
-                                                    .value
-                                                ? SocketState.connected
-                                                : SocketState.connecting))),
-                                  if (Platform.isAndroid)
-                                    const SettingsDivider(),
+                                  const SettingsDivider(),
+                                  SettingsTile(
+                                      backgroundColor: tileColor,
+                                      title: "Notification Providers",
+                                      trailing: const NextButton(),
+                                      onTap: () async {
+                                        ns.pushAndRemoveSettingsUntil(
+                                            context,
+                                            NotificationProvidersPanel(),
+                                            (route) => route.isFirst);
+                                      },
+                                      leading: const SettingsLeadingIcon(
+                                          iosIcon: CupertinoIcons.bell,
+                                          materialIcon: Icons.notifications,
+                                          containerColor: Colors.green)),
+                                  const SettingsDivider(),
                                   SettingsTile(
                                       backgroundColor: tileColor,
                                       onTap: () async {

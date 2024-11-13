@@ -507,7 +507,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
 
                               // This will restart the socket & foreground service
                               await saveNewServerUrl(fcmData[1]);
-                              ss.saveFCMData(data);
+                              await ss.saveFCMData(data);
                             }
                           },
                   ),

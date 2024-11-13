@@ -34,18 +34,24 @@ class FirebaseDatabaseService extends GetxService {
     return null;
   }
 
-  Future<void> fetchFirebaseConfig() async {
-    await http.fcmClient().then((response) async {
+  Future<bool> fetchFirebaseConfig() async {
+    try {
+      final response = await http.fcmClient();
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)) {
         FCMData newData = FCMData.fromMap(data!);
-        ss.saveFCMData(newData);
+        await ss.saveFCMData(newData);
       }
-    }).onError((error, stackTrace) {
-      if (error is Response && error.statusCode == 404) {
-        FCMData.deleteFcmData();
+    } catch (e, s) {
+      Logger.error("Failed to fetch Firebase Config!", error: e, trace: s);
+      if (e is Response && e.statusCode == 404) {
+        await FCMData.deleteFcmData();
       }
-    });
+
+      return false;
+    }
+
+    return true;
   }
 
   /// Fetch the new server URL from the Firebase Database

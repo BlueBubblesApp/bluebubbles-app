@@ -159,32 +159,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                               containerColor: Colors.teal
                             ),
                           )),
-                    if (!kIsWeb && !kIsDesktop)
-                      const SettingsDivider(),
-                    if (!kIsWeb && !kIsDesktop)
-                      Obx(() => SettingsSwitch(
-                            onChanged: (bool val) async {
-                              ss.settings.keepAppAlive.value = val;
-                              await ss.saveSettings(ss.settings);
-
-                              // We don't need to start the service here because it will be started
-                              // when the app is inactive.
-                              if (!val) {
-                                await mcs.invokeMethod("stop-foreground-service");
-                              }
-                            },
-                            initialVal: ss.settings.keepAppAlive.value,
-                            title: "Use Background Service For Notifications",
-                            subtitle:
-                                "Keep an always-open socket connection to the server for notifications, instead of registering with Firebase Cloud Messaging.",
-                            isThreeLine: true,
-                            backgroundColor: tileColor,
-                            leading: const SettingsLeadingIcon(
-                              iosIcon: CupertinoIcons.bolt_badge_a_fill,
-                              materialIcon: Icons.bolt,
-                              containerColor: Colors.blueAccent
-                            ),
-                          )),
                   ],
                 ),
               if (!kIsWeb && !kIsDesktop || ss.canAuthenticate)
