@@ -59,7 +59,15 @@ class HttpService extends GetxService {
     }
   }
 
-  Map<String, String> get headers => ss.settings.customHeaders..addAll({'ngrok-skip-browser-warning': 'true'});
+  Map<String, String> get headers {
+    if (ss.settings.serverAddress.contains('ngrok')) {
+      ss.settings.customHeaders.addAll({'ngrok-skip-browser-warning': 'true'});
+    } else if (ss.settings.serverAddress.contains('zrok')) {
+      ss.settings.customHeaders.addAll({'skip_zrok_interstitial': 'true'});
+    }
+
+    return ss.settings.customHeaders;
+  }
 
   /// Initialize dio with a couple options and intercept all requests for logging
   @override

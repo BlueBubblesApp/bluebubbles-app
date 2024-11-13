@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/firebase_panel.dart';
@@ -123,6 +124,9 @@ class _NotificationProvidersState extends OptimizedState<NotificationProvidersPa
                     onChanged: (bool val) async {
                       ss.settings.keepAppAlive.value = val;
                       await ss.saveSettings(ss.settings);
+
+                      // Save the custom headers to prefs
+                      await ss.prefs.setString('customHeaders', jsonEncode(http.headers));
 
                       // We don't need to start the service here because it will be started
                       // when the app is inactive.
