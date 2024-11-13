@@ -583,23 +583,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             containerColor: Colors.green,
                           ),
                         )),
-                  const SettingsDivider(),
-                  SettingsTile(
-                    leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.down_arrow,
-                        materialIcon: Icons.download,
-                        containerColor: Colors.orange),
-                    title: "Fetch Firebase Config",
-                    subtitle: socket.state.value == SocketState.connected
-                        ? "Forcefully fetch current Firebase Config from server"
-                        : "Disconnected, cannot fetch",
-                    backgroundColor: tileColor,
-                    onTap: () async {
-                      if (socket.state.value != SocketState.connected) return;
-
-                      await fdb.fetchFirebaseConfig();
-                    },
-                  ),
                   if (!isSnap)
                     const SettingsDivider(),
                   if (!isSnap)

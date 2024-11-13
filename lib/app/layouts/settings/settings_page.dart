@@ -981,7 +981,13 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                                     await FCMData.deleteFcmData();
 
                                                     // Delete the Firebase FCM token
-                                                    await mcs.invokeMethod("firebase-delete-token");
+                                                    try {
+                                                      if (fcm.token != null) {
+                                                        await mcs.invokeMethod("firebase-delete-token");
+                                                      }
+                                                    } catch (e, s) {
+                                                      Logger.error("Failed to delete Firebase FCM token", error: e, trace: s);
+                                                    }
 
                                                     // Fully close the app
                                                     exit(0);

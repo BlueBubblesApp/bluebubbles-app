@@ -1,6 +1,8 @@
 
 import 'dart:io';
 
+import 'package:bluebubbles/app/layouts/settings/pages/server/oauth_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -117,12 +119,18 @@ class _FirebasePanelState extends OptimizedState<FirebasePanel> {
                       );
                     }),
                     Obx(() {
-                      final _enabled = ss.settings.firstFcmRegisterDate.value != 0 && !ss.fcmData.isNull;
+                      final _enabled = ss.settings.firstFcmRegisterDate.value != 0 && !ss.fcmData.isNull && socket.socket.connected;
+                      if (_enabled) return const SizedBox.shrink();
+                      return const SettingsDivider();
+                    }),
+                    Obx(() {
+                      final _enabled = ss.settings.firstFcmRegisterDate.value != 0 && !ss.fcmData.isNull && socket.socket.connected;
                       if (_enabled) return const SizedBox.shrink();
 
                       return SettingsTile(
                         backgroundColor: tileColor,
                         title: "Load Configurations from Server",
+                        subtitle: 'Download Firebase configurations directly from your server.',
                         trailing: Obx(() => ss.settings.skin.value != Skins.Material ? Icon(
                             ss.settings.skin.value != Skins.Material
                                 ? CupertinoIcons.refresh
@@ -196,6 +204,90 @@ class _FirebasePanelState extends OptimizedState<FirebasePanel> {
 
                           await fdb.fetchFirebaseConfig();
                           await fcm.registerDevice();
+                        },
+                      );
+                    }),
+                    Obx(() {
+                      final _enabled = ss.settings.firstFcmRegisterDate.value != 0 && !ss.fcmData.isNull;
+                      if (_enabled && !isSnap) return const SizedBox.shrink();
+                      return const SettingsDivider();
+                    }),
+                    Obx(() {
+                      final _enabled = ss.settings.firstFcmRegisterDate.value != 0 && !ss.fcmData.isNull;
+                      if (_enabled && !isSnap) return const SizedBox.shrink();
+
+                      return SettingsTile(
+                        leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Obx(() => Material(
+                              shape: ss.settings.skin.value == Skins.Samsung
+                                  ? SquircleBorder(
+                                      side: BorderSide(color: context.theme.colorScheme.outline.withOpacity(0.5), width: 1.0),
+                                    )
+                                  : null,
+                              color: Colors.transparent,
+                              borderRadius: ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(6) : null,
+                              child: SizedBox(
+                                  width: 31,
+                                  height: 31,
+                                  child: Center(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(6),
+                                          color: Colors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.grey.withOpacity(0.5),
+                                              blurRadius: 0,
+                                              spreadRadius: 0.5,
+                                              offset: const Offset(0, 0),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: Image.asset("assets/images/google-sign-in.png",
+                                              width: 33, fit: BoxFit.contain)))))))
+                        ]),
+                        title: "Load Configurations from Google",
+                        subtitle: "Sign in with Google to load your Firebase configurations.",
+                        backgroundColor: tileColor,
+                        onTap: () {
+                          ns.pushSettings(context, OauthPanel());
+                        },
+                        trailing: const NextButton()
+                      );
+                    }),
+                    Obx(() {
+                      final _enabled = ss.settings.firstFcmRegisterDate.value != 0 && !ss.fcmData.isNull;
+                      if (!_enabled) return const SizedBox.shrink();
+                      return const SettingsDivider();
+                    }),
+                    Obx(() {
+                      final _enabled = ss.settings.firstFcmRegisterDate.value != 0 && !ss.fcmData.isNull;
+                      if (!_enabled) return const SizedBox.shrink();
+
+                      return SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Re-register Device with Server",
+                        trailing: Obx(() => ss.settings.skin.value != Skins.Material ? Icon(
+                            ss.settings.skin.value != Skins.Material
+                                ? CupertinoIcons.refresh
+                                : Icons.refresh_outlined,
+                            color: context.theme.colorScheme.outline.withOpacity(0.5),
+                            size: 18,
+                          ) : const SizedBox.shrink()),
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.device_phone_portrait,
+                          materialIcon: Icons.devices,
+                        ),
+                        onTap: () async {
+                          try {
+                            await fcm.registerDevice();
+                            showSnackbar("Device Registered", "Successfully re-registered device with server!");
+                          } catch (e, s) {
+                            Logger.error("Failed to re-register device with server", error: e, trace: s);
+                            showSnackbar("Error", "Failed to re-register device with server! Error: ${e.toString()}");
+                          }
                         },
                       );
                     })
@@ -299,7 +391,13 @@ class _FirebasePanelState extends OptimizedState<FirebasePanel> {
                                       await FCMData.deleteFcmData();
 
                                       // Delete the Firebase FCM token
-                                      await mcs.invokeMethod("firebase-delete-token");
+                                      try {
+                                        if (fcm.token != null) {
+                                          await mcs.invokeMethod("firebase-delete-token");
+                                        }
+                                      } catch (e, s) {
+                                        Logger.error("Failed to delete Firebase FCM token", error: e, trace: s);
+                                      }
 
                                       ss.settings.firstFcmRegisterDate.value = 0;
                                       await ss.settings.saveOne('firstFcmRegisterDate');
