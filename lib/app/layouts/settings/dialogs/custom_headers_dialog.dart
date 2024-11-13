@@ -101,7 +101,7 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
         ),
         TextButton(
             child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-            onPressed: () {
+            onPressed: () async {
               final map = <String, String>{};
               keyControllers.forEachIndexed((index, element) {
                 final keyController = element;
@@ -111,7 +111,7 @@ Future<bool> showCustomHeadersDialog(BuildContext context) async {
                 }
               });
               ss.settings.customHeaders.value = map;
-              ss.settings.save();
+              await ss.settings.saveOne('customHeaders');
               http.onInit();
               Navigator.of(context).pop(true);
             }
