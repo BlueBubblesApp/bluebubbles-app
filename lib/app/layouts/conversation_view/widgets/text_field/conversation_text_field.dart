@@ -744,9 +744,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                               emojiSizeMax: 28,
                               backgroundColor: Colors.transparent,
                               columns: emojiColumns,
-                              noRecents: Text("No Recents", style: context.textTheme.headlineMedium!.copyWith(color: context.theme.colorScheme.outline))
+                              noRecents: Text("No Recents", style: context.textTheme.headlineMedium!.copyWith(color: context.theme.colorScheme.outline)),
                             ),
-                            swapCategoryAndBottomBar: true,
+                            viewOrderConfig: const ViewOrderConfig(
+                              top: EmojiPickerItem.searchBar,
+                              middle: EmojiPickerItem.emojiView,
+                              bottom: EmojiPickerItem.categoryBar,
+                            ),
                             skinToneConfig: const SkinToneConfig(enabled: false),
                             categoryViewConfig: const CategoryViewConfig(
                               backgroundColor: Colors.transparent,

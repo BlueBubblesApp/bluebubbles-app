@@ -19,7 +19,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   pasteboard
   printing
   record_linux
-  screen_retriever
+  screen_retriever_linux
   super_native_extensions
   system_tray
   tray_manager

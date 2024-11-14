@@ -25,7 +25,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   printing
   record_windows
   screen_brightness_windows
-  screen_retriever
+  screen_retriever_windows
   secure_application
   share_plus
   super_native_extensions

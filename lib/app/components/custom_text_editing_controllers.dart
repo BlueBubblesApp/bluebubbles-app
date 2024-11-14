@@ -10,10 +10,10 @@ import "package:emojis/emoji.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:get/get.dart";
-import "package:languagetool_textfield/core/enums/mistake_type.dart";
+import "package:languagetool_textfield/src/core/enums/mistake_type.dart";
 import 'package:languagetool_textfield/languagetool_textfield.dart';
-import "package:languagetool_textfield/utils/closed_range.dart";
-import "package:languagetool_textfield/utils/keep_latest_response_service.dart";
+import "package:languagetool_textfield/src/utils/closed_range.dart";
+import "package:languagetool_textfield/src/utils/keep_latest_response_service.dart";
 
 class Mentionable {
   Mentionable({required this.handle});

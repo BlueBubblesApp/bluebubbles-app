@@ -28,7 +28,7 @@
 #include <printing/printing_plugin.h>
 #include <record_windows/record_windows_plugin_c_api.h>
 #include <screen_brightness_windows/screen_brightness_windows_plugin.h>
-#include <screen_retriever/screen_retriever_plugin.h>
+#include <screen_retriever_windows/screen_retriever_windows_plugin_c_api.h>
 #include <secure_application/secure_application_plugin.h>
 #include <share_plus/share_plus_windows_plugin_c_api.h>
 #include <super_native_extensions/super_native_extensions_plugin_c_api.h>
@@ -83,8 +83,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("RecordWindowsPluginCApi"));
   ScreenBrightnessWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ScreenBrightnessWindowsPlugin"));
-  ScreenRetrieverPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("ScreenRetrieverPlugin"));
+  ScreenRetrieverWindowsPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("ScreenRetrieverWindowsPluginCApi"));
   SecureApplicationPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("SecureApplicationPlugin"));
   SharePlusWindowsPluginCApiRegisterWithRegistrar(

@@ -70,13 +70,12 @@ class SocketService extends GetxService {
     socket.onReconnect((data) => handleStatusUpdate(SocketState.connected, data));
 
     socket.onReconnectAttempt((data) => handleStatusUpdate(SocketState.connecting, data));
-    socket.onReconnecting((data) => handleStatusUpdate(SocketState.connecting, data));
-    socket.onConnecting((data) => handleStatusUpdate(SocketState.connecting, data));
 
     socket.onDisconnect((data) => handleStatusUpdate(SocketState.disconnected, data));
 
     socket.onConnectError((data) => handleStatusUpdate(SocketState.error, data));
-    socket.onConnectTimeout((data) => handleStatusUpdate(SocketState.error, data));
+    socket.onReconnectError((data) => handleStatusUpdate(SocketState.error, data));
+    socket.onReconnectFailed((data) => handleStatusUpdate(SocketState.error, data));
     socket.onError((data) => handleStatusUpdate(SocketState.error, data));
 
     // custom events
