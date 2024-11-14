@@ -22,8 +22,8 @@ enum SocketState {
 }
 
 class SocketService extends GetxService {
-  final Rx<SocketState> state = SocketState.disconnected.obs;
-  SocketState _lastState = SocketState.disconnected;
+  final Rx<SocketState> state = SocketState.connecting.obs;
+  SocketState _lastState = SocketState.connecting;
   RxString lastError = "".obs;
   Timer? _reconnectTimer;
   late Socket socket;
