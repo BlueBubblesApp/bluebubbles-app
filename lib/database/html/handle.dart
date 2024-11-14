@@ -88,11 +88,61 @@ class Handle {
   );
 
   Handle save({updateColor = false}) {
+    if (kIsWeb) return this;
+    Database.runInTransaction(TxMode.write, () {
+      Handle? existing;
+      if (matchOnOriginalROWID) {
+        existing = Handle.findOne(originalROWID: originalROWID);
+      } else {
+        existing = Handle.findOne(addressAndService: Tuple2(address, service));
+      }
+
+      if (existing != null) {
+        id = existing.id;
+        contactRelation.target = existing.contactRelation.target;
+      } else if (existing == null && contactRelation.target == null) {
+        contactRelation.target = cs.matchHandleToContact(this);
+      }
+      if (!updateColor) {
+        color = existing?.color ?? color;
+      }
+      try {
+        id = Database.handles.put(this);
+        if (contactRelation.target != null) {
+          contactRelation.target!.save();
+        }
+      } on UniqueViolationException catch (_) {}
+    });
     return this;
   }
 
   static List<Handle> bulkSave(List<Handle> handles, {bool matchOnOriginalROWID = false}) {
-    return [];
+    Database.runInTransaction(TxMode.write, () {
+      for (Handle h in handles) {
+        Handle? existing;
+        if (matchOnOriginalROWID) {
+          existing = Handle.findOne(originalROWID: h.originalROWID);
+        } else {
+          existing = Handle.findOne(addressAndService: Tuple2(h.address, h.service));
+        }
+
+        if (existing != null) {
+          h.id = existing.id;
+        } else {
+          h.contactRelation.target ??= cs.matchHandleToContact(h);
+        }
+      }
+
+      List<int> insertedIds = Database.handles.putMany(handles);
+      for (int i = 0; i < insertedIds.length; i++) {
+        handles[i].id = insertedIds[i];
+        if (handles[i].contactRelation.target != null) {
+          handles[i].contactRelation.target!.save();
+        }
+      }
+    });
+
+    return handles;
   }
 
   Handle updateColor(String? newColor) {
@@ -114,12 +164,24 @@ class Handle {
   }
 
   static Handle? findOne({int? id, int? originalROWID, Tuple2<String, String>? addressAndService}) {
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return chats.webCachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.uniqueAddressAndService == "${addressAndService?.item1}/${addressAndService?.item2}");
-  }
-
-  static List<Handle> find() {
-    return [];
+    if (kIsWeb || id == 0) return null;
+    if (id != null) {
+      final handle = Database.handles.get(id) ?? Handle.findOne(originalROWID: id);
+      return handle;
+    } else if (originalROWID != null) {
+      final query = Database.handles.query(Handle_.originalROWID.equals(originalROWID)).build();
+      query.limit = 1;
+      final result = query.findFirst();
+      query.close();
+      return result;
+    } else if (addressAndService != null) {
+      final query = Database.handles.query(Handle_.address.equals(addressAndService.item1) & Handle_.service.equals(addressAndService.item2)).build();
+      query.limit = 1;
+      final result = query.findFirst();
+      query.close();
+      return result;
+    }
+    return null;
   }
 
   static Handle merge(Handle handle1, Handle handle2) {
