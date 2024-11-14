@@ -103,7 +103,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                   left: SettingsScaffold(
                       title: "Settings",
                       initialHeader:
-                          kIsWeb ? "Server & Message Management" : (!iOS) ? "Profile" : null,
+                          kIsWeb ? "Server & Message Management" : (!iOS || kIsDesktop) ? "Profile" : null,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       tileColor: tileColor,
@@ -112,7 +112,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                         SliverList(
                           delegate: SliverChildListDelegate(
                             <Widget>[
-                              if (!kIsWeb && !iOS)
+                              if (!kIsWeb && (!iOS || kIsDesktop))
                                 SettingsSection(
                                   backgroundColor: tileColor,
                                   children: [
