@@ -79,10 +79,10 @@ class _NotificationProvidersState extends OptimizedState<NotificationProvidersPa
                   title: "Google Firebase (FCM)",
                   subtitle: "Receive notifications using Google Services",
                   onTap: () async {
-                    ns.pushAndRemoveSettingsUntil(
+                    ns.pushSettings(
                       context,
                       FirebasePanel(),
-                      (route) => route.isFirst);
+                    );
                   },
                   leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Obx(() => Material(
@@ -151,10 +151,10 @@ class _NotificationProvidersState extends OptimizedState<NotificationProvidersPa
                   title: "Unified Push",
                   subtitle: "Receive notifications using a custom distributor",
                   onTap: () async {
-                    ns.pushAndRemoveSettingsUntil(
+                    ns.pushSettings(
                       context,
                       UnifiedPushPanel(),
-                      (route) => route.isFirst);
+                    );
                   },
                   leading: const SettingsLeadingIcon(
                     iosIcon: CupertinoIcons.bell_circle,
