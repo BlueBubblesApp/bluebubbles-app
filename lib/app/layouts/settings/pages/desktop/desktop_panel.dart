@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:reorderables/reorderables.dart';
@@ -49,6 +50,11 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                     title: "Launch on Startup",
                     subtitle: "Automatically open the desktop app on startup.",
                     backgroundColor: tileColor,
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.rocket,
+                      materialIcon: Icons.rocket_launch_outlined,
+                      containerColor: Colors.blue,
+                    ),
                   )),
                   Obx(() => AnimatedSizeAndFade.showHide(
                     show: ss.settings.launchAtStartup.value,
@@ -72,6 +78,11 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                           title: "Launch on Startup Minimized",
                           subtitle: "Automatically open the desktop app on startup, but minimized to the system tray",
                           backgroundColor: tileColor,
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.eye_slash,
+                            materialIcon: Icons.hide_image_outlined,
+                            containerColor: Colors.deepPurple,
+                          ),
                         ),
                       ],
                     ),
@@ -96,6 +107,11 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                       subtitle:
                           "Enable the custom titlebar. This is necessary on non-GNOME systems, and will not look good on GNOME systems. This is also necessary for 'Minimize to Tray' to work correctly.",
                       backgroundColor: tileColor,
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.macwindow,
+                        materialIcon: Icons.tab_outlined,
+                        containerColor: Colors.orange,
+                      ),
                     )),
                   Obx(() {
                     if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
@@ -120,6 +136,11 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                         title: "Minimize to Tray",
                         subtitle: "When enabled, clicking the minimize button will minimize the app to the system tray",
                         backgroundColor: tileColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.tray_arrow_down,
+                          materialIcon: Icons.expand_circle_down_outlined,
+                          containerColor: Colors.indigo,
+                        ),
                       );
                     }
                     return const SizedBox.shrink();
@@ -146,6 +167,11 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                         title: "Close to Tray",
                         subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
                         backgroundColor: tileColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.tray_arrow_down_fill,
+                          materialIcon: Icons.expand_circle_down,
+                          containerColor: Colors.green,
+                        ),
                   )),
                 ],
               ),
@@ -161,6 +187,11 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> {
                       subtitle:
                           "Click actions to toggle them. Drag actions to move them. ${Platform.isWindows ? "You can select up to 5 actions." : "The number of actions actually visible varies by distribution."} Tapback actions require Private API to be enabled.",
                       isThreeLine: true,
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.bolt,
+                        materialIcon: Icons.bolt_outlined,
+                        containerColor: Colors.brown,
+                      ),
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
