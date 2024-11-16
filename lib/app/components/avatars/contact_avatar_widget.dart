@@ -166,20 +166,21 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
               clipBehavior: Clip.antiAlias,
               alignment: Alignment.center,
               child: Obx(() {
-                final hide = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                final hideContactInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+                final genAvatars = ss.settings.redactedMode.value && ss.settings.generateFakeAvatars.value;
                 final iOS = ss.settings.skin.value == Skins.iOS;
                 final avatar = contact?.avatar;
-                if (!hide && widget.handle == null && ss.settings.userAvatarPath.value != null) {
+                if (!hideContactInfo && widget.handle == null && ss.settings.userAvatarPath.value != null) {
                   dynamic file = File(ss.settings.userAvatarPath.value!);
                   return CircleAvatar(
                     key: ValueKey(ss.settings.userAvatarPath.value!),
                     radius: size / 2,
-                    backgroundImage: FileImage(file),
+                    backgroundImage: Image.file(file).image,
                     backgroundColor: Colors.transparent,
                   );
-                } else if (isNullOrEmpty(avatar) || hide) {
+                } else if (isNullOrEmpty(avatar) || hideContactInfo) {
                   String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
-                  if (!isNullOrEmpty(initials) && !hide) {
+                  if (!isNullOrEmpty(initials) && !hideContactInfo) {
                     return Text(
                       initials!,
                       key: Key("$keyPrefix-avatar-text"),
@@ -189,6 +190,10 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                       ),
                       textAlign: TextAlign.center,
                     );
+                  } else if (genAvatars && widget.handle?.fakeAvatar != null) {
+                    return widget.handle!.fakeAvatar;
+                  } else if (genAvatars && widget.contact?.fakeAvatar != null) {
+                    return widget.contact!.fakeAvatar;
                   } else {
                     return Padding(
                         padding: const EdgeInsets.only(left: 1),

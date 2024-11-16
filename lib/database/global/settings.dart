@@ -109,6 +109,7 @@ class Settings {
   final RxBool hideAttachments = true.obs;
   final RxBool hideContactInfo = true.obs;
   final RxBool generateFakeContactNames = false.obs;
+  final RxBool generateFakeAvatars = false.obs;
   final RxBool hideMessageContent = false.obs;
 
   // Unified Push Settings
@@ -341,6 +342,7 @@ class Settings {
       'hideAttachments': hideAttachments.value,
       'hideContactInfo': hideContactInfo.value,
       'generateFakeContactNames': generateFakeContactNames.value,
+      'generateFakeAvatars': generateFakeAvatars.value,
       'generateFakeMessageContent': hideMessageContent.value,
       'enableQuickTapback': enableQuickTapback.value,
       'quickTapbackType': quickTapbackType.value,
@@ -467,6 +469,7 @@ class Settings {
     ss.settings.hideAttachments.value = map['hideAttachments'] ?? true;
     ss.settings.hideContactInfo.value = map['hideContactInfo'] ?? true;
     ss.settings.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
+    ss.settings.generateFakeAvatars.value = map['generateFakeAvatars'] ?? false;
     ss.settings.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
     ss.settings.enableUnifiedPush.value = map['enableUnifiedPush'] ?? false;
     ss.settings.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
@@ -606,6 +609,7 @@ class Settings {
     s.hideAttachments.value = map['hideAttachments'] ?? true;
     s.hideContactInfo.value = map['hideContactInfo'] ?? true;
     s.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
+    s.generateFakeAvatars.value = map['generateFakeAvatars'] ?? false;
     s.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
     s.enableUnifiedPush.value = map['enableUnifiedPush'] ?? false;
     s.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";

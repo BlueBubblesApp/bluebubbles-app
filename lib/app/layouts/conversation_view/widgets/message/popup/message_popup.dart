@@ -1104,6 +1104,7 @@ class ReactionDetails extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final message = reactions[index];
+                final hideContactInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
                 return Column(
                   key: ValueKey(message.guid!),
                   mainAxisSize: MainAxisSize.min,
@@ -1117,7 +1118,7 @@ class ReactionDetails extends StatelessWidget {
                         fontSize: 22,
                       ),
                     ),
-                    if (!ss.settings.hideNamesForReactions.value)
+                    if (!ss.settings.hideNamesForReactions.value && !hideContactInfo)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Text(
@@ -1128,6 +1129,14 @@ class ReactionDetails extends StatelessWidget {
                     if (ss.settings.hideNamesForReactions.value)
                       const SizedBox(
                         height: 8,
+                      ),
+                    if (!ss.settings.hideNamesForReactions.value && hideContactInfo)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          message.isFromMe! ? ss.settings.userName.value : (message.handle?.fakeName ?? "Friend"),
+                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                        ),
                       ),
                     Container(
                       height: 28,

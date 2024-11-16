@@ -8,6 +8,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
@@ -348,6 +349,16 @@ class Chat {
 
   @Backlink('chat')
   final messages = ToMany<Message>();
+
+  @Transient()
+  String? _fakeName;
+
+  @Transient()
+  String get fakeName {
+    if (_fakeName != null) return _fakeName!;
+    _fakeName = faker.lorem.words(properTitle.split(' ').length).join(" ").capitalize;
+    return _fakeName!;
+  }
 
   Chat({
     this.id,

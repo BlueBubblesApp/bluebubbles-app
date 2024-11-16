@@ -272,7 +272,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                     key: Key(chat.participants[index].address),
                     handle: chat.participants[index],
                     chat: chat,
-                    canBeRemoved: chat.participants.length > 1
+                    canBeRemoved: chat.isGroup
                         && ss.settings.enablePrivateAPI.value
                         && chat.isIMessage,
                   );

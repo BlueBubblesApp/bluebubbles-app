@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 1.15.0+70
+version: 1.15.0+71
 publish_to: none
 
 environment:
@@ -44,6 +44,7 @@ dependencies:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
       ref: webkit2gtk-4.1
   device_info_plus: ^11.1.1
+  dice_bear: ^0.1.7
   dio: ^5.4.2+1
   disable_battery_optimization: # for jcenter() gradle deprecation
     git:

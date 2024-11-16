@@ -248,6 +248,18 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                           subtitle: "Replace contact info with fake names and hide contact photos",
                           isThreeLine: true,
                         ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                        SettingsSwitch(
+                          onChanged: (bool val) {
+                            ss.settings.generateFakeAvatars.value = val;
+                            saveSettings();
+                          },
+                          initialVal: ss.settings.generateFakeAvatars.value,
+                          title: "Generate Fake Avatars",
+                          backgroundColor: tileColor,
+                          subtitle: "Use the Dice Bear service to generate fake avatars for contacts",
+                          isThreeLine: true,
+                        ),
                       ],
                     ),
                   ],
