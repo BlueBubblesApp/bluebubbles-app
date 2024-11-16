@@ -135,7 +135,7 @@ class BaseLogger extends GetxService {
       filter: currentFilter,
       printer: LoggerFactory.PrettyPrinter(
         methodCount: 0,
-        errorMethodCount: 10,
+        errorMethodCount: 25,
         lineLength: 120,
         colors: showColors,
         printEmojis: false,
