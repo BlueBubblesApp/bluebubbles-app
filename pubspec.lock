@@ -551,6 +551,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+  dice_bear:
+    dependency: "direct main"
+    description:
+      name: dice_bear
+      sha256: "4dde957ee3838f1de82aeff43c68f8e976f102ed9b5cb3be2ba1abe243a109af"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.7"
   dio:
     dependency: "direct main"
     description:
