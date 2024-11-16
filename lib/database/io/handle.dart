@@ -4,8 +4,11 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:dice_bear/dice_bear.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart' hide Condition;
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
@@ -25,7 +28,7 @@ class Handle {
   String? defaultEmail;
   String? defaultPhone;
   @Transient()
-  final String fakeName = faker.person.name();
+  final String fakeName = "${faker.person.firstName()} ${faker.person.lastName()}";
 
   final RxnString _color = RxnString();
   String? get color => _color.value;
@@ -34,6 +37,17 @@ class Handle {
   final contactRelation = ToOne<Contact>();
   @Transient()
   Contact? webContact;
+
+  @Transient()
+  Widget? _fakeAvatar;
+
+  @Transient()
+  Widget get fakeAvatar {
+    if (_fakeAvatar != null) return _fakeAvatar!;
+    Avatar _avatar = DiceBearBuilder(seed: address).build();
+    _fakeAvatar = _avatar.toImage();
+    return _fakeAvatar!;
+  }
 
   Contact? get contact => kIsWeb ? webContact : contactRelation.target;
   String get displayName {

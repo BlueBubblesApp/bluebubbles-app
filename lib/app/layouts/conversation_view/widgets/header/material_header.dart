@@ -342,7 +342,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
                 if (controller.inSelectMode.value) {
                   _title = "${controller.selected.length} selected";
                 } else if (hideInfo) {
-                  _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
+                  _title = controller.chat.isGroup ? controller.chat.fakeName : controller.chat.participants[0].fakeName;
                 }
                 return Text(
                   _title,

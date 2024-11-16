@@ -4,6 +4,7 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:collection/collection.dart';
+import 'package:dice_bear/dice_bear.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 // (needed when generating objectbox model code)
@@ -32,6 +33,17 @@ class Contact {
   List<String> emails;
   StructuredName? structuredName;
   Uint8List? avatar;
+
+  @Transient()
+  Widget? _fakeAvatar;
+
+  @Transient()
+  Widget get fakeAvatar {
+    if (_fakeAvatar != null) return _fakeAvatar!;
+    Avatar _avatar = DiceBearBuilder(seed: displayName).build();
+    _fakeAvatar = _avatar.toImage();
+    return _fakeAvatar!;
+  }
 
   String? get dbStructuredName => structuredName == null ? null : jsonEncode(structuredName!.toMap());
   set dbStructuredName(String? json) => structuredName = json == null ? null : StructuredName.fromMap(jsonDecode(json));

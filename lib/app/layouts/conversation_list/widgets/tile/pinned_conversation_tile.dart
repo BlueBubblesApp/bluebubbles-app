@@ -343,7 +343,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
         );
         String _title = title;
         if (hideInfo) {
-          _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
+          _title = controller.chat.isGroup ? controller.chat.fakeName : controller.chat.participants[0].fakeName;
         }
 
         return SizedBox(

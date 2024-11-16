@@ -585,7 +585,7 @@ class ChatCreatorState extends OptimizedState<ChatCreator> {
                                     String _title = chat.properTitle;
                                     if (hideInfo) {
                                       _title =
-                                          chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+                                          chat.isGroup ? chat.fakeName : chat.participants[0].fakeName;
                                     }
                                     return Material(
                                       color: Colors.transparent,
