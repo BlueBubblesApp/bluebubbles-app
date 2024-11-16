@@ -19,12 +19,10 @@ class NetworkTasks {
       
       // Separate functionality for android vs. other
       if (!Platform.isAndroid) {
+        await sync.startIncrementalSync();
+      } else {
         // Only start incremental sync if the app is active and the previous state wasn't just hidden
         // or if the app was never resumed before
-        if (!ls.hasResumed || (ls.currentState == AppLifecycleState.resumed && (ls.wasPaused || ls.wasHidden))) {
-          await sync.startIncrementalSync();
-        }
-      } else {
         if (!ls.hasResumed || (ls.currentState == AppLifecycleState.resumed && ls.wasPaused)) {
           await sync.startIncrementalSync();
         }
