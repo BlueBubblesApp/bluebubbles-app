@@ -24,8 +24,8 @@ export 'package:bluebubbles/database/io/theme_entry.dart'
   if (dart.library.html) 'package:bluebubbles/models/html/theme_entry.dart';
 export 'package:bluebubbles/database/io/theme_object.dart'
   if (dart.library.html) 'package:bluebubbles/models/html/theme_object.dart';
-export 'package:bluebubbles/database/io/giphy.dart'
-    if (dart.library.html) 'package:bluebubbles/models/html/giphy.dart';
+export 'package:bluebubbles/database/io/tenor.dart'
+    if (dart.library.html) 'package:bluebubbles/models/html/tenor.dart';
 export 'package:bluebubbles/database/global/platform_file.dart';
 export 'package:bluebubbles/database/global/settings.dart';
 export 'package:bluebubbles/database/global/attributed_body.dart';

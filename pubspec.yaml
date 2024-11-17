@@ -93,7 +93,6 @@ dependencies:
       url: https://github.com/BlueBubblesApp/xgesture_flutter.git
       ref: 7de6e023ff68f67af1d83f7c1303d8b973f84944
   get: ^4.6.6
-  giphy_get: ^3.5.4
   github: ^9.24.0
   google_fonts: ^6.2.1
   google_ml_kit: ^0.19.0 # mobile only
@@ -175,6 +174,7 @@ dependencies:
   super_drag_and_drop: ^0.9.0-dev.4
   supercharged: ^2.1.1
   system_info2: ^4.0.0
+  tenor_flutter: ^0.0.3
   tray_manager: ^0.2.3
   tuple: ^2.0.2
   unifiedpush: ^5.0.1

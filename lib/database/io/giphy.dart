@@ -1,6 +1,0 @@
-/// THIS FILE IS A PLACEHOLDER FILE SO ANDROID / DESKTOP WILL STILL COMPILE
-/// THE REAL API KEY IS PLACED WITHIN /html/giphy.dart (LOCAL ONLY!!)
-/// DO NOT CHECK /html/giphy.dart INTO VCS
-library bluebubbles;
-
-const GIPHY_API_KEY = "";

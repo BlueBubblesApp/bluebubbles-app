@@ -991,11 +991,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.0.0"
-  flutter_localizations:
-    dependency: transitive
-    description: flutter
-    source: sdk
-    version: "0.0.0"
   flutter_map:
     dependency: "direct main"
     description:
@@ -1159,14 +1154,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.7.0"
-  giphy_get:
-    dependency: "direct main"
-    description:
-      name: giphy_get
-      sha256: "5a51c507bb52680da17d2f715d99f6beb638e69ac10e6cc1d53ae32d57b635b5"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.5.6"
   git:
     dependency: transitive
     description:
@@ -2976,6 +2963,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
+  tenor_dart:
+    dependency: transitive
+    description:
+      name: tenor_dart
+      sha256: ef48b584ef3897ed973b769a90ada76ea7ff70bd8194fadd21d588f73f515120
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
+  tenor_flutter:
+    dependency: "direct main"
+    description:
+      name: tenor_flutter
+      sha256: c0c3ac63dff3636a3bcf5c45eea23ee5eea29433b998fe0c5ba71d055c8d271e
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   term_glyph:
     dependency: transitive
     description:
