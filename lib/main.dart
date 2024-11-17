@@ -584,6 +584,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayL
         AdaptiveTheme.maybeOf(context)?.setDark();
       }
       AdaptiveTheme.maybeOf(context)?.setSystem();
+
+      eventDispatcher.emit("theme-update", null);
     }
   }
 
