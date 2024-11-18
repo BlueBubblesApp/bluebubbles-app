@@ -77,7 +77,7 @@ class FindMyDevice {
   final dynamic lostDevice;
   final dynamic lostModeEnabled;
   final String? deviceDisplayName;
-  final List<dynamic>? safeLocations;
+  final List<SafeLocation> safeLocations;
   final String? name;
   final dynamic canWipeAfterLock;
   final dynamic isMac;
@@ -127,7 +127,7 @@ class FindMyDevice {
     lostDevice: json["lostDevice"],
     lostModeEnabled: json["lostModeEnabled"],
     deviceDisplayName: json["deviceDisplayName"],
-    safeLocations: json["safeLocations"],
+    safeLocations: json["safeLocations"] == null ? [] : List<SafeLocation>.from(json["safeLocations"].map((x) => SafeLocation.fromJson(x))),
     name: json["name"],
     canWipeAfterLock: json["canWipeAfterLock"],
     isMac: json["isMac"],
@@ -217,8 +217,9 @@ class Address {
     required this.country,
   });
 
+  String? label;
+
   final String? subAdministrativeArea;
-  final String? label;
   final String? streetAddress;
   final String? countryCode;
   final String? stateCode;
@@ -322,3 +323,39 @@ class Location {
   };
 }
 
+class SafeLocation {
+  SafeLocation({
+    required this.type,
+    required this.approvalState,
+    required this.name,
+    required this.identifier,
+    required this.location,
+    required this.address
+  });
+
+  final int? type;
+  final int? approvalState;
+  final String? name;
+  final String identifier;
+  final Location location;
+  final Address address;
+
+
+  factory SafeLocation.fromJson(Map<String, dynamic> json) => SafeLocation(
+    type: json["type"],
+    approvalState: json["approvalState"],
+    name: json["name"],
+    identifier: json["identifier"],
+    location: Location.fromJson(json["location"]),
+    address: Address.fromJson(json["address"]),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "type": type,
+    "approvalState": approvalState,
+    "name": name,
+    "identifier": identifier,
+    "location": location.toJson(),
+    "address": address.toJson(),
+  };
+}
