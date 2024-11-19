@@ -846,7 +846,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 class TextFieldComponent extends StatefulWidget {
   const TextFieldComponent({
     super.key,
-    required this.subjectTextController,
+    this.subjectTextController,
     required this.textController,
     required this.controller,
     required this.recorderController,
@@ -855,7 +855,7 @@ class TextFieldComponent extends StatefulWidget {
     this.initialAttachments = const [],
   });
 
-  final SpellCheckTextEditingController subjectTextController;
+  final SpellCheckTextEditingController? subjectTextController;
   final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
@@ -875,7 +875,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
   late final RecorderController? recorderController;
   late final List<PlatformFile> initialAttachments;
   late final MentionTextEditingController textController;
-  late final SpellCheckTextEditingController subjectTextController;
+  late final SpellCheckTextEditingController? subjectTextController;
   late final Future<void> Function({String? effect}) sendMessage;
 
   late final ValueNotifier<bool> isRecordingNotifier;
@@ -896,6 +896,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     recorderController?.addListener(() {
       isRecordingNotifier.value = recorderController?.isRecording ?? false;
     });
+
+    assert(!(subjectTextController == null && !isChatCreator && ss.settings.enablePrivateAPI.value && ss.settings.privateSubjectLine.value && chat!.isIMessage));
   }
 
   @override
@@ -950,7 +952,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                   PickedAttachmentsHolder(
                     controller: controller,
                     textController: txtController,
-                    subjectTextController: subjController,
                     initialAttachments: initialAttachments,
                   ),
                 if (!isChatCreator)
