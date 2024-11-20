@@ -22,16 +22,18 @@ dependencies:
   flutter:
     sdk: flutter
   adaptive_theme: ^3.6.0
-  animated_size_and_fade: ^4.0.0
+  animated_size_and_fade: ^5.0.0
   animations: ^2.0.11
+  app_install_date: ^0.1.5
   app_links: ^6.1.1
+  archive: ^3.6.1
   async_task: ^1.1.1
   audio_waveforms: ^1.0.5
   auto_size_text: ^3.0.0
   bitsdojo_window: ^0.1.6
   chunked_stream: ^1.4.2
   collection: ^1.18.0
-  confetti: ^0.7.0
+  confetti: ^0.8.0
   connectivity_plus: ^6.0.2
   crop_your_image: ^1.0.2
   csslib: ^1.0.0
@@ -41,7 +43,8 @@ dependencies:
     git:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
       ref: webkit2gtk-4.1
-  device_info_plus: ^10.1.0
+  device_info_plus: ^11.1.1
+  dice_bear: ^0.1.7
   dio: ^5.4.2+1
   disable_battery_optimization: # for jcenter() gradle deprecation
     git:
@@ -64,7 +67,7 @@ dependencies:
       ref: beb79f70a2bb0e96e6bb9fdebac2ff452f138950
       path: packages/firebase_dart
   flex_color_picker: ^3.4.1
-  flex_color_scheme: ^7.3.1
+  flex_color_scheme: ^8.0.1
   flutter_acrylic: ^1.1.3
   flutter_audio_waveforms: ^1.2.1+8
   flutter_displaymode: ^0.6.0 # android only
@@ -76,7 +79,7 @@ dependencies:
       url: https://github.com/chipweinberger/flutter_isolate.git
       ref: user/chip/update-examples
   flutter_keyboard_visibility: ^6.0.0 # no desktop support
-  flutter_local_notifications: ^17.2.1+2 # mobile only
+  flutter_local_notifications: ^18.0.1 # mobile only
   flutter_map: ^7.0.1
   flutter_map_marker_popup: ^7.0.0
   flutter_markdown: ^0.7.2+1
@@ -90,20 +93,20 @@ dependencies:
       url: https://github.com/BlueBubblesApp/xgesture_flutter.git
       ref: 7de6e023ff68f67af1d83f7c1303d8b973f84944
   get: ^4.6.6
-  giphy_get: ^3.5.4
   github: ^9.24.0
   google_fonts: ^6.2.1
-  google_ml_kit: ^0.18.0 # mobile only
-  google_mlkit_smart_reply: ^0.11.0
+  google_ml_kit: ^0.19.0 # mobile only
+  google_mlkit_smart_reply: ^0.12.0
   google_sign_in: ^6.2.1
   hand_signature: ^3.0.2
   idb_shim: ^2.4.1+1
   image: ^4.1.7
   image_picker: ^1.0.7
   image_size_getter: ^2.1.3
+  in_app_review: ^2.0.9
+  internet_connection_checker_plus: ^2.5.2
   intl: ^0.19.0
-  js: ^0.7.1
-  languagetool_textfield: ^0.0.6
+  languagetool_textfield: ^0.1.1
   launch_at_startup: ^0.3.1
   local_auth: ^2.2.0
   local_notifier:
@@ -114,6 +117,7 @@ dependencies:
     git:
       url: https://github.com/pikaju/flutter-maps-launcher.git
       ref: master
+  logger: ^2.4.0
   material_color_utilities: ^0.11.1
   media_kit: ^1.1.10+1                           # Primary package.
   media_kit_video: ^1.2.4                        # For video rendering.
@@ -123,7 +127,7 @@ dependencies:
   media_kit_libs_linux: ^1.1.3                   # GNU/Linux dependency package.
   metadata_fetch: ^0.4.1
   mime_type: ^1.0.0
-  mobile_scanner: ^5.1.1 # no desktop support
+  mobile_scanner: ^6.0.2 # no desktop support
   msix: ^3.16.8
   multi_value_listenable_builder: ^0.0.2
   network_info_plus: ^6.0.1
@@ -143,17 +147,15 @@ dependencies:
   photo_manager: ^3.2.0 # only mobile
   photo_view: ^0.15.0
   printing: ^5.12.0
+  pull_down_button: ^0.10.1
   qr_flutter: ^4.1.0
   receive_intent: ^0.2.5 # mobile only
   record: ^5.0.5
   reorderables: ^0.6.0
-  saver_gallery: ^3.0.3
-  screen_retriever: ^0.1.9
+  saver_gallery: ^4.0.0
+  screen_retriever: ^0.2.0
   scroll_to_index: ^3.0.1
-  secure_application:  # no linux support, gradle namespace issue
-    git:
-      url: https://github.com/BlueBubblesApp/secure_application.git
-      ref: master
+  secure_application: ^4.0.1 # no linux support
   share_plus: ^10.0.2 # sharing files not supported on Windows & Linux, todo desktop
   shared_preferences: ^2.2.2
   shimmer: ^3.0.0
@@ -162,7 +164,7 @@ dependencies:
   sliding_up_panel2: ^3.3.0+1
   slugify: ^2.0.0
   smooth_page_indicator: ^1.1.0
-  socket_io_client: ^2.0.3+1
+  socket_io_client: ^3.0.2
   sprung: ^3.0.1
   store_checker: # android namespace issue
     git:
@@ -170,9 +172,10 @@ dependencies:
       ref: master
   synchronized: ^3.1.0+1
   system_tray: ^2.0.3
-  super_drag_and_drop: ^0.8.20
+  super_drag_and_drop: ^0.9.0-dev.4
   supercharged: ^2.1.1
   system_info2: ^4.0.0
+  tenor_flutter: ^0.0.3
   tray_manager: ^0.2.3
   tuple: ^2.0.2
   unifiedpush: ^5.0.1
@@ -186,37 +189,30 @@ dependencies:
     git:
       url: https://github.com/BlueBubblesApp/video_thumbnail.git
       ref: master
+  win32: ^5.8.0
   window_manager: ^0.4.2
   windows_taskbar: ^1.1.2
-  logger: ^2.4.0
-  archive: ^3.6.1
-  in_app_review: ^2.0.9
-  pull_down_button: ^0.10.1
-  app_install_date: ^0.1.5
-  dice_bear: ^0.1.7
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions
   http: ^1.2.1 # metadata_fetch
   intl: ^0.19.0 # firebase_dart
   js: ^0.7.1 # socket_io_client
-  material_color_utilities: ^0.11.1 # flutter test SDK
   permission_handler_platform_interface: ^4.2.1 # BB permission_handler_windows
   permission_handler_windows: # https://github.com/Baseflow/flutter-permission-handler/issues/983
     git:
       url: https://github.com/BlueBubblesApp/flutter-permission-handler.git
-      ref: 7912a76a3208e876c2275e1a87003ede3903abc8
+      ref: 251a9475644f64784efedff4b3a8bd5c99d3884d
       path: permission_handler_windows
   uuid: ^4.4.0 # firebase_dart
-  win32: ^5.5.3 # for build issue in flutter v3.24.0
   frontend_server_client: ^4.0.0  # for build_runner issues on v3.24.0
 
 dev_dependencies:
   build_runner: ^2.4.12
   build_verify: ^3.1.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.1
   flutter_native_splash: ^2.4.0
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
   peanut: ^5.0.0
   objectbox_generator: any
   flutter_test:

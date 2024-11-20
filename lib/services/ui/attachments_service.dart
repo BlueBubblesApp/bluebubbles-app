@@ -224,9 +224,9 @@ class AttachmentsService extends GetxService {
           if (!isDocument) {
             try {
               if (file.path == null && file.bytes != null) {
-                await SaverGallery.saveImage(file.bytes!, quality: 100, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+                await SaverGallery.saveImage(file.bytes!, quality: 100, fileName: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, skipIfExists: false);
               } else {
-                await SaverGallery.saveFile(file: file.path!, name: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, androidExistNotSave: false);
+                await SaverGallery.saveFile(filePath: file.path!, fileName: file.name, androidRelativePath: ss.settings.autoSavePicsLocation.value, skipIfExists: false);
               }
               return showSnackbar('Success', 'Saved attachment to gallery!');
             } catch (_) {}

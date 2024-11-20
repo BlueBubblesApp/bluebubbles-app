@@ -76,16 +76,30 @@ String buildFullDate(DateTime time, {bool includeTime = true, bool useTodayYeste
 
   late String date;
   if (includeTime) {
-    if (useTodayYesterday) {
-      if (time.isToday()) {
-        date = "Today, ${DateFormat.jm().format(time)}";
-      } else if (time.isYesterday()) {
-        date = "Yesterday, ${DateFormat.jm().format(time)}";
+    if (ss.settings.use24HrFormat.value) {
+      if (useTodayYesterday) {
+        if (time.isToday()) {
+          date = "Today, ${DateFormat.Hm().format(time)}";
+        } else if (time.isYesterday()) {
+          date = "Yesterday, ${DateFormat.Hm().format(time)}";
+        } else {
+          date = DateFormat.yMd().add_Hm().format(time);
+        }
+      } else {
+        date = DateFormat.yMd().add_Hm().format(time);
+      }
+    } else {
+      if (useTodayYesterday) {
+        if (time.isToday()) {
+          date = "Today, ${DateFormat.jm().format(time)}";
+        } else if (time.isYesterday()) {
+          date = "Yesterday, ${DateFormat.jm().format(time)}";
+        } else {
+          date = DateFormat.yMd().add_jm().format(time);
+        }
       } else {
         date = DateFormat.yMd().add_jm().format(time);
       }
-    } else {
-      date = DateFormat.yMd().add_jm().format(time);
     }
   } else {
     if (useTodayYesterday) {

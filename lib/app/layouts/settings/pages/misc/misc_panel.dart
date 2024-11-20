@@ -305,6 +305,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                     title: "Replace Emoticons with Emoji",
                     subtitle: "Replace emoticons like :), :D, etc. with their corresponding emojis",
                     backgroundColor: tileColor,
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.smiley,
+                      materialIcon: Icons.emoji_emotions_outlined,
+                      containerColor: Colors.indigo
+                    ),
                   )),
                   const SettingsDivider(),
                   if (kIsDesktop || kIsWeb)
@@ -316,6 +321,11 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                           initialVal: ss.settings.spellcheck.value,
                           title: "Enable Spellcheck",
                           backgroundColor: tileColor,
+                          leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.textformat_abc_dottedunderline,
+                              materialIcon: Icons.spellcheck_outlined,
+                              containerColor: Colors.cyan
+                          ),
                         )),
                   if (kIsDesktop || kIsWeb)
                     Obx(() => ss.settings.spellcheck.value ? SettingsOptions<(String, String)>(

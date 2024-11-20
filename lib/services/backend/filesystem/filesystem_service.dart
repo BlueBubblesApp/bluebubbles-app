@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:idb_shim/idb.dart' as idb;
-import 'package:idb_shim/idb_browser.dart';
+import 'package:idb_shim/idb_browser.dart' hide Database;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';

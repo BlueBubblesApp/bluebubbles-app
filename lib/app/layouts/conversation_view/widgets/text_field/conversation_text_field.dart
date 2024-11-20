@@ -30,7 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
-import 'package:giphy_get/giphy_get.dart';
+import 'package:tenor_flutter/tenor_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path/path.dart' hide context;
@@ -599,23 +599,41 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                       if (kIsDesktop || kIsWeb) {
                         controller.showingOverlays = true;
                       }
-                      GiphyGif? gif = await GiphyGet.getGif(
+                      Tenor tenor = Tenor(apiKey: kIsWeb ? TENOR_API_KEY : dotenv.get('TENOR_API_KEY'));
+                      TenorResult? result = await tenor.showAsBottomSheet(
                         context: context,
-                        apiKey: kIsWeb ? GIPHY_API_KEY : dotenv.get('GIPHY_API_KEY'),
-                        tabColor: context.theme.primaryColor,
-                        showEmojis: false,
+                        style: TenorStyle(
+                          color: context.theme.colorScheme.properSurface,
+                          attributionStyle: TenorAttributionStyle(brightnes: context.theme.brightness),
+                          tabBarStyle: TenorTabBarStyle(
+                            decoration: BoxDecoration(
+                              color: context.theme.colorScheme.properSurface,
+                              borderRadius: BorderRadius.circular(8)
+                            ),
+                            indicator: BoxDecoration(
+                              color: context.theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            labelColor: context.theme.colorScheme.onSurface,
+                            unselectedLabelColor: context.theme.colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                          searchFieldStyle: TenorSearchFieldStyle(
+                            fillColor: context.theme.colorScheme.properSurface,
+                          ),
+                        ),
                       );
                       if (kIsDesktop || kIsWeb) {
                         controller.showingOverlays = false;
                       }
-                      if (gif?.images?.original != null) {
-                        final response = await http.downloadFromUrl(gif!.images!.original!.url);
+                      final selectedGif = result?.media.tinyGif ?? result?.media.tinyGifTransparent;
+                      if (result != null && selectedGif != null) {
+                        final response = await http.downloadFromUrl(selectedGif.url);
                         if (response.statusCode == 200) {
                           try {
                             final Uint8List data = response.data;
                             controller.pickedAttachments.add(PlatformFile(
                               path: null,
-                              name: "${gif.title ?? randomString(8)}.gif",
+                              name: "${result.id}.gif",
                               size: data.length,
                               bytes: data,
                             ));
@@ -744,9 +762,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                               emojiSizeMax: 28,
                               backgroundColor: Colors.transparent,
                               columns: emojiColumns,
-                              noRecents: Text("No Recents", style: context.textTheme.headlineMedium!.copyWith(color: context.theme.colorScheme.outline))
+                              noRecents: Text("No Recents", style: context.textTheme.headlineMedium!.copyWith(color: context.theme.colorScheme.outline)),
                             ),
-                            swapCategoryAndBottomBar: true,
+                            viewOrderConfig: const ViewOrderConfig(
+                              top: EmojiPickerItem.searchBar,
+                              middle: EmojiPickerItem.emojiView,
+                              bottom: EmojiPickerItem.categoryBar,
+                            ),
                             skinToneConfig: const SkinToneConfig(enabled: false),
                             categoryViewConfig: const CategoryViewConfig(
                               backgroundColor: Colors.transparent,
@@ -824,7 +846,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 class TextFieldComponent extends StatefulWidget {
   const TextFieldComponent({
     super.key,
-    required this.subjectTextController,
+    this.subjectTextController,
     required this.textController,
     required this.controller,
     required this.recorderController,
@@ -833,7 +855,7 @@ class TextFieldComponent extends StatefulWidget {
     this.initialAttachments = const [],
   });
 
-  final SpellCheckTextEditingController subjectTextController;
+  final SpellCheckTextEditingController? subjectTextController;
   final MentionTextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
@@ -853,7 +875,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
   late final RecorderController? recorderController;
   late final List<PlatformFile> initialAttachments;
   late final MentionTextEditingController textController;
-  late final SpellCheckTextEditingController subjectTextController;
+  late final SpellCheckTextEditingController? subjectTextController;
   late final Future<void> Function({String? effect}) sendMessage;
 
   late final ValueNotifier<bool> isRecordingNotifier;
@@ -874,6 +896,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     recorderController?.addListener(() {
       isRecordingNotifier.value = recorderController?.isRecording ?? false;
     });
+
+    assert(!(subjectTextController == null && !isChatCreator && ss.settings.enablePrivateAPI.value && ss.settings.privateSubjectLine.value && chat!.isIMessage));
   }
 
   @override
@@ -928,7 +952,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                   PickedAttachmentsHolder(
                     controller: controller,
                     textController: txtController,
-                    subjectTextController: subjController,
                     initialAttachments: initialAttachments,
                   ),
                 if (!isChatCreator)

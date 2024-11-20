@@ -1,9 +1,9 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.14.0.0
+version: 1.15.0.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
-
+license: Apache-2.0
 confinement: strict
 base: core24
 grade: stable
@@ -110,8 +110,8 @@ parts:
       - alsa-mixin
       - fmedia
     source:
-      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.14.0%2B69/bluebubbles-linux-x86_64.tar
-      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.14.0%2B69/bluebubbles-linux-aarch64.tar
+      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.15.0%2B70/bluebubbles-linux-x86_64.tar
+      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v1.15.0%2B70/bluebubbles-linux-aarch64.tar
     plugin: nil
     override-build: |
       set -eux
@@ -147,7 +147,7 @@ parts:
       - gtk-common-themes
     override-prime: |
       set -eux
-      for snap in "core22" "gtk-common-themes"; do
+      for snap in "core24" "gtk-common-themes"; do
           cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
 

@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +31,7 @@ class TextFieldSuffix extends StatefulWidget {
     this.isChatCreator = false,
   });
 
-  final TextEditingController subjectTextController;
+  final TextEditingController? subjectTextController;
   final TextEditingController textController;
   final ConversationViewController? controller;
   final RecorderController? recorderController;
@@ -52,11 +53,11 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
   @override
   Widget build(BuildContext context) {
     return MultiValueListenableBuilder(
-      valueListenables: [widget.textController, widget.subjectTextController],
+      valueListenables: [widget.textController, widget.subjectTextController].whereNotNull().toList(),
       builder: (context, values, _) {
         return Obx(() {
           bool canSend = widget.textController.text.isNotEmpty ||
-              widget.subjectTextController.text.isNotEmpty ||
+              (widget.subjectTextController?.text.isNotEmpty ?? false) ||
               (widget.controller?.pickedAttachments.isNotEmpty ?? false.obs.value);
           bool showRecording = (widget.controller?.showRecording.value ?? false.obs.value) && widget.recorderController != null;
           bool isLinuxArm64 = kIsDesktop && Platform.isLinux && SysInfo.kernelArchitecture == ProcessorArchitecture.arm64;
@@ -190,7 +191,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     context,
                     widget.controller!,
                     widget.textController.text.trim(),
-                    widget.subjectTextController.text.trim(),
+                    widget.subjectTextController?.text.trim() ?? "",
                     widget.controller!.replyToMessage?.item1.guid,
                     widget.controller!.replyToMessage?.item2,
                     widget.controller!.chat.guid,
