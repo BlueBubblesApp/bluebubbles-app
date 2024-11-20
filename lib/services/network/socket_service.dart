@@ -10,6 +10,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 SocketService socket = Get.isRegistered<SocketService>() ? Get.find<SocketService>() : Get.put(SocketService());
@@ -27,6 +28,9 @@ class SocketService extends GetxService {
   RxString lastError = "".obs;
   Timer? _reconnectTimer;
   late Socket socket;
+
+  InternetConnection? internetConnection;
+  StreamSubscription<InternetStatus>? internetConnectionListener;
 
   String get serverAddress => http.origin;
   String get password => ss.settings.guidAuthKey.value;
@@ -95,6 +99,29 @@ class SocketService extends GetxService {
     socket.on("chat-read-status-changed", (data) => ah.handleEvent("chat-read-status-changed", data, 'DartSocket'));
     socket.on("imessage-aliases-removed", (data) => ah.handleEvent("imessage-aliases-removed", data, 'DartSocket'));
 
+    // For some reason desktop needs a separate listener
+    if (kIsDesktop) {
+      internetConnection = InternetConnection.createInstance(
+        customCheckOptions: [
+          InternetCheckOption(
+              uri: Uri.parse(serverAddress),
+              timeout: const Duration(seconds: 5),
+          ),
+        ],
+        useDefaultOptions: false,
+      );
+
+      internetConnectionListener = internetConnection!.onStatusChange.listen((InternetStatus status) {
+        Logger.info("Internet status changed: $status");
+        switch (status) {
+          case InternetStatus.connected:
+            reconnect();
+          case InternetStatus.disconnected:
+            disconnect();
+        }
+      });
+    }
+
     socket.connect();
   }
 
@@ -113,6 +140,7 @@ class SocketService extends GetxService {
   void closeSocket() {
     if (isNullOrEmpty(serverAddress)) return;
     socket.dispose();
+    internetConnectionListener?.cancel();
     state.value = SocketState.disconnected;
   }
 
@@ -154,15 +182,12 @@ class SocketService extends GetxService {
         _reconnectTimer = null;
         NetworkTasks.onConnect();
         notif.clearSocketError();
-        return;
       case SocketState.disconnected:
         Logger.info("Disconnected from socket...");
         state.value = SocketState.disconnected;
-        return;
       case SocketState.connecting:
         Logger.info("Connecting to socket...");
         state.value = SocketState.connecting;
-        return;
       case SocketState.error:
         Logger.info("Socket connect error, fetching new URL...");
 
@@ -184,9 +209,6 @@ class SocketService extends GetxService {
             notif.createSocketError();
           }
         });
-        return;
-      default:
-        return;
     }
   }
 

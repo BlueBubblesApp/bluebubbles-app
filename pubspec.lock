@@ -1570,6 +1570,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+  internet_connection_checker_plus:
+    dependency: "direct main"
+    description:
+      name: internet_connection_checker_plus
+      sha256: "95da3194bdb98cb606b921f0e0007cbe55c32d6a7fa92d5debe59ef4183ce2a6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.2"
   intl:
     dependency: "direct main"
     description:
@@ -2782,10 +2790,10 @@ packages:
     dependency: "direct main"
     description:
       name: socket_io_client
-      sha256: "98d4ad59316c359cf0a80380b068c53cd50fa425c73da12a672543715fe36f9c"
+      sha256: "180fdbc7685e32a849511bbf8b1c7bcc46ab0ff116f7024aa204b425bb3a1ffe"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.1"
+    version: "3.0.2"
   socket_io_common:
     dependency: transitive
     description:
