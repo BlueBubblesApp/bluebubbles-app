@@ -216,7 +216,7 @@ class _AttachmentsFilterPanelState extends OptimizedState<AttachmentsFilterPanel
                           fit: FlexFit.tight,
                           child: Column(
                             mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 'Sender',
@@ -316,6 +316,10 @@ class _AttachmentsFilterPanelState extends OptimizedState<AttachmentsFilterPanel
                                       );
                                     },
                                   ),
+                                ),
+                              if (attachmentsType == AttachmentTypes.media) 
+                                const SizedBox(
+                                  height : 10
                                 ),
                               if (attachmentsType == AttachmentTypes.media) 
                                 Text(
@@ -462,6 +466,9 @@ class _AttachmentsFilterPanelState extends OptimizedState<AttachmentsFilterPanel
                                 //       ),
                                 //     ],
                                 //   ),
+                              const SizedBox(
+                                height : 10
+                              ),
                               Text(
                                 'Date',
                                 style: context.theme.textTheme.bodyMedium!.copyWith(
