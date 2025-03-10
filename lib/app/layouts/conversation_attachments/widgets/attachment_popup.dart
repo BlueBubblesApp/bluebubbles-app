@@ -619,10 +619,10 @@ class _AttachmentPopupState extends OptimizedState<AttachmentPopup> with SingleT
             onTap: share,
             action: DetailsMenuAction.Share,
           ),
-        DetailsMenuActionWidget(
-          onTap: jumpToMessage,
-          action: DetailsMenuAction.JumpToMessage,
-        ),
+        // DetailsMenuActionWidget(
+        //   onTap: jumpToMessage,
+        //   action: DetailsMenuAction.JumpToMessage,
+        // ),
         if (showDownload)
           DetailsMenuActionWidget(
             onTap: redownload,
