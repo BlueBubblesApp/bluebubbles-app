@@ -516,11 +516,9 @@ class _AttachmentPopupState extends OptimizedState<AttachmentPopup> with SingleT
       popDetails();
       getActiveMwc(message.guid!)?.updateWidgets<EmbeddedMedia>(null);
     } else {
-      // for (Attachment? element in part.attachments) {
-      //   // We might actually need the cvController for this if we're going to manipulate imageData
-      //   // widget.cvController.imageData.remove(element!.guid!);
-      //   // as.redownloadAttachment(element);
-      // }
+      MessageWidgetController? mwc = getActiveMwc(message.guid!);
+      mwc!.cvController?.imageData.remove(attachment!.guid!);
+      as.redownloadAttachment(attachment!);
       popDetails();
       getActiveMwc(message.guid!)?.updateWidgets<AttachmentHolder>(null);
     }
