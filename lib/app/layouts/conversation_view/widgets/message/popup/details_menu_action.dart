@@ -32,7 +32,7 @@ enum DetailsMenuAction {
   Delete,
   Bookmark,
   SelectMultiple,
-  MessageInfo
+  MessageInfo,
 }
 
 class PlatformSupport {
