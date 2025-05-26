@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
 import com.bluebubbles.messaging.services.foreground.ForegroundServiceBroadcastReceiver
 import com.bluebubbles.messaging.Constants
+import com.bluebubbles.messaging.utils.NotificationUtils
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -19,9 +20,29 @@ class MainActivity : FlutterFragmentActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         engine = flutterEngine
         super.configureFlutterEngine(flutterEngine)
+
+        // Register MethodChannel handler
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
             call, result -> MethodCallHandler().methodCallHandler(call, result, this)
         }
+
+        // Inline NotificationPlugin logic
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "notification_plugin")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "createNotificationChannel" -> {
+                        val id = call.argument<String>("id")
+                        val name = call.argument<String>("name")
+                        if (id.isNullOrBlank() || name.isNullOrBlank()) {
+                            result.error("INVALID_ARGUMENTS", "Missing or empty id or name", null)
+                            return@setMethodCallHandler
+                        }
+                        NotificationUtils.createNotificationChannel(applicationContext, id, name)
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
 
     override fun onDestroy() {
