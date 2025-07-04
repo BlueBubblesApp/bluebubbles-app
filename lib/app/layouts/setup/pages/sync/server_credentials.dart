@@ -20,6 +20,8 @@ import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
+import '../../../settings/dialogs/certificate_pinning_dialog.dart';
+
 class ServerCredentials extends StatefulWidget {
   @override
   State<ServerCredentials> createState() => _ServerCredentialsState();
@@ -192,12 +194,23 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
               padding: const EdgeInsets.all(2),
               child: TextButton(
                 onPressed: () async {
-                  await showCustomHeadersDialog(context);
+                  await showCertificateShaPinningDialog(context);
                 },
-                child: Text("Enter Custom Headers",
+                child: Text("Pin Certificates",
                         style: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.primary)),
               ),
             ),
+          Container(
+            height: 40,
+            padding: const EdgeInsets.all(2),
+            child: TextButton(
+              onPressed: () async {
+                await showCustomHeadersDialog(context);
+              },
+              child: Text("Enter Custom Headers",
+                  style: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.primary)),
+            ),
+          ),
           const SizedBox(height: 10),
           if (token != null)
             Container(

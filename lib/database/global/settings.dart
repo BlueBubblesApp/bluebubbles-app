@@ -18,6 +18,7 @@ class Settings {
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
   final RxMap<String, String> customHeaders = <String, String>{}.obs;
+  final RxMap<String, String> pinnedCertificateSHAs = <String, String>{}.obs;
   final RxBool finishedSetup = false.obs;
   final RxBool reachedConversationList = false.obs;
   final RxBool autoDownload = true.obs;
