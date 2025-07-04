@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/settings/dialogs/certificate_pinning_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/custom_headers_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/oauth_panel.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -566,6 +567,18 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       backgroundColor: tileColor,
                       onTap: () async {
                         final result = await showCustomHeadersDialog(context);
+                        if (result) {
+                          socket.restartSocket();
+                        }
+                      }),
+                  SettingsTile(
+                      leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.pencil, materialIcon: Icons.edit, containerColor: Colors.teal),
+                      title: "Configure Pinned Certificates",
+                      subtitle: "Add or edit pinned certificates",
+                      backgroundColor: tileColor,
+                      onTap: () async {
+                        final result = await showCertificateShaPinningDialog(context);
                         if (result) {
                           socket.restartSocket();
                         }

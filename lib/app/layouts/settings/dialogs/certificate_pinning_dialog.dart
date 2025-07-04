@@ -207,8 +207,8 @@ Future<bool> showCertificateShaPinningDialog(BuildContext context) async {
             });
 
             ss.settings.pinnedCertificateSHAs.value = map;
-            await ss.settings.saveOne('pinnedCertificates');
-            await ss.prefs.setString('pinnedCertificates', jsonEncode(map));
+            await ss.settings.saveOne('pinnedCertificateSHAs');
+            await ss.prefs.setString('pinnedCertificateSHAs', jsonEncode(map));
             // Reinitialize HTTP client with new certificate pins
             http.onInit();
             Navigator.of(context).pop(true);
