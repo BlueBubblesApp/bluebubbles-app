@@ -163,9 +163,9 @@ class SocketService extends GetxService {
   Future<Map<String, dynamic>> sendMessage(String event, Map<String, dynamic> message) {
     Completer<Map<String, dynamic>> completer = Completer();
 
-    socket.emitWithAck(event, message, ack: (response) {
+    socket.emitWithAck(event, message, ack: (response) async {
       if (response['encrypted'] == true) {
-        response['data'] = jsonDecode(decryptAESCryptoJS(response['data'], password));
+        response['data'] = jsonDecode(await decryptAESCryptoJS(response['data'], password));
       }
 
       if (!completer.isCompleted) {

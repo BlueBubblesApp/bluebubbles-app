@@ -78,7 +78,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
             final item = IncomingItem.fromMap(QueueType.newMessage, payload.data);
             if (ls.isAlive && ss.settings.endpointUnifiedPush.value == "") {
               await inq.queue(item);
@@ -107,7 +107,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
 
             // Since this is an updated-message event, the message should exist in the DB.
             // So if there is no chat, we can find it from the message guid
@@ -154,7 +154,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
             final item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
             await ah.handleNewOrUpdatedChat(item.chat);
           }
@@ -179,7 +179,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
             final guid = payload.data["chats"].first["guid"];
             final chat = Chat.findOne(guid: guid);
             if (chat != null) {
@@ -196,7 +196,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (data == null) return Future.value(true);
-          final payload = ServerPayload.fromJson(data);
+          final payload = await ServerPayload.fromJsonAsync(data);
           Chat? chat = Chat.findOne(guid: payload.data["payload"]["chatGuid"]);
           if (chat != null) {
             await notif.createFailedToSend(chat, scheduled: true);
@@ -267,7 +267,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
             Chat? chat = Chat.findOne(guid: payload.data["chatGuid"]);
             if (chat == null || (payload.data["read"] != true && payload.data["read"] != false)) {
               return Future.value(false);
@@ -298,7 +298,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
             await ActionHandler().handleIncomingFaceTimeCallLegacy(payload.data);
           }
         } catch (e, s) {
@@ -314,7 +314,7 @@ class MethodChannelService extends GetxService {
         try {
           Map<String, dynamic>? data = arguments;
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
             await ActionHandler().handleFaceTimeStatusChange(payload.data);
           }
         } catch (e, s) {
@@ -332,7 +332,7 @@ class MethodChannelService extends GetxService {
         Map<String, dynamic>? data = arguments;
         try {
           if (!isNullOrEmpty(data)) {
-            final payload = ServerPayload.fromJson(data!);
+            final payload = await ServerPayload.fromJsonAsync(data!);
             Logger.info("Alias(es) removed ${payload.data["aliases"]}");
             await notif.createAliasesRemovedNotification((payload.data["aliases"] as List).cast<String>());
           } else {

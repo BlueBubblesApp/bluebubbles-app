@@ -55,7 +55,7 @@ dependencies:
   easy_debounce: ^2.0.3
   unicode_emojis: ^0.4.0
   emoji_picker_flutter: ^4.3.0
-  encrypt: ^5.0.3
+  cryptography: ^2.7.0
   exif: ^3.3.0
   faker: ^2.2.0
   fast_contacts: ^4.0.0  # mobile only
@@ -128,7 +128,7 @@ dependencies:
   network_info_plus: ^6.0.1
   network_tools: ^5.0.2
   numberpicker: ^2.1.2
-  objectbox: 4.0.3 # pinned because upgrading breaks Windows app
+  objectbox: ^5.0.3
   objectbox_flutter_libs: any
   on_exit: ^1.0.0
   open_filex: ^4.7.0

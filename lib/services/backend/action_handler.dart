@@ -457,7 +457,7 @@ class ActionHandler extends GetxService {
     switch (event) {
       case "new-message":
         if (!isNullOrEmpty(data)) {
-          final payload = ServerPayload.fromJson(data);
+          final payload = await ServerPayload.fromJsonAsync(data);
           final message = Message.fromMap(payload.data);
           if (message.isFromMe!) {
             if (payload.data['tempGuid'] == null) {
@@ -479,7 +479,7 @@ class ActionHandler extends GetxService {
         return;
       case "updated-message":
         if (!isNullOrEmpty(data)) {
-          final payload = ServerPayload.fromJson(data);
+          final payload = await ServerPayload.fromJsonAsync(data);
           IncomingItem item = IncomingItem.fromMap(QueueType.updatedMessage, payload.data);
           if (useQueue) {
             inq.queue(item);

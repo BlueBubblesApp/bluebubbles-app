@@ -49,27 +49,78 @@ class ServerPayload {
     required this.isPartial,
     required this.encoding,
     required this.encryptionType,
-  }) {
-    if (isEncrypted) {
-      if (encryptionType == EncryptionType.AES_PB) {
-        data = decryptAESCryptoJS(data, ss.settings.guidAuthKey.value);
-      }
-    }
-    if ([PayloadEncoding.JSON_OBJECT, PayloadEncoding.JSON_STRING].contains(encoding) && data is String) {
-      data = jsonDecode(data);
+  });
+
+  /// Creates a ServerPayload from JSON and handles decryption if needed
+  static Future<ServerPayload> fromJsonAsync(Map<String, dynamic> json) async {
+    final isEncrypted = json["encrypted"] ?? false;
+    PayloadEncoding encoding =
+        PayloadEncoding.values.firstWhereOrNull((element) => element.name == json["encoding"]) ?? PayloadEncoding.JSON_OBJECT;
+
+    dynamic data = json["data"] ?? json;
+
+    // Do not decode before decrypting encrypted payloads
+    if (!isEncrypted && _shouldDecode(encoding, data)) {
+      data = jsonDecode(data as String);
       encoding = PayloadEncoding.JSON_OBJECT;
     }
+
+    final payload = ServerPayload(
+      originalJson: json,
+      data: data,
+      isLegacy: json.containsKey("type"),
+      type: PayloadType.values.firstWhereOrNull((element) => element.name == json["type"]) ?? PayloadType.OTHER,
+      subtype: json["subtype"],
+      isEncrypted: isEncrypted,
+      isPartial: json["partial"] ?? false,
+      encoding: encoding,
+      encryptionType: EncryptionType.values.firstWhereOrNull((element) => element.name == json["encryptionType"]) ?? EncryptionType.AES_PB,
+    );
+
+    // Handle decryption if needed
+    if (payload.isEncrypted) {
+      if (payload.encryptionType == EncryptionType.AES_PB && payload.data is String) {
+        payload.data = await decryptAESCryptoJS(payload.data, ss.settings.guidAuthKey.value);
+      }
+    }
+
+    // Handle JSON decoding post-decryption
+    if (_shouldDecode(payload.encoding, payload.data)) {
+      payload.data = jsonDecode(payload.data as String);
+      payload.encoding = PayloadEncoding.JSON_OBJECT;
+    }
+
+    return payload;
   }
 
-  factory ServerPayload.fromJson(Map<String, dynamic> json) => ServerPayload(
-    originalJson: json,
-    data: ((json["data"] ?? json) is String ? jsonDecode(json["data"] ?? json) : (json["data"] ?? json)).cast<String, Object>(),
-    isLegacy: json.containsKey("type"),
-    type: PayloadType.values.firstWhereOrNull((element) => element.name == json["type"]) ?? PayloadType.OTHER,
-    subtype: json["subtype"],
-    isEncrypted: json["encrypted"] ?? false,
-    isPartial: json["partial"] ?? false,
-    encoding: PayloadEncoding.values.firstWhereOrNull((element) => element.name == json["encoding"]) ?? PayloadEncoding.JSON_OBJECT,
-    encryptionType: EncryptionType.values.firstWhereOrNull((element) => element.name == json["encryptionType"]) ?? EncryptionType.AES_PB,
-  );
+  /// Synchronous factory for backward compatibility - use only when encryption is not used
+  factory ServerPayload.fromJson(Map<String, dynamic> json) {
+    final isEncrypted = json["encrypted"] ?? false;
+    PayloadEncoding encoding =
+        PayloadEncoding.values.firstWhereOrNull((element) => element.name == json["encoding"]) ?? PayloadEncoding.JSON_OBJECT;
+
+    dynamic data = json["data"] ?? json;
+
+    // Only decode when not encrypted; encrypted payloads must use fromJsonAsync
+    if (!isEncrypted && _shouldDecode(encoding, data)) {
+      data = jsonDecode(data as String);
+      encoding = PayloadEncoding.JSON_OBJECT;
+    }
+
+    return ServerPayload(
+      originalJson: json,
+      data: data,
+      isLegacy: json.containsKey("type"),
+      type: PayloadType.values.firstWhereOrNull((element) => element.name == json["type"]) ?? PayloadType.OTHER,
+      subtype: json["subtype"],
+      isEncrypted: isEncrypted,
+      isPartial: json["partial"] ?? false,
+      encoding: encoding,
+      encryptionType: EncryptionType.values.firstWhereOrNull((element) => element.name == json["encryptionType"]) ?? EncryptionType.AES_PB,
+    );
+  }
+}
+
+bool _shouldDecode(PayloadEncoding encoding, dynamic data) {
+  return [PayloadEncoding.JSON_OBJECT, PayloadEncoding.JSON_STRING].contains(encoding) && data is String;
 }
