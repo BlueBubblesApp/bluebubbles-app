@@ -906,9 +906,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "user/chip/update-examples"
+      ref: bf7deabbb1aaa3cff785b636d9f4717d4fe202d9
       resolved-ref: bf7deabbb1aaa3cff785b636d9f4717d4fe202d9
-      url: "https://github.com/chipweinberger/flutter_isolate.git"
+      url: "https://github.com/rmawatson/flutter_isolate.git"
     source: git
     version: "2.0.5-pre"
   flutter_keyboard_visibility:
