@@ -35,7 +35,7 @@ class ChatsService extends GetxService {
     if (!kIsWeb) {
       // watch for new chats
       final countQuery = (Database.chats.query(Chat_.dateDeleted.isNull())..order(Chat_.id, flags: Order.descending))
-          .watch(triggerImmediately: true);
+          .watch();
       countSub = countQuery.listen((event) async {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
@@ -103,7 +103,34 @@ class ChatsService extends GetxService {
       loadedChatBatch.value = true;
     }
     loadedAllChats.complete();
+    sort();
+    showSnackbar("Chats Loaded", "Finished loading ${chats.length} chats", durationMs: 2000);
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
+
+    // On web, fetch contacts from server and match to handles
+    if (kIsWeb && cs.contacts.isEmpty) {
+      try {
+        final networkContacts = await cs.fetchNetworkContacts();
+        Logger.info("fetchNetworkContacts returned ${networkContacts.length} contacts, webCachedHandles: ${webCachedHandles.length}", tag: "ChatBloc");
+        if (networkContacts.isNotEmpty) {
+          cs.contacts = networkContacts;
+          for (Contact c in cs.contacts) {
+            final handles = cs.matchContactToHandles(c, webCachedHandles);
+            for (Handle h in handles) {
+              h.webContact = c;
+            }
+          }
+          for (final chat in chats) {
+            chat.title = null;
+            chat.webSyncParticipants();
+          }
+          sort();
+          Logger.info("Contacts loaded and matched: ${cs.contacts.length} contacts", tag: "ChatBloc");
+        }
+      } catch (e) {
+        Logger.error("Failed to load contacts on web: $e", tag: "ChatBloc");
+      }
+    }
     // update share targets
     if (Platform.isAndroid) {
       StartupTasks.waitForUI().then((_) async {
@@ -153,6 +180,7 @@ class ChatsService extends GetxService {
     final ids = chats.map((e) => e.guid).toSet();
     chats.retainWhere((element) => ids.remove(element.guid));
     chats.sort(Chat.sort);
+    chats.refresh();
   }
 
   bool updateChat(Chat updated, {bool shouldSort = false, bool override = false}) {
@@ -169,8 +197,13 @@ class ChatsService extends GetxService {
   }
 
   Future<void> addChat(Chat toAdd) async {
-    chats.add(toAdd);
-    cm.createChatController(toAdd);
+    final index = chats.indexWhere((e) => e.guid == toAdd.guid);
+    if (index != -1) {
+      chats[index] = toAdd;
+    } else {
+      chats.add(toAdd);
+      cm.createChatController(toAdd);
+    }
     sort();
   }
 

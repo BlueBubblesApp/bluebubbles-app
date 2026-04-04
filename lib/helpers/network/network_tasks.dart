@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -40,7 +41,24 @@ class NetworkTasks {
         }
 
         if (cs.contacts.isEmpty) {
-          await cs.refreshContacts();
+          // Fetch contacts directly from server, bypassing access check
+          final networkContacts = await cs.fetchNetworkContacts();
+          if (networkContacts.isNotEmpty) {
+            cs.contacts = networkContacts;
+            // Match contacts to handles
+            for (Contact c in cs.contacts) {
+              final handles = cs.matchContactToHandles(c, chats.webCachedHandles);
+              for (Handle h in handles) {
+                h.webContact = c;
+              }
+            }
+            // Clear cached titles and refresh so names show instead of numbers
+            for (final chat in chats.chats) {
+              chat.title = null;
+              chat.webSyncParticipants();
+            }
+            chats.sort();
+          }
         }
       }
     }

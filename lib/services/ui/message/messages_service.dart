@@ -57,7 +57,7 @@ class MessagesService extends GetxController {
       if (chat.id != null) {
         final countQuery = (Database.messages.query(Message_.dateDeleted.isNull())
           ..link(Message_.chat, Chat_.id.equals(chat.id!))
-          ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
+          ..order(Message_.id, flags: Order.descending)).watch();
         countSub = countQuery.listen((event) async {
           if (!ss.settings.finishedSetup.value) return;
           final newCount = event.count();

@@ -105,8 +105,7 @@ class NotificationsService extends GetxService {
 
     // watch for new messages and handle the notification
     if (!kIsWeb) {
-      final countQuery =
-          (Database.messages.query()..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      final countQuery = (Database.messages.query()..order(Message_.id, flags: Order.descending)).watch();
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
@@ -211,7 +210,15 @@ class NotificationsService extends GetxService {
       notif.onClick.listen((event) async {
         await intents.openChat(guid);
       });
-    } else if (kIsDesktop) {
+    }
+
+    if (ss.settings.showInAppNotifications.value) {
+      showSnackbar(title, text, durationMs: 3000, onTap: (_) async {
+        await intents.openChat(guid);
+      });
+    }
+
+    if (kIsDesktop) {
       _lock.synchronized(
           () async => await showDesktopNotif(message, text, chat, guid, title, contactName, isGroup, isReaction));
     } else {

@@ -244,15 +244,11 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     } else {
       sub = WebListeners.chatUpdate.listen((chat) {
         if (chat.guid == controller.chat.guid) {
-          // check if we really need to update this widget
-          if (chat.displayName != cachedDisplayName
-              || chat.participants.length != cachedParticipants.length) {
-            final newTitle = chat.getTitle();
-            if (newTitle != title) {
-              setState(() {
-                title = newTitle;
-              });
-            }
+          final newTitle = chat.getTitle();
+          if (newTitle != title) {
+            setState(() {
+              title = newTitle;
+            });
           }
           cachedDisplayName = chat.displayName;
           cachedParticipants = chat.participants;
@@ -271,7 +267,9 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
   Widget build(BuildContext context) {
     return Obx(() {
       final hideInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-      String _title = title;
+      // On web, observe chats list to rebuild when contacts are matched, and read fresh title
+      if (kIsWeb) chats.chats.length;
+      String _title = kIsWeb ? controller.chat.getTitle() : title;
       if (hideInfo) {
         _title = controller.chat.isGroup ? controller.chat.fakeName : controller.chat.participants[0].fakeName;
       }

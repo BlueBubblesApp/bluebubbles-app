@@ -91,6 +91,11 @@ class SyncService extends GetxService {
     cs.completeContactsRefresh(contacts, reloadUI: result);
 
     isIncrementalSyncing.value = false;
+
+    // On web, re-fetch chats from server after sync to ensure UI shows latest messages
+    if (kIsWeb) {
+      await chats.init(force: true);
+    }
   }
 }
 

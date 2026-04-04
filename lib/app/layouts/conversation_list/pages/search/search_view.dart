@@ -18,7 +18,9 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
 import 'package:tuple/tuple.dart';
-import 'package:objectbox/src/native/query/query.dart' as obx;
+// objectbox native queries - only available on non-web platforms
+import 'package:objectbox/src/native/query/query.dart'
+    if (dart.library.html) 'package:bluebubbles/models/html/objectbox.dart' as obx;
 
 class SearchResult {
   final String search;

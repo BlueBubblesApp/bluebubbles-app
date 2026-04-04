@@ -120,6 +120,8 @@ class Player {
   /// Enables or disables shuffle for [Player].
   /// Default is `false`.
   FutureOr<void> setShuffle(bool shuffle) {}
+
+  FutureOr<void> stop() {}
 }
 
 class VideoController {
@@ -149,11 +151,15 @@ class VideoController {
 class Video extends StatefulWidget {
   /// The [VideoController] reference to control this [Video] output & connect with [Player] from `package:media_kit`.
   final VideoController? controller;
+  final dynamic controls;
+  final FilterQuality? filterQuality;
 
   /// {@macro video}
   const Video({
     super.key,
     required this.controller,
+    this.controls,
+    this.filterQuality,
   });
 
   @override

@@ -30,8 +30,20 @@ class Database {
   static final Completer<void> initComplete = Completer();
 
   static Future<void> init() async {
-    // Web doesn't use a database currently, so do not do anything
-    if (kIsWeb) return;
+    // Web doesn't use a database currently, so initialize dummy boxes and return
+    if (kIsWeb) {
+      Database.attachments = Box<Attachment>();
+      Database.chats = Box<Chat>();
+      Database.contacts = Box<Contact>();
+      Database.fcmData = Box<FCMData>();
+      Database.handles = Box<Handle>();
+      Database.messages = Box<Message>();
+      Database.scheduledMessages = Box<ScheduledMessage>();
+      Database.themes = Box<ThemeStruct>();
+      Database.themeEntries = Box<ThemeEntry>();
+      Database.themeObjects = Box<ThemeObject>();
+      return;
+    }
 
     if (!kIsDesktop) {
       await _initDatabaseMobile();

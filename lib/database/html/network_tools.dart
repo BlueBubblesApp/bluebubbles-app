@@ -20,3 +20,22 @@ class HostScanner {
 class ActiveHost {
   String address = "";
 }
+
+class HostScannerService {
+  static final instance = HostScannerService();
+
+  Stream<ActiveHost> scanDevicesForSinglePort(
+    String subnet,
+    int port, {
+      int firstHostId = 1,
+      int lastHostId = 254,
+      Duration timeout = const Duration(milliseconds: 2000),
+      dynamic progressCallback,
+      bool resultsInAddressAscendingOrder = true,
+    }) {
+    final StreamController<ActiveHost> activeHostsController = StreamController<ActiveHost>();
+    return activeHostsController.stream;
+  }
+}
+
+Future<void> configureNetworkTools(String path, {bool enableDebugging = false}) async {}

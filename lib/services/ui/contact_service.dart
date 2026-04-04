@@ -223,34 +223,46 @@ class ContactsService extends GetxService {
 
   List<Handle> matchContactToHandles(Contact c, List<Handle> handles) {
     final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
+    final lowerEmails = c.emails.map((e) => e.toLowerCase()).toList();
     List<Handle> handleMatches = [];
     // multiply phones by 3 because a phone can be matched to iMessage / SMS / Android SMS
     int maxResults = c.phones.length * 3 + c.emails.length;
     for (Handle h in handles) {
-      // Match emails
-      if (h.address.contains("@") && c.emails.contains(h.address)) {
+      // Match emails (case-insensitive)
+      if (h.address.contains("@") && lowerEmails.contains(h.address.toLowerCase())) {
         handleMatches.add(h);
         continue;
       }
 
       final numericAddress = h.address.numericOnly();
 
-      // Match phone numbers (exact)
-      if (c.phones.contains(numericAddress)) {
+      // Match phone numbers (exact numeric match)
+      if (numericPhones.contains(numericAddress)) {
         handleMatches.add(h);
         continue;
       }
 
-      // try to match last 15 - 7 digits
+      // try to match last 15 - 7 digits (bidirectional suffix matching)
+      final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
+      final handleLeadingZerosRemoved = int.tryParse(numericAddress)?.toString() ?? numericAddress;
+      bool matched = false;
       for (String p in numericPhones) {
         // remove leading zeros which indicate "same country"
         final leadingZerosRemoved = int.tryParse(p)?.toString() ?? p;
-        final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
-        if (matchLengths.contains(leadingZerosRemoved.length) && numericAddress.endsWith(leadingZerosRemoved)) {
+        // check if handle ends with contact phone
+        if (matchLengths.contains(leadingZerosRemoved.length) && handleLeadingZerosRemoved.endsWith(leadingZerosRemoved)) {
           handleMatches.add(h);
-          continue;
+          matched = true;
+          break;
+        }
+        // check if contact phone ends with handle (e.g. handle has no country code)
+        if (matchLengths.contains(handleLeadingZerosRemoved.length) && leadingZerosRemoved.endsWith(handleLeadingZerosRemoved)) {
+          handleMatches.add(h);
+          matched = true;
+          break;
         }
       }
+      if (matched) continue;
 
       if (handleMatches.length >= maxResults) break;
     }
@@ -263,21 +275,30 @@ class ContactsService extends GetxService {
 
     Contact? contact;
     final numericAddress = h.address.numericOnly();
+    final handleLeadingZerosRemoved = int.tryParse(numericAddress)?.toString() ?? numericAddress;
     for (Contact c in contacts) {
       final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
-      if (h.address.contains("@") && c.emails.contains(h.address)) {
+      // Match emails (case-insensitive)
+      if (h.address.contains("@") && c.emails.any((e) => e.toLowerCase() == h.address.toLowerCase())) {
         contact = c;
         break;
       } else {
-        // if address is direct match
-        if (c.phones.contains(numericAddress)) {
+        // if address is direct numeric match
+        if (numericPhones.contains(numericAddress)) {
           contact = c;
           break;
         }
-        // try to match last 11 - 7 digits
+        // try to match last 15 - 7 digits (bidirectional suffix matching)
+        final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
         for (String p in numericPhones) {
-          final matchLengths = [15, 14, 13, 12, 11, 10, 9, 8, 7];
-          if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
+          final leadingZerosRemoved = int.tryParse(p)?.toString() ?? p;
+          // check if handle ends with contact phone
+          if (matchLengths.contains(leadingZerosRemoved.length) && handleLeadingZerosRemoved.endsWith(leadingZerosRemoved)) {
+            contact = c;
+            break;
+          }
+          // check if contact phone ends with handle
+          if (matchLengths.contains(handleLeadingZerosRemoved.length) && leadingZerosRemoved.endsWith(handleLeadingZerosRemoved)) {
             contact = c;
             break;
           }

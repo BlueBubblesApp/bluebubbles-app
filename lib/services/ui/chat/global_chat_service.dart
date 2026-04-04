@@ -40,7 +40,7 @@ class _GlobalChatService extends GetxService {
   }
 
   void watchChats() {
-    final query = Database.chats.query().watch(triggerImmediately: true);
+    final query = Database.chats.query().watch();
     query.listen((event) {
       final chats = event.find();
 

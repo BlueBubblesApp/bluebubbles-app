@@ -233,6 +233,34 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                             ? SocketState.connected
                                             : SocketState.disconnected))),
                               const TextSpan(text: "\n\n"),
+                              const TextSpan(text: "Server Contacts: "),
+                              TextSpan(
+                                  text: "${cs.contacts.length} synced",
+                                  style: TextStyle(
+                                      color: getIndicatorColor(cs.contacts.isNotEmpty
+                                          ? SocketState.connected
+                                          : SocketState.disconnected))),
+                              const TextSpan(text: "\n\n"),
+                              TextSpan(text: "Contact Matching: "),
+                              TextSpan(
+                                  text: () {
+                                    final linked = chats.webCachedHandles.where((h) => h.contact != null).length;
+                                    final total = chats.webCachedHandles.length;
+                                    return "$linked / $total handles linked";
+                                  }(),
+                                  style: TextStyle(
+                                      color: getIndicatorColor(chats.webCachedHandles.any((h) => h.contact != null)
+                                          ? SocketState.connected
+                                          : SocketState.disconnected))),
+                              const TextSpan(text: "\n\n"),
+                              TextSpan(text: "Google Contacts: "),
+                              TextSpan(
+                                  text: cs.contacts.any((c) => c.avatar != null && c.avatar!.isNotEmpty) ? "SYNCED" : "NOT SYNCED",
+                                  style: TextStyle(
+                                      color: getIndicatorColor(cs.contacts.any((c) => c.avatar != null && c.avatar!.isNotEmpty)
+                                          ? SocketState.connected
+                                          : SocketState.disconnected))),
+                              const TextSpan(text: "\n\n"),
                               const TextSpan(
                                   text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                             ]),

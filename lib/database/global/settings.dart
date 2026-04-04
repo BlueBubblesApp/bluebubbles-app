@@ -28,6 +28,7 @@ class Settings {
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
   final RxBool showIncrementalSync = false.obs;
+  final RxBool showInAppNotifications = true.obs;
   final RxBool highPerfMode = false.obs;
   final RxInt lastIncrementalSync = 0.obs;
   final RxInt lastIncrementalSyncRowId = 0.obs;
@@ -40,7 +41,7 @@ class Settings {
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
-  final RxBool showConnectionIndicator = false.obs;
+  final RxBool showConnectionIndicator = true.obs;
   final RxBool showSyncIndicator = true.obs;
   final RxInt sendDelay = 0.obs;
   final RxBool recipientAsPlaceholder = false.obs;
@@ -57,7 +58,7 @@ class Settings {
   final RxBool startVideosMutedFullscreen = true.obs;
   final RxBool use24HrFormat = false.obs;
   final RxBool alwaysShowAvatars = false.obs;
-  final RxBool notifyOnChatList = false.obs;
+  final RxBool notifyOnChatList = true.obs;
   final RxBool notifyReactions = true.obs;
   final RxBool colorsFromMedia = false.obs;
   final Rx<Monet> monetTheming = Monet.none.obs;
@@ -68,7 +69,7 @@ class Settings {
   final RxBool immersiveMode = false.obs;
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
-  final RxBool statusIndicatorsOnChats = false.obs;
+  final RxBool statusIndicatorsOnChats = true.obs;
   final RxInt apiTimeout = 30000.obs;
   final RxBool allowUpsideDownRotation = false.obs;
   final RxBool cancelQueuedMessages = false.obs;
@@ -267,6 +268,7 @@ class Settings {
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
       'showIncrementalSync': showIncrementalSync.value,
+      'showInAppNotifications': showInAppNotifications.value,
       'highPerfMode': highPerfMode.value,
       'lastIncrementalSync': lastIncrementalSync.value,
       'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
@@ -403,6 +405,7 @@ class Settings {
     ss.settings.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     ss.settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     ss.settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
+    ss.settings.showInAppNotifications.value = map['showInAppNotifications'] ?? true;
     ss.settings.highPerfMode.value = map['highPerfMode'] ?? false;
     ss.settings.refreshRate.value = map['refreshRate'] ?? 0;
     ss.settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
@@ -413,7 +416,7 @@ class Settings {
     ss.settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     ss.settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     ss.settings.smartReply.value = map['smartReply'] ?? false;
-    ss.settings.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
+    ss.settings.showConnectionIndicator.value = map['showConnectionIndicator'] ?? true;
     ss.settings.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
     ss.settings.sendDelay.value = map['sendDelay'] ?? 0;
     ss.settings.recipientAsPlaceholder.value = map['recipientAsPlaceholder'] ?? false;
@@ -430,7 +433,7 @@ class Settings {
     ss.settings.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'] ?? true;
     ss.settings.use24HrFormat.value = map['use24HrFormat'] ?? false;
     ss.settings.alwaysShowAvatars.value = map['alwaysShowAvatars'] ?? false;
-    ss.settings.notifyOnChatList.value = map['notifyOnChatList'] ?? false;
+    ss.settings.notifyOnChatList.value = map['notifyOnChatList'] ?? true;
     ss.settings.notifyReactions.value = map['notifyReactions'] ?? true;
     ss.settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     ss.settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
@@ -444,7 +447,7 @@ class Settings {
     ss.settings.spellcheckLanguage.value = map['spellcheckLanguage'] ?? 'auto';
     ss.settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     ss.settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
-    ss.settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
+    ss.settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? true;
     ss.settings.apiTimeout.value = map['apiTimeout'] ?? 15000;
     ss.settings.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
@@ -540,6 +543,7 @@ class Settings {
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
+    s.showInAppNotifications.value = map['showInAppNotifications'] ?? true;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
     s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     s.lastIncrementalSyncRowId.value = map['lastIncrementalSyncRowId'] ?? 0;
@@ -552,7 +556,7 @@ class Settings {
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
-    s.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
+    s.showConnectionIndicator.value = map['showConnectionIndicator'] ?? true;
     s.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
     s.sendDelay.value = map['sendDelay'] ?? 0;
     s.recipientAsPlaceholder.value = map['recipientAsPlaceholder'] ?? false;
@@ -569,7 +573,7 @@ class Settings {
     s.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'] ?? true;
     s.use24HrFormat.value = map['use24HrFormat'] ?? false;
     s.alwaysShowAvatars.value = map['alwaysShowAvatars'] ?? false;
-    s.notifyOnChatList.value = map['notifyOnChatList'] ?? false;
+    s.notifyOnChatList.value = map['notifyOnChatList'] ?? true;
     s.notifyReactions.value = map['notifyReactions'] ?? true;
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
     s.monetTheming.value = map['monetTheming'] != null ? Monet.values[map['monetTheming']] : Monet.none;
@@ -586,7 +590,7 @@ class Settings {
     s.spellcheckLanguage.value = map['spellcheckLanguage'] ?? 'auto';
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
-    s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
+    s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? true;
     s.apiTimeout.value = map['apiTimeout'] ?? 15000;
     s.allowUpsideDownRotation.value = map['allowUpsideDownRotation'] ?? false;
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;

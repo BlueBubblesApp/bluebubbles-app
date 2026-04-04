@@ -46,7 +46,7 @@ class FCMData {
     return this;
   }
 
-  static void deleteFcmData() async {
+  static Future<void> deleteFcmData() async {
     await ss.prefs.remove('projectID');
     await ss.prefs.remove('storageBucket');
     await ss.prefs.remove('apiKey');

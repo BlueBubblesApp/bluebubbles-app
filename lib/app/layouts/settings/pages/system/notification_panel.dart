@@ -170,6 +170,18 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                   backgroundColor: tileColor,
                   isThreeLine: true,
                 )),
+                const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                Obx(() => SettingsSwitch(
+                  onChanged: (bool val) {
+                    ss.settings.showInAppNotifications.value = val;
+                    saveSettings();
+                  },
+                  initialVal: ss.settings.showInAppNotifications.value,
+                  title: "In-App Message Notifications",
+                  subtitle: "Show a snackbar inside the app when a new message arrives",
+                  backgroundColor: tileColor,
+                  isThreeLine: true,
+                )),
               ],
             ),
           ],
