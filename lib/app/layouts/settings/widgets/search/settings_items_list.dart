@@ -171,8 +171,8 @@ List<Widget> buildSettingItemList({
                 )
             ),
 
-          if (Platform.isAndroid) const SettingsDivider(),
-          if (Platform.isAndroid)
+          if (!kIsWeb && Platform.isAndroid) const SettingsDivider(),
+          if (!kIsWeb && Platform.isAndroid)
             SearchableSettingItem(
               title: "Message Reminders",
               searchTags: ["Message Reminders"],
@@ -631,7 +631,7 @@ List<Widget> buildSettingItemList({
         ),
 
         // Tasker Integration Tile (only for Android)
-        if (Platform.isAndroid)
+        if (!kIsWeb && Platform.isAndroid)
           SearchableSettingItem(
             title: "Tasker Integration", // Title to search
             searchTags: ["Tasker Integration Details", "Send Events to Tasker"],
@@ -855,7 +855,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             title: "Leave Us a Review",
             subtitle:
-            "Enjoying the app? Leave us a review on the ${Platform.isAndroid ? 'Google Play Store' : 'Microsoft Store'}!",
+            "Enjoying the app? Leave us a review on the ${!kIsWeb && Platform.isAndroid ? 'Google Play Store' : 'Microsoft Store'}!",
             onTap: () async {
               final InAppReview inAppReview = InAppReview.instance;
               inAppReview.openStoreListing(microsoftStoreId: '9P3XF8KJ0LSM');

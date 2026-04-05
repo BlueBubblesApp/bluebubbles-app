@@ -626,24 +626,48 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver, TrayL
               backgroundColor: context.theme.colorScheme.background.themeOpacity(context),
               body: Builder(
                 builder: (BuildContext context) {
+                  Widget body;
                   if (ss.settings.finishedSetup.value) {
                     if (!serverCompatible && kIsWeb) {
-                      return const FailureToStart(
+                      body = const FailureToStart(
                         otherTitle: "Server version too low, please upgrade!",
                         e: "Required Server Version: v0.2.0",
                       );
+                    } else {
+                      body = ConversationList(
+                        showArchivedChats: false,
+                        showUnknownSenders: false,
+                      );
                     }
-                    return ConversationList(
-                      showArchivedChats: false,
-                      showUnknownSenders: false,
-                    );
                   } else {
-                    return PopScope(
+                    body = PopScope(
                       canPop: false,
                       child: TitleBarWrapper(
                           child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
                     );
                   }
+                  if (kDebugMode) {
+                    return Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          color: Colors.orange,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: const Text(
+                            'DEBUG MODE',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: body),
+                      ],
+                    );
+                  }
+                  return body;
                 },
               ),
             )),

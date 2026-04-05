@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/firebase_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/unified_push.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
@@ -117,9 +119,9 @@ class _NotificationProvidersState extends OptimizedState<NotificationProvidersPa
                       ]),
                   trailing: const NextButton()
                 ),
-                if (Platform.isAndroid)
+                if (!kIsWeb && Platform.isAndroid)
                   const SettingsDivider(),
-                if (Platform.isAndroid)
+                if (!kIsWeb && Platform.isAndroid)
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) async {
                       ss.settings.keepAppAlive.value = val;

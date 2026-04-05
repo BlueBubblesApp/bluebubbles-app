@@ -36,21 +36,23 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
     super.initState();
 
     // Count how many .log files are in the log directory
-    final Directory logDir = Directory(Logger.logDir);
-    if (logDir.existsSync()) {
-      final List<FileSystemEntity> files = logDir.listSync();
-      final logFiles =
-          files.where((file) => file.path.endsWith(".log")).toList();
-      logFileCount.value = logFiles.length;
+    if (!kIsWeb) {
+      final Directory logDir = Directory(Logger.logDir);
+      if (logDir.existsSync()) {
+        final List<FileSystemEntity> files = logDir.listSync();
+        final logFiles =
+            files.where((file) => file.path.endsWith(".log")).toList();
+        logFileCount.value = logFiles.length;
 
-      // Size in KB
-      for (final file in logFiles) {
-        logFileSize.value += file.statSync().size ~/ 1024;
+        // Size in KB
+        for (final file in logFiles) {
+          logFileSize.value += file.statSync().size ~/ 1024;
+        }
       }
     }
 
     // Check if battery optimizations are disabled
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((value) {
         optimizationsDisabled.value = value ?? false;
       });
@@ -163,9 +165,9 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                     },
                     trailing: const NextButton(),
                   ),
-                  if (Platform.isAndroid)
+                  if (!kIsWeb && Platform.isAndroid)
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  if (Platform.isAndroid)
+                  if (!kIsWeb && Platform.isAndroid)
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.share_up,
@@ -257,12 +259,12 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
                           await launchUrl(Uri.file(fs.appDocDir.path)),
                     ),
                 ]),
-                if (Platform.isAndroid)
+                if (!kIsWeb && Platform.isAndroid)
                   SettingsHeader(
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "Optimizations"),
-                if (Platform.isAndroid)
+                if (!kIsWeb && Platform.isAndroid)
                   SettingsSection(backgroundColor: tileColor, children: [
                     SettingsTile(
                         onTap: () async {

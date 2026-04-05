@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/setup_checks/battery_optimization.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/sync_settings.dart';
@@ -8,12 +9,15 @@ import 'package:bluebubbles/app/layouts/setup/pages/setup_checks/mac_setup_check
 import 'package:bluebubbles/app/layouts/setup/pages/sync/sync_progress.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/welcome/welcome_page.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 
 class SetupViewController extends StatefulController {
@@ -82,6 +86,9 @@ class _SetupViewState extends OptimizedState<SetupView> {
 
   @override
   Widget build(BuildContext context) {
+    if (kDebugMode && kIsWeb) {
+      return DebugQuickConnect(controller: controller);
+    }
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -93,6 +100,150 @@ class _SetupViewState extends OptimizedState<SetupView> {
               const SizedBox(height: 20),
               SetupPages(),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DebugQuickConnect extends StatefulWidget {
+  final SetupViewController controller;
+  const DebugQuickConnect({super.key, required this.controller});
+
+  @override
+  State<DebugQuickConnect> createState() => _DebugQuickConnectState();
+}
+
+class _DebugQuickConnectState extends State<DebugQuickConnect> {
+  final TextEditingController urlController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  String error = '';
+  bool connecting = false;
+
+  Future<void> quickConnect() async {
+    String url = urlController.text.trim();
+    final password = passwordController.text;
+
+    if (url.isEmpty || password.isEmpty) {
+      setState(() => error = 'Please enter both URL and password');
+      return;
+    }
+    if (url.endsWith("/")) url = url.substring(0, url.length - 1);
+
+    String? addr = sanitizeServerAddress(address: url);
+    if (addr == null) {
+      setState(() => error = 'Invalid server address');
+      return;
+    }
+
+    setState(() {
+      connecting = true;
+      error = '';
+    });
+
+    ss.settings.guidAuthKey.value = password;
+    await saveNewServerUrl(addr, saveAdditionalSettings: ["guidAuthKey"]);
+
+    dio.Response? serverResponse;
+    await http.serverInfo().then((r) => serverResponse = r).catchError((err) {
+      if (err is dio.Response) serverResponse = err;
+    });
+
+    if (serverResponse?.statusCode == 401) {
+      socket.forgetConnection();
+      setState(() { connecting = false; error = 'Authentication failed. Incorrect password!'; });
+      return;
+    }
+    if (serverResponse?.statusCode != 200) {
+      socket.forgetConnection();
+      setState(() { connecting = false; error = 'Failed to connect to $addr'; });
+      return;
+    }
+
+    // Try to get FCM data
+    dio.Response? fcmResponse;
+    await http.fcmClient().then((r) => fcmResponse = r).catchError((err) {
+      if (err is dio.Response) fcmResponse = err;
+    });
+    try {
+      final data = fcmResponse?.data;
+      if (data != null && !isNullOrEmpty(data["data"])) {
+        FCMData fcmData = FCMData.fromMap(data["data"]);
+        await ss.saveFCMData(fcmData);
+      }
+    } catch (_) {}
+
+    socket.restartSocket();
+    ss.settings.finishedSetup.value = true;
+    await ss.saveSettings();
+    await ss.prefs.setString("lastOpenedApp", DateTime.now().toIso8601String());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.theme.colorScheme.background,
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset("assets/icon/icon.png", width: 30, fit: BoxFit.contain),
+                    const SizedBox(width: 10),
+                    Text("BlueBubbles", style: context.theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text("Debug Quick Connect", style: context.theme.textTheme.titleMedium?.copyWith(color: Colors.orange)),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: urlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Server URL',
+                    hintText: 'https://your-server.trycloudflare.com',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.link),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  onSubmitted: (_) => quickConnect(),
+                ),
+                if (error.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(error, style: const TextStyle(color: Colors.red)),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: connecting ? null : quickConnect,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: connecting
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Connect', style: TextStyle(fontSize: 16)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -51,7 +51,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   late final messageService = widget.customService ?? ms(chat.guid)
     ..init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage, jumpToMessage);
   final smartReply = GoogleMlKit.nlp.smartReply();
-  final listKey = GlobalKey<SliverAnimatedListState>();
+  GlobalKey<SliverAnimatedListState> listKey = GlobalKey<SliverAnimatedListState>();
   final RxBool dragging = false.obs;
   final RxInt numFiles = 0.obs;
   final RxBool latestMessageDeliveredState = false.obs;
@@ -88,47 +88,55 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       }
     });
 
-    updateObx(() async {
+    updateObx(() {
       if (chat.isIMessage && !chat.isGroup) {
         getFocusState();
       }
-      final searchMessage = (messageService.method == null) ? null : messageService.struct.messages.firstOrNull;
-      if (messageService.method != null) {
-        await messageService.loadSearchChunk(
-            messageService.struct.messages.first, messageService.method == "local" ? SearchMethod.local : SearchMethod.network);
-      } else if (messageService.struct.isEmpty) {
-        await messageService.loadChunk(0, controller);
-      }
-      _messages = messageService.struct.messages;
-      _messages.sort(Message.sort);
-      setState(() {});
-      _messages.forEachIndexed((i, m) {
-        final c = mwc(m);
-        c.cvController = controller;
-        listKey.currentState!.insertItem(i, duration: const Duration(milliseconds: 0));
-      });
-      // scroll to message if needed
-      if (searchMessage != null) {
+      _loadMessages();
+    });
+  }
+
+  Future<void> _loadMessages() async {
+    final searchMessage = (messageService.method == null) ? null : messageService.struct.messages.firstOrNull;
+    if (messageService.method != null) {
+      await messageService.loadSearchChunk(
+          messageService.struct.messages.first, messageService.method == "local" ? SearchMethod.local : SearchMethod.network);
+    } else if (messageService.struct.isEmpty) {
+      await messageService.loadChunk(0, controller);
+    }
+    if (!mounted) return;
+    _messages = messageService.struct.messages;
+    _messages.sort(Message.sort);
+    for (Message m in _messages) {
+      final c = mwc(m);
+      c.cvController = controller;
+    }
+    // Recreate the list key so SliverAnimatedList picks up the new initialItemCount
+    listKey = GlobalKey<SliverAnimatedListState>();
+    setState(() {});
+    // scroll to message if needed
+    if (searchMessage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         final index = _messages.indexWhere((element) => element.guid == searchMessage.guid);
         await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
         scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 500));
-      } else if (!(_messages.firstOrNull?.isFromMe ?? true)) {
-        updateReplies();
-      }
-      initialized = true;
-      if (ss.settings.scrollToLastUnread.value && chat.lastReadMessageGuid != null) {
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (getActiveMwc(chat.lastReadMessageGuid!)?.built ?? false) return;
-          internalSmartReplies['scroll-last-read'] = _buildReply("Jump to oldest unread", onTap: () async {
-            if (jumpingToOldestUnread.value) return;
-            jumpingToOldestUnread.value = true;
-            await jumpToMessage(chat.lastReadMessageGuid!);
-            internalSmartReplies.remove('scroll-last-read');
-            jumpingToOldestUnread.value = false;
-          });
+      });
+    } else if (!(_messages.firstOrNull?.isFromMe ?? true)) {
+      updateReplies();
+    }
+    initialized = true;
+    if (ss.settings.scrollToLastUnread.value && chat.lastReadMessageGuid != null) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (getActiveMwc(chat.lastReadMessageGuid!)?.built ?? false) return;
+        internalSmartReplies['scroll-last-read'] = _buildReply("Jump to oldest unread", onTap: () async {
+          if (jumpingToOldestUnread.value) return;
+          jumpingToOldestUnread.value = true;
+          await jumpToMessage(chat.lastReadMessageGuid!);
+          internalSmartReplies.remove('scroll-last-read');
+          jumpingToOldestUnread.value = false;
         });
-      }
-    });
+      });
+    }
   }
 
   @override
@@ -342,7 +350,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     const moonIcon = CupertinoIcons.moon_fill;
     return DropRegion(
       hitTestBehavior: HitTestBehavior.translucent,
-      formats: Platform.isLinux ? Formats.standardFormats : Formats.standardFormats.whereType<FileFormat>().toList(),
+      formats: (!kIsWeb && Platform.isLinux) ? Formats.standardFormats : Formats.standardFormats.whereType<FileFormat>().toList(),
       onDropOver: (DropOverEvent event) {
         if (!event.session.allowedOperations.contains(DropOperation.copy)) {
           dragging.value = false;

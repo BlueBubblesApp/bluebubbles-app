@@ -190,7 +190,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
                                       Clipboard.setData(ClipboardData(text: http.origin));
-                                      if (!Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
+                                      if (kIsWeb || !Platform.isAndroid || (fs.androidInfo?.version.sdkInt ?? 0) < 33) {
                                         showSnackbar("Copied", "Server address copied to clipboard!");
                                       }
                                     }),
@@ -212,6 +212,10 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               TextSpan(
                                   text:
                                       "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
+                              const TextSpan(text: "\n\n"),
+                              TextSpan(
+                                  text:
+                                      "App Build: ${kDebugMode ? "Debug" : kProfileMode ? "Profile" : "Release"}"),
                               const TextSpan(text: "\n\n"),
                               TextSpan(
                                   text:
@@ -593,9 +597,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           socket.restartSocket();
                         }
                       }),
-                  if (Platform.isAndroid)
+                  if (!kIsWeb && Platform.isAndroid)
                     const SettingsDivider(),
-                  if (Platform.isAndroid)
+                  if (!kIsWeb && Platform.isAndroid)
                     Obx(() => SettingsSwitch(
                           initialVal: ss.settings.syncContactsAutomatically.value,
                           title: "Auto-Sync Contacts",
@@ -944,7 +948,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
 
                           // Perform the restart
                           try {
-                            if (Platform.isAndroid) {
+                            if (!kIsWeb && Platform.isAndroid) {
                               try {
                                 await mcs.invokeMethod(
                                     "set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});

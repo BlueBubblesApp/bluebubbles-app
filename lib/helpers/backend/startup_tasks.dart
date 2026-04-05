@@ -68,6 +68,8 @@ class StartupTasks {
         await cs.init();
       });
     }
+
+    debugPrint("Startup services initialized successfully.");
   }
 
   static Future<void> initIsolateServices() async {
