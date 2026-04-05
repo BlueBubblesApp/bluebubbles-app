@@ -35,7 +35,7 @@ class Contact {
   }
 
   Map<String, String>? get dbStructuredName => structuredName?.toMap();
-  set dbStructuredName(Map<String, String>? map) => StructuredName.fromMap(map);
+  set dbStructuredName(Map<String, String>? map) => structuredName = StructuredName.fromMap(map);
 
   String? get initials {
     String initials = (structuredName?.givenName.characters.firstOrNull ?? "") + (structuredName?.familyName.characters.firstOrNull ?? "");

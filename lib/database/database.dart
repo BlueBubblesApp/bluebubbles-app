@@ -42,6 +42,7 @@ class Database {
       Database.themes = Box<ThemeStruct>();
       Database.themeEntries = Box<ThemeEntry>();
       Database.themeObjects = Box<ThemeObject>();
+      if (!initComplete.isCompleted) initComplete.complete();
       return;
     }
 
