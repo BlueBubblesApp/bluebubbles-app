@@ -85,6 +85,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   /// Guard against associatedMessageType being null.
   /// An empty string produces no SVG match, which is handled in build().
   String get reactionType => reaction.associatedMessageType ?? '';
+  String? get reactionEmoji => reaction.associatedMessageEmoji;
 
   MessageState? get reactionController {
     // Use same resolution order as reaction getter
@@ -176,7 +177,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
               child: Center(
                 child: Builder(builder: (context) {
                   final text = Text(
-                    ReactionTypes.reactionToEmoji[reactionType] ?? "X",
+                    ReactionTypes.getReactionEmoji(reactionType, emoji: reactionEmoji),
                     style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
                     textAlign: TextAlign.center,
                   );
@@ -232,16 +233,22 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                           child: Padding(
                         padding:
                             const EdgeInsets.all(6.5).add(EdgeInsets.only(right: reactionType == "emphasize" ? 1 : 0)),
-                        child: SvgPicture.asset(
-                          'assets/reactions/$reactionType-black.svg',
-                          colorFilter: ColorFilter.mode(
-                              reactionType == "love"
-                                  ? Colors.pink
-                                  : (reactionIsFromMe
-                                      ? context.theme.colorScheme.onPrimary
-                                      : context.theme.colorScheme.properOnSurface),
-                              BlendMode.srcIn),
-                        ),
+                        child: ReactionTypes.isEmojiReaction(reactionEmoji)
+                            ? Text(
+                                reactionEmoji!,
+                                style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
+                                textAlign: TextAlign.center,
+                              )
+                            : SvgPicture.asset(
+                                'assets/reactions/$reactionType-black.svg',
+                                colorFilter: ColorFilter.mode(
+                                    reactionType == "love"
+                                        ? Colors.pink
+                                        : (reactionIsFromMe
+                                            ? context.theme.colorScheme.onPrimary
+                                            : context.theme.colorScheme.properOnSurface),
+                                    BlendMode.srcIn),
+                              ),
                       )),
                     ));
               })),
@@ -303,11 +310,12 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   /// subscribing to any RxList so GetX never fires the "improper use" warning.
   Widget _buildStatic(BuildContext context, Message reaction) {
     final rType = reaction.associatedMessageType ?? '';
+    final rEmoji = reaction.associatedMessageEmoji;
     final isFromMe = reaction.isFromMe ?? false;
     final tailDirection = widget.tailDirection ?? (isFromMe ? ReactionTailDirection.left : ReactionTailDirection.right);
     final tailIsRight = tailDirection == ReactionTailDirection.right;
 
-    if (rType.isEmpty) return const SizedBox.shrink();
+    if (rType.isEmpty && !ReactionTypes.isEmojiReaction(rEmoji)) return const SizedBox.shrink();
 
     if (SettingsSvc.settings.skin.value != Skins.iOS) {
       return Container(
@@ -329,7 +337,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
         child: Center(
           child: Builder(builder: (ctx) {
             final text = Text(
-              ReactionTypes.reactionToEmoji[rType] ?? "X",
+              ReactionTypes.getReactionEmoji(rType, emoji: rEmoji),
               style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
               textAlign: TextAlign.center,
             );
@@ -392,17 +400,23 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(6.5).add(EdgeInsets.only(right: rType == "emphasize" ? 1 : 0)),
-                  child: SvgPicture.asset(
-                    'assets/reactions/$rType-black.svg',
-                    colorFilter: ColorFilter.mode(
-                      rType == "love"
-                          ? Colors.pink
-                          : (isFromMe
-                              ? context.theme.colorScheme.onPrimary
-                              : context.theme.colorScheme.properOnSurface),
-                      BlendMode.srcIn,
-                    ),
-                  ),
+                  child: ReactionTypes.isEmojiReaction(rEmoji)
+                      ? Text(
+                          rEmoji!,
+                          style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
+                          textAlign: TextAlign.center,
+                        )
+                      : SvgPicture.asset(
+                          'assets/reactions/$rType-black.svg',
+                          colorFilter: ColorFilter.mode(
+                            rType == "love"
+                                ? Colors.pink
+                                : (isFromMe
+                                    ? context.theme.colorScheme.onPrimary
+                                    : context.theme.colorScheme.properOnSurface),
+                            BlendMode.srcIn,
+                          ),
+                        ),
                 ),
               ),
             ),

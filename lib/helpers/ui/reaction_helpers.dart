@@ -58,6 +58,34 @@ class ReactionTypes {
     "❗": EMPHASIZE,
     "❓": QUESTION,
   };
+
+  static bool isValidReaction(String? type, {String? emoji}) {
+    if (emoji != null && emoji.isNotEmpty) return true;
+    if (type == null || type.isEmpty) return false;
+    final cleaned = type.startsWith("-") ? type.substring(1) : type;
+    return toList().contains(cleaned);
+  }
+
+  static bool isEmojiReaction(String? emoji) {
+    return emoji != null && emoji.isNotEmpty;
+  }
+
+  static String getReactionEmoji(String? type, {String? emoji}) {
+    if (emoji != null && emoji.isNotEmpty) return emoji;
+    if (type == null || type.isEmpty) return "";
+    return reactionToEmoji[type] ?? type;
+  }
+
+  static String getReactionVerb(String? type, {String? emoji}) {
+    if (emoji != null && emoji.isNotEmpty) {
+      if (type != null && type.startsWith("-")) return "removed a $emoji reaction from";
+      return "reacted $emoji to";
+    }
+    if (type == null || type.isEmpty) return "reacted to";
+    if (reactionToVerb.containsKey(type)) return reactionToVerb[type]!;
+    if (type.startsWith("-")) return "removed a ${type.substring(1)} reaction from";
+    return "reacted to";
+  }
 }
 
 List<Message> getUniqueReactionMessages(List<Message> messages) {

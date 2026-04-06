@@ -149,7 +149,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
           .where((e) =>
-              ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) &&
+              ReactionTypes.isValidReaction(e.associatedMessageType, emoji: e.associatedMessageEmoji) &&
               (e.associatedMessagePart ?? 0) == part.part)
           .toList());
       final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
@@ -1240,7 +1240,7 @@ class ReactionDetails extends StatelessWidget {
                                 ? const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0)
                                     .add(EdgeInsets.only(right: message.associatedMessageType == "emphasize" ? 1 : 0))
                                 : EdgeInsets.zero,
-                            child: SettingsSvc.settings.skin.value == Skins.iOS
+                            child: SettingsSvc.settings.skin.value == Skins.iOS && !ReactionTypes.isEmojiReaction(message.associatedMessageEmoji)
                                 ? SvgPicture.asset(
                                     'assets/reactions/${message.associatedMessageType}-black.svg',
                                     colorFilter: ColorFilter.mode(
@@ -1254,7 +1254,7 @@ class ReactionDetails extends StatelessWidget {
                                 : Center(
                                     child: Builder(builder: (context) {
                                       final text = Text(
-                                        ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
+                                        ReactionTypes.getReactionEmoji(message.associatedMessageType, emoji: message.associatedMessageEmoji),
                                         style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
                                         textAlign: TextAlign.center,
                                       );

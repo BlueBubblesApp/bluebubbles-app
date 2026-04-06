@@ -31,7 +31,7 @@ class ReactionObserver extends StatelessWidget {
       final isFromMe = state.isFromMe.value;
       final associatedMessages = state.associatedMessages;
       final reactions = associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
+          .where((e) => ReactionTypes.isValidReaction(e.associatedMessageType, emoji: e.associatedMessageEmoji))
           .toList();
       final reactionList = messageParts.length == 1 ? reactions : reactionsForPart(part.part, reactions).toList();
       return Positioned(
@@ -101,7 +101,7 @@ class ReactionSpacing extends StatelessWidget {
       // Directly observe MessageState associatedMessages for reactivity
       final associatedMessages = state.associatedMessages;
       final reactions = associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
+          .where((e) => ReactionTypes.isValidReaction(e.associatedMessageType, emoji: e.associatedMessageEmoji))
           .cast<Message>()
           .toList();
       if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part.part, reactions).isNotEmpty) {

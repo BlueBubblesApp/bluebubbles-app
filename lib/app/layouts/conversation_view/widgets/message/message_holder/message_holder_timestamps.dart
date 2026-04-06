@@ -32,7 +32,7 @@ class SamsungTimestampObserver extends StatelessWidget {
       final isFromMe = ms.isFromMe.value;
       final associatedMessages = ms.associatedMessages;
       final reactions = associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
+          .where((e) => ReactionTypes.isValidReaction(e.associatedMessageType, emoji: e.associatedMessageEmoji))
           .toList();
       return Padding(
         padding: (messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part.part, reactions).isNotEmpty

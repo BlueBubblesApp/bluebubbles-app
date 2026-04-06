@@ -255,7 +255,7 @@ class Chat {
       return true;
     }
     return !SettingsSvc.settings.notifyReactions.value &&
-        ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
+        ReactionTypes.isValidReaction(message?.associatedMessageType, emoji: message?.associatedMessageEmoji);
   }
 
   static void unDelete(Chat chat) {
