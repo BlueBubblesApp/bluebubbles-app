@@ -51,22 +51,26 @@ Future<String?> googleOAuth(BuildContext context) async {
     final gsi = GoogleSignIn.instance;
     await gsi.initialize(clientId: fdb.getClientId());
     GoogleSignInAccount? account = await gsi.attemptLightweightAuthentication();
-    if (account == null) {
-      try {
-        // sign out then sign in
+    try {
+      if (account == null) {
+        // Sign out first to avoid stale auth/session state, then force interactive sign-in.
         await gsi.signOut();
         account = await gsi.authenticate(scopeHint: defaultScopes);
-        // get access token
-        final auth = account.authentication;
-        token = auth.idToken;
-        // error if token is not present
-        if (token == null) {
-          throw Exception("No access token!");
-        }
-      } catch (e, stack) {
-        Logger.error("Failed to sign in with Google (Android/Web)", error: e, trace: stack);
-        return null;
       }
+
+      // We need an OAuth access token for Google/Firebase API calls.
+      // In google_sign_in v7+, this comes from the authorization client, not account.authentication.
+      final authClient = account.authorizationClient;
+      GoogleSignInClientAuthorization? authorization = await authClient.authorizationForScopes(defaultScopes);
+      authorization ??= await authClient.authorizeScopes(defaultScopes);
+      token = authorization.accessToken;
+
+      if (token.isEmpty) {
+        throw Exception("No access token!");
+      }
+    } catch (e, stack) {
+      Logger.error("Failed to sign in with Google (Android/Web)", error: e, trace: stack);
+      return null;
     }
     // desktop implementation
   } else {

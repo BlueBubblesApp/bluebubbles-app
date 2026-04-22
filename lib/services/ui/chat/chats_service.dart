@@ -459,8 +459,10 @@ class ChatsService {
     final currentIndex = _sortedChats.indexWhere((c) => c.guid == chat.guid);
 
     if (currentIndex == -1) {
-      // Chat not found, just insert it
+      // Chat not in sorted list (e.g. state/list briefly out of sync) — insert and
+      // trigger a UI rebuild so the newly-positioned chat becomes visible (#2667).
       _insertChatSorted(chat);
+      _scheduleListVersionUpdate(immediate: immediate);
       return;
     }
 
@@ -528,8 +530,9 @@ class ChatsService {
     chatStates[toAdd.guid] = ChatState(toAdd);
     _setupChatStateListeners(chatStates[toAdd.guid]!);
 
-    // Insert into sorted list at correct position
+    // Insert into sorted list at correct position and notify UI (#2424)
     _insertChatSorted(toAdd);
+    _scheduleListVersionUpdate(immediate: immediate);
   }
 
   void removeChat(Chat toRemove) {

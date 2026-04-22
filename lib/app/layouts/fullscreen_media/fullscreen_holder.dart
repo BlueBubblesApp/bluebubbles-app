@@ -64,6 +64,14 @@ class FullscreenMediaHolderState extends State<FullscreenMediaHolder> with Theme
       }
       controller = PageController(initialPage: currentIndex);
     }
+    // Ensure this Focus node captures keyboard input on desktop so that ESC
+    // closes the fullscreen viewer rather than propagating to the global
+    // GoBackIntent shortcut and closing the entire conversation view.
+    if (kIsDesktop || kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) focusNode.requestFocus();
+      });
+    }
   }
 
   @override
@@ -140,7 +148,8 @@ class FullscreenMediaHolderState extends State<FullscreenMediaHolder> with Theme
                     } else {
                       controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
                     }
-                  } else if (event.physicalKey.debugName == "Escape") {
+                  } else if (event.logicalKey == LogicalKeyboardKey.escape ||
+                      event.physicalKey.debugName == "Escape") {
                     Navigator.of(context).pop();
                     return KeyEventResult.handled;
                   }

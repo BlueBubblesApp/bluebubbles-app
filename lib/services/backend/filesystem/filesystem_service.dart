@@ -33,13 +33,16 @@ class FilesystemService {
   final RxBool fontExistsOnDisk = false.obs;
 
   /// The platform downloads directory. On Android returns [androidDownloadsPath];
-  /// on desktop resolves via path_provider.
+  /// on desktop resolves via path_provider. Falls back to the home/documents dir
+  /// on platforms where getDownloadsDirectory() returns null (e.g. some Linux distros).
   Future<String> get downloadsDirectory async {
     if (kIsWeb) throw "Cannot get downloads directory on web!";
 
     String filePath = androidDownloadsPath;
     if (kIsDesktop) {
-      filePath = (await getDownloadsDirectory())!.path;
+      final dir = await getDownloadsDirectory() ??
+          await getApplicationDocumentsDirectory();
+      filePath = dir.path;
     }
 
     return filePath;

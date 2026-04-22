@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -108,7 +107,9 @@ class FirebaseDatabaseService extends GetxService {
         url = sanitizeServerAddress(address: await MethodChannelSvc.invokeMethod("get-server-url"));
       }
 
-      await saveNewServerUrl(url ?? SettingsSvc.settings.serverAddress.value, force: true);
+      // Return the fetched URL without auto-saving — callers are responsible for
+      // persisting it. Auto-saving here caused user-configured URLs to be
+      // overwritten by stale Firebase URLs on every reconnect failure (#2770).
       return url;
     } catch (e, s) {
       Logger.error("Failed to fetch URL!", error: e, trace: s);

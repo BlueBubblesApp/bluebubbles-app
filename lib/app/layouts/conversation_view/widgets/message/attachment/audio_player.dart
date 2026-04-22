@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
@@ -40,6 +41,7 @@ class _AudioPlayerState extends State<AudioPlayer> with AutomaticKeepAliveClient
   ConversationViewController? get cvController => widget.controller;
 
   PlayerController? controller;
+  StreamSubscription<PlayerState>? _playerStateSub;
   late final animController = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 400), animationBehavior: AnimationBehavior.preserve);
   final playerState = Rx<PlayerState?>(null);
@@ -54,6 +56,7 @@ class _AudioPlayerState extends State<AudioPlayer> with AutomaticKeepAliveClient
 
   @override
   void dispose() {
+    _playerStateSub?.cancel();
     if (attachment == null) {
       controller?.dispose();
     }
@@ -68,16 +71,20 @@ class _AudioPlayerState extends State<AudioPlayer> with AutomaticKeepAliveClient
         ..addListener(() {
           maxDuration.value = controller!.maxDuration;
         });
-      controller!.onPlayerStateChanged.listen((event) {
-        if ((controller!.playerState == PlayerState.paused || controller!.playerState == PlayerState.stopped) &&
-            animController.value > 0) {
-          animController.reverse();
-        }
-        playerState.value = controller!.playerState;
-      });
       await controller!.preparePlayer(path: file.path!);
       if (attachment != null) cvController?.audioPlayers[attachment!.guid!] = controller!;
     }
+    // Always re-subscribe with the CURRENT animController (#2553).
+    // If a cached PlayerController is reused (e.g. after navigating away and
+    // back), the old widget's subscription pointed to a disposed animController
+    // and would silently fail to reverse the icon when playback completes.
+    _playerStateSub?.cancel();
+    _playerStateSub = controller!.onPlayerStateChanged.listen((state) {
+      if ((state == PlayerState.paused || state == PlayerState.stopped) && animController.value > 0) {
+        animController.reverse();
+      }
+      playerState.value = state;
+    });
     playerState.value = controller?.playerState;
     maxDuration.value = controller?.maxDuration ?? 0;
   }
@@ -157,6 +164,7 @@ class _DesktopAudioPlayerState extends State<AudioPlayer>
   ConversationViewController? get cvController => widget.controller;
 
   Player? controller;
+  Timer? _positionTimer;
   late final animController = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 400), animationBehavior: AnimationBehavior.preserve);
   final isPlaying = false.obs;
@@ -185,7 +193,19 @@ class _DesktopAudioPlayerState extends State<AudioPlayer>
       controller = Player()
         ..stream.position.listen((pos) => position.value = pos)
         ..stream.duration.listen((dur) => duration.value = dur)
-        ..stream.playing.listen((playing) => isPlaying.value = playing)
+        ..stream.playing.listen((playing) {
+          isPlaying.value = playing;
+          // Poll position while playing as a fallback for platforms where
+          // stream.position doesn't emit continuously (#2570).
+          if (playing) {
+            _positionTimer?.cancel();
+            _positionTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+              if (controller != null && mounted) position.value = controller!.state.position;
+            });
+          } else {
+            _positionTimer?.cancel();
+          }
+        })
         ..stream.completed.listen((bool completed) async {
           if (completed) {
             await controller!.seek(Duration.zero);

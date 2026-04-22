@@ -450,6 +450,7 @@ List<Widget> buildSettingItemList({
                 "Minimize to Tray",
                 "Close to Tray",
                 "Desktop Notifications",
+                "Hide Taskbar Badge",
                 "Notification Sound Volume",
                 "Actions",
                 "Show Reply Field"

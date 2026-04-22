@@ -240,21 +240,29 @@ class _RecordingButton extends StatelessWidget {
 
           if (controller!.showRecording.value) {
             // Start recording
-            if (isDesktop) {
-              File temp = File(join(
-                FilesystemSvc.appDocDir.path,
-                "temp",
-                "recorder",
-                "${controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a",
-              ));
-              temp.createSync(recursive: true);
-              audioRecorder.start(const RecordConfig(bitRate: 320000), path: temp.path);
-              return;
+            try {
+              if (isDesktop) {
+                File temp = File(join(
+                  FilesystemSvc.appDocDir.path,
+                  "temp",
+                  "recorder",
+                  "${controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a",
+                ));
+                temp.createSync(recursive: true);
+                audioRecorder.start(const RecordConfig(bitRate: 320000), path: temp.path);
+                return;
+              }
+              await recorderController!.record(
+                sampleRate: 44100,
+                bitRate: 320000,
+              );
+            } catch (e) {
+              controller!.showRecording.value = false;
+              final msg = e.toString().toLowerCase().contains('space') || e.toString().toLowerCase().contains('storage')
+                  ? "Not enough storage space to record audio"
+                  : "Failed to start recording";
+              showSnackbar("Error", msg);
             }
-            await recorderController!.record(
-              sampleRate: 44100,
-              bitRate: 320000,
-            );
           } else {
             // Stop recording and show dialog
             late final String? path;

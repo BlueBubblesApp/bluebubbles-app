@@ -154,12 +154,14 @@ class Settings {
   final RxBool launchAtStartupMinimized = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
+  final RxBool disableTrayIcon = false.obs;
   final RxBool spellcheck = true.obs;
   final RxString spellcheckLanguage = "auto".obs;
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
   final RxDouble windowEffectCustomOpacityLight = 0.5.obs;
   final RxDouble windowEffectCustomOpacityDark = 0.5.obs;
   final RxBool desktopNotifications = true.obs;
+  final RxBool hideTaskbarBadge = false.obs;
   final RxInt desktopNotificationSoundVolume = 100.obs;
   final RxnString desktopNotificationSoundPath = RxnString();
 
@@ -328,6 +330,7 @@ class Settings {
       'launchAtStartup': launchAtStartup.value,
       'launchAtStartupMinimized': launchAtStartupMinimized.value,
       'closeToTray': closeToTray.value,
+      'disableTrayIcon': disableTrayIcon.value,
       'spellcheck': spellcheck.value,
       'spellcheckLanguage': spellcheckLanguage.value,
       'minimizeToTray': minimizeToTray.value,
@@ -391,6 +394,7 @@ class Settings {
       'windowEffectCustomOpacityLight': windowEffectCustomOpacityLight.value,
       'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
       'desktopNotifications': desktopNotifications.value,
+      'hideTaskbarBadge': hideTaskbarBadge.value,
       'desktopNotificationSoundVolume': desktopNotificationSoundVolume.value,
       'useDesktopAccent': useDesktopAccent.value,
       'logLevel': logLevel.value.index,
@@ -516,6 +520,7 @@ class Settings {
     SettingsSvc.settings.launchAtStartupMinimized.value =
         map['launchAtStartupMinimized'] ?? SettingsSvc.settings.launchAtStartupMinimized.value;
     SettingsSvc.settings.closeToTray.value = map['closeToTray'] ?? SettingsSvc.settings.closeToTray.value;
+    SettingsSvc.settings.disableTrayIcon.value = map['disableTrayIcon'] ?? SettingsSvc.settings.disableTrayIcon.value;
     SettingsSvc.settings.spellcheck.value = map['spellcheck'] ?? SettingsSvc.settings.spellcheck.value;
     SettingsSvc.settings.spellcheckLanguage.value =
         map['spellcheckLanguage'] ?? SettingsSvc.settings.spellcheckLanguage.value;
@@ -641,6 +646,8 @@ class Settings {
         map['windowEffectCustomOpacityDark']?.toDouble() ?? SettingsSvc.settings.windowEffectCustomOpacityDark.value;
     SettingsSvc.settings.desktopNotifications.value =
         map['desktopNotifications'] ?? SettingsSvc.settings.desktopNotifications.value;
+    SettingsSvc.settings.hideTaskbarBadge.value =
+      map['hideTaskbarBadge'] ?? SettingsSvc.settings.hideTaskbarBadge.value;
     SettingsSvc.settings.desktopNotificationSoundVolume.value =
         map['desktopNotificationSoundVolume'] ?? SettingsSvc.settings.desktopNotificationSoundVolume.value;
     SettingsSvc.settings.desktopNotificationSoundPath.value =
@@ -725,6 +732,7 @@ class Settings {
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
+    s.disableTrayIcon.value = map['disableTrayIcon'] ?? false;
     s.spellcheck.value = map['spellcheck'] ?? true;
     s.spellcheckLanguage.value = map['spellcheckLanguage'] ?? 'auto';
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
@@ -802,6 +810,7 @@ class Settings {
     s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight']?.toDouble() ?? 0.5;
     s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark']?.toDouble() ?? 0.5;
     s.desktopNotifications.value = map['desktopNotifications'] ?? true;
+    s.hideTaskbarBadge.value = map['hideTaskbarBadge'] ?? false;
     s.desktopNotificationSoundVolume.value = map['desktopNotificationSoundVolume'] ?? 100;
     s.desktopNotificationSoundPath.value = map['desktopNotificationSoundPath'];
     s.useDesktopAccent.value = map['useDesktopAccent'] ?? map['useWindowsAccent'] ?? false;

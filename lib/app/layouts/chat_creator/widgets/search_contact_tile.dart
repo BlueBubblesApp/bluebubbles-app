@@ -103,7 +103,15 @@ class _ContactAddressRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitle = (label != null && label!.isNotEmpty) ? '$address  •  $label' : address;
+    // When the display name is the same as the address (unnamed contact), avoid
+    // showing the number twice. Just show the label below if there is one (#2610).
+    final nameIsAddress = displayName.numericOnly() == address.numericOnly() && displayName.numericOnly().isNotEmpty;
+    final String? subtitleText;
+    if (nameIsAddress) {
+      subtitleText = (label != null && label!.isNotEmpty) ? label : null;
+    } else {
+      subtitleText = (label != null && label!.isNotEmpty) ? '$address  •  $label' : address;
+    }
 
     return Material(
       color: Colors.transparent,
@@ -123,13 +131,15 @@ class _ContactAddressRow extends StatelessWidget {
             style: context.theme.textTheme.bodyMedium,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Text(
-            subtitle,
-            style: context.theme.textTheme.bodySmall?.copyWith(
-              color: context.theme.colorScheme.outline,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
+          subtitle: subtitleText != null
+              ? Text(
+                  subtitleText,
+                  style: context.theme.textTheme.bodySmall?.copyWith(
+                    color: context.theme.colorScheme.outline,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                )
+              : null,
         ),
       ),
     );

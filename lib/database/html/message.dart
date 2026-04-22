@@ -368,6 +368,8 @@ class Message {
       text = "$name started a FaceTime call.";
     } else if (itemType == 4 && groupActionType == 0) {
       text = "$name shared ${name == "You" ? "your" : "their"} location.";
+    } else if (itemType == 4 && groupActionType == 1) {
+      text = "$name stopped sharing ${name == "You" ? "your" : "their"} location.";
     }
 
     return text;

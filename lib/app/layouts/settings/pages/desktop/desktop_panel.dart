@@ -190,6 +190,28 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                           containerColor: Colors.green,
                         ),
                       )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) async {
+                      SettingsSvc.settings.disableTrayIcon.value = val;
+                      await SettingsSvc.settings.saveOneAsync('disableTrayIcon');
+                    },
+                    initialVal: SettingsSvc.settings.disableTrayIcon.value,
+                    title: "Disable Tray Icon",
+                    subtitle: "Hide the system tray icon. Changes take effect after restarting the app.",
+                    backgroundColor: tileColor,
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.eye_slash,
+                      materialIcon: Icons.hide_source,
+                      containerColor: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
               SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Notifications"),
@@ -211,6 +233,30 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                           containerColor: Colors.red,
                         ),
                       )),
+                  if (Platform.isWindows)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
+                  if (Platform.isWindows)
+                    Obx(() => SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsSvc.settings.hideTaskbarBadge.value = val;
+                            await SettingsSvc.settings.saveOneAsync('hideTaskbarBadge');
+                          },
+                          initialVal: SettingsSvc.settings.hideTaskbarBadge.value,
+                          title: "Hide Taskbar Badge",
+                          subtitle: "Disables unread-count overlay badges on the Windows taskbar icon",
+                          backgroundColor: tileColor,
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.minus_circle,
+                            materialIcon: Icons.notifications_off_outlined,
+                            containerColor: Colors.orange,
+                          ),
+                        )),
                   Obx(() => AnimatedSizeAndFade.showHide(
                         show: SettingsSvc.settings.desktopNotifications.value,
                         child: SettingsTile(

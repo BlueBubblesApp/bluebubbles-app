@@ -480,10 +480,15 @@ class IncomingMessageHandler {
     if (!isIsolate) {
       _dispatchUpdatedMessage(c, m, oldGuid: tempGuid);
 
-      // 8. Refresh chat-list ordering and subtitle (only if this message is the latest).
+      // 8. Refresh chat-list ordering and subtitle.
+      // Refresh c.latestMessage from DB so that updateChat uses current data.
+      // This is necessary when a background isolate already saved the message
+      // to DB (e.g. via FCM) — without this, c.latestMessage would be stale
+      // and updateFromChat would write the old subtitle into ChatState (#2751).
+      c.dbLatestMessage;
       ChatsSvc.updateChat(c, override: true);
-      final chatState = ChatsSvc.getChatState(c.guid);
-      if (chatState != null && chatState.latestMessage.value?.guid == m.guid) {
+      // Only push the subtitle update if this message is now the latest in the chat.
+      if (c.latestMessage.guid == m.guid) {
         ChatsSvc.updateChatLatestMessage(c.guid, m);
       }
     }

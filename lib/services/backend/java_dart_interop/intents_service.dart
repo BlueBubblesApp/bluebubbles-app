@@ -55,8 +55,31 @@ class IntentsService {
     if (intent == null) return;
 
     switch (intent.action) {
+      case "android.intent.action.SENDTO":
+        final sendToUri = Uri.tryParse(intent.data ?? '');
+        if (sendToUri != null) {
+          final recipients = sendToUri.path.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+          final body = sendToUri.queryParameters['body'];
+          if (recipients.isNotEmpty) {
+            final selected = recipients.map((address) {
+              final handle = Handle.findOne(addressAndService: HandleLookupKey(address, "iMessage"));
+              return SelectedContact(displayName: handle?.displayName ?? address, address: address);
+            }).toList();
+            await StartupTasks.waitForUI();
+            NavigationSvc.pushAndRemoveUntil(
+              Get.context!,
+              NewChatCreator(
+                initialSelected: selected,
+                initialText: body,
+              ),
+              (route) => route.isFirst,
+            );
+          }
+        }
+        return;
       case "android.intent.action.SEND":
       case "android.intent.action.SEND_MULTIPLE":
+
         final id = intent.extra?["android.intent.extra.shortcut.ID"];
         final text = intent.extra?["android.intent.extra.TEXT"];
         final files = <PlatformFile>[];
@@ -65,7 +88,22 @@ class IntentsService {
           if (data is List) {
             for (String? s in data) {
               if (s == null) continue;
-              final path = await MethodChannelSvc.invokeMethod("get-content-uri-path", {"uri": s});
+              try {
+                final path = await MethodChannelSvc.invokeMethod("get-content-uri-path", {"uri": s});
+                final bytes = await File(path).readAsBytes();
+                files.add(PlatformFile(
+                  path: path,
+                  name: basename(path),
+                  bytes: bytes,
+                  size: bytes.length,
+                ));
+              } catch (e) {
+                Logger.warn("Failed to read shared file: $e", tag: "IntentsService");
+              }
+            }
+          } else if (data != null) {
+            try {
+              final path = await MethodChannelSvc.invokeMethod("get-content-uri-path", {"uri": data});
               final bytes = await File(path).readAsBytes();
               files.add(PlatformFile(
                 path: path,
@@ -73,16 +111,9 @@ class IntentsService {
                 bytes: bytes,
                 size: bytes.length,
               ));
+            } catch (e) {
+              Logger.warn("Failed to read shared file: $e", tag: "IntentsService");
             }
-          } else if (data != null) {
-            final path = await MethodChannelSvc.invokeMethod("get-content-uri-path", {"uri": data});
-            final bytes = await File(path).readAsBytes();
-            files.add(PlatformFile(
-              path: path,
-              name: basename(path),
-              bytes: bytes,
-              size: bytes.length,
-            ));
           }
         }
         await openChat(id, text: text, attachments: files);

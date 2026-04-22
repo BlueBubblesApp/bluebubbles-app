@@ -669,11 +669,39 @@ class _ServerCredentialsState extends State<ServerCredentials> with ThemeHelpers
     );
 
     dio.Response? serverResponse;
-    await HttpSvc.serverInfo().then((response) {
+    String? connectionError;
+    await HttpSvc.serverInfo()
+        .timeout(
+          const Duration(seconds: 20),
+          onTimeout: () => throw dio.DioException(
+            requestOptions: dio.RequestOptions(path: ''),
+            type: dio.DioExceptionType.connectionTimeout,
+          ),
+        )
+        .then((response) {
       serverResponse = response;
     }).catchError((err) {
       if (err is dio.Response) {
         serverResponse = err;
+      } else if (err is dio.DioException) {
+        // Detect TLS/certificate errors so we can give the user actionable feedback (#3004).
+        // When shouldAcceptCertificate returns false (or an untrusted cert is rejected),
+        // Dart throws a HandshakeException which Dio surfaces as connectionError/unknown.
+        final inner = err.error;
+        final isHandshake = inner is HandshakeException ||
+            (inner?.toString().toLowerCase().contains('handshake') ?? false) ||
+            (inner?.toString().toLowerCase().contains('certificate') ?? false) ||
+            err.type == dio.DioExceptionType.badCertificate;
+        if (isHandshake) {
+          connectionError =
+              "SSL certificate error connecting to $addr. If your server uses a self-signed certificate, make sure the URL starts with https:// and try again.";
+        } else if (err.type == dio.DioExceptionType.connectionTimeout ||
+            err.type == dio.DioExceptionType.receiveTimeout ||
+            err.type == dio.DioExceptionType.sendTimeout) {
+          connectionError = "Connection timed out connecting to $addr. Check that the URL and port are correct and that your device can reach the server.";
+        } else {
+          connectionError = "Failed to connect to $addr! ${err.message?.isNotEmpty == true ? err.message : 'Please ensure your server is running and accessible.'}";
+        }
       }
     });
     dio.Response? fcmResponse;
@@ -688,6 +716,11 @@ class _ServerCredentialsState extends State<ServerCredentials> with ThemeHelpers
     Navigator.of(context, rootNavigator: true).pop();
     FocusManager.instance.primaryFocus?.unfocus();
 
+    // Connection-level error (cert, timeout, unreachable)
+    if (connectionError != null) {
+      SocketSvc.forgetConnection();
+      return controller.updateConnectError(connectionError!);
+    }
     // Unauthorized request
     if (serverResponse?.statusCode == 401) {
       SocketSvc.forgetConnection();

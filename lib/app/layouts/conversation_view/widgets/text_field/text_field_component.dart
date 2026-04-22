@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
@@ -75,6 +76,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
   late final Future<void> Function({String? effect}) sendMessage;
 
   late final ValueNotifier<bool> isRecordingNotifier;
+  Timer? _sendDelayTimer;
 
   TextFieldComponentState() : isRecordingNotifier = ValueNotifier<bool>(false);
 
@@ -101,8 +103,25 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         chat!.isIMessage));
   }
 
+  /// Trigger a send with the user-configured delay (respects the sendDelay setting).
+  /// Replaces direct sendMessage() calls from keyboard events so that the delay
+  /// is honoured when sending via Enter / numpadEnter / sendWithReturn.
+  void _sendWithDelay() {
+    final delay = SettingsSvc.settings.sendDelay.value;
+    if (delay == 0) {
+      sendMessage();
+    } else {
+      _sendDelayTimer?.cancel();
+      _sendDelayTimer = Timer(Duration(seconds: delay), () {
+        _sendDelayTimer = null;
+        sendMessage();
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _sendDelayTimer?.cancel();
     // dispose of the ValueNotifier when the state is disposed
     isRecordingNotifier.dispose();
     super.dispose();
@@ -440,7 +459,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         onSubmitted: (String value) {
                           controller?.focusNode.requestFocus();
                           if (isNullOrEmpty(value) && (controller?.pickedAttachments.isEmpty ?? false)) return;
-                          sendMessage.call();
+                          _sendWithDelay();
                         },
                         contentInsertionConfiguration:
                             ContentInsertionConfiguration(onContentInserted: onContentCommit),
@@ -620,7 +639,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
     if (isChatCreator) {
       if ((kIsDesktop || kIsWeb) &&
-          ev.logicalKey == LogicalKeyboardKey.enter &&
+          (ev.logicalKey == LogicalKeyboardKey.enter || ev.logicalKey == LogicalKeyboardKey.numpadEnter) &&
           !HardwareKeyboard.instance.isShiftPressed) {
         sendMessage();
         return KeyEventResult.handled;
@@ -702,7 +721,9 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     }
 
     // Tab or Enter
-    if (ev.logicalKey == LogicalKeyboardKey.tab || ev.logicalKey == LogicalKeyboardKey.enter) {
+    if (ev.logicalKey == LogicalKeyboardKey.tab ||
+        ev.logicalKey == LogicalKeyboardKey.enter ||
+        ev.logicalKey == LogicalKeyboardKey.numpadEnter) {
       if (controller!.focusNode.hasPrimaryFocus &&
           controller!.mentionMatches.length > controller!.mentionSelectedIndex.value) {
         int index = controller!.mentionSelectedIndex.value;
@@ -788,17 +809,20 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     }
 
     if ((kIsDesktop || kIsWeb) &&
-        ev.logicalKey == LogicalKeyboardKey.enter &&
+        (ev.logicalKey == LogicalKeyboardKey.enter || ev.logicalKey == LogicalKeyboardKey.numpadEnter) &&
         !HardwareKeyboard.instance.isShiftPressed) {
-      sendMessage();
-      controller!.focusNode.requestFocus();
+      _sendWithDelay();
+      // Re-request focus after the frame so any text-clear events don't steal it away
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) controller!.focusNode.requestFocus();
+      });
       return KeyEventResult.handled;
     }
 
     if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
     if (ev.physicalKey == PhysicalKeyboardKey.enter && SettingsSvc.settings.sendWithReturn.value) {
       if (!isNullOrEmpty(textController.text) || !isNullOrEmpty(controller!.subjectTextController.text)) {
-        sendMessage();
+        _sendWithDelay();
         controller!.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
       } else {

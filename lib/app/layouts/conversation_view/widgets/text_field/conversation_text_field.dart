@@ -79,9 +79,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
     if (controller.fromChatCreator) {
       controller.focusNode.requestFocus();
-    } else if (SettingsSvc.settings.autoOpenKeyboard.value && !controller.fromSearchResult) {
+    } else if ((SettingsSvc.settings.autoOpenKeyboard.value || SettingsSvc.settings.tabletMode.value) &&
+        !controller.fromSearchResult) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        controller.focusNode.requestFocus();
+        if (mounted) controller.focusNode.requestFocus();
       });
     }
 

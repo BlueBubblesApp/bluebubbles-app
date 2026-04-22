@@ -541,6 +541,11 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               }
                             }
 
+                            if (HttpSvc.downloadingFont.value) {
+                              showSnackbar("Download in progress", "The iOS emoji font is already downloading.");
+                              return;
+                            }
+
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(

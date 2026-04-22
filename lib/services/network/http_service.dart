@@ -24,13 +24,39 @@ class HttpService {
   late Dio dio;
   String? originOverride;
 
-  /// Get the URL origin from the current server address
-  String get origin =>
-      originOverride ??
-      (Uri.parse(SettingsSvc.settings.serverAddress.value).hasScheme
-          ? Uri.parse(SettingsSvc.settings.serverAddress.value).origin
-          : '');
-  String get apiRoot => "$origin/api/v1";
+  /// Get the URL origin (scheme + host + port, no path) from the current server address.
+  /// Used for socket.io connections which handle the path separately.
+  String get origin {
+    if (originOverride != null) return originOverride!;
+    final uri = Uri.tryParse(SettingsSvc.settings.serverAddress.value);
+    return (uri != null && uri.hasScheme) ? uri.origin : '';
+  }
+
+  /// Get the base URL including any path prefix the user configured, e.g.
+  /// "https://example.com/bb".  Used as the root for all HTTP API calls so
+  /// that reverse-proxy sub-path deployments work correctly (#2668).
+  String get baseUrl {
+    if (originOverride != null) return originOverride!;
+    final addr = SettingsSvc.settings.serverAddress.value;
+    final uri = Uri.tryParse(addr);
+    if (uri == null || !uri.hasScheme) return '';
+    final path = uri.path.replaceAll(RegExp(r'/+$'), '');
+    return path.isEmpty ? uri.origin : '${uri.origin}$path';
+  }
+
+  /// The socket.io endpoint path. If the user configured a sub-path such as
+  /// "/bb", this returns "/bb/socket.io" so the socket connects through the
+  /// reverse proxy correctly.
+  String get socketPath {
+    if (originOverride != null) return '/socket.io';
+    final addr = SettingsSvc.settings.serverAddress.value;
+    final uri = Uri.tryParse(addr);
+    if (uri == null || !uri.hasScheme) return '/socket.io';
+    final path = uri.path.replaceAll(RegExp(r'/+$'), '');
+    return path.isEmpty ? '/socket.io' : '$path/socket.io';
+  }
+
+  String get apiRoot => "$baseUrl/api/v1";
 
   /// iOS font download status
   RxBool downloadingFont = false.obs;
@@ -1012,7 +1038,7 @@ class HttpService {
   /// Get the basic landing page for the server URL
   Future<Response> landingPage({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
-      final response = await dio.get(origin, queryParameters: buildQueryParams(), cancelToken: cancelToken);
+      final response = await dio.get(baseUrl, queryParameters: buildQueryParams(), cancelToken: cancelToken);
       return returnSuccessOrError(response);
     });
   }

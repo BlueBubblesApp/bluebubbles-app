@@ -373,6 +373,14 @@ class ChatState {
     chat.lockChatName = updatedChat.lockChatName;
     chat.lockChatIcon = updatedChat.lockChatIcon;
     chat.lastReadMessageGuid = updatedChat.lastReadMessageGuid;
+
+    // Re-apply redaction after merging real DB values — updateDisplayNameInternal
+    // and updateCustomAvatarPathInternal above overwrite the fake name/avatar that
+    // redactContactInfo/redactAvatars had set, causing real contact info to leak
+    // through when a new message arrives in redacted mode.
+    if (SettingsSvc.settings.redactedMode.value) {
+      redactFields();
+    }
   }
 
   // ========== Internal Lifecycle State Update Methods ==========

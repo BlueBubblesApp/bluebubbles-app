@@ -32,6 +32,10 @@ class SocketService {
   Timer? _reconnectTimer;
   Socket? socket;
 
+  // Tracks a URL fetched from Firebase during reconnect (#2770).
+  // Applied in-memory only; persisted to disk once the connection succeeds.
+  String? _pendingFirebaseUrl;
+
   InternetConnection? internetConnection;
   StreamSubscription<InternetStatus>? internetConnectionListener;
   StreamSubscription? _connectivitySubscription;
@@ -92,7 +96,10 @@ class SocketService {
         // never fires and our restart+URL-refresh logic never runs.
         .setReconnectionAttempts(3)
         .setReconnectionDelay(1000)
-        .setReconnectionDelayMax(5000);
+        .setReconnectionDelayMax(5000)
+        // Support sub-path deployments behind reverse proxies (#2668).
+        // The socket.io endpoint is at {basePath}/socket.io, not just /socket.io.
+        .setPath(HttpSvc.socketPath);
     socket = io(serverAddress, options.build());
 
     socket?.onConnect((data) => handleStatusUpdate(SocketState.connected, data));
@@ -218,6 +225,12 @@ class SocketService {
           state.value = SocketState.connected;
           _reconnectTimer?.cancel();
           _reconnectTimer = null;
+          // Firebase URL trial succeeded — persist it now (#2770).
+          if (_pendingFirebaseUrl != null) {
+            Logger.info("Firebase URL ${ _pendingFirebaseUrl} confirmed working — persisting");
+            unawaited(saveNewServerUrl(_pendingFirebaseUrl!, restartSocket: false));
+            _pendingFirebaseUrl = null;
+          }
           NetworkTasks.onConnect();
           NotificationsSvc.clearSocketError();
           Logger.info("Socket connected successfully to $serverAddress");
@@ -262,9 +275,16 @@ class SocketService {
       if (state.value == SocketState.connected) return;
 
       Logger.info("Attempting to fetch new URL and restart socket...");
+      final String currentUrl = serverAddress;
       final String? newUrl = await fdb.fetchNewUrl();
-      if (newUrl != null && newUrl != serverAddress) {
-        Logger.info("Server URL changed from $serverAddress to $newUrl");
+      if (newUrl != null && newUrl != currentUrl) {
+        // Apply in-memory without persisting to disk (#2770).
+        // Only persist after the connection actually succeeds (see handleStatusUpdate).
+        Logger.info("Trying Firebase URL $newUrl (current: $currentUrl) — will persist only if connection succeeds");
+        SettingsSvc.settings.serverAddress.value = newUrl;
+        _pendingFirebaseUrl = newUrl;
+      } else {
+        _pendingFirebaseUrl = null;
       }
 
       restartSocket();

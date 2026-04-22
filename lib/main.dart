@@ -136,6 +136,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         windowManager.addListener(DesktopWindowListener.instance);
         doWhenWindowReady(() async {
           await windowManager.setMinimumSize(const Size(300, 300));
+          final List<Display> allDisplays = await ScreenRetriever.instance.getAllDisplays();
           Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
 
           Size size = await windowManager.getSize();
@@ -148,14 +149,38 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           await PrefsSvc.i.setDouble("window-width", width);
           await PrefsSvc.i.setDouble("window-height", height);
 
-          await windowManager.setAlignment(Alignment.center);
-          Offset offset = await windowManager.getPosition();
-          double? posX = PrefsSvc.i.getDouble("window-x") ?? offset.dx;
-          double? posY = PrefsSvc.i.getDouble("window-y") ?? offset.dy;
+          double? savedX = PrefsSvc.i.getDouble("window-x");
+          double? savedY = PrefsSvc.i.getDouble("window-y");
 
-          posX = posX.clamp(0, max(0, primary.size.width - width));
-          posY = posY.clamp(0, max(0, primary.size.height - height));
-          await windowManager.setPosition(Offset(posX, posY), animate: true);
+          // Check if the saved position is visible on any connected display.
+          // The window must overlap each candidate display by at least 100x50px
+          // so the title bar remains reachable. This also handles secondary
+          // monitors that were disconnected since the last run — those positions
+          // will no longer match any display and will gracefully fall back to
+          // centering on the primary display.
+          double posX;
+          double posY;
+          if (savedX != null &&
+              savedY != null &&
+              allDisplays.any((display) {
+                final dx = display.visiblePosition?.dx ?? 0;
+                final dy = display.visiblePosition?.dy ?? 0;
+                final dw = display.visibleSize?.width ?? display.size.width;
+                final dh = display.visibleSize?.height ?? display.size.height;
+                return savedX < dx + dw - 100 &&
+                    savedX + 100 > dx &&
+                    savedY < dy + dh - 50 &&
+                    savedY + 50 > dy;
+              })) {
+            posX = savedX;
+            posY = savedY;
+            await windowManager.setPosition(Offset(posX, posY), animate: true);
+          } else {
+            await windowManager.setAlignment(Alignment.center);
+            Offset offset = await windowManager.getPosition();
+            posX = offset.dx;
+            posY = offset.dy;
+          }
           await PrefsSvc.i.setDouble("window-x", posX);
           await PrefsSvc.i.setDouble("window-y", posY);
 
@@ -241,6 +266,7 @@ class DesktopWindowListener extends WindowListener {
 
   @override
   void onWindowEvent(String eventName) async {
+    if (SettingsSvc.settings.disableTrayIcon.value) return;
     switch (eventName) {
       case "hide":
         await setSystemTrayContextMenu(windowHidden: true);
@@ -480,12 +506,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
 
       if (kIsDesktop) {
         if (Platform.isWindows) {
-          /* ----- CONTACT IMAGE CACHE DELETION ----- */
-          Directory temp = FilesystemSvc.appTemp;
-          if (await temp.exists()) await temp.delete(recursive: true);
+          Future<void> updateTaskbarBadge(int count) async {
+            if (SettingsSvc.settings.hideTaskbarBadge.value) {
+              await WindowsTaskbar.resetOverlayIcon();
+              return;
+            }
 
-          /* ----- BADGE ICON LISTENER ----- */
-          ChatsSvc.unreadCount.listen((count) async {
             if (count == 0) {
               await WindowsTaskbar.resetOverlayIcon();
             } else if (count <= 9) {
@@ -493,6 +519,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
             } else {
               await WindowsTaskbar.setOverlayIcon(ThumbnailToolbarAssetIcon('assets/badges/badge-10.ico'));
             }
+          }
+
+          /* ----- CONTACT IMAGE CACHE DELETION ----- */
+          Directory temp = FilesystemSvc.appTemp;
+          if (await temp.exists()) await temp.delete(recursive: true);
+
+          /* ----- BADGE ICON LISTENER ----- */
+          ChatsSvc.unreadCount.listen((count) async {
+            await updateTaskbarBadge(count);
+          });
+
+          SettingsSvc.settings.hideTaskbarBadge.listen((_) async {
+            await updateTaskbarBadge(ChatsSvc.unreadCount.value);
           });
 
           /* ----- WINDOW EFFECT INITIALIZATION ----- */
@@ -510,17 +549,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
         }
 
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
-        await initSystemTray();
-        if (Platform.isWindows) {
-          systemTray.registerSystemTrayEventHandler((eventName) {
-            if (eventName == st.kSystemTrayEventClick) {
-              onTrayIconMouseDown();
-            } else if (eventName == st.kSystemTrayEventRightClick) {
-              onTrayIconRightMouseDown();
-            }
-          });
-        } else {
-          trayManager.addListener(this);
+        if (!SettingsSvc.settings.disableTrayIcon.value) {
+          await initSystemTray();
+          if (Platform.isWindows) {
+            systemTray.registerSystemTrayEventHandler((eventName) {
+              if (eventName == st.kSystemTrayEventClick) {
+                onTrayIconMouseDown();
+              } else if (eventName == st.kSystemTrayEventRightClick) {
+                onTrayIconRightMouseDown();
+              }
+            });
+          } else {
+            trayManager.addListener(this);
+          }
         }
 
         /* ----- NOTIFICATIONS INITIALIZATION ----- */
@@ -541,7 +582,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
 
   @override
   void onTrayIconMouseDown() async {
+    if (await windowManager.isMinimized()) {
+      await windowManager.restore();
+    }
     await windowManager.show();
+    await windowManager.focus();
   }
 
   @override
@@ -557,7 +602,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
   void onTrayMenuItemClick(MenuItem menuItem) async {
     switch (menuItem.key) {
       case 'show_app':
+        if (await windowManager.isMinimized()) {
+          await windowManager.restore();
+        }
         await windowManager.show();
+        await windowManager.focus();
         break;
       case 'hide_app':
         await windowManager.hide();

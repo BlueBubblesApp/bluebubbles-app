@@ -261,6 +261,10 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
               },
               child: Navigator(
                 key: Get.nestedKey(2),
+                // Prevent the Navigator from auto-claiming focus when a new route is
+                // pushed — ConversationTextFieldState.initState() explicitly requests
+                // focus on the text field via addPostFrameCallback (#2754).
+                requestFocus: false,
                 onPopPage: (route, _) {
                   return false;
                 },

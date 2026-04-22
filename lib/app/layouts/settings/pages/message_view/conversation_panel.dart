@@ -10,6 +10,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
@@ -48,6 +49,32 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
       (receivePlayer as aw.PlayerController)
           .onPlayerStateChanged
           .listen((value) => playingReceiveSound.value = value == aw.PlayerState.playing);
+    }
+  }
+
+  Future<PlatformFile?> _pickSoundFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(type: FileType.audio, withData: true);
+      return result?.files.first;
+    } catch (e, stack) {
+      Logger.warn("Audio file picker failed. Falling back to generic picker.", tag: "ConversationPanel");
+      Logger.error("Failed to open audio file picker", error: e, trace: stack, tag: "ConversationPanel");
+
+      try {
+        final fallbackResult = await FilePicker.platform.pickFiles(withData: true);
+        return fallbackResult?.files.first;
+      } catch (fallbackError, fallbackStack) {
+        Logger.error(
+          "Failed to open fallback file picker",
+          error: fallbackError,
+          trace: fallbackStack,
+          tag: "ConversationPanel",
+        );
+        if (mounted) {
+          showSnackbar("Failed to pick sound file", "Please verify file permissions and try again.");
+        }
+        return null;
+      }
     }
   }
 
@@ -214,16 +241,21 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                             ? basename(SettingsSvc.settings.sendSoundPath.value!).substring("send-".length)
                             : "Adds a sound to be played when sending a message",
                         onTap: () async {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles(type: FileType.audio, withData: true);
-                          if (result != null) {
-                            PlatformFile platformFile = result.files.first;
-                            String path = join(FilesystemSvc.soundsPath, "send-${platformFile.name}");
-                            await File(path).create(recursive: true);
-                            await File(path).writeAsBytes(platformFile.bytes!);
-                            SettingsSvc.settings.sendSoundPath.value = path;
-                            await SettingsSvc.settings.saveOneAsync('sendSoundPath');
+                          final platformFile = await _pickSoundFile();
+                          if (platformFile == null) return;
+
+                          final bytes = platformFile.bytes ??
+                              (platformFile.path == null ? null : await File(platformFile.path!).readAsBytes());
+                          if (bytes == null) {
+                            showSnackbar("Unable to use selected sound", "The selected file could not be read.");
+                            return;
                           }
+
+                          String path = join(FilesystemSvc.soundsPath, "send-${platformFile.name}");
+                          await File(path).create(recursive: true);
+                          await File(path).writeAsBytes(bytes);
+                          SettingsSvc.settings.sendSoundPath.value = path;
+                          await SettingsSvc.settings.saveOneAsync('sendSoundPath');
                         },
                         trailing: (SettingsSvc.settings.sendSoundPath.value == null)
                             ? const SizedBox.shrink()
@@ -288,16 +320,21 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                             ? basename(SettingsSvc.settings.receiveSoundPath.value!).substring("receive-".length)
                             : "Adds a sound to be played when receiving a message",
                         onTap: () async {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles(type: FileType.audio, withData: true);
-                          if (result != null) {
-                            PlatformFile platformFile = result.files.first;
-                            String path = join(FilesystemSvc.soundsPath, "receive-${platformFile.name}");
-                            await File(path).create(recursive: true);
-                            await File(path).writeAsBytes(platformFile.bytes!);
-                            SettingsSvc.settings.receiveSoundPath.value = path;
-                            await SettingsSvc.settings.saveOneAsync('receiveSoundPath');
+                          final platformFile = await _pickSoundFile();
+                          if (platformFile == null) return;
+
+                          final bytes = platformFile.bytes ??
+                              (platformFile.path == null ? null : await File(platformFile.path!).readAsBytes());
+                          if (bytes == null) {
+                            showSnackbar("Unable to use selected sound", "The selected file could not be read.");
+                            return;
                           }
+
+                          String path = join(FilesystemSvc.soundsPath, "receive-${platformFile.name}");
+                          await File(path).create(recursive: true);
+                          await File(path).writeAsBytes(bytes);
+                          SettingsSvc.settings.receiveSoundPath.value = path;
+                          await SettingsSvc.settings.saveOneAsync('receiveSoundPath');
                         },
                         trailing: (SettingsSvc.settings.receiveSoundPath.value == null)
                             ? const SizedBox.shrink()

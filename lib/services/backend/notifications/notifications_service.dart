@@ -450,7 +450,11 @@ class NotificationsService {
     toast.onClick = () async {
       _cleanNotificationState(chat.guid);
       await _openChat(chat);
+      if (await windowManager.isMinimized()) {
+        await windowManager.restore();
+      }
       await windowManager.show();
+      await windowManager.focus();
       if (deleteFileOnClose) {
         _deleteTempFile(avatarPath);
       }

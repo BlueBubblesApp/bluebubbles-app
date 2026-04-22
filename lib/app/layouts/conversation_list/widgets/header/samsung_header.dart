@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_lis
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -97,52 +98,161 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          if (showArchived || showUnknown)
+                          if (controller.selectedChats.isNotEmpty)
+                            IconButton(
+                              onPressed: () {
+                                controller.clearSelectedChats();
+                              },
+                              icon: Icon(
+                                Icons.close,
+                                color: context.theme.colorScheme.primary,
+                              ),
+                            )
+                          else if (showArchived || showUnknown)
                             IconButton(
                                 onPressed: () async {
                                   Navigator.of(context).pop();
                                 },
                                 padding: EdgeInsets.zero,
-                                icon: buildBackButton(context)),
-                          if (!showArchived && !showUnknown) const SizedBox.shrink(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (!showArchived && !showUnknown)
-                                Padding(
-                                    padding: const EdgeInsets.only(left: 2),
-                                    child: IconButton(
-                                      onPressed: () async {
-                                        controller.openCamera(context);
-                                      },
-                                      icon: Icon(
-                                        Icons.camera_alt_outlined,
-                                        color: context.theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                    )),
-                              if (!showArchived && !showUnknown)
-                                IconButton(
-                                    onPressed: () async {
-                                      NavigationSvc.pushLeft(
-                                        context,
-                                        const SearchView(),
-                                      );
+                                icon: buildBackButton(context))
+                          else
+                            const SizedBox.shrink(),
+                          if (controller.selectedChats.isNotEmpty)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (([0, controller.selectedChats.length]).contains(
+                                    controller.selectedChats.where((element) => element.hasUnreadMessage!).length))
+                                  IconButton(
+                                    onPressed: () {
+                                      for (Chat element in controller.selectedChats) {
+                                        final chatState = ChatsSvc.getChatState(element.guid);
+                                        if (chatState != null) {
+                                          ChatsSvc.setChatHasUnread(chatState.chat, !element.hasUnreadMessage!);
+                                        } else {
+                                          element.toggleHasUnreadAsync(!element.hasUnreadMessage!);
+                                        }
+                                      }
+                                      controller.clearSelectedChats();
                                     },
                                     icon: Icon(
-                                      Icons.search,
-                                      color: context.theme.colorScheme.onSurfaceVariant,
-                                    )),
-                              if (!showArchived && !showUnknown)
-                                const Padding(
-                                  padding: EdgeInsets.only(right: 8.0),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: OverflowMenu(),
+                                      controller.selectedChats[0].hasUnreadMessage!
+                                          ? Icons.mark_chat_read_outlined
+                                          : Icons.mark_chat_unread_outlined,
+                                      color: context.theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                if (([0, controller.selectedChats.length]).contains(
+                                    controller.selectedChats.where((element) => element.muteType == "mute").length))
+                                  IconButton(
+                                    onPressed: () {
+                                      for (Chat element in controller.selectedChats) {
+                                        final chatState = ChatsSvc.getChatState(element.guid);
+                                        if (chatState != null) {
+                                          ChatsSvc.setChatMuted(chatState.chat, element.muteType != "mute");
+                                        } else {
+                                          element.toggleMuteAsync(element.muteType != "mute");
+                                        }
+                                      }
+                                      controller.clearSelectedChats();
+                                    },
+                                    icon: Icon(
+                                      controller.selectedChats[0].muteType == "mute"
+                                          ? Icons.notifications_active_outlined
+                                          : Icons.notifications_off_outlined,
+                                      color: context.theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                if (([0, controller.selectedChats.length])
+                                    .contains(controller.selectedChats.where((element) => element.isPinned!).length))
+                                  IconButton(
+                                    onPressed: () {
+                                      for (Chat element in controller.selectedChats) {
+                                        final chatState = ChatsSvc.getChatState(element.guid);
+                                        if (chatState != null) {
+                                          ChatsSvc.setChatPinned(chatState.chat, !element.isPinned!);
+                                        } else {
+                                          ChatsSvc.toggleChatPin(element, !element.isPinned!);
+                                        }
+                                      }
+                                      controller.clearSelectedChats();
+                                    },
+                                    icon: Icon(
+                                      controller.selectedChats[0].isPinned! ? Icons.push_pin_outlined : Icons.push_pin,
+                                      color: context.theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                IconButton(
+                                  onPressed: () {
+                                    for (Chat element in controller.selectedChats) {
+                                      final chatState = ChatsSvc.getChatState(element.guid);
+                                      if (chatState != null) {
+                                        ChatsSvc.setChatArchived(chatState.chat, !element.isArchived!);
+                                      } else {
+                                        ChatsSvc.toggleChatArchive(element, !element.isArchived!);
+                                      }
+                                    }
+                                    controller.clearSelectedChats();
+                                  },
+                                  icon: Icon(
+                                    showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
+                                    color: context.theme.colorScheme.primary,
                                   ),
                                 ),
-                            ],
-                          ),
+                                IconButton(
+                                  onPressed: () {
+                                    for (Chat element in controller.selectedChats) {
+                                      ChatsSvc.removeChat(element);
+                                      ChatsSvc.softDeleteChat(element);
+                                    }
+                                    controller.clearSelectedChats();
+                                  },
+                                  icon: Icon(
+                                    Icons.delete_outlined,
+                                    color: context.theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            )
+                          else
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (!showArchived && !showUnknown)
+                                  Padding(
+                                      padding: const EdgeInsets.only(left: 2),
+                                      child: IconButton(
+                                        onPressed: () async {
+                                          controller.openCamera(context);
+                                        },
+                                        icon: Icon(
+                                          Icons.camera_alt_outlined,
+                                          color: context.theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                      )),
+                                if (!showArchived && !showUnknown)
+                                  IconButton(
+                                      onPressed: () async {
+                                        NavigationSvc.pushLeft(
+                                          context,
+                                          const SearchView(),
+                                        );
+                                      },
+                                      icon: Icon(
+                                        Icons.search,
+                                        color: context.theme.colorScheme.onSurfaceVariant,
+                                      )),
+                                if (!showArchived && !showUnknown)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 8.0),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: OverflowMenu(),
+                                    ),
+                                  ),
+                              ],
+                            ),
                         ],
                       ),
                     ),

@@ -624,6 +624,10 @@ mixin ConnectionPanelHelpersMixin {
               onTap: () async {
                 await fdb.fetchFirebaseConfig();
                 String? newUrl = await fdb.fetchNewUrl();
+                // Explicit user action — persist the fetched URL immediately (#2770).
+                if (newUrl != null) {
+                  await saveNewServerUrl(newUrl, restartSocket: false);
+                }
                 showSnackbar("Notice", "Fetched URL: $newUrl");
                 SocketSvc.restartSocket();
               },

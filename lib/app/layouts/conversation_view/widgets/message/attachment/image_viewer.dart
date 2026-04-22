@@ -130,11 +130,13 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         final qualityFactor = SettingsSvc.settings.previewImageQuality.value;
         final calculatedWidth = (displayWidth * Get.pixelRatio * qualityFactor).round().abs().nonZero;
         final calculatedHeight = (displayHeight * Get.pixelRatio * qualityFactor).round().abs().nonZero;
+        final cacheDimension = max(calculatedWidth ?? 0, calculatedHeight ?? 0).nonZero;
         imageWidget = Image.memory(file.bytes!,
             gaplessPlayback: true,
             filterQuality: FilterQuality.none,
-            cacheWidth: calculatedWidth,
-            cacheHeight: calculatedHeight,
+          // Use a single cache dimension so rotated EXIF images don't get
+          // force-decoded into a stretched width/height pair.
+          cacheWidth: cacheDimension,
             fit: BoxFit.contain,
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               if (wasSynchronouslyLoaded) return child;
@@ -217,12 +219,14 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       final qualityFactor = SettingsSvc.settings.previewImageQuality.value;
       final calculatedWidth = (displayWidth * Get.pixelRatio * qualityFactor).round().abs().nonZero;
       final calculatedHeight = (displayHeight * Get.pixelRatio * qualityFactor).round().abs().nonZero;
+      final cacheDimension = max(calculatedWidth ?? 0, calculatedHeight ?? 0).nonZero;
       imageWidget = Image.file(
         File(file.path!),
         gaplessPlayback: true,
         filterQuality: FilterQuality.none,
-        cacheWidth: calculatedWidth,
-        cacheHeight: calculatedHeight,
+        // Use a single cache dimension so rotated EXIF images don't get
+        // force-decoded into a stretched width/height pair.
+        cacheWidth: cacheDimension,
         fit: BoxFit.contain,
         frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
           if (wasSynchronouslyLoaded) return child;
@@ -263,8 +267,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                 File(snapshot.data!),
                 gaplessPlayback: true,
                 filterQuality: FilterQuality.none,
-                cacheWidth: calculatedWidth,
-                cacheHeight: calculatedHeight,
+                cacheWidth: cacheDimension,
                 fit: BoxFit.contain,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
