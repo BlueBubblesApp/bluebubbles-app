@@ -40,8 +40,7 @@ class FilesystemService {
 
     String filePath = androidDownloadsPath;
     if (kIsDesktop) {
-      final dir = await getDownloadsDirectory() ??
-          await getApplicationDocumentsDirectory();
+      final dir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
       filePath = dir.path;
     }
 

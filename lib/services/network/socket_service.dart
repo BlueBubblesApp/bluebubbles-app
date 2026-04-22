@@ -227,7 +227,7 @@ class SocketService {
           _reconnectTimer = null;
           // Firebase URL trial succeeded — persist it now (#2770).
           if (_pendingFirebaseUrl != null) {
-            Logger.info("Firebase URL ${ _pendingFirebaseUrl} confirmed working — persisting");
+            Logger.info("Firebase URL ${_pendingFirebaseUrl} confirmed working — persisting");
             unawaited(saveNewServerUrl(_pendingFirebaseUrl!, restartSocket: false));
             _pendingFirebaseUrl = null;
           }

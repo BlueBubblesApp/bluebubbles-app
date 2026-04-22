@@ -167,10 +167,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
                 final dy = display.visiblePosition?.dy ?? 0;
                 final dw = display.visibleSize?.width ?? display.size.width;
                 final dh = display.visibleSize?.height ?? display.size.height;
-                return savedX < dx + dw - 100 &&
-                    savedX + 100 > dx &&
-                    savedY < dy + dh - 50 &&
-                    savedY + 50 > dy;
+                return savedX < dx + dw - 100 && savedX + 100 > dx && savedY < dy + dh - 50 && savedY + 50 > dy;
               })) {
             posX = savedX;
             posY = savedY;

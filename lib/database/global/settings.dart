@@ -647,7 +647,7 @@ class Settings {
     SettingsSvc.settings.desktopNotifications.value =
         map['desktopNotifications'] ?? SettingsSvc.settings.desktopNotifications.value;
     SettingsSvc.settings.hideTaskbarBadge.value =
-      map['hideTaskbarBadge'] ?? SettingsSvc.settings.hideTaskbarBadge.value;
+        map['hideTaskbarBadge'] ?? SettingsSvc.settings.hideTaskbarBadge.value;
     SettingsSvc.settings.desktopNotificationSoundVolume.value =
         map['desktopNotificationSoundVolume'] ?? SettingsSvc.settings.desktopNotificationSoundVolume.value;
     SettingsSvc.settings.desktopNotificationSoundPath.value =

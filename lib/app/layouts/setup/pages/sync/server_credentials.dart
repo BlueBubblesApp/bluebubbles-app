@@ -672,12 +672,12 @@ class _ServerCredentialsState extends State<ServerCredentials> with ThemeHelpers
     String? connectionError;
     await HttpSvc.serverInfo()
         .timeout(
-          const Duration(seconds: 20),
-          onTimeout: () => throw dio.DioException(
-            requestOptions: dio.RequestOptions(path: ''),
-            type: dio.DioExceptionType.connectionTimeout,
-          ),
-        )
+      const Duration(seconds: 20),
+      onTimeout: () => throw dio.DioException(
+        requestOptions: dio.RequestOptions(path: ''),
+        type: dio.DioExceptionType.connectionTimeout,
+      ),
+    )
         .then((response) {
       serverResponse = response;
     }).catchError((err) {
@@ -698,9 +698,11 @@ class _ServerCredentialsState extends State<ServerCredentials> with ThemeHelpers
         } else if (err.type == dio.DioExceptionType.connectionTimeout ||
             err.type == dio.DioExceptionType.receiveTimeout ||
             err.type == dio.DioExceptionType.sendTimeout) {
-          connectionError = "Connection timed out connecting to $addr. Check that the URL and port are correct and that your device can reach the server.";
+          connectionError =
+              "Connection timed out connecting to $addr. Check that the URL and port are correct and that your device can reach the server.";
         } else {
-          connectionError = "Failed to connect to $addr! ${err.message?.isNotEmpty == true ? err.message : 'Please ensure your server is running and accessible.'}";
+          connectionError =
+              "Failed to connect to $addr! ${err.message?.isNotEmpty == true ? err.message : 'Please ensure your server is running and accessible.'}";
         }
       }
     });

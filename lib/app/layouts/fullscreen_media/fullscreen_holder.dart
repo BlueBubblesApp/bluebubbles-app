@@ -148,8 +148,7 @@ class FullscreenMediaHolderState extends State<FullscreenMediaHolder> with Theme
                     } else {
                       controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
                     }
-                  } else if (event.logicalKey == LogicalKeyboardKey.escape ||
-                      event.physicalKey.debugName == "Escape") {
+                  } else if (event.logicalKey == LogicalKeyboardKey.escape || event.physicalKey.debugName == "Escape") {
                     Navigator.of(context).pop();
                     return KeyEventResult.handled;
                   }

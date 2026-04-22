@@ -134,9 +134,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         imageWidget = Image.memory(file.bytes!,
             gaplessPlayback: true,
             filterQuality: FilterQuality.none,
-          // Use a single cache dimension so rotated EXIF images don't get
-          // force-decoded into a stretched width/height pair.
-          cacheWidth: cacheDimension,
+            // Use a single cache dimension so rotated EXIF images don't get
+            // force-decoded into a stretched width/height pair.
+            cacheWidth: cacheDimension,
             fit: BoxFit.contain,
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               if (wasSynchronouslyLoaded) return child;

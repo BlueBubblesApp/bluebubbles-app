@@ -79,7 +79,6 @@ class IntentsService {
         return;
       case "android.intent.action.SEND":
       case "android.intent.action.SEND_MULTIPLE":
-
         final id = intent.extra?["android.intent.extra.shortcut.ID"];
         final text = intent.extra?["android.intent.extra.TEXT"];
         final files = <PlatformFile>[];
