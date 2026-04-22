@@ -63,11 +63,9 @@ Future<String?> googleOAuth(BuildContext context) async {
       final authClient = account.authorizationClient;
       GoogleSignInClientAuthorization? authorization = await authClient.authorizationForScopes(defaultScopes);
       authorization ??= await authClient.authorizeScopes(defaultScopes);
-      token = authorization.accessToken;
 
-      if (token.isEmpty) {
-        throw Exception("No access token!");
-      }
+      token = authorization.accessToken;
+      if (token.isEmpty) return null;
     } catch (e, stack) {
       Logger.error("Failed to sign in with Google (Android/Web)", error: e, trace: stack);
       return null;

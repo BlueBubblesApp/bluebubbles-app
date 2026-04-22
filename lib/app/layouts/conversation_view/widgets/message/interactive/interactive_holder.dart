@@ -132,19 +132,6 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                                       } else if (payloadData?.type == PayloadType.url || message.isLegacyUrlPreview) {
                                         final urlData =
                                             payloadData?.urlData?.first ?? UrlPreviewData(originalUrl: message.url);
-                                        if (SettingsSvc.settings.highPerfMode.value) {
-                                          final displayUrl = urlData.url ?? urlData.originalUrl ?? '';
-                                          return Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text(
-                                              displayUrl,
-                                              style: context.theme.textTheme.bodyMedium?.copyWith(
-                                                color: context.theme.colorScheme.primary,
-                                                decoration: TextDecoration.underline,
-                                              ),
-                                            ),
-                                          );
-                                        }
                                         return UrlPreview(data: urlData);
                                       } else {
                                         final data = payloadData!.appData!.first;

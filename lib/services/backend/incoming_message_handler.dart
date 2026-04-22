@@ -488,7 +488,7 @@ class IncomingMessageHandler {
       c.dbLatestMessage;
       ChatsSvc.updateChat(c, override: true);
       // Only push the subtitle update if this message is now the latest in the chat.
-      if (c.latestMessage.guid == m.guid) {
+      if (c.dbLatestMessage.guid == m.guid) {
         ChatsSvc.updateChatLatestMessage(c.guid, m);
       }
     }

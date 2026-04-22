@@ -35,6 +35,9 @@ class SocketService {
   // Tracks a URL fetched from Firebase during reconnect (#2770).
   // Applied in-memory only; persisted to disk once the connection succeeds.
   String? _pendingFirebaseUrl;
+  // The user's original server address before any Firebase trial — used to
+  // revert if the Firebase URL turns out to be stale/unreachable.
+  String? _savedServerAddressBeforeFirebase;
 
   InternetConnection? internetConnection;
   StreamSubscription<InternetStatus>? internetConnectionListener;
@@ -231,6 +234,7 @@ class SocketService {
             unawaited(saveNewServerUrl(_pendingFirebaseUrl!, restartSocket: false));
             _pendingFirebaseUrl = null;
           }
+          _savedServerAddressBeforeFirebase = null; // clear saved URL on successful connect
           NetworkTasks.onConnect();
           NotificationsSvc.clearSocketError();
           Logger.info("Socket connected successfully to $serverAddress");
@@ -275,16 +279,27 @@ class SocketService {
       if (state.value == SocketState.connected) return;
 
       Logger.info("Attempting to fetch new URL and restart socket...");
-      final String currentUrl = serverAddress;
+      // Use the full configured address (not just origin) so path-only
+      // differences are not silently ignored (#2770).
+      final String currentConfiguredUrl = SettingsSvc.settings.serverAddress.value;
       final String? newUrl = await fdb.fetchNewUrl();
-      if (newUrl != null && newUrl != currentUrl) {
+      if (newUrl != null && newUrl != currentConfiguredUrl) {
         // Apply in-memory without persisting to disk (#2770).
         // Only persist after the connection actually succeeds (see handleStatusUpdate).
-        Logger.info("Trying Firebase URL $newUrl (current: $currentUrl) — will persist only if connection succeeds");
-        SettingsSvc.settings.serverAddress.value = newUrl;
+        // Save original so we can revert if this Firebase URL is also stale.
+        Logger.info(
+            "Trying Firebase URL $newUrl (current: $currentConfiguredUrl) — will persist only if connection succeeds");
+        _savedServerAddressBeforeFirebase ??= currentConfiguredUrl;
         _pendingFirebaseUrl = newUrl;
+        SettingsSvc.settings.serverAddress.value = newUrl;
       } else {
         _pendingFirebaseUrl = null;
+        // Revert to the user's original URL if a prior Firebase trial failed.
+        if (_savedServerAddressBeforeFirebase != null) {
+          Logger.info("Firebase URL unchanged or unavailable — reverting to $_savedServerAddressBeforeFirebase");
+          SettingsSvc.settings.serverAddress.value = _savedServerAddressBeforeFirebase!;
+          _savedServerAddressBeforeFirebase = null;
+        }
       }
 
       restartSocket();

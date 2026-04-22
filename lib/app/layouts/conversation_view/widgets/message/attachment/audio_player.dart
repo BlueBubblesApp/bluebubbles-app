@@ -165,6 +165,10 @@ class _DesktopAudioPlayerState extends State<AudioPlayer>
 
   Player? controller;
   Timer? _positionTimer;
+  StreamSubscription? _positionSub;
+  StreamSubscription? _durationSub;
+  StreamSubscription? _playingSub;
+  StreamSubscription? _completedSub;
   late final animController = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 400), animationBehavior: AnimationBehavior.preserve);
   final isPlaying = false.obs;
@@ -180,6 +184,11 @@ class _DesktopAudioPlayerState extends State<AudioPlayer>
 
   @override
   void dispose() {
+    _positionTimer?.cancel();
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _playingSub?.cancel();
+    _completedSub?.cancel();
     if (attachment == null) {
       controller?.dispose();
     }
@@ -190,35 +199,43 @@ class _DesktopAudioPlayerState extends State<AudioPlayer>
   void initBytes() async {
     if (attachment != null) controller = cvController?.audioPlayersDesktop[attachment!.guid];
     if (controller == null) {
-      controller = Player()
-        ..stream.position.listen((pos) => position.value = pos)
-        ..stream.duration.listen((dur) => duration.value = dur)
-        ..stream.playing.listen((playing) {
-          isPlaying.value = playing;
-          // Poll position while playing as a fallback for platforms where
-          // stream.position doesn't emit continuously (#2570).
-          if (playing) {
-            _positionTimer?.cancel();
-            _positionTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
-              if (controller != null && mounted) position.value = controller!.state.position;
-            });
-          } else {
-            _positionTimer?.cancel();
-          }
-        })
-        ..stream.completed.listen((bool completed) async {
-          if (completed) {
-            await controller!.seek(Duration.zero);
-            if (Platform.isLinux) {
-              await controller!.pause();
-            }
-            animController.reverse();
-          }
-        });
+      controller = Player();
       await controller!.setPlaylistMode(PlaylistMode.none);
       await controller!.open(Media(file.path!), play: false);
       if (attachment != null) cvController?.audioPlayersDesktop[attachment!.guid!] = controller!;
     }
+
+    // Always (re)subscribe with per-widget subscriptions so cached controllers
+    // also update position/isPlaying for this widget (#2570).
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _playingSub?.cancel();
+    _completedSub?.cancel();
+    _positionSub = controller!.stream.position.listen((pos) => position.value = pos);
+    _durationSub = controller!.stream.duration.listen((dur) => duration.value = dur);
+    _playingSub = controller!.stream.playing.listen((playing) {
+      isPlaying.value = playing;
+      // Poll position while playing as a fallback for platforms where
+      // stream.position doesn't emit continuously (#2570).
+      if (playing) {
+        _positionTimer?.cancel();
+        _positionTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+          if (controller != null && mounted) position.value = controller!.state.position;
+        });
+      } else {
+        _positionTimer?.cancel();
+      }
+    });
+    _completedSub = controller!.stream.completed.listen((bool completed) async {
+      if (completed) {
+        await controller!.seek(Duration.zero);
+        if (Platform.isLinux) {
+          await controller!.pause();
+        }
+        animController.reverse();
+      }
+    });
+
     isPlaying.value = controller?.state.playing ?? false;
     position.value = controller?.state.position ?? Duration.zero;
     duration.value = controller?.state.duration ?? Duration.zero;

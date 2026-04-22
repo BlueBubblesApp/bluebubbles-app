@@ -135,6 +135,22 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // In high-performance mode, skip the full render and show a plain URL link.
+    if (SettingsSvc.settings.highPerfMode.value) {
+      final displayUrl = data.url ?? data.originalUrl ?? '';
+      return Padding(
+        padding: const EdgeInsets.all(10),
+        child: Text(
+          displayUrl,
+          style: context.theme.textTheme.bodyMedium?.copyWith(
+            color: context.theme.colorScheme.primary,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+      );
+    }
+
     final message = MessageStateScope.maybeMessageOf(context);
     final effectiveImageUrl = data.imageMetadata?.url ?? _fetchedMetadata?.image;
     final _rawSiteText = widget.file != null
