@@ -249,7 +249,7 @@ class _RecordingButton extends StatelessWidget {
                   "${controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a",
                 ));
                 temp.createSync(recursive: true);
-                audioRecorder.start(const RecordConfig(bitRate: 320000), path: temp.path);
+                await audioRecorder.start(const RecordConfig(bitRate: 320000), path: temp.path);
                 return;
               }
               await recorderController!.record(
