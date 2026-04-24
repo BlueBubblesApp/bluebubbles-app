@@ -173,7 +173,7 @@ class Settings {
   List<DetailsMenuAction> get detailsMenuActions => _detailsMenuActions;
 
   // Linux settings
-  final RxBool useCustomTitleBar = RxBool(true);
+  final RxBool useCustomTitleBar = RxBool(false);
 
   // Windows settings
   final RxBool useWindowsAccent = RxBool(false);

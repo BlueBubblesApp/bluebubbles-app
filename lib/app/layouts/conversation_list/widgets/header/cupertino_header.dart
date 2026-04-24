@@ -37,54 +37,27 @@ class CupertinoHeader extends StatelessWidget {
           ),
           child: Obx(() {
             ns.listener.value;
-            return Row(
-              mainAxisAlignment: ns.isAvatarOnly(context) ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                if (!ns.isAvatarOnly(context))
-                  Expanded(
-                    child: HeaderText(controller: controller),
-                  ),
-                if (ns.isAvatarOnly(context))
-                  Material(
-                    color: Colors.transparent,
-                    shape: const CircleBorder(),
-                    clipBehavior: Clip.antiAlias,
-                    child: OverflowMenu(extraItems: true, controller: controller),
-                  ),
-                if (!ns.isAvatarOnly(context))
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
+            return Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    if (!ns.isAvatarOnly(context))
                       SyncIndicator(size: 16),
-                      const SizedBox(width: 10.0),
-                      ClipOval(
-                        child: Material(
-                          color: context.theme.colorScheme.properSurface, // button color
-                          child: SizedBox(
-                            width: 30,
-                            height: 30,
-                            child: InkWell(
-                              child: Icon(CupertinoIcons.search, color: context.theme.colorScheme.properOnSurface, size: 18),
-                              onTap: () {
-                                ns.pushLeft(context, SearchView());
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10.0),
-                      if (ss.settings.moveChatCreatorToHeader.value)
-                        ClipOval(
-                          child: Material(
-                            color: context.theme.colorScheme.properSurface, // button color
+                    if (!ns.isAvatarOnly(context))
+                      Row(
+                        mainAxisSize: MainAxisSize.max,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Material(
+                            color: Colors.transparent,
                             child: InkWell(
                               child: SizedBox(
                                 width: 30,
                                 height: 30,
                                 child: Icon(
-                                  CupertinoIcons.pencil,
+                                  CupertinoIcons.square_pencil,
                                   color: context.theme.colorScheme.properOnSurface,
                                   size: 20,
                                 ),
@@ -92,31 +65,26 @@ class CupertinoHeader extends StatelessWidget {
                               onTap: () => controller.openNewChatCreator(context),
                             ),
                           ),
-                        ),
-                      if (ss.settings.moveChatCreatorToHeader.value && ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop)
-                        const SizedBox(width: 10.0),
-                      if (ss.settings.moveChatCreatorToHeader.value && ss.settings.cameraFAB.value && !kIsWeb && !kIsDesktop)
-                        ClipOval(
-                          child: Material(
-                            color: context.theme.colorScheme.properSurface, // button color
-                            child: InkWell(
-                                child: SizedBox(
-                                  width: 30,
-                                  height: 30,
-                                  child: Icon(CupertinoIcons.camera, color: context.theme.colorScheme.properOnSurface, size: 20),
-                                ),
-                                onTap: () => controller.openCamera(context)),
+                          const SizedBox(width: 10.0),
+                          const Material(
+                            color: Colors.transparent,
+                            shape: CircleBorder(),
+                            clipBehavior: Clip.antiAlias,
+                            child: OverflowMenu(),
                           ),
-                        ),
-                      if (ss.settings.moveChatCreatorToHeader.value) const SizedBox(width: 10.0),
-                      const Material(
-                        color: Colors.transparent,
-                        shape: CircleBorder(),
-                        clipBehavior: Clip.antiAlias,
-                        child: OverflowMenu(),
+                        ],
                       ),
-                    ],
-                  ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                CupertinoSearchTextField(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  placeholder: "Search",
+                  style: context.theme.textTheme.bodyLarge,
+                  onTap: () {
+                    ns.pushLeft(context, SearchView());
+                  },
+                ),
               ],
             );
           }),

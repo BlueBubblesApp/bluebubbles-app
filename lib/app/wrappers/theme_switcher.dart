@@ -60,17 +60,6 @@ class _ThemeSwitcherState extends OptimizedState<ThemeSwitcher> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      switch (ss.settings.skin.value) {
-        case Skins.iOS:
-          return widget.iOSSkin;
-        case Skins.Material:
-          return widget.materialSkin;
-        case Skins.Samsung:
-          return widget.samsungSkin ?? widget.materialSkin;
-        default:
-          return widget.iOSSkin;
-      }
-    });
+    return widget.iOSSkin;
   }
 }

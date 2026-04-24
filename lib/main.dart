@@ -128,10 +128,10 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
           await windowManager.setTitle('BlueBubbles');
           await Window.initialize();
           if (Platform.isWindows) {
-            await Window.hideWindowControls();
+            // await Window.hideWindowControls();
           } else if (Platform.isLinux) {
             await windowManager
-                .setTitleBarStyle(ss.settings.useCustomTitleBar.value ? TitleBarStyle.hidden : TitleBarStyle.normal);
+                .setTitleBarStyle(TitleBarStyle.normal);
           }
           windowManager.addListener(DesktopWindowListener.instance);
           doWhenWindowReady(() async {
