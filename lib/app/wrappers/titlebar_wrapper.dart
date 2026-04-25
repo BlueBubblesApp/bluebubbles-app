@@ -6,8 +6,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
-import 'package:get/get_utils/src/extensions/context_extensions.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:window_manager/window_manager.dart';
 
 class TitleBarWrapper extends StatefulWidget {
@@ -27,7 +27,7 @@ class _TitleBarWrapperState extends State<TitleBarWrapper> {
     if (!kIsDesktop) {
       return Stack(
         children: <Widget>[
-          child,
+          widget.child,
           if (ss.settings.showConnectionIndicator.value) const ConnectionIndicator(),
         ],
       );
@@ -36,7 +36,7 @@ class _TitleBarWrapperState extends State<TitleBarWrapper> {
     return Obx(() => Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.altLeft) {
+        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
           showMenuBar.value = !showMenuBar.value;
           return KeyEventResult.handled;
         }
@@ -47,13 +47,13 @@ class _TitleBarWrapperState extends State<TitleBarWrapper> {
           width: 0,
           child: Stack(
             children: <Widget>[
-              Column(
+              Obx(() => Column(
                 children: [
                   if (showMenuBar.value)
                     const DesktopMenuBar(),
                   Expanded(child: widget.child),
                 ],
-              ),
+              )),
               const TitleBar(),
               if (ss.settings.showConnectionIndicator.value)
                 const ConnectionIndicator(),
@@ -61,13 +61,13 @@ class _TitleBarWrapperState extends State<TitleBarWrapper> {
           ),
         ) : Stack(
           children: <Widget>[
-            Column(
+            Obx(() => Column(
               children: [
                 if (showMenuBar.value)
                   const DesktopMenuBar(),
                 Expanded(child: widget.child),
               ],
-            ),
+            )),
             if (ss.settings.showConnectionIndicator.value)
               const ConnectionIndicator(),
           ],

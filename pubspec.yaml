@@ -64,7 +64,7 @@ dependencies:
       ref: beb79f70a2bb0e96e6bb9fdebac2ff452f138950
       path: packages/firebase_dart
   flex_color_picker: ^3.4.1
-  flex_color_scheme: ^7.3.1
+  flex_color_scheme: ^8.0.1
   flutter_acrylic: ^1.1.3
   flutter_audio_waveforms: ^1.2.1+8
   flutter_displaymode: ^0.6.0 # android only
@@ -77,7 +77,7 @@ dependencies:
   flutter_map: ^7.0.1
   flutter_map_marker_popup: ^7.0.0
   flutter_markdown: ^0.7.2+1
-  flutter_slidable: ^3.1.0
+  flutter_slidable: ^3.1.2
   flutter_staggered_grid_view: ^0.7.0
   flutter_svg: ^2.0.10+1
   flutter_timezone: ^3.0.1 # no desktop support
@@ -89,7 +89,7 @@ dependencies:
   get: ^4.6.6
   giphy_get: ^3.5.4
   github: ^9.24.0
-  google_fonts: ^6.2.1
+  google_fonts: ^8.0.2
   google_ml_kit: ^0.18.0 # mobile only
   google_mlkit_smart_reply: ^0.11.0
   google_sign_in: ^6.2.1
@@ -155,7 +155,7 @@ dependencies:
   shared_preferences: ^2.2.2
   shimmer: ^3.0.0
   simple_animations: ^5.0.2
-  skeletonizer: ^1.1.1
+  skeletonizer: ^2.1.3
   sliding_up_panel2: ^3.3.0+1
   slugify: ^2.0.0
   smooth_page_indicator: ^1.1.0
@@ -193,6 +193,9 @@ dependencies:
 
 dependency_overrides:
   # overrides for packages stuck on outdated versions
+  test_api: 0.7.9
+  matcher: 0.12.18
+  test: 1.25.7
   http: ^1.2.1 # metadata_fetch
   intl: ^0.19.0 # firebase_dart
   js: ^0.7.1 # socket_io_client

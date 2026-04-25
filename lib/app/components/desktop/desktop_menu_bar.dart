@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/advanced/private_api_pane
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theming_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
