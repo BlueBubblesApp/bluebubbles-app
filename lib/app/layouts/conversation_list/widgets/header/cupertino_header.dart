@@ -39,6 +39,15 @@ class CupertinoHeader extends StatelessWidget {
             ns.listener.value;
             return Column(
               children: [
+                CupertinoSearchTextField(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  placeholder: "Search",
+                  style: context.theme.textTheme.bodyLarge,
+                  onTap: () {
+                    ns.pushLeft(context, SearchView());
+                  },
+                ),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -66,24 +75,15 @@ class CupertinoHeader extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 10.0),
-                          const Material(
+                          Material(
                             color: Colors.transparent,
-                            shape: CircleBorder(),
+                            shape: const CircleBorder(),
                             clipBehavior: Clip.antiAlias,
-                            child: OverflowMenu(),
+                            child: OverflowMenu(controller: controller),
                           ),
                         ],
                       ),
                   ],
-                ),
-                const SizedBox(height: 10),
-                CupertinoSearchTextField(
-                  backgroundColor: context.theme.colorScheme.properSurface,
-                  placeholder: "Search",
-                  style: context.theme.textTheme.bodyLarge,
-                  onTap: () {
-                    ns.pushLeft(context, SearchView());
-                  },
                 ),
               ],
             );

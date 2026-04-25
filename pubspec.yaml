@@ -71,10 +71,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   flutter_image_compress: ^2.2.0
   flutter_improved_scrolling: ^0.0.3
-  flutter_isolate: # gradle namespace issue
-    git:
-      url: https://github.com/chipweinberger/flutter_isolate.git
-      ref: user/chip/update-examples
+  flutter_isolate: ^2.0.4
   flutter_keyboard_visibility: ^6.0.0 # no desktop support
   flutter_local_notifications: ^17.2.1+2 # mobile only
   flutter_map: ^7.0.1

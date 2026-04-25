@@ -995,13 +995,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                   cursorColor: context.theme.colorScheme.primary,
                   cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
                   decoration: InputDecoration(
-                    suffixIcon: kIsDesktop || kIsWeb ? IconButton(
-                      icon: Icon(iOS ? CupertinoIcons.smiley : Icons.emoji_emotions, color: context.theme.colorScheme.outline, size: 24),
-                      onPressed: () {
-                        controller?.showEmojiPicker.value = !controller!.showEmojiPicker.value;
-                        (controller?.editing.lastOrNull?.item3.focusNode ?? controller?.lastFocusedNode)?.requestFocus();
-                      },
-                    ) : null,
                     contentPadding: EdgeInsets.all(iOS && !kIsDesktop && !kIsWeb ? 10 : 12.5),
                     isDense: true,
                     isCollapsed: true,
@@ -1024,13 +1017,26 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         ? null
                         : Padding(
                             padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
-                            child: TextFieldSuffix(
-                              subjectTextController: subjController,
-                              textController: txtController,
-                              controller: controller,
-                              recorderController: recorderController,
-                              sendMessage: sendMessage,
-                              isChatCreator: isChatCreator,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (kIsDesktop || kIsWeb)
+                                  IconButton(
+                                    icon: Icon(iOS ? CupertinoIcons.smiley : Icons.emoji_emotions, color: context.theme.colorScheme.outline, size: 24),
+                                    onPressed: () {
+                                      controller?.showEmojiPicker.value = !controller!.showEmojiPicker.value;
+                                      (controller?.editing.lastOrNull?.item3.focusNode ?? controller?.lastFocusedNode)?.requestFocus();
+                                    },
+                                  ),
+                                TextFieldSuffix(
+                                  subjectTextController: subjController,
+                                  textController: txtController,
+                                  controller: controller,
+                                  recorderController: recorderController,
+                                  sendMessage: sendMessage,
+                                  isChatCreator: isChatCreator,
+                                ),
+                              ],
                             ),
                           ),
                   ),
