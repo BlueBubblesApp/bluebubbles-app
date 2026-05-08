@@ -80,13 +80,17 @@ class SettingsService {
     // launch at startup - defer this so it doesn't block startup
     if (kIsDesktop) {
       Future.microtask(() async {
-        if (Platform.isWindows) {
-          try {
-            _canAuthenticate = await LocalAuthentication().isDeviceSupported();
-          } catch (_) {}
+        try {
+          if (Platform.isWindows) {
+            try {
+              _canAuthenticate = await LocalAuthentication().isDeviceSupported();
+            } catch (_) {}
+          }
+          SettingsSvc.settings.launchAtStartup.value = await setupLaunchAtStartup(
+              SettingsSvc.settings.launchAtStartup.value, SettingsSvc.settings.launchAtStartupMinimized.value);
+        } catch (_) {
+          // Best-effort: ignore failures (e.g. SettingsSvc not registered yet in spawned isolates).
         }
-        SettingsSvc.settings.launchAtStartup.value = await setupLaunchAtStartup(
-            SettingsSvc.settings.launchAtStartup.value, SettingsSvc.settings.launchAtStartupMinimized.value);
       });
     }
 
