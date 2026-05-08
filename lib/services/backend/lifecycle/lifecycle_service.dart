@@ -76,7 +76,7 @@ class LifecycleService with WidgetsBindingObserver {
       // "chat is active" notification guard. setActiveToDead() is idempotent
       // (equality-checked inside) and will run again in close() when paused fires.
       // Also handles Samsung One UI which emits `hidden` before `paused`.
-      if (Platform.isAndroid) {
+      if (Platform.isAndroid && GetIt.I.isRegistered<ChatsService>()) {
         ChatsSvc.setActiveToDead();
       }
     } else {
@@ -119,6 +119,10 @@ class LifecycleService with WidgetsBindingObserver {
   void open() {
     // If we haven't finished setup, don't do anything
     if (!SettingsSvc.settings.finishedSetup.value) return;
+    // Lifecycle events can fire before StartupTasks.init() has registered
+    // ChatsService (e.g. window-focus on cold start). Skip until services exist;
+    // startup_tasks will set the active state itself when it finishes.
+    if (!GetIt.I.isRegistered<ChatsService>()) return;
     StartupTasks.onAppResume();
   }
 
@@ -134,10 +138,12 @@ class LifecycleService with WidgetsBindingObserver {
     // Leaving this commented out as a reminder.
     // WidgetsBinding.instance.removeObserver(this);
 
-    if (kIsDesktop) {
+    // Pause/hide can fire before ChatsService is registered on cold start.
+    final chatsReady = GetIt.I.isRegistered<ChatsService>();
+    if (kIsDesktop && chatsReady) {
       wasActiveAliveBefore = ChatsSvc.activeChat?.isAlive.value;
     }
-    if (!kIsDesktop || wasActiveAliveBefore != false) {
+    if (chatsReady && (!kIsDesktop || wasActiveAliveBefore != false)) {
       ChatsSvc.setActiveToDead();
     }
     if (!kIsDesktop && !kIsWeb) {
@@ -151,10 +157,12 @@ class LifecycleService with WidgetsBindingObserver {
         unawaited(GetIt.I<GlobalIsolate>().drainAndStop(timeout: const Duration(seconds: 30)));
       }
     }
-    final activeChat = ChatsSvc.activeChat;
-    if (activeChat != null) {
-      ConversationViewController _cvc = cvc(activeChat.chat);
-      _cvc.lastFocusedNode.unfocus();
+    if (chatsReady) {
+      final activeChat = ChatsSvc.activeChat;
+      if (activeChat != null) {
+        ConversationViewController _cvc = cvc(activeChat.chat);
+        _cvc.lastFocusedNode.unfocus();
+      }
     }
     if (kIsDesktop) {
       windowFocused = false;
