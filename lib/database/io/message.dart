@@ -267,7 +267,12 @@ class Message {
       associatedMessageType: json["associatedMessageType"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
       handle: json['handle'] != null ? Handle.fromMap(json['handle']!.cast<String, Object>()) : null,
-      hasAttachments: json['hasAttachments'] == true,
+      // Server responses don't always include the boolean — derive it from the
+      // attachments array if present so the chat-list subtitle doesn't fall
+      // through the "no text, no attachments" branch and show "Empty message"
+      // for attachment-only messages (e.g. GIFs, photos).
+      hasAttachments: json['hasAttachments'] == true ||
+          (json['attachments'] is List && (json['attachments'] as List).isNotEmpty),
       hasReactions: json['hasReactions'] == true,
       dateDeleted: parseDate(json["dateDeleted"]),
       metadata: metadata is String ? null : metadata,

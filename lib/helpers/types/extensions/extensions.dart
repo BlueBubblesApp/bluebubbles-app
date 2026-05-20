@@ -318,7 +318,12 @@ extension MessageNotificationExtension on Message {
       if (isInteractive) {
         return "$sender$interactiveText";
       }
-      if (isNullOrEmpty(fullText) && !hasAttachments && isNullOrEmpty(associatedMessageGuid)) {
+      // The hasAttachments boolean is denormalized from the attachments array
+      // and isn't always set correctly (server omissions, older rows). Trust
+      // the actual relation as a fallback so attachment-only messages don't
+      // get labeled "Empty message" just because the flag wasn't populated.
+      final actuallyHasAttachments = hasAttachments || realAttachments.isNotEmpty;
+      if (isNullOrEmpty(fullText) && !actuallyHasAttachments && isNullOrEmpty(associatedMessageGuid)) {
         if (dateEdited != null) {
           return "${sender}Unsent message";
         }
