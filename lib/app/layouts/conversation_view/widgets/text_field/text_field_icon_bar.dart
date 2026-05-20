@@ -132,10 +132,27 @@ class TextFieldIconBar extends StatelessWidget {
           IconButton(
               icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
               onPressed: () async {
+                // Resolve the Tenor API key. The web build embeds it as a
+                // const; native builds read it from .env. If the key is
+                // missing or empty, surface a helpful message instead of
+                // throwing / silently doing nothing.
+                String? apiKey;
+                try {
+                  apiKey = kIsWeb ? TENOR_API_KEY : dotenv.maybeGet('TENOR_API_KEY');
+                } catch (_) {
+                  apiKey = null;
+                }
+                if (apiKey == null || apiKey.isEmpty) {
+                  showSnackbar(
+                    'GIF picker unavailable',
+                    'No Tenor API key is configured. Add TENOR_API_KEY to .env to enable GIF search.',
+                  );
+                  return;
+                }
                 if (kIsDesktop || kIsWeb) {
                   controller.showingOverlays = true;
                 }
-                Tenor tenor = Tenor(apiKey: kIsWeb ? TENOR_API_KEY : dotenv.get('TENOR_API_KEY'));
+                Tenor tenor = Tenor(apiKey: apiKey);
                 TextEditingController tenorController = TextEditingController();
                 FocusNode focus = FocusNode();
                 Future<TenorResult?> resultFuture = tenor.showAsBottomSheet(
