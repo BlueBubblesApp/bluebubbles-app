@@ -375,6 +375,11 @@ class ContactV2Actions {
           // written to the DB regardless of whether handle assignments changed.
           try {
             contactsBox.put(contact);
+            // ObjectBox Dart does not always flush ToMany changes implicitly,
+            // particularly for newly-inserted entities whose ID was assigned
+            // by the put above. Force the N:M relation to be written so the
+            // backlink on Handle.contactsV2 resolves correctly.
+            contact.handles.applyToDb();
           } on UniqueViolationException catch (e) {
             Logger.warn('[ContactV2] Unique violation for contact ${contact.nativeContactId}: $e');
           }
