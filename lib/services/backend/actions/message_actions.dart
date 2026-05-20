@@ -121,14 +121,59 @@ class MessageActions {
         }
       }
 
-      // 6. Relate the attachments to the messages
+      // 6. Relate the attachments to the messages. Keep the per-message list
+      // around so we can re-apply the @Backlink ToMany after putMany — see step 7b.
+      final attachmentsPerMessage = <String, List<Attachment>>{};
       for (final msg in newMessages) {
         final relatedAttachments = messageAttachments[msg.guid]?.map((e) => attachmentMap[e]).nonNulls.toList() ?? [];
+        if (relatedAttachments.isEmpty) continue;
+        attachmentsPerMessage[msg.guid!] = relatedAttachments;
         msg.dbAttachments.addAll(relatedAttachments);
       }
 
       // 7. Save all messages (and handle/attachment relationships)
       messageBox.putMany(newMessages);
+
+      // 7b. ObjectBox Dart does not reliably persist @Backlink ToMany changes
+      // via putMany for newly-inserted entities — the link table on the inverse
+      // ToOne side won't be written. Without this, dbAttachments lazy-loads as
+      // empty on next read, so chats with attachment-only latest messages show
+      // "Empty message" in the conversation list. Mirror the pattern used in
+      // Message.save() and ChatActions.bulkSyncMessages.
+      for (final msg in newMessages) {
+        final atts = attachmentsPerMessage[msg.guid];
+        if (atts == null || atts.isEmpty) continue;
+        msg.dbAttachments
+          ..clear()
+          ..addAll(atts);
+        msg.dbAttachments.applyToDb();
+      }
+
+      // 7c. Repair pass for existing messages whose dbAttachments backlink was
+      // lost by the bug we just fixed in 7b. If the server reports attachments
+      // for an existing message but the local DB has none, link them now so
+      // resyncs heal historical "Empty message" chat-list entries instead of
+      // requiring a wipe.
+      for (final existing in existingMessages) {
+        final raw = messageAttachmentsData[existing.guid];
+        if (raw == null || raw.isEmpty) continue;
+        if (existing.dbAttachments.isNotEmpty) continue;
+        final linked = raw
+            .map((m) => m['guid'] as String?)
+            .whereType<String>()
+            .map((g) => attachmentMap[g])
+            .whereType<Attachment>()
+            .toList();
+        if (linked.isEmpty) continue;
+        existing.dbAttachments
+          ..clear()
+          ..addAll(linked);
+        existing.dbAttachments.applyToDb();
+        if (existing.hasAttachments != true) {
+          existing.hasAttachments = true;
+          messageBox.put(existing);
+        }
+      }
 
       // 8. Get the inserted messages
       final messageQuery2 = messageBox.query(Message_.guid.oneOf(inputMessageGuids)).build();
