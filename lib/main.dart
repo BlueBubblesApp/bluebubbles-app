@@ -281,7 +281,24 @@ class Main extends StatelessWidget {
           multitouchDragStrategy: MultitouchDragStrategy.latestPointer,
         ),
         home: Home(),
+        // IMPORTANT: passing `shortcuts:` to GetMaterialApp REPLACES Flutter's
+        // default shortcut map, including the text-editing clipboard bindings
+        // (Ctrl+C/V/X/A, Ctrl+Z, Ctrl+Shift+Z). Re-declare them here so
+        // copy/paste/cut/select-all/undo/redo keep working in every TextField
+        // in the app. GetMaterialApp's `shortcuts` is typed as
+        // Map<LogicalKeySet, Intent>, so the keys are LogicalKeySets here.
         shortcuts: {
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyC): CopySelectionTextIntent.copy,
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyX):
+              const CopySelectionTextIntent.cut(SelectionChangedCause.keyboard),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyV):
+              const PasteTextIntent(SelectionChangedCause.keyboard),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyA):
+              const SelectAllTextIntent(SelectionChangedCause.keyboard),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ):
+              const UndoTextIntent(SelectionChangedCause.keyboard),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyZ):
+              const RedoTextIntent(SelectionChangedCause.keyboard),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
           if (kIsDesktop)
