@@ -12,16 +12,21 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/services/backend/notifications/notifications_service.dart';
 
-Map<String, Route> faceTimeOverlays = {}; // Map from call uuid to overlay route
+/// Map from call uuid to a closure that pops the dialog using the dialog's
+/// OWN Navigator (captured inside the builder). Previously this stored a
+/// `Route` and called `Get.removeRoute`, but `Get.removeRoute` searches via
+/// the global navigator delegate, which can miss dialogs pushed against
+/// `Get.context` — so the overlay stayed un-dismissable even after the user
+/// tapped Accept/Ignore. Storing a direct pop-closure is unambiguous: it
+/// always targets the right Navigator.
+Map<String, VoidCallback> faceTimeOverlays = {};
 
 /// Hides the FaceTime overlay with the given [callUuid]
 /// Also calls [NotificationsService.clearFaceTimeNotification] to clear the notification
 void hideFaceTimeOverlay(String callUuid) {
   notif.clearFaceTimeNotification(callUuid);
-  if (faceTimeOverlays.containsKey(callUuid)) {
-    Get.removeRoute(faceTimeOverlays[callUuid]!);
-    faceTimeOverlays.remove(callUuid);
-  }
+  final dismiss = faceTimeOverlays.remove(callUuid);
+  if (dismiss != null) dismiss();
 }
 
 /// Shows a FaceTime overlay with the given [callUuid], [caller], [chatIcon], and [isAudio]
@@ -40,7 +45,19 @@ Future<void> showFaceTimeOverlay(String callUuid, String caller, Uint8List? chat
   showDialog(
     context: Get.context!,
     barrierDismissible: false,
-    builder: (_) {
+    builder: (dialogContext) {
+      // Capture the dialog's OWN Navigator via its context. Using a
+      // pop-closure (instead of a Route + Get.removeRoute) is unambiguous:
+      // Navigator.of(dialogContext).pop() always targets the dialog itself,
+      // regardless of which navigator delegate Get currently considers
+      // active. The previous code stored a Route and called
+      // Get.removeRoute, which can silently no-op when the navigator
+      // delegate doesn't match — leaving the overlay un-dismissable.
+      faceTimeOverlays[callUuid] = () {
+        if (Navigator.of(dialogContext).canPop()) {
+          Navigator.of(dialogContext).pop();
+        }
+      };
       return BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
         child: AlertDialog(
@@ -72,6 +89,10 @@ Future<void> showFaceTimeOverlay(String callUuid, String caller, Uint8List? chat
                 ],
               ),
               onPressed: () async {
+                // Dismiss the overlay first so the user is never stuck staring
+                // at an un-dismissable dialog while answerFaceTime runs its
+                // HTTP call.
+                hideFaceTimeOverlay(callUuid);
                 await intents.answerFaceTime(callUuid);
               },
             ),
@@ -102,9 +123,5 @@ Future<void> showFaceTimeOverlay(String callUuid, String caller, Uint8List? chat
           ],
         ),
       );
-    }).then((_) => faceTimeOverlays.remove(callUuid) /* Not explicitly necessary since all ways of closing the dialog do this, but just in case */
-  );
-
-  // Save dialog as overlay route
-  faceTimeOverlays[callUuid] = Get.rawRoute!;
+    }).then((_) => faceTimeOverlays.remove(callUuid));
 }
