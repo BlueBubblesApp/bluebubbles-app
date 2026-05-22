@@ -132,6 +132,19 @@ class Database {
       Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
       store = await openStore(directory: objectBoxDirectory.path);
     } catch (e, s) {
+      // A spawned isolate (e.g. the global isolate, sync isolate) opening the
+      // store that the main isolate already holds throws "another store is
+      // still open using the same path". ObjectBox forbids two open() calls
+      // for the same path in one process — Store.attach is the supported way
+      // to share the store across isolates. Without this branch, Linux
+      // unconditionally exit(0)'d on that error, killing any new launch the
+      // moment a spawned isolate raced the main isolate's open.
+      if (e.toString().contains("another store is still open using the same path")) {
+        Logger.info("Retrying to attach to an existing ObjectBox store");
+        store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+        return;
+      }
+
       if (Platform.isLinux) {
         Logger.debug("Another instance is probably running. Sending foreground signal");
         final instanceFile = File(join(fs.appDocDir.path, '.instance'));
