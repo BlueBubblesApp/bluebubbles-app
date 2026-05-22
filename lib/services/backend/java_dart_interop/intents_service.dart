@@ -113,9 +113,25 @@ class IntentsService extends GetxService {
   }
 
   Future<void> answerFaceTime(String callUuid) async {
+    // Track whether the progress dialog is still on the stack so we never
+    // double-pop (which would close the page underneath) and so the user can
+    // cancel if the request hangs.
+    bool progressOpen = false;
+    void closeProgress() {
+      if (!progressOpen) return;
+      progressOpen = false;
+      if (Get.context != null && Navigator.of(Get.context!).canPop()) {
+        Navigator.of(Get.context!).pop();
+      }
+    }
+
     if (Get.context != null) {
+      progressOpen = true;
       showDialog(
           context: Get.context!,
+          // Allow tap-outside dismiss so a hung server doesn't trap the user
+          // staring at a spinner with no way out.
+          barrierDismissible: true,
           builder: (BuildContext context) {
             return AlertDialog(
               backgroundColor: context.theme.colorScheme.properSurface,
@@ -132,20 +148,30 @@ class IntentsService extends GetxService {
                   ),
                 ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    progressOpen = false;
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Cancel",
+                      style: context.theme.textTheme.bodyLarge!
+                          .copyWith(color: context.theme.colorScheme.primary)),
+                ),
+              ],
             );
           }
-      );
+      ).then((_) => progressOpen = false);
       hideFaceTimeOverlay(callUuid);
     }
 
     String? link;
     try {
-      final call = await http.answerFaceTime(callUuid);
+      // Cap the request so a dead/slow server doesn't strand the dialog forever.
+      final call = await http.answerFaceTime(callUuid).timeout(const Duration(seconds: 20));
       link = call.data?["data"]?["link"];
     } catch (_) {}
-    if (Get.context != null) {
-      Navigator.of(Get.context!).pop();
-    }
+    closeProgress();
     if (link == null) {
       return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
     }
