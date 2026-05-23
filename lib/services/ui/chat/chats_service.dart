@@ -1210,6 +1210,13 @@ class ChatsService {
         message.getNotificationText(hideContactInfo: hideContactInfo, hideMessageContent: hideMessageContent));
     state.chat.setLatestMessage(message);
     _repositionChat(state.chat, immediate: true);
+
+    // _repositionChat short-circuits the chatListVersion bump when the chat is
+    // already in its sorted position (common for active chats and self-sends),
+    // which leaves the conversation list stale — the new subtitle/timestamp
+    // never reaches tiles that observe chatListVersion. Force a bump so the
+    // list always rebuilds when a chat gets a new latest message.
+    _scheduleListVersionUpdate(immediate: true);
   }
 
   /// Set chat text field text
