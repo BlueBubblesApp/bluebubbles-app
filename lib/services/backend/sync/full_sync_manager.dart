@@ -88,12 +88,10 @@ class FullSyncManager extends SyncManager {
         List<Chat> chats = await Chat.bulkSyncChats(newChats);
         int deletedChats = 0;
 
-        // 2: For each chat, get the messages — in parallel with bounded
-        // concurrency. Sequential per-chat HTTP roundtrips were the bottleneck
-        // on large accounts (an N-chat account meant N serial round-trips for
-        // messages). Running a small pool of chats at once cuts wall-clock
-        // sync time roughly in proportion to `concurrency`.
-        const int concurrency = 6;
+        // Sync chats with bounded concurrency. Bumped to 12 — most servers
+        // handle the extra HTTP load fine, and it roughly halves wall-clock
+        // time vs. the previous 6.
+        const int concurrency = 12;
         Future<void> syncChat(Chat chat) async {
           if (kIsWeb || (chat.chatIdentifier ?? "").startsWith("urn:biz")) return;
           try {
@@ -128,7 +126,11 @@ class FullSyncManager extends SyncManager {
                 continue;
               }
 
-              addToOutput('Saving chunk of ${newMessages.length} message(s) for chat: $displayName');
+              // Don't spam the live log with "Saving chunk of 0 message(s)"
+              // for every empty chat — happens constantly on large accounts.
+              if (newMessages.isNotEmpty) {
+                addToOutput('Saving chunk of ${newMessages.length} message(s) for chat: $displayName');
+              }
 
               List<Message> insertedMessages = await SyncInterface.bulkSyncData(
                 chatData: chat.toMap(),
@@ -136,8 +138,13 @@ class FullSyncManager extends SyncManager {
               ).then((r) => r.messages);
               messagesSynced += insertedMessages.length;
 
+              // Group icon fetch fires in the background — don't block message
+              // sync on it. Failures now log instead of getting silently
+              // swallowed so missing avatars are diagnosable.
               if (syncGroupChatIcons && chat.isGroup) {
-                await Chat.getIcon(chat).catchError((_) {});
+                unawaited(Chat.getIcon(chat).then((_) {}).catchError((Object e) {
+                  Logger.debug('getIcon failed for ${chat.guid}: $e', tag: tag);
+                }));
               }
 
               completedChats += 1;
