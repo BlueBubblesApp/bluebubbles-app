@@ -39,28 +39,40 @@ class ActionHandler extends GetxService {
   }
 
   Future<void> handleIncomingFaceTimeCall(Map<String, dynamic> data) async {
-    Logger.info("Handling incoming FaceTime call");
-    final callUuid = data["uuid"];
-    String? address = data["handle"]?["address"];
-    String caller = data["address"] ?? "Unknown Number";
-    bool isAudio = data["is_audio"];
-    Uint8List? chatIcon;
+    try {
+      Logger.info("Handling incoming FaceTime call");
+      // Defensive parsing — the server payload occasionally arrives with
+      // missing fields. Previously a direct `bool isAudio = data["is_audio"]`
+      // would throw _TypeError(null is not bool) and the entire overlay path
+      // silently aborted — the user saw nothing for incoming calls.
+      final String? callUuid = data["uuid"] as String?;
+      final String? address = data["handle"] is Map ? (data["handle"]["address"] as String?) : null;
+      String caller = (data["address"] as String?) ?? address ?? "Unknown Number";
+      final bool isAudio = (data["is_audio"] as bool?) ?? false;
+      Uint8List? chatIcon;
 
-    if (address != null) {
-      ContactV2? contact = await ContactsSvcV2.getContact(address);
-      if (contact?.avatarPath != null) {
-        chatIcon = await ContactsSvcV2.getContactAvatar(contact!.nativeContactId);
+      if (address != null) {
+        ContactV2? contact = await ContactsSvcV2.getContact(address);
+        if (contact?.avatarPath != null) {
+          chatIcon = await ContactsSvcV2.getContactAvatar(contact!.nativeContactId);
+        }
+        caller = contact?.displayName ?? caller;
       }
-      caller = contact?.displayName ?? caller;
-    }
 
-    if (!LifecycleSvc.isAlive) {
-      if (kIsDesktop) {
+      // Without a callUuid the overlay's Accept button has nothing to act on,
+      // so skip the overlay entirely and fall through to the notification.
+      if (!LifecycleSvc.isAlive) {
+        if (kIsDesktop && callUuid != null) {
+          await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
+        }
+        await NotificationsSvc.createIncomingFaceTimeNotification(callUuid, caller, chatIcon, isAudio);
+      } else if (callUuid != null) {
         await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
+      } else {
+        await NotificationsSvc.createIncomingFaceTimeNotification(callUuid, caller, chatIcon, isAudio);
       }
-      await NotificationsSvc.createIncomingFaceTimeNotification(callUuid, caller, chatIcon, isAudio);
-    } else {
-      await showFaceTimeOverlay(callUuid, caller, chatIcon, isAudio);
+    } catch (e, st) {
+      Logger.error("FaceTime handler failed", error: e, trace: st);
     }
   }
 
