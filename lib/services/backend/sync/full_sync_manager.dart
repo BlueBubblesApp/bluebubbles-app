@@ -88,12 +88,17 @@ class FullSyncManager extends SyncManager {
         List<Chat> chats = await Chat.bulkSyncChats(newChats);
         int deletedChats = 0;
 
-        // 2: For each chat, get the messages.
-        // We will stream the messages by page
-        for (final chat in chats) {
-          if (kIsWeb || (chat.chatIdentifier ?? "").startsWith("urn:biz")) continue;
+        // 2: For each chat, get the messages — in parallel with bounded
+        // concurrency. Sequential per-chat HTTP roundtrips were the bottleneck
+        // on large accounts (an N-chat account meant N serial round-trips for
+        // messages). Running a small pool of chats at once cuts wall-clock
+        // sync time roughly in proportion to `concurrency`.
+        const int concurrency = 6;
+        Future<void> syncChat(Chat chat) async {
+          if (kIsWeb || (chat.chatIdentifier ?? "").startsWith("urn:biz")) return;
           try {
             await for (final messageEvent in streamChatMessages(chat.guid, messageCount, batchSize: messageCount)) {
+              if (status.value == SyncStatus.STOPPING) return;
               List<Map<String, dynamic>> newMessages = messageEvent.messages;
               String? displayName = chat.guid;
               if (chat.displayName != null && chat.displayName!.isNotEmpty) {
@@ -125,19 +130,16 @@ class FullSyncManager extends SyncManager {
 
               addToOutput('Saving chunk of ${newMessages.length} message(s) for chat: $displayName');
 
-              // Asyncronously save the messages
               List<Message> insertedMessages = await SyncInterface.bulkSyncData(
                 chatData: chat.toMap(),
                 messagesData: newMessages,
               ).then((r) => r.messages);
               messagesSynced += insertedMessages.length;
 
-              // Fetch group chat icon if available.
               if (syncGroupChatIcons && chat.isGroup) {
                 await Chat.getIcon(chat).catchError((_) {});
               }
 
-              // Increment how many chats we've synced, then set the progress
               completedChats += 1;
               int adjustedTotal = (totalChats ?? newChats.length) - filteredChatsCount - deletedChats;
               setProgress(completedChats, adjustedTotal);
@@ -145,17 +147,18 @@ class FullSyncManager extends SyncManager {
               if (kIsDesktop && Platform.isWindows) {
                 await WindowsTaskbar.setProgress(completedChats, adjustedTotal);
               }
-              // If we're supposed to be stopping, break out
-              if (status.value == SyncStatus.STOPPING) break;
             }
           } catch (ex, stack) {
             addToOutput('Failed to sync chat messages! Error: ${ex.toString()}', level: LogLevel.ERROR);
             Logger.debug("StackTrace: $stack", tag: tag);
             Logger.debug('Error: ${ex.toString()}', tag: tag);
           }
+        }
 
-          // If we're supposed to be stopping, break out
+        for (int i = 0; i < chats.length; i += concurrency) {
           if (status.value == SyncStatus.STOPPING) break;
+          final slice = chats.skip(i).take(concurrency).toList();
+          await Future.wait(slice.map(syncChat));
         }
 
         if (chatProgress >= 1.0) {
