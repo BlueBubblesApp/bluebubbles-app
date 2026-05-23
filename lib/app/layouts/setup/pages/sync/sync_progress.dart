@@ -115,7 +115,26 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
               ),
             ],
           ),
-          customButton: !hasPlayed ? const SizedBox.shrink() : Column(
+          customButton: !hasPlayed
+              ? TextButton(
+                  // Skip-and-open escape hatch. On accounts with thousands of
+                  // chats the full initial sync can take 30+ minutes — the app
+                  // works fine without it (chats lazy-load, incremental sync
+                  // picks up new messages via socket). Surface the skip
+                  // explicitly so the user isn't stuck staring at "0%".
+                  style: TextButton.styleFrom(foregroundColor: context.theme.colorScheme.onSurfaceVariant),
+                  onPressed: () {
+                    Get.offAll(
+                      () => ConversationList(showArchivedChats: false, showUnknownSenders: false),
+                      routeName: "",
+                      duration: Duration.zero,
+                      transition: Transition.noTransition,
+                    );
+                    Get.delete<SetupViewController>(force: true);
+                  },
+                  child: const Text("Skip & open app (sync continues in background)"),
+                )
+              : Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
