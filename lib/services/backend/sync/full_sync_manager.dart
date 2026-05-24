@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -88,12 +90,12 @@ class FullSyncManager extends SyncManager {
         List<Chat> chats = await Chat.bulkSyncChats(newChats);
         int deletedChats = 0;
 
-        // 2: For each chat, get the messages.
-        // We will stream the messages by page
-        for (final chat in chats) {
-          if (kIsWeb || (chat.chatIdentifier ?? "").startsWith("urn:biz")) continue;
+        const int concurrency = 12;
+        Future<void> syncChat(Chat chat) async {
+          if (kIsWeb || (chat.chatIdentifier ?? "").startsWith("urn:biz")) return;
           try {
             await for (final messageEvent in streamChatMessages(chat.guid, messageCount, batchSize: messageCount)) {
+              if (status.value == SyncStatus.STOPPING) return;
               List<Map<String, dynamic>> newMessages = messageEvent.messages;
               String? displayName = chat.guid;
               if (chat.displayName != null && chat.displayName!.isNotEmpty) {
@@ -123,21 +125,22 @@ class FullSyncManager extends SyncManager {
                 continue;
               }
 
-              addToOutput('Saving chunk of ${newMessages.length} message(s) for chat: $displayName');
+              if (newMessages.isNotEmpty) {
+                addToOutput('Saving chunk of ${newMessages.length} message(s) for chat: $displayName');
+              }
 
-              // Asyncronously save the messages
               List<Message> insertedMessages = await SyncInterface.bulkSyncData(
                 chatData: chat.toMap(),
                 messagesData: newMessages,
               ).then((r) => r.messages);
               messagesSynced += insertedMessages.length;
 
-              // Fetch group chat icon if available.
               if (syncGroupChatIcons && chat.isGroup) {
-                await Chat.getIcon(chat).catchError((_) {});
+                unawaited(Chat.getIcon(chat).then((_) {}).catchError((Object e) {
+                  Logger.debug('getIcon failed for ${chat.guid}: $e', tag: tag);
+                }));
               }
 
-              // Increment how many chats we've synced, then set the progress
               completedChats += 1;
               int adjustedTotal = (totalChats ?? newChats.length) - filteredChatsCount - deletedChats;
               setProgress(completedChats, adjustedTotal);
@@ -145,17 +148,18 @@ class FullSyncManager extends SyncManager {
               if (kIsDesktop && Platform.isWindows) {
                 await WindowsTaskbar.setProgress(completedChats, adjustedTotal);
               }
-              // If we're supposed to be stopping, break out
-              if (status.value == SyncStatus.STOPPING) break;
             }
           } catch (ex, stack) {
             addToOutput('Failed to sync chat messages! Error: ${ex.toString()}', level: LogLevel.ERROR);
             Logger.debug("StackTrace: $stack", tag: tag);
             Logger.debug('Error: ${ex.toString()}', tag: tag);
           }
+        }
 
-          // If we're supposed to be stopping, break out
+        for (int i = 0; i < chats.length; i += concurrency) {
           if (status.value == SyncStatus.STOPPING) break;
+          final slice = chats.skip(i).take(concurrency).toList();
+          await Future.wait(slice.map(syncChat));
         }
 
         if (chatProgress >= 1.0) {
