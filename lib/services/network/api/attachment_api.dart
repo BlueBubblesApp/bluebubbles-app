@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/services/network/api/base_api.dart';
 import 'package:dio/dio.dart';
 import 'package:universal_io/io.dart';
@@ -42,17 +44,27 @@ class AttachmentApi {
         onReceiveProgress: onReceiveProgress,
       );
 
-      // dio doesn't throw on non-2xx when ResponseType.stream is set, so the
-      // error body comes back as a parsed Map. Bail out before we try to
-      // iterate `response.data.stream` and crash with NoSuchMethodError.
+      // dio doesn't throw on non-2xx when ResponseType.stream is set. Read the
+      // error body (it's a ResponseBody stream of bytes, not the parsed JSON)
+      // so callers can see what the server actually said.
       if (savePath != null && response.statusCode != 200) {
+        dynamic body = response.data;
+        try {
+          if (body is ResponseBody) {
+            final chunks = <int>[];
+            await for (final c in body.stream) {
+              chunks.addAll(c);
+            }
+            body = utf8.decode(chunks, allowMalformed: true);
+          }
+        } catch (_) {}
         return Response(
           requestOptions: response.requestOptions,
           statusCode: response.statusCode,
           statusMessage: response.statusMessage,
           headers: response.headers,
           extra: response.extra,
-          data: response.data,
+          data: body,
         );
       }
 

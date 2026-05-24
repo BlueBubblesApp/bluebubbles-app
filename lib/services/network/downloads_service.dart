@@ -236,7 +236,7 @@ class AttachmentDownloadController extends GetxController {
     }
 
     if (response.statusCode != 200) {
-      Logger.warn("Attachment ${attachment.guid} non-200: ${response.statusCode}");
+      Logger.warn("Attachment ${attachment.guid} non-200: ${response.statusCode} body=${response.data}");
       for (final f in errorFuncs) {
         f.call();
       }
