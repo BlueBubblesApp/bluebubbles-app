@@ -144,16 +144,20 @@ class Database {
       }
 
       Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
-      store = await openStore(directory: objectBoxDirectory.path);
+      if (Store.isOpen(objectBoxDirectory.path)) {
+        store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+      } else {
+        store = await openStore(directory: objectBoxDirectory.path);
+      }
     } catch (e) {
-      if (Platform.isLinux) {
+      if (e.toString().contains("another store is still open using the same path")) {
+        Logger.debug("Intra-process double-open; attaching to existing store");
+        store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+      } else if (Platform.isLinux) {
         Logger.debug("Another instance is probably running. Sending foreground signal");
         final instanceFile = File(join(FilesystemSvc.appDocDir.path, '.instance'));
         instanceFile.openSync(mode: FileMode.write).closeSync();
         exit(0);
-      } else if (Platform.isWindows && e.toString().contains("another store is still open using the same path")) {
-        Logger.debug("Retrying to attach to an existing ObjectBox store");
-        store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
       }
     }
   }
