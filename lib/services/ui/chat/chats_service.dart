@@ -1210,6 +1210,7 @@ class ChatsService {
         message.getNotificationText(hideContactInfo: hideContactInfo, hideMessageContent: hideMessageContent));
     state.chat.setLatestMessage(message);
     _repositionChat(state.chat, immediate: true);
+    _scheduleListVersionUpdate(immediate: true);
   }
 
   /// Set chat text field text
