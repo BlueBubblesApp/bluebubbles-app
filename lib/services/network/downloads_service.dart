@@ -1,3 +1,4 @@
+import 'package:bluebubbles/services/network/heif_converter.dart';
 import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -196,30 +197,54 @@ class AttachmentDownloadController extends GetxController {
     // For web, download to memory. For native platforms, write directly to disk
     final savePath = kIsWeb ? null : attachment.path;
 
-    var response = await HttpSvc.attachment
-        .download(
-      attachment.guid!,
-      savePath: savePath,
-      onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)),
-    )
-        .catchError((err) async {
-      if (!kIsWeb && savePath != null) {
-        File file = File(savePath);
-        if (await file.exists()) {
-          await file.delete();
-        }
+    final bool isHeif = !kIsWeb && HeifConverter.isHeif(attachment.mimeType, filename: attachment.transferName);
+
+    Future<Response> attemptDownload({required bool original}) async {
+      try {
+        return await HttpSvc.attachment.download(
+          attachment.guid!,
+          savePath: savePath,
+          original: original,
+          onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)),
+        );
+      } on DioException catch (e) {
+        if (e.response != null) return e.response!;
+        rethrow;
       }
-      for (Function f in errorFuncs) {
+    }
+
+    Response response;
+    try {
+      response = await attemptDownload(original: isHeif);
+      // sips on the server 500s on HEIC Live Photos / depth / HDR. Retry with the raw bytes.
+      if (response.statusCode == 500 && !isHeif && !kIsWeb && savePath != null) {
+        Logger.warn("Converted preview 500'd for ${attachment.guid}; retrying original=true");
+        response = await attemptDownload(original: true);
+      }
+    } catch (err) {
+      Logger.error("Attachment ${attachment.guid} download failed", error: err);
+      if (!kIsWeb && savePath != null) {
+        final f = File(savePath);
+        if (await f.exists()) await f.delete();
+      }
+      for (final f in errorFuncs) {
         f.call();
       }
-
       state.value = AttachmentDownloadState.error;
       AttachmentDownloader._removeFromQueue(this);
-      return Response(requestOptions: RequestOptions(path: ''));
-    });
+      return;
+    }
 
-    Logger.info("Finished downloading attachment");
-    if (response.statusCode != 200) return;
+    if (response.statusCode != 200) {
+      Logger.warn("Attachment ${attachment.guid} non-200: ${response.statusCode}");
+      for (final f in errorFuncs) {
+        f.call();
+      }
+      state.value = AttachmentDownloadState.error;
+      AttachmentDownloader._removeFromQueue(this);
+      return;
+    }
+    Logger.info("Finished downloading attachment ${attachment.guid}");
 
     attachment.webUrl = response.requestOptions.path;
     stopwatch.stop();
@@ -245,6 +270,15 @@ class AttachmentDownloadController extends GetxController {
         final fileBytes = await File(savePath).readAsBytes();
         final optimizedBytes = await fixSpeedyGifs(fileBytes);
         await File(savePath).writeAsBytes(optimizedBytes);
+      }
+      if (isHeif && savePath != null) {
+        final converted = await HeifConverter.convertInPlace(savePath);
+        if (converted != null) {
+          attachment.mimeType = "image/jpeg";
+          if (attachment.transferName != null) {
+            attachment.transferName = "${attachment.transferName!.split('.').first}.jpg";
+          }
+        }
       }
     }
 
