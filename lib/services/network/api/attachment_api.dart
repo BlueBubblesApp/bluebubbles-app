@@ -42,6 +42,20 @@ class AttachmentApi {
         onReceiveProgress: onReceiveProgress,
       );
 
+      // dio doesn't throw on non-2xx when ResponseType.stream is set, so the
+      // error body comes back as a parsed Map. Bail out before we try to
+      // iterate `response.data.stream` and crash with NoSuchMethodError.
+      if (savePath != null && response.statusCode != 200) {
+        return Response(
+          requestOptions: response.requestOptions,
+          statusCode: response.statusCode,
+          statusMessage: response.statusMessage,
+          headers: response.headers,
+          extra: response.extra,
+          data: response.data,
+        );
+      }
+
       // If savePath provided, write stream directly to file
       if (savePath != null && response.data != null) {
         final file = File(savePath);
