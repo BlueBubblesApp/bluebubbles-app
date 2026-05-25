@@ -1252,6 +1252,7 @@ class ChatsService {
     state.updateSubtitleInternal(
         message.getNotificationText(hideContactInfo: hideContactInfo, hideMessageContent: hideMessageContent));
     _repositionChat(state.chat, immediate: true);
+    _scheduleListVersionUpdate(immediate: true);
   }
 
   /// Set chat text field text
