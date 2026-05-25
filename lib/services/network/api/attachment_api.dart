@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/services/network/api/base_api.dart';
 import 'package:dio/dio.dart';
 import 'package:universal_io/io.dart';
@@ -41,6 +43,30 @@ class AttachmentApi {
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
+
+      // dio doesn't throw on non-2xx when ResponseType.stream is set. Read the
+      // error body (it's a ResponseBody stream of bytes, not the parsed JSON)
+      // so callers can see what the server actually said.
+      if (savePath != null && response.statusCode != 200) {
+        dynamic body = response.data;
+        try {
+          if (body is ResponseBody) {
+            final chunks = <int>[];
+            await for (final c in body.stream) {
+              chunks.addAll(c);
+            }
+            body = utf8.decode(chunks, allowMalformed: true);
+          }
+        } catch (_) {}
+        return Response(
+          requestOptions: response.requestOptions,
+          statusCode: response.statusCode,
+          statusMessage: response.statusMessage,
+          headers: response.headers,
+          extra: response.extra,
+          data: body,
+        );
+      }
 
       // If savePath provided, write stream directly to file
       if (savePath != null && response.data != null) {
