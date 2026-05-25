@@ -500,11 +500,11 @@ class VideoCallButton extends StatelessWidget {
         child: InkWell(
           onTap: () {
             final contact = chat.handles.first.contactsV2.firstOrNull;
-            showAddressPicker(contact, chat.handles.first, context, video: true);
+            showAddressPicker(contact, chat.handles.first, context, video: true, chat: chat);
           },
           onLongPress: () {
             final contact = chat.handles.first.contactsV2.firstOrNull;
-            showAddressPicker(contact, chat.handles.first, context, isLongPressed: true, video: true);
+            showAddressPicker(contact, chat.handles.first, context, isLongPressed: true, video: true, chat: chat);
           },
           borderRadius: BorderRadius.circular(15),
           child: SizedBox(
