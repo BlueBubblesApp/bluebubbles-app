@@ -178,6 +178,8 @@ class Settings {
   // Windows settings
   final RxBool useWindowsAccent = RxBool(false);
 
+  final RxBool enableClipboardSync = false.obs;
+
   Future<DisplayMode> getDisplayMode() async {
     List<DisplayMode> modes = await FlutterDisplayMode.supported;
     return modes.firstWhereOrNull((element) => element.refreshRate.round() == refreshRate.value) ?? DisplayMode.auto;
@@ -366,6 +368,7 @@ class Settings {
       'hideNamesForReactions': hideNamesForReactions.value,
       'replaceEmoticonsWithEmoji': replaceEmoticonsWithEmoji.value,
       'lastReviewRequestTimestamp': lastReviewRequestTimestamp.value,
+      'enableClipboardSync': enableClipboardSync.value,
     };
     if (includeAll) {
       map.addAll({
@@ -648,6 +651,7 @@ class Settings {
     s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
     s.replaceEmoticonsWithEmoji.value = map['replaceEmoticonsWithEmoji'] ?? false;
     s.lastReviewRequestTimestamp.value = map['lastReviewRequestTimestamp'] ?? 0;
+    s.enableClipboardSync.value = map['enableClipboardSync'] ?? false;
     return s;
   }
 

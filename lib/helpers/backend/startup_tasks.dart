@@ -63,6 +63,7 @@ class StartupTasks {
 
     await notif.init();
     await intents.init();
+    ClipboardSyncSvc.start();
   }
 
   static Future<void> initIsolateServices() async {

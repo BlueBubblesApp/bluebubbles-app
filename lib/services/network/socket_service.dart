@@ -95,6 +95,7 @@ class SocketService extends GetxService {
     socket.on("typing-indicator", (data) => ah.handleEvent("typing-indicator", data, 'DartSocket'));
     socket.on("chat-read-status-changed", (data) => ah.handleEvent("chat-read-status-changed", data, 'DartSocket'));
     socket.on("imessage-aliases-removed", (data) => ah.handleEvent("imessage-aliases-removed", data, 'DartSocket'));
+    socket.on("clipboard-sync", (data) => ah.handleEvent("clipboard-sync", data, 'DartSocket'));
 
     socket.connect();
   }

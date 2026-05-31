@@ -6,6 +6,7 @@ export 'backend/lifecycle/lifecycle_service.dart';
 export 'backend/notifications/notifications_service.dart';
 export 'backend/queue/incoming_queue.dart';
 export 'backend/queue/outgoing_queue.dart';
+export 'backend/clipboard_sync_service.dart';
 export 'backend/settings/settings_service.dart';
 export 'backend/setup/setup_service.dart';
 export 'backend/sync/full_sync_manager.dart';

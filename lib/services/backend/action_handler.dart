@@ -522,6 +522,9 @@ class ActionHandler extends GetxService {
         Logger.info("Alias(es) removed ${data["aliases"]}");
         await notif.createAliasesRemovedNotification((data["aliases"] as List).cast<String>());
         return;
+      case "clipboard-sync":
+        await ClipboardSyncSvc.handleIncoming(data);
+        return;
       default:
         return;
     }
