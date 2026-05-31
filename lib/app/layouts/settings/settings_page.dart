@@ -1,5 +1,6 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/advanced/clipboard_sync_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/notification_providers_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
@@ -569,6 +570,24 @@ class _SettingsPageState extends OptimizedState<SettingsPage> {
                                           iosIcon: CupertinoIcons.bell,
                                           materialIcon: Icons.notifications,
                                           containerColor: Colors.green)),
+                                  const SettingsDivider(),
+                                  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS))
+                                    SettingsTile(
+                                        backgroundColor: tileColor,
+                                        title: "Clipboard Sync",
+                                        trailing: const NextButton(),
+                                        onTap: () async {
+                                          ns.pushAndRemoveSettingsUntil(
+                                            context,
+                                            const ClipboardSyncPanel(),
+                                            (route) => route.isFirst,
+                                          );
+                                        },
+                                        leading: const SettingsLeadingIcon(
+                                          iosIcon: CupertinoIcons.doc_on_clipboard,
+                                          materialIcon: Icons.content_paste,
+                                          containerColor: Colors.teal,
+                                        )),
                                   const SettingsDivider(),
                                   SettingsTile(
                                       backgroundColor: tileColor,
