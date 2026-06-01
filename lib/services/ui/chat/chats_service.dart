@@ -125,6 +125,10 @@ class ChatsService extends GetxService {
             chat.webSyncParticipants();
           }
           sort();
+          // Notify each tile so contact names appear without needing user interaction
+          for (final chat in chats) {
+            WebListeners.notifyChatUpdate(chat);
+          }
           Logger.info("Contacts loaded and matched: ${cs.contacts.length} contacts", tag: "ChatBloc");
         }
       } catch (e) {

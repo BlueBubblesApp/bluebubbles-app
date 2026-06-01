@@ -48,4 +48,11 @@ class WebListeners {
       _newChat.add(c);
     }
   }
+
+  /// Force a chat update notification (always routes to chatUpdate, never newChat).
+  /// Used to reactively refresh chat tiles after async work like contact matching.
+  static void notifyChatUpdate(Chat c) {
+    _chatGuids.add(c.guid);
+    _chatUpdate.add(c);
+  }
 }

@@ -58,6 +58,10 @@ class NetworkTasks {
               chat.webSyncParticipants();
             }
             chats.sort();
+            // Notify each tile so contact names appear without needing user interaction
+            for (final chat in chats.chats) {
+              WebListeners.notifyChatUpdate(chat);
+            }
           }
         }
       }
