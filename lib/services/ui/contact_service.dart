@@ -351,8 +351,8 @@ class ContactsService extends GetxService {
 
       LoadTimer.mark("Contacts fetched - no avatars (${networkContacts.length})");
 
-      // Load avatars in the background; do NOT await so names show immediately.
-      _loadContactAvatarsWeb(networkContacts, logger: logger);
+      // Avatars are fetched separately (targeted to the contacts actually in
+      // chats) by ChatsService once chats are loaded — see loadAvatarsForAddresses.
       return networkContacts;
     }
 
@@ -392,35 +392,38 @@ class ContactsService extends GetxService {
     return networkContacts;
   }
 
-  /// Fetches contact avatars in the background (web only) and merges them into
-  /// the already-displayed contacts, then refreshes the UI. Runs after names are
-  /// shown so the large avatar payload doesn't delay contact name display.
-  Future<void> _loadContactAvatarsWeb(List<Contact> networkContacts, {Function(String)? logger}) async {
+  /// Fetches avatars (web only) for just the given [addresses] — the contacts
+  /// actually present in the chat list — instead of every contact. This keeps
+  /// the avatar payload tiny (~tens of KB vs several MB for all contacts), so
+  /// avatars load quickly without a multi-second tail. Merges by contact id and
+  /// refreshes the chat tiles.
+  Future<void> loadAvatarsForAddresses(List<String> addresses, {Function(String)? logger}) async {
+    if (!kIsWeb) {
+      LoadTimer.completeSubsystem('avatars');
+      return;
+    }
     try {
-      logger?.call("Fetching contacts (with avatars)...");
-      final response = await http.contacts(withAvatars: true);
-      if (isNullOrEmpty(response.data['data'])) return;
-
-      // Build an id -> contact lookup once so avatar matching is O(n) instead of
-      // O(n^2) with per-address phone-number formatting. The avatar response uses
-      // the same id scheme as the no-avatar fetch, so ids match directly. This
-      // keeps the merge off the main thread long enough to jank the UI.
-      final byId = <String, Contact>{};
-      for (final c in networkContacts) {
-        byId[c.id] = c;
+      if (addresses.isEmpty) {
+        LoadTimer.mark("Contact avatars loaded (no matched contacts)");
+        return;
       }
-
-      for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
-        final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-        final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-        final id = (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
-
-        final contact = byId[id];
-        if (contact != null && contact.avatar == null) {
-          contact.avatar = base64Decode(map['avatar'].toString());
+      logger?.call("Fetching avatars for ${addresses.length} addresses...");
+      final response = await http.contactByAddresses(addresses, withAvatars: true);
+      if (!isNullOrEmpty(response.data['data'])) {
+        // The query response uses the same id scheme as the no-avatar fetch, so
+        // merge by id with an O(1) lookup.
+        final byId = <String, Contact>{for (final c in contacts) c.id: c};
+        for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
+          final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          final id = (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
+          final contact = byId[id];
+          if (contact != null && contact.avatar == null) {
+            contact.avatar = base64Decode(map['avatar'].toString());
+          }
         }
       }
-      logger?.call("Finished contacts sync (with avatars)");
+      logger?.call("Finished avatar sync");
 
       // Refresh the chat list so avatars appear without user interaction
       if (chats.chats.isNotEmpty) {
@@ -430,10 +433,10 @@ class ContactsService extends GetxService {
         }
       }
       eventDispatcher.emit('update-contacts', null);
-      LoadTimer.mark("Contact avatars loaded");
+      LoadTimer.mark("Contact avatars loaded (${addresses.length} addresses queried)");
     } catch (e, s) {
       logger?.call("Failed to load contact avatars: $e");
-      logger?.call(s.toString());
+      Logger.error("Failed to load contact avatars", error: e, trace: s);
     } finally {
       LoadTimer.completeSubsystem('avatars');
     }

@@ -149,9 +149,12 @@ class ChatsService extends GetxService {
     }
 
     // Load any remaining chats in the background so the most-recent set is
-    // usable immediately while the rest stream in.
+    // usable immediately while the rest stream in. Avatars (targeted to the
+    // contacts actually in chats) are loaded once all chats are present.
     if (stagedLoad && initialBatches < batches) {
-      _backgroundLoadRemainingChats(initialBatches, batches, newChats);
+      _backgroundLoadRemainingChats(initialBatches, batches, newChats, loadAvatars: contactsFuture != null);
+    } else if (kIsWeb && contactsFuture != null) {
+      _loadWebAvatars();
     }
     // update share targets
     if (Platform.isAndroid) {
@@ -239,7 +242,8 @@ class ChatsService extends GetxService {
 
   /// Load the remaining chat batches in the background (after the initial set),
   /// then re-match contacts so the newly loaded chats also show names.
-  Future<void> _backgroundLoadRemainingChats(int startBatch, int endBatch, List<Chat> accumulator) async {
+  Future<void> _backgroundLoadRemainingChats(int startBatch, int endBatch, List<Chat> accumulator,
+      {bool loadAvatars = false}) async {
     try {
       LoadTimer.mark("Background chat load started (batches $startBatch-$endBatch)");
       await _fetchWebChatBatches(startBatch, endBatch, accumulator);
@@ -252,7 +256,18 @@ class ChatsService extends GetxService {
       Logger.error("Failed to background-load remaining chats", error: e, trace: s, tag: "ChatBloc");
     } finally {
       LoadTimer.completeSubsystem('chats');
+      // Now that every chat is present, fetch avatars for the contacts in chats.
+      if (loadAvatars) _loadWebAvatars();
     }
+  }
+
+  /// Fetch avatars only for the contacts that are actually linked to a chat,
+  /// keeping the payload tiny compared to fetching every contact's avatar.
+  void _loadWebAvatars() {
+    final matched = webCachedHandles.map((h) => h.contact).whereType<Contact>().toSet();
+    final addresses = matched.expand((c) => [...c.phones, ...c.emails]).toSet().toList();
+    // Fire-and-forget; completes the 'avatars' load milestone when done.
+    cs.loadAvatarsForAddresses(addresses);
   }
 
   @override

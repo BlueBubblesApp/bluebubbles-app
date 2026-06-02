@@ -878,13 +878,16 @@ class HttpService extends GetxService {
   }
 
   /// Get specific icloud contacts with a list of [addresses], either phone
-  /// numbers or emails
-  Future<Response> contactByAddresses(List<String> addresses, {CancelToken? cancelToken}) async {
+  /// numbers or emails. Set [withAvatars] to also fetch their avatar images.
+  Future<Response> contactByAddresses(List<String> addresses, {bool withAvatars = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$apiRoot/contact/query",
           queryParameters: buildQueryParams(),
-          data: {"addresses": addresses},
+          data: {
+            "addresses": addresses,
+            if (withAvatars) "extraProperties": ["avatar"],
+          },
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
