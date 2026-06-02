@@ -30,6 +30,9 @@ class Settings {
   final RxBool showIncrementalSync = false.obs;
   final RxBool showInAppNotifications = true.obs;
   final RxBool highPerfMode = false.obs;
+  // Number of most-recent chats to load initially on web; the rest load in the
+  // background. 0 = load all chats at once.
+  final RxInt initialChatLoadCount = 50.obs;
   final RxInt lastIncrementalSync = 0.obs;
   final RxInt lastIncrementalSyncRowId = 0.obs;
   final RxInt refreshRate = 0.obs;
@@ -270,6 +273,7 @@ class Settings {
       'showIncrementalSync': showIncrementalSync.value,
       'showInAppNotifications': showInAppNotifications.value,
       'highPerfMode': highPerfMode.value,
+      'initialChatLoadCount': initialChatLoadCount.value,
       'lastIncrementalSync': lastIncrementalSync.value,
       'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
       'refreshRate': refreshRate.value,
@@ -407,6 +411,7 @@ class Settings {
     ss.settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     ss.settings.showInAppNotifications.value = map['showInAppNotifications'] ?? true;
     ss.settings.highPerfMode.value = map['highPerfMode'] ?? false;
+    ss.settings.initialChatLoadCount.value = map['initialChatLoadCount'] ?? 50;
     ss.settings.refreshRate.value = map['refreshRate'] ?? 0;
     ss.settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     ss.settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
@@ -545,6 +550,7 @@ class Settings {
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     s.showInAppNotifications.value = map['showInAppNotifications'] ?? true;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
+    s.initialChatLoadCount.value = map['initialChatLoadCount'] ?? 50;
     s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     s.lastIncrementalSyncRowId.value = map['lastIncrementalSyncRowId'] ?? 0;
     s.refreshRate.value = map['refreshRate'] ?? 0;

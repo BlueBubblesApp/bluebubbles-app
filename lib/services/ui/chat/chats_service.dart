@@ -92,31 +92,15 @@ class ChatsService extends GetxService {
     final newChats = <Chat>[];
     final batches = (currentCount / batchSize).ceil();
 
+    // Optionally load only the most-recent N chats first (they are returned
+    // sorted by last message), then load the rest in the background so the app
+    // is usable immediately. 0 (or a value >= total) loads everything up front.
+    final initialLoadCount = ss.settings.initialChatLoadCount.value;
+    final stagedLoad = kIsWeb && initialLoadCount > 0 && initialLoadCount < currentCount;
+    final initialBatches = stagedLoad ? (initialLoadCount / batchSize).ceil() : batches;
+
     if (kIsWeb) {
-      // Web chat loading is network-bound (one request per batch over the
-      // tunnel). Fetch batches concurrently in waves instead of sequentially
-      // so 800+ chats load in a few seconds rather than dozens of serial
-      // round-trips. The UI updates progressively after each wave.
-      for (int start = 0; start < batches; start += webFetchConcurrency) {
-        final futures = <Future<List<Chat>>>[];
-        for (int i = start; i < start + webFetchConcurrency && i < batches; i++) {
-          futures.add(cm.getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize));
-        }
-        final results = await Future.wait(futures);
-        for (final temp in results) {
-          webCachedHandles.addAll(temp.map((e) => e.participants).flattened.toList());
-          for (Chat c in temp) {
-            cm.createChatController(c, active: cm.activeChat?.chat.guid == c.guid);
-          }
-          newChats.addAll(temp);
-        }
-        // De-dupe cached handles by address
-        final ids = webCachedHandles.map((e) => e.address).toSet();
-        webCachedHandles.retainWhere((element) => ids.remove(element.address));
-        newChats.sort(Chat.sort);
-        chats.value = List<Chat>.from(newChats);
-        loadedChatBatch.value = true;
-      }
+      await _fetchWebChatBatches(0, initialBatches, newChats);
     } else {
       for (int i = 0; i < batches; i++) {
         final temp = await Chat.getChats(limit: batchSize, offset: i * batchSize);
@@ -131,7 +115,7 @@ class ChatsService extends GetxService {
     }
     loadedAllChats.complete();
     sort();
-    LoadTimer.mark("Chats loaded (${chats.length})");
+    LoadTimer.mark("Chats loaded (${chats.length}${stagedLoad ? " of $currentCount, rest loading in background" : ""})");
     showSnackbar("Chats Loaded", "Finished loading ${chats.length} chats", durationMs: 2000);
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
 
@@ -142,27 +126,19 @@ class ChatsService extends GetxService {
         Logger.info("fetchNetworkContacts returned ${networkContacts.length} contacts, webCachedHandles: ${webCachedHandles.length}", tag: "ChatBloc");
         if (networkContacts.isNotEmpty) {
           cs.contacts = networkContacts;
-          for (Contact c in cs.contacts) {
-            final handles = cs.matchContactToHandles(c, webCachedHandles);
-            for (Handle h in handles) {
-              h.webContact = c;
-            }
-          }
-          for (final chat in chats) {
-            chat.title = null;
-            chat.webSyncParticipants();
-          }
-          sort();
-          // Notify each tile so contact names appear without needing user interaction
-          for (final chat in chats) {
-            WebListeners.notifyChatUpdate(chat);
-          }
+          _matchWebContactsAndRefresh();
           LoadTimer.mark("Contact names matched & displayed (${cs.contacts.length} contacts)");
           Logger.info("Contacts loaded and matched: ${cs.contacts.length} contacts", tag: "ChatBloc");
         }
       } catch (e) {
         Logger.error("Failed to load contacts on web: $e", tag: "ChatBloc");
       }
+    }
+
+    // Load any remaining chats in the background so the most-recent set is
+    // usable immediately while the rest stream in.
+    if (stagedLoad && initialBatches < batches) {
+      _backgroundLoadRemainingChats(initialBatches, batches, newChats);
     }
     // update share targets
     if (Platform.isAndroid) {
@@ -200,6 +176,67 @@ class ChatsService extends GetxService {
           (route) => route.isFirst,
         );
       });
+    }
+  }
+
+  /// Fetch chat batches in the range [startBatch, endBatch) on web, in
+  /// concurrent waves of [webFetchConcurrency]. Appends results to
+  /// [accumulator] and updates the visible list after each wave.
+  Future<void> _fetchWebChatBatches(int startBatch, int endBatch, List<Chat> accumulator) async {
+    for (int start = startBatch; start < endBatch; start += webFetchConcurrency) {
+      final futures = <Future<List<Chat>>>[];
+      for (int i = start; i < start + webFetchConcurrency && i < endBatch; i++) {
+        futures.add(cm.getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize));
+      }
+      final results = await Future.wait(futures);
+      for (final temp in results) {
+        webCachedHandles.addAll(temp.map((e) => e.participants).flattened.toList());
+        for (Chat c in temp) {
+          cm.createChatController(c, active: cm.activeChat?.chat.guid == c.guid);
+        }
+        accumulator.addAll(temp);
+      }
+      // De-dupe cached handles by address
+      final ids = webCachedHandles.map((e) => e.address).toSet();
+      webCachedHandles.retainWhere((element) => ids.remove(element.address));
+      accumulator.sort(Chat.sort);
+      chats.value = List<Chat>.from(accumulator);
+      loadedChatBatch.value = true;
+    }
+  }
+
+  /// Match the loaded contacts to cached handles and refresh chat tiles so
+  /// contact names/avatars appear without user interaction (web only).
+  void _matchWebContactsAndRefresh() {
+    for (Contact c in cs.contacts) {
+      final handles = cs.matchContactToHandles(c, webCachedHandles);
+      for (Handle h in handles) {
+        h.webContact = c;
+      }
+    }
+    for (final chat in chats) {
+      chat.title = null;
+      chat.webSyncParticipants();
+    }
+    sort();
+    for (final chat in chats) {
+      WebListeners.notifyChatUpdate(chat);
+    }
+  }
+
+  /// Load the remaining chat batches in the background (after the initial set),
+  /// then re-match contacts so the newly loaded chats also show names.
+  Future<void> _backgroundLoadRemainingChats(int startBatch, int endBatch, List<Chat> accumulator) async {
+    try {
+      LoadTimer.mark("Background chat load started (batches $startBatch-$endBatch)");
+      await _fetchWebChatBatches(startBatch, endBatch, accumulator);
+      if (cs.contacts.isNotEmpty) {
+        _matchWebContactsAndRefresh();
+      }
+      LoadTimer.mark("All chats loaded (${chats.length})");
+      Logger.info("Background chat load complete (${chats.length}).", tag: "ChatBloc");
+    } catch (e, s) {
+      Logger.error("Failed to background-load remaining chats", error: e, trace: s, tag: "ChatBloc");
     }
   }
 

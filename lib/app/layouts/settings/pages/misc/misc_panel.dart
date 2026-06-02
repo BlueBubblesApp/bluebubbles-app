@@ -219,6 +219,36 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                       return const SizedBox.shrink();
                     }
                   }),
+                  if (kIsWeb) const SettingsDivider(),
+                  if (kIsWeb)
+                    Obx(() => SettingsTile(
+                          title: "Initial Chats to Load",
+                          subtitle:
+                              "Load only the most recent chats first, then load the rest in the background. Set to 0 (All) to load every chat at once.",
+                          isThreeLine: true,
+                          leading: const SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.square_stack_3d_down_right,
+                            materialIcon: Icons.playlist_add_check,
+                            containerColor: Colors.teal,
+                          ),
+                          trailing: Text(ss.settings.initialChatLoadCount.value == 0
+                              ? "All"
+                              : "${ss.settings.initialChatLoadCount.value}"),
+                        )),
+                  if (kIsWeb)
+                    Obx(() => SettingsSlider(
+                        startingVal: ss.settings.initialChatLoadCount.value.toDouble(),
+                        update: (double val) {
+                          ss.settings.initialChatLoadCount.value = val.toInt();
+                        },
+                        onChangeEnd: (double val) {
+                          saveSettings();
+                        },
+                        formatValue: ((double val) => val.toInt() == 0 ? "All" : "${val.toInt()}"),
+                        backgroundColor: tileColor,
+                        min: 0,
+                        max: 200,
+                        divisions: 20)),
                 ],
               ),
               SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Networking"),
