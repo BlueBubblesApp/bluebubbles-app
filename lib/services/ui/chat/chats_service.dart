@@ -77,6 +77,14 @@ class ChatsService extends GetxService {
       return;
     }
 
+    // On web, start fetching contacts in parallel with chat loading so names
+    // can be matched the instant chats finish loading (instead of waiting for
+    // the contact fetch to start only after all chats are loaded).
+    Future<List<Contact>>? contactsFuture;
+    if (kIsWeb && cs.contacts.isEmpty) {
+      contactsFuture = cs.fetchNetworkContacts();
+    }
+
     final newChats = <Chat>[];
     final batches = (currentCount < batchSize) ? batchSize : (currentCount / batchSize).ceil();
 
@@ -107,10 +115,10 @@ class ChatsService extends GetxService {
     showSnackbar("Chats Loaded", "Finished loading ${chats.length} chats", durationMs: 2000);
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
 
-    // On web, fetch contacts from server and match to handles
-    if (kIsWeb && cs.contacts.isEmpty) {
+    // On web, await the contacts fetched in parallel above and match to handles
+    if (kIsWeb && contactsFuture != null) {
       try {
-        final networkContacts = await cs.fetchNetworkContacts();
+        final networkContacts = await contactsFuture;
         Logger.info("fetchNetworkContacts returned ${networkContacts.length} contacts, webCachedHandles: ${webCachedHandles.length}", tag: "ChatBloc");
         if (networkContacts.isNotEmpty) {
           cs.contacts = networkContacts;
