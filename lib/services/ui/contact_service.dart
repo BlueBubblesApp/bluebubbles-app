@@ -349,10 +349,13 @@ class ContactsService extends GetxService {
         logger?.call(s.toString());
       }
 
+      // Apply any cached avatars immediately so they render on first paint
+      // (on reload) instead of waiting for the server avatar fetch.
+      applyWebAvatarCache(networkContacts);
       LoadTimer.mark("Contacts fetched - no avatars (${networkContacts.length})");
 
-      // Avatars are fetched separately (targeted to the contacts actually in
-      // chats) by ChatsService once chats are loaded — see loadAvatarsForAddresses.
+      // Full avatar load/refresh is triggered by ChatsService once chats are
+      // loaded — see loadContactAvatars (uses the cache when fresh).
       return networkContacts;
     }
 
@@ -392,33 +395,93 @@ class ContactsService extends GetxService {
     return networkContacts;
   }
 
-  /// Fetches avatars (web only) for just the given [addresses] — the contacts
-  /// actually present in the chat list — instead of every contact. This keeps
-  /// the avatar payload tiny (~tens of KB vs several MB for all contacts), so
-  /// avatars load quickly without a multi-second tail. Merges by contact id and
-  /// refreshes the chat tiles.
-  Future<void> loadAvatarsForAddresses(List<String> addresses, {Function(String)? logger}) async {
+  // Web avatar cache (localStorage via prefs) so reloads show avatars instantly
+  // without re-fetching the multi-MB avatar payload from the server.
+  static const _avatarCacheKey = 'web_avatar_cache_v1';
+  static const _avatarCacheTtlMs = 6 * 60 * 60 * 1000; // 6 hours
+
+  /// Apply cached avatars (web) to [contacts] by id so avatars render instantly
+  /// on reload, before/without any server round-trip.
+  void applyWebAvatarCache(List<Contact> contacts) {
+    if (!kIsWeb) return;
+    try {
+      final raw = ss.prefs.getString(_avatarCacheKey);
+      if (raw == null) return;
+      final cache = jsonDecode(raw) as Map<String, dynamic>;
+      final avatars = (cache['avatars'] as Map?)?.cast<String, dynamic>() ?? {};
+      if (avatars.isEmpty) return;
+      final byId = <String, Contact>{for (final c in contacts) c.id: c};
+      avatars.forEach((id, b64) {
+        final c = byId[id];
+        if (c != null && c.avatar == null && b64 is String && b64.isNotEmpty) {
+          try {
+            c.avatar = base64Decode(b64);
+          } catch (_) {}
+        }
+      });
+    } catch (_) {}
+  }
+
+  bool _isAvatarCacheFresh() {
+    try {
+      final raw = ss.prefs.getString(_avatarCacheKey);
+      if (raw == null) return false;
+      final cache = jsonDecode(raw) as Map<String, dynamic>;
+      final ts = (cache['ts'] as int?) ?? 0;
+      return DateTime.now().millisecondsSinceEpoch - ts < _avatarCacheTtlMs;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Persist avatars for the contacts currently in chats (a small subset, ~tens
+  /// to low-hundreds of KB) so the next load can apply them instantly.
+  void _saveWebAvatarCache() {
+    try {
+      final matched = chats.webCachedHandles.map((h) => h.contact).whereType<Contact>().toSet();
+      final avatars = <String, String>{};
+      for (final c in matched) {
+        if (c.avatar != null && c.avatar!.isNotEmpty) {
+          avatars[c.id] = base64Encode(c.avatar!);
+        }
+      }
+      ss.prefs.setString(_avatarCacheKey,
+          jsonEncode({'ts': DateTime.now().millisecondsSinceEpoch, 'avatars': avatars}));
+    } catch (_) {}
+  }
+
+  /// Loads contact avatars on web. If a fresh local cache exists, the avatars
+  /// have already been applied (see [applyWebAvatarCache]) and no network call
+  /// is made. Otherwise fetches all avatars once, merges by id, refreshes the
+  /// chat tiles, and updates the cache for next time.
+  Future<void> loadContactAvatars({Function(String)? logger}) async {
     if (!kIsWeb) {
       LoadTimer.completeSubsystem('avatars');
       return;
     }
     try {
-      if (addresses.isEmpty) {
-        LoadTimer.mark("Contact avatars loaded (no matched contacts)");
+      if (_isAvatarCacheFresh()) {
+        // Avatars were applied from cache during the no-avatar fetch; refresh
+        // the tiles in case any were applied after first render.
+        if (chats.chats.isNotEmpty) {
+          chats.sort();
+          for (final chat in chats.chats) {
+            WebListeners.notifyChatUpdate(chat);
+          }
+        }
+        LoadTimer.mark("Contact avatars loaded (from cache)");
         return;
       }
-      logger?.call("Fetching avatars for ${addresses.length} addresses...");
-      final response = await http.contactByAddresses(addresses, withAvatars: true);
+      logger?.call("Fetching contact avatars...");
+      final response = await http.contacts(withAvatars: true);
       if (!isNullOrEmpty(response.data['data'])) {
-        // The query response uses the same id scheme as the no-avatar fetch, so
-        // merge by id with an O(1) lookup.
         final byId = <String, Contact>{for (final c in contacts) c.id: c};
         for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
           final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
           final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
           final id = (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
           final contact = byId[id];
-          if (contact != null && contact.avatar == null) {
+          if (contact != null) {
             contact.avatar = base64Decode(map['avatar'].toString());
           }
         }
@@ -433,7 +496,8 @@ class ContactsService extends GetxService {
         }
       }
       eventDispatcher.emit('update-contacts', null);
-      LoadTimer.mark("Contact avatars loaded (${addresses.length} addresses queried)");
+      _saveWebAvatarCache();
+      LoadTimer.mark("Contact avatars loaded (refreshed from server)");
     } catch (e, s) {
       logger?.call("Failed to load contact avatars: $e");
       Logger.error("Failed to load contact avatars", error: e, trace: s);

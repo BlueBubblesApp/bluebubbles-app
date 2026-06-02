@@ -261,13 +261,11 @@ class ChatsService extends GetxService {
     }
   }
 
-  /// Fetch avatars only for the contacts that are actually linked to a chat,
-  /// keeping the payload tiny compared to fetching every contact's avatar.
+  /// Load contact avatars (web). Uses the local avatar cache when fresh so
+  /// reloads show avatars instantly with no network call; otherwise refreshes
+  /// from the server. Fire-and-forget; completes the 'avatars' milestone.
   void _loadWebAvatars() {
-    final matched = webCachedHandles.map((h) => h.contact).whereType<Contact>().toSet();
-    final addresses = matched.expand((c) => [...c.phones, ...c.emails]).toSet().toList();
-    // Fire-and-forget; completes the 'avatars' load milestone when done.
-    cs.loadAvatarsForAddresses(addresses);
+    cs.loadContactAvatars();
   }
 
   @override
