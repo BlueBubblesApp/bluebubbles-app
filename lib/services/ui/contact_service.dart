@@ -401,38 +401,23 @@ class ContactsService extends GetxService {
       final response = await http.contacts(withAvatars: true);
       if (isNullOrEmpty(response.data['data'])) return;
 
+      // Build an id -> contact lookup once so avatar matching is O(n) instead of
+      // O(n^2) with per-address phone-number formatting. The avatar response uses
+      // the same id scheme as the no-avatar fetch, so ids match directly. This
+      // keeps the merge off the main thread long enough to jank the UI.
+      final byId = <String, Contact>{};
+      for (final c in networkContacts) {
+        byId[c.id] = c;
+      }
+
       for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
         final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
         final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
         final id = (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
 
-        for (Contact contact in networkContacts) {
-          if (contact.avatar != null) continue;
-          bool match = contact.id == id;
-
-          // Ensure contact first name matches to avoid issues with shared numbers (landlines)
-          if (!match && map['firstName'] != null && !contact.displayName.startsWith(map['firstName'])) continue;
-
-          if (!match) {
-            final addresses = [...contact.phones, ...contact.emails];
-            final otherAddresses = [...phones, ...emails];
-            for (String a in addresses) {
-              if (match) break;
-              final formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(a));
-              if (formatA.isEmpty) continue;
-              for (String b in otherAddresses) {
-                final formatB = b.contains("@") ? b.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(b));
-                if (formatA == formatB) {
-                  match = true;
-                  break;
-                }
-              }
-            }
-          }
-
-          if (match) {
-            contact.avatar = base64Decode(map['avatar'].toString());
-          }
+        final contact = byId[id];
+        if (contact != null && contact.avatar == null) {
+          contact.avatar = base64Decode(map['avatar'].toString());
         }
       }
       logger?.call("Finished contacts sync (with avatars)");
