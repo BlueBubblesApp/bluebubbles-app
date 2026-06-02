@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/load_timer.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -348,6 +349,8 @@ class ContactsService extends GetxService {
         logger?.call(s.toString());
       }
 
+      LoadTimer.mark("Contacts fetched - no avatars (${networkContacts.length})");
+
       // Load avatars in the background; do NOT await so names show immediately.
       _loadContactAvatarsWeb(networkContacts, logger: logger);
       return networkContacts;
@@ -442,6 +445,7 @@ class ContactsService extends GetxService {
         }
       }
       eventDispatcher.emit('update-contacts', null);
+      LoadTimer.mark("Contact avatars loaded");
     } catch (e, s) {
       logger?.call("Failed to load contact avatars: $e");
       logger?.call(s.toString());

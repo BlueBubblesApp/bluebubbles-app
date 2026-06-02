@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/load_timer.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -63,6 +64,7 @@ class ChatsService extends GetxService {
 
   Future<void> init({bool force = false}) async {
     if (!force && !ss.settings.finishedSetup.value) return;
+    LoadTimer.mark("Chats fetch started");
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ??
         (await http.chatCount().catchError((err) {
@@ -129,6 +131,7 @@ class ChatsService extends GetxService {
     }
     loadedAllChats.complete();
     sort();
+    LoadTimer.mark("Chats loaded (${chats.length})");
     showSnackbar("Chats Loaded", "Finished loading ${chats.length} chats", durationMs: 2000);
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
 
@@ -154,6 +157,7 @@ class ChatsService extends GetxService {
           for (final chat in chats) {
             WebListeners.notifyChatUpdate(chat);
           }
+          LoadTimer.mark("Contact names matched & displayed (${cs.contacts.length} contacts)");
           Logger.info("Contacts loaded and matched: ${cs.contacts.length} contacts", tag: "ChatBloc");
         }
       } catch (e) {

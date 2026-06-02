@@ -8,6 +8,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/load_timer.dart';
 import 'package:bluebubbles/services/network/http_overrides.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
@@ -66,9 +67,13 @@ Future<Null> bubble() async {
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool bubble, List<String> arguments) async {
   runZonedGuarded<Future<void>>(() async {
+    LoadTimer.start();
     WidgetsFlutterBinding.ensureInitialized();
+    // Log the first rendered frame so we can see time-to-first-paint
+    WidgetsBinding.instance.addPostFrameCallback((_) => LoadTimer.mark("First frame rendered"));
 
     await StartupTasks.initStartupServices(isBubble: bubble);
+    LoadTimer.mark("Startup services initialized");
 
     /* ----- RANDOM STUFF INITIALIZATION ----- */
     HttpOverrides.global = BadCertOverride();
