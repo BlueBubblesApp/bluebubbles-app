@@ -18,7 +18,9 @@ import 'package:bluebubbles/database/database.dart';
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
 
 class ChatsService extends GetxService {
-  static const batchSize = 15;
+  static const batchSize = 25;
+  // Number of chat batches to fetch concurrently on web (network-bound)
+  static const webFetchConcurrency = 5;
   int currentCount = 0;
   late final StreamSubscription countSub;
 
@@ -86,29 +88,44 @@ class ChatsService extends GetxService {
     }
 
     final newChats = <Chat>[];
-    final batches = (currentCount < batchSize) ? batchSize : (currentCount / batchSize).ceil();
+    final batches = (currentCount / batchSize).ceil();
 
-    for (int i = 0; i < batches; i++) {
-      List<Chat> temp;
-      if (kIsWeb) {
-        temp = await cm.getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize);
-      } else {
-        temp = await Chat.getChats(limit: batchSize, offset: i * batchSize);
-      }
-
-      if (kIsWeb) {
-        webCachedHandles.addAll(temp.map((e) => e.participants).flattened.toList());
+    if (kIsWeb) {
+      // Web chat loading is network-bound (one request per batch over the
+      // tunnel). Fetch batches concurrently in waves instead of sequentially
+      // so 800+ chats load in a few seconds rather than dozens of serial
+      // round-trips. The UI updates progressively after each wave.
+      for (int start = 0; start < batches; start += webFetchConcurrency) {
+        final futures = <Future<List<Chat>>>[];
+        for (int i = start; i < start + webFetchConcurrency && i < batches; i++) {
+          futures.add(cm.getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize));
+        }
+        final results = await Future.wait(futures);
+        for (final temp in results) {
+          webCachedHandles.addAll(temp.map((e) => e.participants).flattened.toList());
+          for (Chat c in temp) {
+            cm.createChatController(c, active: cm.activeChat?.chat.guid == c.guid);
+          }
+          newChats.addAll(temp);
+        }
+        // De-dupe cached handles by address
         final ids = webCachedHandles.map((e) => e.address).toSet();
         webCachedHandles.retainWhere((element) => ids.remove(element.address));
+        newChats.sort(Chat.sort);
+        chats.value = List<Chat>.from(newChats);
+        loadedChatBatch.value = true;
       }
-
-      for (Chat c in temp) {
-        cm.createChatController(c, active: cm.activeChat?.chat.guid == c.guid);
+    } else {
+      for (int i = 0; i < batches; i++) {
+        final temp = await Chat.getChats(limit: batchSize, offset: i * batchSize);
+        for (Chat c in temp) {
+          cm.createChatController(c, active: cm.activeChat?.chat.guid == c.guid);
+        }
+        newChats.addAll(temp);
+        newChats.sort(Chat.sort);
+        chats.value = newChats;
+        loadedChatBatch.value = true;
       }
-      newChats.addAll(temp);
-      newChats.sort(Chat.sort);
-      chats.value = newChats;
-      loadedChatBatch.value = true;
     }
     loadedAllChats.complete();
     sort();
