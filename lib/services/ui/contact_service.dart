@@ -20,6 +20,13 @@ class ContactsService extends GetxService {
   /// The master list of contact objects
   List<Contact> contacts = [];
 
+  /// Bumped whenever contact avatar bytes are applied/merged on web. Avatar
+  /// widgets observe this so they repaint the instant images become available.
+  /// (A contact's `avatar` is a plain field, not an observable, so widgets that
+  /// already built would otherwise never know the bytes arrived and would keep
+  /// showing initials until an unrelated rebuild happened seconds later.)
+  final RxInt webAvatarGeneration = 0.obs;
+
   bool _hasContactAccess = false;
 
   Future<bool> get hasContactAccess async {
@@ -469,7 +476,12 @@ class ContactsService extends GetxService {
             WebListeners.notifyChatUpdate(chat);
           }
         }
+        // Repaint avatar widgets so the cached images appear immediately. The
+        // bump schedules a rebuild on the very next frame, so the data and the
+        // repaint are effectively simultaneous — complete the milestone now.
+        webAvatarGeneration.value++;
         LoadTimer.mark("Contact avatars loaded (from cache)");
+        LoadTimer.completeSubsystem('avatars');
         return;
       }
       logger?.call("Fetching contact avatars...");
@@ -495,13 +507,18 @@ class ContactsService extends GetxService {
           WebListeners.notifyChatUpdate(chat);
         }
       }
+      // Repaint avatar widgets now that the fetched images are merged in. The
+      // bump schedules a rebuild on the very next frame, so the data and the
+      // repaint are effectively simultaneous — complete the milestone now.
+      webAvatarGeneration.value++;
       eventDispatcher.emit('update-contacts', null);
       _saveWebAvatarCache();
       LoadTimer.mark("Contact avatars loaded (refreshed from server)");
+      LoadTimer.completeSubsystem('avatars');
     } catch (e, s) {
       logger?.call("Failed to load contact avatars: $e");
       Logger.error("Failed to load contact avatars", error: e, trace: s);
-    } finally {
+      // Avatars failed; nothing to paint, so complete immediately.
       LoadTimer.completeSubsystem('avatars');
     }
   }

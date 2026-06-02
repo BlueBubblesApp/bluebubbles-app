@@ -368,7 +368,13 @@ class Chat {
   }
 
   void webSyncParticipants() {
-    _participants = chats.webCachedHandles.where((e) => _participants.map((e2) => e2.address).contains(e.address)).toList();
+    // Re-point each participant to the deduped/matched handle instance via the
+    // address index (O(participants)) rather than scanning every cached handle
+    // for every participant (O(handles × participants)), which janks the UI
+    // when run across the whole chat list during loading.
+    _participants = _participants
+        .map((p) => chats.webHandlesByAddress[p.address] ?? p)
+        .toList();
   }
 
   Message get dbLatestMessage => latestMessage;

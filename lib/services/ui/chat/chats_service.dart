@@ -32,6 +32,16 @@ class ChatsService extends GetxService {
 
   final List<Handle> webCachedHandles = [];
 
+  /// address -> deduped handle, kept in sync with [webCachedHandles]. Lets a
+  /// chat re-point its participants to the matched handle instances in
+  /// O(participants) instead of scanning every cached handle (O(handles)).
+  final Map<String, Handle> webHandlesByAddress = {};
+
+  /// Handle addresses already matched to a contact. Background waves only match
+  /// the newly-arrived handles, so the total match cost stays the same as a
+  /// single pass while names/avatars appear progressively as chats stream in.
+  final Set<String> _webMatchedAddresses = {};
+
   @override
   void onInit() {
     super.onInit();
@@ -198,7 +208,8 @@ class ChatsService extends GetxService {
   /// Fetch chat batches in the range [startBatch, endBatch) on web, in
   /// concurrent waves of [webFetchConcurrency]. Appends results to
   /// [accumulator] and updates the visible list after each wave.
-  Future<void> _fetchWebChatBatches(int startBatch, int endBatch, List<Chat> accumulator) async {
+  Future<void> _fetchWebChatBatches(int startBatch, int endBatch, List<Chat> accumulator,
+      {bool matchPerWave = false}) async {
     for (int start = startBatch; start < endBatch; start += webFetchConcurrency) {
       final futures = <Future<List<Chat>>>[];
       for (int i = start; i < start + webFetchConcurrency && i < endBatch; i++) {
@@ -212,12 +223,22 @@ class ChatsService extends GetxService {
         }
         accumulator.addAll(temp);
       }
-      // De-dupe cached handles by address
+      // De-dupe cached handles by address and keep the address->handle index
+      // in sync so participant re-syncing stays cheap.
       final ids = webCachedHandles.map((e) => e.address).toSet();
       webCachedHandles.retainWhere((element) => ids.remove(element.address));
+      webHandlesByAddress
+        ..clear()
+        ..addEntries(webCachedHandles.map((h) => MapEntry(h.address, h)));
       accumulator.sort(Chat.sort);
       chats.value = List<Chat>.from(accumulator);
       loadedChatBatch.value = true;
+      // Match the handles that just arrived to contacts so these chats show
+      // names and avatars right away, instead of waiting for one match at the
+      // very end of the background load.
+      if (matchPerWave && cs.contacts.isNotEmpty) {
+        await _matchWebContactsAndRefresh();
+      }
     }
   }
 
@@ -228,15 +249,24 @@ class ChatsService extends GetxService {
   /// if run in one synchronous pass. Yield to the event loop periodically so
   /// already-loaded chats stay clickable/scrollable while matching runs.
   Future<void> _matchWebContactsAndRefresh() async {
-    int processed = 0;
-    for (Contact c in cs.contacts) {
-      final handles = cs.matchContactToHandles(c, webCachedHandles);
-      for (Handle h in handles) {
-        h.webContact = c;
+    // Only match handles we haven't matched before. Calling this once per
+    // background wave then costs the same in total as a single final pass, but
+    // newly-loaded chats get their names/avatars as soon as they arrive.
+    final newHandles = webCachedHandles.where((h) => !_webMatchedAddresses.contains(h.address)).toList();
+    if (newHandles.isNotEmpty) {
+      int processed = 0;
+      for (Contact c in cs.contacts) {
+        final handles = cs.matchContactToHandles(c, newHandles);
+        for (Handle h in handles) {
+          h.webContact = c;
+        }
+        if (++processed % 100 == 0) {
+          // Let the UI render a frame / handle taps between chunks.
+          await Future.delayed(Duration.zero);
+        }
       }
-      if (++processed % 100 == 0) {
-        // Let the UI render a frame / handle taps between chunks.
-        await Future.delayed(Duration.zero);
+      for (final h in newHandles) {
+        _webMatchedAddresses.add(h.address);
       }
     }
     for (final chat in chats) {
@@ -244,9 +274,18 @@ class ChatsService extends GetxService {
       chat.webSyncParticipants();
     }
     sort();
-    for (final chat in chats) {
-      WebListeners.notifyChatUpdate(chat);
+    // The chat list itself refreshes via sort()'s chats.refresh() (titles) and
+    // the avatar generation bump below (avatars). Only the currently-open chat
+    // needs an explicit stream notification so its header/details update —
+    // notifying every chat here is an O(chats²) storm that badly slows loading.
+    final activeChat = cm.activeChat?.chat;
+    if (activeChat != null) {
+      WebListeners.notifyChatUpdate(activeChat);
     }
+    // Handles are now linked to their contacts; if those contacts already have
+    // avatar bytes (e.g. applied from the local cache), repaint the avatar
+    // widgets so the images appear immediately instead of after a later rebuild.
+    cs.webAvatarGeneration.value++;
   }
 
   /// Load the remaining chat batches in the background (after the initial set),
@@ -255,7 +294,7 @@ class ChatsService extends GetxService {
       {bool loadAvatars = false}) async {
     try {
       LoadTimer.mark("Background chat load started (batches $startBatch-$endBatch)");
-      await _fetchWebChatBatches(startBatch, endBatch, accumulator);
+      await _fetchWebChatBatches(startBatch, endBatch, accumulator, matchPerWave: true);
       if (cs.contacts.isNotEmpty) {
         await _matchWebContactsAndRefresh();
       }

@@ -29,37 +29,43 @@ class ContactAvatarGroupWidget extends StatefulWidget {
 }
 
 class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWidget> {
-  late final List<Handle> participants = widget.chat.participants;
   final Map materialGeneration = {
     2: [24.5/40, 10.5/40, [Alignment.topRight, Alignment.bottomLeft]],
     3: [21.5/40, 9/40, [Alignment.bottomRight, Alignment.bottomLeft, Alignment.topCenter]],
     4: [1/2, 8.7/40, [Alignment.bottomRight, Alignment.bottomLeft, Alignment.topLeft, Alignment.topRight]],
   };
 
-  @override
-  void initState() {
-    super.initState();
-    participants.sort((a, b) {
+  // Read participants from the chat on each build (rather than capturing them
+  // once via `late final`) so contact/avatar matches applied after the first
+  // render are reflected — important on web, where contacts and avatars load
+  // asynchronously. Participants that have an avatar are sorted first so they
+  // show in the group avatar. Native returns a cached list, so this stays cheap.
+  List<Handle> get _sortedParticipants {
+    final parts = List<Handle>.from(widget.chat.participants);
+    parts.sort((a, b) {
       bool avatarA = a.contact?.avatar?.isNotEmpty ?? false;
       bool avatarB = b.contact?.avatar?.isNotEmpty ?? false;
       if (!avatarA && avatarB) return 1;
       if (avatarA && !avatarB) return -1;
       return 0;
     });
+    return parts;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (participants.isEmpty) {
-      return ContactAvatarWidget(
-        handle: Handle(address: ''),
-        size: widget.size * ss.settings.avatarScale.value,
-        editable: false,
-        scaleSize: false,
-      );
-    }
-
     return Obx(() {
+        // Rebuild when contact avatars/matches load (web); no-op on native.
+        cs.webAvatarGeneration.value;
+        final participants = _sortedParticipants;
+        if (participants.isEmpty) {
+          return ContactAvatarWidget(
+            handle: Handle(address: ''),
+            size: widget.size * ss.settings.avatarScale.value,
+            editable: false,
+            scaleSize: false,
+          );
+        }
         final hide = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
         final avatarSize = widget.size * ss.settings.avatarScale.value;
         final maxAvatars = ss.settings.maxAvatarsInGroupWidget.value;

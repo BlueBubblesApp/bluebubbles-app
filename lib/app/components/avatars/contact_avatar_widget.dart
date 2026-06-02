@@ -166,6 +166,13 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
               clipBehavior: Clip.antiAlias,
               alignment: Alignment.center,
               child: Obx(() {
+                // Avatar bytes are merged into the (non-observable) Contact
+                // after this widget first builds (notably on web, where they
+                // arrive from the network/cache asynchronously). Observe the
+                // avatar generation counter so the image paints the moment it
+                // loads instead of waiting for an unrelated rebuild seconds
+                // later. On native this counter never changes, so it's a no-op.
+                cs.webAvatarGeneration.value;
                 final hideContactInfo = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
                 final genAvatars = ss.settings.redactedMode.value && ss.settings.generateFakeAvatars.value;
                 final iOS = ss.settings.skin.value == Skins.iOS;
