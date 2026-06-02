@@ -434,6 +434,8 @@ class ContactsService extends GetxService {
     } catch (e, s) {
       logger?.call("Failed to load contact avatars: $e");
       logger?.call(s.toString());
+    } finally {
+      LoadTimer.completeSubsystem('avatars');
     }
   }
 }

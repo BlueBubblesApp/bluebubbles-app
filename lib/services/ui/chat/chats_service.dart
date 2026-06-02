@@ -89,6 +89,14 @@ class ChatsService extends GetxService {
       contactsFuture = cs.fetchNetworkContacts();
     }
 
+    // Track the background subsystems so we can log a single accurate
+    // "Everything loaded" line once chats, contacts AND avatars are all ready.
+    LoadTimer.expectSubsystems([
+      'chats',
+      if (contactsFuture != null) 'contacts',
+      if (contactsFuture != null) 'avatars',
+    ]);
+
     final newChats = <Chat>[];
     final batches = (currentCount / batchSize).ceil();
 
@@ -118,6 +126,9 @@ class ChatsService extends GetxService {
     LoadTimer.mark("Chats loaded (${chats.length}${stagedLoad ? " of $currentCount, rest loading in background" : ""})");
     showSnackbar("Chats Loaded", "Finished loading ${chats.length} chats", durationMs: 2000);
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
+    // If not staged, all chats are loaded now; otherwise the background task
+    // marks 'chats' complete when it finishes.
+    if (!stagedLoad) LoadTimer.completeSubsystem('chats');
 
     // On web, await the contacts fetched in parallel above and match to handles
     if (kIsWeb && contactsFuture != null) {
@@ -132,6 +143,8 @@ class ChatsService extends GetxService {
         }
       } catch (e) {
         Logger.error("Failed to load contacts on web: $e", tag: "ChatBloc");
+      } finally {
+        LoadTimer.completeSubsystem('contacts');
       }
     }
 
@@ -237,6 +250,8 @@ class ChatsService extends GetxService {
       Logger.info("Background chat load complete (${chats.length}).", tag: "ChatBloc");
     } catch (e, s) {
       Logger.error("Failed to background-load remaining chats", error: e, trace: s, tag: "ChatBloc");
+    } finally {
+      LoadTimer.completeSubsystem('chats');
     }
   }
 
