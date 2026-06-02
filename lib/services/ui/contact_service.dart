@@ -356,13 +356,11 @@ class ContactsService extends GetxService {
         logger?.call(s.toString());
       }
 
-      // Apply any cached avatars immediately so they render on first paint
-      // (on reload) instead of waiting for the server avatar fetch.
-      applyWebAvatarCache(networkContacts);
       LoadTimer.mark("Contacts fetched - no avatars (${networkContacts.length})");
 
-      // Full avatar load/refresh is triggered by ChatsService once chats are
-      // loaded — see loadContactAvatars (uses the cache when fresh).
+      // Avatars are fetched separately, targeted to the handles actually in
+      // chats, once chats are loaded — see loadContactAvatars. Always fresh
+      // from the server (no local avatar cache).
       return networkContacts;
     }
 
@@ -402,90 +400,38 @@ class ContactsService extends GetxService {
     return networkContacts;
   }
 
-  // Web avatar cache (localStorage via prefs) so reloads show avatars instantly
-  // without re-fetching the multi-MB avatar payload from the server.
-  static const _avatarCacheKey = 'web_avatar_cache_v1';
-  static const _avatarCacheTtlMs = 6 * 60 * 60 * 1000; // 6 hours
+  /// In-chat handle addresses whose avatars we've already fetched this session.
+  /// Repeated calls to [loadContactAvatars] only request newly-arrived handles,
+  /// so we never re-pull avatars we already have (and never pull all contacts).
+  final Set<String> _webAvatarFetchedAddresses = {};
 
-  /// Apply cached avatars (web) to [contacts] by id so avatars render instantly
-  /// on reload, before/without any server round-trip.
-  void applyWebAvatarCache(List<Contact> contacts) {
-    if (!kIsWeb) return;
-    try {
-      final raw = ss.prefs.getString(_avatarCacheKey);
-      if (raw == null) return;
-      final cache = jsonDecode(raw) as Map<String, dynamic>;
-      final avatars = (cache['avatars'] as Map?)?.cast<String, dynamic>() ?? {};
-      if (avatars.isEmpty) return;
-      final byId = <String, Contact>{for (final c in contacts) c.id: c};
-      avatars.forEach((id, b64) {
-        final c = byId[id];
-        if (c != null && c.avatar == null && b64 is String && b64.isNotEmpty) {
-          try {
-            c.avatar = base64Decode(b64);
-          } catch (_) {}
-        }
-      });
-    } catch (_) {}
-  }
-
-  bool _isAvatarCacheFresh() {
-    try {
-      final raw = ss.prefs.getString(_avatarCacheKey);
-      if (raw == null) return false;
-      final cache = jsonDecode(raw) as Map<String, dynamic>;
-      final ts = (cache['ts'] as int?) ?? 0;
-      return DateTime.now().millisecondsSinceEpoch - ts < _avatarCacheTtlMs;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Persist avatars for the contacts currently in chats (a small subset, ~tens
-  /// to low-hundreds of KB) so the next load can apply them instantly.
-  void _saveWebAvatarCache() {
-    try {
-      final matched = chats.webCachedHandles.map((h) => h.contact).whereType<Contact>().toSet();
-      final avatars = <String, String>{};
-      for (final c in matched) {
-        if (c.avatar != null && c.avatar!.isNotEmpty) {
-          avatars[c.id] = base64Encode(c.avatar!);
-        }
-      }
-      ss.prefs.setString(_avatarCacheKey,
-          jsonEncode({'ts': DateTime.now().millisecondsSinceEpoch, 'avatars': avatars}));
-    } catch (_) {}
-  }
-
-  /// Loads contact avatars on web. If a fresh local cache exists, the avatars
-  /// have already been applied (see [applyWebAvatarCache]) and no network call
-  /// is made. Otherwise fetches all avatars once, merges by id, refreshes the
-  /// chat tiles, and updates the cache for next time.
-  Future<void> loadContactAvatars({Function(String)? logger}) async {
+  /// Loads contact avatars on web by fetching ONLY the avatars for the handles
+  /// currently in chats — a small, targeted payload, always fresh from the
+  /// server (no local avatar cache). Safe to call repeatedly as chats stream
+  /// in; each call requests only the handles not fetched yet.
+  ///
+  /// Pass [completeMilestone] = false for an early (partial) call so the
+  /// "Everything loaded" milestone isn't marked until the final call (once all
+  /// chats are present) actually finishes.
+  Future<void> loadContactAvatars({bool completeMilestone = true, Function(String)? logger}) async {
     if (!kIsWeb) {
       LoadTimer.completeSubsystem('avatars');
       return;
     }
     try {
-      if (_isAvatarCacheFresh()) {
-        // Avatars were applied from cache during the no-avatar fetch; refresh
-        // the tiles in case any were applied after first render.
-        if (chats.chats.isNotEmpty) {
-          chats.sort();
-          for (final chat in chats.chats) {
-            WebListeners.notifyChatUpdate(chat);
-          }
-        }
-        // Repaint avatar widgets so the cached images appear immediately. The
-        // bump schedules a rebuild on the very next frame, so the data and the
-        // repaint are effectively simultaneous — complete the milestone now.
-        webAvatarGeneration.value++;
-        LoadTimer.mark("Contact avatars loaded (from cache)");
-        LoadTimer.completeSubsystem('avatars');
-        return;
-      }
-      logger?.call("Fetching contact avatars...");
-      final response = await http.contacts(withAvatars: true);
+      // Only the in-chat handles we haven't fetched avatars for yet.
+      final addresses = chats.webCachedHandles
+          .map((h) => h.address)
+          .toSet()
+          .where((a) => a.isNotEmpty && !_webAvatarFetchedAddresses.contains(a))
+          .toList();
+      if (addresses.isEmpty) return;
+
+      logger?.call("Fetching avatars for ${addresses.length} in-chat handles...");
+      final response = await http.contactByAddresses(addresses, withAvatars: true);
+      // Mark as fetched only after a successful response so failures can retry.
+      _webAvatarFetchedAddresses.addAll(addresses);
+
       if (!isNullOrEmpty(response.data['data'])) {
         final byId = <String, Contact>{for (final c in contacts) c.id: c};
         for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
@@ -500,26 +446,17 @@ class ContactsService extends GetxService {
       }
       logger?.call("Finished avatar sync");
 
-      // Refresh the chat list so avatars appear without user interaction
-      if (chats.chats.isNotEmpty) {
-        chats.sort();
-        for (final chat in chats.chats) {
-          WebListeners.notifyChatUpdate(chat);
-        }
-      }
-      // Repaint avatar widgets now that the fetched images are merged in. The
-      // bump schedules a rebuild on the very next frame, so the data and the
-      // repaint are effectively simultaneous — complete the milestone now.
+      // Repaint avatar widgets now that the fetched images are merged in (the
+      // bump schedules a rebuild on the next frame). The chat list/title side
+      // updates via chats.refresh(); only the open chat needs a stream nudge.
       webAvatarGeneration.value++;
       eventDispatcher.emit('update-contacts', null);
-      _saveWebAvatarCache();
-      LoadTimer.mark("Contact avatars loaded (refreshed from server)");
-      LoadTimer.completeSubsystem('avatars');
+      LoadTimer.mark("Contact avatars loaded (${addresses.length} in-chat handles)");
     } catch (e, s) {
       logger?.call("Failed to load contact avatars: $e");
       Logger.error("Failed to load contact avatars", error: e, trace: s);
-      // Avatars failed; nothing to paint, so complete immediately.
-      LoadTimer.completeSubsystem('avatars');
+    } finally {
+      if (completeMilestone) LoadTimer.completeSubsystem('avatars');
     }
   }
 }

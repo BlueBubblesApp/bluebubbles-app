@@ -150,6 +150,11 @@ class ChatsService extends GetxService {
           await _matchWebContactsAndRefresh();
           LoadTimer.mark("Contact names matched & displayed (${cs.contacts.length} contacts)");
           Logger.info("Contacts loaded and matched: ${cs.contacts.length} contacts", tag: "ChatBloc");
+          // Fetch avatars for the initial (visible) chats right away so they
+          // appear alongside the names. Fire-and-forget; runs in parallel with
+          // the background chat load. The final avatar fetch (once every chat
+          // is loaded) completes the 'avatars' milestone.
+          if (stagedLoad) cs.loadContactAvatars(completeMilestone: false);
         }
       } catch (e) {
         Logger.error("Failed to load contacts on web: $e", tag: "ChatBloc");
