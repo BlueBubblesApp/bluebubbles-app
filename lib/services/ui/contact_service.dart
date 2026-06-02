@@ -316,7 +316,10 @@ class ContactsService extends GetxService {
 
   Future<List<Contact>> fetchNetworkContacts({Function(String)? logger}) async {
     final networkContacts = <Contact>[];
-    // refresh UI on web without waiting for avatars
+
+    // On web, fetch contacts WITHOUT avatars first so names can be matched and
+    // displayed immediately. The avatar payload is much larger (base64 images)
+    // and is loaded in the background afterwards so it doesn't block the UI.
     if (kIsWeb) {
       logger?.call("Fetching contacts (no avatars)...");
       try {
@@ -329,7 +332,6 @@ class ContactsService extends GetxService {
             final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
             final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-            logger?.call("Parsing contact: $displayName");
             networkContacts.add(Contact(
               id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
               displayName: displayName,
@@ -345,100 +347,104 @@ class ContactsService extends GetxService {
         logger?.call("Got exception: $e");
         logger?.call(s.toString());
       }
-      final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
-      for (Contact c in contacts) {
-        final handles = matchContactToHandles(c, handlesToSearch);
-        final addressesAndServices = handles.map((e) => e.uniqueAddressAndService).toList();
-        if (handles.isNotEmpty) {
-          handlesToSearch.removeWhere((e) => addressesAndServices.contains(e.uniqueAddressAndService));
-          for (Handle h in handles) {
-            if (addressesAndServices.contains(h.uniqueAddressAndService)) {
-              h.webContact = c;
-            }
-          }
-        }
-      }
-      eventDispatcher.emit('update-contacts', null);
+
+      // Load avatars in the background; do NOT await so names show immediately.
+      _loadContactAvatarsWeb(networkContacts, logger: logger);
+      return networkContacts;
     }
 
     logger?.call("Fetching contacts (with avatars)...");
     try {
-      if (kIsWeb) {
-        final response = await http.contacts(withAvatars: true);
+      final response = await http.contacts(withAvatars: true);
 
-        if (!isNullOrEmpty(response.data['data'])) {
-          logger?.call("Found contacts!");
-          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
-            final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
-            logger?.call("Adding avatar for contact: $displayName");
-            final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-            final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-            for (Contact contact in networkContacts) {
-              bool match = contact.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
+      if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
+        logger?.call("Found contacts!");
+        for (Map<String, dynamic> map in response.data['data']) {
+          final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
+          final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          logger?.call("Parsing contact: $displayName");
 
-              // Ensure contact first name matches to avoid issues with shared numbers (landlines)
-              if (!match && map['firstName'] != null && !contact.displayName.startsWith(map['firstName'])) continue;
-
-              List<String> addresses = [...contact.phones, ...contact.emails];
-              List<String> _addresses = [...phones, ...emails];
-              for (String a in addresses) {
-                if (match) {
-                  break;
-                }
-                String? formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(a));
-                if (formatA.isEmpty) continue;
-                for (String _a in _addresses) {
-                  String? _formatA =
-                      _a.contains("@") ? _a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(_a));
-                  if (formatA == _formatA) {
-                    match = true;
-                    break;
-                  }
-                }
-              }
-
-              if (match && contact.avatar == null) {
-                contact.avatar = base64Decode(map['avatar'].toString());
-              }
-            }
+          // Log when a contact has no saved addresses
+          if (emails.isEmpty && phones.isEmpty) {
+            logger?.call("Contact has no saved addresses: $displayName");
           }
-        } else {
-          logger?.call("No contacts found!");
+
+          networkContacts.add(Contact(
+            id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
+            displayName: displayName,
+            emails: emails,
+            phones: phones,
+            avatar: !isNullOrEmpty(map['avatar']) ? base64Decode(map['avatar'].toString()) : null,
+          ));
         }
-        logger?.call("Finished contacts sync (with avatars)");
       } else {
-        final response = await http.contacts(withAvatars: true);
-
-        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
-          logger?.call("Found contacts!");
-          for (Map<String, dynamic> map in response.data['data']) {
-            final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
-            final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-            final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-            logger?.call("Parsing contact: $displayName");
-
-            // Log when a contact has no saved addresses
-            if (emails.isEmpty && phones.isEmpty) {
-              logger?.call("Contact has no saved addresses: $displayName");
-            }
-
-            networkContacts.add(Contact(
-              id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
-              displayName: displayName,
-              emails: emails,
-              phones: phones,
-              avatar: !isNullOrEmpty(map['avatar']) ? base64Decode(map['avatar'].toString()) : null,
-            ));
-          }
-        } else {
-          logger?.call("No contacts found!");
-        }
-        logger?.call("Finished contacts sync (with avatars)");
+        logger?.call("No contacts found!");
       }
+      logger?.call("Finished contacts sync (with avatars)");
     } catch (e, s) {
       logger?.call("Got exception: $e");
       logger?.call(s.toString());
     }
     return networkContacts;
+  }
+
+  /// Fetches contact avatars in the background (web only) and merges them into
+  /// the already-displayed contacts, then refreshes the UI. Runs after names are
+  /// shown so the large avatar payload doesn't delay contact name display.
+  Future<void> _loadContactAvatarsWeb(List<Contact> networkContacts, {Function(String)? logger}) async {
+    try {
+      logger?.call("Fetching contacts (with avatars)...");
+      final response = await http.contacts(withAvatars: true);
+      if (isNullOrEmpty(response.data['data'])) return;
+
+      for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar']))) {
+        final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+        final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+        final id = (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
+
+        for (Contact contact in networkContacts) {
+          if (contact.avatar != null) continue;
+          bool match = contact.id == id;
+
+          // Ensure contact first name matches to avoid issues with shared numbers (landlines)
+          if (!match && map['firstName'] != null && !contact.displayName.startsWith(map['firstName'])) continue;
+
+          if (!match) {
+            final addresses = [...contact.phones, ...contact.emails];
+            final otherAddresses = [...phones, ...emails];
+            for (String a in addresses) {
+              if (match) break;
+              final formatA = a.contains("@") ? a.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(a));
+              if (formatA.isEmpty) continue;
+              for (String b in otherAddresses) {
+                final formatB = b.contains("@") ? b.toLowerCase() : await formatPhoneNumber(cleansePhoneNumber(b));
+                if (formatA == formatB) {
+                  match = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (match) {
+            contact.avatar = base64Decode(map['avatar'].toString());
+          }
+        }
+      }
+      logger?.call("Finished contacts sync (with avatars)");
+
+      // Refresh the chat list so avatars appear without user interaction
+      if (chats.chats.isNotEmpty) {
+        chats.sort();
+        for (final chat in chats.chats) {
+          WebListeners.notifyChatUpdate(chat);
+        }
+      }
+      eventDispatcher.emit('update-contacts', null);
+    } catch (e, s) {
+      logger?.call("Failed to load contact avatars: $e");
+      logger?.call(s.toString());
+    }
   }
 }
