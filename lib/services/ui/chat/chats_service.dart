@@ -314,9 +314,8 @@ class ChatsService extends GetxService {
     }
   }
 
-  /// Load contact avatars (web). Uses the local avatar cache when fresh so
-  /// reloads show avatars instantly with no network call; otherwise refreshes
-  /// from the server. Fire-and-forget; completes the 'avatars' milestone.
+  /// Load contact avatars (web) for the handles in chats — targeted, always
+  /// fresh from the server. Fire-and-forget; completes the 'avatars' milestone.
   void _loadWebAvatars() {
     cs.loadContactAvatars();
   }
@@ -348,6 +347,11 @@ class ChatsService extends GetxService {
   }
 
   Future<void> addChat(Chat toAdd) async {
+    // On web, chats that arrive from socket payloads (e.g. a new message that
+    // bumps a previously-quiet chat to the top) carry unmatched handles. Without
+    // re-linking them to their contacts the tile would show the raw number
+    // instead of the contact's name/avatar.
+    if (kIsWeb) _ensureWebContactMatch(toAdd);
     final index = chats.indexWhere((e) => e.guid == toAdd.guid);
     if (index != -1) {
       chats[index] = toAdd;
@@ -356,6 +360,30 @@ class ChatsService extends GetxService {
       cm.createChatController(toAdd);
     }
     sort();
+    // Repaint avatars for the (re)added chat now that its handles are matched.
+    if (kIsWeb) cs.webAvatarGeneration.value++;
+  }
+
+  /// Link a chat's participant handles to their matched contacts (web). Reuses
+  /// the cached/deduped handle instances (which already carry `webContact` from
+  /// the initial match); for any handle we haven't seen yet, caches it and
+  /// matches it to a contact so the chat shows the contact name, not a number.
+  void _ensureWebContactMatch(Chat chat) {
+    if (cs.contacts.isEmpty) return;
+    for (final h in chat.participants) {
+      final cached = webHandlesByAddress[h.address];
+      if (cached == null) {
+        h.webContact ??= cs.matchHandleToContact(h);
+        webCachedHandles.add(h);
+        webHandlesByAddress[h.address] = h;
+        _webMatchedAddresses.add(h.address);
+      } else {
+        cached.webContact ??= cs.matchHandleToContact(cached);
+      }
+    }
+    // Drop the cached title so it recomputes from the now-matched participants.
+    chat.title = null;
+    chat.webSyncParticipants();
   }
 
   void removeChat(Chat toRemove) {
