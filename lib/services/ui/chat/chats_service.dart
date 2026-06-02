@@ -137,7 +137,7 @@ class ChatsService extends GetxService {
         Logger.info("fetchNetworkContacts returned ${networkContacts.length} contacts, webCachedHandles: ${webCachedHandles.length}", tag: "ChatBloc");
         if (networkContacts.isNotEmpty) {
           cs.contacts = networkContacts;
-          _matchWebContactsAndRefresh();
+          await _matchWebContactsAndRefresh();
           LoadTimer.mark("Contact names matched & displayed (${cs.contacts.length} contacts)");
           Logger.info("Contacts loaded and matched: ${cs.contacts.length} contacts", tag: "ChatBloc");
         }
@@ -223,11 +223,20 @@ class ChatsService extends GetxService {
 
   /// Match the loaded contacts to cached handles and refresh chat tiles so
   /// contact names/avatars appear without user interaction (web only).
-  void _matchWebContactsAndRefresh() {
+  ///
+  /// The match is O(contacts × handles), which is large enough to jank the UI
+  /// if run in one synchronous pass. Yield to the event loop periodically so
+  /// already-loaded chats stay clickable/scrollable while matching runs.
+  Future<void> _matchWebContactsAndRefresh() async {
+    int processed = 0;
     for (Contact c in cs.contacts) {
       final handles = cs.matchContactToHandles(c, webCachedHandles);
       for (Handle h in handles) {
         h.webContact = c;
+      }
+      if (++processed % 100 == 0) {
+        // Let the UI render a frame / handle taps between chunks.
+        await Future.delayed(Duration.zero);
       }
     }
     for (final chat in chats) {
@@ -248,7 +257,7 @@ class ChatsService extends GetxService {
       LoadTimer.mark("Background chat load started (batches $startBatch-$endBatch)");
       await _fetchWebChatBatches(startBatch, endBatch, accumulator);
       if (cs.contacts.isNotEmpty) {
-        _matchWebContactsAndRefresh();
+        await _matchWebContactsAndRefresh();
       }
       LoadTimer.mark("All chats loaded (${chats.length})");
       Logger.info("Background chat load complete (${chats.length}).", tag: "ChatBloc");
