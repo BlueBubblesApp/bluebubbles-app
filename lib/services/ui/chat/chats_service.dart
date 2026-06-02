@@ -18,9 +18,9 @@ import 'package:bluebubbles/database/database.dart';
 ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>() : Get.put(ChatsService());
 
 class ChatsService extends GetxService {
-  static const batchSize = 25;
+  static const batchSize = 50;
   // Number of chat batches to fetch concurrently on web (network-bound)
-  static const webFetchConcurrency = 5;
+  static const webFetchConcurrency = 6;
   int currentCount = 0;
   late final StreamSubscription countSub;
 
