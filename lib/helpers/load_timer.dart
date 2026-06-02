@@ -24,7 +24,7 @@ class LoadTimer {
     _lastMs = 0;
     _started = true;
     // ignore: avoid_print
-    print('[BB-LOAD] +0ms — App start');
+    print('[${DateTime.now().toIso8601String()}] [BB-LOAD] +0ms — App start');
   }
 
   /// Record a milestone with the time since start and since the last mark.
@@ -34,6 +34,6 @@ class LoadTimer {
     final delta = now - _lastMs;
     _lastMs = now;
     // ignore: avoid_print
-    print('[BB-LOAD] +${now}ms (Δ${delta}ms) — $label');
+    print('[${DateTime.now().toIso8601String()}] [BB-LOAD] +${now}ms (Δ${delta}ms) — $label');
   }
 }
