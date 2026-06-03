@@ -123,6 +123,12 @@ class Settings {
   final RxBool enableQuickTapback = false.obs;
   final RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
 
+  // GIF picker settings
+  /// "tenor" | "giphy" | "none"
+  final RxString gifProvider = "tenor".obs;
+  final RxString tenorApiKeyOverride = "".obs;
+  final RxString giphyApiKeyOverride = "".obs;
+
   // Notification reaction settings
   final RxBool notificationReactionAction = true.obs;
   final RxString notificationReactionActionType = ReactionTypes.LIKE.obs; // Default to 'like'
@@ -369,6 +375,9 @@ class Settings {
       'generateFakeMessageContent': hideMessageContent.value,
       'enableQuickTapback': enableQuickTapback.value,
       'quickTapbackType': quickTapbackType.value,
+      'gifProvider': gifProvider.value,
+      'tenorApiKeyOverride': tenorApiKeyOverride.value,
+      'giphyApiKeyOverride': giphyApiKeyOverride.value,
       'notificationReactionAction': notificationReactionAction.value,
       'notificationReactionActionType': notificationReactionActionType.value,
       'materialRightAction': materialRightAction.value.index,
@@ -580,6 +589,12 @@ class Settings {
         map['enableQuickTapback'] ?? SettingsSvc.settings.enableQuickTapback.value;
     SettingsSvc.settings.quickTapbackType.value =
         map['quickTapbackType'] ?? SettingsSvc.settings.quickTapbackType.value;
+    SettingsSvc.settings.gifProvider.value =
+        map['gifProvider'] ?? SettingsSvc.settings.gifProvider.value;
+    SettingsSvc.settings.tenorApiKeyOverride.value =
+        map['tenorApiKeyOverride'] ?? SettingsSvc.settings.tenorApiKeyOverride.value;
+    SettingsSvc.settings.giphyApiKeyOverride.value =
+        map['giphyApiKeyOverride'] ?? SettingsSvc.settings.giphyApiKeyOverride.value;
     SettingsSvc.settings.notificationReactionAction.value =
         map['notificationReactionAction'] ?? SettingsSvc.settings.notificationReactionAction.value;
     SettingsSvc.settings.notificationReactionActionType.value =
@@ -764,6 +779,9 @@ class Settings {
     s.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
     s.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     s.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
+    s.gifProvider.value = map['gifProvider'] ?? "tenor";
+    s.tenorApiKeyOverride.value = map['tenorApiKeyOverride'] ?? "";
+    s.giphyApiKeyOverride.value = map['giphyApiKeyOverride'] ?? "";
     s.notificationReactionAction.value = map['notificationReactionAction'] ?? true;
     s.notificationReactionActionType.value = map['notificationReactionActionType'] ?? ReactionTypes.LIKE;
     s.materialRightAction.value = map['materialRightAction'] != null

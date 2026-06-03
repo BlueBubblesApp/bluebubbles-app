@@ -1026,6 +1026,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  flutter_localizations:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_map:
     dependency: "direct main"
     description:
@@ -1230,6 +1235,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.2.1"
+  giphy_get:
+    dependency: "direct main"
+    description:
+      name: giphy_get
+      sha256: "2762b2343b78da19248b6aa3302097a51eecd65584c495b5184a8e4ae0a1efc7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.6.1+1"
   git:
     dependency: transitive
     description:

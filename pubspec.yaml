@@ -95,6 +95,7 @@ dependencies:
       ref: d63342cb17976f60bd94e7c1a822398115d3f83c
   get: ^4.7.2
   github: ^9.25.0
+  giphy_get: ^3.6.1+1
   google_fonts: ^8.0.2
   google_ml_kit: ^0.21.0 # mobile only
   google_mlkit_smart_reply: ^0.13.0
