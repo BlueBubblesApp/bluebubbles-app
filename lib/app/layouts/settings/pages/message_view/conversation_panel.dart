@@ -1,4 +1,5 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
+import 'package:bluebubbles/app/layouts/settings/dialogs/api_key_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -29,6 +30,14 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
 
   bool sendPrepared = false;
   bool receivePrepared = false;
+
+  String get _normalizedGifProvider {
+    const valid = ["tenor", "giphy", "none"];
+    final v = SettingsSvc.settings.gifProvider.value;
+    return valid.contains(v) ? v : "tenor";
+  }
+
+  String _tail(String s) => s.length <= 4 ? s : s.substring(s.length - 4);
 
   @override
   void initState() {
@@ -474,6 +483,76 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                         title: "Scroll To Bottom When Sending Messages",
                         subtitle: "Scroll to the most recent messages in the chat when sending a new text",
                         backgroundColor: tileColor,
+                      )),
+                ],
+              ),
+              SettingsHeader(
+                iosSubtitle: iosSubtitle,
+                materialSubtitle: materialSubtitle,
+                text: "GIF Picker",
+              ),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
+                  Obx(() => SettingsOptions<String>(
+                        title: "Provider",
+                        subtitle: "Choose which GIF service the composer uses, or disable the picker.",
+                        initial: _normalizedGifProvider,
+                        options: const ["tenor", "giphy", "none"],
+                        textProcessing: (v) => switch (v) {
+                          "tenor" => "Tenor",
+                          "giphy" => "Giphy",
+                          _ => "Off",
+                        },
+                        onChanged: (val) async {
+                          if (val == null) return;
+                          SettingsSvc.settings.gifProvider.value = val;
+                          await SettingsSvc.settings.saveOneAsync('gifProvider');
+                        },
+                      )),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  Obx(() => SettingsTile(
+                        title: "Tenor API Key",
+                        subtitle: SettingsSvc.settings.tenorApiKeyOverride.value.isEmpty
+                            ? "Not set — falls back to the build-time key, if any. Tap to add."
+                            : "Custom key set (••••${_tail(SettingsSvc.settings.tenorApiKeyOverride.value)})",
+                        leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.gift, materialIcon: Icons.gif_box),
+                        trailing: const NextButton(),
+                        onTap: () async {
+                          final result = await showApiKeyDialog(
+                            context,
+                            title: "Tenor API Key",
+                            currentValue: SettingsSvc.settings.tenorApiKeyOverride.value,
+                            helperText:
+                                "Used when the GIF provider is Tenor. Leave blank to use the build-time key bundled with the app.",
+                            signupUrl: Uri.parse("https://developers.google.com/tenor/guides/quickstart"),
+                          );
+                          if (result == null) return;
+                          SettingsSvc.settings.tenorApiKeyOverride.value = result;
+                          await SettingsSvc.settings.saveOneAsync('tenorApiKeyOverride');
+                        },
+                      )),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  Obx(() => SettingsTile(
+                        title: "Giphy API Key",
+                        subtitle: SettingsSvc.settings.giphyApiKeyOverride.value.isEmpty
+                            ? "Required for Giphy. Tap to add. Free at developers.giphy.com."
+                            : "Custom key set (••••${_tail(SettingsSvc.settings.giphyApiKeyOverride.value)})",
+                        leading: const SettingsLeadingIcon(iosIcon: CupertinoIcons.gift, materialIcon: Icons.gif),
+                        trailing: const NextButton(),
+                        onTap: () async {
+                          final result = await showApiKeyDialog(
+                            context,
+                            title: "Giphy API Key",
+                            currentValue: SettingsSvc.settings.giphyApiKeyOverride.value,
+                            helperText:
+                                "Required when the GIF provider is Giphy. Get a free key at developers.giphy.com.",
+                            signupUrl: Uri.parse("https://developers.giphy.com/dashboard/"),
+                          );
+                          if (result == null) return;
+                          SettingsSvc.settings.giphyApiKeyOverride.value = result;
+                          await SettingsSvc.settings.saveOneAsync('giphyApiKeyOverride');
+                        },
                       )),
                 ],
               ),

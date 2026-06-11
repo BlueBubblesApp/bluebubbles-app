@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:giphy_get/giphy_get.dart' as giphy;
 import 'package:tenor_flutter/tenor_flutter.dart';
 import 'package:universal_io/io.dart';
 
@@ -134,94 +135,7 @@ class TextFieldIconBar extends StatelessWidget {
         if (!kIsWeb && !Platform.isAndroid)
           IconButton(
               icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
-              onPressed: () async {
-                if (kIsDesktop || kIsWeb) {
-                  controller.showingOverlays = true;
-                }
-                Tenor tenor = Tenor(apiKey: kIsWeb ? TENOR_API_KEY : dotenv.get('TENOR_API_KEY'));
-                TextEditingController tenorController = TextEditingController();
-                FocusNode focus = FocusNode();
-                Future<TenorResult?> resultFuture = tenor.showAsBottomSheet(
-                  maxExtent: 0.8,
-                  minExtent: 0.5,
-                  debounce: const Duration(seconds: 1),
-                  context: context,
-                  searchFieldController: tenorController,
-                  // Copied and slightly modified from source, just so I can autofocus
-                  searchFieldWidget: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        TextField(
-                          focusNode: focus,
-                          controller: tenorController,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.fromLTRB(28, 5, 32, 7),
-                            filled: true,
-                            hintStyle: const TenorSearchFieldStyle().hintStyle,
-                            hintText: "Search Tenor",
-                            isCollapsed: true,
-                            isDense: true,
-                          ),
-                          style: context.theme.textTheme.bodyMedium!,
-                        ),
-                        const Positioned(
-                          left: 4,
-                          child: Icon(
-                            Icons.search,
-                            color: Color(0xFF8A8A86),
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  style: TenorStyle(
-                    color: context.theme.colorScheme.surfaceContainerHighest,
-                    attributionStyle: TenorAttributionStyle(brightnes: context.theme.brightness),
-                    tabBarStyle: TenorTabBarStyle(
-                      decoration: BoxDecoration(
-                          color: context.theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8)),
-                      indicator: BoxDecoration(
-                        color: context.theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      labelColor: context.theme.colorScheme.onSurface,
-                      unselectedLabelColor: context.theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                );
-                focus.requestFocus();
-                TenorResult? result = await resultFuture;
-                if (kIsDesktop || kIsWeb) {
-                  controller.showingOverlays = false;
-                }
-                final selectedGif = result?.media.tinyGif ?? result?.media.tinyGifTransparent;
-                if (result != null && selectedGif != null) {
-                  final response = await HttpSvc.downloadFromUrl(selectedGif.url);
-                  if (response.statusCode == 200) {
-                    try {
-                      final Uint8List data = response.data;
-                      controller.pickedAttachments.add(PlatformFile(
-                        path: null,
-                        name: "${result.id}.gif",
-                        size: data.length,
-                        bytes: data,
-                      ));
-                      return;
-                    } catch (_) {}
-                  }
-                }
-              }),
+              onPressed: () => _onGifTapped(context)),
         if (kIsDesktop || kIsWeb)
           IconButton(
             icon: Icon(_iOS ? CupertinoIcons.smiley_fill : Icons.emoji_emotions,
@@ -241,5 +155,159 @@ class TextFieldIconBar extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  // ---------- GIF picker ----------
+
+  String _resolveTenorKey() {
+    final override = SettingsSvc.settings.tenorApiKeyOverride.value.trim();
+    if (override.isNotEmpty) return override;
+    try {
+      return kIsWeb ? TENOR_API_KEY : (dotenv.maybeGet('TENOR_API_KEY') ?? '');
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _resolveGiphyKey() {
+    final override = SettingsSvc.settings.giphyApiKeyOverride.value.trim();
+    if (override.isNotEmpty) return override;
+    try {
+      return kIsWeb ? '' : (dotenv.maybeGet('GIPHY_API_KEY') ?? '');
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<void> _onGifTapped(BuildContext context) async {
+    const validProviders = ['tenor', 'giphy', 'none'];
+    final raw = SettingsSvc.settings.gifProvider.value;
+    final provider = validProviders.contains(raw) ? raw : 'tenor';
+    if (provider == 'none') {
+      showSnackbar('GIF picker disabled',
+          'The GIF picker is turned off in settings. Enable Tenor or Giphy under Settings → Conversations → GIF Picker.');
+      return;
+    }
+    final apiKey = provider == 'tenor' ? _resolveTenorKey() : _resolveGiphyKey();
+    if (apiKey.isEmpty) {
+      final providerName = provider == 'tenor' ? 'Tenor' : 'Giphy';
+      showSnackbar(
+        'GIF picker unavailable',
+        'No $providerName API key is configured. Add one under Settings → Conversations → GIF Picker.',
+      );
+      return;
+    }
+    if (kIsDesktop || kIsWeb) {
+      controller.showingOverlays = true;
+    }
+    try {
+      ({String id, Uint8List bytes})? picked;
+      if (provider == 'tenor') {
+        picked = await _pickTenorGif(context, apiKey);
+      } else {
+        picked = await _pickGiphyGif(context, apiKey);
+      }
+      if (picked != null) {
+        controller.pickedAttachments.add(PlatformFile(
+          path: null,
+          name: "${picked.id}.gif",
+          size: picked.bytes.length,
+          bytes: picked.bytes,
+        ));
+      }
+    } finally {
+      if (kIsDesktop || kIsWeb) {
+        controller.showingOverlays = false;
+      }
+    }
+  }
+
+  Future<({String id, Uint8List bytes})?> _pickTenorGif(BuildContext context, String apiKey) async {
+    final tenor = Tenor(apiKey: apiKey);
+    final searchController = TextEditingController();
+    final focus = FocusNode();
+    final resultFuture = tenor.showAsBottomSheet(
+      maxExtent: 0.8,
+      minExtent: 0.5,
+      debounce: const Duration(seconds: 1),
+      context: context,
+      searchFieldController: searchController,
+      searchFieldWidget: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            TextField(
+              focusNode: focus,
+              controller: searchController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(width: 0, style: BorderStyle.none),
+                ),
+                contentPadding: const EdgeInsets.fromLTRB(28, 5, 32, 7),
+                filled: true,
+                hintStyle: const TenorSearchFieldStyle().hintStyle,
+                hintText: "Search Tenor",
+                isCollapsed: true,
+                isDense: true,
+              ),
+              style: context.theme.textTheme.bodyMedium!,
+            ),
+            const Positioned(
+              left: 4,
+              child: Icon(Icons.search, color: Color(0xFF8A8A86), size: 22),
+            ),
+          ],
+        ),
+      ),
+      style: TenorStyle(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        attributionStyle: TenorAttributionStyle(brightnes: context.theme.brightness),
+        tabBarStyle: TenorTabBarStyle(
+          decoration: BoxDecoration(
+              color: context.theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
+          indicator: BoxDecoration(
+            color: context.theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          labelColor: context.theme.colorScheme.onSurface,
+          unselectedLabelColor: context.theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+    focus.requestFocus();
+    final result = await resultFuture;
+    final selectedGif = result?.media.tinyGif ?? result?.media.tinyGifTransparent;
+    if (result == null || selectedGif == null) return null;
+    final response = await HttpSvc.downloadFromUrl(selectedGif.url);
+    if (response.statusCode != 200) return null;
+    try {
+      return (id: result.id, bytes: response.data as Uint8List);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<({String id, Uint8List bytes})?> _pickGiphyGif(BuildContext context, String apiKey) async {
+    final result = await giphy.GiphyGet.getGif(
+      context: context,
+      apiKey: apiKey,
+      lang: giphy.GiphyLanguage.english,
+      tabColor: context.theme.colorScheme.primary,
+    );
+    if (result == null) return null;
+    final url = result.images?.downsized?.url ??
+        result.images?.fixedHeightSmall?.url ??
+        result.images?.fixedHeight?.url ??
+        result.images?.original?.url;
+    if (url == null || url.isEmpty) return null;
+    final response = await HttpSvc.downloadFromUrl(url);
+    if (response.statusCode != 200) return null;
+    try {
+      return (id: result.id ?? 'giphy', bytes: response.data as Uint8List);
+    } catch (_) {
+      return null;
+    }
   }
 }
