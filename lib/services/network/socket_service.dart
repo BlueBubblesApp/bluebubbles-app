@@ -159,7 +159,9 @@ class SocketService {
         customCheckOptions: [
           InternetCheckOption(
             uri: Uri.parse(serverAddress),
-            timeout: const Duration(seconds: 3),
+            // 3s is too aggressive for a busy LAN server — a single slow probe
+            // would falsely report "no internet". 5s tolerates normal jitter.
+            timeout: const Duration(seconds: 5),
             responseStatusFn: (_) => true,
           ),
         ],
@@ -170,8 +172,16 @@ class SocketService {
       internetConnectionListener = internetConnection!.onStatusChange.listen((InternetStatus status) {
         Logger.info("Internet status changed: $status");
         if (status == InternetStatus.disconnected) {
-          handleStatusUpdate(SocketState.error, null);
-        } else if (state.value == SocketState.error) {
+          // A single failed reachability probe must NOT tear down a live
+          // websocket. socket.io already detects real drops via
+          // onDisconnect/onConnectError; forcing SocketState.error here on every
+          // transient LAN/probe timeout manufactures a restart loop (the cause
+          // of repeated disconnects on the home network). Only escalate if the
+          // socket truly isn't connected.
+          if (socket?.connected != true && state.value != SocketState.connected) {
+            handleStatusUpdate(SocketState.error, null);
+          }
+        } else if (state.value == SocketState.error && socket?.connected != true) {
           Logger.info("Internet reconnected, restarting socket...");
           restartSocket();
         }
