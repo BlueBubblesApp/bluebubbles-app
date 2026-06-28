@@ -411,7 +411,11 @@ extension MessageNotificationExtension on Message {
                     (associatedMessage.text ?? "");
               }
             }
-            return '$reactionSender $verb ${attachment ? "" : "“"}$messageText${attachment ? "" : "”"}';
+            // Wrap the quoted message in a Unicode First-Strong Isolate (U+2068 ... U+2069)
+            // so an RTL message (e.g. Farsi) embedded in this LTR sentence renders as a
+            // self-contained bidi unit; keeps trailing emoji/punctuation on the correct
+            // side of the quotes instead of escaping into the surrounding text.
+            return '$reactionSender $verb ${attachment ? "" : "\u2068“"}$messageText${attachment ? "" : "”\u2069"}';
           }
         }
         // if we can't fetch the associated message for some reason
