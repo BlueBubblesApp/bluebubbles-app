@@ -54,6 +54,20 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
               if (!kIsWeb)
                 Obx(() => SettingsSwitch(
                       onChanged: (bool val) async {
+                        SettingsSvc.settings.dndFavoritesOverride.value = val;
+                        await SettingsSvc.settings.saveOneAsync('dndFavoritesOverride');
+                      },
+                      initialVal: SettingsSvc.settings.dndFavoritesOverride.value,
+                      title: "Override DND for Favorites",
+                      subtitle:
+                          "Override Do Not Disturb (DND) for Favorite (starred) contacts",
+                      isThreeLine: true,
+                      backgroundColor: tileColor,
+                    )),
+              if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+              if (!kIsWeb)
+                Obx(() => SettingsSwitch(
+                      onChanged: (bool val) async {
                         SettingsSvc.settings.notifyOnChatList.value = val;
                         await SettingsSvc.settings.saveOneAsync('notifyOnChatList');
                       },

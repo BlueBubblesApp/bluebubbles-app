@@ -96,7 +96,6 @@ class MethodChannelActions {
   }
 
   Future<void> createIncomingMessageNotification({
-    required String channelId,
     required int? chatId,
     required String chatGuid,
     required bool chatIsGroup,
@@ -104,15 +103,16 @@ class MethodChannelActions {
     required Uint8List chatIcon,
     required String contactName,
     required Uint8List contactAvatar,
+    required String? nativeContactId,
     required String messageGuid,
     required String messageText,
     required int messageDate,
     required bool messageIsFromMe,
     required bool showReactionAction,
     required String reactionType,
+    required bool dndFavoritesOverride,
   }) async {
     await service.invokeMethod('create-incoming-message-notification', {
-      'channel_id': channelId,
       'chat_id': chatId,
       'chat_guid': chatGuid,
       'chat_is_group': chatIsGroup,
@@ -120,12 +120,14 @@ class MethodChannelActions {
       'chat_icon': chatIcon,
       'contact_name': contactName,
       'contact_avatar': contactAvatar,
+      if (nativeContactId != null) 'native_contact_id': nativeContactId,
       'message_guid': messageGuid,
       'message_text': messageText,
       'message_date': messageDate,
       'message_is_from_me': messageIsFromMe,
       'show_reaction_action': showReactionAction,
       'reaction_type': reactionType,
+      'dnd_favorites_override': dndFavoritesOverride,
     });
   }
 

@@ -11,7 +11,9 @@ class SettingsHelper(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
     
     companion object {
-        private const val PREFIX = ""
+        // Flutter's shared_preferences plugin stores all keys with this prefix in FlutterSharedPreferences.
+        // Every other Kotlin service (SocketIOForegroundService, FirebaseAuthHandler, etc.) uses this prefix.
+        private const val PREFIX = "flutter."
     }
 
     // Server connection settings

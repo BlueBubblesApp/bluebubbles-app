@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
 import androidx.core.app.RemoteInput
@@ -17,6 +18,7 @@ import com.bluebubbles.messaging.R
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
 import com.bluebubbles.messaging.services.intents.InternalIntentReceiver
 import com.bluebubbles.messaging.services.system.PushShareTargetsHandler
+import com.bluebubbles.messaging.utils.ContactNotificationHelper
 import com.bluebubbles.messaging.utils.Utils
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -32,8 +34,6 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         result: MethodChannel.Result,
         context: Context
     ) {
-        // channel details
-        val channelId: String = call.argument("channel_id")!!
         // chat details
         val chatGuid: String = call.argument("chat_guid")!!
         val chatTitle: String = call.argument("chat_title")!!
@@ -48,6 +48,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         // contact details
         val contactName: String = call.argument("contact_name")!!
         val contactIcon: ByteArray? = call.argument("contact_avatar")
+        val nativeContactId: String? = call.argument("native_contact_id")
         val contactBitmap = if ((contactIcon?.size ?: 0) == 0) null else Utils.getAdaptiveIconFromByteArray(contactIcon!!)
         // reaction settings
         val showReactionAction: Boolean = call.argument("show_reaction_action") ?: false
@@ -57,6 +58,8 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         val notificationId: Int = call.argument("chat_id")!!
 
         val notificationManager = context.getSystemService(NotificationManager::class.java)
+
+        val resolvedChannelId = ContactNotificationHelper.PARENT_CHANNEL_ID
         
         // Synchronize to prevent duplicate notifications from concurrent calls
         synchronized(notificationLock) {
@@ -67,15 +70,22 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         }
         
         // this is used to copy the style, since the notification already exists
-        val chatNotification = notificationManager.activeNotifications.lastOrNull { it.notification.extras.getString("chatGuid") == chatGuid && it.notification.extras.getString("channelId") == channelId }
+        val chatNotification = notificationManager.activeNotifications.lastOrNull { it.notification.extras.getString("chatGuid") == chatGuid && it.notification.extras.getString("channelId") == resolvedChannelId }
 
-        // build the sender object and push the share target again
-        val sender = Person.Builder()
-            .setName(contactName)
-            .setIcon(contactBitmap)
-            .setImportant(true)
-            .build()
-        PushShareTargetsHandler().pushShareTarget(context, chatTitle, chatGuid, chatIcon)
+        // Resolve favorite/DND status once; reuse for sender Person and conversation shortcut.
+        // When the "Override DND for Favorites" setting is off, skip the contact lookup entirely
+        // so no contact gets setUri/setImportant and no DND bypass occurs.
+        // The setting is passed from Dart (where the RxBool value is authoritative) rather than
+        // read from SharedPreferences, because the app uses SharedPreferencesAsync (DataStore)
+        // which is not accessible via the legacy getSharedPreferences() API.
+        val dndEnabled = call.argument<Boolean>("dnd_favorites_override") ?: false
+        val contactInfo = if (dndEnabled) {
+            ContactNotificationHelper.resolveContactInfo(context, nativeContactId)
+        } else {
+            ContactNotificationHelper.ContactInfo(lookupUri = null, isFavorite = false)
+        }
+        val sender = ContactNotificationHelper.buildPerson(contactName, contactBitmap, contactInfo)
+        PushShareTargetsHandler().pushShareTarget(context, chatTitle, chatGuid, chatIcon, contactInfo)
 
         // get or create a messaging style
         val style = if (chatNotification != null) {
@@ -99,7 +109,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         val extras = Bundle()
         extras.putString("chatGuid", chatGuid)
         extras.putString("messageGuid", messageGuid)
-        extras.putString("channelId", channelId)
+        extras.putString("channelId", resolvedChannelId)
         extras.putString("tag", Constants.newMessageNotificationTag)
         extras.putBoolean("reactionSent", false) // Track if reaction has been sent
 
@@ -190,7 +200,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         )
 
         // Build the notification
-        val notificationBuilder = NotificationCompat.Builder(context, channelId)
+        val notificationBuilder = NotificationCompat.Builder(context, resolvedChannelId)
             .setSmallIcon(R.mipmap.ic_stat_icon)
             .setGroup(Constants.notificationGroupKey)
             .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
@@ -222,7 +232,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         }
         notificationBuilder.extend(wearableExtender)
 
-        // Only set bubble metadata on Android 11+ (API 29+) where it's supported
+        // Only set bubble metadata on Android 10+ (API 29+) where it's supported
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val bubbleMetadata = NotificationCompat.BubbleMetadata.Builder(bubbleIntent, chatBitmap ?: IconCompat.createWithResource(context, R.mipmap.ic_stat_icon))
                 .setDesiredHeight(600)
@@ -248,7 +258,7 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        val summaryNotificationBuilder = NotificationCompat.Builder(context, channelId)
+        val summaryNotificationBuilder = NotificationCompat.Builder(context, resolvedChannelId)
             .setSmallIcon(R.mipmap.ic_stat_icon)
             .setGroup(Constants.notificationGroupKey)
             .setGroupSummary(true)
@@ -259,8 +269,13 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
             .setContentIntent(openSummaryIntent)
             .setColor(4888294)
 
-        notificationManager.notify(Constants.newMessageNotificationTag, 0, summaryNotificationBuilder.build())
-        notificationManager.notify(Constants.newMessageNotificationTag, notificationId, notificationBuilder.build())
-        result.success(null)
+        try {
+            notificationManager.notify(Constants.newMessageNotificationTag, 0, summaryNotificationBuilder.build())
+            notificationManager.notify(Constants.newMessageNotificationTag, notificationId, notificationBuilder.build())
+            result.success(null)
+        } catch (e: Exception) {
+            Log.e(Constants.logTag, "Failed to post notification", e)
+            result.error("500", "Failed to create notification", e.message)
+        }
     }
 }

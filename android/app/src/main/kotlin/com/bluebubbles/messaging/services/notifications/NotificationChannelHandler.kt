@@ -42,6 +42,14 @@ class NotificationChannelHandler: MethodCallHandlerImpl() {
             // perform a one-time migration to remediate that. Some devices will always report
             // shouldVibrate() as false, so we also use SharedPreferences to ensure we only do this once.
             if (channelId == "com.bluebubbles.new_messages") {
+                // Remove legacy per-conversation channels so stale tones can't linger in system UI.
+                for (legacy in notificationManager.notificationChannels) {
+                    if (legacy.id.startsWith("bb-chat-")) {
+                        notificationManager.deleteNotificationChannel(legacy.id)
+                        Log.d(Constants.logTag, "Deleted legacy per-conversation channel ${legacy.id}")
+                    }
+                }
+
                 val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 val alreadyMigrated = prefs.getBoolean(KEY_NEW_MESSAGES_VIBRATION_MIGRATED, false)
                 val existing = notificationManager.getNotificationChannel(channelId)
@@ -66,12 +74,11 @@ class NotificationChannelHandler: MethodCallHandlerImpl() {
             // setup channel with parameters
             val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
             channel.description = channelDescription
-            // set the 'New Messages' channel to allow bubbling, bypassing DND, and showing badges
+            // Global fallback channel — no bypassDnd; per-contact DND is handled via Person URIs.
             if (channelId == "com.bluebubbles.new_messages") {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     channel.setAllowBubbles(true)
                 }
-                channel.setBypassDnd(true)
                 channel.setShowBadge(true)
                 channel.enableVibration(true)
             // set 'Foreground Service' channel to low importance (avoid heads-up notification)

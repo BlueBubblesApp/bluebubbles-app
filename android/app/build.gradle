@@ -128,7 +128,7 @@ android {
             productFlavors.tanay.signingConfig signingConfigs.debug
             productFlavors.alpha.signingConfig signingConfigs.release
             productFlavors.beta.signingConfig signingConfigs.release
-            productFlavors.prod.signingConfig signingConfigs.release
+            productFlavors.prod.signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }

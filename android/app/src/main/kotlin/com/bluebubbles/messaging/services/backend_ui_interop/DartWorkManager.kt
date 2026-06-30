@@ -15,18 +15,40 @@ import com.google.gson.ToNumberPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 
 object DartWorkManager {
+    // WorkManager input data is capped at 10 KB total; attachment pushes can exceed that.
+    private const val WORKER_DATA_MAX_BYTES = 9_000
+    const val DATA_FILE_MARKER = "@file:"
+
     fun createWorker(context: Context, method: String, arguments: HashMap<String, Any?>, callback: () -> (Unit)) {
         Log.d(Constants.logTag, "Creating new ${Constants.dartWorkerTag} for method $method")
         val gson = GsonBuilder()
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create()
+        val json = gson.toJson(arguments)
+        Log.i(Constants.logTag, "Worker payload for $method is ${json.length} bytes")
+
+        val dataBuilder = Data.Builder().putString("method", method)
+        if (json.length <= WORKER_DATA_MAX_BYTES) {
+            dataBuilder.putString("data", json)
+        } else {
+            val payloadFile = File(
+                context.cacheDir,
+                "dart_worker_${System.currentTimeMillis()}_${method.hashCode()}.json",
+            )
+            payloadFile.writeText(json)
+            dataBuilder.putString("data", DATA_FILE_MARKER + payloadFile.absolutePath)
+            Log.w(
+                Constants.logTag,
+                "Worker payload exceeds WorkManager limit; spilling ${json.length} bytes to ${payloadFile.absolutePath}",
+            )
+        }
+
         val work = OneTimeWorkRequest.Builder(DartWorker::class.java)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            .setInputData(Data.Builder()
-                .putString("method", method)
-                .putString("data", gson.toJson(arguments).toString()).build())
+            .setInputData(dataBuilder.build())
             .addTag(Constants.dartWorkerTag)
             .build()
         // Use unique work to prevent a binder storm when multiple FCM messages arrive
@@ -35,11 +57,22 @@ object DartWorkManager {
         // threshold and cause the OS to kill the process before any message is processed.
         // APPEND_OR_REPLACE chains jobs sequentially (safe: workerEngine is a singleton) and
         // keeps all messages — unlike KEEP (drops) or REPLACE (cancels in-progress work).
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            Constants.dartWorkerTag,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
-            work
-        )
+        try {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                Constants.dartWorkerTag,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                work
+            )
+        } catch (e: Exception) {
+            Log.e(Constants.logTag, "Failed to enqueue worker for method $method (${json.length} bytes)", e)
+            if (json.length > WORKER_DATA_MAX_BYTES) {
+                val spilledPath = dataBuilder.build().getString("data")
+                if (spilledPath?.startsWith(DATA_FILE_MARKER) == true) {
+                    File(spilledPath.removePrefix(DATA_FILE_MARKER)).delete()
+                }
+            }
+            return
+        }
 
         // Observe when the worker is finished and run the provided callback
         lateinit var observer: Observer<WorkInfo>
