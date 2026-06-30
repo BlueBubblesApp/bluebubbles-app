@@ -3,7 +3,8 @@ package com.bluebubbles.messaging
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
 import com.bluebubbles.messaging.utils.Utils
 import com.google.gson.Gson
-import com.google.gson.JsonElement
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
 
 import org.unifiedpush.android.connector.MessagingReceiver
@@ -49,36 +50,45 @@ class UnifiedPushReceiver : MessagingReceiver() {
     override fun onMessage(context: Context, payload: ByteArray, instance: String) {
         val applicationContext = context.getApplicationContext()
         val msg = payload.toString(Charsets.UTF_8)
-        val gson: Gson = Gson()
-        val json: Map<String, JsonElement> = gson.fromJson(msg)
-        val type: String
+        Log.i(tag, "UnifiedPush payload received (${payload.size} bytes)")
+
         try {
-            type = json.get("type")?.getAsString() ?: return
-        } catch (e: UnsupportedOperationException) {
-            Log.d(tag, "Invalid message type")
-            return
-        }
+            val gson: Gson = GsonBuilder()
+                .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+                .create()
+            @Suppress("UNCHECKED_CAST")
+            val parsed = gson.fromJson<HashMap<String, Any?>>(
+                msg,
+                object : TypeToken<HashMap<String, Any?>>() {}.type,
+            )
+            val type: String = parsed["type"]?.toString() ?: run {
+                Log.w(tag, "UnifiedPush payload missing type field (${payload.size} bytes)")
+                return
+            }
 
-        Log.i(tag, "Received new message of type $type from UnifiedPush...")
-        DartWorkManager.createWorker(applicationContext, type, HashMap(json)) {}
+            Log.i(tag, "Received new message of type $type from UnifiedPush (${payload.size} bytes)")
+            DartWorkManager.createWorker(applicationContext, type, parsed) {}
 
-        // check if the user configured "Send Events to Tasker"
-        val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
-        if (prefs.getBoolean("flutter.sendEventsToTasker", false)) {
-            Utils.getServerUrl(applicationContext, object : MethodChannel.Result {
-                override fun success(result: Any?) {
-                    Log.w(tag, "Got URL: $result - sending to Tasker...")
-                    val intent = Intent()
-                    intent.setAction("net.dinglisch.android.taserm.BB_EVENT")
-                    intent.putExtra("url", result.toString())
-                    intent.putExtra("event", type)
-                    intent.putExtras(bundleOf(*json.toList().toTypedArray()))
-                    applicationContext.sendBroadcast(intent)
-                }
+            // check if the user configured "Send Events to Tasker"
+            val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
+            if (prefs.getBoolean("flutter.sendEventsToTasker", false)) {
+                Utils.getServerUrl(applicationContext, object : MethodChannel.Result {
+                    override fun success(result: Any?) {
+                        Log.w(tag, "Got URL: $result - sending to Tasker...")
+                        val intent = Intent()
+                        intent.setAction("net.dinglisch.android.taserm.BB_EVENT")
+                        intent.putExtra("url", result.toString())
+                        intent.putExtra("event", type)
+                        intent.putExtras(bundleOf(*parsed.toList().toTypedArray()))
+                        applicationContext.sendBroadcast(intent)
+                    }
 
-                override fun error(errorCode: String, errorMesage: String?, errorDetails: Any?) {}
-                override fun notImplemented() {}
-            })
+                    override fun error(errorCode: String, errorMesage: String?, errorDetails: Any?) {}
+                    override fun notImplemented() {}
+                })
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to process UnifiedPush message (${payload.size} bytes)", e)
         }
     }
 }

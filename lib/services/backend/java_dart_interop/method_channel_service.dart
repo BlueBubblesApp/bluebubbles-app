@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:bluebubbles/services/network/method_channel_actions.dart';
 import 'package:bluebubbles/services/backend/java_dart_interop/method_channel_handlers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/deep_map_normalize.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -81,8 +82,7 @@ class MethodChannelService implements MethodChannelServiceDelegate {
   }
 
   Future<bool> _callHandler(MethodCall call) async {
-    final Map<String, dynamic>? arguments =
-        call.arguments is String ? jsonDecode(call.arguments) : call.arguments?.cast<String, Object>();
+    final Map<String, dynamic>? arguments = normalizeMethodChannelArguments(call.arguments);
 
     // ONLY RETURN Future.value or Future.error
     // Future.value(false) will have the engine retry the call

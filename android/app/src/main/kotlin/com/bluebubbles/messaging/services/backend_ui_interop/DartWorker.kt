@@ -36,6 +36,7 @@ import java.util.Timer
 import kotlin.concurrent.schedule
 import kotlin.coroutines.resume
 import kotlinx.coroutines.guava.future
+import java.io.File
 
 // Background worker plugins — only those required for notification/sync processing
 import com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin
@@ -60,7 +61,8 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
 
     override fun startWork(): ListenableFuture<Result> {
         val method = inputData.getString("method")!!
-        val data = inputData.getString("data")!!
+        val data = resolveWorkerPayload(inputData.getString("data")!!)
+            ?: return Futures.immediateFuture(Result.failure())
         val gson = GsonBuilder()
                 .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
                 .create()
@@ -136,6 +138,25 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
                 Log.d(Constants.logTag, "Error sending method $method to Dart: ${e.message}")
                 return@future Result.failure()
             }
+        }
+    }
+
+    private fun resolveWorkerPayload(rawData: String): String? {
+        if (!rawData.startsWith(DartWorkManager.DATA_FILE_MARKER)) {
+            return rawData
+        }
+
+        val path = rawData.removePrefix(DartWorkManager.DATA_FILE_MARKER)
+        val payloadFile = File(path)
+        return try {
+            val json = payloadFile.readText()
+            Log.d(Constants.logTag, "Loaded ${json.length} byte worker payload from $path")
+            payloadFile.delete()
+            json
+        } catch (e: Exception) {
+            Log.e(Constants.logTag, "Failed to read worker payload file $path", e)
+            payloadFile.delete()
+            null
         }
     }
 

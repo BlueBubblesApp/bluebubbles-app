@@ -9,6 +9,8 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/models/models.dart' show HandleLookupKey;
+import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -27,6 +29,111 @@ import 'package:get_it/get_it.dart';
 
 // ignore: non_constant_identifier_names
 NotificationsService get NotificationsSvc => GetIt.I<NotificationsService>();
+
+/// Android Contacts row ID for linking notifications to system DND starred-contact rules.
+String? nativeContactIdForHandle(Handle? handle) {
+  if (handle == null) return null;
+
+  ContactV2? contact = handle.contactsV2.where((c) => c.isNative).firstOrNull;
+  contact ??= handle.contactsV2.firstOrNull;
+  if (contact == null) return null;
+
+  final id = contact.nativeContactId;
+  if (id.isEmpty || int.tryParse(id) == null) return null;
+  return id;
+}
+
+Future<String?> nativeContactIdForMessage(Message message) async {
+  final handle = message.handleRelation.target;
+  final fromHandle = nativeContactIdForHandle(handle);
+  if (fromHandle != null) return fromHandle;
+
+  final address = handle?.address;
+  if (address == null || address.isEmpty) return null;
+
+  final contact = await ContactV2Interface.getContactByAddress(address: address);
+  if (contact == null) return null;
+  final id = contact.nativeContactId;
+  if (id.isEmpty || int.tryParse(id) == null) return null;
+  return id;
+}
+
+/// Incoming pushes can arrive before ObjectBox ToOne links are hydrated on the
+/// in-memory [Message]. Reload and fall back to chat participants so attachment
+/// notifications are not dropped.
+String notificationSenderName(Message message, Chat chat) {
+  if (message.handleRelation.hasValue) {
+    return message.handleRelation.target!.displayName;
+  }
+  if (message.handle != null) {
+    return message.handle!.displayName;
+  }
+  if (message.handleId != null && message.handleId! > 0) {
+    for (final h in chat.handles) {
+      if (h.originalROWID == message.handleId) return h.displayName;
+    }
+    final global = Handle.findOne(originalROWID: message.handleId);
+    if (global != null) return global.displayName;
+  }
+  return 'Unknown';
+}
+
+Message resolveHandleForNotification(Message message, Chat chat) {
+  Message m = message;
+
+  if (!m.handleRelation.hasValue && m.guid != null) {
+    final reloaded = Message.findOne(guid: m.guid);
+    if (reloaded != null) {
+      m = reloaded;
+    }
+  }
+
+  if (!m.handleRelation.hasValue && m.handleId != null && m.handleId! > 0) {
+    final handle = Handle.findOne(originalROWID: m.handleId);
+    if (handle != null) {
+      m.handleRelation.target = handle;
+      return m;
+    }
+  }
+
+  if (!m.handleRelation.hasValue && m.handle != null) {
+    final handle = Handle.findOne(
+          addressAndService: HandleLookupKey(m.handle!.address, m.handle!.service),
+        ) ??
+        m.handle;
+    if (handle != null) {
+      m.handleRelation.target = handle;
+      return m;
+    }
+  }
+
+  final participantPool = chat.handles.isNotEmpty ? chat.handles.toList() : chat.participants;
+  if (!m.handleRelation.hasValue && m.handleId != null && participantPool.isNotEmpty) {
+    final participant = participantPool.cast<Handle?>().firstWhereOrNull(
+          (h) => h?.originalROWID == m.handleId,
+        );
+    if (participant != null) {
+      m.handleRelation.target = participant;
+      return m;
+    }
+  }
+
+  if (!m.handleRelation.hasValue && chat.isGroup && m.handle != null && participantPool.isNotEmpty) {
+    final byAddress = participantPool.cast<Handle?>().firstWhereOrNull(
+          (h) => h?.address == m.handle!.address && h?.service == m.handle!.service,
+        );
+    if (byAddress != null) {
+      m.handleRelation.target = byAddress;
+      return m;
+    }
+  }
+
+  if (!m.handleRelation.hasValue && !chat.isGroup && chat.participants.isNotEmpty) {
+    m.handleRelation.target = chat.participants.first;
+  }
+
+  return m;
+}
 
 class PendingToastItem {
   final String? sender;
@@ -132,7 +239,7 @@ class NotificationsService {
     if (chat.shouldMuteNotification(message) || message.isFromMe!) return;
     final isGroup = chat.isGroup;
     final guid = chat.guid;
-    final contactName = message.handleRelation.target?.displayName ?? "Unknown";
+    final contactName = notificationSenderName(message, chat);
     final title = isGroup ? chat.getTitle() : contactName;
     final text = hideContent ? "iMessage" : message.getNotificationText();
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid);
@@ -174,10 +281,20 @@ class NotificationsService {
             SettingsSvc.settings.notificationReactionAction.value &&
             message.associatedMessageGuid == null;
         final String reactionType = SettingsSvc.settings.notificationReactionActionType.value;
+        String? nativeContactId;
+        try {
+          nativeContactId = await nativeContactIdForMessage(message);
+        } catch (e, s) {
+          Logger.warn(
+            'Contact lookup failed for notification; continuing without contact link',
+            tag: 'NotificationsService',
+            error: e,
+            trace: s,
+          );
+        }
 
         await GetIt.I.isReady<MethodChannelService>();
         await MethodChannelSvc.actions.createIncomingMessageNotification(
-          channelId: NEW_MESSAGE_CHANNEL,
           chatId: chat.id,
           chatGuid: guid,
           chatIsGroup: isGroup,
@@ -185,26 +302,28 @@ class NotificationsService {
           chatIcon: isGroup ? chatIcon : contactIcon,
           contactName: contactName,
           contactAvatar: contactIcon,
+          nativeContactId: nativeContactId,
           messageGuid: message.guid!,
           messageText: text,
           messageDate: message.dateCreated!.millisecondsSinceEpoch,
           messageIsFromMe: false,
           showReactionAction: showReactionAction,
           reactionType: reactionType,
+          dndFavoritesOverride: SettingsSvc.settings.dndFavoritesOverride.value,
         );
       }
     }
   }
 
   Future<void> tryCreateNewMessageNotification(Message message, Chat chat) async {
-    if (message.isFromMe! || !message.handleRelation.hasValue) {
-      if (!(message.isFromMe ?? false) && !message.handleRelation.hasValue) {
-        Logger.warn(
-          'Skipping notification for ${message.guid} — handle relation not resolved',
-          tag: 'NotificationsService',
-        );
-      }
-      return;
+    if (message.isFromMe!) return;
+
+    message = resolveHandleForNotification(message, chat);
+    if (!message.handleRelation.hasValue) {
+      Logger.warn(
+        'Handle relation not resolved for ${message.guid}; posting notification with chat fallback',
+        tag: 'NotificationsService',
+      );
     }
     if (message.isKeptAudio) return;
     if (chat.shouldMuteNotification(message)) return;

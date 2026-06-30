@@ -6,6 +6,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/deep_map_normalize.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -93,19 +94,67 @@ class MethodChannelHandlers {
         return _ok();
       }
 
-      final Map<String, dynamic>? data = arguments;
+      Logger.info('BB_MAP_FIX_V3 handling new-message push');
+      final Map<String, dynamic>? data = normalizeMethodChannelArguments(arguments);
       if (!isNullOrEmpty(data)) {
-        final payload = ServerPayload.fromJson(data!);
+        late final ServerPayload payload;
+        late final Map<String, dynamic> messageData;
+        late final Chat chat;
+        late final Message message;
+        late final List<Attachment> attachments;
+
+        try {
+          Logger.info('BB_MAP_FIX_V3 step=ServerPayload');
+          payload = ServerPayload.fromJson(data!);
+        } catch (e, s) {
+          Logger.error('BB_MAP_FIX_V3 failed at ServerPayload: $e', trace: s);
+          rethrow;
+        }
+
+        try {
+          Logger.info('BB_MAP_FIX_V3 step=messageData');
+          messageData = asStringDynamicMapRequired(payload.data);
+        } catch (e, s) {
+          Logger.error('BB_MAP_FIX_V3 failed at messageData: $e', trace: s);
+          rethrow;
+        }
+
+        try {
+          Logger.info('BB_MAP_FIX_V3 step=Message');
+          message = Message.fromMap(messageData);
+        } catch (e, s) {
+          Logger.error('BB_MAP_FIX_V3 failed at Message: $e', trace: s);
+          rethrow;
+        }
+
+        try {
+          Logger.info('BB_MAP_FIX_V3 step=attachments count=${(messageData['attachments'] as List?)?.length ?? 0}');
+          attachments = ((messageData['attachments'] as List?) ?? const [])
+              .map((e) => Attachment.fromMap(asStringDynamicMapRequired(e)))
+              .toList();
+        } catch (e, s) {
+          Logger.error('BB_MAP_FIX_V3 failed at attachments: $e', trace: s);
+          rethrow;
+        }
+
+        try {
+          Logger.info('BB_MAP_FIX_V3 step=Chat');
+          final chatJson = asStringDynamicMapRequired(messageData['chats']?.first);
+          chatJson.remove('lastMessage');
+          chat = Chat.fromMap(chatJson);
+        } catch (e, s) {
+          Logger.error('BB_MAP_FIX_V3 failed at Chat: $e', trace: s);
+          rethrow;
+        }
+
+        Logger.info('BB_MAP_FIX_V3 step=IncomingMsgHandler');
         await IncomingMsgHandler.handle(IncomingPayload(
           type: MessageEventType.newMessage,
           source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, Object>()),
-          message: Message.fromMap(payload.data),
-          attachments: ((payload.data['attachments'] as List?) ?? const [])
-              .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, Object>()))
-              .toList(),
-          tempGuid: payload.data['tempGuid'],
+          chat: chat,
+          message: message,
+          attachments: attachments,
+          tempGuid: messageData['tempGuid'],
         ));
       }
     } catch (e, s) {
@@ -133,16 +182,17 @@ class MethodChannelHandlers {
     }
 
     try {
-      final Map<String, dynamic>? data = arguments;
+      final Map<String, dynamic>? data = normalizeMethodChannelArguments(arguments);
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
+        final messageData = deepNormalizeJson(payload.data) as Map<String, dynamic>;
 
-        if (payload.data['chats'] == null || payload.data['chats'].isEmpty) {
+        if (messageData['chats'] == null || (messageData['chats'] as List).isEmpty) {
           Logger.info('No chat data found, attempting to find chat from message guid...');
-          final existingMsg = Message.findOne(guid: payload.data['guid']);
+          final existingMsg = Message.findOne(guid: messageData['guid']);
           if (existingMsg != null && existingMsg.chat.target != null) {
             Logger.info('Found chat from message guid, adding to payload');
-            payload.data['chats'] = [existingMsg.chat.target!.toMap()];
+            messageData['chats'] = [existingMsg.chat.target!.toMap()];
           } else {
             Logger.warn('No chat data found, and unable to find chat from message guid');
             return _retry();
@@ -152,13 +202,13 @@ class MethodChannelHandlers {
         await IncomingMsgHandler.handle(IncomingPayload(
           type: MessageEventType.updatedMessage,
           source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, Object>()),
-          message: Message.fromMap(payload.data),
-          attachments: ((payload.data['attachments'] as List?) ?? const [])
+          chat: Chat.fromMap(deepNormalizeJson(messageData['chats'].first) as Map<String, dynamic>),
+          message: Message.fromMap(messageData),
+          attachments: ((messageData['attachments'] as List?) ?? const [])
               .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, Object>()))
+              .map((e) => Attachment.fromMap(deepNormalizeJson(e) as Map<String, dynamic>))
               .toList(),
-          tempGuid: payload.data['tempGuid'],
+          tempGuid: messageData['tempGuid'],
         ));
       }
     } catch (e, s) {
