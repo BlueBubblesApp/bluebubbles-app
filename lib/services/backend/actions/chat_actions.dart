@@ -251,12 +251,7 @@ class ChatActions {
 
       // Prepare handle reference (find or create handle, but don't set relation yet)
       Handle? handleToLink;
-      if (inputMessage.handle == null && inputMessage.handleId != null) {
-        final handleQuery = handleBox.query(Handle_.originalROWID.equals(inputMessage.handleId!)).build();
-        handleQuery.limit = 1;
-        handleToLink = handleQuery.findFirst();
-        handleQuery.close();
-      } else if (inputMessage.handle != null) {
+      if (inputMessage.handle != null) {
         // Try and find existing handle by unique address
         final existingHandleQuery = handleBox
             .query(Handle_.uniqueAddressAndService.equals(inputMessage.handle!.uniqueAddressAndService))
@@ -268,11 +263,36 @@ class ChatActions {
         if (existingHandle != null) {
           handleToLink = existingHandle;
         } else {
-          // Save new handle
-          final handleId = handleBox.put(inputMessage.handle!);
-          inputMessage.handle!.id = handleId;
-          handleToLink = inputMessage.handle;
+          // Normalized fallback: try with +/− prefix variant.
+          // The Mac can store the same person's number as both "+1XXXXXXXXXX" and
+          // "1XXXXXXXXXX"; a second message from the same sender may carry the
+          // other form.  If we already have the canonical handle, reuse it so that
+          // the message is linked to the contact-aware handle instead of creating
+          // an orphaned duplicate.
+          final addr = inputMessage.handle!.address;
+          final altAddr = addr.startsWith('+') ? addr.substring(1) : '+$addr';
+          final altUAS = '$altAddr/${inputMessage.handle!.service}';
+          final altQuery = handleBox.query(Handle_.uniqueAddressAndService.equals(altUAS)).build();
+          altQuery.limit = 1;
+          final altHandle = altQuery.findFirst();
+          altQuery.close();
+
+          if (altHandle != null) {
+            handleToLink = altHandle;
+          } else {
+            // Ensure originalROWID mirrors the Mac ROWID carried in the id field
+            // (the server sends ROWID in the "ROWID" key; originalROWID may be absent).
+            inputMessage.handle!.originalROWID ??= inputMessage.handle!.id;
+            final handleId = handleBox.put(inputMessage.handle!);
+            inputMessage.handle!.id = handleId;
+            handleToLink = inputMessage.handle;
+          }
         }
+      } else if (inputMessage.handleId != null && inputMessage.handleId! > 0) {
+        final handleQuery = handleBox.query(Handle_.originalROWID.equals(inputMessage.handleId!)).build();
+        handleQuery.limit = 1;
+        handleToLink = handleQuery.findFirst();
+        handleQuery.close();
       }
 
       // Handle associated messages (reactions)
@@ -305,6 +325,17 @@ class ChatActions {
 
       if (dbChat != null) {
         inputMessage.chat.target = dbChat;
+
+        // Fallback: resolve sender against this chat's linked participants
+        if (handleToLink == null && inputMessage.handleId != null && inputMessage.handleId! > 0) {
+          handleToLink =
+              List<Handle>.from(dbChat.handles).firstWhereOrNull((h) => h.originalROWID == inputMessage.handleId);
+        }
+        if (handleToLink == null && inputMessage.handle != null) {
+          handleToLink = List<Handle>.from(dbChat.handles).firstWhereOrNull(
+            (h) => h.address == inputMessage.handle!.address && h.service == inputMessage.handle!.service,
+          );
+        }
       }
 
       // Save the message
@@ -334,6 +365,14 @@ class ChatActions {
           if (handleToLink != null && dbMessage.handleRelation.target == null) {
             dbMessage.handleRelation.target = handleToLink;
             needsUpdate = true;
+          }
+
+          // Keep chat participant list in sync when we resolve a new sender
+          if (handleToLink != null &&
+              dbChat != null &&
+              !dbChat.handles.any((h) => h.originalROWID == handleToLink!.originalROWID)) {
+            dbChat.handles.add(handleToLink);
+            dbChat.handles.applyToDb();
           }
 
           // Process and link attachments if present
@@ -682,6 +721,9 @@ class ChatActions {
 
   static Future<List<int>> getMessagesAsync(dynamic data) async {
     final chatId = data['chatId'] as int;
+    // chatStyle == 43 means iMessage group chat; used as a more reliable group
+    // indicator than participants.length when the local participant list is stale.
+    final chatStyle = data['chatStyle'] as int? ?? 0;
     final participantsData = (data['participantsData'] as List).cast<Map<String, dynamic>>();
     final offset = data['offset'] as int? ?? 0;
     final limit = data['limit'] as int? ?? 25;
@@ -727,15 +769,22 @@ class ChatActions {
         afterQuery.close();
       }
 
-      // Handle matching - filter out messages that don't match participant requirements
-      for (int i = 0; i < messages.length; i++) {
-        Message message = messages[i];
-        if (participants.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
-          Handle? handle =
-              participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
-          if (handle == null && message.originalROWID != null) {
-            messages.remove(message);
-            i--;
+      // 1:1 only: drop messages whose sender doesn't match the sole participant.
+      // Group messages are already chat-linked; filtering them here hides valid
+      // messages when the local participant list is stale.
+      // chatStyle == 43 is iMessage group; also keep the participant-count check
+      // as a fallback for SMS groups (style != 43).
+      final isGroupChat = chatStyle == 43 || participants.length > 1;
+      if (!isGroupChat) {
+        for (int i = 0; i < messages.length; i++) {
+          Message message = messages[i];
+          if (participants.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
+            final Handle? handle =
+                participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
+            if (handle == null && message.originalROWID != null) {
+              messages.remove(message);
+              i--;
+            }
           }
         }
       }

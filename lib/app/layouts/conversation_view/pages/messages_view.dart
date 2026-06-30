@@ -372,6 +372,10 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     Logger.debug(
         "loadNextChunk: Found ${newMessages.length} new messages (old: $oldLength, new: ${newMessagesFromService.length})");
 
+    if (newMessages.isEmpty) {
+      noMoreMessages = true;
+    }
+
     // Initialize message widget controllers for new messages
     for (final newMsg in newMessages) {
       createStateForMessage(newMsg, controller);

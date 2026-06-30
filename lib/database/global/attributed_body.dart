@@ -1,3 +1,5 @@
+import 'package:bluebubbles/utils/deep_map_normalize.dart';
+
 class AttributedBody {
   AttributedBody({
     required this.string,
@@ -7,11 +9,17 @@ class AttributedBody {
   final String string;
   final List<Run> runs;
 
-  factory AttributedBody.fromMap(Map<String, dynamic> json) => AttributedBody(
-        string: json["string"],
-        runs:
-            json["runs"] == null ? [] : List<Run>.from(json["runs"].map((x) => Run.fromMap(x!.cast<String, Object>()))),
-      );
+  factory AttributedBody.fromMap(Map<String, dynamic> json) {
+    json = asStringDynamicMapRequired(json);
+    return AttributedBody(
+      string: json["string"] ?? "",
+      runs: json["runs"] == null
+          ? []
+          : List<Run>.from(
+              json["runs"].map((x) => Run.fromMap(asStringDynamicMapRequired(x))),
+            ),
+    );
+  }
 
   Map<String, dynamic> toMap() => {
         "string": string,
@@ -31,10 +39,15 @@ class Run {
   bool get isAttachment => attributes?.attachmentGuid != null;
   bool get hasMention => attributes?.mention != null;
 
-  factory Run.fromMap(Map<String, dynamic> json) => Run(
-        range: json["range"] == null ? [] : List<int>.from(json["range"].map((x) => x)),
-        attributes: json["attributes"] == null ? null : Attributes.fromMap(json["attributes"]!.cast<String, Object>()),
-      );
+  factory Run.fromMap(Map<String, dynamic> json) {
+    json = asStringDynamicMapRequired(json);
+    return Run(
+      range: json["range"] == null ? [] : List<int>.from(json["range"].map((x) => x)),
+      attributes: json["attributes"] == null
+          ? null
+          : Attributes.fromMap(asStringDynamicMapRequired(json["attributes"])),
+    );
+  }
 
   Map<String, dynamic> toMap() => {
         "range": range,
@@ -57,7 +70,6 @@ class Attributes {
       audioTranscript: json["IMAudioTranscription"]);
 
   Map<String, dynamic> toMap() {
-    // Only include non-null values
     final Map<String, dynamic> map = {};
     if (messagePart != null) map["__kIMMessagePartAttributeName"] = messagePart;
     if (attachmentGuid != null) map["__kIMFileTransferGUIDAttributeName"] = attachmentGuid;

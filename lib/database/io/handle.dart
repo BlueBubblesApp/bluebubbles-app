@@ -2,6 +2,7 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/interfaces/handle_interface.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/deep_map_normalize.dart';
 import 'package:dice_bear/dice_bear.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -139,7 +140,9 @@ class Handle {
     }
   }
 
-  factory Handle.fromMap(Map<String, dynamic> json) => Handle(
+  factory Handle.fromMap(Map<String, dynamic> json) {
+    json = asStringDynamicMapRequired(json);
+    return Handle(
         id: json["ROWID"] ?? json["id"],
         originalROWID: json["originalROWID"],
         address: json["address"],
@@ -151,6 +154,7 @@ class Handle {
         defaultPhone: json["defaultPhone"],
         defaultEmail: json["defaultEmail"],
       );
+  }
 
   /// Formats and sets the formattedAddress field if not already set.
   ///

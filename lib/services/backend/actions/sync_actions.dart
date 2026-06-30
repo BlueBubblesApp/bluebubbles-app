@@ -43,6 +43,11 @@ class SyncActions {
     }
 
     for (final msgData in messagesData) {
+      final embeddedHandle = msgData['handle'];
+      if (embeddedHandle is Map) {
+        final h = embeddedHandle.cast<String, dynamic>();
+        uniqueHandleMapsByKey[_handleKey(h)] ??= h;
+      }
       for (final chat in (msgData['chats'] as List? ?? const []).whereType<Map>()) {
         collectParticipants(chat.cast<String, dynamic>()['participants'] as List?);
       }
@@ -86,7 +91,7 @@ class SyncActions {
 
       // Step 2 – Sync messages → (savedMessages, messagesByGuid)
       final (savedMessages, messagesByGuid) =
-          _syncMessagesInTx(messagesData, chatData, chatsMap, handlesByRowId, messageBox);
+          _syncMessagesInTx(messagesData, chatData, chatsMap, handlesByRowId, handlesMap, messageBox);
 
       // Step 3 – Sync attachments (via Attachment.message.target — no applyToDb needed)
       _syncAttachmentsInTx(messagesData, messagesByGuid, attachmentBox, messageBox);
@@ -218,6 +223,7 @@ class SyncActions {
     Map<String, dynamic>? topLevelChatData,
     Map<String, Chat> chatsMap,
     Map<int, Handle> handlesByRowId,
+    Map<String, Handle> handlesByAddress,
     Box<Message> messageBox,
   ) {
     if (messagesData.isEmpty) return ([], {});
@@ -261,14 +267,23 @@ class SyncActions {
       }
       if (chat != null) msgToSave.chat.target = chat;
 
-      // Wire to handle (by server originalROWID).
+      // Wire to handle (by server originalROWID, then embedded handle object).
       if (!msgToSave.handleRelation.hasValue && msgToSave.handleId != null && msgToSave.handleId! > 0) {
         final handle = handlesByRowId[msgToSave.handleId];
         if (handle != null) {
           msgToSave.handleRelation.target = handle;
           msgToSave.handle = handle;
         }
-      } else if (msgToSave.handleRelation.hasValue && msgToSave.handle == null) {
+      }
+      if (!msgToSave.handleRelation.hasValue && msgData['handle'] is Map) {
+        final hMap = (msgData['handle'] as Map).cast<String, dynamic>();
+        final handle = handlesByAddress[_handleKey(hMap)];
+        if (handle != null) {
+          msgToSave.handleRelation.target = handle;
+          msgToSave.handle = handle;
+        }
+      }
+      if (msgToSave.handleRelation.hasValue && msgToSave.handle == null) {
         msgToSave.handle = msgToSave.handleRelation.target;
       }
 

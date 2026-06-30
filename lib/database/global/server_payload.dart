@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
+import 'package:bluebubbles/utils/deep_map_normalize.dart' show asStringDynamicMapRequired, deepNormalizeJson;
 import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:collection/collection.dart';
 
@@ -55,12 +56,18 @@ class ServerPayload {
       data = jsonDecode(data);
       encoding = PayloadEncoding.JSON_OBJECT;
     }
+    if (data is Map || data is List) {
+      data = deepNormalizeJson(data);
+    }
   }
 
-  factory ServerPayload.fromJson(Map<String, dynamic> json) => ServerPayload(
+  factory ServerPayload.fromJson(Map<String, dynamic> json) {
+    json = asStringDynamicMapRequired(json);
+    final rawData = json['data'] ?? json;
+    final decoded = rawData is String ? jsonDecode(rawData) : rawData;
+    return ServerPayload(
         originalJson: json,
-        data: ((json["data"] ?? json) is String ? jsonDecode(json["data"] ?? json) : (json["data"] ?? json))
-            .cast<String, dynamic>(),
+        data: asStringDynamicMapRequired(decoded),
         isLegacy: json.containsKey("type"),
         type: PayloadType.values.firstWhereOrNull((element) => element.name == json["type"]) ?? PayloadType.OTHER,
         subtype: json["subtype"],
@@ -71,4 +78,5 @@ class ServerPayload {
         encryptionType: EncryptionType.values.firstWhereOrNull((element) => element.name == json["encryptionType"]) ??
             EncryptionType.AES_PB,
       );
+  }
 }

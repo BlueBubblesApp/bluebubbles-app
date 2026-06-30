@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:bluebubbles/utils/deep_map_normalize.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
@@ -119,7 +120,7 @@ class Message {
   set dbPayloadData(String? json) => payloadData = json == null ? null : PayloadData.fromJson(jsonDecode(json));
 
   String? get dbMetadata => metadata == null ? null : jsonEncode(metadata);
-  set dbMetadata(String? json) => metadata = json == null ? null : jsonDecode(json) as Map<String, dynamic>;
+  set dbMetadata(String? json) => metadata = json == null ? null : asStringDynamicMap(jsonDecode(json));
 
   @Transient()
   bool get isKeptAudio => itemType == 5 && subject != null;
@@ -199,34 +200,37 @@ class Message {
   }
 
   factory Message.fromMap(Map<String, dynamic> json) {
+    json = asStringDynamicMapRequired(json);
+
     List<AttributedBody> attributedBody = [];
     if (json["attributedBody"] != null) {
       if (json['attributedBody'] is Map) {
-        json['attributedBody'] = [json['attributedBody']!.cast<String, Object>()];
+        json['attributedBody'] = [deepNormalizeJson(json['attributedBody'])];
       }
       try {
-        attributedBody =
-            (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a!.cast<String, Object>())).toList();
+        attributedBody = (json['attributedBody'] as List)
+            .map((a) => AttributedBody.fromMap(asStringDynamicMapRequired(a)))
+            .toList();
       } catch (e, stack) {
         Logger.error('Failed to parse attributed body!', error: e, trace: stack);
       }
     }
 
-    Map<String, dynamic> metadata = {};
+    Map<String, dynamic>? metadata;
     if (!isNullOrEmpty(json["metadata"])) {
       if (json["metadata"] is String) {
         try {
-          metadata = jsonDecode(json["metadata"]);
+          metadata = asStringDynamicMap(jsonDecode(json["metadata"]));
         } catch (_) {}
       } else {
-        metadata = json["metadata"]?.cast<String, Object>();
+        metadata = asStringDynamicMap(json["metadata"]);
       }
     }
 
     List<MessageSummaryInfo> msi = [];
     try {
       msi = (json['messageSummaryInfo'] as List? ?? [])
-          .map((e) => MessageSummaryInfo.fromJson(e!.cast<String, Object>()))
+          .map((e) => MessageSummaryInfo.fromJson(asStringDynamicMapRequired(e)))
           .toList();
     } catch (e, stack) {
       Logger.error('Failed to parse summary info!', error: e, trace: stack);
@@ -234,7 +238,7 @@ class Message {
 
     PayloadData? payloadData;
     try {
-      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
+      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(deepNormalizeJson(json['payloadData']));
     } catch (e, s) {
       Logger.error('Failed to parse payload data!', error: e, trace: s);
     }
@@ -266,11 +270,11 @@ class Message {
           int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
       associatedMessageType: json["associatedMessageType"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
-      handle: json['handle'] != null ? Handle.fromMap(json['handle']!.cast<String, Object>()) : null,
+      handle: json['handle'] != null ? Handle.fromMap(asStringDynamicMapRequired(json['handle'])) : null,
       hasAttachments: (json['attachments'] as List? ?? []).isNotEmpty || json['hasAttachments'] == true,
       hasReactions: json['hasReactions'] == true,
       dateDeleted: parseDate(json["dateDeleted"]),
-      metadata: metadata is String ? null : metadata,
+      metadata: metadata,
       threadOriginatorGuid: json['threadOriginatorGuid'],
       threadOriginatorPart: json['threadOriginatorPart'],
       attributedBody: attributedBody,
@@ -423,6 +427,11 @@ class Message {
   Handle? getHandle() {
     // Phase 2: Prefer ToOne relationship if available
     if (handleRelation.target != null) return handleRelation.target;
+
+    // Phase 3: Use transient handle field (set from push payload, cleared after DB load).
+    // Must be checked before the DB lookup so that addMessageToChat can serialise the
+    // embedded handle object through toMap() → fromMap() and then persist the relation.
+    if (handle != null) return handle;
 
     // Fallback to manual lookup for backward compatibility
     if (kIsWeb || handleId == 0 || handleId == null) return null;

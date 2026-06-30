@@ -131,7 +131,8 @@ class MessageState extends StatefulController {
   /// least one reactive dependency (prevents the GetX "improper use" warning
   /// even for outgoing group-event messages).
   String get senderDisplayName {
-    if (isFromMe.value || sender == null) return 'You';
+    if (isFromMe.value) return 'You';
+    if (sender == null) return 'Unknown';
     return sender?.displayName.value ?? message.handleRelation.target?.displayName ?? 'Unknown';
   }
 

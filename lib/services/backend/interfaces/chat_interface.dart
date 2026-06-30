@@ -244,6 +244,7 @@ class ChatInterface {
   static Future<List<Message>> getMessagesAsync({
     required int chatId,
     required String chatGuid,
+    required int chatStyle,
     required List<Map<String, dynamic>> participantsData,
     int offset = 0,
     int limit = 25,
@@ -254,6 +255,7 @@ class ChatInterface {
     final data = {
       'chatId': chatId,
       'chatGuid': chatGuid,
+      'chatStyle': chatStyle,
       'participantsData': participantsData,
       'offset': offset,
       'limit': limit,

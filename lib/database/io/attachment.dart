@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/deep_map_normalize.dart';
 import 'package:bluebubbles/generated/objectbox.g.dart';
 import 'package:bluebubbles/database/io/message.dart';
 import 'package:bluebubbles/services/backend/descriptors/attachment_query_descriptor.dart';
@@ -42,7 +43,7 @@ class Attachment {
   Map<String, dynamic>? exif;
 
   String? get dbMetadata => metadata == null ? null : jsonEncode(metadata);
-  set dbMetadata(String? json) => metadata = json == null ? null : jsonDecode(json) as Map<String, dynamic>;
+  set dbMetadata(String? json) => metadata = json == null ? null : asStringDynamicMap(jsonDecode(json));
 
   Attachment({
     this.id,
@@ -65,25 +66,31 @@ class Attachment {
 
   /// Convert JSON to [Attachment]
   factory Attachment.fromMap(Map<String, dynamic> json) {
+    json = asStringDynamicMapRequired(json);
+
     String? mimeType = json["mimeType"];
     if (json["uti"] == "com.apple.coreaudio_format" || json['transferName'].toString().endsWith(".caf")) {
       mimeType = "audio/caf";
     }
 
-    // Load the metadata
-    var metadata = json["metadata"];
-    if (metadata is String && metadata.isNotEmpty) {
+    Map<String, dynamic>? metadata;
+    final rawMetadata = json["metadata"];
+    if (rawMetadata is String && rawMetadata.isNotEmpty) {
       try {
-        metadata = jsonDecode(metadata);
+        metadata = asStringDynamicMap(jsonDecode(rawMetadata));
       } catch (_) {}
+    } else {
+      metadata = asStringDynamicMap(rawMetadata);
     }
 
-    // exif uses null = never loaded, {} = loaded with no EXIF data
-    var exif = json["exif"];
-    if (exif is String && exif.isNotEmpty) {
+    Map<String, dynamic>? exif;
+    final rawExif = json["exif"];
+    if (rawExif is String && rawExif.isNotEmpty) {
       try {
-        exif = jsonDecode(exif);
+        exif = asStringDynamicMap(jsonDecode(rawExif));
       } catch (_) {}
+    } else {
+      exif = asStringDynamicMap(rawExif);
     }
 
     return Attachment(
@@ -97,8 +104,8 @@ class Attachment {
       totalBytes: json['totalBytes'] is int ? json['totalBytes'] : 0,
       height: json["height"] ?? 0,
       width: json["width"] ?? 0,
-      metadata: metadata is String ? null : metadata,
-      exif: exif is String ? null : exif,
+      metadata: metadata,
+      exif: exif,
       hasLivePhoto: json["hasLivePhoto"] ?? false,
       isDownloaded: json["isDownloaded"] ?? false,
     );

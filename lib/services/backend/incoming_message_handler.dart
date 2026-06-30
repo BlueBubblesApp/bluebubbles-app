@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/env.dart';
+import 'package:bluebubbles/models/models.dart' show HandleLookupKey;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -347,7 +348,8 @@ class IncomingMessageHandler {
       clearNotificationsIfFromMe: clearNotificationFromMe,
       attachments: incomingAttachments,
     );
-    final saved = result.message;
+    var saved = result.message;
+    saved = await _ensureMessageHandleLinked(saved, c);
 
     // 5. Mark as processed before any async I/O so a duplicate delivery that
     //    races in while we're playing a sound or sending a notification skips.
@@ -486,6 +488,29 @@ class IncomingMessageHandler {
     }
   }
 
+  /// Links [message] to a sender [Handle] when push delivery saved it without a
+  /// handleRelation (stale group participant list).
+  Future<Message> _ensureMessageHandleLinked(Message message, Chat chat) async {
+    if (message.isFromMe == true || message.handleRelation.hasValue) return message;
+    if (message.handleId == null || message.handleId! <= 0) return message;
+
+    Handle? handle = Handle.findOne(originalROWID: message.handleId);
+    handle ??= chat.handles.cast<Handle?>().firstWhereOrNull((h) => h?.originalROWID == message.handleId);
+    if (handle == null && message.handle != null) {
+      handle = chat.handles.cast<Handle?>().firstWhereOrNull(
+            (h) => h?.address == message.handle!.address && h?.service == message.handle!.service,
+          );
+      handle ??= Handle.findOne(
+        addressAndService: HandleLookupKey(message.handle!.address, message.handle!.service),
+      );
+    }
+    if (handle == null) return message;
+
+    message.handleRelation.target = handle;
+    message.handle = handle;
+    return message.saveAsync(chat: chat);
+  }
+
   // ── Chat hydration ──────────────────────────────────────────────────────
 
   /// Returns a fully-hydrated [Chat] object with handle/participant data, plus the IDs
@@ -499,18 +524,28 @@ class IncomingMessageHandler {
   /// 3. When the chat is in the DB but participants are missing, re-fetch
   ///    from the server to populate them.
   /// 4. When the chat isn't in the DB at all, sync it via [ChatInterface].
+  bool _chatIsGroup(Chat chat) =>
+      chat.style == 43 || chat.handles.length > 1 || chat.participants.length > 1;
+
   Future<({Chat chat, List<int> affectedHandleIds})> _hydrateChat(Chat partial, Message m) async {
     // Group events always need fresh server data.
     if (m.isGroupEvent) {
       partial = (await ChatsSvc.fetchChat(partial.guid)) ?? partial;
     } else {
-      // If we have a local copy and the local copy has participants, use it — no need to fetch.
       final local = Chat.findOne(guid: partial.guid);
-      if (local != null && local.handles.isNotEmpty) {
+      final chatForCheck = local ?? partial;
+      final incomingFromOther = !(m.isFromMe ?? false);
+
+      // Always refresh participants for incoming group messages — push payloads
+      // carry handleId only, and a stale local participant list breaks linking.
+      if (incomingFromOther && _chatIsGroup(chatForCheck)) {
+        Logger.debug(
+          'Refetching group participants for ${partial.guid} (handleId=${m.handleId})',
+          tag: _tag,
+        );
+        partial = (await ChatsSvc.fetchChat(partial.guid)) ?? (local ?? partial);
+      } else if (local != null && local.handles.isNotEmpty) {
         return (chat: local, affectedHandleIds: <int>[]);
-        // Cases to fetch from the server:
-        // * Local chat exists but has no participants (incomplete data).
-        // * Local chat doesn't exist at all (new chat).
       } else if ((local != null && local.handles.isEmpty) || local == null) {
         partial = (await ChatsSvc.fetchChat(partial.guid)) ?? partial;
       }

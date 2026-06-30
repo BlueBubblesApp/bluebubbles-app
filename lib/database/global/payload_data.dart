@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/deep_map_normalize.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,10 +17,17 @@ class PayloadData {
 
   factory PayloadData.fromJson(dynamic json) {
     if (json is Map) {
+      final map = asStringDynamicMapRequired(json);
       return PayloadData(
-        type: PayloadType.values[json["type"]],
-        urlData: json["urlData"]?.map((e) => UrlPreviewData.fromJson(e)).toList().cast<UrlPreviewData>(),
-        appData: json["appData"]?.map((e) => iMessageAppData.fromJson(e)).toList().cast<iMessageAppData>(),
+        type: PayloadType.values[map["type"]],
+        urlData: map["urlData"]
+            ?.map((e) => UrlPreviewData.fromJson(asStringDynamicMapRequired(e)))
+            .toList()
+            .cast<UrlPreviewData>(),
+        appData: map["appData"]
+            ?.map((e) => iMessageAppData.fromJson(asStringDynamicMapRequired(e)))
+            .toList()
+            .cast<iMessageAppData>(),
       );
     } else {
       List data = [];
