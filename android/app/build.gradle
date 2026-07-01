@@ -28,6 +28,12 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+// firebase-iid classes are now bundled inside firebase-messaging; exclude the
+// standalone artifact to prevent duplicate class errors from transitive deps.
+configurations.all {
+    exclude group: 'com.google.firebase', module: 'firebase-iid'
+}
+
 android {
     namespace "com.bluebubbles.messaging"
     compileSdk 36
@@ -159,7 +165,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:24.0.0'
     implementation 'com.google.firebase:firebase-database:21.0.0'
     implementation 'com.google.firebase:firebase-messaging-directboot:24.0.0'
-    implementation 'com.google.firebase:firebase-iid:21.1.0'
     implementation 'com.google.firebase:firebase-firestore:25.0.0'
 
     // Kotlin Coroutines (async)
