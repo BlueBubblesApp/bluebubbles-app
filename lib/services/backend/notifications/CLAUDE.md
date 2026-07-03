@@ -15,7 +15,7 @@
 | Platform | Library |
 |----------|---------|
 | Android / iOS | `flutter_local_notifications` |
-| Desktop (macOS, Windows, Linux) | `local_notifier` (custom fork) |
+| Desktop (macOS, Windows, Linux) | `flutter_local_notifications` (via the `DesktopNotification` adapter) |
 | Web | Browser Notification API |
 
 ## Key Behaviors

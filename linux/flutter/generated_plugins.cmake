@@ -12,7 +12,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_acrylic
   flutter_timezone
   gtk
-  local_notifier
   maps_launcher
   media_kit_libs_linux
   media_kit_video

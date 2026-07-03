@@ -105,10 +105,6 @@ dependencies:
   languagetool_textfield: ^0.1.1
   launch_at_startup: ^0.5.1
   local_auth: ^3.0.1
-  local_notifier:
-    git:
-      url: https://github.com/BlueBubblesApp/local_notifier.git
-      ref: f9ab42b4fb76f601bdda6c1d677907d4b149c334
   maps_launcher: ^3.0.0+1
   logger: ^2.6.1
   material_color_utilities: ^0.13.0 # Pinned because of flutter SDK
