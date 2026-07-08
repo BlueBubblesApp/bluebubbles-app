@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_map_widget.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,8 @@ class ParticipantsFindMyMapCard extends StatefulWidget {
 
 class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   static String _controllerTag(String guid) => 'findmy-$guid';
+  static const double _mapHeight = 132;
+  static const double _footerHeight = 56;
 
   FindMyController? _controller;
   StreamSubscription? _participantsSub;
@@ -105,12 +108,14 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
 
     return Obx(() {
       controller.friendsWithLocation.length;
-      if (controller.fetching2.value == true) {
+      final visibleParticipants = controller.participantFriendsWithLocation;
+      if (controller.fetching2.value == true || visibleParticipants.isEmpty) {
         return const SliverToBoxAdapter(child: SizedBox.shrink());
       }
-      if (controller.participantFriendsWithLocation.isEmpty) {
-        return const SliverToBoxAdapter(child: SizedBox.shrink());
-      }
+
+      final isGroup = widget.chat.isGroup;
+      final locationTitle = _singleChatLocationTitle(visibleParticipants.first);
+      final groupTitle = _chatState?.title.value ?? widget.chat.getTitle();
 
       return SliverToBoxAdapter(
         child: Padding(
@@ -122,17 +127,65 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: _sheetOpen ? null : _openExpandedMap,
-              child: SizedBox(
-                height: 160,
-                child: _sheetOpen
-                    ? const ColoredBox(color: Colors.transparent)
-                    : IgnorePointer(
-                        child: FindMyMapWidget(
-                          controller: controller,
-                          interactive: false,
-                          onMapReady: () => controller.fitMapToParticipantMarkers(),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: _mapHeight,
+                    child: _sheetOpen
+                        ? const ColoredBox(color: Colors.transparent)
+                        : IgnorePointer(
+                            child: FindMyMapWidget(
+                              controller: controller,
+                              interactive: false,
+                              onMapReady: () => controller.fitMapToParticipantMarkers(),
+                            ),
+                          ),
+                  ),
+                  Container(
+                    height: _footerHeight,
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    color: context.tileColor,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 18,
+                          color: context.theme.colorScheme.primary,
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isGroup ? groupTitle : locationTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.theme.textTheme.titleSmall,
+                              ),
+                              if (isGroup)
+                                Text(
+                                  _groupParticipantLabel(visibleParticipants.length),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.theme.textTheme.bodySmall,
+                                )
+                              else
+                                Text(
+                                  'Live',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.theme.textTheme.bodySmall,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -140,4 +193,12 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
       );
     });
   }
+
+  String _singleChatLocationTitle(FindMyFriend friend) {
+    final description = (friend.longAddress ?? '').trim();
+    if (description.isEmpty) return 'Location';
+    return description;
+  }
+
+  String _groupParticipantLabel(int count) => '$count ${count == 1 ? "Person" : "People"}';
 }
