@@ -110,12 +110,14 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
     return Obx(() {
       controller.friendsWithLocation.length;
       final visibleParticipants = controller.participantFriendsWithLocation;
-      if (controller.fetching2.value == true || visibleParticipants.isEmpty) {
+      final isLoadingParticipants = controller.fetching2.value == true;
+
+      if (!isLoadingParticipants && visibleParticipants.isEmpty) {
         return const SliverToBoxAdapter(child: SizedBox.shrink());
       }
 
       final isGroup = widget.chat.isGroup;
-      final locationTitle = _singleChatLocationTitle(visibleParticipants.first);
+      final locationTitle = visibleParticipants.isNotEmpty ? _singleChatLocationTitle(visibleParticipants.first) : null;
       final groupTitle = _chatState?.title.value ?? widget.chat.getTitle();
 
       return SliverToBoxAdapter(
@@ -134,13 +136,15 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
                     aspectRatio: _mapAspectRatio,
                     child: _sheetOpen
                         ? const ColoredBox(color: Colors.transparent)
-                        : IgnorePointer(
-                            child: FindMyMapWidget(
-                              controller: controller,
-                              interactive: false,
-                              onMapReady: () => controller.fitMapToParticipantMarkers(),
-                            ),
-                          ),
+                        : isLoadingParticipants
+                            ? _buildMapLoadingPlaceholder(context)
+                            : IgnorePointer(
+                                child: FindMyMapWidget(
+                                  controller: controller,
+                                  interactive: false,
+                                  onMapReady: () => controller.fitMapToParticipantMarkers(),
+                                ),
+                              ),
                   ),
                   Container(
                     height: _footerHeight,
@@ -161,12 +165,19 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isGroup ? groupTitle : locationTitle,
+                                isGroup ? groupTitle : (locationTitle ?? 'Loading Location'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: context.theme.textTheme.titleSmall,
                               ),
-                              if (isGroup)
+                              if (isLoadingParticipants)
+                                Text(
+                                  'Loading…',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.theme.textTheme.bodySmall,
+                                )
+                              else if (isGroup)
                                 Text(
                                   _groupParticipantLabel(visibleParticipants.length),
                                   maxLines: 1,
@@ -207,5 +218,21 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
     final status = friend.status;
     if (status == null) return 'Location';
     return '${status.name.capitalize!} Location';
+  }
+
+  Widget _buildMapLoadingPlaceholder(BuildContext context) {
+    return ColoredBox(
+      color: context.theme.colorScheme.surface,
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.4,
+            color: context.theme.colorScheme.primary,
+          ),
+        ),
+      ),
+    );
   }
 }
