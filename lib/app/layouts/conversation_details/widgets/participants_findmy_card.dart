@@ -207,6 +207,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   }
 
   String _singleChatLocationTitle(FindMyFriend friend) {
+    if (SettingsSvc.settings.redactedMode.value) return 'Location';
     final description = (friend.longAddress ?? '').trim();
     if (description.isEmpty) return 'Location';
     return description;

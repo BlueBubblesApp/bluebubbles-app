@@ -80,6 +80,7 @@ class _ParticipantsFindMyMapSheetState extends State<_ParticipantsFindMyMapSheet
   String _groupParticipantLabel(int count) => '$count ${count == 1 ? "Person" : "People"}';
 
   String _locationDescription(FindMyFriend friend) {
+    if (SettingsSvc.settings.redactedMode.value) return "Location";
     final description = (friend.longAddress ?? '').trim();
     if (description.isEmpty) return "Location";
     return description;
