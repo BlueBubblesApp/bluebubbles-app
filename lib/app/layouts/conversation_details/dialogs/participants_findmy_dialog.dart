@@ -22,7 +22,7 @@ Future<void> showParticipantsFindMyMap(
       enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (_) => FractionallySizedBox(
-        heightFactor: 0.9,
+        heightFactor: 0.92,
         alignment: Alignment.bottomCenter,
         child: _themedSheet(
           context,

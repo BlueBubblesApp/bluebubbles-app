@@ -149,6 +149,17 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: ChatInfo(chat: chat),
                     ),
                     ParticipantsFindMyMapCard(chat: chat),
+                    if (chat.isGroup)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0, top: 20.0, bottom: 5.0),
+                          child: Text(
+                            "${chat.handles.length} ${iOS ? "OTHER MEMBERS" : "OTHER PEOPLE"}",
+                            style: context.theme.textTheme.bodyMedium!
+                                .copyWith(color: context.theme.colorScheme.outline),
+                          ),
+                        ),
+                      ),
                     ParticipantsList(chat: chat),
                     // Hidden widget that loads attachments in the background
                     SliverToBoxAdapter(

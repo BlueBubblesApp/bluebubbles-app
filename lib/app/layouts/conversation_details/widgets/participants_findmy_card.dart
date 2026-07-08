@@ -22,7 +22,7 @@ class ParticipantsFindMyMapCard extends StatefulWidget {
 
 class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   static String _controllerTag(String guid) => 'findmy-$guid';
-  static const double _mapHeight = 132;
+  static const double _mapAspectRatio = 2.2;
   static const double _footerHeight = 56;
 
   FindMyController? _controller;
@@ -120,7 +120,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
 
       return SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
           child: Material(
             color: context.theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(16),
@@ -130,8 +130,8 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
               onTap: _sheetOpen ? null : _openExpandedMap,
               child: Column(
                 children: [
-                  SizedBox(
-                    height: _mapHeight,
+                  AspectRatio(
+                    aspectRatio: _mapAspectRatio,
                     child: _sheetOpen
                         ? const ColoredBox(color: Colors.transparent)
                         : IgnorePointer(
