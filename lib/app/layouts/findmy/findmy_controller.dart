@@ -468,7 +468,7 @@ class FindMyController extends GetxController {
           ),
         ),
       ),
-      alignment: Alignment.topCenter,
+      alignment: isParticipantMode ? Alignment.center : Alignment.topCenter,
     );
   }
 
