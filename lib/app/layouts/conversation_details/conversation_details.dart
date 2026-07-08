@@ -3,11 +3,12 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_info.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_options.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/widgets/participants_findmy_map_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/widgets/participants_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/documents/documents_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/links/links_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/locations/locations_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_grid_section.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/widgets/participants_list.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -147,6 +148,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     SliverToBoxAdapter(
                       child: ChatInfo(chat: chat),
                     ),
+                    ParticipantsFindMyMapCard(chat: chat),
                     ParticipantsList(chat: chat),
                     // Hidden widget that loads attachments in the background
                     SliverToBoxAdapter(

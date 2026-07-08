@@ -6,7 +6,7 @@ Sub-widgets for the Find My device/friends/items tracking screen.
 
 | File | Purpose |
 |------|---------|
-| `findmy_map_widget.dart` | Interactive map overview showing all tracked devices and friends |
+| `findmy_map_widget.dart` | Interactive map with device/friend/self markers and popups |
 | `findmy_devices_tab_view.dart` | Tab content listing the user's own Apple devices |
 | `findmy_friends_tab_view.dart` | Tab content listing shared-location friends |
 | `findmy_items_tab_view.dart` | Tab content listing AirTag / Find My accessory items |

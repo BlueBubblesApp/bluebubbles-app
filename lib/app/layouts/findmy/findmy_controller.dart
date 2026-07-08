@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -15,10 +16,30 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_location_clipper.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_participant_matcher.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 
 class FindMyController extends GetxController {
+  FindMyController({this.participantFilter});
+
+  /// When set, only friends matching these chat participants are shown (conversation details mode).
+  List<Handle>? participantFilter;
+  Map<String, String> participantDisplayNames = {};
+
+  bool get isParticipantMode => participantFilter != null;
+
+  FindMyParticipantMatcher? get _participantMatcher {
+    if (participantFilter == null) return null;
+    return FindMyParticipantMatcher(
+      participants: participantFilter!,
+      displayNamesByAddress: participantDisplayNames,
+    );
+  }
+
+  List<FindMyFriend> get participantFriendsWithLocation =>
+      friendsWithLocation.where((f) => matchesParticipantFilter(f)).toList();
+
   // Scroll Controllers
   final ScrollController devicesController = ScrollController();
   final ScrollController itemsController = ScrollController();
@@ -56,16 +77,112 @@ class FindMyController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getLocations();
+    if (isParticipantMode) {
+      _loadParticipantLocations();
+    } else {
+      getLocations();
+    }
 
     // Setup socket listener
     SocketSvc.socket?.on("new-findmy-location", _handleNewFindMyLocation);
 
-    _scheduleRefreshGate();
+    if (!isParticipantMode) {
+      _scheduleRefreshGate();
+    }
     _setupRedactionListeners();
   }
 
+  Future<void> _loadParticipantLocations() async {
+    await getLocations(refreshFriends: false, suppressErrors: true);
+    if (!_isAlive) return;
+    if (participantFriendsWithLocation.isEmpty) {
+      await getLocations(refreshFriends: true, suppressErrors: true);
+    }
+  }
+
+  bool matchesParticipantFilter(FindMyFriend friend) {
+    if (participantFilter == null) return true;
+    return _participantMatcher?.matches(friend) ?? false;
+  }
+
+  void updateParticipantFilter(List<Handle> handles, {Map<String, String>? displayNames}) {
+    participantFilter = handles;
+    participantDisplayNames = displayNames ?? {};
+    _rebuildParticipantMarkers();
+    fitMapToParticipantMarkers();
+  }
+
+  static bool _isSameFindMyFriend(FindMyFriend a, FindMyFriend b) =>
+      FindMyParticipantMatcher.friendIdentifiersMatch(a, b);
+
+  String _friendMarkerKey(FindMyFriend friend) =>
+      friend.stableId ?? friend.handleAddress ?? friend.title ?? randomString(6);
+
   bool get _isAlive => !isClosed;
+
+  void _rebuildParticipantMarkers() {
+    if (!isParticipantMode) return;
+    final allowedKeys = participantFriendsWithLocation.map(_friendMarkerKey).toSet();
+    markers.removeWhere((key, _) => !allowedKeys.contains(key));
+    for (final friend in participantFriendsWithLocation) {
+      buildFriendMarker(friend);
+    }
+  }
+
+  void fitMapToParticipantMarkers([MapController? target]) {
+    final map = target ?? mapController;
+    final points =
+        participantFriendsWithLocation.map((f) => LatLng(f.latitude!, f.longitude!)).toList(growable: false);
+    if (points.isEmpty) return;
+
+    void apply() {
+      if (points.length == 1) {
+        map.move(points.first, 13);
+        return;
+      }
+
+      var minLat = points.first.latitude;
+      var maxLat = points.first.latitude;
+      var minLng = points.first.longitude;
+      var maxLng = points.first.longitude;
+      for (final p in points) {
+        minLat = min(minLat, p.latitude);
+        maxLat = max(maxLat, p.latitude);
+        minLng = min(minLng, p.longitude);
+        maxLng = max(maxLng, p.longitude);
+      }
+      final center = LatLng((minLat + maxLat) / 2, (minLng + maxLng) / 2);
+      final maxSpan = max(maxLat - minLat, maxLng - minLng);
+      final zoom = maxSpan > 0.5
+          ? 8.0
+          : maxSpan > 0.1
+              ? 10.0
+              : maxSpan > 0.05
+                  ? 11.0
+                  : maxSpan > 0.01
+                      ? 12.0
+                      : 13.0;
+      map.move(center, zoom);
+    }
+
+    apply();
+    WidgetsBinding.instance.addPostFrameCallback((_) => apply());
+  }
+
+  String friendMarkerKeyFor(FindMyFriend friend) => _friendMarkerKey(friend);
+
+  Handle handleForFriendMarker(FindMyFriend friend) {
+    final matcher = _participantMatcher;
+    if (matcher != null && participantFilter != null) {
+      for (final participant in participantFilter!) {
+        if (matcher.matchesFriend(friend, participant)) {
+          return participant;
+        }
+      }
+    }
+    if (friend.handle != null) return friend.handle!;
+    return Handle(address: friend.handleAddress ?? friend.title ?? "Unknown");
+  }
 
   void _scheduleRefreshGate() {
     _refreshTimer?.cancel();
@@ -112,7 +229,7 @@ class FindMyController extends GetxController {
       Logger.info("Received new location for ${friend.handle?.address}");
       if ((friend.latitude ?? 0) == 0 && (friend.longitude ?? 0) == 0) return;
 
-      final existingFriendIndex = friends.indexWhere((e) => e.stableId != null && e.stableId == friend.stableId);
+      final existingFriendIndex = friends.indexWhere((e) => _isSameFindMyFriend(e, friend));
       final existingFriend = existingFriendIndex == -1 ? null : friends[existingFriendIndex];
 
       final shouldUpdate = existingFriend == null ||
@@ -120,6 +237,8 @@ class FindMyController extends GetxController {
           friend.locatingInProgress ||
           LocationStatus.values.indexOf(existingFriend.status!) <=
               LocationStatus.values.indexOf(friend.status ?? LocationStatus.legacy);
+
+      if (isParticipantMode && !matchesParticipantFilter(friend)) return;
 
       if (shouldUpdate) {
         Logger.info("Updating map for ${friend.stableId}");
@@ -135,6 +254,7 @@ class FindMyController extends GetxController {
             friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
 
         buildFriendMarker(friend);
+        if (isParticipantMode) fitMapToParticipantMarkers();
       }
     } catch (e, s) {
       Logger.warn("Failed to fetch FindMy locations", error: e, trace: s, tag: 'FindMyController');
@@ -147,10 +267,10 @@ class FindMyController extends GetxController {
   /// however, the refresh friends endpoint does. The way this was coded assumes that the server
   /// will return the data for both endpoints. A server update will fix this, but for now,
   /// we will "patch" it by only "refreshing" devices when the user manually refreshes the data.
-  Future<void> getLocations({bool refreshFriends = true, bool refreshDevices = false}) async {
+  Future<void> getLocations({bool refreshFriends = true, bool refreshDevices = false, bool suppressErrors = false}) async {
     if (!_isAlive) return;
 
-    if (!(Platform.isLinux && !kIsWeb)) {
+    if (!isParticipantMode && !(Platform.isLinux && !kIsWeb)) {
       LocationPermission granted = await Geolocator.checkPermission();
       if (!_isAlive) return;
       if (granted == LocationPermission.denied) {
@@ -183,7 +303,9 @@ class FindMyController extends GetxController {
         ? await HttpSvc.icloud.refreshFriends().catchError((_) async {
             if (!_isAlive) return Response(requestOptions: RequestOptions(path: ''));
             refreshing2.value = false;
-            showSnackbar("Error", "Something went wrong refreshing FindMy Friends data!");
+            if (!suppressErrors) {
+              showSnackbar("Error", "Something went wrong refreshing FindMy Friends data!");
+            }
             return Response(requestOptions: RequestOptions(path: ''));
           })
         : await HttpSvc.icloud.getFriends().catchError((_) async {
@@ -203,8 +325,13 @@ class FindMyController extends GetxController {
         friendsWithoutLocation.value =
             friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
 
-        for (FindMyFriend e in friendsWithLocation) {
-          buildFriendMarker(e);
+        if (isParticipantMode) {
+          _rebuildParticipantMarkers();
+          fitMapToParticipantMarkers();
+        } else {
+          for (final e in friendsWithLocation) {
+            buildFriendMarker(e);
+          }
         }
         fetching2.value = false;
         refreshing2.value = false;
@@ -217,6 +344,13 @@ class FindMyController extends GetxController {
     } else {
       fetching2.value = false;
       refreshing2.value = false;
+    }
+
+    if (isParticipantMode) {
+      if (!refreshFriends) {
+        HttpSvc.icloud.refreshFriends();
+      }
+      return;
     }
 
     // Fetch devices data
@@ -309,7 +443,11 @@ class FindMyController extends GetxController {
   }
 
   void buildFriendMarker(FindMyFriend friend) {
-    final markerKey = friend.stableId ?? randomString(6);
+    final markerKey = _friendMarkerKey(friend);
+    if (isParticipantMode && !matchesParticipantFilter(friend)) {
+      markers.remove(markerKey);
+      return;
+    }
     markers[markerKey] = Marker(
       key: ValueKey('friend-$markerKey'),
       point: markerPointForFriend(friend),
@@ -321,7 +459,12 @@ class FindMyController extends GetxController {
           child: Padding(
             padding: const EdgeInsets.all(3),
             child: ContactAvatarWidget(
-                editable: false, handle: friend.handle ?? Handle(address: friend.title ?? "Unknown")),
+              editable: false,
+              size: 29,
+              scaleSize: false,
+              borderThickness: 0,
+              handle: isParticipantMode ? handleForFriendMarker(friend) : friend.handle,
+            ),
           ),
         ),
       ),

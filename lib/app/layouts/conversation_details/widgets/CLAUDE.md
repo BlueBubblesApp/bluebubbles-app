@@ -7,6 +7,7 @@ Reusable widgets composing the conversation details / info panel.
 | File | Purpose |
 |------|---------|
 | `chat_info.dart` | Top section: avatar, name, participant count, edit name button |
+| `participants_findmy_map_card.dart` | Horizontal Find My map preview for chat participants; tap opens map bottom sheet |
 | `chat_options.dart` | Action row: mute, pin, archive, block, delete |
 | `contact_tile.dart` | Single participant row (avatar, name, address, remove button) |
 | `participants_list.dart` | Scrollable list of `ContactTile`s for group chats |

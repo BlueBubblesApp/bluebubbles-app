@@ -12,31 +12,60 @@ import 'package:url_launcher/url_launcher.dart';
 
 class FindMyMapWidget extends StatelessWidget {
   final FindMyController controller;
+  final bool interactive;
+  final MapController? mapController;
+  final VoidCallback? onMapReady;
+  final double? initialZoom;
 
-  const FindMyMapWidget({super.key, required this.controller});
+  const FindMyMapWidget({
+    super.key,
+    required this.controller,
+    this.interactive = true,
+    this.mapController,
+    this.onMapReady,
+    this.initialZoom,
+  });
+
+  LatLng _initialCenter() {
+    if (controller.location.value != null) {
+      return LatLng(controller.location.value!.latitude, controller.location.value!.longitude);
+    }
+    final participants = controller.participantFriendsWithLocation;
+    if (participants.isNotEmpty) {
+      return LatLng(participants.first.latitude!, participants.first.longitude!);
+    }
+    return const LatLng(0, 0);
+  }
+
+  double _initialZoom() {
+    if (initialZoom != null) return initialZoom!;
+    if (controller.isParticipantMode) return 13;
+    return 5;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return TrackpadBugWrapper(builder: (context, bugDetected) {
+    final activeMapController = mapController ?? controller.mapController;
+    final content = TrackpadBugWrapper(builder: (context, bugDetected) {
       return Obx(() => FlutterMap(
-            mapController: controller.mapController,
+            key: ValueKey(activeMapController),
+            mapController: activeMapController,
             options: MapOptions(
-              initialZoom: 5.0,
+              initialZoom: _initialZoom(),
               minZoom: 1.0,
               maxZoom: 18.0,
-              initialCenter: controller.location.value == null
-                  ? const LatLng(0, 0)
-                  : LatLng(controller.location.value!.latitude, controller.location.value!.longitude),
+              initialCenter: _initialCenter(),
               onTap: (_, __) => controller.popupController.hideAllPopups(),
-              keepAlive: true,
+              keepAlive: mapController == null,
               interactionOptions: InteractionOptions(
-                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                flags: interactive ? InteractiveFlag.all & ~InteractiveFlag.rotate : InteractiveFlag.none,
                 forceOnlySinglePinchGesture: bugDetected,
               ),
               onMapReady: () {
-                if (!controller.completer.isCompleted) {
+                if (mapController == null && !controller.completer.isCompleted) {
                   controller.completer.complete();
                 }
+                onMapReady?.call();
               },
             ),
             children: [
@@ -64,6 +93,9 @@ class FindMyMapWidget extends StatelessWidget {
             ],
           ));
     });
+
+    if (!interactive) return IgnorePointer(child: content);
+    return content;
   }
 
   Widget _buildMarkerPopup(BuildContext context, Marker marker) {
@@ -77,8 +109,10 @@ class FindMyMapWidget extends StatelessWidget {
       if (item == null) return const SizedBox();
       return _buildDevicePopup(context, item);
     } else if (keyStr.startsWith("friend-")) {
-      final stableId = keyStr.substring("friend-".length);
-      final item = controller.friends.firstWhereOrNull((e) => e.stableId == stableId);
+      final markerKey = keyStr.substring("friend-".length);
+      final item = controller.friends.firstWhereOrNull(
+        (e) => controller.friendMarkerKeyFor(e) == markerKey || e.stableId == markerKey,
+      );
       if (item == null) return const SizedBox();
       return _buildFriendPopup(context, item);
     }
