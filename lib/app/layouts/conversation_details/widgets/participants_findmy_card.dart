@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/layouts/conversation_details/dialogs/participants_findmy_map_dialog.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/dialogs/participants_findmy_dialog.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_map_widget.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
