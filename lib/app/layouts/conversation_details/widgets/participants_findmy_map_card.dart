@@ -79,6 +79,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
     await showParticipantsFindMyMap(
       context,
       controller: controller,
+      chat: widget.chat,
       onSheetClosed: () {
         if (mounted) setState(() => _sheetOpen = false);
       },
@@ -174,7 +175,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
                                 )
                               else
                                 Text(
-                                  'Live',
+                                  _locationStateLabel(visibleParticipants.first),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.theme.textTheme.bodySmall,
@@ -201,4 +202,10 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   }
 
   String _groupParticipantLabel(int count) => '$count ${count == 1 ? "Person" : "People"}';
+
+  String _locationStateLabel(FindMyFriend friend) {
+    final status = friend.status;
+    if (status == null) return 'Location';
+    return '${status.name.capitalize!} Location';
+  }
 }
