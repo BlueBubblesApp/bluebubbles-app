@@ -3,7 +3,7 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_info.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_options.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/widgets/participants_findmy_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/widgets/participants_findmy_card/participants_findmy_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/participants_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/documents/documents_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/links/links_section.dart';
