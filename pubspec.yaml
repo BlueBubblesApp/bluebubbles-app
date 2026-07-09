@@ -71,10 +71,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   flutter_image_compress: ^2.2.0
   flutter_improved_scrolling: ^0.0.3
-  flutter_isolate: # gradle namespace issue
-    git:
-      url: https://github.com/chipweinberger/flutter_isolate.git
-      ref: user/chip/update-examples
+  flutter_isolate: ^2.1.0
   flutter_keyboard_visibility: ^6.0.0 # no desktop support
   flutter_local_notifications: ^17.2.1+2 # mobile only
   flutter_map: ^7.0.1
@@ -181,7 +178,7 @@ dependencies:
   url_launcher: ^6.2.5
   vcf_dart: ^1.0.1
   version: ^3.0.2
-  video_player: ^2.8.5
+  video_player: ^2.9.1
   video_thumbnail:
     git:
       url: https://github.com/BlueBubblesApp/video_thumbnail.git
@@ -207,6 +204,7 @@ dependency_overrides:
       ref: 7912a76a3208e876c2275e1a87003ede3903abc8
       path: permission_handler_windows
   uuid: ^4.4.0 # firebase_dart
+  video_player_android: 2.7.16 # avoids Java 8 -Werror failures on modern JDKs
   win32: ^5.5.3 # for build issue in flutter v3.24.0
   frontend_server_client: ^4.0.0  # for build_runner issues on v3.24.0
 
