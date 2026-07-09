@@ -23,7 +23,12 @@ class AutoStartReceiver: BroadcastReceiver() {
                 // If the service is enabled, start it
                 if (keepAppAlive) {
                     val serviceIntent = Intent(context, SocketIOForegroundService::class.java)
-                    context.startForegroundService(serviceIntent)
+                    try {
+                        context.startForegroundService(serviceIntent)
+                    } catch (e: Exception) {
+                        Log.e(Constants.logTag, "Failed to start foreground service from auto start receiver")
+                        Log.e(Constants.logTag, e.stackTraceToString())
+                    }
                 }
             }
         }

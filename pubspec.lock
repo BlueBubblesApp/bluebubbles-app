@@ -905,12 +905,11 @@ packages:
   flutter_isolate:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "user/chip/update-examples"
-      resolved-ref: bf7deabbb1aaa3cff785b636d9f4717d4fe202d9
-      url: "https://github.com/chipweinberger/flutter_isolate.git"
-    source: git
-    version: "2.0.5-pre"
+      name: flutter_isolate
+      sha256: "36a84e1a22371d8092ea2121145b330c24fb272acb951fb30c60ba44926b8fb3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:
@@ -3202,13 +3201,13 @@ packages:
     source: hosted
     version: "2.9.1"
   video_player_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: video_player_android
-      sha256: "38d8fe136c427abdce68b5e8c3c08ea29d7a794b453c7a51b12ecfad4aad9437"
+      sha256: "391e092ba4abe2f93b3e625bd6b6a6ec7d7414279462c1c0ee42b5ab8d0a0898"
       url: "https://pub.dev"
     source: hosted
-    version: "2.7.3"
+    version: "2.7.16"
   video_player_avfoundation:
     dependency: transitive
     description:

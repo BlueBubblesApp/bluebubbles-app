@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
+import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -327,6 +329,13 @@ class MethodChannelService extends GetxService {
         final Map<String, dynamic>? data = arguments;
         if (data == null) return Future.value(true);
         await intents.answerFaceTime(data["callUuid"]);
+        return Future.value(true);
+      case "show-facetime-overlay":
+        Logger.info("Showing FaceTime overlay from notification tap");
+        final Map<String, dynamic>? data = arguments;
+        if (data == null) return Future.value(true);
+        await StartupTasks.waitForUI();
+        await showFaceTimeOverlay(data["callUuid"], data["caller"] ?? "Unknown", null, data["isAudio"] == true);
         return Future.value(true);
       case "imessage-aliases-removed":
         Map<String, dynamic>? data = arguments;

@@ -57,6 +57,13 @@ class NotificationsService extends GetxService {
 
   bool get hideContent => ss.settings.hideTextPreviews.value;
 
+  int _faceTimeNotificationId(String? callUuid) {
+    if (callUuid == null) return Random().nextInt(9998) + 1;
+    final digits = RegExp(r'\d+').allMatches(callUuid).map((match) => match.group(0)).join();
+    if (digits.isEmpty) return callUuid.hashCode.abs() % 99999999 + 1;
+    return int.parse(digits.substring(0, min(8, digits.length)));
+  }
+
   Future<void> init() async {
     if (!kIsWeb && !kIsDesktop) {
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
@@ -235,10 +242,9 @@ class NotificationsService extends GetxService {
     } else if (kIsDesktop) {
       _lock.synchronized(() async => await showPersistentDesktopFaceTimeNotif(callUuid, caller, chatIcon, isAudio));
     } else {
-      final numeric = callUuid?.numericOnly();
       await mcs.invokeMethod("create-incoming-facetime-notification", {
         "channel_id": FACETIME_CHANNEL,
-        "notification_id": numeric != null ? int.parse(numeric.substring(0, min(8, numeric.length))) : Random().nextInt(9998) + 1,
+        "notification_id": _faceTimeNotificationId(callUuid),
         "title": title,
         "body": text,
         "caller_avatar": chatIcon,
@@ -252,11 +258,10 @@ class NotificationsService extends GetxService {
     if (kIsDesktop) {
       await clearDesktopFaceTimeNotif(callUuid);
     } else if (!kIsWeb) {
-      final numeric = callUuid.numericOnly();
       mcs.invokeMethod(
         "delete-notification",
         {
-          "notification_id": int.parse(numeric.substring(0, min(8, numeric.length))),
+          "notification_id": _faceTimeNotificationId(callUuid),
           "tag": NEW_FACETIME_TAG
         }
       );
