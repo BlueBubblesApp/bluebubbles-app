@@ -16,12 +16,30 @@ class MainActivity : FlutterFragmentActivity() {
         var engine: FlutterEngine? = null
     }
 
+    private var methodChannel: MethodChannel? = null
+    private var dartReady = false
+    private val pendingFaceTimeIntents = mutableListOf<Pair<String, Map<String, Any>>>()
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         engine = flutterEngine
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
-            call, result -> MethodCallHandler().methodCallHandler(call, result, this)
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, Constants.methodChannel)
+        methodChannel?.setMethodCallHandler { call, result ->
+            if (call.method == "ready") {
+                dartReady = true
+                result.success(null)
+                flushPendingFaceTimeIntents()
+            } else {
+                MethodCallHandler().methodCallHandler(call, result, this)
+            }
         }
+        handleFaceTimeIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleFaceTimeIntent(intent)
     }
 
     override fun onDestroy() {
@@ -56,6 +74,37 @@ class MainActivity : FlutterFragmentActivity() {
         } catch (e: Exception) {
             Log.d(Constants.logTag, "Caught unhandled Exception when destroying MainActivity")
             Log.e(Constants.logTag, e.stackTraceToString())
+        }
+    }
+
+    private fun handleFaceTimeIntent(intent: Intent?) {
+        val callUuid = intent?.getStringExtra("callUuid") ?: return
+        val caller = intent.getStringExtra("caller") ?: "Unknown"
+        val isAudio = intent.getBooleanExtra("isAudio", false)
+        val answer = intent.getBooleanExtra("answer", false)
+        val method = if (answer) "answer-facetime" else "show-facetime-overlay"
+        val arguments = mapOf(
+            "callUuid" to callUuid,
+            "caller" to caller,
+            "isAudio" to isAudio
+        )
+
+        if (dartReady) {
+            Log.d(Constants.logTag, "Forwarding FaceTime notification intent to Dart")
+            methodChannel?.invokeMethod(method, arguments)
+        } else {
+            Log.d(Constants.logTag, "Queueing FaceTime notification intent until Dart is ready")
+            pendingFaceTimeIntents.add(Pair(method, arguments))
+        }
+    }
+
+    private fun flushPendingFaceTimeIntents() {
+        if (pendingFaceTimeIntents.isEmpty()) return
+        Log.d(Constants.logTag, "Flushing ${pendingFaceTimeIntents.size} pending FaceTime notification intent(s)")
+        val pending = pendingFaceTimeIntents.toList()
+        pendingFaceTimeIntents.clear()
+        pending.forEach { (method, arguments) ->
+            methodChannel?.invokeMethod(method, arguments)
         }
     }
 
