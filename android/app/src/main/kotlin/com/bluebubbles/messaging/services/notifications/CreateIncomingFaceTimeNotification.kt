@@ -50,17 +50,18 @@ class CreateIncomingFaceTimeNotification: MethodCallHandlerImpl() {
         // create a bundle for extra info
         val extras = Bundle()
         extras.putString("callUuid", callUuid)
+        val pendingIntentFlags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
         // intent to open the app
         val openSummaryIntent = PendingIntent.getActivity(
             context,
-            0,
+            notificationId,
             Intent(context, MainActivity::class.java)
                 .putExtras(extras)
                 .putExtra("answer", false)
                 .putExtra("caller", callerName)
                 .setType("OpenSummary"),
-            PendingIntent.FLAG_IMMUTABLE
+            pendingIntentFlags
         )
 
         // Create intent for answering and opening the facetime link
@@ -72,7 +73,7 @@ class CreateIncomingFaceTimeNotification: MethodCallHandlerImpl() {
                 .putExtra("answer", true)
                 .putExtra("caller", callerName)
                 .setType("AnswerFaceTime"),
-            PendingIntent.FLAG_IMMUTABLE
+            pendingIntentFlags
         )
         val answerAction = NotificationCompat.Action.Builder(0, "Answer", answerIntent)
             .setShowsUserInterface(false)
@@ -85,7 +86,7 @@ class CreateIncomingFaceTimeNotification: MethodCallHandlerImpl() {
             Intent(context, InternalIntentReceiver::class.java)
                 .putExtra("notificationId", notificationId)
                 .setType("DeleteNotification"),
-            PendingIntent.FLAG_IMMUTABLE
+            pendingIntentFlags
         )
         val declineAction = NotificationCompat.Action.Builder(0, "Ignore", declineIntent)
             .setShowsUserInterface(false)
