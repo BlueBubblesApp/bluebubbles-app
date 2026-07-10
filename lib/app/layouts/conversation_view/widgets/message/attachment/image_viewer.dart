@@ -37,6 +37,61 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   PlatformFile get file => widget.file;
   ConversationViewController? get controller => widget.controller;
 
+  // One-shot guard for auto-healing an undecodable image. A process crash
+  // mid-download can leave a truncated file that was never marked downloaded
+  // (isDownloaded != true); existsOnDisk-based gating then trusts the poisoned
+  // bytes and the image fails to decode forever. When that happens we
+  // re-download once. A file that WAS fully downloaded but still won't decode
+  // is left for a manual retry (no auto-loop).
+  bool _autoHealedDecode = false;
+
+  // Re-downloads the attachment and, on completion, evicts Flutter's cached
+  // (failed) decode for its path so the fresh bytes are re-read in place.
+  // Without the eviction the stale cache entry keeps rendering the error until
+  // the chat is re-entered. Setting the guard first prevents the auto-heal path
+  // from re-firing while the re-download (which flips isDownloaded false) runs.
+  void _healAttachment() {
+    if (attachment.guid?.isEmpty ?? true) return;
+    _autoHealedDecode = true;
+    AttachmentsSvc.redownloadAttachment(
+      attachment,
+      onComplete: (_) async {
+        if (!mounted) return;
+        try {
+          await FileImage(File(attachment.path)).evict();
+          await FileImage(File(attachment.convertedPath)).evict();
+        } catch (_) {}
+        if (mounted) setState(() {});
+      },
+    );
+  }
+
+  Widget _buildImageDecodeError(BuildContext context) {
+    if (!_autoHealedDecode && attachment.isDownloaded != true && (attachment.guid?.isNotEmpty ?? false)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _healAttachment());
+    }
+    return Center(
+      heightFactor: 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+            ),
+            const SizedBox(width: 4.0),
+            IconButton(
+              tooltip: "Retry download",
+              icon: Icon(CupertinoIcons.arrow_clockwise, color: context.theme.colorScheme.primary),
+              onPressed: _healAttachment,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Implement required getter for LivePhotoMixin
   @override
   Attachment get livePhotoAttachment => attachment;
@@ -154,46 +209,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               }
               return child;
             },
-            errorBuilder: (context, object, stacktrace) => Center(
-                  heightFactor: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
-                    child: Row(children: [
-                      Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
-                      const SizedBox(width: 2.0),
-                      IconButton(
-                          onPressed: () {
-                            showBBDialog(
-                              context: context,
-                              title: "Image Stacktrace",
-                              content: SizedBox(
-                                width: NavigationSvc.width(context) * 3 / 5,
-                                height: context.height * 1 / 4,
-                                child: Container(
-                                  padding: const EdgeInsets.all(10.0),
-                                  decoration: BoxDecoration(
-                                      color: context.theme.colorScheme.surface,
-                                      borderRadius: const BorderRadius.all(Radius.circular(10))),
-                                  child: SingleChildScrollView(
-                                    child: SelectableText(
-                                      stacktrace.toString(),
-                                      style: context.theme.textTheme.bodyLarge,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              actions: [
-                                BBDialogAction(
-                                  text: "Close",
-                                  onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-                                ),
-                              ],
-                            );
-                          },
-                          icon: const Icon(CupertinoIcons.info_circle))
-                    ]),
-                  ),
-                ));
+            errorBuilder: (context, object, stacktrace) =>
+                _buildImageDecodeError(context));
       }
     } else {
       // Calculate the proper height/width for the attachment to use only for the
@@ -276,11 +293,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               );
             }
 
-            // Conversion failed or not needed
-            return Center(
-              heightFactor: 1,
-              child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
-            );
+            // Conversion failed or not needed — heal a crash-truncated file.
+            return _buildImageDecodeError(context);
           },
         ),
       );

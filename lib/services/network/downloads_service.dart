@@ -289,6 +289,24 @@ class AttachmentDownloadController extends GetxController {
       bytes: kIsWeb ? bytes : null,
     );
 
+    // Integrity guard: a completed transfer that produced 0 bytes is a failed
+    // download. Without this it gets marked downloaded and trusted forever
+    // (existsOnDisk gating), showing "Failed to display image" permanently.
+    // A partial/truncated file that still fails to decode is healed at display
+    // time by ImageViewer's auto re-download. (No size==totalBytes check here:
+    // GIFs are re-encoded and `original=false` can return a converted file, so
+    // size legitimately differs from totalBytes.)
+    if (!kIsWeb && (file.value?.size ?? 0) == 0) {
+      Logger.warn("Attachment ${attachment.guid} downloaded 0 bytes — not marking downloaded, will retry",
+          tag: "Downloads");
+      try {
+        await File(attachment.path).delete();
+      } catch (_) {}
+      state.value = AttachmentDownloadState.error;
+      AttachmentDownloader._removeFromQueue(this);
+      return;
+    }
+
     // Mark attachment as downloaded and save to database
     attachment.isDownloaded = true;
     await attachment.saveAsync(attachment.message.target);
