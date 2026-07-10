@@ -64,25 +64,38 @@ class StartupTasks {
     return interopReady;
   }
 
-  static Future<void> _initCoreServices({required bool headless}) async {
+  /// [isolateHandoff]/[onStage]: background isolates receive platform-channel
+  /// values (paths, package info, a prefs snapshot) from the main engine at
+  /// spawn instead of calling channel plugins themselves — those calls were
+  /// observed to hang around pause transitions and leave the isolate
+  /// stillborn at init (2026-07-05/06 wedges). [onStage] reports init
+  /// progress back to the isolate manager so a stalled init names its stage.
+  static Future<void> _initCoreServices({
+    required bool headless,
+    Map<String, dynamic>? isolateHandoff,
+    void Function(String)? onStage,
+  }) async {
+    onStage?.call('core:filesystem');
     debugPrint("Registering FilesystemService...");
     GetIt.I.registerSingletonAsync<FilesystemService>(() async {
       final fsService = FilesystemService();
-      await fsService.init(headless: headless);
+      await fsService.init(headless: headless, handoff: isolateHandoff?['filesystem'] as Map<String, dynamic>?);
       return fsService;
     });
     await GetIt.I.isReady<FilesystemService>();
     debugPrint("FilesystemService ready");
 
+    onStage?.call('core:prefs');
     debugPrint("Registering SharedPreferencesService...");
     GetIt.I.registerSingletonAsync<SharedPreferencesService>(() async {
       final prefsService = SharedPreferencesService();
-      await prefsService.init();
+      await prefsService.init(snapshot: (isolateHandoff?['prefs'] as Map?)?.cast<String, Object>());
       return prefsService;
     });
     await GetIt.I.isReady<SharedPreferencesService>();
     debugPrint("SharedPreferencesService ready");
 
+    onStage?.call('core:settings');
     debugPrint("Registering SettingsService...");
     GetIt.I.registerSingletonAsync<SettingsService>(() async {
       final settingsService = SettingsService();
@@ -92,6 +105,7 @@ class StartupTasks {
     await GetIt.I.isReady<SettingsService>();
     debugPrint("SettingsService ready");
 
+    onStage?.call('core:logger');
     debugPrint("Registering BaseLogger...");
     GetIt.I.registerSingletonAsync<BaseLogger>(() async {
       final logService = BaseLogger();
@@ -253,9 +267,14 @@ class StartupTasks {
     unawaited(NetworkTasks.detectLocalhost().then((_) => SyncSvc.startIncrementalSync()));
   }
 
-  static Future<void> initGlobalIsolateServices(RootIsolateToken? rootIsolateToken) async {
+  static Future<void> initGlobalIsolateServices(
+    RootIsolateToken? rootIsolateToken, [
+    Map<String, dynamic>? handoff,
+    void Function(String)? onStage,
+  ]) async {
     debugPrint("Initializing isolate services...");
 
+    onStage?.call('messenger');
     BinaryMessenger? messenger;
     if (rootIsolateToken != null) {
       debugPrint("Initializing Background Isolate Binary Messenger");
@@ -263,30 +282,40 @@ class StartupTasks {
       messenger = BackgroundIsolateBinaryMessenger.instance;
     }
 
-    await _initCoreServices(headless: true);
+    await _initCoreServices(headless: true, isolateHandoff: handoff, onStage: onStage);
 
+    onStage?.call('interop-preregister');
     final globalInteropReady = _preRegisterInteropServices(
       headless: true,
       isBubble: false,
       binaryMessenger: messenger,
     );
 
+    onStage?.call('db');
     Logger.info("Initializing database...");
     await Database.init();
     Logger.info("Database initialized");
     globalInteropReady.complete();
 
+    onStage?.call('contacts-chats');
     await _initContactHandleChats(headless: true);
+    onStage?.call('http');
     await _initHttpService();
+    onStage?.call('interop-wait');
     await _waitForInterop(methodChannel: true);
 
     Logger.info("Global isolate services initialization complete");
   }
 
   /// Initialize only the services required for sync operations (lighter than full global isolate)
-  static Future<void> initSyncIsolateServices(RootIsolateToken? rootIsolateToken) async {
+  static Future<void> initSyncIsolateServices(
+    RootIsolateToken? rootIsolateToken, [
+    Map<String, dynamic>? handoff,
+    void Function(String)? onStage,
+  ]) async {
     debugPrint("Initializing sync isolate services...");
 
+    onStage?.call('messenger');
     BinaryMessenger? messenger;
     if (rootIsolateToken != null) {
       debugPrint("Initializing Background Isolate Binary Messenger");
@@ -294,20 +323,24 @@ class StartupTasks {
       messenger = BackgroundIsolateBinaryMessenger.instance;
     }
 
-    await _initCoreServices(headless: true);
+    await _initCoreServices(headless: true, isolateHandoff: handoff, onStage: onStage);
 
+    onStage?.call('interop-preregister');
     final syncInteropReady = _preRegisterInteropServices(
       headless: true,
       isBubble: false,
       binaryMessenger: messenger,
     );
 
+    onStage?.call('db');
     Logger.info("Initializing database...");
     await Database.init();
     Logger.info("Database initialized");
     syncInteropReady.complete();
 
+    onStage?.call('contacts-chats');
     await _initContactHandleChats(headless: true);
+    onStage?.call('http');
     await _initHttpService();
     Logger.info("HttpService ready");
 

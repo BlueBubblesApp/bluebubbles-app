@@ -127,7 +127,25 @@ class FilesystemService {
     return path;
   }
 
-  Future<void> init({bool headless = false}) async {
+  /// [handoff] is the background-isolate path: path_provider and package_info
+  /// are platform-channel plugins, and channel calls from inside an isolate
+  /// were observed to hang around pause transitions, leaving the isolate
+  /// stillborn at init (2026-07-05/06 wedges). The main engine hands the
+  /// already-resolved values over at isolate spawn instead.
+  Future<void> init({bool headless = false, Map<String, dynamic>? handoff}) async {
+    if (handoff != null) {
+      appDocDir = Directory(handoff['appDocPath'] as String);
+      _sysTemp = Directory(handoff['sysTempPath'] as String);
+      final pi = handoff['packageInfo'] as Map<String, dynamic>;
+      packageInfo = PackageInfo(
+        appName: pi['appName'] as String,
+        packageName: pi['packageName'] as String,
+        version: pi['version'] as String,
+        buildNumber: pi['buildNumber'] as String,
+        buildSignature: pi['buildSignature'] as String? ?? '',
+      );
+      return;
+    }
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory());
@@ -155,6 +173,20 @@ class FilesystemService {
       androidInfo = await DeviceInfoPlugin().androidInfo;
     }
   }
+
+  /// Serializable snapshot of the platform-channel-derived values, for the
+  /// isolate spawn handoff (see [init]'s `handoff` parameter).
+  Map<String, dynamic> buildHandoff() => {
+        'appDocPath': appDocDir.path,
+        'sysTempPath': _sysTemp.path,
+        'packageInfo': {
+          'appName': packageInfo.appName,
+          'packageName': packageInfo.packageName,
+          'version': packageInfo.version,
+          'buildNumber': packageInfo.buildNumber,
+          'buildSignature': packageInfo.buildSignature,
+        },
+      };
 
   void checkFont() async {
     if (!kIsWeb) {

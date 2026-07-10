@@ -5,31 +5,26 @@ import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
 
 class PrefsInterface {
+  // Reply-state persistence is SharedPreferences, not ObjectBox — there is no
+  // reason to marshal it through the GlobalIsolate, and doing so is hazardous:
+  // prefs writes are platform-channel write-throughs, and channel calls made
+  // from inside the isolate were observed to hang around pause transitions
+  // (2026-07-06 wedge: saveReplyToMessageState froze a healthy isolate and
+  // every request behind it). Always run these on the calling engine.
   static Future<void> saveReplyToMessageState(String chatGuid, String? messageGuid, int? messagePart) async {
     final data = {
       'chatGuid': chatGuid,
       'messageGuid': messageGuid,
       'messagePart': messagePart,
     };
-
-    if (isIsolate) {
-      return await PrefsActions.saveReplyToMessageState(data);
-    } else {
-      return await GetIt.I<GlobalIsolate>().send<void>(IsolateRequestType.saveReplyToMessageState, input: data);
-    }
+    return await PrefsActions.saveReplyToMessageState(data);
   }
 
   static Future<Map<String, dynamic>?> loadReplyToMessageState(String chatGuid) async {
     final data = {
       'chatGuid': chatGuid,
     };
-
-    if (isIsolate) {
-      return PrefsActions.loadReplyToMessageState(data);
-    } else {
-      return await GetIt.I<GlobalIsolate>()
-          .send<Map<String, dynamic>?>(IsolateRequestType.loadReplyToMessageState, input: data);
-    }
+    return PrefsActions.loadReplyToMessageState(data);
   }
 
   static Future<void> syncAllSettings({Map<String, dynamic>? settings}) async {

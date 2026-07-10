@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences/util/legacy_to_async_migration_util.dart';
 import 'package:shared_preferences_android/shared_preferences_android.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:universal_io/io.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_admin_actions.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_database_actions.dart';
@@ -51,20 +53,31 @@ class SharedPreferencesService {
         )
       : const SharedPreferencesOptions();
 
-  Future<void> init({bool headless = false}) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await migrateLegacySharedPreferencesToSharedPreferencesAsyncIfNecessary(
-      legacySharedPreferencesInstance: prefs,
-      sharedPreferencesAsyncOptions: _options,
-      migrationCompletedKey: 'migrationCompleted',
-    );
+  /// [snapshot] is the isolate path: background isolates must NOT touch the
+  /// platform-channel prefs backends (getInstance / the legacy→async migration /
+  /// the DataStore copy) — those calls were observed to hang around pause
+  /// transitions, leaving the isolate stillborn at init with every queued
+  /// request frozen behind it. The main engine hands a full key/value snapshot
+  /// to the isolate at spawn and the whole prefs stack runs in-memory there.
+  /// Isolate-side writes are intentionally non-persistent.
+  Future<void> init({bool headless = false, Map<String, Object>? snapshot}) async {
+    if (snapshot != null) {
+      SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.withData(snapshot);
+    } else {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await migrateLegacySharedPreferencesToSharedPreferencesAsyncIfNecessary(
+        legacySharedPreferencesInstance: prefs,
+        sharedPreferencesAsyncOptions: _options,
+        migrationCompletedKey: 'migrationCompleted',
+      );
 
-    // Values written while the async API was DataStore-backed exist only in
-    // DataStore and would vanish when switching back to the XML store. Copy
-    // them over once. Runs AFTER the legacy migration above so the (newer)
-    // DataStore values win over any stale legacy values it re-imported.
-    if (!kIsWeb && Platform.isAndroid) {
-      await _migrateDataStoreToSharedPreferences();
+      // Values written while the async API was DataStore-backed exist only in
+      // DataStore and would vanish when switching back to the XML store. Copy
+      // them over once. Runs AFTER the legacy migration above so the (newer)
+      // DataStore values win over any stale legacy values it re-imported.
+      if (!kIsWeb && Platform.isAndroid) {
+        await _migrateDataStoreToSharedPreferences();
+      }
     }
 
     i = await SharedPreferencesWithCache.create(

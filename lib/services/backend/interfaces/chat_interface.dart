@@ -1,6 +1,7 @@
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/env.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/actions/chat_actions.dart';
 import 'package:bluebubbles/models/models.dart' show MessageSaveResult;
 import 'package:bluebubbles/services/services.dart';
@@ -14,16 +15,13 @@ class ChatInterface {
     required int chatId,
     required String chatGuid,
   }) async {
-    final data = {
-      'chatId': chatId,
-      'chatGuid': chatGuid,
-    };
-
-    if (isIsolate) {
-      return await ChatActions.clearNotificationForChat(data);
-    } else if (!LifecycleSvc.isBubble) {
-      return await GetIt.I<GlobalIsolate>().send<void>(IsolateRequestType.clearNotificationForChat, input: data);
-    }
+    // This is purely a method-channel call to Kotlin (no DB work) — round-
+    // tripping it through the GlobalIsolate only added a platform-channel
+    // call from inside the isolate, the exact class of call observed to hang
+    // around pause transitions (2026-07-06 wedge). Invoke it directly.
+    if (kIsDesktop || kIsWeb) return;
+    if (!isIsolate && LifecycleSvc.isBubble) return;
+    await MethodChannelSvc.actions.deleteNotification(notificationId: chatId, tag: 'new_message');
   }
 
   static Future<void> markAllChatsRead({

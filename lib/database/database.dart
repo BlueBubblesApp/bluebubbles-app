@@ -312,9 +312,31 @@ class Database {
     }
   }
 
-  /// Wrapper for store.runInTransaction
+  /// Wrapper for store.runInTransaction.
+  ///
+  /// Write transactions are timed: ObjectBox allows one writer per store
+  /// process-wide and blocks the rest natively, so a slow holder (or a
+  /// starved waiter) freezes every other writer in the app. Logging the
+  /// call site of anything that spends >5s in here is the only way to name
+  /// the holder when a store-wide write wedge occurs.
   static R runInTransaction<R>(TxMode mode, R Function() fn) {
-    return store.runInTransaction(mode, fn);
+    if (mode != TxMode.write) {
+      return store.runInTransaction(mode, fn);
+    }
+    final sw = Stopwatch()..start();
+    try {
+      return store.runInTransaction(mode, fn);
+    } finally {
+      sw.stop();
+      if (sw.elapsed > const Duration(seconds: 5)) {
+        Logger.warn(
+          'Write transaction spent ${sw.elapsedMilliseconds}ms (wait + hold) — '
+          'possible write-lock contention. Call site:',
+          trace: StackTrace.current,
+          tag: 'DbTx',
+        );
+      }
+    }
   }
 
   static reset() {

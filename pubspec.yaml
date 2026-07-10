@@ -150,6 +150,7 @@ dependencies:
   share_plus: ^12.0.1 # sharing files not supported on Linux, doesn't work properly on Windows
   shared_preferences: ^2.5.3
   shared_preferences_android: ^2.4.10 # direct dep: Android backend options (keep native-readable SharedPreferences store)
+  shared_preferences_platform_interface: ^2.4.2 # direct dep: InMemorySharedPreferencesAsync for the isolate prefs snapshot (no channel calls)
   shimmer: ^3.0.0
   simple_animations: ^5.1.0
   skeletonizer: ^2.1.3

@@ -642,6 +642,49 @@ class NotificationsService {
     }
   }
 
+  /// Shown when the isolate watchdog detects a store-wide database write
+  /// wedge (two watchdog fires in quick succession): isolate restarts can't
+  /// release a write lock held elsewhere in the process — only a full app
+  /// restart can. Without this, the app looks alive but silently saves
+  /// nothing until the user figures that out on their own.
+  Future<void> createDatabaseStuckNotification() async {
+    const title = "BlueBubbles needs a restart";
+    const text =
+        "The message database hit a write deadlock — new messages can't be saved until the app is fully restarted.";
+    const notifId = -4;
+
+    if (kIsDesktop) {
+      final toast = LocalNotification(
+        type: LocalNotificationType.text02,
+        title: title,
+        body: text,
+      );
+      toast.onClick = () async {
+        await windowManager.show();
+      };
+      await toast.show();
+    } else {
+      final notifs = await flnp.getActiveNotifications();
+      if (notifs.firstWhereOrNull((n) => n.id == notifId) != null) return;
+
+      await flnp.show(
+        id: notifId,
+        title: title,
+        body: text,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(ERROR_CHANNEL, 'Errors',
+              channelDescription: 'Displays message send failures, connection failures, and more',
+              priority: Priority.max,
+              importance: Importance.max,
+              color: HexColor("4990de"),
+              ongoing: false,
+              onlyAlertOnce: true,
+              styleInformation: const BigTextStyleInformation('')),
+        ),
+      );
+    }
+  }
+
   Future<void> createFailedToSend(Chat chat, {bool scheduled = false}) async {
     final title = 'Failed to send${scheduled ? " scheduled" : ""} message';
     final subtitle = scheduled ? 'Tap to open scheduled messages list' : 'Tap to see more details or retry';
