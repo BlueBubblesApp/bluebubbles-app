@@ -1,3 +1,5 @@
+import 'package:bluebubbles/app/components/bb_chip.dart';
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
@@ -28,7 +30,8 @@ class ConversationFullscreenHolder extends StatefulWidget {
       this.initialAttachmentGuid,
       this.replyMessage,
       this.replyPartIndex,
-      this.galleryAttachments});
+      this.galleryAttachments,
+      this.showJumpToMessage = false});
 
   final Chat? currentChat;
   final Attachment attachment;
@@ -42,6 +45,9 @@ class ConversationFullscreenHolder extends StatefulWidget {
   /// When non-null, the fullscreen carousel is limited to these attachments
   /// instead of all images in the chat. Used when opening from a gallery card.
   final List<Attachment>? galleryAttachments;
+
+  /// When true, shows a header chip to jump back to the source message.
+  final bool showJumpToMessage;
 
   @override
   ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
@@ -79,6 +85,115 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   bool get _isVideoAttachment => attachment.mimeStart == "video";
   late bool showAppBar = kIsDesktop || kIsWeb || !_isVideoAttachment;
   bool get _canReply => widget.replyMessage != null && widget.replyPartIndex != null && widget.currentChat != null;
+
+  Message? _messageForAttachment(Attachment attachment) {
+    if (attachment.message.hasValue) {
+      return attachment.message.target;
+    }
+    final svc = messageService;
+    if (svc != null && attachment.guid != null) {
+      for (final message in svc.struct.messages) {
+        if (message.dbAttachments.any((a) => a.guid == attachment.guid)) {
+          return message;
+        }
+      }
+    }
+    return null;
+  }
+
+  Message? get _currentMessage => _messageForAttachment(attachments[currentIndex]);
+
+  bool get _canJumpToMessage {
+    if (!widget.showJumpToMessage || kIsWeb || !widget.showInteractions) return false;
+    final message = _currentMessage;
+    if (message?.guid == null) return false;
+    final chatGuid = widget.currentChat?.guid ?? message!.chat.target?.guid;
+    if (chatGuid == null) return false;
+    return maybeFindMessagesSvc(chatGuid) != null;
+  }
+
+  void _jumpToSourceMessage() {
+    final message = _currentMessage;
+    final guid = message?.guid;
+    final chatGuid = widget.currentChat?.guid ?? message?.chat.target?.guid;
+    if (guid == null || chatGuid == null) return;
+
+    final service = maybeFindMessagesSvc(chatGuid);
+    if (service == null) return;
+
+    // Capture before popping — this widget's context is disposed after the first pop.
+    final navigator = Navigator.of(context);
+
+    // Close fullscreen first.
+    navigator.pop();
+
+    // Then close conversation-details / attachments routes above the conversation.
+    // Pop one route per frame so ConversationView's RouteAware can clear
+    // showingSubRoute before we decide whether another pop is needed.
+    void popUntilConversation() {
+      final ctrl = Get.isRegistered<ConversationViewController>(tag: chatGuid)
+          ? Get.find<ConversationViewController>(tag: chatGuid)
+          : null;
+      if (ctrl?.showingSubRoute == true && navigator.canPop()) {
+        navigator.pop();
+        WidgetsBinding.instance.addPostFrameCallback((_) => popUntilConversation());
+        return;
+      }
+      service.jumpToMessage(guid);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => popUntilConversation());
+  }
+
+  String get _jumpChipLabel {
+    final message = _currentMessage!;
+    if (message.isFromMe!) return "From You";
+    final handle = message.handleRelation.target;
+    if (handle == null) return "From Unknown";
+    final handleState = HandleSvc.getOrCreateHandleState(handle);
+    return "From ${handleState.displayName.value ?? handle.displayName}";
+  }
+
+  PreferredSizeWidget? _buildJumpToMessageBar(BuildContext context) {
+    if (!_canJumpToMessage) return null;
+
+    return PreferredSize(
+      // Material chip metrics (avatar + bodyMedium line-height) can slightly exceed 36;
+      // keep headroom so we don't trip fractional RenderFlex overflows.
+      preferredSize: const Size.fromHeight(40),
+      child: Align(
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Theme(
+            data: context.theme.copyWith(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            child: BBChip(
+              avatar: CircleAvatar(
+                backgroundColor: context.theme.colorScheme.primaryContainer,
+                radius: 12,
+                child: ContactAvatarWidget(
+                  handle: _currentMessage!.isFromMe! ? null : _currentMessage!.handleRelation.target,
+                  size: 24,
+                  editable: false,
+                  scaleSize: false,
+                  borderThickness: 0,
+                ),
+              ),
+              label: Text(
+                _jumpChipLabel,
+                style: context.theme.textTheme.bodyMedium?.copyWith(height: 1.2),
+                overflow: TextOverflow.ellipsis,
+              ),
+              onPressed: _jumpToSourceMessage,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -153,6 +268,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                       : "${currentIndex + 1} of ${attachments.length}",
                   titleStyle:
                       context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                  bottom: _buildJumpToMessageBar(context),
                   iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
                   actions: [
                     if (_canReply)
