@@ -103,14 +103,16 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
 
   Message? get _currentMessage => _messageForAttachment(attachments[currentIndex]);
 
-  bool get _canJumpToMessage {
+  bool _canJumpFor(Attachment attachment) {
     if (!widget.showJumpToMessage || kIsWeb || !widget.showInteractions) return false;
-    final message = _currentMessage;
+    final message = _messageForAttachment(attachment);
     if (message?.guid == null) return false;
     final chatGuid = widget.currentChat?.guid ?? message!.chat.target?.guid;
     if (chatGuid == null) return false;
     return maybeFindMessagesSvc(chatGuid) != null;
   }
+
+  bool get _canJumpToMessage => _canJumpFor(attachments[currentIndex]);
 
   void _jumpToSourceMessage() {
     final message = _currentMessage;
@@ -398,184 +400,216 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                   _videoSwipeVelocityTracker = null;
                   _videoSwipeDragDx = 0;
                 },
-                child: PageView.builder(
-                physics: physics ??
-                    (attachments.length == 1 ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics()),
-                reverse: SettingsSvc.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
-                itemCount: attachments.length,
-                onPageChanged: (int val) {
-                  widget.videoController?.player.pause();
-                  setState(() {
-                    currentIndex = val;
-                    // Reset a zoom-lock (NeverScrollableScrollPhysics) set by the page we're
-                    // leaving — FullscreenImage's PhotoView reports its own scale state via
-                    // updatePhysics, but `physics` lives on this shared holder, not per-page.
-                    // Without this reset, landing on a video (which never calls updatePhysics)
-                    // after a zoomed image permanently locks the PageView from then on.
-                    physics = null;
-                  });
-                },
-                controller: controller,
-                itemBuilder: (BuildContext context, int index) {
-                  final attachment = attachments[index];
-                  dynamic content = AttachmentsSvc.getContent(attachment,
-                      path: attachment.guid == null ? attachment.transferName : null);
-                  final key = attachment.guid ?? attachment.transferName ?? randomString(8);
-
-                  if (content is PlatformFile) {
-                    if (attachment.mimeStart == "image") {
-                      return FullscreenImage(
-                        key: Key(key),
-                        attachment: attachment,
-                        file: content,
-                        showInteractions: widget.showInteractions,
-                        updatePhysics: (ScrollPhysics p) {
-                          if (physics != p) {
-                            setState(() {
-                              physics = p;
-                            });
-                          }
-                        },
-                        onOverlayToggle: (show) {
-                          if (showAppBar != show) {
-                            setState(() {
-                              showAppBar = show;
-                            });
-                          }
-                        },
-                      );
-                    } else if (attachment.mimeStart == "video") {
-                      return FullscreenVideo(
-                        key: Key(key),
-                        file: content,
-                        attachment: attachment,
-                        showInteractions: widget.showInteractions,
-                        videoController: widget.videoController,
-                        mute: widget.mute,
-                        onOverlayToggle: (show) {
-                          if (showAppBar != show) {
-                            setState(() {
-                              showAppBar = show;
-                            });
-                          }
-                        },
-                      );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  } else if (content is Attachment) {
-                    final Attachment _content = content;
-                    return InkWell(
-                      onTap: () {
+                child: Stack(
+                  children: [
+                    PageView.builder(
+                      physics: physics ??
+                          (attachments.length == 1
+                              ? const NeverScrollableScrollPhysics()
+                              : ThemeSwitcher.getScrollPhysics()),
+                      reverse: SettingsSvc.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
+                      itemCount: attachments.length,
+                      onPageChanged: (int val) {
+                        widget.videoController?.player.pause();
                         setState(() {
-                          content = AttachmentDownloader.startDownload(content, onComplete: (file) {
-                            setState(() {
-                              content = file;
-                            });
-                          });
+                          currentIndex = val;
+                          // Reset a zoom-lock (NeverScrollableScrollPhysics) set by the page we're
+                          // leaving — FullscreenImage's PhotoView reports its own scale state via
+                          // updatePhysics, but `physics` lives on this shared holder, not per-page.
+                          // Without this reset, landing on a video (which never calls updatePhysics)
+                          // after a zoomed image permanently locks the PageView from then on.
+                          physics = null;
                         });
                       },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          SizedBox(
-                            height: 40,
-                            width: 40,
-                            child: Center(
-                                child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined,
-                                    size: 30)),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            (_content.mimeType ?? ""),
-                            style: context.theme.textTheme.bodyLarge!
-                                .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _content.getFriendlySize(),
-                            style: context.theme.textTheme.bodyMedium!
-                                .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                            maxLines: 1,
-                          ),
-                        ],
-                      ),
-                    );
-                  } else if (content is AttachmentDownloadController) {
-                    final AttachmentDownloadController _content = content;
-                    return InkWell(
-                      onTap: () {
-                        final AttachmentDownloadController _content = content;
-                        if (_content.state.value != AttachmentDownloadState.error) return;
-                        Get.delete<AttachmentDownloadController>(tag: _content.attachment.guid);
-                        content = AttachmentDownloader.startDownload(_content.attachment, onComplete: (file) {
-                          setState(() {
-                            content = file;
-                          });
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Obx(() {
-                          final isError = _content.state.value == AttachmentDownloadState.error;
-                          final isProcessing = _content.state.value == AttachmentDownloadState.processing;
-                          final isQueued = _content.state.value == AttachmentDownloadState.queued;
+                      controller: controller,
+                      itemBuilder: (BuildContext context, int index) {
+                        final attachment = attachments[index];
+                        dynamic content = AttachmentsSvc.getContent(attachment,
+                            path: attachment.guid == null ? attachment.transferName : null);
+                        final key = attachment.guid ?? attachment.transferName ?? randomString(8);
 
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              SizedBox(
-                                height: 40,
-                                width: 40,
-                                child: Center(
-                                  child: isError
-                                      ? Icon(iOS ? CupertinoIcons.arrow_clockwise : Icons.refresh, size: 30)
-                                      : isProcessing
-                                          ? (iOS
-                                              ? const CupertinoActivityIndicator(radius: 14)
-                                              : const CircularProgressIndicator())
-                                          : isQueued
-                                              ? Icon(iOS ? CupertinoIcons.clock : Icons.schedule, size: 30)
-                                              : CircleProgressBar(
-                                                  value: _content.progress.value?.toDouble() ?? 0,
-                                                  backgroundColor: context.theme.colorScheme.outline,
-                                                  foregroundColor: context.theme.colorScheme.onSurfaceVariant,
-                                                ),
+                        if (content is PlatformFile) {
+                          if (attachment.mimeStart == "image") {
+                            return FullscreenImage(
+                              key: Key(key),
+                              attachment: attachment,
+                              file: content,
+                              showInteractions: widget.showInteractions,
+                              updatePhysics: (ScrollPhysics p) {
+                                if (physics != p) {
+                                  setState(() {
+                                    physics = p;
+                                  });
+                                }
+                              },
+                              onOverlayToggle: (show) {
+                                if (showAppBar != show) {
+                                  setState(() {
+                                    showAppBar = show;
+                                  });
+                                }
+                              },
+                            );
+                          } else if (attachment.mimeStart == "video") {
+                            return FullscreenVideo(
+                              key: Key(key),
+                              file: content,
+                              attachment: attachment,
+                              showInteractions: widget.showInteractions,
+                              videoController: widget.videoController,
+                              mute: widget.mute,
+                              onOverlayToggle: (show) {
+                                if (showAppBar != show) {
+                                  setState(() {
+                                    showAppBar = show;
+                                  });
+                                }
+                              },
+                            );
+                          } else {
+                            return const SizedBox.shrink();
+                          }
+                        } else if (content is Attachment) {
+                          final Attachment _content = content;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                content = AttachmentDownloader.startDownload(content, onComplete: (file) {
+                                  setState(() {
+                                    content = file;
+                                  });
+                                });
+                              });
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 40,
+                                  width: 40,
+                                  child: Center(
+                                      child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined,
+                                          size: 30)),
                                 ),
-                              ),
-                              isError ? const SizedBox(height: 10) : const SizedBox(height: 5),
+                                const SizedBox(height: 5),
+                                Text(
+                                  (_content.mimeType ?? ""),
+                                  style: context.theme.textTheme.bodyLarge!
+                                      .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  _content.getFriendlySize(),
+                                  style: context.theme.textTheme.bodyMedium!
+                                      .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                                  maxLines: 1,
+                                ),
+                              ],
+                            ),
+                          );
+                        } else if (content is AttachmentDownloadController) {
+                          final AttachmentDownloadController _content = content;
+                          return InkWell(
+                            onTap: () {
+                              final AttachmentDownloadController _content = content;
+                              if (_content.state.value != AttachmentDownloadState.error) return;
+                              Get.delete<AttachmentDownloadController>(tag: _content.attachment.guid);
+                              content = AttachmentDownloader.startDownload(_content.attachment, onComplete: (file) {
+                                setState(() {
+                                  content = file;
+                                });
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Obx(() {
+                                final isError = _content.state.value == AttachmentDownloadState.error;
+                                final isProcessing = _content.state.value == AttachmentDownloadState.processing;
+                                final isQueued = _content.state.value == AttachmentDownloadState.queued;
+
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    SizedBox(
+                                      height: 40,
+                                      width: 40,
+                                      child: Center(
+                                        child: isError
+                                            ? Icon(iOS ? CupertinoIcons.arrow_clockwise : Icons.refresh, size: 30)
+                                            : isProcessing
+                                                ? (iOS
+                                                    ? const CupertinoActivityIndicator(radius: 14)
+                                                    : const CircularProgressIndicator())
+                                                : isQueued
+                                                    ? Icon(iOS ? CupertinoIcons.clock : Icons.schedule, size: 30)
+                                                    : CircleProgressBar(
+                                                        value: _content.progress.value?.toDouble() ?? 0,
+                                                        backgroundColor: context.theme.colorScheme.outline,
+                                                        foregroundColor: context.theme.colorScheme.onSurfaceVariant,
+                                                      ),
+                                      ),
+                                    ),
+                                    isError ? const SizedBox(height: 10) : const SizedBox(height: 5),
+                                    Text(
+                                      isError
+                                          ? "Failed to download!"
+                                          : isProcessing
+                                              ? "Processing"
+                                              : isQueued
+                                                  ? "Queued"
+                                                  : (_content.attachment.mimeType ?? ""),
+                                      style: context.theme.textTheme.bodyLarge!
+                                          .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    )
+                                  ],
+                                );
+                              }),
+                            ),
+                          );
+                        } else {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
                               Text(
-                                isError
-                                    ? "Failed to download!"
-                                    : isProcessing
-                                        ? "Processing"
-                                        : isQueued
-                                            ? "Queued"
-                                            : (_content.attachment.mimeType ?? ""),
-                                style: context.theme.textTheme.bodyLarge!
-                                    .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              )
+                                "Error loading attachment",
+                                style: context.theme.textTheme.bodyLarge,
+                              ),
                             ],
                           );
-                        }),
-                      ),
-                    );
-                  } else {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Error loading attachment",
-                          style: context.theme.textTheme.bodyLarge,
+                        }
+                      },
+                    ),
+                    if (material && _canJumpToMessage)
+                      Positioned(
+                        right: 16,
+                        bottom: 16,
+                        child: IgnorePointer(
+                          ignoring: !showAppBar,
+                          child: AnimatedOpacity(
+                            opacity: showAppBar ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: SafeArea(
+                              top: false,
+                              child: FilledButton(
+                                onPressed: _jumpToSourceMessage,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: context.theme.colorScheme.primary,
+                                  foregroundColor: context.theme.colorScheme.onPrimary,
+                                  shape: const StadiumBorder(),
+                                  minimumSize: const Size(0, 48),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                ),
+                                child: const Text("See in chat"),
+                              ),
+                            ),
+                          ),
                         ),
-                      ],
-                    );
-                  }
-                },
+                      ),
+                  ],
                 ),
               ),
             ),
