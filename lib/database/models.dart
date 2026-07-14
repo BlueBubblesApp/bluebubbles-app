@@ -31,6 +31,7 @@ export 'package:bluebubbles/database/global/apple_location.dart';
 export 'package:bluebubbles/database/global/isolate.dart';
 export 'package:bluebubbles/database/global/theme_colors.dart';
 export 'package:bluebubbles/database/global/payload_data.dart';
+export 'package:bluebubbles/database/global/poll_data.dart';
 export 'package:bluebubbles/database/global/message_summary_info.dart';
 export 'package:bluebubbles/database/global/message_part.dart';
 export 'package:bluebubbles/database/global/scheduled_message.dart';

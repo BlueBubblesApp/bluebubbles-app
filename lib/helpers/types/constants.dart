@@ -40,6 +40,10 @@ const balloonBundleIdMap = {
   'com.apple.messages.MSMessageExtensionBalloonPlugin': {
     'com.nearfuturespecialists.imessagepoll.MessagesExtension': 'iMessage Poll',
     'be.nieldeckx.poll.extension': 'iMessage Poll',
+    // Apple's native Polls feature (iOS 18+) — kept as a distinct label from the
+    // third-party 'iMessage Poll' entries above so it can be gated independently
+    // in interactive_holder.dart.
+    'com.apple.messages.MSMessageExtensionBalloonPlugin:0000000000:com.apple.messages.Polls': 'Apple Poll',
     'com.gamerdelights.gamepigeon.ext': 'GamePigeon',
     'com.google.ios.youtube.MessagesExtension': 'YouTube',
     'com.shazam.Shazam.imessageextension': 'Shazam',
@@ -61,6 +65,9 @@ final balloonBundleIdIconMap = {
         SettingsSvc.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_chart : Icons.ballot_outlined,
     'be.nieldeckx.poll.extension':
         SettingsSvc.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_chart : Icons.ballot_outlined,
+    // 'com.apple.messages.Polls': SettingsSvc.settings.skin.value == Skins.iOS
+    //     ? CupertinoIcons.doc_chart
+    //     : Icons.ballot_outlined, // uncomment together with the PollMessage case in interactive_holder.dart
     'com.gamerdelights.gamepigeon.ext':
         SettingsSvc.settings.skin.value == Skins.iOS ? CupertinoIcons.game_controller : Icons.sports_esports_outlined,
     'com.google.ios.youtube.MessagesExtension':

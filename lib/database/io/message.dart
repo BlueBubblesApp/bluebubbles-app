@@ -544,6 +544,38 @@ class Message {
     return "${FilesystemSvc.messagesPath}/$guid/embedded-media/$balloonBundleId$extension";
   }
 
+  /// True for any message belonging to Apple's native Polls balloon (initial
+  /// poll, a vote, or an options update). Distinguishes native Apple Polls
+  /// from the third-party poll extensions also registered in
+  /// [balloonBundleIdMap] (those never set this true).
+  bool get isPoll =>
+      balloonBundleId
+          ?.contains("com.apple.messages.MSMessageExtensionBalloonPlugin:0000000000:com.apple.messages.Polls") ??
+      false;
+
+  /// The original poll message that defines the poll (no associatedMessageGuid).
+  bool get isPollInitialMessage => isPoll && associatedMessageGuid == null;
+
+  /// A vote cast against an existing poll.
+  bool get isPollVote => isPoll && associatedMessageGuid != null && associatedMessageType == "4000";
+
+  /// A message carrying a full, updated option list for an existing poll.
+  /// Apple moves the "live"/canonical poll UI to the newest such message for
+  /// a given poll — see [ConversationViewController.pollCanonicalMessageGuid].
+  bool get isPollOptionsUpdate => isPoll && associatedMessageGuid != null && associatedMessageType == "2";
+
+  /// This message's own decoded poll payload (only non-null for
+  /// [isPollVote] / [isPollOptionsUpdate] messages — the initial message
+  /// carries no parseable vote/option data itself). Pure/synchronous.
+  PollPayload? get pollPayload {
+    if (!isPoll || associatedMessageGuid == null) return null;
+    return PollPayload.tryParse(payloadData?.appData?.firstOrNull?.url);
+  }
+
+  List<PollVote> get pollVotesFromPayload => pollPayload?.voteBatch?.votes ?? [];
+
+  List<PollOption> get pollOptionsFromPayload => pollPayload?.optionsUpdate?.options ?? [];
+
   bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
 
   /// Resolved sender name for the group event — prefers [handleRelation.target]
@@ -611,6 +643,57 @@ class Message {
   List<Message> get reactions => associatedMessages
       .where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", "")))
       .toList();
+
+  /// Vote messages associated with this poll. Only meaningful when called on
+  /// the root/initial poll message — that's the only message that ever
+  /// accumulates poll votes/updates in [associatedMessages], via the same
+  /// mechanism used for reactions.
+  List<Message> get pollVoteMessages => associatedMessages.where((m) => m.isPollVote).toList();
+
+  /// Options-update messages associated with this poll, oldest first.
+  List<Message> get pollOptionsUpdateMessages => associatedMessages.where((m) => m.isPollOptionsUpdate).toList()
+    ..sort((a, b) => (a.dateCreated ?? DateTime(0)).compareTo(b.dateCreated ?? DateTime(0)));
+
+  /// The message currently holding the newest option list for this poll, or
+  /// null if none has arrived yet.
+  Message? get latestPollOptionsUpdateMessage => pollOptionsUpdateMessages.lastOrNull;
+
+  /// The option list to render as "current" — from the newest options-update
+  /// message if one exists, else this message's own payload (typically empty
+  /// for the initial message, since it carries no option data itself).
+  List<PollOption> get pollCurrentOptions =>
+      latestPollOptionsUpdateMessage?.pollOptionsFromPayload ?? pollOptionsFromPayload;
+
+  /// Vote tally by option identifier. Dedupes so a participant who changes
+  /// their vote is only counted once, keeping each participant's
+  /// latest-by-dateCreated vote.
+  Map<String, int> get pollVoteTally {
+    final latestByParticipant = <String, PollVote>{};
+    final dateByParticipant = <String, DateTime>{};
+    for (final voteMsg in pollVoteMessages) {
+      final created = voteMsg.dateCreated ?? DateTime(0);
+      for (final vote in voteMsg.pollVotesFromPayload) {
+        final prev = dateByParticipant[vote.participantHandle];
+        if (prev == null || created.isAfter(prev)) {
+          latestByParticipant[vote.participantHandle] = vote;
+          dateByParticipant[vote.participantHandle] = created;
+        }
+      }
+    }
+    final tally = <String, int>{};
+    for (final vote in latestByParticipant.values) {
+      tally[vote.voteOptionIdentifier] = (tally[vote.voteOptionIdentifier] ?? 0) + 1;
+    }
+    return tally;
+  }
+
+  /// The device owner's own current vote, determined via each vote message's
+  /// own [isFromMe] (the same signal used to distinguish "your reaction").
+  String? get pollMyVoteOptionIdentifier {
+    final mine = pollVoteMessages.where((m) => m.isFromMe == true).toList()
+      ..sort((a, b) => (a.dateCreated ?? DateTime(0)).compareTo(b.dateCreated ?? DateTime(0)));
+    return mine.lastOrNull?.pollVotesFromPayload.firstOrNull?.voteOptionIdentifier;
+  }
 
   MessageStatusIndicator get indicatorToShow {
     if (!isFromMe!) return MessageStatusIndicator.NONE;

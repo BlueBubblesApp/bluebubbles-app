@@ -47,6 +47,13 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final Map<String, Player> audioPlayersDesktop = {};
   final Map<String, List<EntityAnnotation>> mlKitParsedText = {};
 
+  /// Keyed by a poll's ROOT message guid. Value = guid of the message that
+  /// should currently render the live/interactive poll UI. Defaults to the
+  /// root's own guid; updated to the newest options-update message's guid
+  /// when one arrives, since Apple moves the live poll UI to the newest
+  /// message carrying updated options (see POLL_NOTES.md).
+  final RxMap<String, String> pollCanonicalMessageGuid = <String, String>{}.obs;
+
   // message view items
   final RxBool showTypingIndicator = false.obs;
   final RxBool showScrollDown = false.obs;

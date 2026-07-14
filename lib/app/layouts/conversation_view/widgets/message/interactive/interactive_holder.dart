@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/apple_pay.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/embedded_media.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
+// import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/poll_message.dart'; // uncomment to enable native Apple Polls UI (see PollMessage doc comment)
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/supported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/unsupported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
@@ -143,6 +144,13 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                                           return SupportedInteractive(
                                             data: data,
                                           );
+                                        // case "Apple Poll":
+                                        //   // Native iMessage Polls (iOS 18+) — fully implemented
+                                        //   // (Message.isPoll*, ConversationViewController
+                                        //   // .pollCanonicalMessageGuid); uncomment this case + the
+                                        //   // PollMessage import above to enable. Until then falls
+                                        //   // through to `default` below, identical to today's behavior.
+                                        //   return PollMessage(data: data);
                                         case "GamePigeon":
                                           return GamePigeon(
                                             data: data,

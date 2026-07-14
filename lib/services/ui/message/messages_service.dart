@@ -784,6 +784,12 @@ class MessagesService extends GetxController {
           parentState.addAssociatedMessageInternal(message);
           Logger.debug("Added reaction ${message.guid} to MessageState of parent ${message.associatedMessageGuid}",
               tag: "MessageState");
+
+          // A newer options-update message supersedes the current canonical
+          // poll display message for this poll thread.
+          if (message.isPollOptionsUpdate) {
+            parentState.cvController?.pollCanonicalMessageGuid[message.associatedMessageGuid!] = message.guid!;
+          }
         }
 
         // Notify UI of update (no longer need to call controller methods)
@@ -1474,6 +1480,14 @@ class MessagesService extends GetxController {
                     "[loadChunk] Synced ${message.associatedMessages.length} reactions into MessageState for ${message.guid}",
                     tag: "MessageReactivity");
               }
+            }
+
+            // Seed the canonical-poll-message tracker: default to the root poll
+            // message itself, or the newest options-update message if one has
+            // already arrived (see ConversationViewController.pollCanonicalMessageGuid).
+            if (message.isPollInitialMessage && message.guid != null) {
+              final latest = message.latestPollOptionsUpdateMessage;
+              controller.pollCanonicalMessageGuid[message.guid!] = latest?.guid ?? message.guid!;
             }
           }
         },
