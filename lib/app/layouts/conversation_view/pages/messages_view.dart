@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/messag
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/messages_view_components.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -243,23 +244,20 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     super.dispose();
   }
 
-  Future<void> _scrollAndHighlight(int index) async {
-    await scrollController.scrollToIndex(
-      index,
-      preferPosition: AutoScrollPosition.middle,
-      // scroll_to_index asserts duration > Duration.zero; keep this near-instant.
-      duration: const Duration(milliseconds: 1),
-    );
-    scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 2000));
-  }
+  Future<void> _scrollToSearchResult(String guid) async {
+    if (!mounted) return;
 
-  /// Load a window of messages around [target] and rebuild the list if new rows were added.
-  Future<void> _ensureSurroundLoaded(Message target) async {
-    final method = messageService.method == "network" ? SearchMethod.network : SearchMethod.local;
-    await loadSearchChunk(target, method);
+    // Find the target message in the current (pre-seeded) message list
+    final targetMessage = _messages.firstWhereOrNull((m) => m.guid == guid);
+    if (targetMessage == null) return;
+
+    // Load messages surrounding the search result
+    final method = messageService.method == "local" ? SearchMethod.local : SearchMethod.network;
+    await loadSearchChunk(targetMessage, method);
 
     if (!mounted) return;
 
+    // Merge newly loaded messages into the local list
     final oldGuids = Set<String>.from(_messages.map((m) => m.guid).whereType<String>());
     final newMessages =
         messageService.struct.messages.where((m) => m.guid != null && !oldGuids.contains(m.guid)).toList();
@@ -270,24 +268,12 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       _messages.sort(Message.sort);
       _listKey = GlobalKey<SliverAnimatedListState>();
       if (mounted) setState(() {});
-      // Allow AutoScrollTags to mount before scrolling
+      // Allow the list to render before scrolling
       await Future.delayed(const Duration(milliseconds: 300));
     }
-  }
-
-  Future<void> _scrollToSearchResult(String guid) async {
-    if (!mounted) return;
-
-    final targetMessage = _messages.firstWhereOrNull((m) => m.guid == guid);
-    if (targetMessage == null) return;
-
-    await _ensureSurroundLoaded(targetMessage);
 
     if (!mounted) return;
-    final index = _messages.indexWhere((element) => element.guid == guid);
-    if (index != -1) {
-      await _scrollAndHighlight(index);
-    }
+    await jumpToMessage(guid);
   }
 
   void getFocusState() {
@@ -305,24 +291,26 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
   }
 
   Future<void> jumpToMessage(String guid) async {
+    // check if the message is already loaded
     int index = _messages.indexWhere((element) => element.guid == guid);
     if (index != -1) {
-      await _scrollAndHighlight(index);
+      await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+      scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 2000));
       return;
     }
-
+    // otherwise fetch until it is loaded
     final message = Message.findOne(guid: guid);
-    if (message == null) {
-      showSnackbar("Error", "Failed to find message!");
-      return;
-    }
-
-    await _ensureSurroundLoaded(message);
-
-    if (!mounted) return;
+    final query = (Database.messages.query(Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
+          ..link(Message_.chat, Chat_.id.equals(chat.id!))
+          ..order(Message_.dateCreated, flags: Order.descending))
+        .build();
+    final ids = await query.findIdsAsync();
+    final pos = ids.indexOf(message!.id!);
+    await _loadMoreMessages(limit: pos + 10);
     index = _messages.indexWhere((element) => element.guid == guid);
     if (index != -1) {
-      await _scrollAndHighlight(index);
+      await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+      scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 2000));
     } else {
       showSnackbar("Error", "Failed to find message!");
     }
