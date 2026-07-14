@@ -230,7 +230,14 @@ class IntentsService {
       // comment in init()), so activeChat may be a stale leftover from before the
       // Activity was torn down — always navigate explicitly in that case rather
       // than trusting it to already reflect what's on screen.
-      bool chatIsOpen = !isInitialIntent && ChatsSvc.activeChat?.chat.guid == guid;
+      //
+      // Otherwise the chat counts as open if it is the active chat or a view for
+      // it is still mounted: setAllInactive clears activeChat while the
+      // ConversationView is still on the stack (e.g. split view), and pushing a
+      // duplicate view there races the two over the shared MessagesService.
+      final activeMatch = ChatsSvc.activeChat?.chat.guid == guid;
+      final mountedMatch = ChatsSvc.isConversationMounted(guid);
+      bool chatIsOpen = !isInitialIntent && (activeMatch || mountedMatch);
       Logger.debug("Chat is active: $chatIsOpen", tag: "IntentsService");
 
       setPickedAttachments() {

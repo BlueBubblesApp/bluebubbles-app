@@ -65,6 +65,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   @override
   void initState() {
     super.initState();
+    ChatsSvc.registerMountedConversation(chat.guid);
     controller.fromChatCreator = widget.fromChatCreator;
     controller.fromSearchResult = widget.initialScrollToGuid != null;
     ChatsSvc.setActiveChat(chat);
@@ -205,6 +206,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
 
   @override
   void dispose() {
+    ChatsSvc.unregisterMountedConversation(chat.guid);
     routeObserver.unsubscribe(this);
     controller.saveReplyToMessageState(); // P8bda
     super.dispose();

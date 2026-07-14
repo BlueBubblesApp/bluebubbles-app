@@ -43,6 +43,15 @@ class ChatsService {
 
   ChatState? activeChat;
 
+  /// How many ConversationViews are currently mounted per chat GUID. Unlike
+  /// [activeChat] (nulled by setAllInactive) and ChatState.isAlive (deadened on
+  /// pause), this stays accurate while the widget is on the navigation stack, so
+  /// an incoming share-sheet / notification intent can tell a chat is already
+  /// on-screen and skip pushing a duplicate view (which would race the two views
+  /// over the shared MessagesService). Refcounted so an in-flight handoff stays
+  /// correct.
+  final Map<String, int> _mountedConversationCounts = {};
+
   /// Sorted list of chats maintained for efficient access
   /// Updated on add/update using binary search insertion O(log n + n)
   /// instead of sorting entire list O(n log n) on every access
@@ -824,6 +833,24 @@ class ChatsService {
     EventDispatcherSvc.emit("update-highlight", activeChat?.chat.guid);
     activeChat?.updateAliveInternal(true);
   }
+
+  /// Called by ConversationView.initState — a view for [guid] is now mounted.
+  void registerMountedConversation(String guid) {
+    _mountedConversationCounts[guid] = (_mountedConversationCounts[guid] ?? 0) + 1;
+  }
+
+  /// Called by ConversationView.dispose — a view for [guid] is no longer mounted.
+  void unregisterMountedConversation(String guid) {
+    final remaining = (_mountedConversationCounts[guid] ?? 0) - 1;
+    if (remaining > 0) {
+      _mountedConversationCounts[guid] = remaining;
+    } else {
+      _mountedConversationCounts.remove(guid);
+    }
+  }
+
+  /// True while at least one ConversationView for [guid] is on the navigation stack.
+  bool isConversationMounted(String guid) => (_mountedConversationCounts[guid] ?? 0) > 0;
 
   /// Check if a chat is currently active (both active and alive)
   bool isChatActive(String guid) {
