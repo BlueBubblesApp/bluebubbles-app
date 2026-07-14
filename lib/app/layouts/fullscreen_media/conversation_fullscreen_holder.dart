@@ -123,12 +123,21 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
 
     // Capture before popping — this widget's context is disposed after the first pop.
     final navigator = Navigator.of(context);
+    final useTabletNestedNav = Get.keys.containsKey(2) && NavigationSvc.isTabletMode(context);
 
     // Close fullscreen first.
     navigator.pop();
 
-    // Then close conversation-details / attachments routes above the conversation.
-    // Pop one route per frame so ConversationView's RouteAware can clear
+    if (useTabletNestedNav) {
+      // Nested right-pane navigator doesn't fire RouteAware, so showingSubRoute stays
+      // false. Pop Details / Attachments via Get.back(id: 2) instead.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _popTabletOverlaysThenJump(guid: guid, service: service);
+      });
+      return;
+    }
+
+    // Phone: pop one route per frame so ConversationView's RouteAware can clear
     // showingSubRoute before we decide whether another pop is needed.
     void popUntilConversation() {
       final ctrl = Get.isRegistered<ConversationViewController>(tag: chatGuid)
@@ -143,6 +152,46 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) => popUntilConversation());
+  }
+
+  /// Tablet right-pane stack is typically: initial → ConversationView → Details → (Attachments?).
+  /// ConversationView and Attachments are both GetPageRoute; Details is a ThemeSwitcher page route.
+  /// Pop overlays only — never the conversation (the GetPageRoute that sits above `initial`).
+  void _popTabletOverlaysThenJump({required String guid, required MessagesService service}) {
+    void step({int popsDone = 0}) {
+      if (popsDone >= 2) {
+        service.jumpToMessage(guid);
+        return;
+      }
+
+      final nav = Get.global(2).currentState;
+      if (nav == null || !nav.canPop()) {
+        service.jumpToMessage(guid);
+        return;
+      }
+
+      Route<dynamic>? top;
+      nav.popUntil((route) {
+        top = route;
+        return true; // Inspect only; do not pop.
+      });
+
+      final isDetailsRoute = top is MaterialPageRoute || top is PageRouteBuilder;
+      final isGetPageRoute = top is GetPageRoute;
+
+      // Details (always pop). Attachments is a GetPageRoute still above CV — pop only as
+      // the first overlay. A later GetPageRoute is ConversationView; leave it alone.
+      final shouldPop = isDetailsRoute || (isGetPageRoute && popsDone == 0);
+      if (!shouldPop) {
+        service.jumpToMessage(guid);
+        return;
+      }
+
+      Get.back(id: 2);
+      WidgetsBinding.instance.addPostFrameCallback((_) => step(popsDone: popsDone + 1));
+    }
+
+    step();
   }
 
   String get _jumpChipLabel {
