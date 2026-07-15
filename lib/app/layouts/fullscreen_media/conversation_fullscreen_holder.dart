@@ -429,6 +429,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                         final key = attachment.guid ?? attachment.transferName ?? randomString(8);
 
                         if (content is PlatformFile) {
+                          final canJump = _canJumpFor(attachment);
                           if (attachment.mimeStart == "image") {
                             return FullscreenImage(
                               key: Key(key),
@@ -449,6 +450,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                                   });
                                 }
                               },
+                              onJumpToMessage: canJump ? _jumpToSourceMessage : null,
                             );
                           } else if (attachment.mimeStart == "video") {
                             return FullscreenVideo(
@@ -465,6 +467,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                                   });
                                 }
                               },
+                              onJumpToMessage: canJump ? _jumpToSourceMessage : null,
                             );
                           } else {
                             return const SizedBox.shrink();

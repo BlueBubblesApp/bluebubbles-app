@@ -25,6 +25,7 @@ class FullscreenImage extends StatefulWidget {
     required this.showInteractions,
     required this.updatePhysics,
     this.onOverlayToggle,
+    this.onJumpToMessage,
   });
 
   final PlatformFile file;
@@ -32,6 +33,7 @@ class FullscreenImage extends StatefulWidget {
   final bool showInteractions;
   final Function(ScrollPhysics) updatePhysics;
   final Function(bool)? onOverlayToggle;
+  final VoidCallback? onJumpToMessage;
 
   @override
   State<FullscreenImage> createState() => _FullscreenImageState();
@@ -155,6 +157,51 @@ class _FullscreenImageState extends State<FullscreenImage>
     );
   }
 
+  Widget _senderHeaderColumn({required bool jumpEnabled}) {
+    final column = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Obx(() {
+          final msg = message;
+          if (msg == null) return const SizedBox.shrink();
+          final name = (msg.isFromMe ?? false)
+              ? 'You'
+              : (msg.handleRelation.target != null
+                      ? HandleSvc.getOrCreateHandleState(msg.handleRelation.target!).displayName.value
+                      : null) ??
+                  'Unknown';
+          return Text(name, style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white));
+        }),
+        if (message?.dateCreated != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: Text(
+              samsung
+                  ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
+                  : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!),
+              style: context.theme.textTheme.bodyLarge!
+                  .copyWith(color: samsung ? Colors.grey : Colors.white),
+            ),
+          ),
+      ],
+    );
+
+    if (!jumpEnabled) return column;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onJumpToMessage,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: column,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -217,39 +264,8 @@ class _FullscreenImageState extends State<FullscreenImage>
                               if (widget.showInteractions)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 5.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Obx(() {
-                                        final msg = message;
-                                        if (msg == null) return const SizedBox.shrink();
-                                        final name = (msg.isFromMe ?? false)
-                                            ? 'You'
-                                            : (msg.handleRelation.target != null
-                                                    ? HandleSvc.getOrCreateHandleState(msg.handleRelation.target!)
-                                                        .displayName
-                                                        .value
-                                                    : null) ??
-                                                'Unknown';
-                                        return Text(
-                                          name,
-                                          style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white),
-                                        );
-                                      }),
-                                      if (message?.dateCreated != null)
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 2.0),
-                                          child: Text(
-                                            samsung
-                                                ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
-                                                : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!),
-                                            style: context.theme.textTheme.bodyLarge!.copyWith(
-                                              color: samsung ? Colors.grey : Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
+                                  child: _senderHeaderColumn(
+                                    jumpEnabled: samsung && widget.onJumpToMessage != null,
                                   ),
                                 ),
                             ],
