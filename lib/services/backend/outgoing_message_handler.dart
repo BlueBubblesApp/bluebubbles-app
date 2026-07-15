@@ -218,8 +218,11 @@ class OutgoingMessageHandler {
   /// `(ok: false, ...)` once a terminal failure has been finalized (the caller
   /// should stop).
   Future<({bool ok, dynamic result})> _prepItemWithRetry(OutgoingQueueItem item) async {
-    // Every call site generates the temp GUID before queueing, so it is set.
-    final guid = item.message.guid!;
+    // Most call sites generate the temp GUID before queueing, but reactions
+    // queue a temp Message with no GUID yet. Fall back to '' so the retry guard
+    // and failure-finalize below stay safe (findOne('') matches nothing, i.e.
+    // "not yet saved").
+    final guid = item.message.guid ?? '';
     Object? lastError;
     StackTrace? lastStack;
     int attempts = 0;
