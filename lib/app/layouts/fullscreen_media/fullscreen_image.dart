@@ -221,12 +221,22 @@ class _FullscreenImageState extends State<FullscreenImage>
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        (message?.isFromMe ?? false)
+                                      Obx(() {
+                                        final msg = message;
+                                        if (msg == null) return const SizedBox.shrink();
+                                        final name = (msg.isFromMe ?? false)
                                             ? 'You'
-                                            : message?.handleRelation.target?.displayName ?? "Unknown",
-                                        style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white),
-                                      ),
+                                            : (msg.handleRelation.target != null
+                                                    ? HandleSvc.getOrCreateHandleState(msg.handleRelation.target!)
+                                                        .displayName
+                                                        .value
+                                                    : null) ??
+                                                'Unknown';
+                                        return Text(
+                                          name,
+                                          style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white),
+                                        );
+                                      }),
                                       if (message?.dateCreated != null)
                                         Padding(
                                           padding: const EdgeInsets.only(top: 2.0),
