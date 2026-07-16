@@ -17,6 +17,7 @@ import 'package:flutter/foundation.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_location_clipper.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_participant_matcher.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_participant_prefetch.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 
@@ -74,6 +75,9 @@ class FindMyController extends GetxController {
   void onInit() {
     super.onInit();
     if (isParticipantMode) {
+      // Seed from the session snapshot so the details card can paint the real
+      // map on first frame when we already know participants are sharing.
+      _hydrateFromPrefetchSnapshot();
       _loadParticipantLocations();
     } else {
       getLocations();
@@ -88,10 +92,30 @@ class FindMyController extends GetxController {
     _setupRedactionListeners();
   }
 
+  /// Applies the shared prefetch friends list synchronously so
+  /// [participantFriendsWithLocation] is non-empty before the first Obx build
+  /// when the snapshot already has matching sharers.
+  void _hydrateFromPrefetchSnapshot() {
+    final snapshot = FindMyParticipantPrefetch.sessionFriends;
+    if (snapshot.isEmpty) return;
+
+    friends.value = List<FindMyFriend>.from(snapshot);
+    friendsWithLocation.value =
+        friends.where((item) => (item.latitude ?? 0) != 0 && (item.longitude ?? 0) != 0).toList();
+    friendsWithoutLocation.value =
+        friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
+
+    if (participantFriendsWithLocation.isEmpty) return;
+
+    _rebuildParticipantMarkers();
+    fetching2.value = false;
+  }
+
   Future<void> _loadParticipantLocations() async {
     await getLocations(refreshFriends: false, suppressErrors: true);
     if (!_isAlive) return;
-    if (participantFriendsWithLocation.isEmpty) {
+    if (participantFriendsWithLocation.isEmpty && FindMyParticipantPrefetch.canPostParticipantRefresh) {
+      FindMyParticipantPrefetch.recordParticipantRefresh();
       await getLocations(refreshFriends: true, suppressErrors: true);
     }
   }
@@ -271,6 +295,12 @@ class FindMyController extends GetxController {
           LocationStatus.values.indexOf(existingFriend.status!) <=
               LocationStatus.values.indexOf(friend.status ?? LocationStatus.legacy);
 
+      // Keep the session snapshot current for any accepted socket update, even
+      // when this controller is filtered to a single chat's participants.
+      if (shouldUpdate) {
+        FindMyParticipantPrefetch.upsertFriend(friend);
+      }
+
       if (isParticipantMode && !matchesParticipantFilter(friend)) return;
 
       if (shouldUpdate) {
@@ -361,6 +391,7 @@ class FindMyController extends GetxController {
         if (isParticipantMode) {
           _rebuildParticipantMarkers();
           fitMapToParticipantMarkers();
+          FindMyParticipantPrefetch.updateSnapshot(friends);
         } else {
           for (final e in friendsWithLocation) {
             buildFriendMarker(e);
@@ -380,7 +411,8 @@ class FindMyController extends GetxController {
     }
 
     if (isParticipantMode) {
-      if (!refreshFriends) {
+      if (!refreshFriends && FindMyParticipantPrefetch.canPostParticipantRefresh) {
+        FindMyParticipantPrefetch.recordParticipantRefresh();
         HttpSvc.icloud.refreshFriends();
       }
       return;

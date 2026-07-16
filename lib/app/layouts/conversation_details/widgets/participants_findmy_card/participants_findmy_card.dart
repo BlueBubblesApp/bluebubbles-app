@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/participants_findmy_sheet/participants_findmy_sheet.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_participant_prefetch.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_map_widget.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -18,15 +19,13 @@ class ParticipantsFindMyMapCard extends StatefulWidget {
   const ParticipantsFindMyMapCard({super.key, required this.chat});
 
   /// Same capability gate as the Find My nav entry (plus web exclusion).
-  static bool get isSupported => !kIsWeb && SettingsSvc.serverDetails.isMinCatalina;
+  static bool get isSupported => FindMyParticipantPrefetch.isSupported;
 
   @override
   State<ParticipantsFindMyMapCard> createState() => _ParticipantsFindMyMapCardState();
 }
 
 class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
-  static String _controllerTag(String guid) => 'findmy-$guid';
-
   late final FindMyController _controller;
   late final MapController _mapController;
   StreamSubscription? _participantsSub;
@@ -53,7 +52,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   }
 
   void _initController() {
-    final tag = _controllerTag(widget.chat.guid);
+    final tag = FindMyParticipantPrefetch.controllerTag(widget.chat.guid);
     if (Get.isRegistered<FindMyController>(tag: tag)) {
       _controller = Get.find<FindMyController>(tag: tag);
       _controller.updateParticipantFilter(_currentParticipants);
@@ -85,7 +84,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
     _participantsSub?.cancel();
     _controller.detachParticipantMapController();
     _mapController.dispose();
-    final tag = _controllerTag(widget.chat.guid);
+    final tag = FindMyParticipantPrefetch.controllerTag(widget.chat.guid);
     if (Get.isRegistered<FindMyController>(tag: tag)) {
       Get.delete<FindMyController>(tag: tag);
     }
@@ -97,8 +96,12 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
     return Obx(() {
       _controller.friendsWithLocation.length;
       final visibleParticipants = _controller.participantFriendsWithLocation;
+      final loading = visibleParticipants.isEmpty;
 
-      if (visibleParticipants.isEmpty) {
+      // Show the card when we have real locations, or when prefetch already
+      // knows a participant is sharing (map area stays in a loading state).
+      // Otherwise render nothing so we never leave an empty gap.
+      if (loading && !FindMyParticipantPrefetch.hasParticipantSharing(widget.chat)) {
         return const SliverToBoxAdapter(child: SizedBox.shrink());
       }
 
@@ -108,7 +111,10 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
         visibleParticipants: visibleParticipants,
         isGroup: widget.chat.isGroup,
         groupTitle: _chatState?.title.value ?? widget.chat.getTitle(),
-        locationTitle: widget.chat.isGroup ? null : _singleChatLocationTitle(visibleParticipants.first),
+        locationTitle: widget.chat.isGroup
+            ? null
+            : (loading ? 'Location' : _singleChatLocationTitle(visibleParticipants.first)),
+        loading: loading,
         sheetOpen: _sheetOpen,
         openExpandedMap: _openExpandedMap,
       );
@@ -123,6 +129,7 @@ class _ParticipantsFindMyCardContent extends StatelessWidget {
   final bool isGroup;
   final String groupTitle;
   final String? locationTitle;
+  final bool loading;
   final bool sheetOpen;
   final VoidCallback openExpandedMap;
 
@@ -133,17 +140,18 @@ class _ParticipantsFindMyCardContent extends StatelessWidget {
     required this.isGroup,
     required this.groupTitle,
     required this.locationTitle,
+    required this.loading,
     required this.sheetOpen,
     required this.openExpandedMap,
   });
 
-  static const double _mapAspectRatio = 2.2;
-  static const double _footerHeight = 56;
+  static const double _mapAspectRatio = _kFindMyMapAspectRatio;
+  static const double _footerHeight = _kFindMyFooterHeight;
 
   @override
   Widget build(BuildContext context) {
-    final onTap = sheetOpen ? null : openExpandedMap;
-    return _buildSkinCard(
+    final onTap = loading || sheetOpen ? null : openExpandedMap;
+    return _buildFindMySkinCard(
       context,
       onTap: onTap,
       child: Column(
@@ -155,63 +163,42 @@ class _ParticipantsFindMyCardContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSkinCard(BuildContext context, {required VoidCallback? onTap, required Widget child}) {
-    if (context.iOS) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-          child: Material(
-            color: context.theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-            clipBehavior: Clip.antiAlias,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onTap,
-              child: child,
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (context.samsung) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 8),
-          child: Material(
-            color: context.headerColor,
-            borderRadius: BorderRadius.circular(20),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(onTap: onTap, child: child),
-          ),
-        ),
-      );
-    }
-
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 6),
-        child: Material(
-          color: context.headerColor,
-          child: InkWell(onTap: onTap, child: child),
-        ),
-      ),
-    );
-  }
-
   Widget _buildMapPreview(BuildContext context) {
     return AspectRatio(
       aspectRatio: _mapAspectRatio,
-      child: sheetOpen
-          ? const ColoredBox(color: Colors.transparent)
-          : IgnorePointer(
-              child: FindMyMapWidget(
-                controller: controller,
-                mapController: mapController,
-                interactive: false,
-                onMapReady: () => controller.onParticipantMapReady(mapController),
+      child: loading
+          ? _buildMapSkeleton(context)
+          : sheetOpen
+              ? const ColoredBox(color: Colors.transparent)
+              : IgnorePointer(
+                  child: FindMyMapWidget(
+                    controller: controller,
+                    mapController: mapController,
+                    interactive: false,
+                    onMapReady: () => controller.onParticipantMapReady(mapController),
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildMapSkeleton(BuildContext context) {
+    return ColoredBox(
+      color: context.theme.colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: context.iOS
+            ? CupertinoActivityIndicator(
+                radius: 12,
+                color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              )
+            : SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -276,10 +263,11 @@ class _ParticipantsFindMyCardContent extends StatelessWidget {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 15),
-            child: Icon(Icons.open_in_full, size: 18, color: context.theme.colorScheme.onSurfaceVariant),
-          ),
+          if (!loading)
+            Padding(
+              padding: const EdgeInsets.only(right: 15),
+              child: Icon(Icons.open_in_full, size: 18, color: context.theme.colorScheme.onSurfaceVariant),
+            ),
         ],
       ),
     );
@@ -311,19 +299,69 @@ class _ParticipantsFindMyCardContent extends StatelessWidget {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 15),
-            child: Icon(Icons.keyboard_arrow_up_rounded, size: 22, color: context.theme.colorScheme.onSurfaceVariant),
-          ),
+          if (!loading)
+            Padding(
+              padding: const EdgeInsets.only(right: 15),
+              child: Icon(Icons.keyboard_arrow_up_rounded, size: 22, color: context.theme.colorScheme.onSurfaceVariant),
+            ),
         ],
       ),
     );
   }
 
   String? _footerSubtitle() {
+    if (loading) return null;
     if (isGroup) return _groupParticipantLabel(visibleParticipants.length);
     return _locationStateLabel(visibleParticipants.first);
   }
+}
+
+const double _kFindMyMapAspectRatio = 2.2;
+const double _kFindMyFooterHeight = 56;
+
+/// Card chrome (padding, radius, colors) shared across skins.
+Widget _buildFindMySkinCard(BuildContext context, {required VoidCallback? onTap, required Widget child}) {
+  if (context.iOS) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+        child: Material(
+          color: context.theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
+  if (context.samsung) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 8),
+        child: Material(
+          color: context.headerColor,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(onTap: onTap, child: child),
+        ),
+      ),
+    );
+  }
+
+  return SliverToBoxAdapter(
+    child: Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 6),
+      child: Material(
+        color: context.headerColor,
+        child: InkWell(onTap: onTap, child: child),
+      ),
+    ),
+  );
 }
 
 String _singleChatLocationTitle(FindMyFriend friend) {
