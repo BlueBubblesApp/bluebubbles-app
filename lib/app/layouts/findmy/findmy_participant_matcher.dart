@@ -1,16 +1,17 @@
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/models/models.dart' show HandleLookupKey;
-import 'package:collection/collection.dart';
 
-/// Matches Find My friends to conversation participants, including when they
-/// use different identifiers (e.g. iCloud email in Find My vs phone in chat).
+/// Matches Find My friends to conversation participants when they use different
+/// identifiers (e.g. iCloud email in Find My vs phone in chat).
+///
+/// Matching is intentionally conservative — only deterministic identity signals:
+/// handle IDs, address equality (normalized), shared [ContactV2] records, and
+/// contact phone/email entries. Display names are never compared.
 class FindMyParticipantMatcher {
   final List<Handle> participants;
-  final Map<String, String> displayNamesByAddress;
 
   const FindMyParticipantMatcher({
     required this.participants,
-    this.displayNamesByAddress = const {},
   });
 
   bool matches(FindMyFriend friend) => participants.any((handle) => matchesFriend(friend, handle));
@@ -36,23 +37,10 @@ class FindMyParticipantMatcher {
       for (final friendId in _friendIdentifiers(friend)) {
         if (_contactMatchesIdentifier(contact, friendId)) return true;
       }
-      for (final friendName in _friendNames(friend, resolvedFriendHandle)) {
-        if (_namesMatch(contact.computedDisplayName, friendName)) return true;
-        if (_namesMatch(contact.displayName, friendName)) return true;
-        if (contact.nickname != null && _namesMatch(contact.nickname, friendName)) return true;
-      }
-    }
-
-    final participantName = _participantDisplayName(handle);
-    for (final friendName in _friendNames(friend, resolvedFriendHandle)) {
-      if (_namesMatch(participantName, friendName)) return true;
     }
 
     return false;
   }
-
-  String _participantDisplayName(Handle handle) =>
-      displayNamesByAddress[handle.address] ?? handle.displayName;
 
   static bool friendIdentifiersMatch(FindMyFriend a, FindMyFriend b) {
     if (a.stableId != null && b.stableId != null && a.stableId == b.stableId) return true;
@@ -61,16 +49,12 @@ class FindMyParticipantMatcher {
         if (identifiersMatch(aId, bId)) return true;
       }
     }
-    final aName = (a.title ?? a.handle?.displayName ?? '').trim().toLowerCase();
-    final bName = (b.title ?? b.handle?.displayName ?? '').trim().toLowerCase();
-    return aName.isNotEmpty && namesMatch(aName, bName);
+    return false;
   }
 
   static Set<String> friendIdentifiers(FindMyFriend friend) => _friendIdentifiers(friend);
 
   static bool identifiersMatch(String a, String b) => _identifiersMatch(a, b);
-
-  static bool namesMatch(String? a, String? b) => _namesMatch(a, b);
 
   static Handle? _resolveFriendHandle(FindMyFriend friend) {
     if (friend.handle != null) return friend.handle;
@@ -93,7 +77,11 @@ class FindMyParticipantMatcher {
   }
 
   static Set<String> _handleIdentifiers(Handle handle) {
-    final ids = <String>{handle.uniqueAddressAndService, handle.address};
+    final ids = <String>{
+      handle.uniqueAddressAndService,
+      handle.address,
+      if (handle.formattedAddress != null) handle.formattedAddress!,
+    };
     if (handle.uniqueAddressAndService.contains('/')) {
       ids.add(handle.uniqueAddressAndService.split('/').first);
     }
@@ -104,36 +92,42 @@ class FindMyParticipantMatcher {
     final ids = <String>{};
     if (friend.stableId != null) ids.add(friend.stableId!);
     if (friend.handleAddress != null) ids.add(friend.handleAddress!);
-    if (friend.subtitle != null) ids.add(friend.subtitle!);
     if (friend.handle != null) {
       ids.add(friend.handle!.address);
       ids.add(friend.handle!.uniqueAddressAndService);
     }
-    if (friend.title != null) ids.add(friend.title!);
+    if (friend.subtitle != null && _looksLikeAddress(friend.subtitle!)) {
+      ids.add(friend.subtitle!);
+    }
+    if (friend.title != null && _looksLikeAddress(friend.title!)) {
+      ids.add(friend.title!);
+    }
     return ids;
   }
 
-  static Iterable<String> _friendNames(FindMyFriend friend, Handle? resolvedFriendHandle) sync* {
-    if (friend.title != null && !friend.title!.contains('@')) yield friend.title!;
-    if (friend.handle?.displayName != null) yield friend.handle!.displayName;
-    if (resolvedFriendHandle != null) yield resolvedFriendHandle.displayName;
+  /// True when [value] is an email or phone-like string, not a display name.
+  static bool _looksLikeAddress(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    if (trimmed.contains('@')) return true;
+    final digits = trimmed.replaceAll(RegExp(r'[^\d]'), '');
+    return digits.length >= 7;
   }
 
   static bool _identifiersMatch(String a, String b) {
     if (a == b) return true;
+
     final aIsEmail = a.contains('@');
     final bIsEmail = b.contains('@');
-    if (aIsEmail && bIsEmail) {
+    if (aIsEmail != bIsEmail) return false;
+
+    if (aIsEmail) {
       return ContactV2.normalizeEmail(a) == ContactV2.normalizeEmail(b);
     }
-    if (aIsEmail != bIsEmail) return false;
+
     final na = ContactV2.normalizePhoneNumber(a);
     final nb = ContactV2.normalizePhoneNumber(b);
-    if (na.isNotEmpty && na == nb) return true;
-    if (na.length >= 10 && nb.length >= 10) {
-      return na.endsWith(nb.substring(nb.length - 10)) || nb.endsWith(na.substring(na.length - 10));
-    }
-    return false;
+    return na.isNotEmpty && na == nb;
   }
 
   static bool _contactMatchesIdentifier(ContactV2 contact, String identifier) {
@@ -145,18 +139,5 @@ class FindMyParticipantMatcher {
       if (_identifiersMatch(email.address, identifier)) return true;
     }
     return false;
-  }
-
-  static bool _namesMatch(String? a, String? b) {
-    if (a == null || b == null) return false;
-    final na = a.trim().toLowerCase();
-    final nb = b.trim().toLowerCase();
-    if (na.isEmpty || nb.isEmpty) return false;
-    if (na == nb) return true;
-    if (na.contains(nb) || nb.contains(na)) return true;
-
-    final aFirst = na.split(' ').where((s) => s.isNotEmpty).firstOrNull ?? '';
-    final bFirst = nb.split(' ').where((s) => s.isNotEmpty).firstOrNull ?? '';
-    return aFirst.length > 2 && aFirst == bFirst;
   }
 }
