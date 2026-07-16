@@ -189,8 +189,8 @@ class FindMyController extends GetxController {
     }
 
     final map = target ?? participantMapController ?? mapController;
-    final points =
-        participantFriendsWithLocation.map((f) => LatLng(f.latitude!, f.longitude!)).toList(growable: false);
+    // Use markerPointForFriend so redacted mode centers on decoy pins, not real coords.
+    final points = participantFriendsWithLocation.map(markerPointForFriend).toList(growable: false);
     if (points.isEmpty) return;
 
     void apply() {
@@ -265,6 +265,7 @@ class FindMyController extends GetxController {
       buildDeviceMarker(device);
     }
     markers.refresh();
+    if (isParticipantMode) fitMapToParticipantMarkers();
   }
 
   LatLng markerPointForFriend(FindMyFriend friend) => resolveFindMyMarkerPoint(

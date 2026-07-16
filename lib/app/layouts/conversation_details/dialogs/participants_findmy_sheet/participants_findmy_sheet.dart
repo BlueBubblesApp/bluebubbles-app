@@ -268,7 +268,7 @@ class _ParticipantsFindMyMapSheetBody extends StatelessWidget {
 String _findMyGroupParticipantLabel(int count) => '$count ${count == 1 ? "Person" : "People"}';
 
 String _findMyLocationDescription(FindMyFriend friend) {
-  if (SettingsSvc.settings.redactedMode.value) return 'Location';
+  if (shouldRedactFindMyContactInfo()) return 'Location';
   final description = (friend.longAddress ?? '').trim();
   if (description.isEmpty) return 'Location';
   return description;

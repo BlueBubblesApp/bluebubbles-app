@@ -365,7 +365,7 @@ Widget _buildFindMySkinCard(BuildContext context, {required VoidCallback? onTap,
 }
 
 String _singleChatLocationTitle(FindMyFriend friend) {
-  if (SettingsSvc.settings.redactedMode.value) return 'Location';
+  if (shouldRedactFindMyContactInfo()) return 'Location';
   final description = (friend.longAddress ?? '').trim();
   if (description.isEmpty) return 'Location';
   return description;

@@ -32,7 +32,8 @@ class FindMyMapWidget extends StatelessWidget {
     }
     final participants = controller.participantFriendsWithLocation;
     if (participants.isNotEmpty) {
-      return LatLng(participants.first.latitude!, participants.first.longitude!);
+      // Prefer marker points so redacted decoys aren't flashed as real coords.
+      return controller.markerPointForFriend(participants.first);
     }
     return const LatLng(0, 0);
   }
