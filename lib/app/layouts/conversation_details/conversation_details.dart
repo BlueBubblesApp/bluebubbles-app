@@ -148,7 +148,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     SliverToBoxAdapter(
                       child: ChatInfo(chat: chat),
                     ),
-                    ParticipantsFindMyMapCard(chat: chat),
+                    if (ParticipantsFindMyMapCard.isSupported)
+                      ParticipantsFindMyMapCard(chat: chat),
                     if (chat.isGroup)
                       SliverToBoxAdapter(
                         child: Padding(
