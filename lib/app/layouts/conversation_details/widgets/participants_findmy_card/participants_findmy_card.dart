@@ -10,7 +10,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 
 class ParticipantsFindMyMapCard extends StatefulWidget {
@@ -27,7 +26,6 @@ class ParticipantsFindMyMapCard extends StatefulWidget {
 
 class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   late final FindMyController _controller;
-  late final MapController _mapController;
   StreamSubscription? _participantsSub;
   bool _sheetOpen = false;
 
@@ -42,7 +40,6 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   @override
   void initState() {
     super.initState();
-    _mapController = MapController();
     _initController();
     _participantsSub = _chatState?.participants.listen((_) {
       if (!mounted) return;
@@ -62,7 +59,6 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
         tag: tag,
       );
     }
-    _controller.attachParticipantMapController(_mapController);
   }
 
   Future<void> _openExpandedMap() async {
@@ -82,8 +78,6 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   @override
   void dispose() {
     _participantsSub?.cancel();
-    _controller.detachParticipantMapController();
-    _mapController.dispose();
     final tag = FindMyParticipantPrefetch.controllerTag(widget.chat.guid);
     if (Get.isRegistered<FindMyController>(tag: tag)) {
       Get.delete<FindMyController>(tag: tag);
@@ -107,7 +101,6 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
 
       return _ParticipantsFindMyCardContent(
         controller: _controller,
-        mapController: _mapController,
         visibleParticipants: visibleParticipants,
         isGroup: widget.chat.isGroup,
         groupTitle: _chatState?.title.value ?? widget.chat.getTitle(),
@@ -124,7 +117,6 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
 
 class _ParticipantsFindMyCardContent extends StatelessWidget {
   final FindMyController controller;
-  final MapController mapController;
   final List<FindMyFriend> visibleParticipants;
   final bool isGroup;
   final String groupTitle;
@@ -135,7 +127,6 @@ class _ParticipantsFindMyCardContent extends StatelessWidget {
 
   const _ParticipantsFindMyCardContent({
     required this.controller,
-    required this.mapController,
     required this.visibleParticipants,
     required this.isGroup,
     required this.groupTitle,
@@ -168,16 +159,14 @@ class _ParticipantsFindMyCardContent extends StatelessWidget {
       aspectRatio: _mapAspectRatio,
       child: loading
           ? _buildMapSkeleton(context)
-          : sheetOpen
-              ? const ColoredBox(color: Colors.transparent)
-              : IgnorePointer(
-                  child: FindMyMapWidget(
-                    controller: controller,
-                    mapController: mapController,
-                    interactive: false,
-                    onMapReady: () => controller.onParticipantMapReady(mapController),
-                  ),
-                ),
+          : IgnorePointer(
+              child: FindMyMapWidget(
+                controller: controller,
+                mapController: controller.mapController,
+                interactive: false,
+                onMapReady: controller.onParticipantMapReady,
+              ),
+            ),
     );
   }
 

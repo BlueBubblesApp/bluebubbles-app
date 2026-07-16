@@ -130,19 +130,8 @@ class FindMyController extends GetxController {
     _rebuildParticipantMarkers();
   }
 
-  /// When set (conversation-details card), fits target this controller instead of [mapController].
-  MapController? participantMapController;
+  /// True once the card's [mapController] has attached to a [FlutterMap].
   bool _participantMapReady = false;
-
-  void attachParticipantMapController(MapController controller) {
-    participantMapController = controller;
-    _participantMapReady = false;
-  }
-
-  void detachParticipantMapController() {
-    participantMapController = null;
-    _participantMapReady = false;
-  }
 
   static bool _isSameFindMyFriend(FindMyFriend a, FindMyFriend b) =>
       FindMyParticipantMatcher.friendIdentifiersMatch(a, b);
@@ -178,17 +167,19 @@ class FindMyController extends GetxController {
     }
   }
 
-  void onParticipantMapReady([MapController? target]) {
+  /// Card map finished attaching — enable background fits and frame markers.
+  void onParticipantMapReady() {
     _participantMapReady = true;
-    fitMapToParticipantMarkers(target: target, ignoreReadyGate: true);
+    fitMapToParticipantMarkers();
   }
 
-  void fitMapToParticipantMarkers({MapController? target, bool ignoreReadyGate = false}) {
-    if (!ignoreReadyGate && isParticipantMode && participantMapController != null && !_participantMapReady) {
+  /// Fits [target], or the card's [mapController] when omitted.
+  void fitMapToParticipantMarkers({MapController? target}) {
+    if (target == null && isParticipantMode && !_participantMapReady) {
       return;
     }
 
-    final map = target ?? participantMapController ?? mapController;
+    final map = target ?? mapController;
     // Use markerPointForFriend so redacted mode centers on decoy pins, not real coords.
     final points = participantFriendsWithLocation.map(markerPointForFriend).toList(growable: false);
     if (points.isEmpty) return;
@@ -595,7 +586,6 @@ class FindMyController extends GetxController {
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
     locationSub?.cancel();
-    detachParticipantMapController();
     mapController.dispose();
     popupController.dispose();
     tabController?.dispose();

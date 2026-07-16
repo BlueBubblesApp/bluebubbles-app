@@ -13,9 +13,6 @@ Future<void> showParticipantsFindMyMap(
   required Chat chat,
   VoidCallback? onSheetClosed,
 }) async {
-  final mapController = controller.participantMapController;
-  if (mapController == null) return;
-
   try {
     await showModalBottomSheet<void>(
       context: context,
@@ -28,7 +25,6 @@ Future<void> showParticipantsFindMyMap(
         alignment: Alignment.bottomCenter,
         child: _ParticipantsFindMyMapSheetBody(
           controller: controller,
-          mapController: mapController,
           chat: chat,
         ),
       ),
@@ -54,20 +50,37 @@ class _ParticipantsFindMyHeaderData {
   });
 }
 
-class _ParticipantsFindMyMapSheetBody extends StatelessWidget {
+class _ParticipantsFindMyMapSheetBody extends StatefulWidget {
   final FindMyController controller;
-  final MapController mapController;
   final Chat chat;
 
   const _ParticipantsFindMyMapSheetBody({
     required this.controller,
-    required this.mapController,
     required this.chat,
   });
 
+  @override
+  State<_ParticipantsFindMyMapSheetBody> createState() => _ParticipantsFindMyMapSheetBodyState();
+}
+
+class _ParticipantsFindMyMapSheetBodyState extends State<_ParticipantsFindMyMapSheetBody> {
+  late final MapController _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   String _chatTitle() {
-    final state = ChatsSvc.chatStates[chat.guid];
-    return state?.title.value ?? chat.getTitle();
+    final state = ChatsSvc.chatStates[widget.chat.guid];
+    return state?.title.value ?? widget.chat.getTitle();
   }
 
   @override
@@ -81,12 +94,12 @@ class _ParticipantsFindMyMapSheetBody extends StatelessWidget {
       child: Column(
         children: [
           Obx(() {
-            controller.friendsWithLocation.length;
-            final visibleParticipants = controller.participantFriendsWithLocation;
+            widget.controller.friendsWithLocation.length;
+            final visibleParticipants = widget.controller.participantFriendsWithLocation;
             final firstFriend = visibleParticipants.isEmpty ? null : visibleParticipants.first;
             final data = _ParticipantsFindMyHeaderData(
               title: visibleParticipants.isEmpty ? 'Location' : _chatTitle(),
-              isGroup: chat.isGroup,
+              isGroup: widget.chat.isGroup,
               participantCount: visibleParticipants.length,
               singleLocationDescription: firstFriend == null ? null : _findMyLocationDescription(firstFriend),
               singleLocationState: firstFriend == null ? null : _findMyLocationStateLabel(firstFriend),
@@ -95,11 +108,11 @@ class _ParticipantsFindMyMapSheetBody extends StatelessWidget {
           }),
           Expanded(
             child: FindMyMapWidget(
-              controller: controller,
-              mapController: mapController,
+              controller: widget.controller,
+              mapController: _mapController,
               interactive: true,
               initialZoom: 13,
-              onMapReady: () => controller.onParticipantMapReady(mapController),
+              onMapReady: () => widget.controller.fitMapToParticipantMarkers(target: _mapController),
             ),
           ),
         ],
