@@ -20,7 +20,7 @@ Future<void> showParticipantsFindMyMap(
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      enableDrag: !context.iOS,
+      enableDrag: true,
       isDismissible: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => FractionallySizedBox(
