@@ -104,7 +104,20 @@ class FindMyController extends GetxController {
   void updateParticipantFilter(List<Handle> handles) {
     participantFilter = handles;
     _rebuildParticipantMarkers();
-    fitMapToParticipantMarkers();
+  }
+
+  /// When set (conversation-details card), fits target this controller instead of [mapController].
+  MapController? participantMapController;
+  bool _participantMapReady = false;
+
+  void attachParticipantMapController(MapController controller) {
+    participantMapController = controller;
+    _participantMapReady = false;
+  }
+
+  void detachParticipantMapController() {
+    participantMapController = null;
+    _participantMapReady = false;
   }
 
   static bool _isSameFindMyFriend(FindMyFriend a, FindMyFriend b) =>
@@ -141,8 +154,17 @@ class FindMyController extends GetxController {
     }
   }
 
-  void fitMapToParticipantMarkers([MapController? target]) {
-    final map = target ?? mapController;
+  void onParticipantMapReady([MapController? target]) {
+    _participantMapReady = true;
+    fitMapToParticipantMarkers(target: target, ignoreReadyGate: true);
+  }
+
+  void fitMapToParticipantMarkers({MapController? target, bool ignoreReadyGate = false}) {
+    if (!ignoreReadyGate && isParticipantMode && participantMapController != null && !_participantMapReady) {
+      return;
+    }
+
+    final map = target ?? participantMapController ?? mapController;
     final points =
         participantFriendsWithLocation.map((f) => LatLng(f.latitude!, f.longitude!)).toList(growable: false);
     if (points.isEmpty) return;
@@ -540,6 +562,7 @@ class FindMyController extends GetxController {
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
     locationSub?.cancel();
+    detachParticipantMapController();
     mapController.dispose();
     popupController.dispose();
     tabController?.dispose();
