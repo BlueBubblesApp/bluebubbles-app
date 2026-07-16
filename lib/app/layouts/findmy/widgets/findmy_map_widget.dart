@@ -56,7 +56,9 @@ class FindMyMapWidget extends StatelessWidget {
               minZoom: 1.0,
               maxZoom: 18.0,
               initialCenter: _initialCenter(),
-              onTap: (_, __) => controller.popupController.hideAllPopups(),
+              // Only interactive maps own popups; previews must not subscribe to
+              // the shared PopupController or a sheet tap reparents GlobalKeys.
+              onTap: interactive ? (_, __) => controller.popupController.hideAllPopups() : null,
               keepAlive: mapController == null,
               interactionOptions: InteractionOptions(
                 flags: interactive ? InteractiveFlag.all & ~InteractiveFlag.rotate : InteractiveFlag.none,
@@ -74,15 +76,18 @@ class FindMyMapWidget extends StatelessWidget {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.bluebubbles.app',
               ),
-              PopupMarkerLayer(
-                options: PopupMarkerLayerOptions(
-                  popupController: controller.popupController,
-                  markers: controller.markers.values.toList(),
-                  popupDisplayOptions: PopupDisplayOptions(
-                    builder: (context, marker) => _buildMarkerPopup(context, marker),
+              if (interactive)
+                PopupMarkerLayer(
+                  options: PopupMarkerLayerOptions(
+                    popupController: controller.popupController,
+                    markers: controller.markers.values.toList(),
+                    popupDisplayOptions: PopupDisplayOptions(
+                      builder: (context, marker) => _buildMarkerPopup(context, marker),
+                    ),
                   ),
-                ),
-              ),
+                )
+              else
+                MarkerLayer(markers: controller.markers.values.toList()),
               RichAttributionWidget(
                 attributions: [
                   TextSourceAttribution(
