@@ -25,16 +25,12 @@ class FindMyController extends GetxController {
 
   /// When set, only friends matching these chat participants are shown (conversation details mode).
   List<Handle>? participantFilter;
-  Map<String, String> participantDisplayNames = {};
 
   bool get isParticipantMode => participantFilter != null;
 
   FindMyParticipantMatcher? get _participantMatcher {
     if (participantFilter == null) return null;
-    return FindMyParticipantMatcher(
-      participants: participantFilter!,
-      displayNamesByAddress: participantDisplayNames,
-    );
+    return FindMyParticipantMatcher(participants: participantFilter!);
   }
 
   List<FindMyFriend> get participantFriendsWithLocation =>
@@ -105,9 +101,8 @@ class FindMyController extends GetxController {
     return _participantMatcher?.matches(friend) ?? false;
   }
 
-  void updateParticipantFilter(List<Handle> handles, {Map<String, String>? displayNames}) {
+  void updateParticipantFilter(List<Handle> handles) {
     participantFilter = handles;
-    participantDisplayNames = displayNames ?? {};
     _rebuildParticipantMarkers();
     fitMapToParticipantMarkers();
   }
@@ -115,8 +110,25 @@ class FindMyController extends GetxController {
   static bool _isSameFindMyFriend(FindMyFriend a, FindMyFriend b) =>
       FindMyParticipantMatcher.friendIdentifiersMatch(a, b);
 
-  String _friendMarkerKey(FindMyFriend friend) =>
-      friend.stableId ?? friend.handleAddress ?? friend.title ?? randomString(6);
+  String _friendMarkerKey(FindMyFriend friend) {
+    final primary = friend.stableId ?? friend.handleAddress ?? friend.title;
+    if (primary != null) return primary;
+
+    final segments = <String>{
+      ...FindMyParticipantMatcher.friendIdentifiers(friend),
+      if (friend.latitude != null && friend.longitude != null) '${friend.latitude},${friend.longitude}',
+      if (friend.subtitle != null) friend.subtitle!,
+      if (friend.longAddress != null) friend.longAddress!,
+      if (friend.lastUpdated != null) friend.lastUpdated!.millisecondsSinceEpoch.toString(),
+    }..removeWhere((s) => s.isEmpty);
+
+    if (segments.isEmpty) {
+      return 'friend-unknown-${Object.hash(friend.latitude, friend.longitude, friend.longAddress, friend.subtitle)}';
+    }
+
+    final sorted = segments.toList()..sort();
+    return sorted.join('|');
+  }
 
   bool get _isAlive => !isClosed;
 
@@ -171,7 +183,7 @@ class FindMyController extends GetxController {
 
   String friendMarkerKeyFor(FindMyFriend friend) => _friendMarkerKey(friend);
 
-  Handle handleForFriendMarker(FindMyFriend friend) {
+  Handle? handleForFriendMarker(FindMyFriend friend) {
     final matcher = _participantMatcher;
     if (matcher != null && participantFilter != null) {
       for (final participant in participantFilter!) {
@@ -180,8 +192,7 @@ class FindMyController extends GetxController {
         }
       }
     }
-    if (friend.handle != null) return friend.handle!;
-    return Handle(address: friend.handleAddress ?? friend.title ?? "Unknown");
+    return friend.handle;
   }
 
   void _scheduleRefreshGate() {
