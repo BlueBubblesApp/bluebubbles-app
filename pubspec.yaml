@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 2.0.0+85
+version: 2.0.0+86
 publish_to: none
 
 environment:
@@ -145,6 +145,7 @@ dependencies:
   secure_application: ^4.1.0 # no linux support
   share_plus: ^12.0.1 # sharing files not supported on Linux, doesn't work properly on Windows
   shared_preferences: ^2.5.3
+  shared_preferences_android: ^2.4.10 # direct dep: Android backend options (keep native-readable SharedPreferences store)
   shimmer: ^3.0.0
   simple_animations: ^5.1.0
   skeletonizer: ^2.1.3

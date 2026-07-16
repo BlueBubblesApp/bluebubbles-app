@@ -203,6 +203,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
               extendBodyBehindAppBar: true,
               safeAreaLeft: false,
               safeAreaRight: false,
+              // The popup opens over a still-collapsing keyboard. Keep the body
+              // full-screen and its bottom edge fixed so Positioned offsets are
+              // screen-anchored and don't ride the inset animation down.
+              resizeToAvoidBottomInset: false,
+              safeAreaMaintainBottomViewPadding: true,
               backgroundColor: kIsDesktop && iOS && SettingsSvc.settings.windowEffect.value != WindowEffect.disabled
                   ? context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
                   : Colors.transparent,

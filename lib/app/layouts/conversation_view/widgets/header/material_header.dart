@@ -31,9 +31,10 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
             backgroundColor: _backgroundColor.value,
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
-            systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
-                ? SystemUiOverlayStyle.light
-                : SystemUiOverlayStyle.dark,
+            systemOverlayStyle: context.systemUiOverlayStyle(
+              statusBarColor: _backgroundColor.value,
+              backgroundBrightness: ThemeData.estimateBrightnessForColor(_backgroundColor.value),
+            ),
             automaticallyImplyLeading: false,
             toolbarHeight: (kIsDesktop ? 25 : 0) + kToolbarHeight,
             leadingWidth: 30,

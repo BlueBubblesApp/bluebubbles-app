@@ -366,7 +366,7 @@ class SearchViewState extends State<SearchView> with ThemeHelpers {
                             title: RichText(
                               text: TextSpan(
                                 children: MessageHelper.buildEmojiText(
-                                  chat.getTitle(),
+                                  ChatsSvc.getChatState(chat.guid)?.title.value ?? chat.getTitle(),
                                   context.theme.textTheme.bodyLarge!,
                                 ),
                               ),
@@ -514,7 +514,9 @@ class SearchViewState extends State<SearchView> with ThemeHelpers {
                                         )),
                                   ),
                                   label: selectedChat.value != null
-                                      ? Text(selectedChat.value!.getTitle(),
+                                      ? Text(
+                                          ChatsSvc.getChatState(selectedChat.value!.guid)?.title.value ??
+                                              selectedChat.value!.getTitle(),
                                           style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.normal,

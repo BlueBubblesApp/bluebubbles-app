@@ -102,7 +102,7 @@ class ChatMessages {
     return null;
   }
 
-  flush() {
+  void flush() {
     _messages.clear();
     _reactions.clear();
     _attachments.clear();

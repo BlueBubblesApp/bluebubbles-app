@@ -22,11 +22,21 @@ ContactServiceV2 get ContactsSvcV2 => GetIt.I<ContactServiceV2>();
 class ContactServiceV2 {
   final tag = "ContactServiceV2";
 
+  /// Trailing debounce for device contact change events while the app is in the
+  /// foreground — an account sync (e.g. Google Contacts) fires many change events
+  /// in a burst, and each full sync is an expensive Contacts Provider sweep.
+  static const Duration _contactChangeDebounce = Duration(seconds: 30);
+
   /// Whether we have permission to access contacts
   bool _hasContactAccess = false;
 
   void Function(void)? _contactChangeListener;
   StreamSubscription<void>? _contactChangeSubscription;
+  Timer? _contactChangeDebounceTimer;
+
+  /// Set when contact change events arrive while the app is backgrounded;
+  /// consumed by [runPendingContactSync] on the next app resume.
+  bool _pendingContactSync = false;
 
   bool get hasContactAccessSync {
     return _hasContactAccess;
@@ -80,7 +90,7 @@ class ContactServiceV2 {
 
       // Subscribe to device contact change events (mobile only)
       if (!kIsDesktop && !kIsWeb) {
-        _contactChangeListener = (_) => syncContactsToHandles(wait: false);
+        _contactChangeListener = (_) => _onContactsDbChanged();
         _contactChangeSubscription = fc.FlutterContacts.onDatabaseChange.listen(_contactChangeListener!);
       }
     } else {
@@ -88,6 +98,47 @@ class ContactServiceV2 {
     }
 
     Logger.info('[ContactServiceV2] Initialization complete');
+  }
+
+  bool get _isAppAlive {
+    if (!GetIt.I.isRegistered<LifecycleService>() || !GetIt.I.isReadySync<LifecycleService>()) return true;
+    return LifecycleSvc.isAlive;
+  }
+
+  /// Handle a device contacts DB change event.
+  ///
+  /// While backgrounded, a full sync per change event hammers the Contacts Provider
+  /// from a cached process — this is what triggered the "excessive binder traffic
+  /// during cached" kills during overnight account syncs. Instead, mark a pending
+  /// sync and run it once on the next app resume ([runPendingContactSync]).
+  /// While foregrounded, coalesce event bursts with a trailing debounce.
+  void _onContactsDbChanged() {
+    _contactChangeDebounceTimer?.cancel();
+
+    if (!_isAppAlive) {
+      _pendingContactSync = true;
+      Logger.debug('[ContactServiceV2] Contacts changed while backgrounded — deferring sync to next app resume');
+      return;
+    }
+
+    _contactChangeDebounceTimer = Timer(_contactChangeDebounce, () {
+      // The app may have been backgrounded while the debounce was pending.
+      if (!_isAppAlive) {
+        _pendingContactSync = true;
+        return;
+      }
+      Logger.info('[ContactServiceV2] Contacts changed — running debounced sync');
+      syncContactsToHandles(wait: false);
+    });
+  }
+
+  /// Run a contact sync that was deferred because change events arrived while the
+  /// app was backgrounded. Called on app resume; no-op when nothing is pending.
+  Future<void> runPendingContactSync() async {
+    if (!_pendingContactSync) return;
+    _pendingContactSync = false;
+    Logger.info('[ContactServiceV2] Running contact sync deferred from background');
+    await syncContactsToHandles(wait: false);
   }
 
   Future<List<int>> syncContactsToHandles({bool wait = true}) async {
@@ -183,23 +234,20 @@ class ContactServiceV2 {
         return;
       }
 
-      // Find all chats that have any of these handles as participants
-      for (final handleId in handleIds) {
-        final handle = Database.handles.get(handleId);
-        if (handle == null) continue;
+      // Single pass: load chats once and match participants against the handle
+      // ID set, instead of re-querying all chats (and lazily loading each
+      // chat's handles) once per affected handle.
+      final idSet = handleIds.toSet();
+      final query = Database.chats.query(Chat_.dateDeleted.isNull()).build();
+      final allChats = query.find();
+      query.close();
 
-        // Get all chats this handle participates in
-        final chatsWithHandle = Database.chats
-            .query(Chat_.dateDeleted.isNull())
-            .build()
-            .find()
-            .where((chat) => chat.handles.any((p) => p.id == handleId))
-            .toList();
-
-        // Update each chat in the ChatsService to trigger UI updates
-        for (final chat in chatsWithHandle) {
-          ChatsService chats = GetIt.I<ChatsService>();
-          chats.updateChat(chat, override: true);
+      final ChatsService chats = GetIt.I<ChatsService>();
+      for (final chat in allChats) {
+        if (chat.handles.any((p) => idSet.contains(p.id))) {
+          // Debounced (immediate: false) so a large sync batches into one
+          // chat-list version bump instead of one rebuild per chat.
+          chats.updateChat(chat, override: true, immediate: false);
         }
       }
     } catch (e, stack) {
@@ -313,6 +361,8 @@ class ContactServiceV2 {
 
   /// Remove the contact change listener and release resources
   void dispose() {
+    _contactChangeDebounceTimer?.cancel();
+    _contactChangeDebounceTimer = null;
     if (_contactChangeListener != null) {
       _contactChangeSubscription?.cancel();
       _contactChangeListener = null;

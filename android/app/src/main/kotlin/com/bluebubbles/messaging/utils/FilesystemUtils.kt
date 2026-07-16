@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import android.util.Log
 import android.webkit.MimeTypeMap
 import java.io.File
 import java.io.FileOutputStream
@@ -96,7 +95,7 @@ object FilesystemUtils {
                 if (cursor != null && cursor.moveToFirst()) {
                     val columnIndex = cursor.getColumnIndexOrThrow(column)
                     val fileName = cursor.getString(columnIndex)
-                    Log.i("FileDirectory", "File name: $fileName")
+                    PersistentLog.i(context, "FileDirectory", "File name: $fileName")
                     if (fileName != null) {
                         targetFile = File(context.cacheDir, fileName)
                     }

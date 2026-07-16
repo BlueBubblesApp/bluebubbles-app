@@ -16,8 +16,8 @@ import "package:flutter/material.dart";
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
 
-class FullscreenMediaHolder extends StatefulWidget {
-  const FullscreenMediaHolder(
+class ConversationFullscreenHolder extends StatefulWidget {
+  const ConversationFullscreenHolder(
       {super.key,
       required this.attachment,
       required this.showInteractions,
@@ -43,10 +43,10 @@ class FullscreenMediaHolder extends StatefulWidget {
   final List<Attachment>? galleryAttachments;
 
   @override
-  FullscreenMediaHolderState createState() => FullscreenMediaHolderState();
+  ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
 }
 
-class FullscreenMediaHolderState extends State<FullscreenMediaHolder> with ThemeHelpers {
+class ConversationFullscreenHolderState extends State<ConversationFullscreenHolder> with ThemeHelpers {
   final focusNode = FocusNode();
   late final PageController controller;
   late final messageService = widget.currentChat == null ? null : maybeFindMessagesSvc(widget.currentChat!.guid);

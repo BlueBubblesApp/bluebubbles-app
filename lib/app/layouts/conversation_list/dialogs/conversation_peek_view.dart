@@ -122,7 +122,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
       child: BBScaffold(
         backgroundColor: Colors.transparent,
         safeAreaTop: false,
-        safeAreaBottom: true,
         safeAreaLeft: false,
         safeAreaRight: false,
         body: TitleBarWrapper(

@@ -3,8 +3,8 @@ package com.bluebubbles.messaging.services.intents
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.bluebubbles.messaging.Constants
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.Utils
 import io.flutter.plugin.common.MethodChannel
 
@@ -13,18 +13,18 @@ class ExternalIntentReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) return
 
-        Log.d(Constants.logTag, "Received intent ${intent.action} from external app")
+        PersistentLog.d(context, Constants.logTag, "Received intent ${intent.action} from external app")
         when (intent.action) {
             "com.bluebubbles.external.GET_SERVER_URL" -> {
                 val password = intent.extras?.getString("password")
                 val identifier = intent.extras?.getString("id")
                 val prefs = context.getSharedPreferences("FlutterSharedPreferences", 0)
-                val storedPassword = prefs.getString("flutter.guidAuthKey", "")
+                val storedPassword = prefs.getString("guidAuthKey", "")
 
                 if (password == storedPassword) {
                     Utils.getServerUrl(context, object : MethodChannel.Result {
                         override fun success(result: Any?) {
-                            Log.d(Constants.logTag, "Got URL: $result - sending to Tasker...")
+                            PersistentLog.d(context, Constants.logTag, "Got URL: $result - sending to Tasker...")
                             val intent = Intent()
                             intent.setAction("net.dinglisch.android.taskerm.BB_SERVER_URL")
                             intent.putExtra("url", result.toString())

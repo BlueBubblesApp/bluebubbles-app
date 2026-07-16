@@ -81,6 +81,8 @@ class _NewChatCreatorState extends State<NewChatCreator> with ThemeHelpers<NewCh
   Widget build(BuildContext context) {
     return BBScaffold(
       safeAreaTop: true,
+      safeAreaBottom: true,
+      resizeToAvoidBottomInset: true,
       appBar: BBAppBar(
         titleText: 'New Message',
         leading: buildBackButton(context),

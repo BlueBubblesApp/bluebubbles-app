@@ -15,7 +15,7 @@ class BBAnnotatedRegion extends StatelessWidget {
   /// Custom navigation bar icon brightness (defaults to theme-based)
   final Brightness? systemNavigationBarIconBrightness;
 
-  /// Custom navigation bar color (defaults to theme background or transparent in immersive mode)
+  /// Custom navigation bar color (defaults to theme surface or transparent in immersive mode)
   final Color? systemNavigationBarColor;
 
   /// Custom status bar color (defaults to transparent)
@@ -32,15 +32,12 @@ class BBAnnotatedRegion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final brightness = colorScheme.brightness;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: systemNavigationBarColor ?? Colors.transparent,
-        systemNavigationBarIconBrightness: systemNavigationBarIconBrightness ?? brightness.opposite,
+      value: context.systemUiOverlayStyle(
+        systemNavigationBarColor: systemNavigationBarColor,
+        systemNavigationBarIconBrightness: systemNavigationBarIconBrightness,
         statusBarColor: statusBarColor ?? Colors.transparent,
-        statusBarIconBrightness: statusBarIconBrightness ?? brightness.opposite,
+        statusBarIconBrightness: statusBarIconBrightness,
       ),
       child: child,
     );

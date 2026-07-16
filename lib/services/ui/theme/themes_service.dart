@@ -517,9 +517,12 @@ class ThemesService {
     }
   }
 
-  bool inDarkMode(BuildContext context) => (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
-      (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
-          PlatformDispatcher.instance.platformBrightness == Brightness.dark));
+  bool inDarkMode(BuildContext context) {
+    final mode = AdaptiveTheme.maybeOf(context)?.mode;
+    if (mode == null) return PlatformDispatcher.instance.platformBrightness == Brightness.dark;
+    return mode == AdaptiveThemeMode.dark ||
+        (mode == AdaptiveThemeMode.system && PlatformDispatcher.instance.platformBrightness == Brightness.dark);
+  }
 
   bool isGradientBg(BuildContext context) {
     if (inDarkMode(context)) {

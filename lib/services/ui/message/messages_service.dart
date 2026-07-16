@@ -489,11 +489,6 @@ class MessagesService extends GetxController {
   void _onAttachmentDownloadComplete(String messageGuid, String attachmentGuid, PlatformFile file) {
     final attState = messageStates[messageGuid]?.getAttachmentState(attachmentGuid);
     if (attState == null) return;
-    // Drop any stale/failed decode cached against this file path before the freshly
-    // downloaded bytes are handed to the ImageViewer that mounts when resolvedFile flips
-    // non-null. Without this, a decode that failed earlier in the session stays cached
-    // and the newly downloaded (valid) image keeps showing "Failed to display image".
-    AttachmentsSvc.evictImageCache(attState.attachment);
     attState.updateResolvedFileInternal(file);
     attState.updateActiveDownloadInternal(null);
     notifyAttachmentDownloadComplete(messageGuid, attachmentGuid);

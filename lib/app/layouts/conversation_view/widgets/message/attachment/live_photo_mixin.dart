@@ -265,7 +265,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
           duration: const Duration(milliseconds: 200),
           child: Video(
             controller: livePhotoController!,
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
             controls: null,
           ),
         ),

@@ -171,13 +171,13 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
           }),
           actions: [
             TextButton(
+              onPressed: _saveImage,
               child: Text(
                 "SAVE",
                 style: context.theme.textTheme.bodyLarge!.apply(
                   color: context.theme.colorScheme.primary,
                 ),
               ),
-              onPressed: _saveImage,
             ),
           ],
         );

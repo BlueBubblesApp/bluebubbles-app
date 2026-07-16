@@ -87,55 +87,65 @@ class FindMyMapWidget extends StatelessWidget {
   }
 
   Widget _buildDevicePopup(BuildContext context, FindMyDevice item) {
-    return Obx(() => Padding(
-          padding: const EdgeInsets.only(bottom: 5.0),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
-            ),
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(SettingsSvc.settings.redactedMode.value ? "Device" : (item.name ?? "Unknown Device"),
-                    style: context.theme.textTheme.labelLarge),
-                Text(
-                    SettingsSvc.settings.redactedMode.value
-                        ? "Location"
-                        : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
-                    style: context.theme.textTheme.bodySmall),
-              ],
-            ),
+    return Obx(() {
+      final hideContactInfo = shouldRedactFindMyContactInfo();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 5.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
           ),
-        ));
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(hideContactInfo ? "Device" : (item.name ?? "Unknown Device"),
+                  style: context.theme.textTheme.labelLarge),
+              Text(
+                  hideContactInfo
+                      ? "Location"
+                      : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+                  style: context.theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildFriendPopup(BuildContext context, FindMyFriend item) {
-    return Obx(() => Padding(
-          padding: const EdgeInsets.only(bottom: 5.0),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
-            ),
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.handle?.displayName ?? item.title ?? "Unknown Friend",
-                    style: context.theme.textTheme.labelLarge),
-                Text(SettingsSvc.settings.redactedMode.value ? "Location" : (item.longAddress ?? "No location found"),
-                    style: context.theme.textTheme.bodySmall),
-                if (item.lastUpdated != null && item.status != LocationStatus.live)
-                  Text("Last updated ${buildDate(item.lastUpdated)}", style: context.theme.textTheme.bodySmall),
-                if (item.status != null)
-                  Text("${item.status!.name.capitalize!} Location", style: context.theme.textTheme.bodySmall),
-              ],
-            ),
+    return Obx(() {
+      final hideContactInfo = shouldRedactFindMyContactInfo();
+      final handleState = item.handle != null ? HandleSvc.getOrCreateHandleState(item.handle!) : null;
+      final displayName = hideContactInfo
+          ? (handleState?.fakeName ?? 'Contact')
+          : (item.handle?.displayName ?? item.title ?? "Unknown Friend");
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 5.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
           ),
-        ));
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(displayName, style: context.theme.textTheme.labelLarge),
+              Text(hideContactInfo ? "Location" : (item.longAddress ?? "No location found"),
+                  style: context.theme.textTheme.bodySmall),
+              if (item.lastUpdated != null && item.status != LocationStatus.live)
+                Text("Last updated ${buildDate(item.lastUpdated)}", style: context.theme.textTheme.bodySmall),
+              if (item.status != null)
+                Text("${item.status!.name.capitalize!} Location", style: context.theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }

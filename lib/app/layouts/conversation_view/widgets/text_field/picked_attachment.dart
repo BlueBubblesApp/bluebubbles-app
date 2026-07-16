@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:animations/animations.dart';
-import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/single_attachment_fullscreen_viewer.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
@@ -44,7 +44,7 @@ class _PickedAttachmentState extends State<PickedAttachment> with AutomaticKeepA
   Future<void> load() async {
     final file = widget.data;
     final mimeType = mime(widget.data.name) ?? "";
-    if (mimeType.startsWith("video/") && Platform.isAndroid) {
+    if (mimeType.startsWith("video/") && !kIsWeb && !kIsDesktop) {
       try {
         imageBytes = await AttachmentsSvc.getVideoThumbnail(file.path!, useCachedFile: false);
       } catch (ex) {
@@ -119,24 +119,26 @@ class _PickedAttachmentState extends State<PickedAttachment> with AutomaticKeepA
                 openColor: Colors.black,
                 closedColor: context.theme.colorScheme.surface,
                 openBuilder: (_, closeContainer) {
-                  // Use the full file path as transferName so getContent can locate
-                  // the file on disk when bytes are not pre-loaded (e.g. gallery picker).
-                  // Prefer state-cached bytes (imageBytes) over the raw widget bytes so
-                  // that HEIC/TIFF files, which have already been decoded into imagePath,
-                  // still have their fallback bytes available.
+                  // Use the full file path as transferName for metadata/mime lookups.
+                  // Pass widget.data straight through as the file — it's already the
+                  // real PlatformFile (path and/or bytes), no need to round-trip it
+                  // through AttachmentsSvc.getContent() like the gallery holder does.
                   final fakeAttachment = Attachment(
                     transferName: widget.data.path ?? widget.data.name,
                     mimeType: mime(widget.data.name) ?? "",
                     bytes: imageBytes ?? widget.data.bytes,
                   );
-                  return FullscreenMediaHolder(
+                  return SingleAttachmentFullscreenViewer(
+                    file: widget.data,
                     attachment: fakeAttachment,
                     showInteractions: false,
                   );
                 },
                 closedBuilder: (_, openContainer) {
+                  final mimeType = mime(widget.data.name) ?? "";
+                  final isVideo = mimeType.startsWith("video/");
                   return InkWell(
-                    onTap: mime(widget.data.name)?.startsWith("image") ?? false ? openContainer : null,
+                    onTap: mimeType.startsWith("image") || isVideo ? openContainer : null,
                     child: Stack(
                       clipBehavior: Clip.none,
                       alignment: Alignment.topRight,
@@ -154,6 +156,16 @@ class _PickedAttachmentState extends State<PickedAttachment> with AutomaticKeepA
                                   maxLines: 3,
                                   textAlign: TextAlign.center,
                                 ),
+                              ),
+                            ),
+                          ),
+                        if (!isLoading && isVideo)
+                          Positioned.fill(
+                            child: Center(
+                              child: Icon(
+                                iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
+                                color: Colors.white,
+                                size: 40,
                               ),
                             ),
                           ),

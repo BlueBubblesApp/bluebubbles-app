@@ -71,7 +71,7 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
     // Each card is wrapped in its own Obx so only the affected card rebuilds
     // when a single observable changes. No LayoutBuilder needed — Row+Expanded
     // gives each card exactly half the available width without a layout pass.
-    final items = ConnectionPanelHelpersMixin.kStatusItems;
+    const items = ConnectionPanelHelpersMixin.kStatusItems;
     final rows = <Widget>[];
     for (int i = 0; i < items.length; i += 2) {
       rows.add(Row(

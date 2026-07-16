@@ -184,6 +184,19 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       // Handle people arrow-keying or clicking into mentions
       String text = controller.textController.text;
       TextSelection selection = controller.textController.selection;
+
+      // Work around an Android IME quirk where tapping the field while it already has
+      // a collapsed cursor can report the new selection as a range anchored at the old
+      // cursor position instead of collapsing to the tapped location. A plain tap should
+      // never turn a collapsed cursor into a range, so treat this specific shape (base
+      // pinned at the previous collapsed offset) as spurious and collapse it to the tap point.
+      if (!selection.isCollapsed &&
+          localController.oldTextFieldSelection.value.isCollapsed &&
+          localController.oldTextFieldSelection.value.baseOffset == selection.baseOffset) {
+        selection = TextSelection.collapsed(offset: selection.extentOffset);
+        controller.textController.selection = selection;
+      }
+
       if (selection.isCollapsed && selection.start != -1) {
         final behind = text.substring(0, selection.baseOffset);
         final behindMatches = MentionTextEditingController.escapingChar.allMatches(behind);

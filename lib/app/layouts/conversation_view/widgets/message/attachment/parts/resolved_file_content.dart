@@ -8,7 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/intera
 import 'package:bluebubbles/app/state/attachment_state_scope.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
-import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -69,7 +69,7 @@ class ResolvedFileContent extends StatelessWidget {
               )
             : const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5.0))),
         useRootNavigator: false,
-        openBuilder: (context, _) => FullscreenMediaHolder(
+        openBuilder: (context, _) => ConversationFullscreenHolder(
           currentChat: currentChat,
           attachment: attachment,
           showInteractions: true,

@@ -193,18 +193,26 @@ class AttachmentDownloadController extends GetxController {
     // Mark as not downloaded while downloading (handles re-downloads)
     attachment.isDownloaded = false;
 
-    // For web, download to memory. For native platforms, write directly to disk
+    // For web, download to memory. For native platforms, write to disk.
+    //
+    // Native downloads stream into a temporary `.part` file and are renamed into the
+    // final path only after being fully written (and post-processed). This preserves the
+    // invariant "file exists at attachment.path <=> file is complete" — consumers like
+    // AttachmentsSvc.getContent and the gallery's image-size prober treat file presence
+    // as readiness, and decoding a partially-written image poisons Flutter's ImageCache
+    // with a failure that sticks until the widget is disposed ("Failed to display image").
     final savePath = kIsWeb ? null : attachment.path;
+    final tempPath = savePath == null ? null : "$savePath.part";
 
     var response = await HttpSvc.attachment
         .download(
       attachment.guid!,
-      savePath: savePath,
+      savePath: tempPath,
       onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)),
     )
         .catchError((err) async {
-      if (!kIsWeb && savePath != null) {
-        File file = File(savePath);
+      if (!kIsWeb && tempPath != null) {
+        File file = File(tempPath);
         if (await file.exists()) {
           await file.delete();
         }
@@ -219,7 +227,16 @@ class AttachmentDownloadController extends GetxController {
     });
 
     Logger.info("Finished downloading attachment");
-    if (response.statusCode != 200) return;
+    if (response.statusCode != 200) {
+      // Don't leave a lingering partial file behind on a failed request.
+      if (tempPath != null) {
+        try {
+          final tempFile = File(tempPath);
+          if (await tempFile.exists()) await tempFile.delete();
+        } catch (_) {}
+      }
+      return;
+    }
 
     attachment.webUrl = response.requestOptions.path;
     stopwatch.stop();
@@ -239,12 +256,19 @@ class AttachmentDownloadController extends GetxController {
       }
       attachment.bytes = bytes;
     } else {
-      // For native platforms, file is already written to disk
-      // Handle GIF optimization if needed
-      if (attachment.mimeType == "image/gif" && savePath != null) {
-        final fileBytes = await File(savePath).readAsBytes();
+      // For native platforms, the temp file is fully written to disk.
+      // Handle GIF optimization on the temp file so the rewrite is covered by the
+      // atomic rename below.
+      if (attachment.mimeType == "image/gif" && tempPath != null) {
+        final fileBytes = await File(tempPath).readAsBytes();
         final optimizedBytes = await fixSpeedyGifs(fileBytes);
-        await File(savePath).writeAsBytes(optimizedBytes);
+        await File(tempPath).writeAsBytes(optimizedBytes);
+      }
+
+      // Atomically move the completed file into its final path. Only now does
+      // attachment.path exist, so readers can never observe partial content.
+      if (tempPath != null && savePath != null) {
+        await File(tempPath).rename(savePath);
       }
     }
 

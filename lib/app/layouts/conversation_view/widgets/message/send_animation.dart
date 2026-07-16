@@ -249,7 +249,6 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
             ),
         ],
       );
-      _message.generateTempGuid();
       OutgoingMsgHandler.queue(
         (_message.attributedBody.isNotEmpty)
             ? OutgoingMultipartMessage(

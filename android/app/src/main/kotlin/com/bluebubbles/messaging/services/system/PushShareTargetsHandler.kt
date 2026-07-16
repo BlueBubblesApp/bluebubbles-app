@@ -2,13 +2,13 @@ package com.bluebubbles.messaging.services.system
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.Person
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.MainActivity
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.Utils
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -34,7 +34,7 @@ class PushShareTargetsHandler: MethodCallHandlerImpl() {
     fun pushShareTarget(context: Context, name: String, guid: String, icon: ByteArray?) {
         val adaptiveIcon = if ((icon?.size ?: 0) == 0) null else Utils.getAdaptiveIconFromByteArray(icon!!)
 
-        Log.d(Constants.logTag, "Creating intent for shortcut with name $name")
+        PersistentLog.d(context, Constants.logTag, "Creating intent for shortcut with name $name")
         val contactCategories = setOf(Constants.categoryTextShareTarget)
         val launcherIntent = Intent(context, MainActivity::class.java)
             .putExtra("chatGuid", guid)
@@ -45,7 +45,7 @@ class PushShareTargetsHandler: MethodCallHandlerImpl() {
             person.setIcon(adaptiveIcon)
         }
 
-        Log.d(Constants.logTag, "Creating and pushing shortcut for $name")
+        PersistentLog.d(context, Constants.logTag, "Creating and pushing shortcut for $name")
         val shortcut = ShortcutInfoCompat.Builder(context, guid)
             .setShortLabel(name)
             .setIntent(launcherIntent)

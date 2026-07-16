@@ -3,6 +3,7 @@ package com.bluebubbles.messaging.services.backend_ui_interop
 import android.content.Context
 import android.util.Log
 import com.bluebubbles.messaging.Constants
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.MainActivity
 import com.bluebubbles.messaging.services.filesystem.GetContentUriPathHandler
 import com.bluebubbles.messaging.services.firebase.FirebaseAuthHandler
@@ -99,7 +100,11 @@ class MethodCallHandler {
     private fun dispatchHandler(call: MethodCall, result: MethodChannel.Result, context: Context) {
         when(call.method) {
             "ready" -> {
-                Log.d(Constants.logTag, "Dart engine is ready!")
+                PersistentLog.d(context, Constants.logTag, "Dart engine is ready!")
+                // Only MainActivity's channel routes "ready" here. DartWorker's headless
+                // engine intercepts and resolves its own "ready" handshake locally (see
+                // DartWorker.initNewEngine), so this always reflects the main engine.
+                MainActivity.setDartReady(true, context)
                 result.success(null)
             }
             UnifiedPushHandler.tag -> UnifiedPushHandler().handleMethodCall(call, result, context)
@@ -127,21 +132,21 @@ class MethodCallHandler {
             StopForegroundServiceHandler.tag -> StopForegroundServiceHandler().handleMethodCall(call, result, context)
             else -> {
                 val error = "Could not find method call handler for ${call.method}!"
-                Log.d(Constants.logTag, error)
+                PersistentLog.d(context, Constants.logTag, error)
                 result.error("500", error, null)
             }
         }
     }
 
     fun methodCallHandler(call: MethodCall, result: MethodChannel.Result, context: Context) {
-        Log.d(Constants.logTag, "Received new method call from Dart with method ${call.method}")
+        PersistentLog.d(context, Constants.logTag, "Received new method call from Dart with method ${call.method}")
 
         if (fireAndForgetTags.contains(call.method)) {
             result.success(null)
             try {
                 dispatchHandler(call, fireAndForgetResult, context)
             } catch (e: Exception) {
-                Log.e(Constants.logTag, "Fire-and-forget method handler failed for ${call.method}", e)
+                PersistentLog.e(context, Constants.logTag, "Fire-and-forget method handler failed for ${call.method}", e)
             }
             return
         }
@@ -149,7 +154,7 @@ class MethodCallHandler {
         try {
             dispatchHandler(call, result, context)
         } catch (e: Exception) {
-            Log.e(Constants.logTag, "Method channel handler failed for ${call.method}", e)
+            PersistentLog.e(context, Constants.logTag, "Method channel handler failed for ${call.method}", e)
             result.error("500", "Method channel handler failed", e.localizedMessage)
         }
     }

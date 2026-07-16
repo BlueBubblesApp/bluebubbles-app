@@ -50,6 +50,8 @@ class FindMyController extends GetxController {
 
   StreamSubscription? locationSub;
   Timer? _refreshTimer;
+  StreamSubscription? _redactedModeListener;
+  StreamSubscription? _hideContactInfoListener;
 
   @override
   void onInit() {
@@ -60,6 +62,7 @@ class FindMyController extends GetxController {
     SocketSvc.socket?.on("new-findmy-location", _handleNewFindMyLocation);
 
     _scheduleRefreshGate();
+    _setupRedactionListeners();
   }
 
   bool get _isAlive => !isClosed;
@@ -71,6 +74,36 @@ class FindMyController extends GetxController {
       canRefresh.value = true;
     });
   }
+
+  void _setupRedactionListeners() {
+    _redactedModeListener?.cancel();
+    _hideContactInfoListener?.cancel();
+    _redactedModeListener = SettingsSvc.settings.redactedMode.listen((_) => _rebuildAllMarkers());
+    _hideContactInfoListener = SettingsSvc.settings.hideContactInfo.listen((_) => _rebuildAllMarkers());
+  }
+
+  void _rebuildAllMarkers() {
+    if (!_isAlive) return;
+    for (final friend in friendsWithLocation) {
+      buildFriendMarker(friend);
+    }
+    for (final device in devices.where((e) => e.location?.latitude != null && e.location?.longitude != null)) {
+      buildDeviceMarker(device);
+    }
+    markers.refresh();
+  }
+
+  LatLng markerPointForFriend(FindMyFriend friend) => resolveFindMyMarkerPoint(
+        stableKey: friend.stableId ?? friend.title ?? 'friend',
+        latitude: friend.latitude!,
+        longitude: friend.longitude!,
+      );
+
+  LatLng markerPointForDevice(FindMyDevice device) => resolveFindMyMarkerPoint(
+        stableKey: device.id ?? device.name ?? 'device',
+        latitude: device.location!.latitude!,
+        longitude: device.location!.longitude!,
+      );
 
   void _handleNewFindMyLocation(dynamic data) {
     if (!_isAlive) return;
@@ -241,7 +274,7 @@ class FindMyController extends GetxController {
   void buildDeviceMarker(FindMyDevice e) {
     markers[e.id ?? randomString(6)] = Marker(
       key: ValueKey('device-${e.id ?? randomString(6)}'),
-      point: LatLng(e.location!.latitude!, e.location!.longitude!),
+      point: markerPointForDevice(e),
       width: 30,
       height: 35,
       child: ClipShadowPath(
@@ -279,7 +312,7 @@ class FindMyController extends GetxController {
     final markerKey = friend.stableId ?? randomString(6);
     markers[markerKey] = Marker(
       key: ValueKey('friend-$markerKey'),
-      point: LatLng(friend.latitude!, friend.longitude!),
+      point: markerPointForFriend(friend),
       width: 35,
       height: 35,
       child: Container(
@@ -350,6 +383,8 @@ class FindMyController extends GetxController {
   @override
   void onClose() {
     _refreshTimer?.cancel();
+    _redactedModeListener?.cancel();
+    _hideContactInfoListener?.cancel();
     locationSub?.cancel();
     mapController.dispose();
     popupController.dispose();

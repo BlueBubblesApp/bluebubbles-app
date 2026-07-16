@@ -1,9 +1,11 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/system_ui_overlay_style_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
@@ -308,6 +310,26 @@ extension HSLHelpers on HSLColor {
 
 extension OppositeBrightness on Brightness {
   Brightness get opposite => this == Brightness.light ? Brightness.dark : Brightness.light;
+}
+
+extension SystemUiOverlayStyleHelpers on BuildContext {
+  SystemUiOverlayStyle systemUiOverlayStyle({
+    Color? systemNavigationBarColor,
+    Color statusBarColor = Colors.transparent,
+    Brightness? backgroundBrightness,
+    Brightness? systemNavigationBarIconBrightness,
+    Brightness? statusBarIconBrightness,
+  }) {
+    return buildSystemUiOverlayStyle(
+      surfaceColor: theme.colorScheme.surface,
+      immersiveMode: SettingsSvc.settings.immersiveMode.value,
+      systemNavigationBarColor: systemNavigationBarColor,
+      statusBarColor: statusBarColor,
+      backgroundBrightness: backgroundBrightness,
+      systemNavigationBarIconBrightness: systemNavigationBarIconBrightness,
+      statusBarIconBrightness: statusBarIconBrightness,
+    );
+  }
 }
 
 MaterialColor createMaterialColor(Color color) {

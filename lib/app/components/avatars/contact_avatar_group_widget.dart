@@ -57,9 +57,15 @@ class ContactAvatarGroupWidget extends StatelessWidget {
 
   List<Handle> _sortedHandles(List<Handle> handles) {
     final sorted = List<Handle>.from(handles);
+    // Sort by the reactive HandleState avatar path — reading contactsV2 here
+    // would run a lazy ToMany DB query per handle on every rebuild, and the
+    // registry value is also what the child ContactAvatarWidgets display.
+    final hasAvatar = {
+      for (final h in handles) h: HandleSvc.getOrCreateHandleState(h).avatarPath.value != null,
+    };
     sorted.sort((a, b) {
-      final avatarA = a.contactsV2.firstOrNull?.avatarPath != null;
-      final avatarB = b.contactsV2.firstOrNull?.avatarPath != null;
+      final avatarA = hasAvatar[a] ?? false;
+      final avatarB = hasAvatar[b] ?? false;
       if (!avatarA && avatarB) return 1;
       if (avatarA && !avatarB) return -1;
       return 0;

@@ -117,7 +117,11 @@ class BBAppBar extends StatelessWidget implements PreferredSizeWidget {
       scrolledUnderElevation: scrolledUnderElevation,
       surfaceTintColor: effectiveSurfaceTint,
       centerTitle: effectiveCenterTitle,
-      systemOverlayStyle: systemOverlayStyle,
+      systemOverlayStyle: systemOverlayStyle ??
+          context.systemUiOverlayStyle(
+            statusBarColor: effectiveBg,
+            backgroundBrightness: ThemeData.estimateBrightnessForColor(effectiveBg),
+          ),
       automaticallyImplyLeading: automaticallyImplyLeading,
       leadingWidth: leadingWidth,
       iconTheme: iconTheme,

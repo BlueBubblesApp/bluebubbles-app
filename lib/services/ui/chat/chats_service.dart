@@ -565,6 +565,9 @@ class ChatsService {
 
     // Insert into sorted list at correct position
     _insertChatSorted(toAdd);
+
+    // _sortedChats isn't reactive; bump the list version so the UI rebuilds.
+    _scheduleListVersionUpdate(immediate: immediate);
   }
 
   void removeChat(Chat toRemove) {

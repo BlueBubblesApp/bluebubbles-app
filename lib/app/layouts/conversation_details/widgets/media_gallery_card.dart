@@ -5,7 +5,7 @@ import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -397,7 +397,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
 
     return OpenContainer(
       openBuilder: (_, closeContainer) {
-        return FullscreenMediaHolder(
+        return ConversationFullscreenHolder(
           attachment: attachment,
           showInteractions: true,
         );

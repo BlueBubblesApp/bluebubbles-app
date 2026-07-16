@@ -129,6 +129,8 @@ class IncrementalSyncManager extends SyncManager {
     } catch (ex) {
       completeWithError(ex.toString());
     }
+
+    return completer!.future;
   }
 
   Future<void> startMin_1_6_0() async {
@@ -445,9 +447,16 @@ class IncrementalSyncManager extends SyncManager {
       await SettingsSvc.settings.saveManyAsync(toSave);
     }
 
-    // Update the chat service with the latest chats
+    // Update the chat service with the latest chats.
+    // Use addChat for chats we haven't seen locally yet — updateChat is a no-op
+    // when no ChatState exists, which leaves brand-new chats invisible in the
+    // list (and their latestMessage unset) until the app restarts.
     for (var chat in syncedChats.values) {
-      ChatsSvc.updateChat(chat, override: true);
+      if (ChatsSvc.getChatState(chat.guid) == null) {
+        await ChatsSvc.addChat(chat, immediate: true);
+      } else {
+        ChatsSvc.updateChat(chat, override: true);
+      }
     }
 
     // Apply group photo changes detected during the sync.

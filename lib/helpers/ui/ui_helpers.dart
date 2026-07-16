@@ -530,7 +530,10 @@ Future<void> paintGroupAvatar({
   late final ThemeData theme;
   final bool systemDark = PlatformDispatcher.instance.platformBrightness == Brightness.dark;
   final isAlive = GetIt.I.isRegistered<LifecycleService>() ? GetIt.I<LifecycleService>().isAlive : false;
-  if (!isAlive) {
+  // `isAlive` can report true from a headless background isolate (bg_isolate port is
+  // registered process-wide) even though that isolate has no Flutter widget tree, so
+  // `Get.context` is still null there — guard against it explicitly.
+  if (!isAlive || Get.context == null) {
     if (systemDark) {
       theme = ThemeStruct.getDarkTheme().data;
     } else {

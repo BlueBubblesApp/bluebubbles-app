@@ -73,7 +73,7 @@ class SyncService {
     final processedMessageIds = <int>{};
     final processedSubtitleByChat = <String, int>{}; // chatGuid → message DB ID
 
-    void onPageComplete(dynamic data) {
+    Future<void> onPageComplete(dynamic data) async {
       if (data is! Map<String, dynamic>) return;
       final messageIds = (data['messageIds'] as List).cast<int>();
       final latestPerChat = Map<String, int>.from(data['latestMessageIdPerChat'] as Map);
@@ -93,6 +93,13 @@ class SyncService {
       for (final entry in latestPerChat.entries) {
         final msg = Database.messages.get(entry.value);
         if (msg == null) continue;
+        // If this chat was created for the first time during this sync,
+        // ChatState doesn't exist yet — register it so updateChatLatestMessage
+        // isn't a silent no-op.
+        if (ChatsSvc.getChatState(entry.key) == null) {
+          final chat = msg.chat.target;
+          if (chat != null) await ChatsSvc.addChat(chat, immediate: true);
+        }
         ChatsSvc.updateChatLatestMessage(entry.key, msg);
         processedSubtitleByChat[entry.key] = entry.value;
       }

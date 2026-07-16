@@ -289,7 +289,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                       }
 
                       return SliverPadding(
-                        padding: const EdgeInsets.only(top: 10),
+                        // Bottom padding is 20 to account for the bottom pill bar.
+                        padding: const EdgeInsets.only(top: 10, bottom: 20),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {

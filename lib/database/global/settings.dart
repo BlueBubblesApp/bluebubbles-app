@@ -69,7 +69,7 @@ class Settings {
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
   final RxBool highlightSelectedChat = true.obs;
-  final RxBool immersiveMode = false.obs;
+  final RxBool immersiveMode = true.obs;
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
   final RxBool statusIndicatorsOnChats = false.obs;
@@ -712,7 +712,7 @@ class Settings {
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = kIsDesktop || (map['tabletMode'] ?? true);
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
-    s.immersiveMode.value = map['immersiveMode'] ?? false;
+    s.immersiveMode.value = map['immersiveMode'] ?? true;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;

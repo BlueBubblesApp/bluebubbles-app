@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.bluebubbles.messaging.utils.PersistentLog
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
@@ -32,7 +32,7 @@ class OpenConversationNotificationSettingsHandler: MethodCallHandlerImpl() {
         val channelName: String = call.argument("display_name")!!
         val channelId: String = call.argument("channel_id")!!
         // We don't check if the channel exists because the underlying new messages channel gets returned then
-        Log.d(Constants.logTag, "Creating channel...")
+        PersistentLog.d(context, Constants.logTag, "Creating channel...")
         // setup channel with parameters
         val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
         // set the channel to allow bubbling, bypassing DND, and showing badges
@@ -43,7 +43,7 @@ class OpenConversationNotificationSettingsHandler: MethodCallHandlerImpl() {
         // create the channel
         notificationManager.createNotificationChannel(channel)
         // create the intent and launch
-        Log.d(Constants.logTag, "Launching notification settings for conversation")
+        PersistentLog.d(context, Constants.logTag, "Launching notification settings for conversation")
         val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
             .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             .putExtra(Settings.EXTRA_CHANNEL_ID, channel.id)

@@ -154,46 +154,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               }
               return child;
             },
-            errorBuilder: (context, object, stacktrace) => Center(
-                  heightFactor: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
-                    child: Row(children: [
-                      Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
-                      const SizedBox(width: 2.0),
-                      IconButton(
-                          onPressed: () {
-                            showBBDialog(
-                              context: context,
-                              title: "Image Stacktrace",
-                              content: SizedBox(
-                                width: NavigationSvc.width(context) * 3 / 5,
-                                height: context.height * 1 / 4,
-                                child: Container(
-                                  padding: const EdgeInsets.all(10.0),
-                                  decoration: BoxDecoration(
-                                      color: context.theme.colorScheme.surface,
-                                      borderRadius: const BorderRadius.all(Radius.circular(10))),
-                                  child: SingleChildScrollView(
-                                    child: SelectableText(
-                                      stacktrace.toString(),
-                                      style: context.theme.textTheme.bodyLarge,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              actions: [
-                                BBDialogAction(
-                                  text: "Close",
-                                  onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-                                ),
-                              ],
-                            );
-                          },
-                          icon: const Icon(CupertinoIcons.info_circle))
-                    ]),
-                  ),
-                ));
+            errorBuilder: (context, object, stacktrace) =>
+                _buildImageError(context, displayWidth, displayHeight, object, stacktrace));
       }
     } else {
       // Calculate the proper height/width for the attachment to use only for the
@@ -277,10 +239,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
             }
 
             // Conversion failed or not needed
-            return Center(
-              heightFactor: 1,
-              child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
-            );
+            return _buildImageError(context, displayWidth, displayHeight, object, stacktrace);
           },
         ),
       );
@@ -355,6 +314,80 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           ],
         ),
       ),
+    );
+  }
+
+  /// Themed placeholder shown in place of an image that failed to decode/render.
+  /// Sized to match the placeholder used while the image is loading so it doesn't
+  /// collapse to a sliver and hug the top of the top-aligned [Stack] in [build].
+  Widget _buildImageError(BuildContext context, double width, double height, Object error, StackTrace? stacktrace) {
+    return Container(
+      width: max(width, 120),
+      height: max(height, 100),
+      alignment: Alignment.center,
+      color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              iOS ? CupertinoIcons.photo : Icons.broken_image_outlined,
+              size: 30,
+              color: context.theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Photo Unavailable",
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+              maxLines: 1,
+            ),
+            const SizedBox(height: 4),
+            InkWell(
+              borderRadius: BorderRadius.circular(4),
+              onTap: () => _showImageErrorDetails(context, error, stacktrace),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                child: Text(
+                  "View Details",
+                  style: context.theme.textTheme.bodySmall!.copyWith(
+                    color: context.theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showImageErrorDetails(BuildContext context, Object error, StackTrace? stacktrace) {
+    showBBDialog(
+      context: context,
+      title: "Image Error Details",
+      content: SizedBox(
+        width: NavigationSvc.width(context) * 3 / 5,
+        height: context.height * 1 / 4,
+        child: Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+              color: context.theme.colorScheme.surface, borderRadius: const BorderRadius.all(Radius.circular(10))),
+          child: SingleChildScrollView(
+            child: SelectableText(
+              "$error\n\n$stacktrace",
+              style: context.theme.textTheme.bodyLarge,
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        BBDialogAction(
+          text: "Close",
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        ),
+      ],
     );
   }
 

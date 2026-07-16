@@ -75,14 +75,22 @@ class BBScaffold extends StatelessWidget {
 
   /// Whether to apply bottom SafeArea padding to the body.
   ///
-  /// Defaults to true to avoid content being obscured by system gesture areas on modern Android devices.
-  final bool safeAreaBottom;
+  /// If null, defaults to `false` when immersive mode is enabled and
+  /// [extendBodyBehindBottomPill] is true (so the body can extend edge-to-edge
+  /// behind the transparent gesture pill), and `true` otherwise (so content
+  /// isn't obscured by the opaque nav bar).
+  final bool? safeAreaBottom;
 
   /// Whether to apply left SafeArea padding to the body.
   final bool safeAreaLeft;
 
   /// Whether to apply right SafeArea padding to the body.
   final bool safeAreaRight;
+
+  /// Keeps the bottom SafeArea padding stable while the keyboard is visible
+  /// (SafeArea.maintainBottomViewPadding). Use when the body must not shift
+  /// as viewInsets animate.
+  final bool safeAreaMaintainBottomViewPadding;
 
   const BBScaffold({
     super.key,
@@ -101,9 +109,10 @@ class BBScaffold extends StatelessWidget {
     this.persistentFooterButtons,
     this.persistentFooterAlignment,
     this.safeAreaTop = false,
-    this.safeAreaBottom = true,
+    this.safeAreaBottom,
     this.safeAreaLeft = true,
     this.safeAreaRight = true,
+    this.safeAreaMaintainBottomViewPadding = false,
   });
 
   @override
@@ -116,6 +125,9 @@ class BBScaffold extends StatelessWidget {
             ? Colors.transparent
             : Theme.of(context).colorScheme.surface);
 
+    final effectiveSafeAreaBottom =
+        safeAreaBottom ?? !(SettingsSvc.settings.immersiveMode.value && extendBodyBehindBottomPill);
+
     // SafeArea is applied to the body in all cases so content doesn't overlap
     // system bars. The Scaffold itself is never wrapped in SafeArea — this
     // ensures the Scaffold's backgroundColor fills edge-to-edge, including
@@ -126,9 +138,10 @@ class BBScaffold extends StatelessWidget {
         ? null
         : SafeArea(
             top: safeAreaTop,
-            bottom: safeAreaBottom,
+            bottom: effectiveSafeAreaBottom,
             left: safeAreaLeft,
             right: safeAreaRight,
+            maintainBottomViewPadding: safeAreaMaintainBottomViewPadding,
             child: body!,
           );
 

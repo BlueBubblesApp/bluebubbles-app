@@ -7,7 +7,6 @@ import 'package:bluebubbles/models/parsed_log_entry.dart';
 import 'package:bluebubbles/services/backend/interfaces/log_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
@@ -210,10 +209,10 @@ class _LoggingPanel extends State<LoggingPanel> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
               child: AppBar(
-                systemOverlayStyle:
-                    ThemeData.estimateBrightnessForColor(context.theme.colorScheme.surface) == Brightness.dark
-                        ? SystemUiOverlayStyle.light
-                        : SystemUiOverlayStyle.dark,
+                systemOverlayStyle: context.systemUiOverlayStyle(
+                  statusBarColor: context.theme.colorScheme.surface,
+                  backgroundBrightness: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.surface),
+                ),
                 toolbarHeight: kIsDesktop ? 80 : 50,
                 elevation: 0,
                 scrolledUnderElevation: 3,

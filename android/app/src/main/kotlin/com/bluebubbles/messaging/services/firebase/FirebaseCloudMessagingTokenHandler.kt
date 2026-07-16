@@ -1,7 +1,8 @@
 package com.bluebubbles.messaging.services.firebase
 
-import android.util.Log
+import android.content.Context
 import com.bluebubbles.messaging.Constants
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.google.android.gms.tasks.Task
 import com.google.firebase.messaging.FirebaseMessaging
 import io.flutter.plugin.common.MethodChannel
@@ -11,8 +12,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class FirebaseCloudMessagingTokenHandler {
-    fun getToken(result: MethodChannel.Result?) {
-        Log.d(Constants.logTag, "Fetching FCM token...")
+    fun getToken(context: Context, result: MethodChannel.Result?) {
+        PersistentLog.d(context, Constants.logTag, "Fetching FCM token...")
         // Attempt to get an FCM registration token to pass to the server
         val tokenTask: Task<String> = FirebaseMessaging.getInstance().token;
         CoroutineScope(Dispatchers.Main).launch {
@@ -21,14 +22,14 @@ class FirebaseCloudMessagingTokenHandler {
                 result?.success(fcmToken)
             } catch (exception: Exception) {
                 val error = "Failed to get FCM token!"
-                Log.e(Constants.logTag, error)
+                PersistentLog.e(context, Constants.logTag, error, exception)
                 result?.error("500", error, exception)
             }
         }
     }
 
-    fun deleteToken(result: MethodChannel.Result?) {
-        Log.d(Constants.logTag, "Deleting FCM token...")
+    fun deleteToken(context: Context, result: MethodChannel.Result?) {
+        PersistentLog.d(context, Constants.logTag, "Deleting FCM token...")
         // Attempt to delete FCM registration token
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -36,7 +37,7 @@ class FirebaseCloudMessagingTokenHandler {
                 result?.success(null)
             } catch (exception: Exception) {
                 val error = "Failed to delete FCM token!"
-                Log.e(Constants.logTag, error)
+                PersistentLog.e(context, Constants.logTag, error, exception)
                 result?.error("500", error, exception)
             }
         }

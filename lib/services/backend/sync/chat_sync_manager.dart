@@ -18,7 +18,7 @@ class ChatSyncManager extends SyncManager {
 
   ChatSyncManager({bool saveLogs = false, this.simulateError = false}) : super("Chat", saveLogs: saveLogs);
 
-  flush() {
+  void flush() {
     chatsSynced = 0;
   }
 

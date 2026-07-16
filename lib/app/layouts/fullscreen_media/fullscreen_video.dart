@@ -188,7 +188,10 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
   }
 
   void _handleTap() {
-    if (!widget.showInteractions || kIsDesktop || kIsWeb) return;
+    // Tap-to-toggle works regardless of `showInteractions` — that flag only gates
+    // which action buttons are relevant (download/reply/etc. don't apply to an
+    // unsent composer preview), not whether the overlay can be shown/hidden.
+    if (kIsDesktop || kIsWeb) return;
     final newVal = !showPlayPauseOverlay.value;
     showPlayPauseOverlay.value = newVal;
     widget.onOverlayToggle?.call(newVal);
@@ -356,45 +359,56 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                       ),
                     );
                   }),
-                if (!iOS && (kIsWeb || kIsDesktop))
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Obx(() {
-                      return MouseRegion(
-                        onEnter: (event) => _hover.value = true,
-                        onExit: (event) => _hover.value = false,
-                        child: AbsorbPointer(
-                          absorbing: !showPlayPauseOverlay.value && !_hover.value,
-                          child: AnimatedOpacity(
-                            opacity: _hover.value
-                                ? 1
-                                : showPlayPauseOverlay.value
-                                    ? 1
-                                    : 0,
-                            duration: const Duration(milliseconds: 100),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(40),
-                                onTap: () async {
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.white,
-                                    size: 25,
-                                  ),
+                // Top close bar (mirrors FullscreenImage's `!iOS` top bar) — gives
+                // Android/desktop/web a visible, always-reachable way to dismiss the
+                // viewer instead of relying solely on the system back button/gesture.
+                // On the iOS skin, closing is handled by whichever holder wraps this
+                // widget (ConversationFullscreenHolder's "Done" app bar, or
+                // SingleAttachmentFullscreenViewer's own), driven by `onOverlayToggle`.
+                if (!iOS)
+                  Obx(() {
+                    final visible = showPlayPauseOverlay.value || _hover.value;
+                    return MouseRegion(
+                      onEnter: (event) => _hover.value = true,
+                      onExit: (event) => _hover.value = false,
+                      child: AbsorbPointer(
+                        absorbing: !visible,
+                        child: AnimatedOpacity(
+                          opacity: visible ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 125),
+                          child: Container(
+                            height: kIsDesktop ? 80 : 100.0,
+                            width: NavigationSvc.width(context),
+                            color: context.theme.colorScheme.shadow.withValues(alpha: samsung ? 1 : 0.65),
+                            child: SafeArea(
+                              left: false,
+                              right: false,
+                              bottom: false,
+                              child: SizedBox(
+                                height: kIsDesktop ? 80 : 50,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 5),
+                                      child: CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                                        onPressed: () => Navigator.of(context).pop(),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      );
-                    }),
-                  ),
+                      ),
+                    );
+                  }),
                 // Bottom action bar for iOS
                 if (iOS && widget.showInteractions)
                   Positioned(

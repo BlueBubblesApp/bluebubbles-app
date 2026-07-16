@@ -441,10 +441,28 @@ class StartupTasks {
         // On desktop, always restore focus when the app is resumed (window regains focus).
         // On mobile, only refocus if the user has auto-open keyboard enabled AND the
         // conversation view is the active route (not obscured by ConversationDetails etc.).
-        if (kIsDesktop || SettingsSvc.settings.autoOpenKeyboard.value) {
-          ConversationViewController _cvc = cvc(activeChat.chat);
-          if (!_cvc.showingOverlays && !_cvc.showingSubRoute && _cvc.editing.isEmpty) {
+        ConversationViewController _cvc = cvc(activeChat.chat);
+        if (!_cvc.showingOverlays && !_cvc.showingSubRoute && _cvc.editing.isEmpty) {
+          if (kIsDesktop || SettingsSvc.settings.autoOpenKeyboard.value) {
             _cvc.lastFocusedNode.requestFocus();
+          } else if (_cvc.lastFocusedNode.hasFocus) {
+            // The field keeps its focus across a background/resume cycle, but
+            // the Android engine fails to restore the keyboard on resume: the
+            // OS shows it briefly, then the engine's input-connection restart
+            // dismisses it without notifying the framework, so focus and
+            // viewInsets are left as if the keyboard were still open (blank
+            // reserved space). Re-show it once the restart settles so the
+            // keyboard comes back exactly as the user left it.
+            //
+            // Workaround for https://github.com/flutter/flutter/issues/52599 —
+            // once the engine fix (https://github.com/flutter/flutter/pull/187778)
+            // ships in the Flutter version we build with, this block becomes a
+            // no-op and can be removed.
+            Future.delayed(const Duration(milliseconds: 200), () {
+              if (_cvc.lastFocusedNode.hasFocus && !_cvc.showingOverlays && !_cvc.showingSubRoute) {
+                SystemChannels.textInput.invokeMethod('TextInput.show');
+              }
+            });
           }
         }
       }
@@ -454,13 +472,22 @@ class StartupTasks {
       await NetworkTasks.detectLocalhost();
     }
 
+    // Flush any contact sync deferred while the app was backgrounded
+    // (contact change events are queued instead of synced while cached).
+    if (GetIt.I.isRegistered<ContactServiceV2>() && GetIt.I.isReadySync<ContactServiceV2>()) {
+      unawaited(ContactsSvcV2.runPendingContactSync());
+    }
+
     // On app resume, use the global isolate so it's ready for other tasks.
     if (GetIt.I.isRegistered<SyncService>()) {
       if (!Platform.isAndroid) {
         unawaited(SyncSvc.startIncrementalSync(useGlobalIsolate: true));
       } else if (lifecycle == null ||
           !lifecycle.hasResumed ||
-          (lifecycle.currentState == AppLifecycleState.resumed && lifecycle.wasPaused)) {
+          // wasBackgrounded (paused/detached, NOT hidden): sync only when the user
+          // actually left the app — not when resuming from an in-app overlay like
+          // the share sheet, which hides the activity without leaving the app.
+          (lifecycle.currentState == AppLifecycleState.resumed && lifecycle.wasBackgrounded)) {
         unawaited(SyncSvc.startIncrementalSync(useGlobalIsolate: true));
       }
     }

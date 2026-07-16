@@ -108,8 +108,14 @@ class ContactV2Actions {
             final contactId = (map['id'] ?? displayName).toString();
             if (!isNullOrEmpty(map['avatar'])) {
               try {
-                avatarPaths[contactId] = await _saveContactAvatar(contactId, base64Decode(map['avatar'].toString()));
+                final savedPath = await _saveContactAvatar(contactId, base64Decode(map['avatar'].toString()));
+                // A null path means the disk write failed — leave the key unset so
+                // the existing avatarPath is preserved instead of being wiped.
+                if (savedPath != null) avatarPaths[contactId] = savedPath;
               } catch (_) {}
+            } else {
+              // Server reports no avatar for this contact — record the removal explicitly.
+              avatarPaths[contactId] = null;
             }
 
             final nc = ContactV2(
@@ -143,10 +149,16 @@ class ContactV2Actions {
             final avatarData = contactWithPhoto?.photo?.fullSize ?? contactWithPhoto?.photo?.thumbnail;
 
             if (avatarData != null && avatarData.isNotEmpty) {
-              avatarPaths[rawContact.id!] = await _saveContactAvatar(rawContact.id!, avatarData);
+              final savedPath = await _saveContactAvatar(rawContact.id!, avatarData);
+              // A null path means the disk write failed — leave the key unset so
+              // the existing avatarPath is preserved instead of being wiped.
+              if (savedPath != null) avatarPaths[rawContact.id!] = savedPath;
+            } else if (contactWithPhoto != null) {
+              // Fetch succeeded and the contact has no photo — record the removal explicitly.
+              avatarPaths[rawContact.id!] = null;
             }
           } catch (e) {
-            // Avatar fetch failed, continue without it
+            // Avatar fetch failed — leave the key unset so the existing avatarPath is kept.
           }
         }
       }
@@ -295,9 +307,15 @@ class ContactV2Actions {
             // Update existing contact
             contact = existingContact;
             final oldComputedName = contact.computedDisplayName;
+            final oldAvatarPath = contact.avatarPath;
             contact.displayName = displayName;
             contact.addresses = normalizedAddresses.toList();
-            contact.avatarPath = avatarPath;
+            // Only touch avatarPath when the prefetch step produced a definitive
+            // answer (photo saved, or confirmed no photo). An absent key means the
+            // photo fetch failed — keep the existing path instead of wiping it.
+            if (avatarPaths.containsKey(contactId)) {
+              contact.avatarPath = avatarPath;
+            }
             contact.firstName = firstName;
             contact.lastName = lastName;
             contact.middleName = middleName;
@@ -311,8 +329,8 @@ class ContactV2Actions {
             // Track existing handles to detect changes
             existingHandleIds = contact.handles.map((h) => h.id).whereType<int>().toSet();
 
-            if (oldComputedName != contact.computedDisplayName) {
-              // Mark all existing handles for this contact as affected (computed name changed)
+            if (oldComputedName != contact.computedDisplayName || oldAvatarPath != contact.avatarPath) {
+              // Mark all existing handles for this contact as affected (computed name or avatar changed)
               affectedHandleIds.addAll(existingHandleIds);
             }
           } else {
@@ -408,12 +426,15 @@ class ContactV2Actions {
       });
 
       final endTime = DateTime.now().millisecondsSinceEpoch;
+      // De-duplicate — a handle can be marked affected by both a name/avatar
+      // change and a handle-link change within the same sync.
+      final uniqueAffected = affectedHandleIds.toSet().toList();
       Logger.info('[ContactV2] Contact fetch and match completed in ${endTime - startTime}ms');
-      Logger.info('[ContactV2] Affected ${affectedHandleIds.length} handles');
+      Logger.info('[ContactV2] Affected ${uniqueAffected.length} handles');
 
       // Complete the completer with the result
-      _syncCompleter?.complete(affectedHandleIds);
-      return affectedHandleIds;
+      _syncCompleter?.complete(uniqueAffected);
+      return uniqueAffected;
     } catch (e, stack) {
       Logger.error('[ContactV2] Error fetching and matching contacts', error: e, trace: stack);
 

@@ -99,7 +99,11 @@ class NotificationsService {
         final details = await flnp.getNotificationAppLaunchDetails();
         if (details != null && details.didNotificationLaunchApp && details.notificationResponse?.payload != null) {
           if (GetIt.I.isRegistered<IntentsService>()) {
-            IntentsSvc.openChat(details.notificationResponse!.payload!);
+            // didNotificationLaunchApp means this tap is what launched the app — the
+            // widget tree is starting fresh, so activeChat can't be trusted here.
+            IntentsSvc.openChat(details.notificationResponse!.payload!, isInitialIntent: true);
+          } else {
+            Logger.warn('IntentsService not registered, cannot process notification launch payload');
           }
         }
       }
@@ -141,7 +145,7 @@ class NotificationsService {
     final isGroup = chat.isGroup;
     final guid = chat.guid;
     final contactName = message.handleRelation.target?.displayName ?? "Unknown";
-    final title = isGroup ? chat.getTitle() : contactName;
+    final title = isGroup ? (ChatsSvc.getChatState(chat.guid)?.title.value ?? chat.getTitle()) : contactName;
     final text = hideContent ? "iMessage" : message.getNotificationText();
     final isReaction = !isNullOrEmpty(message.associatedMessageGuid);
 
@@ -150,7 +154,7 @@ class NotificationsService {
       final notif =
           Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: message.guid);
       notif.onClick.listen((event) async {
-        await IntentsSvc.openChat(guid);
+        await IntentsSvc.openChat(guid, isInitialIntent: false);
       });
     } else if (kIsDesktop) {
       // Avatar loading is deferred to _buildAndShowToast — don't load it here.
@@ -205,10 +209,11 @@ class NotificationsService {
   }
 
   Future<void> tryCreateNewMessageNotification(Message message, Chat chat) async {
-    if (message.isFromMe! || !message.handleRelation.hasValue) {
+    if ((message.isFromMe ?? false) || !message.handleRelation.hasValue) {
       if (!(message.isFromMe ?? false) && !message.handleRelation.hasValue) {
-        Logger.warn(
-          'Skipping notification for ${message.guid} — handle relation not resolved',
+        Logger.error(
+          'Skipping notification for ${message.guid} in chat ${chat.guid} — '
+          'handle relation not resolved (handleId=${message.handleId})',
           tag: 'NotificationsService',
         );
       }
@@ -518,7 +523,7 @@ class NotificationsService {
       _desktopNotificationPlayer = player;
       await player.setVolume(SettingsSvc.settings.desktopNotificationSoundVolume.value.toDouble());
       await player.open(Media(SettingsSvc.settings.desktopNotificationSoundPath.value!));
-      player.stream.completed.firstWhere((completed) => completed).then((_) async {
+      player.stream.completed.firstWhere((completed) => completed, orElse: () => false).then((_) async {
         await Future.delayed(const Duration(milliseconds: 450));
         if (_desktopNotificationPlayer == player) {
           await player.dispose();

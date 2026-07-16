@@ -317,7 +317,7 @@ class Database {
     return store.runInTransaction(mode, fn);
   }
 
-  static reset() {
+  static void reset() {
     Database.attachments.removeAll();
     Database.chats.removeAll();
     Database.fcmData.removeAll();
