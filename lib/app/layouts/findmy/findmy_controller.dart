@@ -589,7 +589,7 @@ class FindMyController extends GetxController {
     mapController.dispose();
     popupController.dispose();
     tabController?.dispose();
-    SocketSvc.socket?.off("new-findmy-location");
+    SocketSvc.socket?.off("new-findmy-location", _handleNewFindMyLocation);
     itemsController.dispose();
     devicesController.dispose();
     friendsController.dispose();

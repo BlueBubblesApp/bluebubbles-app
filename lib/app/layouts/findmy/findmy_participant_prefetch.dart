@@ -25,7 +25,7 @@ class FindMyParticipantPrefetch {
   /// Same capability gate as the Find My nav entry (plus web exclusion).
   static bool get isSupported => !kIsWeb && SettingsSvc.serverDetails.isMinCatalina;
 
-  static String controllerTag(String chatGuid) => 'findmy-$chatGuid';
+  static String controllerTag(String chatGuid) => 'conversation-findmy-location-$chatGuid';
 
   /// True once a snapshot has been fetched at least once — lets callers
   /// distinguish "nobody is sharing" (known false) from "not loaded yet".
