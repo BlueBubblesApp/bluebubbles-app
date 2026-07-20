@@ -42,7 +42,6 @@ import shared_preferences_foundation
 import sqlite3_flutter_libs
 import store_checker
 import super_native_extensions
-import system_tray
 import tray_manager
 import url_launcher_macos
 import video_player_avfoundation
@@ -87,7 +86,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   Sqlite3FlutterLibsPlugin.register(with: registry.registrar(forPlugin: "Sqlite3FlutterLibsPlugin"))
   StoreCheckerPlugin.register(with: registry.registrar(forPlugin: "StoreCheckerPlugin"))
   SuperNativeExtensionsPlugin.register(with: registry.registrar(forPlugin: "SuperNativeExtensionsPlugin"))
-  SystemTrayPlugin.register(with: registry.registrar(forPlugin: "SystemTrayPlugin"))
   TrayManagerPlugin.register(with: registry.registrar(forPlugin: "TrayManagerPlugin"))
   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
   FVPVideoPlayerPlugin.register(with: registry.registrar(forPlugin: "FVPVideoPlayerPlugin"))

@@ -28,7 +28,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   share_plus
   sqlite3_flutter_libs
   super_native_extensions
-  system_tray
   tray_manager
   url_launcher_windows
   window_manager

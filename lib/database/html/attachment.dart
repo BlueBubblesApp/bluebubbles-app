@@ -140,6 +140,8 @@ class Attachment {
 
   bool get canCompress => mimeStart == "image" && !mimeType!.contains("gif");
 
+  bool get isPkPass => false;
+
   static Attachment merge(Attachment attachment1, Attachment attachment2) {
     attachment1.id ??= attachment2.id;
     attachment1.bytes ??= attachment2.bytes;

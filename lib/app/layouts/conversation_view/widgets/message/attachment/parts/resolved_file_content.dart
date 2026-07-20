@@ -14,6 +14,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:passkit_ui/passkit_ui.dart';
 
 /// Fully resolved attachment: dispatches to the appropriate viewer widget.
 /// No reactive state is needed here — the file is static once this is shown.
@@ -148,6 +149,13 @@ class ResolvedFileContent extends StatelessWidget {
       return Padding(
         padding: showTail ? tailPadding : EdgeInsets.zero,
         child: ContactCard(attachment: attachment, file: file),
+      );
+    }
+
+    if (attachment.isPkPass) {
+      return Padding(
+        padding: showTail ? tailPadding : EdgeInsets.zero,
+        child: FittedBox(fit: BoxFit.contain, child: PkPassWidget(pass: attachment.pkPass!)),
       );
     }
 

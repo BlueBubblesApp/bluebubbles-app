@@ -258,7 +258,9 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
     final bool isInReply = ReplyScope.maybeOf(context) != null;
-    final bool showTail = !isInReply && message.showTail(newerMessage) && part.part == controller.parts.length - 1;
+    final bool isPass = attachment.isPkPass;
+    final bool showTail =
+        !isInReply && !isPass && message.showTail(newerMessage) && part.part == controller.parts.length - 1;
 
     // Resolve state once for the scope.  The AttachmentState object is updated
     // in-place by the service layer; no re-lookup is needed on reactive changes.
@@ -290,7 +292,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final hasError = state.hasError.value || message.error > 0;
         final hasPreview = state.resolvedFile.value != null ||
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
-        final transparentCard = widget.transparentBackground && hasPreview;
+        final transparentCard = hasPreview && (widget.transparentBackground || isPass);
         // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
         // to fill the SizedBox dimensions set by MessageImageGallery and have their
         // background clipped to rounded corners.

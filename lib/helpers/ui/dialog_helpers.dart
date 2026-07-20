@@ -242,20 +242,26 @@ Future<T?> _showCupertinoActionSheetSelector<T>(
 }) {
   return showCupertinoModalPopup<T>(
     context: context,
-    builder: (ctx) => CupertinoActionSheet(
-      title: title != null ? Text(title) : null,
-      message: message != null ? Text(message) : null,
-      actions: options.map((option) {
-        return CupertinoActionSheetAction(
-          isDestructiveAction: option.isDestructive,
-          onPressed: () => Navigator.of(ctx).pop(option.value),
-          child: Text(option.label),
-        );
-      }).toList(),
-      cancelButton: CupertinoActionSheetAction(
-        isDefaultAction: true,
-        onPressed: () => Navigator.of(ctx).pop(),
-        child: Text(cancelText),
+    builder: (ctx) => CupertinoTheme(
+      // Bridge Material theme brightness into the Cupertino color system so
+      // CupertinoDynamicColor.resolve picks the correct light/dark variant
+      // instead of falling back to the system platform brightness.
+      data: CupertinoThemeData(brightness: Theme.of(ctx).brightness),
+      child: CupertinoActionSheet(
+        title: title != null ? Text(title) : null,
+        message: message != null ? Text(message) : null,
+        actions: options.map((option) {
+          return CupertinoActionSheetAction(
+            isDestructiveAction: option.isDestructive,
+            onPressed: () => Navigator.of(ctx).pop(option.value),
+            child: Text(option.label),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(cancelText),
+        ),
       ),
     ),
   );
@@ -270,35 +276,45 @@ Future<T?> _showCupertinoWheelSelector<T>(
   var selectedIndex = 0;
   return showCupertinoModalPopup<T>(
     context: context,
-    builder: (ctx) => Container(
-      height: 260,
-      color: CupertinoTheme.of(ctx).scaffoldBackgroundColor,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    builder: (ctx) {
+      // Bridge Material theme brightness into the Cupertino color system so
+      // CupertinoDynamicColor.resolve (and CupertinoTheme.of() lookups below)
+      // pick the correct light/dark variant instead of falling back to the
+      // system platform brightness.
+      final cupertinoTheme = CupertinoThemeData(brightness: Theme.of(ctx).brightness);
+      return CupertinoTheme(
+        data: cupertinoTheme,
+        child: Container(
+          height: 260,
+          color: cupertinoTheme.scaffoldBackgroundColor,
+          child: Column(
             children: [
-              CupertinoButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(cancelText),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(cancelText),
+                  ),
+                  if (title != null) Text(title, style: cupertinoTheme.textTheme.navTitleTextStyle),
+                  CupertinoButton(
+                    onPressed: () => Navigator.of(ctx).pop(options[selectedIndex].value),
+                    child: const Text("Done"),
+                  ),
+                ],
               ),
-              if (title != null) Text(title, style: CupertinoTheme.of(ctx).textTheme.navTitleTextStyle),
-              CupertinoButton(
-                onPressed: () => Navigator.of(ctx).pop(options[selectedIndex].value),
-                child: const Text("Done"),
+              Expanded(
+                child: CupertinoPicker(
+                  itemExtent: 36,
+                  onSelectedItemChanged: (index) => selectedIndex = index,
+                  children: options.map((o) => Center(child: Text(o.label))).toList(),
+                ),
               ),
             ],
           ),
-          Expanded(
-            child: CupertinoPicker(
-              itemExtent: 36,
-              onSelectedItemChanged: (index) => selectedIndex = index,
-              children: options.map((o) => Center(child: Text(o.label))).toList(),
-            ),
-          ),
-        ],
-      ),
-    ),
+        ),
+      );
+    },
   );
 }
 

@@ -177,6 +177,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.9"
+  barcode_widget:
+    dependency: transitive
+    description:
+      name: barcode_widget
+      sha256: "6f2c5b08659b1a5f4d88d183e6007133ea2f96e50e7b8bb628f03266c3931427"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.4"
   bidi:
     dependency: transitive
     description:
@@ -676,6 +684,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.5+3"
+  extended_image:
+    dependency: transitive
+    description:
+      name: extended_image
+      sha256: e81d801cd692921f152834e01f39bba8b3d6302c48ad420d499c6062a7e24737
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.1.0"
+  extended_image_library:
+    dependency: transitive
+    description:
+      name: extended_image_library
+      sha256: "1f9a24d3a00c2633891c6a7b5cab2807999eb2d5b597e5133b63f49d113811fe"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.1"
   fake_async:
     dependency: transitive
     description:
@@ -826,6 +850,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.0"
+  flutter_dotenv:
+    dependency: "direct main"
+    description:
+      name: flutter_dotenv
+      sha256: d41da11fb497314fbf89811ec30af02d1d898b47980a129f0a8c0a1720460ba2
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.1"
   flutter_image_compress:
     dependency: "direct main"
     description:
@@ -1391,6 +1423,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.6.0"
+  http_client_helper:
+    dependency: transitive
+    description:
+      name: http_client_helper
+      sha256: "8a9127650734da86b5c73760de2b404494c968a3fd55602045ffec789dac3cb1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   http_multi_server:
     dependency: transitive
     description:
@@ -1599,6 +1639,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.11.0"
+  klipy_dart:
+    dependency: transitive
+    description:
+      name: klipy_dart
+      sha256: e175946111ded69374b9d13d14d7dae2738b0a4751307a28ea989311ba9ca367
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
+  klipy_flutter:
+    dependency: "direct main"
+    description:
+      name: klipy_flutter
+      sha256: b32caff8d11e88b2e4eedd3f3a5f3c74e6435145b4e1f24c966abfbf5044bc8d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   languagetool_textfield:
     dependency: "direct main"
     description:
@@ -2055,6 +2111,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  passkit:
+    dependency: "direct main"
+    description:
+      name: passkit
+      sha256: "4520d9e41814a3184210914c6f062060f19b75b738a166a6b50d74b5e63f4b40"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  passkit_ui:
+    dependency: "direct main"
+    description:
+      name: passkit_ui
+      sha256: d85a761ad261e7041d9f5942ff11551eff5fc723c1563cb209c4ff4804165873
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   pasteboard:
     dependency: "direct main"
     description:
@@ -2151,6 +2223,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.1"
+  pem:
+    dependency: transitive
+    description:
+      name: pem
+      sha256: e66b389cbb007fa5860d511f08ea604ea68e78afc4e1b543dc227a0f0ef4faf9
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.6"
   permission_handler:
     dependency: "direct main"
     description:
@@ -2232,6 +2312,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.5"
+  pkcs7:
+    dependency: transitive
+    description:
+      name: pkcs7
+      sha256: "7acfea83d6cbf7a18eb812d6fc893652d4298849a5fd5d20208fea9976808072"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.6"
   platform:
     dependency: transitive
     description:
@@ -2925,14 +3013,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.0"
-  system_tray:
-    dependency: "direct main"
-    description:
-      name: system_tray
-      sha256: "40444e5de8ed907822a98694fd031b8accc3cb3c0baa547634ce76189cf3d9cf"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.3"
   term_glyph:
     dependency: transitive
     description:

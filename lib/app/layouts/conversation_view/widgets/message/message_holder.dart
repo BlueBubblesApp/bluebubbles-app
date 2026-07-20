@@ -544,8 +544,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                           return ClipPath(
                                                                             clipper: TailClipper(
                                                                               isFromMe: message.isFromMe!,
-                                                                              showTail: message
-                                                                                      .showTail(newerMessage) &&
+                                                                              showTail: !e.isPkPass &&
+                                                                                  message.showTail(newerMessage) &&
                                                                                   e.part == controller.parts.length - 1,
                                                                               connectLower: iOS
                                                                                   ? false

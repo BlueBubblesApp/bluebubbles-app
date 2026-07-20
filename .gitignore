@@ -47,7 +47,7 @@ pubspeck.lock
 #private keys
 *.env
 .vscode/launch.json
-/lib/models/html/giphy.dart
+/lib/models/html/klipy.dart
 
 /android/app/.cxx/
 

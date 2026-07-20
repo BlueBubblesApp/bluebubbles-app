@@ -11,6 +11,7 @@ import 'package:mime_type/mime_type.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
+import 'package:passkit/passkit.dart';
 import 'package:universal_io/io.dart';
 
 @Entity()
@@ -249,6 +250,35 @@ class Attachment {
   Future<bool> get existsOnDiskAsync async => await File(path).exists();
 
   bool get canCompress => mimeStart == "image" && !mimeType!.contains("gif");
+
+  @Transient()
+  PkPass? _pkPass;
+  @Transient()
+  bool _pkPassParsed = false;
+
+  /// The parsed Wallet pass, or null if this isn't one (or is a corrupt one).
+  ///
+  /// Parsed lazily and cached — including failures, so a bad pass isn't
+  /// re-unzipped on every build. A file that isn't on disk yet is *not* cached:
+  /// it may simply not be downloaded, and we want to retry once it lands.
+  PkPass? get pkPass {
+    if (_pkPassParsed) return _pkPass;
+    if (!path.endsWith(".pkpass")) return null;
+    final file = File(path);
+    if (!file.existsSync()) return null;
+    _pkPassParsed = true;
+    try {
+      return _pkPass =
+          PkPass.fromBytes(file.readAsBytesSync(), skipSignatureVerification: true, skipChecksumVerification: true);
+    } catch (_) {
+      return _pkPass = null;
+    }
+  }
+
+  /// Whether this attachment renders as a Wallet pass. Passes draw their own
+  /// rounded card with transparent corners, so a bubble tail or background
+  /// behind them leaks through the holes — callers use this to suppress both.
+  bool get isPkPass => pkPass != null;
 
   static Attachment merge(Attachment attachment1, Attachment attachment2) {
     attachment1.id ??= attachment2.id;

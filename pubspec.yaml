@@ -71,6 +71,7 @@ dependencies:
   flex_color_picker: ^3.7.1
   flex_color_scheme: ^8.1.1
   flutter_acrylic: ^1.1.4
+  flutter_dotenv: ^6.0.1
   flutter_displaymode: ^0.7.0 # android only
   flutter_image_compress: ^2.4.0
   flutter_improved_scrolling: ^0.0.3
@@ -102,6 +103,7 @@ dependencies:
   image_size_getter: ^2.4.1
   in_app_review: ^2.0.11
   internet_connection_checker_plus: ^3.0.0
+  klipy_flutter: ^0.0.3
   languagetool_textfield: ^0.1.1
   launch_at_startup: ^0.5.1
   local_auth: ^3.0.1
@@ -122,6 +124,8 @@ dependencies:
   numberpicker: ^2.1.2
   objectbox: ^5.3.1
   objectbox_flutter_libs: any
+  passkit: any
+  passkit_ui: any
   sqlite3_flutter_libs: ^0.5.24 # required for network_tools drift/ARP service on Android
   on_exit: ^1.0.0
   open_filex: ^4.7.0
@@ -159,7 +163,6 @@ dependencies:
   sprung: ^3.0.1
   store_checker: ^1.8.0
   synchronized: ^3.3.0+3
-  system_tray: ^2.0.3
   super_drag_and_drop: ^0.9.1
   supercharged: ^2.1.1
   system_info2: ^4.0.0
@@ -298,6 +301,7 @@ flutter:
     - assets/badges/badge-8.ico
     - assets/badges/badge-9.ico
     - assets/badges/badge-10.ico
+    - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

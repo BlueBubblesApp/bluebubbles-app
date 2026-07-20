@@ -103,8 +103,9 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
     if (!kIsWeb && !kIsDesktop && SettingsSvc.settings.smartReply.value) {
       if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
         try {
-          controller.mlKitParsedText["${message.guid!}-${part.part}"] =
-              await EntityExtractor(language: EntityExtractorLanguage.english).annotateText(part.text!);
+          controller.mlKitParsedText["${message.guid!}-${part.part}"] = await EntityExtractor(
+                  language: EntityExtractorLanguage.english)
+              .annotateText(sanitizeForMlKit(part.text!));
         } catch (ex, stack) {
           Logger.warn('Failed to extract entities using mlkit!', error: ex, trace: stack);
         }

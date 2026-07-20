@@ -43,14 +43,15 @@ class SmartRepliesManager {
   void _rebuildConversation() {
     smartReply.clearConversation();
     for (final message in _context) {
+      final text = sanitizeForMlKit(message.fullText);
       if (message.isFromMe ?? false) {
         smartReply.addMessageToConversationFromLocalUser(
-          message.fullText,
+          text,
           message.dateCreated!.millisecondsSinceEpoch,
         );
       } else {
         smartReply.addMessageToConversationFromRemoteUser(
-          message.fullText,
+          text,
           message.dateCreated!.millisecondsSinceEpoch,
           message.handleRelation.target?.address ?? "participant",
         );
