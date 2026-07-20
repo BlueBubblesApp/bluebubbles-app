@@ -78,7 +78,10 @@ class ChatState {
         displayName = RxnString(chat.displayName),
         customAvatarPath = RxnString(chat.customAvatarPath),
         customBackgroundPath = RxnString(FilesystemSvc.getExistingChatBackgroundPath(chat.guid)),
-        title = RxnString(chat.getTitle()),
+        // Placeholder; recomputed from live participant state once [participants]
+        // is populated below, so a contact link resolved concurrently with chat
+        // creation isn't missed by a one-shot snapshot of chat.getTitle().
+        title = RxnString(null),
         chatCreatorSubtitle = RxnString(chat.isGroup
             ? chat.getChatCreatorSubtitle()
             : (chat.handles.isNotEmpty ? (chat.handles.first.formattedAddress ?? chat.handles.first.address) : null)),
@@ -109,9 +112,16 @@ class ChatState {
     participants.addAll(chat.handles.map((h) => HandleSvc.getOrCreateHandleState(h)));
     for (final hs in participants) {
       _participantWorkers.add(
-        ever(hs.displayName, (_) => updateChatCreatorSubtitleInternal(_computeCreatorSubtitle())),
+        ever(hs.displayName, (_) {
+          updateChatCreatorSubtitleInternal(_computeCreatorSubtitle());
+          updateTitleInternal(_computeTitle());
+        }),
       );
     }
+
+    // Now that participants are populated, compute the real title from live
+    // state rather than the one-shot chat.getTitle() snapshot.
+    title.value = _computeTitle();
     // Cache fake name for consistent redacted-mode display.
     _cachedFakeName =
         chat.isGroup ? chat.fakeName : (participants.isNotEmpty ? participants.first.fakeName : 'Unknown');
@@ -279,20 +289,24 @@ class ChatState {
       return participants.first.displayName.value;
     }
     if (count <= 4) {
-      final words =
-          participants.map((p) => (p.reactionDisplayName.value ?? '').firstWord).where((s) => s.isNotEmpty).toList();
+      final words = participants.map(_shortNameFor).where((s) => s.isNotEmpty).toList();
       if (words.isEmpty) return null;
       if (words.length == 1) return words[0];
       return '${words.take(words.length - 1).join(', ')} & ${words.last}';
     } else {
-      final words = participants
-          .take(3)
-          .map((p) => (p.reactionDisplayName.value ?? '').firstWord)
-          .where((s) => s.isNotEmpty)
-          .toList();
+      final words = participants.take(3).map(_shortNameFor).where((s) => s.isNotEmpty).toList();
       if (words.isEmpty) return null;
       return '${words.join(', ')} & ${count - 3} others';
     }
+  }
+
+  /// Short label for a participant in a multi-person subtitle. Only takes the
+  /// first word (e.g. "First" from "First Last") when the handle has a linked
+  /// contact — otherwise the value is a formatted address/phone number, which
+  /// must be shown in full. Mirrors [Handle.shortName].
+  String _shortNameFor(HandleState p) {
+    final name = p.reactionDisplayName.value ?? '';
+    return p.handle.contactsV2.isNotEmpty ? name.firstWord : name;
   }
 
   /// Compute the subtitle for [message] respecting the current redacted-mode settings.

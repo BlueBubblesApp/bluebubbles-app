@@ -1,4 +1,6 @@
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
+import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/soft_deleted_chats_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
@@ -338,6 +340,85 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       subtitle:
                           "Permanently deletes a selected chat, all its messages, and all its participants. Use this to simulate a brand-new chat arrival."),
                   const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  SettingsTile(
+                      onTap: () async {
+                        final bool? confirmed = await showBBDialog<bool>(
+                          context: context,
+                          title: "Delete All Messaging Data?",
+                          body: "This will permanently delete ALL messages, attachments, chats, "
+                              "participants (handles), and contacts from this device. This includes "
+                              "attachment files, custom chat avatars/backgrounds, contact avatars, "
+                              "and message caches. Your settings and themes will not be affected. "
+                              "This cannot be undone.",
+                          bodyTextAlign: TextAlign.center,
+                          actions: [
+                            BBDialogAction(
+                              text: "Cancel",
+                              onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+                            ),
+                            BBDialogAction(
+                              text: "Delete All",
+                              isDestructive: true,
+                              color: Colors.redAccent,
+                              onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+                            ),
+                          ],
+                        );
+
+                        if (confirmed != true) return;
+
+                        try {
+                          await ChatsSvc.deleteAllMessagingData();
+                          showSnackbar(
+                            "Messaging Data Deleted",
+                            "Successfully deleted all messages, chats, attachments, participants, and contacts.",
+                          );
+                        } catch (ex, stacktrace) {
+                          Logger.error("Failed to delete all messaging data!", error: ex, trace: stacktrace);
+                          showSnackbar("Failed to Delete Messaging Data", "Error: ${ex.toString()}");
+                          return;
+                        }
+
+                        if (!context.mounted) return;
+                        await showAreYouSure(
+                          context,
+                          title: "Sync Messages Now?",
+                          content: const Text(
+                              "Would you like to sync messages from the server now? You can also do this later."),
+                          noText: "Not Now",
+                          yesText: "Sync Now",
+                          onNo: () => Navigator.of(context, rootNavigator: true).pop(),
+                          onYes: () async {
+                            Navigator.of(context, rootNavigator: true).pop();
+                            if (!context.mounted) return;
+                            final range = await showSyncTimeRangeDialog(context);
+                            if (range == null) return;
+
+                            // Same mechanism as "Manually Sync Messages" on the Server
+                            // Management page: a single global message query bounded by
+                            // start/end, which discovers and creates any chats referenced
+                            // by the synced messages.
+                            final mgr = IncrementalSyncManager(
+                              startTimestamp: range.start.millisecondsSinceEpoch,
+                              endTimestamp: range.end.millisecondsSinceEpoch,
+                            );
+                            if (!context.mounted) return;
+                            showDialog(
+                              context: context,
+                              builder: (context) => SyncDialog(manager: mgr),
+                            );
+                            await mgr.start();
+                          },
+                        );
+                      },
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.trash,
+                        materialIcon: Icons.delete_forever,
+                        containerColor: Colors.redAccent,
+                      ),
+                      title: "Delete All Messaging Data",
+                      subtitle:
+                          "Permanently deletes ALL messages, chats, attachments, participants, and contacts on this device."),
                 ]),
                 if (kIsDesktop) const SizedBox(height: 100),
               ],

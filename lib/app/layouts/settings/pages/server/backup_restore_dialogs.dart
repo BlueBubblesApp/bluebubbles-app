@@ -40,6 +40,36 @@ class BackupRestoreDialogs {
     );
   }
 
+  /// Shown only when one or more pinned chats couldn't be matched on import —
+  /// callers should skip this dialog entirely when [skipped] is empty.
+  static Future<void> showPinnedChatsRestoreSummary({
+    required BuildContext context,
+    required List<String> skipped,
+  }) {
+    return showBBDialog(
+      context: context,
+      title: "Some Pinned Chats Couldn't Be Restored",
+      content: SizedBox(
+        width: NavigationSvc.width(context) * 3 / 5,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final label in skipped) Text("• $label"),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        BBDialogAction(
+          text: "Close",
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        ),
+      ],
+    );
+  }
+
   static Future<void> showJsonData({
     required BuildContext context,
     required String title,

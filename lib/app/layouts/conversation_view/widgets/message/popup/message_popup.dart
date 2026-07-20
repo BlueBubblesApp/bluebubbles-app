@@ -676,6 +676,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                       children: allActions.sublist(numberToShow - 1),
                     );
                     showBBDialog(
+                      useRootNavigator: false,
                       context: context,
                       content: content,
                     );

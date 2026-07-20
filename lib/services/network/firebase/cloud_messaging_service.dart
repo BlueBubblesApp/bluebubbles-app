@@ -36,6 +36,20 @@ class CloudMessagingService {
       completer = Completer<void>();
     }
 
+    // The completer must always resolve here, no matter which path _registerDevice()
+    // takes (return, throw, or an exception type neither of its catch clauses expects).
+    // Leaving it pending would hang every future caller of registerDevice() forever,
+    // since they all await this same completer while one is in-flight (see above).
+    try {
+      await _registerDevice();
+      if (!completer!.isCompleted) completer!.complete();
+    } catch (e, s) {
+      if (!completer!.isCompleted) completer!.completeError(e, s);
+      rethrow;
+    }
+  }
+
+  Future<void> _registerDevice() async {
     // Get a unique name for this device
     bool closeCompleter = false;
 
@@ -52,9 +66,7 @@ class CloudMessagingService {
       String deviceName = await getDeviceName();
       await HttpSvc.fcm.addDevice(deviceName.trim(), token!.trim()).then((_) {
         Logger.info('Device registration successful!', tag: 'FCM-Auth');
-        completer?.complete();
       }).catchError((ex) {
-        completer?.completeError(ex);
         throw Exception("Failed to add FCM device to the server! Token: $token, ${ex.toString()}");
       });
       closeCompleter = true;
@@ -70,9 +82,6 @@ class CloudMessagingService {
 
     // Close out of the registration process when requested
     if (closeCompleter) {
-      if (!(completer?.isCompleted ?? false)) {
-        completer?.complete();
-      }
       return;
     }
 
@@ -110,22 +119,22 @@ class CloudMessagingService {
         } on PlatformException catch (e, stack) {
           // If we fail a second time, error out
           Logger.error("Failed to register with FCM", error: e, trace: stack, tag: 'FCM-Auth');
-          completer?.completeError(e);
-          return;
+          rethrow;
         }
       } else {
         Logger.error('Failed to register with FCM - API error ${response.statusCode}: ${response.data}',
             tag: 'FCM-Auth');
-        completer?.completeError("API Error ${response.statusCode}");
-        return;
+        throw Exception("API Error ${response.statusCode}");
       }
     }
 
     // Make sure we got a valid response back from the FCM auth
     if (isNullOrEmpty(result)) {
       Logger.warn("Empty results, not registering device with the server.", tag: 'FCM-Auth');
-      completer?.complete();
-      return;
+      throw Exception(
+          "Failed to get an FCM token from Firebase (empty result). This can happen if Firebase was "
+          "already initialized with stale credentials in this app session. Try fully closing and "
+          "reopening the app.");
     }
 
     // Register the FCM device to the server
@@ -134,9 +143,7 @@ class CloudMessagingService {
     String deviceName = await getDeviceName();
     await HttpSvc.fcm.addDevice(deviceName.trim(), token!.trim()).then((_) {
       Logger.info('Device registration successful!', tag: 'FCM-Auth');
-      completer?.complete();
     }).catchError((ex) {
-      completer?.completeError(ex);
       throw Exception("Failed to add FCM device to the server! Token: $token, ${ex.toString()}");
     });
   }

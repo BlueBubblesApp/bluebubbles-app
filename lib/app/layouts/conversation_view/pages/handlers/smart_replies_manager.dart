@@ -2,7 +2,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:google_mlkit_smart_reply/google_mlkit_smart_reply.dart' hide Message;
 
 /// Manages smart reply generation via ML Kit.
 ///
@@ -13,12 +13,19 @@ import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 /// - Clear suggestions when user sends a message
 /// - Refresh suggestions when non-user messages arrive
 class SmartRepliesManager {
+  /// Rolling context window size. ML Kit's own conversation list has no cap, so this
+  /// class enforces one to keep suggestions scoped to recent context and to bound
+  /// memory growth for chats that stay mounted for a long time (desktop, tablet split-view).
+  static const int _maxContextMessages = 5;
+
   late final SmartReply smartReply;
 
   final RxList<String> smartReplies = <String>[].obs;
 
+  final List<Message> _context = [];
+
   SmartRepliesManager() {
-    smartReply = GoogleMlKit.nlp.smartReply();
+    smartReply = SmartReply();
   }
 
   bool shouldShowSmartReplies(bool messagesEmpty) {
@@ -26,17 +33,28 @@ class SmartRepliesManager {
   }
 
   void addMessageToContext(Message message) {
-    if (message.isFromMe ?? false) {
-      smartReply.addMessageToConversationFromLocalUser(
-        message.fullText,
-        message.dateCreated!.millisecondsSinceEpoch,
-      );
-    } else {
-      smartReply.addMessageToConversationFromRemoteUser(
-        message.fullText,
-        message.dateCreated!.millisecondsSinceEpoch,
-        message.handleRelation.target?.address ?? "participant",
-      );
+    _context.add(message);
+    if (_context.length > _maxContextMessages) {
+      _context.removeRange(0, _context.length - _maxContextMessages);
+    }
+    _rebuildConversation();
+  }
+
+  void _rebuildConversation() {
+    smartReply.clearConversation();
+    for (final message in _context) {
+      if (message.isFromMe ?? false) {
+        smartReply.addMessageToConversationFromLocalUser(
+          message.fullText,
+          message.dateCreated!.millisecondsSinceEpoch,
+        );
+      } else {
+        smartReply.addMessageToConversationFromRemoteUser(
+          message.fullText,
+          message.dateCreated!.millisecondsSinceEpoch,
+          message.handleRelation.target?.address ?? "participant",
+        );
+      }
     }
   }
 

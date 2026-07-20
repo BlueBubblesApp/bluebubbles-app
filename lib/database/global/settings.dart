@@ -160,6 +160,7 @@ class Settings {
   final RxBool desktopNotifications = true.obs;
   final RxInt desktopNotificationSoundVolume = 100.obs;
   final RxnString desktopNotificationSoundPath = RxnString();
+  final RxBool windowsTaskbarBadge = true.obs;
 
   // Troubleshooting settings
   final Rx<Level> logLevel = Level.info.obs;
@@ -388,6 +389,7 @@ class Settings {
       'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
       'desktopNotifications': desktopNotifications.value,
       'desktopNotificationSoundVolume': desktopNotificationSoundVolume.value,
+      'windowsTaskbarBadge': windowsTaskbarBadge.value,
       'useDesktopAccent': useDesktopAccent.value,
       'logLevel': logLevel.value.index,
       'hideNamesForReactions': hideNamesForReactions.value,
@@ -637,6 +639,8 @@ class Settings {
         map['desktopNotifications'] ?? SettingsSvc.settings.desktopNotifications.value;
     SettingsSvc.settings.desktopNotificationSoundVolume.value =
         map['desktopNotificationSoundVolume'] ?? SettingsSvc.settings.desktopNotificationSoundVolume.value;
+    SettingsSvc.settings.windowsTaskbarBadge.value =
+        map['windowsTaskbarBadge'] ?? SettingsSvc.settings.windowsTaskbarBadge.value;
     SettingsSvc.settings.desktopNotificationSoundPath.value =
         map['desktopNotificationSoundPath'] ?? SettingsSvc.settings.desktopNotificationSoundPath.value;
     SettingsSvc.settings.useDesktopAccent.value =
@@ -654,6 +658,7 @@ class Settings {
     SettingsSvc.settings.save();
 
     if (!isIsolate) {
+      unawaited(PrefsInterface.syncAllSettings());
       EventDispatcherSvc.emit("theme-update", null);
     }
   }
@@ -801,6 +806,7 @@ class Settings {
     s.desktopNotificationSoundVolume.value = map['desktopNotificationSoundVolume'] ?? 100;
     s.desktopNotificationSoundPath.value = map['desktopNotificationSoundPath'];
     s.useDesktopAccent.value = map['useDesktopAccent'] ?? map['useWindowsAccent'] ?? false;
+    s.windowsTaskbarBadge.value = map['windowsTaskbarBadge'] ?? true;
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
@@ -813,12 +819,14 @@ class Settings {
   void setDetailsMenuActions(List<DetailsMenuAction> actions) {
     SettingsSvc.settings._detailsMenuActions.value =
         _filterDetailsMenuActions(actions, SettingsSvc.settings.detailsMenuActions);
-    SettingsSvc.settings.save();
+    // saveOneAsync (not save()) so the GlobalIsolate's copy is synced too, else it
+    // overwrites this on its next background settings write.
+    unawaited(SettingsSvc.settings.saveOneAsync('detailsMenuActions'));
   }
 
   void resetDetailsMenuActions() {
     SettingsSvc.settings._detailsMenuActions.value = DetailsMenuAction.values;
-    SettingsSvc.settings.save();
+    unawaited(SettingsSvc.settings.saveOneAsync('detailsMenuActions'));
   }
 }
 

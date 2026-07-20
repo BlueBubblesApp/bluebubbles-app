@@ -30,8 +30,18 @@ class WindowEntry {
 class StartupTasks {
   static final Completer<void> uiReady = Completer<void>();
 
+  /// User-facing description of the current startup phase, surfaced by the
+  /// desktop splash screen while services initialize. Updated by
+  /// [initStartupServices] (main isolate only — isolate init paths don't drive UI).
+  static final ValueNotifier<String> status = ValueNotifier<String>("Starting...");
+
   static Future<void> waitForUI() async {
     await uiReady.future;
+  }
+
+  static Future<void> setSplashStatus(String value) async {
+    status.value = value;
+    if (kIsDesktop) await Future.delayed(Duration.zero);
   }
 
   static Completer<void> _preRegisterInteropServices({
@@ -151,6 +161,7 @@ class StartupTasks {
 
   static Future<void> initStartupServices({bool isBubble = false}) async {
     debugPrint("Initializing startup services...");
+    await setSplashStatus("Loading settings...");
     await _initCoreServices(headless: false);
 
     final startupInteropReady = _preRegisterInteropServices(
@@ -166,9 +177,12 @@ class StartupTasks {
     // The next thing we need to do is initialize the database.
     // If the database is not initialized, we cannot do anything.
     Logger.info("Initializing database...");
+    await setSplashStatus("Opening database...");
     await Database.init();
     Logger.info("Database initialized");
     startupInteropReady.complete();
+
+    await setSplashStatus("Starting services...");
 
     // Register the global isolate
     Logger.info("Registering isolates...");
@@ -215,6 +229,7 @@ class StartupTasks {
 
     // Parallelize independent services for faster startup
     Logger.info("Waiting for services to be ready...");
+    await setSplashStatus("Loading contacts...");
     await Future.wait([
       ThemeSvc.init(),
       IntentsSvc.init(),
@@ -231,6 +246,7 @@ class StartupTasks {
     HandleSvc.init();
 
     Logger.info("Registering ChatsService, SocketService, and NotificationsService...");
+    await setSplashStatus("Loading chats...");
     GetIt.I.registerSingleton<ChatsService>(ChatsService());
     GetIt.I.registerSingleton<TypingIndicatorService>(TypingIndicatorService());
     GetIt.I.registerSingleton<SocketService>(SocketService());
@@ -244,6 +260,7 @@ class StartupTasks {
       dispose: (svc) => svc.dispose(),
     );
 
+    await setSplashStatus("Finishing up...");
     Logger.info(
         "Startup services initialization complete! Running localhost detection then starting incremental sync...");
 
@@ -372,10 +389,11 @@ class StartupTasks {
     unawaited(SettingsSvc.refreshServerDetails());
 
     // Only register FCM device on startup
-    // Don't await - let this happen in background
+    // Don't await. Let this happen in background
     Logger.info("Registering FCM device in background...");
     FirebaseSvc.registerDevice().catchError((e, s) {
       Logger.warn("Failed to register FCM device on startup!", error: e, trace: s);
+      showToast("Failed to register FCM device!", isError: true);
       return null; // Return null on error
     });
 

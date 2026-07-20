@@ -227,8 +227,6 @@ final RegExp emojiRegex = RegExp(
 const bigEmojiScaleFactor = 3.0;
 
 const appName = "BlueBubbles";
-const msStorePackageName = "23344BlueBubbles.BlueBubbles";
-const windowsAppPackageName = "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw!bluebubbles";
 
 const randomAvatarBackgroundColors = [
   // Pinks

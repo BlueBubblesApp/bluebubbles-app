@@ -17,6 +17,18 @@ import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image/image.dart' as img;
 import 'package:universal_io/io.dart';
+import 'package:window_manager/window_manager.dart';
+
+/// Brings the desktop window to the foreground. On Linux `windowManager.show()` only un-hides a
+/// hidden window; a taskbar-minimized window must be restored (deiconified) first — so any handler
+/// reacting to a user action (notification/tray click) must call this, not bare `show()`.
+Future<void> showAndFocusWindow() async {
+  if (await windowManager.isMinimized()) {
+    await windowManager.restore();
+  }
+  await windowManager.show();
+  await windowManager.focus();
+}
 
 class BackButton extends StatelessWidget {
   final bool Function()? onPressed;
@@ -108,6 +120,58 @@ Widget buildBackButton(BuildContext context,
         ),
       ),
     ),
+  );
+}
+
+/// The empty-state shown in the conversation list when there is nothing to
+/// display for the current filter (all chats, archived, or unknown senders).
+Widget buildEmptyChatListState(BuildContext context, {bool showArchived = false, bool showUnknown = false}) {
+  final IconData icon = showArchived
+      ? Icons.archive_outlined
+      : showUnknown
+          ? Icons.person_search_rounded
+          : Icons.chat_bubble_outline_rounded;
+  final String title = showArchived
+      ? "No archived chats"
+      : showUnknown
+          ? "No messages from unknown senders"
+          : "No conversations yet";
+  final String? subtitle = showArchived || showUnknown ? null : "Tap the compose button to start a new one";
+
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(
+        icon,
+        size: 48,
+        color: context.theme.colorScheme.outline,
+      ),
+      const SizedBox(height: 12),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Text(
+          title,
+          style: context.theme.textTheme.titleMedium?.copyWith(
+            color: context.theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      if (subtitle != null) ...[
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            subtitle,
+            style: context.theme.textTheme.bodyMedium?.copyWith(
+              color: context.theme.colorScheme.outline,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    ],
   );
 }
 

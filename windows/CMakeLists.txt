@@ -29,6 +29,12 @@ set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
 
+# VS2026 (MSVC 14.50+) turns the <experimental/coroutine> deprecation into a
+# hard error (STL1011). Several plugins (local_auth_windows,
+# permission_handler_windows, flutter_local_notifications_windows) still
+# include it, so silence the error until they migrate to C++20 <coroutine>.
+add_definitions(-D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Compilation settings that should be applied to most targets.
 function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_17)

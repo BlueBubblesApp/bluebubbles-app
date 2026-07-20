@@ -326,4 +326,16 @@ class Database {
     Database.messages.removeAll();
     Database.themes.removeAll();
   }
+
+  /// Wipes messaging-scoped data: attachments, chats, contactsV2, handles, and messages.
+  /// Leaves settings, themes, fcmData, and scheduledMessages untouched.
+  static void resetMessagingData() {
+    Database.runInTransaction(TxMode.write, () {
+      Database.attachments.removeAll();
+      Database.chats.removeAll();
+      Database.contactsV2.removeAll();
+      Database.handles.removeAll();
+      Database.messages.removeAll();
+    });
+  }
 }

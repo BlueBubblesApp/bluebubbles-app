@@ -45,7 +45,7 @@ class MessagePartContent extends StatelessWidget {
       if (iOS && messagePart.isMediaGallery) {
         return Padding(
             padding:
-                EdgeInsets.only(left: !chat.isGroup && SettingsSvc.settings.alwaysShowAvatars.value == false ? 20 : 0),
+                EdgeInsets.only(left: !chat.isGroup && SettingsSvc.settings.alwaysShowAvatars.value == false ? 20 : 10),
             child: MessageImageGallery(
               attachments: messagePart.attachments,
               partIndex: messagePart.part,

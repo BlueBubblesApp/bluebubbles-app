@@ -6,6 +6,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/services/isolates/isolate_actions.dart';
 import 'package:bluebubbles/services/isolates/isolate_event.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 /// A base isolate manager for handling background tasks
@@ -65,7 +66,7 @@ class GlobalIsolate {
 
   GlobalIsolate({
     this.taskTimeout = Duration.zero,
-    this.startupTimeout = const Duration(seconds: 30),
+    this.startupTimeout = const Duration(seconds: kDebugMode ? 60 : 30),
     this.idleTimeout = const Duration(minutes: 5),
   });
 

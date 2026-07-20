@@ -24,6 +24,7 @@ MessagesService ensureMessagesSvc(String chatGuid) =>
     Get.put(
       MessagesService(chatGuid),
       tag: chatGuid,
+      permanent: true,
     );
 
 MessagesService registerMessagesSvc(MessagesService service) =>
@@ -31,6 +32,7 @@ MessagesService registerMessagesSvc(MessagesService service) =>
     Get.put(
       service,
       tag: service.tag,
+      permanent: true,
     );
 
 // ignore: non_constant_identifier_names
@@ -64,6 +66,12 @@ class MessagesService extends GetxController {
   bool _init = false;
   bool messagesLoaded = false;
   String? method;
+
+  /// The view (State) currently driving this service. When a second
+  /// ConversationView for the same chat is pushed (e.g. from a notification tap),
+  /// both routes share this tagged instance — the superseded view's dispose must
+  /// not delete it out from under its successor. See MessagesServiceMixin.
+  Object? owner;
 
   /// Map of message states for granular reactivity
   /// Key is message GUID, value is MessageState
@@ -725,7 +733,7 @@ class MessagesService extends GetxController {
   void close({bool force = false}) {
     String? lastChat = lastReloadedChat();
     if (force || lastChat != tag) {
-      Get.delete<MessagesService>(tag: tag);
+      Get.delete<MessagesService>(tag: tag, force: true);
     }
 
     struct.flush();
@@ -740,7 +748,7 @@ class MessagesService extends GetxController {
   void reload() {
     messagesLoaded = false;
     Get.put<String>(tag, tag: 'lastReloadedChat');
-    Get.reload<MessagesService>(tag: tag);
+    Get.reload<MessagesService>(tag: tag, force: true);
   }
 
   /// Adds [message] to the active chat view if it is not already present.
@@ -1262,7 +1270,9 @@ class MessagesService extends GetxController {
     if (chat == null) return;
     final latest = Chat.getMessages(chat, limit: 1);
     if (latest.isNotEmpty) {
-      ChatsSvc.updateChatLatestMessage(tag, latest.first);
+      // The newest message was just deleted, so the surviving latest is older
+      // than the current pointer — allow the downgrade here specifically.
+      ChatsSvc.updateChatLatestMessage(tag, latest.first, allowOlder: true);
     }
   }
 

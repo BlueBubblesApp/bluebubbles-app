@@ -124,12 +124,12 @@ class MessageEditField extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: context.theme.colorScheme.inversePrimary, width: 1.5),
+                    borderSide: BorderSide(color: context.theme.colorScheme.onSurface, width: 1.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   fillColor: Colors.transparent,
                   hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(
-                        color: context.theme.colorScheme.inversePrimary,
+                        color: context.theme.colorScheme.onSurface,
                       ),
                   prefixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 40),
                   prefixIcon: IconButton(
@@ -138,7 +138,7 @@ class MessageEditField extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     icon: Icon(
                       CupertinoIcons.xmark_circle_fill,
-                      color: context.theme.colorScheme.inversePrimary,
+                      color: context.theme.colorScheme.onSurface,
                       size: 20,
                     ),
                     onPressed: () => _cancelEdit(message),
@@ -150,7 +150,7 @@ class MessageEditField extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     icon: Icon(
                       iOS ? CupertinoIcons.checkmark_alt_circle_fill : Icons.check_circle,
-                      color: context.theme.colorScheme.inversePrimary,
+                      color: context.theme.colorScheme.onSurface,
                       size: 20,
                     ),
                     onPressed: () => onComplete(editController.text, part),

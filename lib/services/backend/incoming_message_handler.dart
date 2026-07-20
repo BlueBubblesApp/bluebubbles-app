@@ -392,6 +392,13 @@ class IncomingMessageHandler {
         await ChatsSvc.addChat(c, immediate: true);
       }
       ChatsSvc.updateChatLatestMessage(c.guid, saved);
+
+      // Fire after the ChatState exists (addChat above) so a contact link
+      // resolved during hydration isn't dropped by ChatsService.updateChat's
+      // no-op-when-no-state-yet guard for a chat that's brand new this call.
+      if (hydrated.affectedHandleIds.isNotEmpty) {
+        ContactsSvcV2.notifyHandlesUpdated(hydrated.affectedHandleIds);
+      }
     }
 
     // 9. Push / in-app notification.

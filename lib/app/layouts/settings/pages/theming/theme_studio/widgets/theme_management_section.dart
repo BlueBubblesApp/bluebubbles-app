@@ -95,9 +95,9 @@ class ThemeManagementSection extends StatelessWidget {
                       ),
                       trailing: Switch(
                         value: controller.activeTheme.gradientBg,
-                        onChanged: (v) => _toggleGradient(context, v),
+                        onChanged: (v) async => await _toggleGradient(context, v),
                       ),
-                      onTap: () => _toggleGradient(context, !controller.activeTheme.gradientBg),
+                      onTap: () async => await _toggleGradient(context, !controller.activeTheme.gradientBg),
                     ),
                   ],
                 ],
@@ -237,13 +237,13 @@ class ThemeManagementSection extends StatelessWidget {
     }
   }
 
-  void _toggleGradient(BuildContext context, bool value) {
+  Future<void> _toggleGradient(BuildContext context, bool value) async {
     controller.activeTheme.gradientBg = value;
     controller.activeTheme.save();
     if (controller.isDark.value) {
-      ThemeSvc.changeTheme(context, dark: controller.activeTheme);
+      await ThemeSvc.changeTheme(context, dark: controller.activeTheme);
     } else {
-      ThemeSvc.changeTheme(context, light: controller.activeTheme);
+      await ThemeSvc.changeTheme(context, light: controller.activeTheme);
     }
     controller.bump();
   }

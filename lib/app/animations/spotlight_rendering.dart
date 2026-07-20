@@ -27,8 +27,8 @@ class Spotlight extends LeafRenderObjectWidget {
 
 class RenderSpotlight extends RenderBox {
   RenderSpotlight({
-    required SpotlightController controller,
-  }) : _controller = controller;
+    required this._controller,
+  });
 
   SpotlightController get controller => _controller;
   SpotlightController _controller;

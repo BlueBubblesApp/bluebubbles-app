@@ -200,9 +200,6 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                                   ]);
                             },
                           );
-
-                          await fdb.fetchFirebaseConfig();
-                          await FirebaseSvc.registerDevice();
                         },
                       );
                     }),

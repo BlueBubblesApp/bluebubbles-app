@@ -19,5 +19,6 @@ x86/
 /.vs/
 cmake-build-debug
 
-# Generated executable
-bluebubbles-windows.exe
+# Generated installers
+bluebubbles_installer.exe
+*.msix

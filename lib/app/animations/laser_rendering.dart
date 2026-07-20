@@ -28,8 +28,8 @@ class Laser extends LeafRenderObjectWidget {
 
 class RenderLaser extends RenderBox {
   RenderLaser({
-    required LaserController controller,
-  }) : _controller = controller;
+    required this._controller,
+  });
 
   LaserController get controller => _controller;
   LaserController _controller;

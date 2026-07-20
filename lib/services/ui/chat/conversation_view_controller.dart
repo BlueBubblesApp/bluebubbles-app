@@ -9,7 +9,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:bluebubbles/services/ui/chat/send_data.dart';
@@ -241,8 +241,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   void close() {
     updateSmartReplyLayout(visible: false, height: 0);
-    EventDispatcherSvc.emit("update-highlight", null);
-    ChatsSvc.setAllInactive();
+    ChatsSvc.setAllInactiveSync();
     Get.delete<ConversationViewController>(tag: tag);
   }
 

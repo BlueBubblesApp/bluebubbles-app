@@ -62,7 +62,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
   @override
   void initState() {
     super.initState();
-    ChatsSvc.setActiveChat(widget.chat, clearNotifications: false);
+    ChatsSvc.setActiveChatSync(widget.chat, clearNotifications: false);
     ChatsSvc.activeChat!.controller = cvController;
 
     // Initialize messages service with message states for proper reactivity

@@ -16,6 +16,33 @@ import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:mime_type/mime_type.dart';
 import 'package:universal_html/html.dart' as html;
 
+/// Sizes [child] like [AspectRatio], but never shrinks width to satisfy a
+/// height constraint (mirrors how image_viewer.dart sizes images) — a fixed
+/// parent height (e.g. the gallery fan card) would otherwise force a
+/// narrower box for portrait-ish videos than for images in the same slot.
+Widget _boundedAspectRatio({required double ratio, required Widget child}) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      double width;
+      double height;
+      if (constraints.maxWidth.isFinite) {
+        width = constraints.maxWidth;
+        height = width / ratio;
+        if (constraints.maxHeight.isFinite && height > constraints.maxHeight) {
+          height = constraints.maxHeight;
+        }
+      } else if (constraints.maxHeight.isFinite) {
+        height = constraints.maxHeight;
+        width = height * ratio;
+      } else {
+        width = 0;
+        height = 0;
+      }
+      return SizedBox(width: width, height: height, child: child);
+    },
+  );
+}
+
 class VideoPlayer extends StatefulWidget {
   final PlatformFile file;
   final Attachment attachment;
@@ -433,14 +460,15 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              Obx(() => AspectRatio(
-                    aspectRatio: aspectRatio.value,
+              Obx(() => _boundedAspectRatio(
+                    ratio: aspectRatio.value,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
                         Video(
                           controller: videoController!,
                           controls: null,
+                          fit: BoxFit.cover,
                         ),
                         // Keep the thumbnail painted over the black surface until the first frame decodes
                         if (!kIsDesktop && !kIsWeb && thumbnail != null)
@@ -489,8 +517,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           // All mobile states (placeholder → thumbnail → playing) share the same
           // Obx(AspectRatio(aspectRatio.value)) geometry so state changes never resize the box
           child: thumbnail == null && !kIsDesktop && !kIsWeb
-              ? Obx(() => AspectRatio(
-                    aspectRatio: aspectRatio.value,
+              ? Obx(() => _boundedAspectRatio(
+                    ratio: aspectRatio.value,
                     child: Center(
                       child: PlayPauseButton(
                         showPlayPauseOverlay: showPlayPauseOverlay,
@@ -538,8 +566,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                         ],
                       ),
                     )
-                  : Obx(() => AspectRatio(
-                        aspectRatio: aspectRatio.value,
+                  : Obx(() => _boundedAspectRatio(
+                        ratio: aspectRatio.value,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [

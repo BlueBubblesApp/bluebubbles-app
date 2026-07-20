@@ -64,7 +64,7 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                     if (payloadData == null) {
                       url = message.url;
                     } else if (payloadData!.type == PayloadType.url) {
-                      url = payloadData!.urlData!.first.url ?? payloadData!.urlData!.first.originalUrl;
+                      url = payloadData!.urlData!.first.originalUrl ?? payloadData!.urlData!.first.url;
                     } else {
                       url = payloadData!.appData!.first.url;
                     }

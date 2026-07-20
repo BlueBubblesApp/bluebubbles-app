@@ -171,7 +171,6 @@ class NavigatorService {
             if (ChatsSvc.activeChat != null) {
               cvc(ChatsSvc.activeChat!.chat).close();
             }
-            EventDispatcherSvc.emit('update-highlight', null);
           }
           return true;
         }, id: 2);
@@ -201,7 +200,6 @@ class NavigatorService {
         return route.settings.name == "initial";
       }, id: 2);
     }
-    EventDispatcherSvc.emit("update-highlight", null);
   }
 
   void backSettings(BuildContext context, {dynamic result, bool closeOverlays = false}) {

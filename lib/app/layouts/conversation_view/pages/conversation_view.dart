@@ -68,7 +68,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
     super.initState();
     controller.fromChatCreator = widget.fromChatCreator;
     controller.fromSearchResult = widget.initialScrollToGuid != null;
-    ChatsSvc.setActiveChat(chat);
+    ChatsSvc.setActiveChatSync(chat);
     ChatsSvc.activeChat?.controller = controller;
     FindMyParticipantPrefetch.warm(chat);
     Logger.debug("Conversation View initialized for ${chat.guid}");

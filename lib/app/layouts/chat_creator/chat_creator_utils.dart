@@ -37,14 +37,7 @@ class ChatCreatorUtils {
     int matches = 0;
     for (final address in selectedAddresses) {
       for (final participant in chat.handles) {
-        if (address.isEmail && !participant.address.isEmail) continue;
-        if (address == participant.address) {
-          matches += 1;
-          break;
-        }
-
-        final numeric = address.numericOnly();
-        if (_phoneMatchLengths.contains(numeric.length) && cleansePhoneNumber(participant.address).endsWith(numeric)) {
+        if (addressesMatch(address, participant.address)) {
           matches += 1;
           break;
         }
@@ -52,5 +45,15 @@ class ChatCreatorUtils {
     }
 
     return matches == selectedAddresses.length;
+  }
+
+  /// Compares two handle addresses (phone numbers or emails), tolerating
+  /// differing phone number formats (country code, punctuation, etc).
+  static bool addressesMatch(String a, String b) {
+    if (a.isEmail && !b.isEmail) return false;
+    if (a == b) return true;
+
+    final numeric = a.numericOnly();
+    return _phoneMatchLengths.contains(numeric.length) && cleansePhoneNumber(b).endsWith(numeric);
   }
 }

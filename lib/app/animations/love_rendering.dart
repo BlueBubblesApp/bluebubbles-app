@@ -26,8 +26,8 @@ class Love extends LeafRenderObjectWidget {
 
 class RenderLove extends RenderBox {
   RenderLove({
-    required LoveController controller,
-  }) : _controller = controller;
+    required this._controller,
+  });
 
   LoveController get controller => _controller;
   LoveController _controller;

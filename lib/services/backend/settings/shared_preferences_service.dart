@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences/util/legacy_to_async_migration_util.dart';
 import 'package:shared_preferences_android/shared_preferences_android.dart';
 import 'package:universal_io/io.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_admin_actions.dart';
+import 'package:bluebubbles/services/backend/settings/desktop_shared_preferences_store.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_database_actions.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_desktop_actions.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_firebase_actions.dart';
@@ -51,6 +54,14 @@ class SharedPreferencesService {
       : const SharedPreferencesOptions();
 
   Future<void> init({bool headless = false}) async {
+    // The stock Windows/Linux backends cache per isolate and clobber each
+    // other's writes; swap in the cross-isolate-safe store before anything
+    // (including the legacy migration below) touches prefs. Must run in every
+    // isolate, which this init does. macOS/mobile backends are already safe.
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+      await DesktopSharedPreferencesStore.register();
+    }
+
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await migrateLegacySharedPreferencesToSharedPreferencesAsyncIfNecessary(
       legacySharedPreferencesInstance: prefs,

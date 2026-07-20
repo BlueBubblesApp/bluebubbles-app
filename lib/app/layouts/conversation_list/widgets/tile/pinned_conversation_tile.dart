@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
@@ -43,6 +44,7 @@ class PinnedConversationTile extends CustomStateful<ConversationTileController> 
 class _PinnedConversationTileState extends CustomState<PinnedConversationTile, void, ConversationTileController> {
   ConversationListController get listController => controller.listController;
   Offset? longPressPosition;
+  StreamSubscription? _activeSub;
 
   @override
   void initState() {
@@ -53,19 +55,19 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
 
-    if (kIsDesktop || kIsWeb) {
-      controller.shouldHighlight.value = ChatsSvc.activeChat?.chat.guid == controller.chat.guid;
-    }
 
-    EventDispatcherSvc.stream.listen((event) {
-      if (event.type == 'update-highlight' && mounted) {
-        if ((kIsDesktop || kIsWeb) && event.data == controller.chat.guid) {
-          controller.shouldHighlight.value = true;
-        } else if (controller.shouldHighlight.value) {
-          controller.shouldHighlight.value = false;
-        }
-      }
+    controller.shouldHighlight.value = ChatsSvc.activeChatGuid.value == controller.chat.guid;
+    _activeSub = ChatsSvc.activeChatGuid.listen((guid) {
+      Future.microtask(() {
+        if (mounted) controller.shouldHighlight.value = guid == controller.chat.guid;
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _activeSub?.cancel();
+    super.dispose();
   }
 
   @override

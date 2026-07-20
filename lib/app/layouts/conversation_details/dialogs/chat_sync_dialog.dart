@@ -1,4 +1,5 @@
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:flutter/material.dart';
@@ -109,31 +110,12 @@ class _ChatSyncDialogState extends State<ChatSyncDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(errorCode != null ? "Error!" : message!, style: context.theme.textTheme.titleLarge),
-      content: errorCode != null
-          ? Text(errorCode!, style: context.theme.textTheme.bodyLarge)
-          : SizedBox(
-              height: 5,
-              child: Center(
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: context.theme.colorScheme.outline,
-                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                ),
-              ),
-            ),
-      backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
+    return BBProgressDialog(
+      title: errorCode != null ? "Error!" : message!,
+      progress: progress,
+      body: errorCode != null ? Text(errorCode!, style: context.theme.textTheme.bodyLarge) : null,
       actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: Text(
-            "OK",
-            style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
-          ),
-        )
+        BBDialogAction(text: "OK", onPressed: () => Navigator.of(context).pop()),
       ],
     );
   }

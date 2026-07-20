@@ -388,10 +388,11 @@ packages:
   connectivity_plus:
     dependency: "direct main"
     description:
-      name: connectivity_plus
-      sha256: "62ffa266d9a23b79fb3fcbc206afc00bb979417ba57b1324c546b5aab95ba057"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/connectivity_plus/connectivity_plus"
+      ref: "2b614414ce95d920880765d07cbb9759699a4563"
+      resolved-ref: "2b614414ce95d920880765d07cbb9759699a4563"
+      url: "https://github.com/edde746/plus_plugins"
+    source: git
     version: "7.1.1"
   connectivity_plus_platform_interface:
     dependency: transitive
@@ -545,14 +546,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.2"
-  desktop_drop:
-    dependency: "direct main"
-    description:
-      name: desktop_drop
-      sha256: aa1e797255bfbc76f9eb5aa4f61e5b68dbf69962ab1be6495816d2f251bc0d1f
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.1"
   desktop_webview_auth:
     dependency: "direct main"
     description:
@@ -817,14 +810,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.4"
-  flutter_audio_waveforms:
-    dependency: "direct main"
-    description:
-      name: flutter_audio_waveforms
-      sha256: "425dda9ee5ef9bb2ff2a2000b19ec595593b3baba6a1274da8d1d729846a144b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.1+8"
   flutter_contacts:
     dependency: "direct main"
     description:
@@ -841,14 +826,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.0"
-  flutter_dotenv:
-    dependency: "direct main"
-    description:
-      name: flutter_dotenv
-      sha256: d4130c4a43e0b13fefc593bc3961f2cb46e30cb79e253d4a526b1b5d24ae1ce4
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.0.0"
   flutter_image_compress:
     dependency: "direct main"
     description:
@@ -905,14 +882,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.4"
-  flutter_isolate:
-    dependency: "direct main"
-    description:
-      name: flutter_isolate
-      sha256: "36a84e1a22371d8092ea2121145b330c24fb272acb951fb30c60ba44926b8fb3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:
@@ -981,34 +950,43 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_local_notifications
-      sha256: "0d9035862236fe38250fe1644d7ed3b8254e34a21b2c837c9f539fbb3bba5ef1"
+      sha256: a0d7141f14cabcee42967470a858dfc99dd6cfb70d3cab404bacfcafa9e84e70
       url: "https://pub.dev"
     source: hosted
-    version: "21.0.0"
+    version: "22.0.1"
   flutter_local_notifications_linux:
     dependency: transitive
     description:
       name: flutter_local_notifications_linux
-      sha256: e0f25e243c6c44c825bbbc6b2b2e76f7d9222362adcfe9fd780bf01923c840bd
+      sha256: "9ca97e63776f29ab1b955725c09999fc2c150523269db150c39274f2a43c5a8b"
       url: "https://pub.dev"
     source: hosted
-    version: "8.0.0"
+    version: "8.0.1"
   flutter_local_notifications_platform_interface:
     dependency: transitive
     description:
       name: flutter_local_notifications_platform_interface
-      sha256: e7db3d5b49c2b7ecc68deba4aaaa67a348f92ee0fef34c8e4b4459dbef0d7307
+      sha256: ff0013eae795e8dc8fad4a8992a209e64d3ba2fbd8bf5e43c36bf448f95bd814
       url: "https://pub.dev"
     source: hosted
-    version: "11.0.0"
-  flutter_local_notifications_windows:
+    version: "12.0.0"
+  flutter_local_notifications_web:
     dependency: transitive
     description:
-      name: flutter_local_notifications_windows
-      sha256: "3a2654ba104fbb52c618ebed9def24ef270228470718c43b3a6afcd5c81bef0c"
+      name: flutter_local_notifications_web
+      sha256: "516afaf97a2d1e67a036c6617321b00d205d72f7a67b6eccf936cd565f985878"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.0"
+    version: "1.0.0"
+  flutter_local_notifications_windows:
+    dependency: "direct overridden"
+    description:
+      path: flutter_local_notifications_windows
+      ref: "3e7fb1172968dd3d53e2f1f307261c1bc60d1b96"
+      resolved-ref: "3e7fb1172968dd3d53e2f1f307261c1bc60d1b96"
+      url: "https://github.com/jjoelj/flutter_local_notifications.git"
+    source: git
+    version: "3.1.1"
   flutter_map:
     dependency: "direct main"
     description:
@@ -1261,22 +1239,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.3+1"
-  google_ml_kit:
-    dependency: "direct main"
-    description:
-      name: google_ml_kit
-      sha256: a4f623635226f714753935b43274bc3a5095669e50762c979d484968aa5c7cff
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.21.0"
-  google_mlkit_barcode_scanning:
-    dependency: transitive
-    description:
-      name: google_mlkit_barcode_scanning
-      sha256: dbf4df99cb490b12e95dcedde3e6741ce711942904f7049da601dfede91c1e0f
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.14.2"
   google_mlkit_commons:
     dependency: transitive
     description:
@@ -1285,147 +1247,19 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.1"
-  google_mlkit_digital_ink_recognition:
-    dependency: transitive
-    description:
-      name: google_mlkit_digital_ink_recognition
-      sha256: e841430c7c18e2d82d109914342bccf56084db080b1a997b66b6dac01200ee13
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.14.2"
   google_mlkit_entity_extraction:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: google_mlkit_entity_extraction
       sha256: a56536cbf14731829f9331694165518873eb0582fcdced9d453dfc90b9fb561b
       url: "https://pub.dev"
     source: hosted
     version: "0.15.3"
-  google_mlkit_face_detection:
-    dependency: transitive
-    description:
-      name: google_mlkit_face_detection
-      sha256: "7b6ddcc69dbd6fbfa313fb2d974ad0f0c3a0d1657560f0da6be465baf1889687"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.13.2"
-  google_mlkit_face_mesh_detection:
-    dependency: transitive
-    description:
-      name: google_mlkit_face_mesh_detection
-      sha256: a44c163138336f67d42edd72997e8b3a9057432d87444565ab8d3d9d3af14ae2
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.2"
-  google_mlkit_genai_image_description:
-    dependency: transitive
-    description:
-      name: google_mlkit_genai_image_description
-      sha256: "49725fbd1edbfd76fbb36169ab7566f3e89ade84b3a21c68aa462beffd34dd43"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
-  google_mlkit_genai_prompt:
-    dependency: transitive
-    description:
-      name: google_mlkit_genai_prompt
-      sha256: "6f34563aea82727d1089b48553bccac6d4577390e149b5e1b5e9518a014503ff"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
-  google_mlkit_genai_proofreading:
-    dependency: transitive
-    description:
-      name: google_mlkit_genai_proofreading
-      sha256: "4b559b9b4399c8c105ecf58f404574a6da34dd23c4b7e7c8922e00a4819d57c7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
-  google_mlkit_genai_rewriting:
-    dependency: transitive
-    description:
-      name: google_mlkit_genai_rewriting
-      sha256: "2d77c4f9f285f53ab88a1b65b5a3f5a87907011899fe1ed583cd65ccb3be816f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
-  google_mlkit_genai_speech_recognition:
-    dependency: transitive
-    description:
-      name: google_mlkit_genai_speech_recognition
-      sha256: "31c4dee58ad6ba866c165748461561a37fddb4f60ed47c836e791f911568a4f1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
-  google_mlkit_genai_summarization:
-    dependency: transitive
-    description:
-      name: google_mlkit_genai_summarization
-      sha256: d4cdae8a38b627998ef43fd546b797f4a140cdab49af674a0b60d970efca007d
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
-  google_mlkit_image_labeling:
-    dependency: transitive
-    description:
-      name: google_mlkit_image_labeling
-      sha256: d744d1844c674aae860262f3bb22f5628fd96eaa9d482e6b8d64974efd003dac
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.14.2"
-  google_mlkit_language_id:
-    dependency: transitive
-    description:
-      name: google_mlkit_language_id
-      sha256: "30fda2b81ae207c89639361f8a14f754c2877f9fda66a1114255e239235895d3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.13.1"
-  google_mlkit_object_detection:
-    dependency: transitive
-    description:
-      name: google_mlkit_object_detection
-      sha256: "9dd35886972e18747e22098f8ebee78d30716a99a789bb2e3a65a24229e031e7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.15.1"
-  google_mlkit_pose_detection:
-    dependency: transitive
-    description:
-      name: google_mlkit_pose_detection
-      sha256: "9157847e41fff1703b6b16b1af5508cf5def85cad96b7b724394fa9fe386cb8f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.14.1"
-  google_mlkit_selfie_segmentation:
-    dependency: transitive
-    description:
-      name: google_mlkit_selfie_segmentation
-      sha256: "1688273f3bd9d3c78cdb6f4136c2b2c40c7013bd53d56392c0d52a84cdf3cb29"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.10.1"
   google_mlkit_smart_reply:
     dependency: "direct main"
     description:
       name: google_mlkit_smart_reply
       sha256: e5c691c9243b3b123dfb5681590a136165c7b6fd76fdec43775ca66373664bb9
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.13.1"
-  google_mlkit_text_recognition:
-    dependency: transitive
-    description:
-      name: google_mlkit_text_recognition
-      sha256: "10a8d1a64fa21efda89514f6df88bbb7885be3ae1bfb7a6d229132d802a20d22"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.15.1"
-  google_mlkit_translation:
-    dependency: transitive
-    description:
-      name: google_mlkit_translation
-      sha256: "5cb1c156d926cb5f4795674835d9df480366e002a3a7e17729d2ee472aed11ae"
       url: "https://pub.dev"
     source: hosted
     version: "0.13.1"
@@ -1717,6 +1551,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  irondash_engine_context:
+    dependency: transitive
+    description:
+      name: irondash_engine_context
+      sha256: "2bb0bc13dfda9f5aaef8dde06ecc5feb1379f5bb387d59716d799554f3f305d7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.5"
+  irondash_message_channel:
+    dependency: transitive
+    description:
+      name: irondash_message_channel
+      sha256: b4101669776509c76133b8917ab8cfc704d3ad92a8c450b92934dd8884a2f060
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0"
   jni:
     dependency: transitive
     description:
@@ -1845,15 +1695,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.1"
-  local_notifier:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: f9ab42b4fb76f601bdda6c1d677907d4b149c334
-      resolved-ref: f9ab42b4fb76f601bdda6c1d677907d4b149c334
-      url: "https://github.com/BlueBubblesApp/local_notifier.git"
-    source: git
-    version: "0.1.6"
   logger:
     dependency: "direct main"
     description:
@@ -2263,7 +2104,7 @@ packages:
     source: hosted
     version: "2.6.0"
   path_provider_linux:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider_linux
       sha256: f7a1fe3a634fe7734c8d3f2766ad746ae2a2884abe22e241a8b301bf5cac3279
@@ -2279,7 +2120,7 @@ packages:
     source: hosted
     version: "2.1.2"
   path_provider_windows:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider_windows
       sha256: bd6f00dbd873bfb70d0761682da2b3a2c2fccc2b9e84c495821639601d81afe7
@@ -2383,6 +2224,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.15.0"
+  pixel_snap:
+    dependency: transitive
+    description:
+      name: pixel_snap
+      sha256: "677410ea37b07cd37ecb6d5e6c0d8d7615a7cf3bd92ba406fd1ac57e937d1fb0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.5"
   platform:
     dependency: transitive
     description:
@@ -2760,7 +2609,7 @@ packages:
     source: hosted
     version: "2.4.1"
   shared_preferences_platform_interface:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: shared_preferences_platform_interface
       sha256: "649dc798a33931919ea356c4305c2d1f81619ea6e92244070b520187b5140ef9"
@@ -3020,6 +2869,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  super_clipboard:
+    dependency: transitive
+    description:
+      name: super_clipboard
+      sha256: e73f3bb7e66cc9260efa1dc507f979138e7e106c3521e2dda2d0311f6d728a16
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.1"
+  super_drag_and_drop:
+    dependency: "direct main"
+    description:
+      name: super_drag_and_drop
+      sha256: "8946913a021cb617c35e36cfe57e8b817335643d7ee9bbc83d6e11760136bd1c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.1"
+  super_native_extensions:
+    dependency: transitive
+    description:
+      name: super_native_extensions
+      sha256: b9611dcb68f1047d6f3ef11af25e4e68a21b1a705bbcc3eb8cb4e9f5c3148569
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.1"
   supercharged:
     dependency: "direct main"
     description:
@@ -3072,26 +2945,26 @@ packages:
     dependency: transitive
     description:
       name: test
-      sha256: "280d6d890011ca966ad08df7e8a4ddfab0fb3aa49f96ed6de56e3521347a9ae7"
+      sha256: "8d9ceddbab833f180fbefed08afa76d7c03513dfdba87ffcec2718b02bbcbf20"
       url: "https://pub.dev"
     source: hosted
-    version: "1.30.0"
+    version: "1.31.0"
   test_api:
     dependency: transitive
     description:
       name: test_api
-      sha256: "8161c84903fd860b26bfdefb7963b3f0b68fee7adea0f59ef805ecca346f0c7a"
+      sha256: "949a932224383300f01be9221c39180316445ecb8e7547f70a41a35bf421fb9e"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.10"
+    version: "0.7.11"
   test_core:
     dependency: transitive
     description:
       name: test_core
-      sha256: "0381bd1585d1a924763c308100f2138205252fb90c9d4eeaf28489ee65ccde51"
+      sha256: "1991d4cfe85d5043241acac92962c3977c8d2f2add1ee73130c7b286417d1d34"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.16"
+    version: "0.6.17"
   throttling:
     dependency: transitive
     description:
@@ -3509,5 +3382,5 @@ packages:
     source: hosted
     version: "3.1.3"
 sdks:
-  dart: ">=3.11.0 <4.0.0"
+  dart: ">=3.12.2 <4.0.0"
   flutter: ">=3.41.0"

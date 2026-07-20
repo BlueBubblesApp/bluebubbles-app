@@ -473,6 +473,11 @@ class AttachmentsService extends GetxService {
 
   Uint8List? getCachedVideoThumbnailSync(String filePath) => _videoThumbnailMemCache[filePath];
 
+  /// Clears the in-memory video thumbnail cache. Call after bulk-deleting
+  /// attachment files so stale bytes aren't served for paths that no longer
+  /// exist on disk.
+  void clearVideoThumbnailCache() => _videoThumbnailMemCache.clear();
+
   void _memCacheVideoThumbnail(String filePath, Uint8List bytes) {
     _videoThumbnailMemCache.remove(filePath);
     _videoThumbnailMemCache[filePath] = bytes;

@@ -106,7 +106,6 @@ Relations: `handles` -- `ToMany<Handle>` (N:M, owning side)
 | File | Purpose |
 |------|---------|
 | `fcm_data.dart` | FCM tokens and Firebase auth credentials -- persisted per device |
-| `tenor.dart` | GIF search result metadata (Tenor API) |
 | `launch_at_startup.dart` | Auto-launch configuration (desktop only) |
 
 ---

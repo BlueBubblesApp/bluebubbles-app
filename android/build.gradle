@@ -15,6 +15,17 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
+// Some transitive dependencies (e.g. unifiedpush_android) ship a Kotlin
+// languageVersion of 1.7, which the project's Kotlin Gradle plugin no longer
+// supports. Force a minimum supported language version across all modules.
+subprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        compilerOptions {
+            languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8)
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

@@ -160,7 +160,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     // one and may not have the dark theme properly applied (it's a detached overlay context).
     final outerTheme = Theme.of(context);
     Widget focusWidget = Focus(
-      onKeyEvent: (_, ev) => handleKey(_, ev, context, isChatCreator),
+      onKeyEvent: (node, ev) => handleKey(node, ev, context, isChatCreator),
       child: ValueListenableBuilder<bool>(
           valueListenable: isRecordingNotifier,
           builder: (context, isRecording, child) {

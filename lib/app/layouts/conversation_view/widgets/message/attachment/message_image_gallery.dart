@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -55,7 +56,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   static const _pastSlotDy = <double>[5, 11, 17];
   static const _pastSlotAngle = <double>[0.1, 0.19, 0.28];
   static const _pastSlotScale = <double>[0.82, 0.72, 0.62];
-  static const _pastSlotOpacity = <double>[0.55, 0.35, 0.2];
+  static const _pastSlotOpacity = <double>[0.80, 0.60, 0.40];
 
   static const double _scrollAdvanceThreshold = 50.0;
 
@@ -77,11 +78,17 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   @override
   void didUpdateWidget(covariant MessageImageGallery oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final diff = widget.attachments.filter((a) => !_imageSizes.containsKey(a.guid ?? a.transferName)).toList();
-    if (diff.isNotEmpty) {
+    final oldKeys = oldWidget.attachments.map((a) => a.guid ?? a.transferName).toList();
+    final newKeys = widget.attachments.map((a) => a.guid ?? a.transferName).toList();
+    if (!listEquals(oldKeys, newKeys)) {
       _currentIndex = 0;
       _imageSizes.clear();
       _loadImageSizes();
+    } else {
+      final diff = widget.attachments.filter((a) => !_imageSizes.containsKey(a.guid ?? a.transferName)).toList();
+      if (diff.isNotEmpty) {
+        _loadImageSizes();
+      }
     }
   }
 
@@ -186,6 +193,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
   void _showGalleryPopup(BuildContext context, String title) {
     showBBDialog(
+      useRootNavigator: false,
       context: context,
       title: title,
       content: SizedBox(

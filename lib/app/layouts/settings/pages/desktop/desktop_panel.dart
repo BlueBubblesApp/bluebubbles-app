@@ -72,6 +72,20 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         ),
                       )),
                   Obx(() => AnimatedSizeAndFade.showHide(
+                      show: SettingsSvc.settings.launchAtStartup.value,
+                      child: SettingsTile(
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.doc,
+                          materialIcon: Icons.description_outlined,
+                          containerColor: Colors.green,
+                        ),
+                        onTap: LaunchAtStartup.revealShortcut,
+                        title: "Show Startup Entry",
+                        subtitle: SettingsSvc.settings.launchAtStartup.value && LaunchAtStartup.shortcutPath != null
+                            ? "Startup entry: ${LaunchAtStartup.shortcutPath}"
+                            : "",
+                      ))),
+                  Obx(() => AnimatedSizeAndFade.showHide(
                         show: SettingsSvc.settings.launchAtStartup.value,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -217,6 +231,23 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
+                  if (Platform.isWindows)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) async {
+                        SettingsSvc.settings.windowsTaskbarBadge.value = val;
+                        await SettingsSvc.settings.saveOneAsync('windowsTaskbarBadge');
+                        ChatsSvc.unreadCount.refresh();  // Trigger listener
+                      },
+                      initialVal: SettingsSvc.settings.windowsTaskbarBadge.value,
+                      title: "Taskbar Badge",
+                      subtitle: "Enable badge on taskbar icon for new messages",
+                      backgroundColor: tileColor,
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.app_badge,
+                        materialIcon: Icons.mark_chat_unread_outlined,
+                        containerColor: Colors.teal,
+                      ),
+                    )),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) async {
                           SettingsSvc.settings.desktopNotifications.value = val;

@@ -1,8 +1,12 @@
 #include "flutter_window.h"
 
+#include <flutter/method_channel.h>
+#include <flutter/standard_method_codec.h>
+
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "splash_screen.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -26,6 +30,32 @@ bool FlutterWindow::OnCreate() {
   }
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
+
+  // Channel the Flutter side uses to dismiss the native splash once its own
+  // splash window is on screen (see ShowSplashScreen in main.cpp).
+  splash_channel_ = std::make_unique<flutter::MethodChannel<>>(
+      flutter_controller_->engine()->messenger(), "bluebubbles/splash",
+      &flutter::StandardMethodCodec::GetInstance());
+  splash_channel_->SetMethodCallHandler(
+      [](const flutter::MethodCall<>& call,
+         std::unique_ptr<flutter::MethodResult<>> result) {
+        if (call.method_name() == "setStatus") {
+          if (const auto* status = std::get_if<std::string>(call.arguments())) {
+            int len = MultiByteToWideChar(CP_UTF8, 0, status->c_str(), -1, nullptr, 0);
+            std::wstring wide(len > 0 ? len - 1 : 0, L'\0');
+            if (len > 0) {
+              MultiByteToWideChar(CP_UTF8, 0, status->c_str(), -1, &wide[0], len);
+            }
+            SetSplashStatus(wide);
+          }
+          result->Success();
+        } else if (call.method_name() == "closeSplash") {
+          CloseSplashScreen();
+          result->Success();
+        } else {
+          result->NotImplemented();
+        }
+      });
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();

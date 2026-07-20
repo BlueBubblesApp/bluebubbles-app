@@ -28,8 +28,8 @@ class Balloons extends LeafRenderObjectWidget {
 
 class RenderBalloons extends RenderBox {
   RenderBalloons({
-    required BalloonController controller,
-  }) : _controller = controller;
+    required this._controller,
+  });
 
   BalloonController get controller => _controller;
   BalloonController _controller;

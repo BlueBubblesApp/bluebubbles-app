@@ -595,8 +595,8 @@ class OutgoingMessageHandler {
     final List<Message> saved = [];
     for (final message in messages) {
       final existing = Message.findOne(guid: message.guid);
-      final Message hydrated = existing ??
-          (await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe)).message;
+      final Message hydrated =
+          existing ?? (await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe)).message;
       saved.add(hydrated);
 
       final msgSvcRegistered = Get.isRegistered<MessagesService>(tag: c.guid);

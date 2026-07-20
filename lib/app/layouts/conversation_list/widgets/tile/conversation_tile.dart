@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -50,7 +52,7 @@ class ConversationTileController extends StatefulController {
         ),
         (route) => route.isFirst,
       );
-    } else if (NavigationSvc.isTabletMode(context) && ChatsSvc.activeChat?.isAlive == false) {
+    } else if (NavigationSvc.isTabletMode(context) && ChatsSvc.activeChat?.isAlive.value == false) {
       // Pops chat details
       Get.back(id: 2);
     } else {
@@ -119,6 +121,7 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
 class _ConversationTileState extends CustomState<ConversationTile, void, ConversationTileController>
     with AutomaticKeepAliveClientMixin {
   ConversationListController get listController => controller.listController;
+  StreamSubscription? _activeSub;
 
   @override
   bool get wantKeepAlive => true;
@@ -131,19 +134,19 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
 
-    if (kIsDesktop || kIsWeb) {
-      controller.shouldHighlight.value = ChatsSvc.activeChat?.chat.guid == controller.chat.guid;
-    }
 
-    EventDispatcherSvc.stream.listen((event) {
-      if (event.type == 'update-highlight' && mounted) {
-        if ((kIsDesktop || kIsWeb) && event.data == controller.chat.guid) {
-          controller.shouldHighlight.value = true;
-        } else if (controller.shouldHighlight.value) {
-          controller.shouldHighlight.value = false;
-        }
-      }
+    controller.shouldHighlight.value = ChatsSvc.activeChatGuid.value == controller.chat.guid;
+    _activeSub = ChatsSvc.activeChatGuid.listen((guid) {
+      Future.microtask(() {
+        if (mounted) controller.shouldHighlight.value = guid == controller.chat.guid;
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _activeSub?.cancel();
+    super.dispose();
   }
 
   @override

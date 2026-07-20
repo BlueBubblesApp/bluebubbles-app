@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 
 /// Mixin for initializing and managing MessagesService with proper message controllers and states.
@@ -50,6 +51,10 @@ mixin MessagesServiceMixin<T extends StatefulWidget> on State<T> {
   }) {
     // Use custom service or get/create singleton
     _messageService = customService != null ? registerMessagesSvc(customService) : ensureMessagesSvc(chat.guid);
+
+    // Take ownership: if another view for this chat is still mounted (duplicate
+    // ConversationView), its dispose must leave the service alone from now on.
+    _messageService!.owner = this;
 
     // Only initialize handlers if this is NOT a customService
     // CustomService is already initialized by the caller, don't reinitialize
@@ -176,7 +181,16 @@ mixin MessagesServiceMixin<T extends StatefulWidget> on State<T> {
   /// registry and [prepMessage] can still reach it via [addNewMessage].
   void disposeMessagesService({bool force = false, bool onlyDetach = false}) {
     if (!onlyDetach) {
-      _messageService?.close(force: force);
+      if (_messageService != null && _messageService!.owner != null && _messageService!.owner != this) {
+        // A newer view for the same chat took ownership (duplicate ConversationView,
+        // e.g. via notification tap) — deleting the shared tagged service here would
+        // crash the successor's MessageHolders with "not registered".
+        Logger.debug('Skipping MessagesService close for ${_messageService!.tag} — owned by a newer view',
+            tag: 'MessagesServiceMixin');
+      } else {
+        _messageService?.close(force: force);
+        if (_messageService?.owner == this) _messageService?.owner = null;
+      }
     }
 
     _messageService = null;

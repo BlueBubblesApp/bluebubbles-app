@@ -96,25 +96,21 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 100),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              !loaded
-                                  ? "Loading chats..."
-                                  : showArchived
-                                      ? "You have no archived chats"
-                                      : showUnknown
-                                          ? "You have no messages from unknown senders :)"
-                                          : "You have no chats :(",
-                              style: context.theme.textTheme.labelLarge,
-                              textAlign: TextAlign.center,
+                      child: loaded
+                          ? buildEmptyChatListState(context, showArchived: showArchived, showUnknown: showUnknown)
+                          : Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    "Loading chats...",
+                                    style: context.theme.textTheme.labelLarge,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                buildProgressIndicator(context, size: 15),
+                              ],
                             ),
-                          ),
-                          if (!loaded) buildProgressIndicator(context, size: 15),
-                        ],
-                      ),
                     ),
                   );
                 }

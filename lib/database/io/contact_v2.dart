@@ -211,10 +211,14 @@ class ContactV2 {
       'displayName': displayName,
       'firstName': firstName,
       'lastName': lastName,
-      'middleName': middleName,
-      'nickname': nickname,
-      'phoneNumbers': phoneNumbers.map((e) => {'address': e.number, 'label': e.label}).toList(),
-      'emails': emailAddresses.map((e) => {'address': e.address, 'label': e.label}).toList(),
+      'phoneNumbers': phoneNumbers.map((e) => e.number).toList(),
+      'emails': emailAddresses.map((e) => e.address).toList(),
+      // Server supports avatars, but all we have right now is a path to it.
+      // Fetching it and converting to base64 is a bit too much for now, so we'll skip it.
+      // 'avatar': avatarPath != null ? base64Encode(File(avatarPath!).readAsBytesSync()) : null,
+      // Not supported on server yet
+      // 'middleName': middleName,
+      // 'nickname': nickname,
     };
   }
 

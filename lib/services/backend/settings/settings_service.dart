@@ -100,11 +100,14 @@ class SettingsService {
   Future<bool> setupLaunchAtStartup(bool launchAtStartup, bool minimized) async {
     // Can't use fs here because it hasn't been initialized yet
     LaunchAtStartup.setup((await PackageInfo.fromPlatform()).appName, minimized);
-    if (launchAtStartup) {
-      await LaunchAtStartup.enable();
-      return true;
+    try {
+      if (launchAtStartup) {
+        return await LaunchAtStartup.enable();
+      }
+      await LaunchAtStartup.disable();
+    } catch (e, s) {
+      Logger.error('Failed to set launch at startup', error: e, trace: s, tag: 'SettingsService');
     }
-    await LaunchAtStartup.disable();
     return false;
   }
 
@@ -284,7 +287,7 @@ class SettingsService {
                     Navigator.of(Get.context!, rootNavigator: true).pop();
                     NavigationSvc.closeSettings(Get.context!);
                     NavigationSvc.closeAllConversationView(Get.context!);
-                    ChatsSvc.setAllInactive();
+                    await ChatsSvc.setAllInactive();
                     await Navigator.of(Get.context!).push(
                       ThemeSwitcher.buildPageRoute(
                         builder: (BuildContext context) {

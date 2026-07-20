@@ -36,7 +36,6 @@ Add the shorthand getter to `lib/services/services.dart`.
 **Emitting:**
 ```dart
 EventDispatcherSvc.emit('chat-updated', chat.guid);
-EventDispatcherSvc.emit('update-highlight', {'guid': chat.guid, 'value': true});
 ```
 
 **Listening (in `initState`):**
