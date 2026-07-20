@@ -25,17 +25,32 @@ class ParticipantsFindMyMapCard extends StatefulWidget {
 }
 
 class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
+  /// Tag → owning card State's token. Prevents a stale sheet-close callback from
+  /// deleting a controller after a remount has claimed the same tag.
+  static final Map<String, Object> _owners = <String, Object>{};
+
+  /// Tags with an expanded sheet currently open (survives card remount).
+  static final Set<String> _sheetOpenTags = <String>{};
+
+  /// Sheet-close handler for the current owner of each tag.
+  static final Map<String, VoidCallback> _sheetCloseHandlers = <String, VoidCallback>{};
+
   late final FindMyController _controller;
+  final Object _ownerToken = Object();
   StreamSubscription? _participantsSub;
   bool _sheetOpen = false;
 
   ChatState? get _chatState => ChatsSvc.chatStates[widget.chat.guid];
+
+  String get _controllerTag => FindMyParticipantPrefetch.controllerTag(widget.chat.guid);
 
   List<Handle> get _currentParticipants {
     final state = _chatState;
     if (state != null) return state.participants.map((hs) => hs.handle).toList();
     return widget.chat.handles.toList();
   }
+
+  bool _owns(String tag) => identical(_owners[tag], _ownerToken);
 
   @override
   void initState() {
@@ -49,7 +64,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   }
 
   void _initController() {
-    final tag = FindMyParticipantPrefetch.controllerTag(widget.chat.guid);
+    final tag = _controllerTag;
     if (Get.isRegistered<FindMyController>(tag: tag)) {
       _controller = Get.find<FindMyController>(tag: tag);
       _controller.updateParticipantFilter(_currentParticipants);
@@ -59,18 +74,56 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
         tag: tag,
       );
     }
+    _claimOwnership(tag);
+  }
+
+  void _claimOwnership(String tag) {
+    _owners[tag] = _ownerToken;
+    _sheetCloseHandlers[tag] = _handleSheetClosed;
+    // Remount while a sheet is still open: inherit the flag so dispose skips delete.
+    if (_sheetOpenTags.contains(tag)) {
+      _sheetOpen = true;
+    }
+  }
+
+  void _clearOwnership(String tag) {
+    if (!_owns(tag)) return;
+    _owners.remove(tag);
+    _sheetCloseHandlers.remove(tag);
+  }
+
+  void _deleteControllerIfRegistered(String tag) {
+    if (Get.isRegistered<FindMyController>(tag: tag)) {
+      Get.delete<FindMyController>(tag: tag);
+    }
+  }
+
+  /// Invoked via [_sheetCloseHandlers] so a remounted card receives the close.
+  void _handleSheetClosed() {
+    final tag = _controllerTag;
+    if (!_owns(tag)) return;
+
+    if (mounted) {
+      setState(() => _sheetOpen = false);
+    } else {
+      _deleteControllerIfRegistered(tag);
+      _clearOwnership(tag);
+    }
   }
 
   Future<void> _openExpandedMap() async {
     if (_sheetOpen) return;
 
+    final tag = _controllerTag;
     setState(() => _sheetOpen = true);
+    _sheetOpenTags.add(tag);
     await showParticipantsFindMyMap(
       context,
       controller: _controller,
       chat: widget.chat,
       onSheetClosed: () {
-        if (mounted) setState(() => _sheetOpen = false);
+        _sheetOpenTags.remove(tag);
+        _sheetCloseHandlers[tag]?.call();
       },
     );
   }
@@ -78,9 +131,12 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
   @override
   void dispose() {
     _participantsSub?.cancel();
-    final tag = FindMyParticipantPrefetch.controllerTag(widget.chat.guid);
-    if (Get.isRegistered<FindMyController>(tag: tag)) {
-      Get.delete<FindMyController>(tag: tag);
+    final tag = _controllerTag;
+    // Skip delete while the sheet still holds the controller; sheet close will
+    // clean up if this card (or a remounted owner) is already gone.
+    if (_owns(tag) && !_sheetOpen) {
+      _deleteControllerIfRegistered(tag);
+      _clearOwnership(tag);
     }
     super.dispose();
   }
