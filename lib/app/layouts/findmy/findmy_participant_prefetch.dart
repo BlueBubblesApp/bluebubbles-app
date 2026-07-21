@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/layouts/findmy/findmy_participant_matcher.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_handle_matcher.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -81,8 +81,8 @@ class FindMyParticipantPrefetch {
     final sharers =
         _snapshot.where((f) => (f.latitude ?? 0) != 0 && (f.longitude ?? 0) != 0).toList(growable: false);
     if (sharers.isEmpty) return false;
-    final matcher = FindMyParticipantMatcher(participants: participantsFor(chat));
-    return sharers.any(matcher.matches);
+    final participants = participantsFor(chat);
+    return sharers.any((f) => FindMyHandleMatcher.matchesAny(f, participants));
   }
 
   /// Shared cooldown so opening details on several chats within [_postCooldown]
@@ -102,7 +102,7 @@ class FindMyParticipantPrefetch {
   /// Merges a single friend from a live socket update into the snapshot so
   /// reopening Details hydrates the latest coords instead of a stale GET.
   static void upsertFriend(FindMyFriend friend) {
-    final index = _snapshot.indexWhere((e) => FindMyParticipantMatcher.friendIdentifiersMatch(e, friend));
+    final index = _snapshot.indexWhere((e) => FindMyHandleMatcher.friendIdentifiersMatch(e, friend));
     if (index == -1) {
       _snapshot = [..._snapshot, friend];
     } else {

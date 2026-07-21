@@ -1,23 +1,31 @@
+import 'dart:math' as math;
+
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/models/models.dart' show HandleLookupKey;
 
-/// Matches Find My friends to conversation participants when they use different
-/// identifiers (e.g. iCloud email in Find My vs phone in chat).
+/// Matches Find My friends to handles when they use different identifiers
+/// (e.g. iCloud email in Find My vs phone in chat).
 ///
 /// Matching is intentionally conservative — only deterministic identity signals:
 /// handle IDs, address equality (normalized), shared [ContactV2] records, and
 /// contact phone/email entries. Display names are never compared.
-class FindMyParticipantMatcher {
-  final List<Handle> participants;
+///
+/// [resolveFriendHandle] memoizes ObjectBox lookups for the process lifetime:
+/// positives are sticky; nulls use an exponential TTL backoff.
+class FindMyHandleMatcher {
+  FindMyHandleMatcher._();
 
-  const FindMyParticipantMatcher({
-    required this.participants,
-  });
+  static const Duration _nullTtlBase = Duration(seconds: 2);
+  static const int _nullTtlFactor = 2;
+  static const Duration _nullTtlCap = Duration(minutes: 10);
 
-  bool matches(FindMyFriend friend) => participants.any((handle) => matchesFriend(friend, handle));
+  static final Map<String, _ResolveCacheEntry> _resolveCache = <String, _ResolveCacheEntry>{};
 
-  bool matchesFriend(FindMyFriend friend, Handle handle) {
-    final resolvedFriendHandle = _resolveFriendHandle(friend);
+  static bool matchesAny(FindMyFriend friend, List<Handle> handles) =>
+      handles.any((handle) => matchesFriend(friend, handle));
+
+  static bool matchesFriend(FindMyFriend friend, Handle handle) {
+    final resolvedFriendHandle = resolveFriendHandle(friend);
 
     if (friend.handle != null) {
       if (friend.handle!.id != null && handle.id != null && friend.handle!.id == handle.id) return true;
@@ -56,8 +64,51 @@ class FindMyParticipantMatcher {
 
   static bool identifiersMatch(String a, String b) => _identifiersMatch(a, b);
 
-  static Handle? _resolveFriendHandle(FindMyFriend friend) {
+  /// Resolves a friend without a hydrated [FindMyFriend.handle] via local DB lookup.
+  /// Results are cached: positives stick; nulls back off with an increasing TTL.
+  static Handle? resolveFriendHandle(FindMyFriend friend) {
     if (friend.handle != null) return friend.handle;
+
+    final key = _cacheKey(friend);
+    if (key != null) {
+      final cached = _resolveCache[key];
+      if (cached != null) {
+        if (cached.handle != null) return cached.handle;
+        final expiresAt = cached.expiresAt;
+        if (expiresAt != null && DateTime.now().isBefore(expiresAt)) return null;
+      }
+    }
+
+    final resolved = _lookupFriendHandle(friend);
+
+    if (key == null) return resolved;
+
+    if (resolved != null) {
+      _resolveCache[key] = _ResolveCacheEntry(handle: resolved);
+      return resolved;
+    }
+
+    final previousFails = _resolveCache[key]?.failCount ?? 0;
+    final failCount = previousFails + 1;
+    final ttlMs = math.min(
+      _nullTtlCap.inMilliseconds,
+      _nullTtlBase.inMilliseconds * math.pow(_nullTtlFactor, failCount - 1).toInt(),
+    );
+    _resolveCache[key] = _ResolveCacheEntry(
+      handle: null,
+      failCount: failCount,
+      expiresAt: DateTime.now().add(Duration(milliseconds: ttlMs)),
+    );
+    return null;
+  }
+
+  static String? _cacheKey(FindMyFriend friend) {
+    final key = friend.stableId ?? friend.handleAddress ?? friend.title;
+    if (key == null || key.isEmpty) return null;
+    return key;
+  }
+
+  static Handle? _lookupFriendHandle(FindMyFriend friend) {
     for (final id in _friendIdentifiers(friend)) {
       final addr = id.contains('/') ? id.split('/').first : id;
       if (!addr.contains('@')) continue;
@@ -140,4 +191,16 @@ class FindMyParticipantMatcher {
     }
     return false;
   }
+}
+
+class _ResolveCacheEntry {
+  _ResolveCacheEntry({
+    required this.handle,
+    this.failCount = 0,
+    this.expiresAt,
+  });
+
+  final Handle? handle;
+  final int failCount;
+  final DateTime? expiresAt;
 }

@@ -16,7 +16,7 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_location_clipper.dart';
-import 'package:bluebubbles/app/layouts/findmy/findmy_participant_matcher.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_handle_matcher.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_participant_prefetch.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -28,11 +28,6 @@ class FindMyController extends GetxController {
   List<Handle>? participantFilter;
 
   bool get isParticipantMode => participantFilter != null;
-
-  FindMyParticipantMatcher? get _participantMatcher {
-    if (participantFilter == null) return null;
-    return FindMyParticipantMatcher(participants: participantFilter!);
-  }
 
   List<FindMyFriend> get participantFriendsWithLocation =>
       friendsWithLocation.where((f) => matchesParticipantFilter(f)).toList();
@@ -122,7 +117,7 @@ class FindMyController extends GetxController {
 
   bool matchesParticipantFilter(FindMyFriend friend) {
     if (participantFilter == null) return true;
-    return _participantMatcher?.matches(friend) ?? false;
+    return FindMyHandleMatcher.matchesAny(friend, participantFilter!);
   }
 
   void updateParticipantFilter(List<Handle> handles) {
@@ -134,14 +129,14 @@ class FindMyController extends GetxController {
   bool _participantMapReady = false;
 
   static bool _isSameFindMyFriend(FindMyFriend a, FindMyFriend b) =>
-      FindMyParticipantMatcher.friendIdentifiersMatch(a, b);
+      FindMyHandleMatcher.friendIdentifiersMatch(a, b);
 
   String _friendMarkerKey(FindMyFriend friend) {
     final primary = friend.stableId ?? friend.handleAddress ?? friend.title;
     if (primary != null) return primary;
 
     final segments = <String>{
-      ...FindMyParticipantMatcher.friendIdentifiers(friend),
+      ...FindMyHandleMatcher.friendIdentifiers(friend),
       if (friend.latitude != null && friend.longitude != null) '${friend.latitude},${friend.longitude}',
       if (friend.subtitle != null) friend.subtitle!,
       if (friend.longAddress != null) friend.longAddress!,
@@ -221,10 +216,9 @@ class FindMyController extends GetxController {
   String friendMarkerKeyFor(FindMyFriend friend) => _friendMarkerKey(friend);
 
   Handle? handleForFriendMarker(FindMyFriend friend) {
-    final matcher = _participantMatcher;
-    if (matcher != null && participantFilter != null) {
+    if (participantFilter != null) {
       for (final participant in participantFilter!) {
-        if (matcher.matchesFriend(friend, participant)) {
+        if (FindMyHandleMatcher.matchesFriend(friend, participant)) {
           return participant;
         }
       }
