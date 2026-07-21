@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_collage.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_gallery.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
@@ -43,16 +44,31 @@ class MessagePartContent extends StatelessWidget {
     if (messagePart.attachments.isNotEmpty) {
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
       if (iOS && messagePart.isMediaGallery) {
-        return Padding(
-            padding:
-                EdgeInsets.only(left: !chat.isGroup && SettingsSvc.settings.alwaysShowAvatars.value == false ? 20 : 10),
-            child: MessageImageGallery(
+        final fanDirection =
+            message.isFromMe == true ? GalleryFanDirection.left : GalleryFanDirection.right;
+        final padding = EdgeInsets.only(
+            left: !chat.isGroup && SettingsSvc.settings.alwaysShowAvatars.value == false ? 20 : 10);
+        // 2–3 items: vertical collage; 4+: swipeable fan stack
+        if (messagePart.attachments.length <= 3) {
+          return Padding(
+            padding: padding,
+            child: MessageImageCollage(
               attachments: messagePart.attachments,
               partIndex: messagePart.part,
-              isInReply: false,
-              fanDirection: message.isFromMe == true ? GalleryFanDirection.left : GalleryFanDirection.right,
-              currentIndexNotifier: galleryCurrentIndexNotifier,
-            ));
+              fanDirection: fanDirection,
+            ),
+          );
+        }
+        return Padding(
+          padding: padding,
+          child: MessageImageGallery(
+            attachments: messagePart.attachments,
+            partIndex: messagePart.part,
+            isInReply: false,
+            fanDirection: fanDirection,
+            currentIndexNotifier: galleryCurrentIndexNotifier,
+          ),
+        );
       }
       return AttachmentHolder(
         message: messagePart,
