@@ -39,9 +39,13 @@ Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `Mess
 
 ## Swipe-to-Reply
 
-`SwipeToReplyWrapper` wraps the entire bubble Stack. On swipe-right:
-1. Animates `slide_to_reply.dart` indicator
-2. Calls `cvController.setReplyToMessage(message)` to populate the reply bar in the text field
+`SwipeToReplyWrapper` wraps message content and detects swipe-right gestures. On threshold:
+1. Animates `slide_to_reply.dart` indicator via the shared `replyOffset` `RxDouble`
+2. Sets `cvController.replyToMessage` with `MessageReplyContext` (optional `attachmentGuid` for per-attachment replies)
+
+Bubble-level: wraps the entire bubble Stack in `MessageHolder` (disabled for 2–3 item collages).
+
+Per-card: `CollectionAttachmentCard` with `enableSwipeToReply: true` (collage only) wraps each card independently and passes `attachmentGuid` so the composer preview shows the swiped image.
 
 ## Bubble Effects
 

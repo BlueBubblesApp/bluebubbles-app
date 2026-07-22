@@ -15,7 +15,12 @@ import 'package:flutter/widgets.dart';
 
 void reply(MessagePopupActionContext ctx) {
   ctx.popDetails();
-  ctx.cvController.replyToMessage = MessageReplyContext(ctx.message, ctx.part.part);
+  final part = ctx.part;
+  ctx.cvController.replyToMessage = MessageReplyContext(
+    ctx.message,
+    part.part,
+    attachmentGuid: part.attachments.length == 1 ? part.attachments.first.guid : null,
+  );
 }
 
 void openDm(MessagePopupActionContext ctx) {

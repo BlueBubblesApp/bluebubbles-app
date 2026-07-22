@@ -508,7 +508,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     isEditing: isEditing(e.part),
                                                                     enableGestures: !(iOS && e.isMediaGallery),
                                                                     child: SwipeToReplyWrapper(
-                                                                      enabled: canSwipeToReply && !isEditing(e.part),
+                                                                      enabled: canSwipeToReply &&
+                                                                          !isEditing(e.part) &&
+                                                                          !(iOS && e.isMediaGallery && e.attachments.length <= 3),
                                                                       partIndex: index,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
@@ -524,6 +526,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                                 messagePart: e,
                                                                                 cvController: widget.cvController,
                                                                                 isEditing: isEditing(e.part),
+                                                                                canSwipeToReply:
+                                                                                    canSwipeToReply && !isEditing(e.part),
                                                                                 galleryCurrentIndexNotifier: isStack
                                                                                     ? _galleryIndices.putIfAbsent(
                                                                                         e.part, () => ValueNotifier(0))
@@ -604,7 +608,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                       !message.isGroupEvent &&
                                                       !e.isUnsent &&
                                                       !widget.isReplyThread &&
-                                                      index < replyOffsets.length)
+                                                      index < replyOffsets.length &&
+                                                      !(iOS && e.isMediaGallery && e.attachments.length <= 3))
                                                     Obx(() => SlideToReply(
                                                         width: replyOffsets[index].value.abs(),
                                                         isFromMe: message.isFromMe!)),

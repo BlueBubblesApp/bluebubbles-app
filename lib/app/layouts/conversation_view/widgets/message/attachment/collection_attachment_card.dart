@@ -1,9 +1,12 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/swipe_to_reply_wrapper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +48,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
 }
 
 /// Per-card wrapper for media collection attachments: popup gestures + tapbacks.
-class CollectionAttachmentCard extends StatelessWidget {
+class CollectionAttachmentCard extends StatefulWidget {
   const CollectionAttachmentCard({
     super.key,
     required this.controller,
@@ -55,6 +58,8 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.collectionAttachments,
     this.isEditing = false,
     this.enableGestures = true,
+    this.canSwipeToReply = false,
+    this.enableSwipeToReply = false,
   });
 
   final MessageState controller;
@@ -64,11 +69,20 @@ class CollectionAttachmentCard extends StatelessWidget {
   final List<Attachment> collectionAttachments;
   final bool isEditing;
   final bool enableGestures;
+  final bool canSwipeToReply;
+  final bool enableSwipeToReply;
+
+  @override
+  State<CollectionAttachmentCard> createState() => _CollectionAttachmentCardState();
+}
+
+class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
+  final RxDouble _replyOffset = 0.0.obs;
 
   MessagePart get _scopedPart => MessagePart(
-        part: collectionPart.partIndexForAttachment(attachmentIndex),
-        attachments: [collectionAttachments[attachmentIndex]],
-        shouldRedact: collectionPart.shouldRedact,
+        part: widget.collectionPart.partIndexForAttachment(widget.attachmentIndex),
+        attachments: [widget.collectionAttachments[widget.attachmentIndex]],
+        shouldRedact: widget.collectionPart.shouldRedact,
         text: null,
         subject: null,
         mentions: const [],
@@ -76,30 +90,62 @@ class CollectionAttachmentCard extends StatelessWidget {
         isUnsent: false,
       );
 
-  @override
-  Widget build(BuildContext context) {
-    final scopedPart = _scopedPart;
+  bool get _swipeEnabled =>
+      widget.enableSwipeToReply && widget.canSwipeToReply && !widget.isEditing;
+
+  Widget _buildCardContent(MessagePart scopedPart) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
         MessagePopupHolder(
-          controller: controller,
-          cvController: cvController,
-          isEditing: isEditing,
+          controller: widget.controller,
+          cvController: widget.cvController,
+          isEditing: widget.isEditing,
           part: scopedPart,
-          enableGestures: enableGestures,
+          enableGestures: widget.enableGestures,
           child: AttachmentHolder(
             message: scopedPart,
             transparentBackground: true,
             showCardShadow: true,
-            galleryAttachments: collectionAttachments,
+            galleryAttachments: widget.collectionAttachments,
           ),
         ),
         CollectionAttachmentReactions(
-          collectionPart: collectionPart,
-          attachmentIndex: attachmentIndex,
+          collectionPart: widget.collectionPart,
+          attachmentIndex: widget.attachmentIndex,
         ),
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scopedPart = _scopedPart;
+    final attachment = widget.collectionAttachments[widget.attachmentIndex];
+
+    if (!_swipeEnabled) {
+      return _buildCardContent(scopedPart);
+    }
+
+    return Obx(() {
+      final isFromMe = widget.controller.isFromMe.value;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SwipeToReplyWrapper(
+            enabled: true,
+            partIndex: scopedPart.part,
+            attachmentGuid: attachment.guid,
+            replyOffset: _replyOffset,
+            cvController: widget.cvController,
+            child: _buildCardContent(scopedPart),
+          ),
+          SlideToReply(
+            width: _replyOffset.value.abs(),
+            isFromMe: isFromMe,
+          ),
+        ].conditionalReverse(isFromMe),
+      );
+    });
   }
 }

@@ -18,12 +18,14 @@ class MessagePartContent extends StatelessWidget {
     required this.cvController,
     this.isEditing = false,
     this.galleryCurrentIndexNotifier,
+    this.canSwipeToReply = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
   final bool isEditing;
   final ValueNotifier<int>? galleryCurrentIndexNotifier;
+  final bool canSwipeToReply;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +57,7 @@ class MessagePartContent extends StatelessWidget {
             cvController: cvController,
             isEditing: isEditing,
             fanDirection: fanDirection,
+            canSwipeToReply: canSwipeToReply,
           );
         }
         return MessageImageStack(

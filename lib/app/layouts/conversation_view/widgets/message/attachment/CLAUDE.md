@@ -7,7 +7,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 | File | Purpose |
 |------|---------|
 | `attachment_holder.dart` | **Entry point** — MIME type dispatcher; manages download state |
-| `collection_attachment_card.dart` | Per-card popup + tapback wrapper for media collections (collage/stack) |
+| `collection_attachment_card.dart` | Per-card popup, tapback, and optional swipe-to-reply wrapper for media collections |
 | `message_image_collage.dart` | 2–3 item vertical overlapping collage (iOS skin) |
 | `message_image_stack.dart` | 4+ item swipeable fan stack (iOS skin) |
 | `image_viewer.dart` | Images with tap-to-fullscreen gesture |
@@ -26,7 +26,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 
 **Fullscreen**: Tap on `ImageViewer` or `VideoPlayer` pushes `FullscreenMedia` via `NavigationSvc`. See `lib/app/layouts/fullscreen_media/CLAUDE.md`.
 
-**Media collections (iOS)**: Multi-attachment image/video parts route to `MessageImageCollage` (2–3 items) or `MessageImageStack` (4+). Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all iOS gallery parts; tapbacks are card-local, not bubble-level.
+**Media collections (iOS)**: Multi-attachment image/video parts route to `MessageImageCollage` (2–3 items) or `MessageImageStack` (4+). Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all iOS gallery parts; tapbacks are card-local, not bubble-level. Collage cards also get per-card swipe-to-reply via `CollectionAttachmentCard` (`enableSwipeToReply: true`); the outer bubble-level swipe is disabled for collages. Stack (4+) keeps outer bubble swipe to avoid conflicting with fan navigation.
 
 ## Adding a New Attachment Type
 
