@@ -190,8 +190,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
     final alwaysShowAvatars = SettingsSvc.settings.alwaysShowAvatars.value;
     final avatarScale = SettingsSvc.settings.avatarScale.value;
 
-    Iterable<Message> reactionsForPart(int part, List<Message> reactions) {
-      return reactions.where((s) => (s.associatedMessagePart ?? 0) == part);
+    Iterable<Message> reactionsForPart(MessagePart part, List<Message> reactions) {
+      return reactions.where((s) => part.includesAssociatedPart(s.associatedMessagePart));
     }
 
     /// Layout tree

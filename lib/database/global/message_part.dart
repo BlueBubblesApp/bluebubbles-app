@@ -59,6 +59,17 @@ class MessagePart {
   /// Falls back to [part] if [attachmentPartIndices] is not set.
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
 
+  /// Whether a reaction/sticker with [associatedMessagePart] belongs on this bubble.
+  /// Gallery parts include every original index in [attachmentPartIndices].
+  bool includesAssociatedPart(int? associatedMessagePart) {
+    final index = associatedMessagePart ?? 0;
+    final indices = attachmentPartIndices;
+    if (indices != null && indices.isNotEmpty) {
+      return indices.contains(index);
+    }
+    return index == part;
+  }
+
   bool get isEdited => edits.isNotEmpty;
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));

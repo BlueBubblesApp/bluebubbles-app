@@ -21,7 +21,7 @@ class ReactionObserver extends StatelessWidget {
   final List<MessagePart> messageParts;
   final MessagePart part;
   final String chatGuid;
-  final Iterable<Message> Function(int, List<Message>) reactionsForPart;
+  final Iterable<Message> Function(MessagePart, List<Message>) reactionsForPart;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class ReactionObserver extends StatelessWidget {
       final reactions = associatedMessages
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .toList();
-      final reactionList = messageParts.length == 1 ? reactions : reactionsForPart(part.part, reactions).toList();
+      final reactionList = messageParts.length == 1 ? reactions : reactionsForPart(part, reactions).toList();
       return Positioned(
         top: -14,
         left: isFromMe ? -20 : null,
@@ -68,7 +68,7 @@ class StickerObserver extends StatelessWidget {
       final allStickers = state.associatedMessages.where((e) => e.associatedMessageType == "sticker").toList();
       final stickersForPart = messageParts.length == 1
           ? allStickers
-          : allStickers.where((s) => (s.associatedMessagePart ?? 0) == part.part).toList();
+          : allStickers.where((s) => part.includesAssociatedPart(s.associatedMessagePart)).toList();
 
       if (stickersForPart.isEmpty) return const SizedBox.shrink();
 
@@ -93,7 +93,7 @@ class ReactionSpacing extends StatelessWidget {
 
   final List<MessagePart> messageParts;
   final MessagePart part;
-  final Iterable<Message> Function(int, List<Message>) reactionsForPart;
+  final Iterable<Message> Function(MessagePart, List<Message>) reactionsForPart;
   final double minHeightWhenNoReactions;
 
   @override
@@ -106,7 +106,7 @@ class ReactionSpacing extends StatelessWidget {
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .cast<Message>()
           .toList();
-      if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part.part, reactions).isNotEmpty) {
+      if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part, reactions).isNotEmpty) {
         return const SizedBox(height: 12.5);
       }
 
