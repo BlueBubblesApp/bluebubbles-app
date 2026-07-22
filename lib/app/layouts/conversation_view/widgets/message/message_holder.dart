@@ -142,7 +142,6 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
   }
 
   List<MessagePart> _collapseImageGalleryParts(List<MessagePart> parts) {
-    if (!iOS) return parts;
     final collapsed = <MessagePart>[];
     int i = 0;
     while (i < parts.length) {
@@ -333,7 +332,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                           : MessageSender(olderMessage: olderMessage),
                                     ),
                                   // add a box to account for height of reactions
-                                  if (!(iOS && e.isMediaGallery))
+                                  if (!e.isMediaGallery)
                                     iOS &&
                                             !widget.isReplyThread &&
                                             message.threadOriginatorGuid != null &&
@@ -506,7 +505,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    enableGestures: !(iOS && e.isMediaGallery),
+                                                                    enableGestures: !e.isMediaGallery,
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
@@ -516,9 +515,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                       cvController: widget.cvController,
                                                                       child: Builder(
                                                                         builder: (_) {
-                                                                          final isGallery = iOS && e.isMediaGallery;
+                                                                          final isGallery = e.isMediaGallery;
                                                                           final isStack =
-                                                                              isGallery && e.attachments.length > 3;
+                                                                              iOS && isGallery && e.attachments.length > 3;
                                                                           final inner = Stack(
                                                                             alignment: Alignment.centerRight,
                                                                             children: [
@@ -583,7 +582,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     ),
                                                                   ),
                                                                 ),
-                                                                if (!(iOS && e.isMediaGallery))
+                                                                if (!e.isMediaGallery)
                                                                   MessageReactions(
                                                                     messageParts: messageParts,
                                                                     part: e,

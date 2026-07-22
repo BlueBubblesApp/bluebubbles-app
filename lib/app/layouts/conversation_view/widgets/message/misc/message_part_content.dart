@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_collage.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -47,26 +48,33 @@ class MessagePartContent extends StatelessWidget {
     // Messages with attachments
     if (messagePart.attachments.isNotEmpty) {
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
-      if (iOS && messagePart.isMediaGallery) {
-        final fanDirection =
-            message.isFromMe == true ? GalleryFanDirection.right : GalleryFanDirection.left;
-        // 2–3 items: vertical collage; 4+: swipeable fan stack
-        if (messagePart.attachments.length <= 3) {
-          return MessageImageCollage(
+      if (messagePart.isMediaGallery) {
+        if (iOS) {
+          final fanDirection =
+              message.isFromMe == true ? GalleryFanDirection.right : GalleryFanDirection.left;
+          // 2–3 items: vertical collage; 4+: swipeable fan stack
+          if (messagePart.attachments.length <= 3) {
+            return MessageImageCollage(
+              messagePart: messagePart,
+              cvController: cvController,
+              isEditing: isEditing,
+              fanDirection: fanDirection,
+              canSwipeToReply: canSwipeToReply,
+            );
+          }
+          return MessageImageStack(
             messagePart: messagePart,
             cvController: cvController,
-            isEditing: isEditing,
+            isInReply: false,
             fanDirection: fanDirection,
-            canSwipeToReply: canSwipeToReply,
+            isEditing: isEditing,
+            currentIndexNotifier: galleryCurrentIndexNotifier,
           );
         }
-        return MessageImageStack(
+        return MessageImageGrid(
           messagePart: messagePart,
           cvController: cvController,
-          isInReply: false,
-          fanDirection: fanDirection,
           isEditing: isEditing,
-          currentIndexNotifier: galleryCurrentIndexNotifier,
         );
       }
       return AttachmentHolder(

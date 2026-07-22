@@ -26,12 +26,15 @@ class AttachmentHolder extends StatefulWidget {
     required this.message,
     this.transparentBackground = false,
     this.showCardShadow = false,
+    this.inGridCell = false,
     this.galleryAttachments,
   });
 
   final MessagePart message;
   final bool transparentBackground;
   final bool showCardShadow;
+  /// When true, the attachment fills a square grid cell with no per-cell rounding or shadow.
+  final bool inGridCell;
   final List<Attachment>? galleryAttachments;
 
   @override
@@ -207,6 +210,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           cvController: controller.cvController,
           isInReply: isInReply,
           forceAllCornersRounded: widget.transparentBackground,
+          fillCell: widget.inGridCell,
           galleryAttachments: widget.galleryAttachments,
         );
       }
@@ -223,6 +227,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         cvController: controller.cvController,
         isInReply: isInReply,
         forceAllCornersRounded: widget.transparentBackground,
+        fillCell: widget.inGridCell,
         galleryAttachments: widget.galleryAttachments,
       );
     }
@@ -292,18 +297,32 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final hasError = state.hasError.value || message.error > 0;
         final hasPreview = state.resolvedFile.value != null ||
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
-        final transparentCard = hasPreview && (widget.transparentBackground || isPass || attachment.mimeStart == "image");
+        final transparentCard = hasPreview &&
+            ((widget.transparentBackground && !widget.inGridCell) || isPass || attachment.mimeStart == "image");
         // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
         // to fill the SizedBox dimensions set by MessageImageStack and have their
         // background clipped to rounded corners.
-        final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview;
+        final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview && !widget.inGridCell;
+        final shouldFillCell = widget.inGridCell;
         Widget content = Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: _buildOnTap(state),
             child: Ink(
               color: transparentCard ? Colors.transparent : context.theme.colorScheme.surfaceContainerHighest,
-              child: ConstrainedBox(
+              child: shouldFillCell
+                  ? SizedBox.expand(
+                      child: SendingOpacityWrapper(
+                        child: _buildContent(
+                          state: state,
+                          hideAttachments: hideAttachments,
+                          showTail: showTail,
+                          isInReply: isInReply,
+                          isiOS: isiOS,
+                        ),
+                      ),
+                    )
+                  : ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: NavigationSvc.width(context) * 0.5,
                   maxHeight: isInReply ? double.infinity : context.height * 0.6,
@@ -393,7 +412,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         // saveLayer bounded by the messages view repaint boundary. The dstOver blend
         // then fills every transparent pixel in that large layer with tertiaryContainer,
         // turning the entire messages view pink/purple while an attachment downloads.
-        if (!transparentCard && !widget.transparentBackground) {
+        if (!transparentCard && !widget.transparentBackground && !widget.inGridCell) {
           content = ColorFiltered(
             colorFilter: ColorFilter.mode(
               context.theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),

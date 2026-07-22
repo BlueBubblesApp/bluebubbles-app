@@ -24,7 +24,11 @@ if (message.hasApplePayloadData || message.isInteractive)
 else if (messagePart.text != null)
   → TextBubble                 // plain / attributed text
 else if (messagePart.attachments.isNotEmpty)
-  → AttachmentHolder           // image, video, audio, sticker, file
+  if (messagePart.isMediaGallery)
+    iOS skin  → MessageImageCollage (2–3) or MessageImageStack (4+)
+    other     → MessageImageGrid
+  else
+    → AttachmentHolder         // single image, video, audio, sticker, file
 else
   → SizedBox.shrink()          // empty part (renders nothing)
 ```
@@ -43,9 +47,9 @@ Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `Mess
 1. Animates `slide_to_reply.dart` indicator via the shared `replyOffset` `RxDouble`
 2. Sets `cvController.replyToMessage` with `MessageReplyContext` (optional `attachmentGuid` for per-attachment replies)
 
-Bubble-level: wraps the entire bubble Stack in `MessageHolder` (disabled for 2–3 item collages).
+Bubble-level: wraps the entire bubble Stack in `MessageHolder` (disabled for iOS 2–3 item collages; enabled for grid and iOS stack).
 
-Per-card: `CollectionAttachmentCard` with `enableSwipeToReply: true` (collage only) wraps each card independently and passes `attachmentGuid` so the composer preview shows the swiped image.
+Per-card: `CollectionAttachmentCard` with `enableSwipeToReply: true` (iOS collage only) wraps each card independently and passes `attachmentGuid` so the composer preview shows the swiped image. Grid cells do not use per-card swipe-to-reply.
 
 ## Bubble Effects
 

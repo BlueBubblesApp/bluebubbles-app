@@ -60,6 +60,8 @@ class CollectionAttachmentCard extends StatefulWidget {
     this.enableGestures = true,
     this.canSwipeToReply = false,
     this.enableSwipeToReply = false,
+    this.inGridCell = false,
+    this.hideReactions = false,
   });
 
   final MessageState controller;
@@ -71,6 +73,8 @@ class CollectionAttachmentCard extends StatefulWidget {
   final bool enableGestures;
   final bool canSwipeToReply;
   final bool enableSwipeToReply;
+  final bool inGridCell;
+  final bool hideReactions;
 
   @override
   State<CollectionAttachmentCard> createState() => _CollectionAttachmentCardState();
@@ -106,14 +110,16 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
           child: AttachmentHolder(
             message: scopedPart,
             transparentBackground: true,
-            showCardShadow: true,
+            showCardShadow: !widget.inGridCell,
+            inGridCell: widget.inGridCell,
             galleryAttachments: widget.collectionAttachments,
           ),
         ),
-        CollectionAttachmentReactions(
-          collectionPart: widget.collectionPart,
-          attachmentIndex: widget.attachmentIndex,
-        ),
+        if (!widget.hideReactions)
+          CollectionAttachmentReactions(
+            collectionPart: widget.collectionPart,
+            attachmentIndex: widget.attachmentIndex,
+          ),
       ],
     );
   }

@@ -25,9 +25,11 @@ class ImageViewer extends StatefulWidget {
     required this.isFromMe,
     this.controller,
     this.isInReply = false,
+    this.fillCell = false,
   });
 
   final ConversationViewController? controller;
+  final bool fillCell;
 
   @override
   State<StatefulWidget> createState() => _ImageViewerState();
@@ -74,6 +76,10 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     // Handle demo attachments
     if (attachment.guid!.contains("demo")) {
       return Image.asset(attachment.transferName!, fit: BoxFit.cover);
+    }
+
+    if (widget.fillCell) {
+      return _buildFillCellImage(context);
     }
 
     // In reply context use a compact blur canvas instead of the full viewer.
@@ -423,6 +429,51 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   : const SizedBox.shrink()),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Fills a grid cell with a cover-cropped image.
+  Widget _buildFillCellImage(BuildContext context) {
+    Widget image;
+    if (!kIsWeb && file.path != null) {
+      image = Image.file(
+        File(file.path!),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.high,
+        errorBuilder: (context, object, stacktrace) => ColoredBox(
+          color: context.theme.colorScheme.surfaceContainerHighest,
+          child: Center(
+            child: Icon(
+              iOS ? CupertinoIcons.photo : Icons.broken_image_outlined,
+              color: context.theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    } else if (file.bytes != null) {
+      image = Image.memory(
+        file.bytes!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.high,
+      );
+    } else {
+      image = ColoredBox(color: context.theme.colorScheme.surfaceContainerHighest);
+    }
+
+    return SizedBox.expand(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          image,
+          if (attachment.hasLivePhoto) buildLivePhotoOverlay(),
+        ],
       ),
     );
   }

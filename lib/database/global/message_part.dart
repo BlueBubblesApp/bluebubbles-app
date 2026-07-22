@@ -85,7 +85,7 @@ class MessagePart {
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 
   /// True when this part's attachments form a multi-item media group (>1 images/videos).
-  /// Used to route the part to [MessageImageCollage]/[MessageImageStack] instead of [AttachmentHolder].
+  /// Used to route the part to [MessageImageCollage]/[MessageImageStack]/[MessageImageGrid] instead of [AttachmentHolder].
   bool get isMediaGallery =>
       attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }
