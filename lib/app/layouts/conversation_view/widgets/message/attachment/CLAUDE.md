@@ -8,6 +8,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 |------|---------|
 | `attachment_holder.dart` | **Entry point** — MIME type dispatcher; manages download state |
 | `collection_attachment_card.dart` | Per-card popup, tapback, and swipe-to-reply wrapper for media collections |
+| `collection_media_grid_page.dart` | Full-page selectable grid for a message collection (reuses `MediaGridSection`) |
 | `message_image_collage.dart` | 2–3 item vertical overlapping collage (iOS skin) |
 | `message_image_stack.dart` | 4+ item swipeable fan stack (iOS skin) |
 | `message_image_grid.dart` | Multi-attachment grid layout (Material / Samsung skins) |
@@ -30,9 +31,11 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 **Media collections**: Multi-attachment image/video parts (`isMediaGallery`) are formed in `MessageHolder._collapseImageGalleryParts` (all skins) and route by skin:
 
 - **iOS**: `MessageImageCollage` (2–3) or `MessageImageStack` (4+ fan).
-- **Material / Samsung**: `MessageImageGrid` — Google Messages–style card: 2 side-by-side; 3 hero+pair; 4 as 2×2; 5+ hero with 2:1 bottom span + 1:1 stack (cap 5, `+N` on last). Shadow only on iOS skin.
+- **Material / Samsung**: `MessageImageGrid` - Google Messages–style grid card
 
 Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all gallery parts; tapbacks are card-local, not bubble-level. iOS collage cards also get per-card swipe-to-reply (`enableSwipeToReply: true`); the outer bubble-level swipe is disabled for iOS collages. Grid cells do not get per-card swipe-to-reply. iOS stack (4+) keeps outer bubble swipe to avoid conflicting with fan navigation.
+
+The stack "**X Items**" label and grid "**+N**" overlay open `CollectionMediaGridPage` — a selectable `MediaGridSection` of that message's attachments (same grid UX as conversation details Photos & Videos).
 
 ## Adding a New Attachment Type
 

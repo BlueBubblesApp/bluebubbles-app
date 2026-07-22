@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -179,26 +179,12 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     return tallest.clamp(minHeight, maxHeight);
   }
 
-  void _showStackPopup(BuildContext context, String title) {
-    showBBDialog(
-      useRootNavigator: false,
-      context: context,
+  void _openCollectionGrid(BuildContext context, String title) {
+    CollectionMediaGridPage.open(
+      context,
+      chat: widget.cvController.chat,
+      media: _attachments,
       title: title,
-      content: SizedBox(
-        width: 500,
-        height: 400,
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-          ),
-          itemCount: _attachments.length,
-          itemBuilder: (context, index) {
-            return MediaGalleryCard(attachment: _attachments[index], showSenderAvatar: false);
-          },
-        ),
-      ),
     );
   }
 
@@ -215,14 +201,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     // The deepest fan card stays inside the author-side edge (no bleed past the screen).
     final bool authorOnRight = widget.fanDirection == GalleryFanDirection.right;
     final direction = authorOnRight ? 1.0 : -1.0;
-    final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
-    final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
-    final totalCount = photoCount + videoCount;
-    final stackLabel = photoCount > 0 && videoCount > 0
-        ? '$totalCount Items'
-        : videoCount > 0
-            ? '$videoCount ${videoCount == 1 ? 'Video' : 'Videos'}'
-            : '$photoCount ${photoCount == 1 ? 'Photo' : 'Photos'}';
+    final stackLabel = CollectionMediaGridPage.titleForAttachments(_attachments);
 
     final double maxFanDx;
     if (widget.infiniteScroll) {
@@ -410,7 +389,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
                 onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
                 onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
                 child: GestureDetector(
-                  onTap: kIsDesktop ? () => _showStackPopup(context, stackLabel) : null,
+                  onTap: () => _openCollectionGrid(context, stackLabel),
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [

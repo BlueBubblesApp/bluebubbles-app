@@ -1,0 +1,161 @@
+import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_grid_section.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/app/state/chat_state_scope.dart';
+import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:get/get.dart';
+
+/// Full-page selectable grid of attachments from a single message media collection.
+///
+/// Reuses [MediaGridSection] (same grid + selection UX as conversation details).
+class CollectionMediaGridPage extends StatefulWidget {
+  const CollectionMediaGridPage({
+    super.key,
+    required this.chat,
+    required this.media,
+    required this.title,
+  });
+
+  final Chat chat;
+  final List<Attachment> media;
+  final String title;
+
+  static String titleForAttachments(List<Attachment> attachments) {
+    final photoCount = attachments.where((a) => a.mimeStart == 'image').length;
+    final videoCount = attachments.where((a) => a.mimeStart == 'video').length;
+    final totalCount = photoCount + videoCount;
+    if (photoCount > 0 && videoCount > 0) return '$totalCount Items';
+    if (videoCount > 0) return '$videoCount ${videoCount == 1 ? 'Video' : 'Videos'}';
+    return '$photoCount ${photoCount == 1 ? 'Photo' : 'Photos'}';
+  }
+
+  static void open(
+    BuildContext context, {
+    required Chat chat,
+    required List<Attachment> media,
+    String? title,
+  }) {
+    NavigationSvc.push(
+      context,
+      CollectionMediaGridPage(
+        chat: chat,
+        media: media,
+        title: title ?? titleForAttachments(media),
+      ),
+    );
+  }
+
+  @override
+  State<CollectionMediaGridPage> createState() => _CollectionMediaGridPageState();
+}
+
+class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with ThemeHelpers {
+  final RxList<String> selected = <String>[].obs;
+
+  void _downloadAttachments(Iterable<Attachment> attachments) {
+    for (final a in attachments) {
+      final file = AttachmentsSvc.getContent(a, autoDownload: false);
+      if (file is PlatformFile) {
+        AttachmentsSvc.saveToDisk(file);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chatState = ChatsSvc.getOrCreateChatState(widget.chat);
+    return ChatStateScope(
+      chatState: chatState,
+      child: Obx(() {
+        final isDark = ThemeSvc.inDarkMode(context);
+        chatState.themeVersion.value;
+        final themeName = isDark ? chatState.customThemeDark.value : chatState.customThemeLight.value;
+        final baseTheme = ThemeStruct.resolveByName(themeName, isDark ? Brightness.dark : Brightness.light).data;
+
+        final hasWindowEffect = SettingsSvc.settings.windowEffect.value != WindowEffect.disabled;
+        final reverseMapping = SettingsSvc.settings.skin.value == Skins.Material && isDark;
+        final rawHeaderColor = (isDark ? baseTheme.colorScheme.surface : baseTheme.colorScheme.surfaceContainerHighest)
+            .withAlpha(hasWindowEffect ? 20 : 255);
+        final rawTileColor = (isDark ? baseTheme.colorScheme.surfaceContainerHighest : baseTheme.colorScheme.surface)
+            .withAlpha(hasWindowEffect ? 100 : 255);
+        final scaffoldHeaderColor = reverseMapping ? rawTileColor : rawHeaderColor;
+        final scaffoldTileColor = reverseMapping ? rawHeaderColor : rawTileColor;
+
+        final bubbleColors = baseTheme.extensions[BubbleColors] as BubbleColors?;
+        final bubbleColor = widget.chat.isIMessage
+            ? bubbleColors?.iMessageBubbleColor ?? baseTheme.colorScheme.iMessageBubble
+            : bubbleColors?.smsBubbleColor ?? baseTheme.colorScheme.smsBubble;
+        final onBubbleColor = widget.chat.isIMessage
+            ? bubbleColors?.oniMessageBubbleColor ?? baseTheme.colorScheme.oniMessageBubble
+            : bubbleColors?.onSmsBubbleColor ?? baseTheme.colorScheme.onSmsBubble;
+        final useGeneratedThemeSurface = themeName != null
+            ? ThemesService.isGeneratedMaterialThemeName(themeName)
+            : ThemeSvc.isMaterialYouActive(context);
+
+        return Theme(
+          data: baseTheme.copyWith(
+            primaryColor: bubbleColor,
+            colorScheme: baseTheme.colorScheme.copyWith(
+              primary: bubbleColor,
+              onPrimary: onBubbleColor,
+              surface: useGeneratedThemeSurface ? null : bubbleColors?.receivedBubbleColor,
+              onSurface: useGeneratedThemeSurface ? null : bubbleColors?.onReceivedBubbleColor,
+            ),
+          ),
+          child: Obx(
+            () => SettingsScaffold(
+              headerColor: scaffoldHeaderColor,
+              title: widget.title,
+              tileColor: scaffoldTileColor,
+              initialHeader: null,
+              iosSubtitle: iosSubtitle,
+              materialSubtitle: materialSubtitle,
+              actions: [
+                Obx(() {
+                  if (selected.isEmpty) return const SizedBox.shrink();
+                  return IconButton(
+                    icon: Icon(iOS ? CupertinoIcons.xmark : Icons.close, color: context.theme.colorScheme.onSurface),
+                    onPressed: () => selected.clear(),
+                  );
+                }),
+                Obx(() {
+                  final inSelectionMode = selected.isNotEmpty;
+                  return IconButton(
+                    icon: Icon(
+                      iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                      color: inSelectionMode
+                          ? context.theme.colorScheme.onSurface
+                          : context.theme.colorScheme.primary,
+                    ),
+                    onPressed: () {
+                      if (inSelectionMode) {
+                        _downloadAttachments(widget.media.where((e) => selected.contains(e.guid!)));
+                      } else {
+                        _downloadAttachments(widget.media);
+                      }
+                    },
+                  );
+                }),
+              ],
+              bodySlivers: [
+                MediaGridSection(
+                  chat: widget.chat,
+                  media: widget.media,
+                  selected: selected,
+                  isLoading: false,
+                  fullPage: true,
+                  crossAxisCount: 3,
+                ),
+                const SliverPadding(padding: EdgeInsets.only(top: 50)),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}

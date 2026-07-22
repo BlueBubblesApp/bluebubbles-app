@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -94,7 +95,13 @@ class MessageImageGrid extends StatelessWidget {
           if (cellMoreCount == null || cellMoreCount <= 0) return null;
           return ClipRRect(
             borderRadius: _cellBorderRadius(count, index, cardRadius),
-            child: IgnorePointer(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => CollectionMediaGridPage.open(
+                context,
+                chat: cvController.chat,
+                media: _attachments,
+              ),
               child: ColoredBox(
                 color: Colors.black54,
                 child: Center(
