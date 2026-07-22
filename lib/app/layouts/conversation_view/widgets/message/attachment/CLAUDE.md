@@ -29,8 +29,8 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 
 **Media collections**: Multi-attachment image/video parts (`isMediaGallery`) are formed in `MessageHolder._collapseImageGalleryParts` (all skins) and route by skin:
 
-- **iOS**: `MessageImageCollage` (2–3 items) or `MessageImageStack` (4+ fan stack).
-- **Material / Samsung**: `MessageImageGrid` — single rounded card containing a gap-separated grid. Cells have square edges (no per-cell rounding) and images use cover fit to fill each cell. Layout: 2 items side-by-side; 3 items with a prominent top row; 4+ with a prominent top row and a bottom row (left = 2nd image, right = vertical stack of the rest). Caps at five visible cells; the fifth shows a `+N` overlay when more attachments exist.
+- **iOS**: `MessageImageCollage` (2–3) or `MessageImageStack` (4+ fan).
+- **Material / Samsung**: `MessageImageGrid` — Google Messages–style card: 2 side-by-side; 3 hero+pair; 4 as 2×2; 5+ hero with 2:1 bottom span + 1:1 stack (cap 5, `+N` on last). Shadow only on iOS skin.
 
 Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all gallery parts; tapbacks are card-local, not bubble-level. iOS collage cards also get per-card swipe-to-reply (`enableSwipeToReply: true`); the outer bubble-level swipe is disabled for iOS collages. Grid cells do not get per-card swipe-to-reply. iOS stack (4+) keeps outer bubble swipe to avoid conflicting with fan navigation.
 
