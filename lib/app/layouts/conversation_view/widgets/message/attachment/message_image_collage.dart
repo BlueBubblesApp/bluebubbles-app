@@ -50,7 +50,8 @@ class MessageImageCollage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardWidth = min(NavigationSvc.width(context) * 0.5, 260.0);
-    final fromMe = fanDirection == GalleryFanDirection.left;
+    // Matches MessagePartContent: from-me → right, received → left.
+    final fromMe = fanDirection == GalleryFanDirection.right;
 
     final heights = [for (final a in attachments) _estimateHeight(a, cardWidth)];
     final tops = <double>[];

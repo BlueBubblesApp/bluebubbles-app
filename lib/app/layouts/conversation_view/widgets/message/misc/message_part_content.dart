@@ -2,7 +2,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_collage.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_gallery.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
-import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -25,7 +24,6 @@ class MessagePartContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final message = MessageStateScope.messageOf(context);
-    final chat = ChatStateScope.chatOf(context);
     // Interactive messages (URL previews, GamePigeon, etc.)
     if (message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive) {
       return InteractiveHolder(
@@ -45,29 +43,21 @@ class MessagePartContent extends StatelessWidget {
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
       if (iOS && messagePart.isMediaGallery) {
         final fanDirection =
-            message.isFromMe == true ? GalleryFanDirection.left : GalleryFanDirection.right;
-        final padding = EdgeInsets.only(
-            left: !chat.isGroup && SettingsSvc.settings.alwaysShowAvatars.value == false ? 20 : 10);
+            message.isFromMe == true ? GalleryFanDirection.right : GalleryFanDirection.left;
         // 2–3 items: vertical collage; 4+: swipeable fan stack
         if (messagePart.attachments.length <= 3) {
-          return Padding(
-            padding: padding,
-            child: MessageImageCollage(
-              attachments: messagePart.attachments,
-              partIndex: messagePart.part,
-              fanDirection: fanDirection,
-            ),
-          );
-        }
-        return Padding(
-          padding: padding,
-          child: MessageImageGallery(
+          return MessageImageCollage(
             attachments: messagePart.attachments,
             partIndex: messagePart.part,
-            isInReply: false,
             fanDirection: fanDirection,
-            currentIndexNotifier: galleryCurrentIndexNotifier,
-          ),
+          );
+        }
+        return MessageImageGallery(
+          attachments: messagePart.attachments,
+          partIndex: messagePart.part,
+          isInReply: false,
+          fanDirection: fanDirection,
+          currentIndexNotifier: galleryCurrentIndexNotifier,
         );
       }
       return AttachmentHolder(
