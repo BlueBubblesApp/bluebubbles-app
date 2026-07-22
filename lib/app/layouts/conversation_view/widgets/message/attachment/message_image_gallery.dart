@@ -229,11 +229,21 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final direction = authorOnRight ? 1.0 : -1.0;
     final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
     final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
+    final totalCount = photoCount + videoCount;
     final galleryLabel = photoCount > 0 && videoCount > 0
-        ? '${photoCount + videoCount} Photos & Videos'
+        ? '$totalCount Items'
         : videoCount > 0
             ? '$videoCount ${videoCount == 1 ? 'Video' : 'Videos'}'
             : '$photoCount ${photoCount == 1 ? 'Photo' : 'Photos'}';
+
+    final double maxFanDx;
+    if (widget.infiniteScroll) {
+      maxFanDx = _fanSlotDx.last;
+    } else {
+      final futureCount = _attachments.length - _currentIndex - 1;
+      final visibleFuture = min(futureCount, _visibleFanSlots - 1);
+      maxFanDx = visibleFuture > 0 ? _fanSlotDx[visibleFuture] : 0.0;
+    }
 
     final stackChildren = <Widget>[];
 
@@ -255,7 +265,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     }
 
     if (widget.infiniteScroll) {
-      final maxFanDx = _fanSlotDx.last;
       stackChildren.addAll(List.generate(_attachments.length, (i) {
         final attachment = _attachmentAtOffset(i);
         return _buildFanCard(
@@ -270,11 +279,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         );
       }).reversed);
     } else {
-      final futureCount = _attachments.length - _currentIndex - 1;
       final pastCount = _currentIndex;
       final visiblePast = min(pastCount, _maxPastCards);
+      final futureCount = _attachments.length - _currentIndex - 1;
       final visibleFuture = min(futureCount, _visibleFanSlots - 1);
-      final maxFanDx = visibleFuture > 0 ? _fanSlotDx[visibleFuture] : 0.0;
 
       for (int p = visiblePast; p >= 1; p--) {
         final attachment = _attachments[_currentIndex - p];
@@ -399,17 +407,9 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: authorOnRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: fanCanvasWidth,
-              height: fanCanvasHeight,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: stackChildren,
-              ),
-            ),
-            const SizedBox(height: 4),
             Padding(
-              padding: authorOnRight ? const EdgeInsets.only(right: 4) : const EdgeInsets.only(left: 4),
+              // Match the front card's inset from the author edge (maxFanDx).
+              padding: authorOnRight ? EdgeInsets.only(right: maxFanDx) : EdgeInsets.only(left: maxFanDx),
               child: MouseRegion(
                 onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
                 onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
@@ -454,6 +454,15 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
                     ],
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              width: fanCanvasWidth,
+              height: fanCanvasHeight,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: stackChildren,
               ),
             ),
           ],
