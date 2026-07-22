@@ -165,6 +165,11 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
       }
 
       if (groupedAttachments.length > 1) {
+        // Single source part: iMessage uses attachment ordinals (0, 1, 2…) as
+        // associatedMessagePart for per-attachment tapbacks.
+        final partIndices = j == i + 1
+            ? List.generate(groupedAttachments.length, (k) => k)
+            : groupedPartIndices;
         collapsed.add(MessagePart(
           attachments: groupedAttachments,
           part: current.part,
@@ -172,7 +177,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
           mentions: const [],
           edits: const [],
           isUnsent: current.isUnsent,
-          attachmentPartIndices: groupedPartIndices,
+          attachmentPartIndices: partIndices,
         ));
       } else {
         collapsed.add(current);
@@ -328,37 +333,38 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                           : MessageSender(olderMessage: olderMessage),
                                     ),
                                   // add a box to account for height of reactions
-                                  iOS &&
-                                          !widget.isReplyThread &&
-                                          message.threadOriginatorGuid != null &&
-                                          replyTo != null &&
-                                          replyTo!.isFromMe!
-                                      ? SizedBox(
-                                          width: double.infinity,
-                                          child: CustomPaint(
-                                            painter: _ReplyLinePainter(
-                                              color: context.theme.colorScheme.surfaceContainerHighest,
-                                              isFromMe: message.isFromMe!,
+                                  if (!(iOS && e.isMediaGallery))
+                                    iOS &&
+                                            !widget.isReplyThread &&
+                                            message.threadOriginatorGuid != null &&
+                                            replyTo != null &&
+                                            replyTo!.isFromMe!
+                                        ? SizedBox(
+                                            width: double.infinity,
+                                            child: CustomPaint(
+                                              painter: _ReplyLinePainter(
+                                                color: context.theme.colorScheme.surfaceContainerHighest,
+                                                isFromMe: message.isFromMe!,
+                                              ),
+                                              child: ReactionSpacing(
+                                                messageParts: messageParts,
+                                                part: e,
+                                                reactionsForPart: reactionsForPart,
+                                                minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
+                                              ),
                                             ),
-                                            child: ReactionSpacing(
-                                              messageParts: messageParts,
-                                              part: e,
-                                              reactionsForPart: reactionsForPart,
-                                              minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
-                                            ),
+                                          )
+                                        : ReactionSpacing(
+                                            messageParts: messageParts,
+                                            part: e,
+                                            reactionsForPart: reactionsForPart,
+                                            minHeightWhenNoReactions: iOS &&
+                                                    !widget.isReplyThread &&
+                                                    message.threadOriginatorGuid != null &&
+                                                    message.isFromMe!
+                                                ? 8
+                                                : 0,
                                           ),
-                                        )
-                                      : ReactionSpacing(
-                                          messageParts: messageParts,
-                                          part: e,
-                                          reactionsForPart: reactionsForPart,
-                                          minHeightWhenNoReactions: iOS &&
-                                                  !widget.isReplyThread &&
-                                                  message.threadOriginatorGuid != null &&
-                                                  message.isFromMe!
-                                              ? 8
-                                              : 0,
-                                        ),
                                   if (!iOS &&
                                       index == 0 &&
                                       !widget.isReplyThread &&
@@ -500,15 +506,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    enableGestures: !(iOS &&
-                                                                        e.isMediaGallery &&
-                                                                        e.attachments.length <= 3),
-                                                                    galleryCurrentIndex: iOS &&
-                                                                            e.isMediaGallery &&
-                                                                            e.attachments.length > 3
-                                                                        ? _galleryIndices.putIfAbsent(
-                                                                            e.part, () => ValueNotifier(0))
-                                                                        : null,
+                                                                    enableGestures: !(iOS && e.isMediaGallery),
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply && !isEditing(e.part),
                                                                       partIndex: index,
@@ -581,14 +579,13 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     ),
                                                                   ),
                                                                 ),
-                                                                // Reactions are in the inner Stack so they are always
-                                                                // positioned relative to the bubble, not the sticker
-                                                                MessageReactions(
-                                                                  messageParts: messageParts,
-                                                                  part: e,
-                                                                  chatGuid: chat.guid,
-                                                                  reactionsForPart: reactionsForPart,
-                                                                ),
+                                                                if (!(iOS && e.isMediaGallery))
+                                                                  MessageReactions(
+                                                                    messageParts: messageParts,
+                                                                    part: e,
+                                                                    chatGuid: chat.guid,
+                                                                    reactionsForPart: reactionsForPart,
+                                                                  ),
                                                               ],
                                                             ),
                                                             // Stickers are in the outer Stack so they contribute to

@@ -7,6 +7,9 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 | File | Purpose |
 |------|---------|
 | `attachment_holder.dart` | **Entry point** — MIME type dispatcher; manages download state |
+| `collection_attachment_card.dart` | Per-card popup + tapback wrapper for media collections (collage/stack) |
+| `message_image_collage.dart` | 2–3 item vertical overlapping collage (iOS skin) |
+| `message_image_stack.dart` | 4+ item swipeable fan stack (iOS skin) |
 | `image_viewer.dart` | Images with tap-to-fullscreen gesture |
 | `video_player.dart` | Video playback with custom controls |
 | `audio_player.dart` | Audio playback with progress bar |
@@ -22,6 +25,8 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 **Controller**: Extends `CustomStateful<MessageWidgetController>`. Always set `forceDelete = false` in `initState()` — the message list owns the controller lifecycle.
 
 **Fullscreen**: Tap on `ImageViewer` or `VideoPlayer` pushes `FullscreenMedia` via `NavigationSvc`. See `lib/app/layouts/fullscreen_media/CLAUDE.md`.
+
+**Media collections (iOS)**: Multi-attachment image/video parts route to `MessageImageCollage` (2–3 items) or `MessageImageStack` (4+). Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all iOS gallery parts; tapbacks are card-local, not bubble-level.
 
 ## Adding a New Attachment Type
 

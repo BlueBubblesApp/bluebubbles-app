@@ -55,7 +55,9 @@ class MessagePart {
   /// Null for non-gallery parts or single-source-part galleries.
   List<int>? attachmentPartIndices;
 
-  /// Returns the original message part index for the attachment at [index].
+  /// Returns the associated-message part index for the attachment at [index].
+  /// For single-part collections, indices are attachment ordinals (0, 1, 2…) used
+  /// as [associatedMessagePart] targets for per-attachment tapbacks.
   /// Falls back to [part] if [attachmentPartIndices] is not set.
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
 

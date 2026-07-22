@@ -58,10 +58,11 @@ class MessagePartContent extends StatelessWidget {
           );
         }
         return MessageImageStack(
-          attachments: messagePart.attachments,
-          partIndex: messagePart.part,
+          messagePart: messagePart,
+          cvController: cvController,
           isInReply: false,
           fanDirection: fanDirection,
+          isEditing: isEditing,
           currentIndexNotifier: galleryCurrentIndexNotifier,
         );
       }

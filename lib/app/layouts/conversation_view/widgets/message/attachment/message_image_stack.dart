@@ -3,7 +3,9 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
+import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -21,20 +23,24 @@ enum GalleryFanDirection {
 class MessageImageStack extends StatefulWidget {
   const MessageImageStack({
     super.key,
-    required this.attachments,
-    required this.partIndex,
+    required this.messagePart,
+    required this.cvController,
     required this.isInReply,
     required this.fanDirection,
+    this.isEditing = false,
     this.infiniteScroll = false,
     this.currentIndexNotifier,
   });
 
-  final List<Attachment> attachments;
-  final int partIndex;
+  final MessagePart messagePart;
+  final ConversationViewController cvController;
   final bool isInReply;
   final GalleryFanDirection fanDirection;
+  final bool isEditing;
   final bool infiniteScroll;
   final ValueNotifier<int>? currentIndexNotifier;
+
+  List<Attachment> get attachments => messagePart.attachments;
 
   @override
   State<MessageImageStack> createState() => _MessageImageStackState();
@@ -153,24 +159,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     widget.currentIndexNotifier?.value = _currentIndex;
   }
 
-  Attachment _attachmentAtOffset(int offset) {
-    final index = (_currentIndex + offset) % _attachments.length;
-    return _attachments[index];
-  }
-
-  MessagePart _partForAttachment(Attachment attachment) {
-    return MessagePart(
-      part: widget.partIndex,
-      attachments: [attachment],
-      shouldRedact: false,
-      text: null,
-      subject: null,
-      mentions: const [],
-      edits: const [],
-      isUnsent: false,
-    );
-  }
-
   double _computeBaseCardHeight(double baseCardWidth) {
     if (widget.isInReply) return 120.0;
 
@@ -266,9 +254,11 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
 
     if (widget.infiniteScroll) {
       stackChildren.addAll(List.generate(_attachments.length, (i) {
-        final attachment = _attachmentAtOffset(i);
+        final attachmentIndex = (_currentIndex + i) % _attachments.length;
         return _buildFanCard(
-          attachment: attachment,
+          attachmentIndex: attachmentIndex,
+          attachment: _attachments[attachmentIndex],
+          messageState: MessageStateScope.of(context),
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -285,10 +275,12 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       final visibleFuture = min(futureCount, _visibleFanSlots - 1);
 
       for (int p = visiblePast; p >= 1; p--) {
-        final attachment = _attachments[_currentIndex - p];
+        final attachmentIndex = _currentIndex - p;
         final slot = (p - 1).clamp(0, _maxPastCards - 1);
         stackChildren.add(_buildPastCard(
-          attachment: attachment,
+          attachmentIndex: attachmentIndex,
+          attachment: _attachments[attachmentIndex],
+          messageState: MessageStateScope.of(context),
           slotIndex: slot,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -298,9 +290,11 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       }
 
       for (int f = visibleFuture; f >= 1; f--) {
-        final attachment = _attachments[_currentIndex + f];
+        final attachmentIndex = _currentIndex + f;
         stackChildren.add(_buildFanCard(
-          attachment: attachment,
+          attachmentIndex: attachmentIndex,
+          attachment: _attachments[attachmentIndex],
+          messageState: MessageStateScope.of(context),
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -312,7 +306,9 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       }
 
       stackChildren.add(_buildFanCard(
+        attachmentIndex: _currentIndex,
         attachment: _attachments[_currentIndex],
+        messageState: MessageStateScope.of(context),
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
@@ -472,7 +468,9 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
   }
 
   Widget _buildFanCard({
+    required int attachmentIndex,
     required Attachment attachment,
+    required MessageState messageState,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -511,11 +509,14 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           alignment: authorOnRight ? Alignment.bottomLeft : Alignment.bottomRight,
           child: IgnorePointer(
             ignoring: !isCurrent,
-            child: AttachmentHolder(
-              message: _partForAttachment(attachment),
-              transparentBackground: true,
-              showCardShadow: true,
-              galleryAttachments: _attachments,
+            child: CollectionAttachmentCard(
+              controller: messageState,
+              cvController: widget.cvController,
+              collectionPart: widget.messagePart,
+              attachmentIndex: attachmentIndex,
+              collectionAttachments: _attachments,
+              isEditing: widget.isEditing,
+              enableGestures: isCurrent,
             ),
           ),
         ),
@@ -524,7 +525,9 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
   }
 
   Widget _buildPastCard({
+    required int attachmentIndex,
     required Attachment attachment,
+    required MessageState messageState,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -559,11 +562,14 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
             alignment: authorOnRight ? Alignment.bottomRight : Alignment.bottomLeft,
             child: IgnorePointer(
               ignoring: true,
-              child: AttachmentHolder(
-                message: _partForAttachment(attachment),
-                transparentBackground: true,
-                showCardShadow: true,
-                galleryAttachments: _attachments,
+              child: CollectionAttachmentCard(
+                controller: messageState,
+                cvController: widget.cvController,
+                collectionPart: widget.messagePart,
+                attachmentIndex: attachmentIndex,
+                collectionAttachments: _attachments,
+                isEditing: widget.isEditing,
+                enableGestures: false,
               ),
             ),
           ),
