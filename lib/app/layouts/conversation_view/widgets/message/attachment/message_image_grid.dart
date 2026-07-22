@@ -36,13 +36,23 @@ class MessageImageGrid extends StatelessWidget {
   static const double _bottomRowHeightRatio = 0.45;
   static const double _iosCardRadius = 8.0;
   static const double _materialCardRadius = 16.0;
+  /// Matches Samsung settings section cards ([SettingsSection]).
+  static const double _samsungCardRadius = 25.0;
   /// Matches [TailClipper] author-side inset on Material bubbles.
   static const double _materialTailInset = 10.0;
 
   List<Attachment> get _attachments => messagePart.attachments;
 
-  double get _cardRadius =>
-      SettingsSvc.settings.skin.value == Skins.iOS ? _iosCardRadius : _materialCardRadius;
+  double get _cardRadius {
+    switch (SettingsSvc.settings.skin.value) {
+      case Skins.Samsung:
+        return _samsungCardRadius;
+      case Skins.iOS:
+        return _iosCardRadius;
+      case Skins.Material:
+        return _materialCardRadius;
+    }
+  }
 
   /// One column of the 5+ bottom row (3 columns with two gaps).
   double _columnWidth(double gridWidth) => (gridWidth - 2 * _gap) / 3;
