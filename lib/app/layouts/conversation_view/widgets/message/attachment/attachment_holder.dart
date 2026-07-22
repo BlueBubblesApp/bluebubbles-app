@@ -294,7 +294,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
         final transparentCard = hasPreview && (widget.transparentBackground || isPass || attachment.mimeStart == "image");
         // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
-        // to fill the SizedBox dimensions set by MessageImageGallery and have their
+        // to fill the SizedBox dimensions set by MessageImageStack and have their
         // background clipped to rounded corners.
         final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview;
         Widget content = Material(

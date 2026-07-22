@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_collage.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_gallery.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
@@ -52,7 +52,7 @@ class MessagePartContent extends StatelessWidget {
             fanDirection: fanDirection,
           );
         }
-        return MessageImageGallery(
+        return MessageImageStack(
           attachments: messagePart.attachments,
           partIndex: messagePart.part,
           isInReply: false,

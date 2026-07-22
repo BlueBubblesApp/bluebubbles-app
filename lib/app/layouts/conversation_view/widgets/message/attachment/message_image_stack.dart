@@ -18,8 +18,8 @@ enum GalleryFanDirection {
   right,
 }
 
-class MessageImageGallery extends StatefulWidget {
-  const MessageImageGallery({
+class MessageImageStack extends StatefulWidget {
+  const MessageImageStack({
     super.key,
     required this.attachments,
     required this.partIndex,
@@ -37,10 +37,10 @@ class MessageImageGallery extends StatefulWidget {
   final ValueNotifier<int>? currentIndexNotifier;
 
   @override
-  State<MessageImageGallery> createState() => _MessageImageGalleryState();
+  State<MessageImageStack> createState() => _MessageImageStackState();
 }
 
-class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHelpers {
+class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers {
   static const int _visibleFanSlots = 5;
   static const int _maxPastCards = 3;
   static const double _swipeCommitThreshold = 70;
@@ -76,7 +76,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   }
 
   @override
-  void didUpdateWidget(covariant MessageImageGallery oldWidget) {
+  void didUpdateWidget(covariant MessageImageStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     final oldKeys = oldWidget.attachments.map((a) => a.guid ?? a.transferName).toList();
     final newKeys = widget.attachments.map((a) => a.guid ?? a.transferName).toList();
@@ -191,7 +191,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     return tallest.clamp(minHeight, maxHeight);
   }
 
-  void _showGalleryPopup(BuildContext context, String title) {
+  void _showStackPopup(BuildContext context, String title) {
     showBBDialog(
       useRootNavigator: false,
       context: context,
@@ -230,7 +230,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
     final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
     final totalCount = photoCount + videoCount;
-    final galleryLabel = photoCount > 0 && videoCount > 0
+    final stackLabel = photoCount > 0 && videoCount > 0
         ? '$totalCount Items'
         : videoCount > 0
             ? '$videoCount ${videoCount == 1 ? 'Video' : 'Videos'}'
@@ -414,7 +414,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
                 onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
                 onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
                 child: GestureDetector(
-                  onTap: kIsDesktop ? () => _showGalleryPopup(context, galleryLabel) : null,
+                  onTap: kIsDesktop ? () => _showStackPopup(context, stackLabel) : null,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -443,7 +443,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            galleryLabel,
+                            stackLabel,
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.bold,
