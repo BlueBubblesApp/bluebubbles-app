@@ -18,6 +18,54 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Ctrl+C tears PowerShell down before `finally`/`trap` get a look in, and the fvm/flutter/dart
+# batch shims leave dart.exe, MSBuild and friends building away in the background. So take the
+# console signal in .NET instead — it fires on a separate thread while the build command is
+# still blocking the main one — kill the process tree from there, then exit.
+Add-Type -Name Ctrl -Namespace Build -MemberDefinition @'
+    [DllImport("kernel32.dll")] static extern uint GetConsoleProcessList(uint[] pids, uint count);
+    [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int which);
+    [DllImport("kernel32.dll")] static extern bool GetConsoleMode(IntPtr handle, out uint mode);
+    [DllImport("kernel32.dll")] static extern bool SetConsoleMode(IntPtr handle, uint mode);
+
+    static uint _inMode, _outMode;
+    static System.Collections.Generic.List<int> _spare;   // us, plus whatever was here first
+
+    // Everything attached to this console: the set Windows warns about when you close the tab,
+    // and unlike a parent-PID walk it still finds a dart.exe whose cmd.exe shim already exited.
+    // ponytail: misses anything that made its own console — that doesn't hold the tab open either.
+    static System.Collections.Generic.List<int> Attached() {
+        var pids = new uint[256];
+        uint found = GetConsoleProcessList(pids, 256);
+        var list = new System.Collections.Generic.List<int>();
+        for (int i = 0; i < found && i < 256; i++) list.Add((int)pids[i]);
+        return list;
+    }
+
+    public static void KillTreeOnCtrlC() {
+        _spare = Attached();
+        GetConsoleMode(GetStdHandle(-10), out _inMode);
+        GetConsoleMode(GetStdHandle(-11), out _outMode);
+        System.Console.CancelKeyPress += delegate(object sender, System.ConsoleCancelEventArgs e) {
+            // e.Cancel stays false: kill what the build started, then let PowerShell handle the
+            // signal as usual. Killing this process too would take the terminal with it.
+            foreach (var pid in Attached()) {
+                if (_spare.Contains(pid)) continue;
+                try {
+                    var p = System.Diagnostics.Process.GetProcessById(pid);
+                    System.Console.Error.WriteLine("Stopping " + p.ProcessName + " (" + pid + ")");
+                    p.Kill();
+                } catch { }   // already gone, or not ours to touch
+            }
+            // A killed dart.exe never restores the console mode it changed
+            SetConsoleMode(GetStdHandle(-10), _inMode);
+            SetConsoleMode(GetStdHandle(-11), _outMode);
+            System.Console.Error.WriteLine("Build cancelled.");
+        };
+    }
+'@
+[Build.Ctrl]::KillTreeOnCtrlC()
+
 # Flutter version to build with; override with the FLUTTER_VERSION env var.
 $flutterVersion = if ($env:FLUTTER_VERSION) { $env:FLUTTER_VERSION } else { '3.44.6' }
 
