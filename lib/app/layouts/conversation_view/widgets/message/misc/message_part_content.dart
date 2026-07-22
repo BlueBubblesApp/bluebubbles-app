@@ -15,10 +15,14 @@ class MessagePartContent extends StatelessWidget {
   const MessagePartContent({
     super.key,
     required this.messagePart,
+    required this.cvController,
+    this.isEditing = false,
     this.galleryCurrentIndexNotifier,
   });
 
   final MessagePart messagePart;
+  final ConversationViewController cvController;
+  final bool isEditing;
   final ValueNotifier<int>? galleryCurrentIndexNotifier;
 
   @override
@@ -47,8 +51,9 @@ class MessagePartContent extends StatelessWidget {
         // 2–3 items: vertical collage; 4+: swipeable fan stack
         if (messagePart.attachments.length <= 3) {
           return MessageImageCollage(
-            attachments: messagePart.attachments,
-            partIndex: messagePart.part,
+            messagePart: messagePart,
+            cvController: cvController,
+            isEditing: isEditing,
             fanDirection: fanDirection,
           );
         }

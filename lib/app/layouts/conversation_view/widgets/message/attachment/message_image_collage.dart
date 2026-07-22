@@ -2,6 +2,9 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
+import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -9,27 +12,32 @@ import 'package:flutter/material.dart';
 /// Vertical overlapping collage for 2–3 media attachments (iOS skin).
 ///
 /// Even indexes sit flush to the author side; odd indexes get a horizontal stagger.
-/// Lower cards overlap the ones above them. Each card is an independent [AttachmentHolder].
+/// Lower cards overlap the ones above them. Each card is an independent [AttachmentHolder]
+/// wrapped in its own [MessagePopupHolder] so long-press targets that attachment.
 class MessageImageCollage extends StatelessWidget {
   const MessageImageCollage({
     super.key,
-    required this.attachments,
-    required this.partIndex,
+    required this.messagePart,
+    required this.cvController,
     required this.fanDirection,
+    this.isEditing = false,
   });
 
-  final List<Attachment> attachments;
-  final int partIndex;
+  final MessagePart messagePart;
+  final ConversationViewController cvController;
   final GalleryFanDirection fanDirection;
+  final bool isEditing;
 
   static const double _horizontalStagger = 20.0;
   static const double _verticalOverlap = 32.0;
 
-  MessagePart _partForAttachment(Attachment attachment) {
+  List<Attachment> get _attachments => messagePart.attachments;
+
+  MessagePart _partForAttachment(int index) {
     return MessagePart(
-      part: partIndex,
-      attachments: [attachment],
-      shouldRedact: false,
+      part: messagePart.partIndexForAttachment(index),
+      attachments: [_attachments[index]],
+      shouldRedact: messagePart.shouldRedact,
       text: null,
       subject: null,
       mentions: const [],
@@ -49,11 +57,12 @@ class MessageImageCollage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final messageState = MessageStateScope.of(context);
     final cardWidth = min(NavigationSvc.width(context) * 0.5, 260.0);
     // Matches MessagePartContent: from-me → right, received → left.
     final fromMe = fanDirection == GalleryFanDirection.right;
 
-    final heights = [for (final a in attachments) _estimateHeight(a, cardWidth)];
+    final heights = [for (final a in _attachments) _estimateHeight(a, cardWidth)];
     final tops = <double>[];
     double y = 0;
     for (int i = 0; i < heights.length; i++) {
@@ -70,7 +79,7 @@ class MessageImageCollage extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          for (int i = 0; i < attachments.length; i++)
+          for (int i = 0; i < _attachments.length; i++)
             Positioned(
               top: tops[i],
               // Even indexes flush to author; odd indexes shift toward center.
@@ -78,14 +87,25 @@ class MessageImageCollage extends StatelessWidget {
                   ? (i.isOdd ? 0.0 : _horizontalStagger)
                   : (i.isOdd ? _horizontalStagger : 0.0),
               width: cardWidth,
-              child: AttachmentHolder(
-                message: _partForAttachment(attachments[i]),
-                transparentBackground: true,
-                showCardShadow: true,
-                galleryAttachments: attachments,
-              ),
+              child: _buildCard(messageState, i),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCard(MessageState messageState, int index) {
+    final part = _partForAttachment(index);
+    return MessagePopupHolder(
+      controller: messageState,
+      cvController: cvController,
+      isEditing: isEditing,
+      part: part,
+      child: AttachmentHolder(
+        message: part,
+        transparentBackground: true,
+        showCardShadow: true,
+        galleryAttachments: _attachments,
       ),
     );
   }

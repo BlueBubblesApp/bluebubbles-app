@@ -24,6 +24,7 @@ class MessagePopupHolder extends StatefulWidget {
     required this.cvController,
     required this.isEditing,
     this.galleryCurrentIndex,
+    this.enableGestures = true,
   });
 
   final Widget child;
@@ -35,6 +36,10 @@ class MessagePopupHolder extends StatefulWidget {
   /// For gallery parts: tracks which attachment is currently at the front.
   /// When set, [openPopup] scopes the popup to just the selected attachment.
   final ValueNotifier<int>? galleryCurrentIndex;
+
+  /// When false, skips the long-press / right-click / double-tap detector so a
+  /// descendant [MessagePopupHolder] (e.g. per-card collage) can own gestures.
+  final bool enableGestures;
 
   @override
   State<StatefulWidget> createState() => _MessagePopupHolderState();
@@ -218,6 +223,10 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.enableGestures) {
+      return widget.child;
+    }
+
     return Obx(() {
       final isTempMessage = widget.controller.isSending.value;
       return GestureDetector(

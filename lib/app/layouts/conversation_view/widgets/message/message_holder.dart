@@ -500,7 +500,12 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    galleryCurrentIndex: e.isMediaGallery
+                                                                    enableGestures: !(iOS &&
+                                                                        e.isMediaGallery &&
+                                                                        e.attachments.length <= 3),
+                                                                    galleryCurrentIndex: iOS &&
+                                                                            e.isMediaGallery &&
+                                                                            e.attachments.length > 3
                                                                         ? _galleryIndices.putIfAbsent(
                                                                             e.part, () => ValueNotifier(0))
                                                                         : null,
@@ -512,13 +517,16 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                       child: Builder(
                                                                         builder: (_) {
                                                                           final isGallery = iOS && e.isMediaGallery;
+                                                                          final isStack =
+                                                                              isGallery && e.attachments.length > 3;
                                                                           final inner = Stack(
                                                                             alignment: Alignment.centerRight,
                                                                             children: [
                                                                               MessagePartContent(
                                                                                 messagePart: e,
-                                                                                galleryCurrentIndexNotifier: e
-                                                                                        .isMediaGallery
+                                                                                cvController: widget.cvController,
+                                                                                isEditing: isEditing(e.part),
+                                                                                galleryCurrentIndexNotifier: isStack
                                                                                     ? _galleryIndices.putIfAbsent(
                                                                                         e.part, () => ValueNotifier(0))
                                                                                     : null,
