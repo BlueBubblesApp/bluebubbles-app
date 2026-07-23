@@ -149,6 +149,7 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                   isLoading: false,
                   fullPage: true,
                   crossAxisCount: 3,
+                  showSenderAvatar: false,
                 ),
                 const SliverPadding(padding: EdgeInsets.only(top: 50)),
               ],

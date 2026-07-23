@@ -25,6 +25,7 @@ class MediaGridSection extends StatefulWidget {
   final MediaSenderFilter senderFilter;
   final DateTime? sinceDate;
   final ValueChanged<MediaFilter>? onMediaFilterChanged;
+  final bool showSenderAvatar;
 
   const MediaGridSection({
     super.key,
@@ -38,6 +39,7 @@ class MediaGridSection extends StatefulWidget {
     this.senderFilter = const MediaSenderFilter.any(),
     this.sinceDate,
     this.onMediaFilterChanged,
+    this.showSenderAvatar = true,
   });
 
   @override
@@ -133,6 +135,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
                 children: [
                   MediaGalleryCard(
                     attachment: attachment,
+                    showSenderAvatar: widget.showSenderAvatar,
                   ),
                   if (widget.selected.contains(attachment.guid))
                     Container(
