@@ -8,6 +8,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 |------|---------|
 | `attachment_holder.dart` | **Entry point** — MIME type dispatcher; manages download state |
 | `collection_attachment_card.dart` | Per-card popup, tapback, and swipe-to-reply wrapper for media collections |
+| `collection_download_button.dart` | Incoming-only circular download control shared by collage/stack |
 | `collection_media_grid_page.dart` | Full-page grid for a message collection (reuses `MediaGridSection`) |
 | `message_image_collage.dart` | 2–3 item vertical overlapping collage (iOS skin) |
 | `message_image_stack.dart` | 4+ item swipeable fan stack (iOS skin) |
@@ -34,6 +35,8 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 - **Material / Samsung**: `MessageImageGrid` - Google Messages–style grid card
 
 Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all gallery parts; tapbacks are card-local, not bubble-level. iOS collage cards also get per-card swipe-to-reply (`enableSwipeToReply: true`); the outer bubble-level swipe is disabled for iOS collages. Grid cells do not get per-card swipe-to-reply. iOS stack (4+) keeps outer bubble swipe to avoid conflicting with fan navigation.
+
+Incoming iOS collage/stack collections show a `CollectionDownloadButton` to the right of the media (save-to-disk for attachments already on disk). Outgoing collections and non-iOS skins do not.
 
 The stack "**X Items**" label and grid "**+N**" overlay open `CollectionMediaGridPage`. Fullscreen viewers opened from a collection (`galleryAttachments`) also show a grid button that opens the same page.
 

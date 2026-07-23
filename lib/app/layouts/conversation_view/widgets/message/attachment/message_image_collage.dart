@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -61,7 +62,7 @@ class MessageImageCollage extends StatelessWidget {
     final totalHeight = tops.isEmpty ? 0.0 : tops.last + heights.last;
     final totalWidth = cardWidth + _horizontalStagger;
 
-    return SizedBox(
+    final collage = SizedBox(
       width: totalWidth,
       height: totalHeight,
       child: Stack(
@@ -79,6 +80,18 @@ class MessageImageCollage extends StatelessWidget {
             ),
         ],
       ),
+    );
+
+    if (fromMe || !CollectionDownloadButton.isSupported) return collage;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        collage,
+        const SizedBox(width: CollectionDownloadButton.gap),
+        CollectionDownloadButton(attachments: _attachments),
+      ],
     );
   }
 

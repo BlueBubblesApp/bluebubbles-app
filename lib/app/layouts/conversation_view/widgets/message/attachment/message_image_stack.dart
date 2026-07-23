@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -227,6 +228,21 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
               });
             },
           ),
+        ),
+      );
+    }
+
+    // Incoming iOS only: beside the front card, behind cards so swipes paint over it,
+    // above the advance tap fill so it stays tappable when uncovered.
+    if (!authorOnRight && CollectionDownloadButton.isSupported) {
+      stackChildren.add(
+        Positioned(
+          right: (fanCanvasWidth - baseCardWidth - maxFanDx) -
+              CollectionDownloadButton.size -
+              CollectionDownloadButton.gap,
+          top: 0,
+          bottom: 0,
+          child: Center(child: CollectionDownloadButton(attachments: _attachments)),
         ),
       );
     }
