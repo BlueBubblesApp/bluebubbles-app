@@ -407,10 +407,11 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                                         padding: const EdgeInsets.only(right: 5),
                                         child: CupertinoButton(
                                           padding: const EdgeInsets.symmetric(horizontal: 5),
+                                          minSize: 0,
                                           onPressed: widget.onOpenCollectionGrid,
-                                          child: Icon(
-                                            Icons.grid_view_rounded,
-                                            color: context.theme.colorScheme.primary,
+                                          child: const Icon(
+                                            Icons.grid_view_outlined,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ),
