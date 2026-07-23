@@ -332,38 +332,37 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                           : MessageSender(olderMessage: olderMessage),
                                     ),
                                   // add a box to account for height of reactions
-                                  if (!e.isMediaGallery)
-                                    iOS &&
-                                            !widget.isReplyThread &&
-                                            message.threadOriginatorGuid != null &&
-                                            replyTo != null &&
-                                            replyTo!.isFromMe!
-                                        ? SizedBox(
-                                            width: double.infinity,
-                                            child: CustomPaint(
-                                              painter: _ReplyLinePainter(
-                                                color: context.theme.colorScheme.surfaceContainerHighest,
-                                                isFromMe: message.isFromMe!,
-                                              ),
-                                              child: ReactionSpacing(
-                                                messageParts: messageParts,
-                                                part: e,
-                                                reactionsForPart: reactionsForPart,
-                                                minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
-                                              ),
+                                  iOS &&
+                                          !widget.isReplyThread &&
+                                          message.threadOriginatorGuid != null &&
+                                          replyTo != null &&
+                                          replyTo!.isFromMe!
+                                      ? SizedBox(
+                                          width: double.infinity,
+                                          child: CustomPaint(
+                                            painter: _ReplyLinePainter(
+                                              color: context.theme.colorScheme.surfaceContainerHighest,
+                                              isFromMe: message.isFromMe!,
                                             ),
-                                          )
-                                        : ReactionSpacing(
-                                            messageParts: messageParts,
-                                            part: e,
-                                            reactionsForPart: reactionsForPart,
-                                            minHeightWhenNoReactions: iOS &&
-                                                    !widget.isReplyThread &&
-                                                    message.threadOriginatorGuid != null &&
-                                                    message.isFromMe!
-                                                ? 8
-                                                : 0,
+                                            child: ReactionSpacing(
+                                              messageParts: messageParts,
+                                              part: e,
+                                              reactionsForPart: reactionsForPart,
+                                              minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
+                                            ),
                                           ),
+                                        )
+                                      : ReactionSpacing(
+                                          messageParts: messageParts,
+                                          part: e,
+                                          reactionsForPart: reactionsForPart,
+                                          minHeightWhenNoReactions: iOS &&
+                                                  !widget.isReplyThread &&
+                                                  message.threadOriginatorGuid != null &&
+                                                  message.isFromMe!
+                                              ? 8
+                                              : 0,
+                                        ),
                                   if (!iOS &&
                                       index == 0 &&
                                       !widget.isReplyThread &&
