@@ -509,7 +509,10 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
-                                                                          !(iOS && e.isMediaGallery && e.attachments.length <= 3),
+                                                                          // Outer swipe: off for iOS collage (per-card) and Material/Samsung
+                                                                          // grids (no attachmentGuid). iOS stack (4+) keeps it.
+                                                                          !(e.isMediaGallery &&
+                                                                              (!iOS || e.attachments.length <= 3)),
                                                                       partIndex: index,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
@@ -608,7 +611,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                       !e.isUnsent &&
                                                       !widget.isReplyThread &&
                                                       index < replyOffsets.length &&
-                                                      !(iOS && e.isMediaGallery && e.attachments.length <= 3))
+                                                      !(e.isMediaGallery &&
+                                                          (!iOS || e.attachments.length <= 3)))
                                                     Obx(() => SlideToReply(
                                                         width: replyOffsets[index].value.abs(),
                                                         isFromMe: message.isFromMe!)),
