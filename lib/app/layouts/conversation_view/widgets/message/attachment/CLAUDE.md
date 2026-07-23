@@ -36,6 +36,12 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 
 Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all gallery parts; tapbacks are card-local, not bubble-level.
 
+**iOS collage / stack card sizing**:
+
+- **Collage (2–3):** Locked per-card frames from each attachment’s `displayWidth`/`displayHeight` (mixed portrait/landscape OK). Media cover-fills via `fillCard` so load does not resize cards.
+- **Stack (4+):** Shared portrait **3:4** frame for every fan/past slot; media cover-fills via `fillCard`.
+- **Material grid:** Predetermined cell geometry with `inGridCell` (same cover-fill path; no card shadow).
+
 The stack "**X Items**" label and grid "**+N**" overlay open `CollectionMediaGridPage`. Fullscreen viewers opened from a collection (`galleryAttachments`) also show a grid button that opens the same page.
 
 ## Adding a New Attachment Type

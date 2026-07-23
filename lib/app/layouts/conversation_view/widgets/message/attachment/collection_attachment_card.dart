@@ -61,6 +61,9 @@ class CollectionAttachmentCard extends StatefulWidget {
     this.canSwipeToReply = false,
     this.enableSwipeToReply = false,
     this.inGridCell = false,
+    this.fillCard = false,
+    this.cardWidth,
+    this.cardHeight,
     this.hideReactions = false,
   });
 
@@ -74,6 +77,12 @@ class CollectionAttachmentCard extends StatefulWidget {
   final bool canSwipeToReply;
   final bool enableSwipeToReply;
   final bool inGridCell;
+  /// Cover-fill a fixed collage/stack card frame (keeps [showCardShadow]).
+  final bool fillCard;
+  /// Explicit frame when [fillCard] is true. Required for collage swipe-to-reply
+  /// so the reply chevron can sit beside the card instead of inside a tight Positioned.
+  final double? cardWidth;
+  final double? cardHeight;
   final bool hideReactions;
 
   @override
@@ -97,8 +106,14 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
   bool get _swipeEnabled =>
       widget.enableSwipeToReply && widget.canSwipeToReply && !widget.isEditing;
 
+  bool get _hasExplicitCardSize =>
+      widget.fillCard && widget.cardWidth != null && widget.cardHeight != null;
+
   Widget _buildCardContent(MessagePart scopedPart) {
-    return Stack(
+    // fillCard/inGridCell: expand so SizedBox.expand in AttachmentHolder gets tight bounds.
+    final fill = widget.fillCard || widget.inGridCell;
+    Widget content = Stack(
+      fit: fill ? StackFit.expand : StackFit.loose,
       clipBehavior: Clip.none,
       children: [
         MessagePopupHolder(
@@ -112,6 +127,7 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
             transparentBackground: true,
             showCardShadow: !widget.inGridCell,
             inGridCell: widget.inGridCell,
+            fillCard: widget.fillCard,
             galleryAttachments: widget.collectionAttachments,
           ),
         ),
@@ -122,6 +138,15 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
           ),
       ],
     );
+
+    if (_hasExplicitCardSize) {
+      content = SizedBox(
+        width: widget.cardWidth,
+        height: widget.cardHeight,
+        child: content,
+      );
+    }
+    return content;
   }
 
   @override
@@ -135,6 +160,9 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
 
     return Obx(() {
       final isFromMe = widget.controller.isFromMe.value;
+      // Keep the card on a fixed SizedBox and let SlideToReply sit beside it
+      // (mainAxisSize.min). Putting Expanded inside a tight Positioned ate the
+      // chevron space and broke collage swipe-to-reply.
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [

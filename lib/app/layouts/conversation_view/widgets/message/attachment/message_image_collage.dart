@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
@@ -14,6 +12,9 @@ import 'package:flutter/material.dart';
 /// Even indexes sit flush to the author side; odd indexes get a horizontal stagger.
 /// Lower cards overlap the ones above them. Each card is a [CollectionAttachmentCard]
 /// with its own popup gestures, per-attachment tapbacks, and swipe-to-reply.
+///
+/// Card frames use each attachment's natural aspect ratio (mixed portrait/landscape
+/// allowed). Media cover-fills the locked frame so load no longer resizes cards.
 class MessageImageCollage extends StatelessWidget {
   const MessageImageCollage({
     super.key,
@@ -36,8 +37,8 @@ class MessageImageCollage extends StatelessWidget {
   List<Attachment> get _attachments => messagePart.attachments;
 
   double _estimateHeight(Attachment attachment, double cardWidth) {
-    final w = attachment.width;
-    final h = attachment.height;
+    final w = attachment.displayWidth;
+    final h = attachment.displayHeight;
     if (w != null && w > 0 && h != null && h > 0) {
       return (h / w) * cardWidth;
     }
@@ -47,7 +48,7 @@ class MessageImageCollage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
-    final cardWidth = min(NavigationSvc.width(context) * 0.5, 260.0);
+    final cardWidth = collectionCardWidth(context);
     // Matches MessagePartContent: from-me → right, received → left.
     final fromMe = fanDirection == GalleryFanDirection.right;
 
@@ -72,11 +73,12 @@ class MessageImageCollage extends StatelessWidget {
             Positioned(
               top: tops[i],
               // Even indexes flush to author; odd indexes shift toward center.
+              // Only pin top/left so swipe-to-reply can grow the row beside the
+              // fixed card SizedBox (Clip.none paints the chevron outside).
               left: fromMe
                   ? (i.isOdd ? 0.0 : _horizontalStagger)
                   : (i.isOdd ? _horizontalStagger : 0.0),
-              width: cardWidth,
-              child: _buildCard(messageState, i),
+              child: _buildCard(messageState, i, cardWidth, heights[i]),
             ),
         ],
       ),
@@ -95,7 +97,7 @@ class MessageImageCollage extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(MessageState messageState, int index) {
+  Widget _buildCard(MessageState messageState, int index, double cardWidth, double cardHeight) {
     return CollectionAttachmentCard(
       controller: messageState,
       cvController: cvController,
@@ -105,6 +107,9 @@ class MessageImageCollage extends StatelessWidget {
       isEditing: isEditing,
       canSwipeToReply: canSwipeToReply,
       enableSwipeToReply: true,
+      fillCard: true,
+      cardWidth: cardWidth,
+      cardHeight: cardHeight,
     );
   }
 }

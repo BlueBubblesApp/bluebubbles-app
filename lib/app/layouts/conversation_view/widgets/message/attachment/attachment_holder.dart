@@ -27,6 +27,7 @@ class AttachmentHolder extends StatefulWidget {
     this.transparentBackground = false,
     this.showCardShadow = false,
     this.inGridCell = false,
+    this.fillCard = false,
     this.galleryAttachments,
   });
 
@@ -35,6 +36,8 @@ class AttachmentHolder extends StatefulWidget {
   final bool showCardShadow;
   /// When true, the attachment fills a square grid cell with no per-cell rounding or shadow.
   final bool inGridCell;
+  /// When true, media cover-fills a fixed collage/stack card frame (keeps card shadow).
+  final bool fillCard;
   final List<Attachment>? galleryAttachments;
 
   @override
@@ -187,7 +190,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     required bool showTail,
     required bool isInReply,
     required bool isiOS,
+    bool? fillCellOverride,
   }) {
+    final fillCell = fillCellOverride ?? (widget.inGridCell || widget.fillCard);
+
     // Redacted mode always shows placeholder regardless of download status.
     if (hideAttachments) {
       return NotLoadedContent(
@@ -210,7 +216,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           cvController: controller.cvController,
           isInReply: isInReply,
           forceAllCornersRounded: widget.transparentBackground,
-          fillCell: widget.inGridCell,
+          fillCell: fillCell,
           galleryAttachments: widget.galleryAttachments,
         );
       }
@@ -227,7 +233,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         cvController: controller.cvController,
         isInReply: isInReply,
         forceAllCornersRounded: widget.transparentBackground,
-        fillCell: widget.inGridCell,
+        fillCell: fillCell,
         galleryAttachments: widget.galleryAttachments,
       );
     }
@@ -301,9 +307,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             ((widget.transparentBackground && !widget.inGridCell) || isPass || attachment.mimeStart == "image");
         // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
         // to fill the SizedBox dimensions set by MessageImageStack and have their
-        // background clipped to rounded corners.
-        final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview && !widget.inGridCell;
-        final shouldFillCell = widget.inGridCell;
+        // background clipped to rounded corners. fillCard uses the expand path below.
+        final shouldExpandAndClipForGallery =
+            widget.transparentBackground && !hasPreview && !widget.inGridCell && !widget.fillCard;
+        final shouldFillCell = widget.inGridCell || widget.fillCard;
         Widget content = Material(
           color: Colors.transparent,
           child: InkWell(
@@ -311,16 +318,28 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             child: Ink(
               color: transparentCard ? Colors.transparent : context.theme.colorScheme.surfaceContainerHighest,
               child: shouldFillCell
-                  ? SizedBox.expand(
-                      child: SendingOpacityWrapper(
-                        child: _buildContent(
-                          state: state,
-                          hideAttachments: hideAttachments,
-                          showTail: showTail,
-                          isInReply: isInReply,
-                          isiOS: isiOS,
-                        ),
-                      ),
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Popover (and other unbounded parents) only constrain maxWidth.
+                        // SizedBox.expand + fillCell cover requires tight bounds — fall
+                        // back to natural sizing so long-press popover still layouts.
+                        final canExpand = constraints.hasBoundedWidth &&
+                            constraints.hasBoundedHeight &&
+                            constraints.maxWidth.isFinite &&
+                            constraints.maxHeight.isFinite;
+                        final filled = SendingOpacityWrapper(
+                          child: _buildContent(
+                            state: state,
+                            hideAttachments: hideAttachments,
+                            showTail: showTail,
+                            isInReply: isInReply,
+                            isiOS: isiOS,
+                            fillCellOverride: canExpand,
+                          ),
+                        );
+                        if (canExpand) return SizedBox.expand(child: filled);
+                        return filled;
+                      },
                     )
                   : ConstrainedBox(
                 constraints: BoxConstraints(
@@ -384,10 +403,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             ),
           ),
         );
-        // Gallery non-preview: wrap with shadow + rounded clip at the card boundary.
-        // This clips the surfaceContainerHighest Ink background to rounded corners and
-        // places the shadow around the full card rather than the smaller content widget.
-        if (shouldExpandAndClipForGallery) {
+        // Gallery non-preview / fillCard: shadow + rounded clip at the card boundary.
+        // Clips the Ink background to rounded corners and places the shadow around the
+        // full card rather than the smaller content widget. Grid cells clip in the parent.
+        if (shouldExpandAndClipForGallery || widget.fillCard) {
           content = DecoratedBox(
             decoration: widget.showCardShadow
                 ? BoxDecoration(
