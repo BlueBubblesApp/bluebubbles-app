@@ -25,6 +25,7 @@ class FullscreenImage extends StatefulWidget {
     required this.showInteractions,
     required this.updatePhysics,
     this.onOverlayToggle,
+    this.onOpenCollectionGrid,
   });
 
   final PlatformFile file;
@@ -32,6 +33,7 @@ class FullscreenImage extends StatefulWidget {
   final bool showInteractions;
   final Function(ScrollPhysics) updatePhysics;
   final Function(bool)? onOverlayToggle;
+  final VoidCallback? onOpenCollectionGrid;
 
   @override
   State<FullscreenImage> createState() => _FullscreenImageState();
@@ -234,6 +236,18 @@ class _FullscreenImageState extends State<FullscreenImage>
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
+                                  if (widget.onOpenCollectionGrid != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10.0),
+                                      child: CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                                        onPressed: widget.onOpenCollectionGrid,
+                                        child: Icon(
+                                          Icons.grid_view_rounded,
+                                          color: context.theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                    ),
                                   Padding(
                                     padding: const EdgeInsets.only(top: 10.0),
                                     child: CupertinoButton(
