@@ -78,11 +78,12 @@ class MessageImageCollage extends StatelessWidget {
             Positioned(
               top: tops[i],
               // Even indexes flush to author; odd indexes shift toward center.
-              // Only pin top/left so swipe-to-reply can grow the row beside the
-              // fixed card SizedBox (Clip.none paints the chevron outside).
-              left: fromMe
-                  ? (i.isOdd ? 0.0 : _horizontalStagger)
-                  : (i.isOdd ? _horizontalStagger : 0.0),
+              // Pin to the author edge only (left for received, right for sent) so
+              // swipe-to-reply can grow the SlideToReply chevron toward center
+              // beside the fixed card SizedBox (Clip.none paints it outside).
+              // Left-pinning from-me cards pushed them off the author edge instead.
+              left: fromMe ? null : (i.isOdd ? _horizontalStagger : 0.0),
+              right: fromMe ? (i.isOdd ? _horizontalStagger : 0.0) : null,
               child: _buildCard(messageState, i, cardWidth, heights[i]),
             ),
         ],
