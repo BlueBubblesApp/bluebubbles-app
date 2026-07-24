@@ -8,7 +8,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 |------|---------|
 | `attachment_holder.dart` | **Entry point** — MIME type dispatcher; manages download state |
 | `collection_attachment_card.dart` | Per-card popup, tapback, and swipe-to-reply wrapper for media collections |
-| `collection_download_button.dart` | Incoming-only circular download control shared by collage/stack |
+| `collection_download_button.dart` | Incoming-only circular download control shared by collage/stack/grid |
 | `collection_media_grid_page.dart` | Full-page grid for a message collection (reuses `MediaGridSection`) |
 | `message_image_collage.dart` | Vertical overlapping collage (any count ≥ 2) |
 | `message_image_stack.dart` | Swipeable fan stack (any count ≥ 2) |

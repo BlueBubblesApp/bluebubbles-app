@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -138,12 +139,36 @@ class MessageImageGrid extends StatelessWidget {
     );
 
     // Author-edge inset is applied by MessagePartContent (shared with collage/stack).
-    return Stack(
+    final grid = Stack(
       clipBehavior: Clip.none,
       children: [
         imageLayer,
         Positioned.fill(child: reactionLayer),
       ],
+    );
+
+    // Incoming iOS: download control to the right of the grid (matches collage/stack).
+    final fromMe = messageState.isFromMe.value;
+    if (fromMe || !CollectionDownloadButton.isSupported) return grid;
+
+    return SizedBox(
+      width: gridWidth + CollectionDownloadButton.gap + CollectionDownloadButton.size,
+      height: gridHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: gridWidth + CollectionDownloadButton.gap,
+            top: 0,
+            bottom: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: CollectionDownloadButton(attachments: _attachments),
+            ),
+          ),
+          grid,
+        ],
+      ),
     );
   }
 
