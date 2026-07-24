@@ -127,7 +127,7 @@ jobs:
           PACKAGE_MSIX: ${{ steps.sign-payload.outcome == 'success' }}
           # Must match the signing cert subject: release cert when signing for release, else test cert.
           # MakeAppx requires ", " (comma-space) between RDNs — bare commas fail with 0x80080204.
-          SIGNED_MSIX_PUBLISHER: "${{ env.RELEASE_SIGNING == 'true' && 'CN=SignPath Foundation, O=SignPath Foundation, C=US, S=DE, L=Lewes' || 'CN=Test certificate for ''BlueBubbles [OSS]''' }}"
+          SIGNED_MSIX_PUBLISHER: "${{ env.RELEASE_SIGNING == 'true' && 'CN=SignPath Foundation, O=SignPath Foundation, L=Lewes, S=Delaware, C=US' || 'CN=Test certificate for ''BlueBubbles [OSS]''' }}"
           SIGNED_MSIX_IDENTITY: BlueBubbles.BlueBubbles
 
       - name: Upload unsigned installer artifact
