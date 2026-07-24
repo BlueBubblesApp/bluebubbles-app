@@ -1013,7 +1013,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(19, 6026421545462496199),
     name: 'CustomGroup',
-    lastPropertyId: const obx_int.IdUid(3, 4839844138628793238),
+    lastPropertyId: const obx_int.IdUid(4, 3135907887940008645),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1033,6 +1033,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(3, 4839844138628793238),
         name: 'sortOrder',
         type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 3135907887940008645),
+        name: 'showUnreadBadge',
+        type: 1,
         flags: 0,
       ),
     ],
@@ -2559,10 +2565,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (CustomGroup object, fb.Builder fbb) {
         final nameOffset = fbb.writeString(object.name);
-        fbb.startTable(4);
+        fbb.startTable(5);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(1, nameOffset);
         fbb.addInt64(2, object.sortOrder);
+        fbb.addBool(3, object.showUnreadBadge);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -2583,10 +2590,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
           8,
           0,
         );
+        final showUnreadBadgeParam = const fb.BoolReader().vTableGet(
+          buffer,
+          rootOffset,
+          10,
+          false,
+        );
         final object = CustomGroup(
           id: idParam,
           name: nameParam,
           sortOrder: sortOrderParam,
+          showUnreadBadge: showUnreadBadgeParam,
         );
         obx_int.InternalToManyAccess.setRelInfo<CustomGroup>(
           object.chats,
@@ -3337,6 +3351,11 @@ class CustomGroup_ {
   /// See [CustomGroup.sortOrder].
   static final sortOrder = obx.QueryIntegerProperty<CustomGroup>(
     _entities[9].properties[2],
+  );
+
+  /// See [CustomGroup.showUnreadBadge].
+  static final showUnreadBadge = obx.QueryBooleanProperty<CustomGroup>(
+    _entities[9].properties[3],
   );
 
   /// see [CustomGroup.chats]

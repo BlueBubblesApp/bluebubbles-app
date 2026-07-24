@@ -366,7 +366,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
             onTap: () async {
               final group = await showBBListSelector<CustomGroup>(
                 context: context,
-                title: "Add to Group",
+                title: "Add to Custom Group",
                 options: CustomGroupsSvc.groups
                     .map((g) => BBListSelectorOption(label: g.name, value: g))
                     .toList(),
@@ -382,7 +382,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
               mouseCursor: MouseCursor.defer,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
-                'Add to Group',
+                'Add to Custom Group',
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
               ),
               trailing: Icon(

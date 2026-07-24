@@ -125,6 +125,10 @@ Future<void> showAreYouSure(
   String? yesText = "Yes",
   Color? noColor,
   Color? yesColor,
+  /// Marks the "Yes" action as destructive — renders red on the iOS skin
+  /// (via [CupertinoDialogAction.isDestructiveAction]) in addition to any
+  /// [yesColor] override on Material/Samsung.
+  bool yesIsDestructive = false,
   TextAlign textAlign = TextAlign.center,
   required Function onNo,
   required Function onYes,
@@ -143,6 +147,7 @@ Future<void> showAreYouSure(
       BBDialogAction(
         text: yesText ?? "Yes",
         color: yesColor,
+        isDestructive: yesIsDestructive,
         isDefault: true,
         onPressed: () => onYes.call(),
       ),

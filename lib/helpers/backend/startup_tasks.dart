@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' show AppLifecycleState;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/env.dart';
@@ -12,6 +11,8 @@ import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:on_exit/init.dart';
@@ -267,6 +268,12 @@ class StartupTasks {
     await setSplashStatus("Finishing up...");
     Logger.info(
         "Startup services initialization complete! Running localhost detection then starting incremental sync...");
+
+    // Release any notification click that started the app. Deferred to the first frame
+    // because opening the chat needs a widget tree, which doesn't exist yet here.
+    if (kIsDesktop) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => DesktopNotifications.markReady());
+    }
 
     // Nothing network-related should run before setup — no server is configured yet.
     // Don't use the global isolate on startup as it'll likely cause a crash

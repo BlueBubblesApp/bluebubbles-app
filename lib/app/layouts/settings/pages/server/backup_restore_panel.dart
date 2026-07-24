@@ -291,14 +291,18 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                       "Are you sure you want to replace this backup with your current Settings?",
                                     ),
                                     onYes: () {
-                                      Navigator.of(_context).pop();
+                                      // Confirmation dialog is on the root navigator (showBBDialog uses
+                                      // useRootNavigator: true), so it must be popped from there.
+                                      Navigator.of(_context, rootNavigator: true).pop();
                                       yes = true;
                                     },
                                   );
                                   if (!yes) return;
-                                } else {
-                                  Navigator.of(_context).pop();
                                 }
+                                // Dismiss the name-entry dialog (also on the root navigator) before
+                                // performing the backup. Using the non-root navigator here would pop
+                                // the settings page instead, leaving the dialog stuck open.
+                                Navigator.of(_context, rootNavigator: true).pop();
                                 Map<String, dynamic> json = SettingsSvc.settings.toMap(includeAll: false);
                                 if (desc.isNotEmpty) {
                                   json["description"] = desc;
@@ -332,23 +336,28 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                   }
                                   final downloadsDir = await FilesystemSvc.downloadsDirectory;
                                   String filePath = join(downloadsDir, "BB-Settings-$name.json");
+                                  final String jsonString = jsonEncode(json);
                                   if (kIsDesktop) {
+                                    // Let the portal write the file: passing bytes lands it at the
+                                    // real chosen location (sandbox-safe) so reveal opens the right
+                                    // folder, instead of a separate write to a non-granted path.
                                     String? _filePath = await FilePicker.saveFile(
                                       initialDirectory: downloadsDir,
                                       dialogTitle: 'Choose a location to save this file',
                                       fileName: "BB-Settings-$name.json",
                                       type: FileType.custom,
                                       allowedExtensions: ["json"],
+                                      bytes: utf8.encode(jsonString),
                                     );
                                     if (_filePath == null) {
                                       return showSnackbar('Failed', 'You didn\'t select a file path!');
                                     }
                                     filePath = _filePath;
+                                  } else {
+                                    File file = File(filePath);
+                                    await file.create(recursive: true);
+                                    await file.writeAsString(jsonString);
                                   }
-                                  File file = File(filePath);
-                                  await file.create(recursive: true);
-                                  String jsonString = jsonEncode(json);
-                                  await file.writeAsString(jsonString);
                                   showSnackbar(
                                     "Success",
                                     "Settings exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
@@ -746,21 +755,26 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                 final downloadsDir = await FilesystemSvc.downloadsDirectory;
                                 String filePath = join(downloadsDir, themeFilename);
                                 if (kIsDesktop) {
+                                  // Let the portal write the file: passing bytes lands it at the
+                                  // real chosen location (sandbox-safe) so reveal opens the right
+                                  // folder, instead of a separate write to a non-granted path.
                                   String? _filePath = await FilePicker.saveFile(
                                     initialDirectory: downloadsDir,
                                     dialogTitle: 'Choose a location to save this file',
                                     fileName: themeFilename,
                                     type: FileType.custom,
                                     allowedExtensions: ["json"],
+                                    bytes: utf8.encode(jsonStr),
                                   );
                                   if (_filePath == null) {
                                     return showSnackbar('Failed', 'You didn\'t select a file path!');
                                   }
                                   filePath = _filePath;
+                                } else {
+                                  File file = File(filePath);
+                                  await file.create(recursive: true);
+                                  await file.writeAsString(jsonStr);
                                 }
-                                File file = File(filePath);
-                                await file.create(recursive: true);
-                                await file.writeAsString(jsonStr);
                                 showSnackbar(
                                   "Success",
                                   "Theming exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",

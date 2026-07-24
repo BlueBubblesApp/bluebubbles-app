@@ -819,7 +819,7 @@
     },
     {
       "id": "19:6026421545462496199",
-      "lastPropertyId": "3:4839844138628793238",
+      "lastPropertyId": "4:3135907887940008645",
       "name": "CustomGroup",
       "properties": [
         {
@@ -839,6 +839,11 @@
           "id": "3:4839844138628793238",
           "name": "sortOrder",
           "type": 6
+        },
+        {
+          "id": "4:3135907887940008645",
+          "name": "showUnreadBadge",
+          "type": 1
         }
       ],
       "relations": [

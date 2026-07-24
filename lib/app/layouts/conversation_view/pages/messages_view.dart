@@ -14,12 +14,12 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
-import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import 'handlers/drop_zone_manager.dart';
 import 'handlers/message_animation_orchestrator.dart';
@@ -558,12 +558,11 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
 
   @override
   Widget build(BuildContext context) {
-    return DropRegion(
-      hitTestBehavior: HitTestBehavior.translucent,
-      formats: Formats.standardFormats,
-      onDropOver: (DropOverEvent event) => dropZoneManager.onDropOver(event),
-      onDropLeave: (DropEvent event) => dropZoneManager.onDropLeave(event),
-      onPerformDrop: (PerformDropEvent event) async => await dropZoneManager.onPerformDrop(event, controller),
+    return DropTarget(
+      onDragEntered: (DropEventDetails details) => dropZoneManager.onDropOver(details),
+      onDragUpdated: (DropEventDetails details) => dropZoneManager.onDropOver(details),
+      onDragExited: (DropEventDetails details) => dropZoneManager.onDropLeave(details),
+      onDragDone: (DropDoneDetails details) async => await dropZoneManager.onPerformDrop(details, controller),
       child: GestureDetector(
           behavior: HitTestBehavior.deferToChild,
           onHorizontalDragUpdate: (details) {
@@ -718,7 +717,6 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
               ),
               DragDropOverlay(
                 dragging: dropZoneManager.dragging,
-                numFiles: dropZoneManager.numFiles,
               ),
             ],
           )),

@@ -10,7 +10,7 @@ import 'package:universal_io/io.dart';
 /// host-side by URI string — no grant needed.
 Future<void> revealInFileManager(String path) async {
   if (Platform.isWindows) {
-    await Process.start('explorer', ['/select,$path']);
+    await Process.start('explorer', [dirname(path)]);
   } else if (Platform.isMacOS) {
     await Process.start('open', ['-R', path]);
   } else if (Platform.environment.containsKey('FLATPAK_ID')) {

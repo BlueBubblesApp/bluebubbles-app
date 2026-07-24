@@ -298,6 +298,11 @@ class Message {
         if (existing.handleRelation.hasValue) {
           handleRelation.target = existing.handleRelation.target;
         }
+
+        // Preserve the chat relationship from the existing message
+        if (chat == null && !this.chat.hasValue && existing.chat.hasValue) {
+          this.chat.target = existing.chat.target;
+        }
       }
 
       // Phase 2: Set up handle relationship if we have a handle

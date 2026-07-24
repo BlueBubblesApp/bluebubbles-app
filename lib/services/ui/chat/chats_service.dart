@@ -79,6 +79,12 @@ class ChatsService {
   StreamSubscription? _generateFakeAvatarsListener;
   StreamSubscription? _hideAttachmentsListener;
 
+  /// Rebuilds the chat list whenever [CustomGroupsSvc.groups] changes (e.g.
+  /// a chat added to/removed from a group via the conversation peek view),
+  /// since the `customGroupIds` filter branch in [getFilteredChats] reads
+  /// membership from there.
+  StreamSubscription? _customGroupsListener;
+
   // ========== Helper Getters (replacing direct chats access) ==========
 
   /// Get all chats as a list (non-reactive), sorted by pin index and latest message date
@@ -187,7 +193,18 @@ class ChatsService {
       }
 
       if (filters.customGroupIds.isNotEmpty) {
-        chats = chats.where((e) => e.customGroups.any((g) => filters.customGroupIds.contains(g.id))).toList();
+        // Sourced from CustomGroupsSvc.groups (refreshed on every
+        // 'custom-groups-updated' event) rather than `e.customGroups` —
+        // that backlink ToMany is lazily loaded and cached per Chat instance
+        // (e.g. by CustomGroupFilterChipRow's unread-count badges), so it
+        // goes stale as soon as a chat is added to/removed from a group and
+        // never picks up the change without this.
+        final matchingGuids = CustomGroupsSvc.groups
+            .where((g) => filters.customGroupIds.contains(g.id))
+            .expand((g) => g.chats)
+            .map((c) => c.guid)
+            .toSet();
+        chats = chats.where((e) => matchingGuids.contains(e.guid)).toList();
       }
     }
 
@@ -353,6 +370,16 @@ class ChatsService {
 
     // Set up global listeners for redacted mode settings
     _setupRedactedModeListeners();
+
+    // Rebuild the chat list whenever custom-group membership changes. Listens
+    // to CustomGroupsSvc.groups directly (rather than the raw
+    // 'custom-groups-updated' event) so it only fires once CustomGroupsSvc has
+    // already re-fetched — no redundant DB query here — and debounces via
+    // _scheduleListVersionUpdate so a burst of changes (e.g. restoring many
+    // groups from a backup, each of which fires its own event) collapses into
+    // a single rebuild instead of one per group.
+    _customGroupsListener?.cancel();
+    _customGroupsListener = CustomGroupsSvc.groups.listen((_) => _scheduleListVersionUpdate());
 
     if (kIsDesktop && Platform.isWindows) {
       /* ----- IMESSAGE:// HANDLER ----- */
@@ -541,6 +568,7 @@ class ChatsService {
     _hideContactInfoListener?.cancel();
     _generateFakeAvatarsListener?.cancel();
     _hideAttachmentsListener?.cancel();
+    _customGroupsListener?.cancel();
   }
 
   /// Get sorted chats (pin index first, then by latest message date)

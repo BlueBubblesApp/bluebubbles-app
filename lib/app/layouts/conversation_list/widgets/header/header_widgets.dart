@@ -464,12 +464,16 @@ class CupertinoOverflowMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userName = SettingsSvc.settings.userName.value;
-    final moveChatCreatorToHeader = SettingsSvc.settings.moveChatCreatorToHeader.value;
-    final filterUnknownSenders = SettingsSvc.settings.filterUnknownSenders.value;
-    final hasActiveChatFilter = ChatsSvc.chatListFilters.value.hasActiveFilter;
+    // Self-contained Obx (rather than relying on the ancestor `OverflowMenu`'s Obx,
+    // which only tracks the skin setting) so the "Filter Chats" icon reacts to
+    // `chatListFilters` changes instead of only reflecting its value at first build.
+    return Obx(() {
+      final userName = SettingsSvc.settings.userName.value;
+      final moveChatCreatorToHeader = SettingsSvc.settings.moveChatCreatorToHeader.value;
+      final filterUnknownSenders = SettingsSvc.settings.filterUnknownSenders.value;
+      final hasActiveChatFilter = ChatsSvc.chatListFilters.value.hasActiveFilter;
 
-    final itemTheme = PullDownMenuItemTheme(
+      final itemTheme = PullDownMenuItemTheme(
       textStyle: TextStyle(
         color: context.theme.colorScheme.onSurface,
       ),
@@ -580,7 +584,8 @@ class CupertinoOverflowMenu extends StatelessWidget {
           ),
           materialSkin: const SizedBox.shrink(),
           samsungSkin: const SizedBox.shrink()),
-    );
+      );
+    });
   }
 }
 

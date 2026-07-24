@@ -12,6 +12,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import "package:flutter/material.dart";
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
@@ -58,6 +59,21 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
 
   int currentIndex = 0;
   ScrollPhysics? physics;
+
+  // media_kit_video_controls' seek/volume/brightness GestureDetector always registers a
+  // non-null onHorizontalDragUpdate regardless of the `seekGesture` theme flag (only its
+  // callback body checks the flag, not whether the recognizer is attached). As a descendant
+  // of the PageView, that recognizer wins the gesture arena's "eager winner" race before
+  // PageView's own drag recognizer ever gets a chance, permanently blocking swipe on any
+  // video page. Since that's vendored package behavior we can't patch, drive paging
+  // independently via raw pointer tracking (which never enters the arena) whenever the
+  // current page is a video. Excludes touches starting in the bottom quarter of the screen
+  // so dragging the video's own seek bar isn't misread as a page-swipe attempt.
+  int? _videoSwipePointer;
+  double _videoSwipeDragDx = 0;
+  VelocityTracker? _videoSwipeVelocityTracker;
+  static const double _videoSwipeCommitThreshold = 60;
+
   Attachment get attachment => widget.attachment;
   // Start hidden for video (video auto-plays and manages its own overlay); show for images
   bool get _isVideoAttachment => attachment.mimeStart == "video";
@@ -174,7 +190,50 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                 }
                 return KeyEventResult.ignored;
               },
-              child: PageView.builder(
+              child: Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: (event) {
+                  if (attachments.isEmpty || attachments[currentIndex].mimeStart != "video") return;
+                  // Leave the bottom quarter (seek bar / controls) alone.
+                  if (event.position.dy > MediaQuery.sizeOf(context).height * 0.75) return;
+                  _videoSwipePointer = event.pointer;
+                  _videoSwipeDragDx = 0;
+                  _videoSwipeVelocityTracker = VelocityTracker.withKind(event.kind);
+                  _videoSwipeVelocityTracker!.addPosition(event.timeStamp, event.position);
+                },
+                onPointerMove: (event) {
+                  if (_videoSwipePointer != event.pointer) return;
+                  _videoSwipeDragDx += event.delta.dx;
+                  _videoSwipeVelocityTracker?.addPosition(event.timeStamp, event.position);
+                },
+                onPointerUp: (event) {
+                  if (_videoSwipePointer != event.pointer) return;
+                  _videoSwipePointer = null;
+                  final velocity = _videoSwipeVelocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+                  _videoSwipeVelocityTracker = null;
+                  final dx = _videoSwipeDragDx;
+                  _videoSwipeDragDx = 0;
+                  final bool commit = dx.abs() >= _videoSwipeCommitThreshold || velocity.abs() > 700;
+                  if (!commit) return;
+                  final reverseSwipe = SettingsSvc.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT;
+                  final goForward = reverseSwipe ? dx > 0 : dx < 0;
+                  if (goForward) {
+                    if (currentIndex < attachments.length - 1) {
+                      controller.nextPage(duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+                    }
+                  } else {
+                    if (currentIndex > 0) {
+                      controller.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+                    }
+                  }
+                },
+                onPointerCancel: (event) {
+                  if (_videoSwipePointer != event.pointer) return;
+                  _videoSwipePointer = null;
+                  _videoSwipeVelocityTracker = null;
+                  _videoSwipeDragDx = 0;
+                },
+                child: PageView.builder(
                 physics: physics ??
                     (attachments.length == 1 ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics()),
                 reverse: SettingsSvc.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
@@ -183,6 +242,12 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                   widget.videoController?.player.pause();
                   setState(() {
                     currentIndex = val;
+                    // Reset a zoom-lock (NeverScrollableScrollPhysics) set by the page we're
+                    // leaving — FullscreenImage's PhotoView reports its own scale state via
+                    // updatePhysics, but `physics` lives on this shared holder, not per-page.
+                    // Without this reset, landing on a video (which never calls updatePhysics)
+                    // after a zoomed image permanently locks the PageView from then on.
+                    physics = null;
                   });
                 },
                 controller: controller,
@@ -346,6 +411,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                     );
                   }
                 },
+                ),
               ),
             ),
           ),

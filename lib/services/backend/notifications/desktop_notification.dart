@@ -161,11 +161,53 @@ class DesktopNotifications {
     FutureOr<void> Function(DesktopMessageInteraction interaction)? handler,
   ) => _messageInteractionHandler = handler;
 
+  /// Interactions that arrived before the app could act on them.
+  ///
+  /// A click that starts the app is delivered as soon as the notification plugin registers
+  /// its activator, which happens during service pre-registration — before the database is
+  /// open and long before ChatsService and OutgoingMessageHandler exist. Handling one then
+  /// throws, and the exception dies at the FFI boundary with the click silently lost, so
+  /// they wait here until [markReady].
+  static final List<DesktopMessageInteraction> _pendingInteractions = [];
+  static bool _ready = false;
+
+  /// Releases interactions held during startup. Safe to call more than once.
+  static void markReady() {
+    if (_ready) return;
+    _ready = true;
+    if (_pendingInteractions.isEmpty) return;
+    final List<DesktopMessageInteraction> queued = List.of(_pendingInteractions);
+    _pendingInteractions.clear();
+    Logger.info('Replaying ${queued.length} notification interaction(s)', tag: 'DesktopNotifications');
+    for (final DesktopMessageInteraction interaction in queued) {
+      _dispatch(interaction);
+    }
+  }
+
+  // The caller is a native callback, so an escaping exception is unhandleable and
+  // invisible — log it here instead of losing the click with no trace.
+  static void _dispatch(DesktopMessageInteraction interaction) {
+    try {
+      _messageInteractionHandler?.call(interaction);
+    } catch (e, s) {
+      Logger.error(
+        'Failed to handle notification interaction for chat ${interaction.data.chatGuid}',
+        error: e,
+        trace: s,
+        tag: 'DesktopNotifications',
+      );
+    }
+  }
+
   static void handleResponse(NotificationResponse response) {
-    Logger.error(response);
+    Logger.info(response);
     final DesktopMessageInteraction? messageInteraction = DesktopMessageInteraction.fromResponse(response);
     if (messageInteraction != null) {
-      _messageInteractionHandler?.call(messageInteraction);
+      if (_ready) {
+        _dispatch(messageInteraction);
+      } else {
+        _pendingInteractions.add(messageInteraction);
+      }
       return;
     }
     final List<String> parts = (response.actionId ?? response.payload ?? '').split(':');

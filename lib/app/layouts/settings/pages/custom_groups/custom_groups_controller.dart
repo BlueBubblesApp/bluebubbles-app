@@ -44,7 +44,16 @@ class CustomGroupsController extends GetxController {
     await CustomGroupInterface.updateChats(id: group.id!, chatGuids: chatGuids);
   }
 
+  Future<void> setShowUnreadBadge(CustomGroup group, bool value) async {
+    await CustomGroupInterface.setShowUnreadBadge(id: group.id!, value: value);
+  }
+
   Future<void> deleteGroup(CustomGroup group) async {
     await CustomGroupInterface.delete(id: group.id!);
+  }
+
+  Future<void> reorderGroups(List<CustomGroup> newOrder) async {
+    groups.value = newOrder;
+    await CustomGroupInterface.reorder(ids: newOrder.map((g) => g.id!).toList());
   }
 }

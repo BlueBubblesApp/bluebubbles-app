@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -27,6 +28,7 @@ class MessageImageGallery extends StatefulWidget {
     required this.fanDirection,
     this.infiniteScroll = false,
     this.currentIndexNotifier,
+    this.reactionsByAttachmentKey,
   });
 
   final List<Attachment> attachments;
@@ -35,6 +37,12 @@ class MessageImageGallery extends StatefulWidget {
   final GalleryFanDirection fanDirection;
   final bool infiniteScroll;
   final ValueNotifier<int>? currentIndexNotifier;
+
+  /// Tapback reactions keyed by attachment (guid, falling back to
+  /// transferName) so each card in the fan can show the reaction that was
+  /// actually left on that specific image/video, rather than one reaction
+  /// shared across the whole gallery.
+  final Map<String, List<Message>>? reactionsByAttachmentKey;
 
   @override
   State<MessageImageGallery> createState() => _MessageImageGalleryState();
@@ -66,6 +74,8 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   bool _hapticGivenForCurrentEnd = false;
   bool _labelHovered = false;
   final Map<String, Size> _imageSizes = {};
+  int? _activeDragPointer;
+  VelocityTracker? _velocityTracker;
 
   List<Attachment> get _attachments => widget.attachments;
 
@@ -315,6 +325,13 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     }
 
     return Listener(
+      // Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this
+      // swipe never has to win a gesture-arena contest against a card's own recognizers — e.g.
+      // VideoPlayer registers onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer
+      // holding the arena open was swallowing fast horizontal swipes over video attachments while
+      // images (which register no onDoubleTap) were unaffected. Listener never enters the arena, so
+      // it always sees the drag regardless of what the card underneath does with the same pointer.
+      behavior: HitTestBehavior.translucent,
       onPointerSignal: (event) {
         if (event is PointerScrollEvent && _attachments.length > 1) {
           GestureBinding.instance.pointerSignalResolver.register(event, (event) {
@@ -335,79 +352,81 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           });
         }
       },
-      child: GestureDetector(
-        onHorizontalDragUpdate: (details) {
-          if (_attachments.length <= 1) return;
-          if (!widget.infiniteScroll) {
-            final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
-            final atStart = _currentIndex == 0;
-            final atEnd = _currentIndex == _attachments.length - 1;
-            final blockedPositive = (atStart && fanFlip > 0) || (atEnd && fanFlip < 0);
-            final blockedNegative = (atStart && fanFlip < 0) || (atEnd && fanFlip > 0);
+      onPointerDown: (event) {
+        if (_attachments.length <= 1) return;
+        _activeDragPointer = event.pointer;
+        _velocityTracker = VelocityTracker.withKind(event.kind);
+        _velocityTracker!.addPosition(event.timeStamp, event.position);
+      },
+      onPointerMove: (event) {
+        if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
+        _velocityTracker?.addPosition(event.timeStamp, event.position);
+        if (!widget.infiniteScroll) {
+          final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
+          final atStart = _currentIndex == 0;
+          final atEnd = _currentIndex == _attachments.length - 1;
+          final blockedPositive = (atStart && fanFlip > 0) || (atEnd && fanFlip < 0);
+          final blockedNegative = (atStart && fanFlip < 0) || (atEnd && fanFlip > 0);
 
-            final draggingIntoBlockedEnd =
-                (blockedPositive && details.delta.dx > 0) || (blockedNegative && details.delta.dx < 0);
-            if (draggingIntoBlockedEnd) {
-              if (!_hapticGivenForCurrentEnd) {
-                HapticFeedback.lightImpact();
-                _hapticGivenForCurrentEnd = true;
-              }
-              setState(() {
-                _dragDx += details.delta.dx * 0.3;
-                if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
-                if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
-              });
-              return;
-            } else {
-              _hapticGivenForCurrentEnd = false;
+          final draggingIntoBlockedEnd =
+              (blockedPositive && event.delta.dx > 0) || (blockedNegative && event.delta.dx < 0);
+          if (draggingIntoBlockedEnd) {
+            if (!_hapticGivenForCurrentEnd) {
+              HapticFeedback.lightImpact();
+              _hapticGivenForCurrentEnd = true;
             }
-          }
-          setState(() {
-            _dragDx += details.delta.dx;
-            _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
-          });
-        },
-        onHorizontalDragEnd: (details) {
-          _hapticGivenForCurrentEnd = false;
-          if (_attachments.length <= 1) return;
-          final velocity = details.primaryVelocity ?? 0;
-          final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
-          if (!commit) {
             setState(() {
-              _dragDx = 0;
+              _dragDx += event.delta.dx * 0.3;
+              if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
+              if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
             });
             return;
+          } else {
+            _hapticGivenForCurrentEnd = false;
           }
+        }
+        setState(() {
+          _dragDx += event.delta.dx;
+          _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
+        });
+      },
+      onPointerUp: (event) {
+        if (_activeDragPointer != event.pointer) return;
+        _activeDragPointer = null;
+        _hapticGivenForCurrentEnd = false;
+        final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+        _velocityTracker = null;
+        if (_attachments.length <= 1) return;
+        final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
+        if (!commit) {
+          setState(() {
+            _dragDx = 0;
+          });
+          return;
+        }
 
-          final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
-          final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
-          setState(() {
-            _advance(rawSign * fanFlip);
-            _dragDx = 0;
-          });
-        },
-        onHorizontalDragCancel: () {
-          _hapticGivenForCurrentEnd = false;
-          if (_attachments.length <= 1) return;
-          setState(() {
-            _dragDx = 0;
-          });
-        },
-        child: Column(
+        final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
+        final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
+        setState(() {
+          _advance(rawSign * fanFlip);
+          _dragDx = 0;
+        });
+      },
+      onPointerCancel: (event) {
+        if (_activeDragPointer != event.pointer) return;
+        _activeDragPointer = null;
+        _velocityTracker = null;
+        _hapticGivenForCurrentEnd = false;
+        if (_attachments.length <= 1) return;
+        setState(() {
+          _dragDx = 0;
+        });
+      },
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment:
               widget.fanDirection == GalleryFanDirection.left ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: fanCanvasWidth,
-              height: fanCanvasHeight,
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: stackChildren,
-              ),
-            ),
-            const SizedBox(height: 4),
             Padding(
               padding: (widget.fanDirection == GalleryFanDirection.left
                   ? const EdgeInsets.only(right: 20)
@@ -458,9 +477,42 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
                 ),
               ),
             ),
+            const SizedBox(height: 4),
+            SizedBox(
+              width: fanCanvasWidth,
+              height: fanCanvasHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: stackChildren,
+              ),
+            ),
           ],
         ),
-      ),
+    );
+  }
+
+  List<Message> _reactionsFor(Attachment attachment) {
+    final key = attachment.guid ?? attachment.transferName;
+    if (key == null) return const [];
+    return widget.reactionsByAttachmentKey?[key] ?? const [];
+  }
+
+  Widget _withReactionOverlay(Widget card, Attachment attachment) {
+    final reactions = _reactionsFor(attachment);
+    if (reactions.isEmpty) return card;
+    final isFromMe = widget.fanDirection == GalleryFanDirection.left;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        card,
+        Positioned(
+          top: -14,
+          left: isFromMe ? -14 : null,
+          right: isFromMe ? null : -14,
+          child: ReactionHolder(reactions: reactions),
+        ),
+      ],
     );
   }
 
@@ -500,14 +552,17 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           child: Transform.rotate(
             angle: angle.toDouble() + dragRotate,
             alignment: widget.fanDirection == GalleryFanDirection.left ? Alignment.bottomRight : Alignment.bottomLeft,
-            child: IgnorePointer(
-              ignoring: !isCurrent,
-              child: AttachmentHolder(
-                message: _partForAttachment(attachment),
-                transparentBackground: true,
-                showCardShadow: true,
-                galleryAttachments: _attachments,
+            child: _withReactionOverlay(
+              IgnorePointer(
+                ignoring: !isCurrent,
+                child: AttachmentHolder(
+                  message: _partForAttachment(attachment),
+                  transparentBackground: true,
+                  showCardShadow: true,
+                  galleryAttachments: _attachments,
+                ),
               ),
+              attachment,
             ),
           ),
         ),
@@ -549,14 +604,17 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           child: Transform.rotate(
             angle: angle.toDouble(),
             alignment: widget.fanDirection == GalleryFanDirection.left ? Alignment.bottomLeft : Alignment.bottomRight,
-            child: IgnorePointer(
-              ignoring: true,
-              child: AttachmentHolder(
-                message: _partForAttachment(attachment),
-                transparentBackground: true,
-                showCardShadow: true,
-                galleryAttachments: _attachments,
+            child: _withReactionOverlay(
+              IgnorePointer(
+                ignoring: true,
+                child: AttachmentHolder(
+                  message: _partForAttachment(attachment),
+                  transparentBackground: true,
+                  showCardShadow: true,
+                  galleryAttachments: _attachments,
+                ),
               ),
+              attachment,
             ),
           ),
         ),

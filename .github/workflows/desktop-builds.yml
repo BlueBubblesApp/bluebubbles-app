@@ -39,26 +39,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260
-
-      - name: Install fvm
-        run: dart pub global activate fvm "$FVM_VERSION"
-        shell: bash
-
-      # Keyed on the Flutter version so the SDK is only re-downloaded when the
-      # version actually changes — not on every build-script edit.
-      - name: Cache Flutter SDK (fvm)
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      # Also resolves dependencies, so build.ps1's own pub get below is a no-op.
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
         with:
-          path: ~/fvm
-          key: fvm-${{ runner.os }}-${{ runner.arch }}-${{ env.FLUTTER_VERSION }}
-
-      - name: Cache pub packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
 
       - name: Write .env
         run: echo "KLIPY_API_KEY=${{ secrets.KLIPY_API_KEY }}" > .env
@@ -286,26 +272,12 @@ jobs:
             libayatana-appindicator3-dev \
             libnotify-dev
 
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260
-
-      - name: Install fvm
-        run: dart pub global activate fvm "$FVM_VERSION"
-        shell: bash
-
-      # Keyed on the Flutter version so the SDK is only re-downloaded when the
-      # version actually changes — not on every build-script edit.
-      - name: Cache Flutter SDK (fvm)
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      # Also resolves dependencies, so build.sh's own pub get below is a no-op.
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
         with:
-          path: ~/fvm
-          key: fvm-${{ runner.os }}-${{ runner.arch }}-${{ env.FLUTTER_VERSION }}
-
-      - name: Cache pub packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
 
       - name: Write .env
         run: echo "KLIPY_API_KEY=${{ secrets.KLIPY_API_KEY }}" > .env

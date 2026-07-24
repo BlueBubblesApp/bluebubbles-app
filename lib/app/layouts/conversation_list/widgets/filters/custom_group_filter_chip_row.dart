@@ -31,39 +31,58 @@ class CustomGroupFilterChipRow extends StatelessWidget {
       ChatsSvc.chatListVersion.value;
       final unreadStates = ChatsSvc.chatStates.values.where((s) => s.hasUnreadMessage.value).toList();
       final unreadCounts = <int, int>{
+        // Membership is read from `group.chats` (the group's own ToMany,
+        // refreshed whenever CustomGroupsSvc reloads) rather than
+        // `s.chat.customGroups` — that backlink is lazily cached per Chat
+        // instance and goes stale as soon as membership changes elsewhere
+        // (e.g. the conversation peek view's "Add to Custom Group" action).
         for (final group in groups)
-          group.id!: unreadStates.where((s) => s.chat.customGroups.any((g) => g.id == group.id)).length,
+          group.id!: unreadStates.where((s) => group.chats.any((c) => c.guid == s.chat.guid)).length,
       };
 
       return SizedBox(
-        height: 44 + padding.vertical,
+        // Extra top room so the overlapping badge isn't clipped.
+        height: 50 + padding.vertical,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: padding,
+          padding: padding.copyWith(top: padding.top + 6),
           itemCount: groups.length,
           separatorBuilder: (context, index) => const SizedBox(width: 8),
           itemBuilder: (context, index) {
             final group = groups[index];
             final selected = current.contains(group.id);
             final unreadCount = unreadCounts[group.id] ?? 0;
-            return BBChip(
-              label: Text(unreadCount > 0 ? '${group.name} ($unreadCount)' : group.name),
-              selected: selected,
-              showCheckmark: true,
-              onPressed: () {
-                final next = Set<int>.from(current);
-                if (selected) {
-                  next.remove(group.id);
-                } else {
-                  next.add(group.id!);
-                }
-                ChatsSvc.chatListFilters.value = ChatsSvc.chatListFilters.value.copyWith(customGroupIds: next);
-              },
-              onLongPress: () {
-                // Long-press singles out this group, replacing any other
-                // selected groups, instead of toggling it alongside them.
-                ChatsSvc.chatListFilters.value = ChatsSvc.chatListFilters.value.copyWith(customGroupIds: {group.id!});
-              },
+            return Badge(
+              isLabelVisible: group.showUnreadBadge && unreadCount > 0,
+              label: Text(unreadCount > 99 ? '99+' : unreadCount.toString()),
+              backgroundColor: context.theme.colorScheme.primary,
+              textColor: context.theme.colorScheme.onPrimary,
+              child: BBChip(
+                label: Text(
+                  group.name,
+                  style: TextStyle(
+                    color: selected ? context.theme.colorScheme.primary : null,
+                    fontWeight: selected ? FontWeight.bold : null,
+                  ),
+                ),
+                selected: selected,
+                showCheckmark: false,
+                onPressed: () {
+                  final next = Set<int>.from(current);
+                  if (selected) {
+                    next.remove(group.id);
+                  } else {
+                    next.add(group.id!);
+                  }
+                  ChatsSvc.chatListFilters.value = ChatsSvc.chatListFilters.value.copyWith(customGroupIds: next);
+                },
+                onLongPress: () {
+                  // Long-press singles out this group, replacing any other
+                  // selected groups, instead of toggling it alongside them.
+                  ChatsSvc.chatListFilters.value =
+                      ChatsSvc.chatListFilters.value.copyWith(customGroupIds: {group.id!});
+                },
+              ),
             );
           },
         ),
