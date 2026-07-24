@@ -22,6 +22,14 @@ enum GalleryFanDirection {
 double collectionCardWidth(BuildContext context) =>
     min(NavigationSvc.width(context) * 0.42, 220.0);
 
+/// Author-side inset matching single attachments / [TailClipper] (galleries skip the clipper).
+const double collectionEdgeInset = 10.0;
+
+EdgeInsets collectionAuthorEdgeInsets({required bool isFromMe}) => EdgeInsets.only(
+      left: isFromMe ? 0 : collectionEdgeInset,
+      right: isFromMe ? collectionEdgeInset : 0,
+    );
+
 class MessageImageStack extends StatefulWidget {
   const MessageImageStack({
     super.key,
@@ -210,52 +218,48 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        Padding(
-          // Align label with the left-anchored front card.
-          padding: alignEnd ? EdgeInsets.only(right: maxFanDx) : EdgeInsets.zero,
-          child: MouseRegion(
-            onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
-            onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
-            child: GestureDetector(
-              onTap: () => _openCollectionGrid(context, stackLabel),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: -6,
-                    right: -6,
-                    top: -2,
-                    bottom: -2,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      decoration: BoxDecoration(
-                        color: _labelHovered
-                            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+        MouseRegion(
+          onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
+          onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
+          child: GestureDetector(
+            onTap: () => _openCollectionGrid(context, stackLabel),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: -6,
+                  right: -6,
+                  top: -2,
+                  bottom: -2,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    decoration: BoxDecoration(
+                      color: _labelHovered
+                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.grid_view_rounded,
-                        size: 10,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        stackLabel,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.grid_view_rounded,
+                      size: 10,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      stackLabel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

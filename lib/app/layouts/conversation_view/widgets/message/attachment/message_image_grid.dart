@@ -39,8 +39,6 @@ class MessageImageGrid extends StatelessWidget {
   static const double _materialCardRadius = 16.0;
   /// Matches Samsung settings section cards ([SettingsSection]).
   static const double _samsungCardRadius = 25.0;
-  /// Matches [TailClipper] author-side inset on Material bubbles.
-  static const double _materialTailInset = 10.0;
 
   List<Attachment> get _attachments => messagePart.attachments;
 
@@ -61,7 +59,6 @@ class MessageImageGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
-    final isFromMe = messageState.isFromMe.value;
     final count = _attachments.length;
     final cardRadius = _cardRadius;
     final gridWidth = NavigationSvc.width(context) * MessageState.maxBubbleSizeFactor;
@@ -138,18 +135,13 @@ class MessageImageGrid extends StatelessWidget {
       ),
     );
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: isFromMe ? 0 : _materialTailInset,
-        right: isFromMe ? _materialTailInset : 0,
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          imageLayer,
-          Positioned.fill(child: reactionLayer),
-        ],
-      ),
+    // Author-edge inset is applied by MessagePartContent (shared with collage/stack).
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        imageLayer,
+        Positioned.fill(child: reactionLayer),
+      ],
     );
   }
 

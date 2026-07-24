@@ -49,11 +49,12 @@ class MessagePartContent extends StatelessWidget {
     if (messagePart.attachments.isNotEmpty) {
       if (messagePart.isMediaGallery) {
         final layout = resolveMediaCollectionLayout(messagePart.attachments.length);
-        final fanDirection =
-            message.isFromMe == true ? GalleryFanDirection.right : GalleryFanDirection.left;
+        final isFromMe = message.isFromMe == true;
+        final fanDirection = isFromMe ? GalleryFanDirection.right : GalleryFanDirection.left;
+        final Widget gallery;
         switch (layout) {
           case MediaCollectionLayout.collage:
-            return MessageImageCollage(
+            gallery = MessageImageCollage(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
@@ -61,7 +62,7 @@ class MessagePartContent extends StatelessWidget {
               canSwipeToReply: canSwipeToReply,
             );
           case MediaCollectionLayout.stack:
-            return MessageImageStack(
+            gallery = MessageImageStack(
               messagePart: messagePart,
               cvController: cvController,
               isInReply: false,
@@ -72,12 +73,17 @@ class MessagePartContent extends StatelessWidget {
           case MediaCollectionLayout.grid:
           case MediaCollectionLayout.skinDefault:
             // skinDefault is resolved before the switch; treat as grid fallback.
-            return MessageImageGrid(
+            gallery = MessageImageGrid(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
             );
         }
+        // Galleries skip TailClipper; restore the same author-edge inset as bubbles.
+        return Padding(
+          padding: collectionAuthorEdgeInsets(isFromMe: isFromMe),
+          child: gallery,
+        );
       }
       return AttachmentHolder(
         message: messagePart,
