@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -276,7 +277,15 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        // Reserve room for per-card tapbacks (top: -14) so they don't cover the label.
+        // Empty messageParts so we only key off reactionsForPart (not whole-message reactions).
+        ReactionSpacing(
+          messageParts: const [],
+          part: widget.messagePart,
+          reactionsForPart: (part, reactions) =>
+              reactions.where((s) => part.includesAssociatedPart(s.associatedMessagePart)),
+          minHeightWhenNoReactions: 4,
+        ),
         SizedBox(
           width: fanCanvasWidth,
           height: fanCanvasHeight,

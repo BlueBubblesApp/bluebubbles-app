@@ -27,8 +27,9 @@ class CollectionAttachmentReactions extends StatelessWidget {
   final int attachmentIndex;
   final ReactionTailType tailType;
 
-  /// When true, always pin to the top-trailing corner (and use a matching inward
+  /// When true, always pin to the top-trailing corner (and use a matching
   /// [ReactionTailDirection]). Used by the collection grid page.
+  /// Also implied when [tailType] is [ReactionTailType.inside] (stack fan).
   final bool alignTrailing;
 
   @override
@@ -43,7 +44,10 @@ class CollectionAttachmentReactions extends StatelessWidget {
           .toList();
       if (reactions.isEmpty) return const SizedBox.shrink();
 
-      final alignRight = alignTrailing || !isFromMe;
+      // Stack fans always open right, so inside-tail reactions stay on the trailing
+      // edge for both sides (matching from-others / collection grid).
+      final forceTrailing = alignTrailing || tailType == ReactionTailType.inside;
+      final alignRight = forceTrailing || !isFromMe;
       return Positioned(
         top: -14,
         left: alignRight ? null : -20,
@@ -51,8 +55,8 @@ class CollectionAttachmentReactions extends StatelessWidget {
         child: ReactionHolder(
           reactions: reactions,
           tailType: tailType,
-          // From-me defaults to a left-pointing inside tail; override when we force trailing.
-          tailDirection: alignTrailing ? ReactionTailDirection.right : null,
+          // From-me defaults to a left-pointing tail; switch to right when trailing.
+          tailDirection: forceTrailing ? ReactionTailDirection.right : null,
         ),
       );
     });
