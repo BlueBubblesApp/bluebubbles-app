@@ -86,6 +86,10 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   ReactionTailDirection get _effectiveTailDirection =>
       widget.tailDirection ?? (messageIsFromMe ? ReactionTailDirection.left : ReactionTailDirection.right);
 
+  /// Layout/alignment for the reaction disc — follows the effective tail so an
+  /// explicit [widget.tailDirection] keeps icon + clip consistent.
+  bool get _alignToEnd => _effectiveTailDirection == ReactionTailDirection.left;
+
   /// Guard against associatedMessageType being null.
   /// An empty string produces no SVG match, which is handled in build().
   String get reactionType => reaction.associatedMessageType ?? '';
@@ -207,14 +211,14 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
             ));
       }
       return Stack(
-        alignment: messageIsFromMe ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: _alignToEnd ? Alignment.centerRight : Alignment.centerLeft,
         fit: StackFit.passthrough,
         clipBehavior: Clip.none,
         children: [
           Positioned(
             top: -1,
-            left: messageIsFromMe ? 0 : -1,
-            right: !messageIsFromMe ? 0 : -1,
+            left: _alignToEnd ? 0 : -1,
+            right: !_alignToEnd ? 0 : -1,
             child: ClipPath(
               clipper: ReactionBorderClipper(
                 tailDirection: _effectiveTailDirection,
@@ -244,7 +248,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                         ? context.theme.colorScheme.primary.darkenAmount(isSending ? 0.2 : 0)
                         : ((context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor ??
                             context.theme.colorScheme.surfaceContainerHighest),
-                    alignment: messageIsFromMe ? Alignment.topRight : Alignment.topLeft,
+                    alignment: _alignToEnd ? Alignment.topRight : Alignment.topLeft,
                     child: SizedBox(
                       width: iosSize * 0.8,
                       height: iosSize * 0.8,
@@ -266,8 +270,8 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                     ));
               })),
           Positioned(
-            left: !messageIsFromMe ? 0 : -75,
-            right: messageIsFromMe ? 0 : -75,
+            left: !_alignToEnd ? 0 : -75,
+            right: _alignToEnd ? 0 : -75,
             child: Obx(() {
               final hasError = reactionController?.hasError.value ?? false;
               if (reaction.error > 0 || hasError) {

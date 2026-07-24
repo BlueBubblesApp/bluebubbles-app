@@ -1,9 +1,14 @@
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_grid_section.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
+import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -18,11 +23,15 @@ class CollectionMediaGridPage extends StatefulWidget {
     required this.chat,
     required this.media,
     required this.title,
+    this.messageState,
+    this.collectionPart,
   });
 
   final Chat chat;
   final List<Attachment> media;
   final String title;
+  final MessageState? messageState;
+  final MessagePart? collectionPart;
 
   static String titleForAttachments(List<Attachment> attachments) {
     final photoCount = attachments.where((a) => a.mimeStart == 'image').length;
@@ -38,6 +47,8 @@ class CollectionMediaGridPage extends StatefulWidget {
     required Chat chat,
     required List<Attachment> media,
     String? title,
+    MessageState? messageState,
+    MessagePart? collectionPart,
   }) {
     NavigationSvc.push(
       context,
@@ -45,6 +56,8 @@ class CollectionMediaGridPage extends StatefulWidget {
         chat: chat,
         media: media,
         title: title ?? titleForAttachments(media),
+        messageState: messageState,
+        collectionPart: collectionPart,
       ),
     );
   }
@@ -96,7 +109,10 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
             ? ThemesService.isGeneratedMaterialThemeName(themeName)
             : ThemeSvc.isMaterialYouActive(context);
 
-        return Theme(
+        final collectionPart = widget.collectionPart;
+        final showReactions = widget.messageState != null && collectionPart != null;
+
+        Widget scaffold = Theme(
           data: baseTheme.copyWith(
             primaryColor: bubbleColor,
             colorScheme: baseTheme.colorScheme.copyWith(
@@ -150,12 +166,32 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                   fullPage: true,
                   crossAxisCount: 3,
                   showSenderAvatar: false,
+                  cellOverlayBuilder: showReactions
+                      ? (context, index, _) => CollectionAttachmentReactions(
+                            collectionPart: collectionPart,
+                            attachmentIndex: index,
+                            alignTrailing: true,
+                            tailType: ReactionTailType.inside,
+                          )
+                      : null,
                 ),
                 const SliverPadding(padding: EdgeInsets.only(top: 50)),
               ],
             ),
           ),
         );
+
+        if (showReactions) {
+          // ReactionHolder uses DeferPointer; needs a handler outside MessageHolder.
+          scaffold = DeferredPointerHandler(
+            child: MessageStateScope(
+              messageState: widget.messageState!,
+              child: scaffold,
+            ),
+          );
+        }
+
+        return scaffold;
       }),
     );
   }

@@ -125,6 +125,8 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       chat: widget.cvController.chat,
       media: _attachments,
       title: title,
+      messageState: MessageStateScope.of(context),
+      collectionPart: widget.messagePart,
     );
   }
 

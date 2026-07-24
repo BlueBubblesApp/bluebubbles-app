@@ -27,6 +27,10 @@ class MediaGridSection extends StatefulWidget {
   final ValueChanged<MediaFilter>? onMediaFilterChanged;
   final bool showSenderAvatar;
 
+  /// Optional overlay per cell (e.g. collection tapbacks). When set, cell corners
+  /// are clipped on the thumbnail only so overlays can overflow the grid tile.
+  final Widget Function(BuildContext context, int index, Attachment attachment)? cellOverlayBuilder;
+
   const MediaGridSection({
     super.key,
     required this.chat,
@@ -40,6 +44,7 @@ class MediaGridSection extends StatefulWidget {
     this.sinceDate,
     this.onMediaFilterChanged,
     this.showSenderAvatar = true,
+    this.cellOverlayBuilder,
   });
 
   @override
@@ -102,15 +107,29 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
   Widget _buildGridItem(BuildContext context, int index) {
     final attachment = _filteredMedia[index];
+    final hasOverlay = widget.cellOverlayBuilder != null;
+    const tileRadius = BorderRadius.all(Radius.circular(20));
+
+    Widget thumbnail = MediaGalleryCard(
+      attachment: attachment,
+      showSenderAvatar: widget.showSenderAvatar,
+      chat: widget.chat,
+      // Swipe through the filtered grid set (collection page or chat media).
+      galleryAttachments: _filteredMedia,
+      // Already in a grid — don't offer opening another one from fullscreen.
+      showCollectionGridButton: false,
+    );
+    if (hasOverlay) {
+      thumbnail = ClipRRect(borderRadius: tileRadius, child: thumbnail);
+    }
+
     return Obx(() => AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           margin: EdgeInsets.all(
             widget.selected.contains(attachment.guid) ? 10 : 0,
           ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          clipBehavior: Clip.antiAlias,
+          decoration: hasOverlay ? null : const BoxDecoration(borderRadius: tileRadius),
+          clipBehavior: hasOverlay ? Clip.none : Clip.antiAlias,
           child: GestureDetector(
             onTap: widget.selected.isNotEmpty
                 ? () {
@@ -132,16 +151,9 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
               absorbing: widget.selected.isNotEmpty,
               child: Stack(
                 alignment: Alignment.center,
+                clipBehavior: hasOverlay ? Clip.none : Clip.hardEdge,
                 children: [
-                  MediaGalleryCard(
-                    attachment: attachment,
-                    showSenderAvatar: widget.showSenderAvatar,
-                    chat: widget.chat,
-                    // Swipe through the filtered grid set (collection page or chat media).
-                    galleryAttachments: _filteredMedia,
-                    // Already in a grid — don't offer opening another one from fullscreen.
-                    showCollectionGridButton: false,
-                  ),
+                  thumbnail,
                   if (widget.selected.contains(attachment.guid))
                     Container(
                       decoration: BoxDecoration(
@@ -157,6 +169,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
                         ),
                       ),
                     ),
+                  if (hasOverlay) widget.cellOverlayBuilder!(context, index, attachment),
                 ],
               ),
             ),

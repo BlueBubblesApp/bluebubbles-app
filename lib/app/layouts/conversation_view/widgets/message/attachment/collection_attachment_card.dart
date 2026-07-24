@@ -20,11 +20,16 @@ class CollectionAttachmentReactions extends StatelessWidget {
     required this.collectionPart,
     required this.attachmentIndex,
     this.tailType = ReactionTailType.standard,
+    this.alignTrailing = false,
   });
 
   final MessagePart collectionPart;
   final int attachmentIndex;
   final ReactionTailType tailType;
+
+  /// When true, always pin to the top-trailing corner (and use a matching inward
+  /// [ReactionTailDirection]). Used by the collection grid page.
+  final bool alignTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +43,16 @@ class CollectionAttachmentReactions extends StatelessWidget {
           .toList();
       if (reactions.isEmpty) return const SizedBox.shrink();
 
+      final alignRight = alignTrailing || !isFromMe;
       return Positioned(
         top: -14,
-        left: isFromMe ? -20 : null,
-        right: isFromMe ? null : -20,
+        left: alignRight ? null : -20,
+        right: alignRight ? -20 : null,
         child: ReactionHolder(
           reactions: reactions,
           tailType: tailType,
+          // From-me defaults to a left-pointing inside tail; override when we force trailing.
+          tailDirection: alignTrailing ? ReactionTailDirection.right : null,
         ),
       );
     });

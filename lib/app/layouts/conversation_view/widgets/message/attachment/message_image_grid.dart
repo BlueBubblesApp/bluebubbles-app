@@ -98,6 +98,8 @@ class MessageImageGrid extends StatelessWidget {
                 context,
                 chat: cvController.chat,
                 media: _attachments,
+                messageState: messageState,
+                collectionPart: messagePart,
               ),
               child: ColoredBox(
                 color: Colors.black54,
