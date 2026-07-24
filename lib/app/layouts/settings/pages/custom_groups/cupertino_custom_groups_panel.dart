@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/create_group_dialog.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/custom_group_options_menu.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/custom_groups_controller.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -67,6 +68,23 @@ class _CupertinoCustomGroupsPanelState extends State<CupertinoCustomGroupsPanel>
     );
   }
 
+  Future<void> _onRename(CustomGroup group) async {
+    final name = await showCreateGroupDialog(context, initialName: group.name);
+    if (name == null || name.isEmpty || !mounted) return;
+    await controller.renameGroup(group, name);
+  }
+
+  void _onOptions(CustomGroup group) {
+    showCustomGroupOptionsMenu(
+      context,
+      group: group,
+      onRename: () => _onRename(group),
+      onEditChats: () => _onEditChats(group),
+      onToggleUnreadBadge: () => controller.setShowUnreadBadge(group, !group.showUnreadBadge),
+      onDelete: () => _onDelete(group),
+    );
+  }
+
   List<Handle> _groupHandles(CustomGroup group) {
     final seen = <String>{};
     final handles = <Handle>[];
@@ -78,7 +96,15 @@ class _CupertinoCustomGroupsPanelState extends State<CupertinoCustomGroupsPanel>
     return handles;
   }
 
-  Widget _buildGroupRow(CustomGroup group) {
+  void _onReorder(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) newIndex -= 1;
+    final newOrder = controller.groups.toList();
+    final group = newOrder.removeAt(oldIndex);
+    newOrder.insert(newIndex, group);
+    controller.reorderGroups(newOrder);
+  }
+
+  Widget _buildGroupRow(CustomGroup group, int index) {
     return Slidable(
       key: ValueKey(group.id),
       endActionPane: ActionPane(
@@ -103,7 +129,34 @@ class _CupertinoCustomGroupsPanelState extends State<CupertinoCustomGroupsPanel>
           size: 30,
           editable: false,
         ),
-        trailing: const NextButton(),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!group.showUnreadBadge)
+              Tooltip(
+                message: "Unread badge hidden",
+                child: Icon(
+                  CupertinoIcons.bell_slash_fill,
+                  size: 16,
+                  color: context.theme.colorScheme.outline,
+                ),
+              ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => _onOptions(group),
+              child: Icon(CupertinoIcons.ellipsis_circle, color: context.theme.colorScheme.onSurfaceVariant),
+            ),
+            const NextButton(),
+            const SizedBox(width: 12),
+            ReorderableDragStartListener(
+              index: index,
+              child: Icon(
+                CupertinoIcons.line_horizontal_3,
+                color: context.theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -149,14 +202,20 @@ class _CupertinoCustomGroupsPanelState extends State<CupertinoCustomGroupsPanel>
                       )
                     : Padding(
                         padding: const EdgeInsets.only(top: 8),
-                        child: SettingsSection(
-                          backgroundColor: tileColor,
-                          children: [
-                            for (int i = 0; i < groups.length; i++) ...[
-                              _buildGroupRow(groups[i]),
-                              if (i < groups.length - 1) const SettingsDivider(),
+                        child: ReorderableListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          buildDefaultDragHandles: false,
+                          onReorder: _onReorder,
+                          itemCount: groups.length,
+                          itemBuilder: (context, index) => Column(
+                            key: ValueKey(groups[index].id),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildGroupRow(groups[index], index),
+                              if (index < groups.length - 1) const SettingsDivider(),
                             ],
-                          ],
+                          ),
                         ),
                       ),
           ),

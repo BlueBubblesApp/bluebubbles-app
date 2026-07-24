@@ -10,6 +10,10 @@ on:
         description: "Run SignPath signing on this manual build (test the signing pipeline without a release tag)"
         type: boolean
         default: false
+      release_signing:
+        description: "Sign with the release cert instead of the test cert (implies sign). Artifacts are still not attached to any release."
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,6 +21,9 @@ permissions:
 env:
   FLUTTER_VERSION: "3.44.6"
   FVM_VERSION: "4.1.2"
+  # Which SignPath policy/cert to use. Tags always sign for release; a manual run
+  # can opt in when a release build needs re-signing outside a tag push.
+  RELEASE_SIGNING: ${{ startsWith(github.ref, 'refs/tags/') || inputs.release_signing }}
 
 jobs:
   windows:
@@ -26,9 +33,6 @@ jobs:
     timeout-minutes: 60
     env:
       SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
-      # Must match the signing cert subject: release cert on tags, test cert on manual builds.
-      SIGNED_MSIX_PUBLISHER: "${{ startsWith(github.ref, 'refs/tags/') && 'CN=SignPath Foundation,O=SignPath Foundation,C=US,S=DE,L=Lewes' || 'CN=Test certificate for ''BlueBubbles [OSS]''' }}"
-      SIGNED_MSIX_IDENTITY: BlueBubbles.BlueBubbles
     steps:
       - name: Support long paths
         run: git config --system core.longpaths true
@@ -52,12 +56,12 @@ jobs:
         run: .\windows\build.ps1 -Phase Build
         shell: pwsh
 
-      # sign=true when: token present AND (release tag or manual sign=true).
+      # sign=true when: token present AND (release tag or manual sign/release_signing).
       - name: Determine signing
         id: gate
         shell: bash
         run: |
-          if [ -n "$SIGNPATH_API_TOKEN" ] && { [[ "$GITHUB_REF" == refs/tags/* ]] || [ "${{ inputs.sign }}" = "true" ]; }; then
+          if [ -n "$SIGNPATH_API_TOKEN" ] && { [ "$RELEASE_SIGNING" = "true" ] || [ "${{ inputs.sign }}" = "true" ]; }; then
             echo "sign=true" >> "$GITHUB_OUTPUT"
           else
             echo "sign=false" >> "$GITHUB_OUTPUT"
@@ -89,7 +93,7 @@ jobs:
           api-token: ${{ env.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
           project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
-          signing-policy-slug: ${{ startsWith(github.ref, 'refs/tags/') && 'release-signing' || 'test-signing' }}
+          signing-policy-slug: ${{ env.RELEASE_SIGNING == 'true' && 'release-signing' || 'test-signing' }}
           artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIG_APP }}
           github-artifact-id: ${{ steps.upload-payload.outputs.artifact-id }}
           wait-for-completion: true
@@ -107,6 +111,10 @@ jobs:
         shell: pwsh
         env:
           PACKAGE_MSIX: ${{ steps.sign-payload.outcome == 'success' }}
+          # Must match the signing cert subject: release cert when signing for release, else test cert.
+          # MakeAppx requires ", " (comma-space) between RDNs — bare commas fail with 0x80080204.
+          SIGNED_MSIX_PUBLISHER: "${{ env.RELEASE_SIGNING == 'true' && 'CN=SignPath Foundation, O=SignPath Foundation, C=US, S=DE, L=Lewes' || 'CN=Test certificate for ''BlueBubbles [OSS]''' }}"
+          SIGNED_MSIX_IDENTITY: BlueBubbles.BlueBubbles
 
       - name: Upload unsigned installer artifact
         id: upload-installer
@@ -149,7 +157,7 @@ jobs:
           api-token: ${{ env.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
           project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
-          signing-policy-slug: ${{ startsWith(github.ref, 'refs/tags/') && 'release-signing' || 'test-signing' }}
+          signing-policy-slug: ${{ env.RELEASE_SIGNING == 'true' && 'release-signing' || 'test-signing' }}
           artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIG_INSTALLER }}
           github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
           wait-for-completion: true
@@ -157,7 +165,7 @@ jobs:
 
       - name: Sign release msix (SignPath)
         id: sign-msix
-        if: ${{ steps.gate.outputs.sign == 'true' && steps.sign-payload.outcome == 'success' && startsWith(github.ref, 'refs/tags/') && steps.upload-msix.outputs.artifact-id != '' }}
+        if: ${{ steps.gate.outputs.sign == 'true' && steps.sign-payload.outcome == 'success' && env.RELEASE_SIGNING == 'true' && steps.upload-msix.outputs.artifact-id != '' }}
         continue-on-error: true
         uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd
         with:
@@ -172,7 +180,7 @@ jobs:
 
       - name: Sign test msix (SignPath)
         id: sign-msix-test
-        if: ${{ steps.gate.outputs.sign == 'true' && steps.sign-payload.outcome == 'success' && !startsWith(github.ref, 'refs/tags/') && steps.upload-msix.outputs.artifact-id != '' }}
+        if: ${{ steps.gate.outputs.sign == 'true' && steps.sign-payload.outcome == 'success' && env.RELEASE_SIGNING != 'true' && steps.upload-msix.outputs.artifact-id != '' }}
         uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd
         with:
           api-token: ${{ env.SIGNPATH_API_TOKEN }}

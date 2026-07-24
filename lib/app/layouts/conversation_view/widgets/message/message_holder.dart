@@ -331,9 +331,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                             )
                                           : MessageSender(olderMessage: olderMessage),
                                     ),
-                                  // add a box to account for height of reactions.
-                                  // Stack galleries reserve space between the "X Items" label and cards
-                                  // instead; skip the bubble-level spacer so it doesn't sit above the label.
+                                  // add a box to account for height of reactions
                                   iOS &&
                                           !widget.isReplyThread &&
                                           message.threadOriginatorGuid != null &&
@@ -525,12 +523,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
-                                                                          // Outer swipe: on for stack only. Collage uses per-card
-                                                                          // swipe; grid has no attachmentGuid for outer swipe.
-                                                                          (!e.isMediaGallery ||
-                                                                              resolveMediaCollectionLayout(
-                                                                                    e.attachments.length) ==
-                                                                                  MediaCollectionLayout.stack),
+                                                                          // Collections own horizontal gestures (fan /
+                                                                          // per-card swipe); outer reply is for bubbles only.
+                                                                          !e.isMediaGallery,
                                                                       partIndex: index,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
@@ -605,6 +600,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     ),
                                                                   ),
                                                                 ),
+                                                                // Reactions sit in the inner Stack (relative to the bubble,
+                                                                // not stickers). Media collections show tapbacks per
+                                                                // attachment on CollectionAttachmentCard instead.
                                                                 if (!e.isMediaGallery)
                                                                   MessageReactions(
                                                                     messageParts: messageParts,
@@ -631,9 +629,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                       !e.isUnsent &&
                                                       !widget.isReplyThread &&
                                                       index < replyOffsets.length &&
-                                                      (!e.isMediaGallery ||
-                                                          resolveMediaCollectionLayout(e.attachments.length) ==
-                                                              MediaCollectionLayout.stack))
+                                                      !e.isMediaGallery)
                                                     Obx(() => SlideToReply(
                                                         width: replyOffsets[index].value.abs(),
                                                         isFromMe: message.isFromMe!)),

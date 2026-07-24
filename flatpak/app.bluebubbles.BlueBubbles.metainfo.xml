@@ -44,28 +44,79 @@
   <launchable type="desktop-id">app.bluebubbles.BlueBubbles.desktop</launchable>
   <screenshots>
     <screenshot type="default" xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v1.15.4%2B73-desktop/flatpak/screenshots/Ios%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.0.0%2B89/flatpak/screenshots/Ios%20Skin.png</image>
       <caption>Chat with friends and family</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v1.15.4%2B73-desktop/flatpak/screenshots/Dark.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.0.0%2B89/flatpak/screenshots/Dark.png</image>
       <caption>Dark Mode</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v1.15.4%2B73-desktop/flatpak/screenshots/Settings.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.0.0%2B89/flatpak/screenshots/Settings.png</image>
       <caption>Extensive Customization</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v1.15.4%2B73-desktop/flatpak/screenshots/Material%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.0.0%2B89/flatpak/screenshots/Material%20Skin.png</image>
       <caption>Material Skin</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v1.15.4%2B73-desktop/flatpak/screenshots/Samsung%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.0.0%2B89/flatpak/screenshots/Samsung%20Skin.png</image>
       <caption>Samsung Skin</caption>
     </screenshot>
   </screenshots>
 
   <releases>
+    <release date="2026-07-24" version="2.0.0.0">
+      <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.0.0%2B89</url>
+      <description>
+        <p>The Big Stuff</p>
+        <ul>
+          <li>Major Performance Improvements</li>
+          <li>Custom Groups &amp; Chat Filtering</li>
+          <li>Theme Studio (Revamped Advanced Theming)</li>
+          <li>Improved New Chat Creator</li>
+          <li>Improved Share Sheet/Menu</li>
+          <li>Skin-Specific Dialogs</li>
+          <li>Improved Attachment Explorer in the Conversation Details Page</li>
+          <li>Send a Quick Reaction via a Notification Button</li>
+          <li>Chat-Specific Custom Theming</li>
+          <li>Chat-Specific Custom Backgrounds</li>
+          <li>Live Photo Support</li>
+          <li>Digital Pass Support</li>
+          <li>Revamped Server Management Page</li>
+          <li>Image Gallery for Messages with Multiple Images</li>
+          <li>New splash screen so the app shows something while it loads</li>
+          <li>Option to fully hide the title bar</li>
+          <li>Open images in your system's native image viewer</li>
+        </ul>
+        <p>The Small Stuff</p>
+        <ul>
+          <li>Improved invisible ink consistency to prevent leaks</li>
+          <li>Improved page &amp; UI consistency</li>
+          <li>Nickname support &amp; default</li>
+          <li>Settings Backup/Restore now supports pinned chats &amp; custom groups</li>
+          <li>Improved Attachments UI &amp; Full Screen Viewer</li>
+          <li>Redesigned Scheduled Messages Page</li>
+          <li>iMessage Statistics Page</li>
+          <li>Improved Redacted Mode</li>
+          <li>Improve camera quality</li>
+          <li>Improved video playback quality</li>
+          <li>Improved connection status bar</li>
+          <li>Improved notification reliability</li>
+          <li>Improved contact syncing &amp; matching</li>
+          <li>View and restore recently deleted chats</li>
+          <li>Cancel a message while it is still sending</li>
+          <li>Additional Material You preset themes with improved previews</li>
+          <li>New settings for image preview quality and maximum concurrent downloads</li>
+          <li>Improved error pages, error reporting, and crash guards</li>
+          <li>System GIF paste and clipboard history support</li>
+          <li>Fixes launch at startup and opening file locations under Flatpak</li>
+          <li>Fixes clipboard handling on Linux</li>
+          <li>The window now unminimizes when opening a chat from a notification</li>
+          <li>Fixes the window failing to close on Linux</li>
+        </ul>
+      </description>
+    </release>
     <release date="2026-07-19" version="1.15.104.0" type="development" />
     <release date="2026-07-18" version="1.15.103.0" type="development" />
     <release date="2026-06-12" version="1.15.102.0" type="development" />

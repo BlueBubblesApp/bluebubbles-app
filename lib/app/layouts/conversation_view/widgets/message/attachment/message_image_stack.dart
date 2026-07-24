@@ -81,6 +81,8 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
   double _scrollAccumulator = 0;
   bool _hapticGivenForCurrentEnd = false;
   bool _labelHovered = false;
+  int? _activeDragPointer;
+  VelocityTracker? _velocityTracker;
 
   List<Attachment> get _attachments => widget.attachments;
 
@@ -314,7 +316,14 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     }
 
     // Swipe direction matches on both sides: left = forward, right = back.
+    // Raw pointer tracking (instead of GestureDetector.onHorizontalDrag*) so this
+    // swipe never has to win a gesture-arena contest against a card's own recognizers —
+    // e.g. VideoPlayer registers onTap/onDoubleTap on the current card, and a
+    // DoubleTapGestureRecognizer holding the arena open was swallowing fast horizontal
+    // swipes over video attachments while images (no onDoubleTap) were unaffected.
+    // Listener never enters the arena, so it always sees the drag.
     return Listener(
+      behavior: HitTestBehavior.translucent,
       onPointerSignal: (event) {
         if (event is PointerScrollEvent && _attachments.length > 1) {
           GestureBinding.instance.pointerSignalResolver.register(event, (event) {
@@ -335,66 +344,77 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           });
         }
       },
-      child: GestureDetector(
-        onHorizontalDragUpdate: (details) {
-          if (_attachments.length <= 1) return;
-          if (!widget.infiniteScroll) {
-            final atStart = _currentIndex == 0;
-            final atEnd = _currentIndex == _attachments.length - 1;
-            // Right = back (blocked at start), left = forward (blocked at end).
-            final blockedPositive = atStart;
-            final blockedNegative = atEnd;
+      onPointerDown: (event) {
+        if (_attachments.length <= 1) return;
+        _activeDragPointer = event.pointer;
+        _velocityTracker = VelocityTracker.withKind(event.kind);
+        _velocityTracker!.addPosition(event.timeStamp, event.position);
+      },
+      onPointerMove: (event) {
+        if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
+        _velocityTracker?.addPosition(event.timeStamp, event.position);
+        if (!widget.infiniteScroll) {
+          final atStart = _currentIndex == 0;
+          final atEnd = _currentIndex == _attachments.length - 1;
+          // Right = back (blocked at start), left = forward (blocked at end).
+          final blockedPositive = atStart;
+          final blockedNegative = atEnd;
 
-            final draggingIntoBlockedEnd =
-                (blockedPositive && details.delta.dx > 0) || (blockedNegative && details.delta.dx < 0);
-            if (draggingIntoBlockedEnd) {
-              if (!_hapticGivenForCurrentEnd) {
-                HapticFeedback.lightImpact();
-                _hapticGivenForCurrentEnd = true;
-              }
-              setState(() {
-                _dragDx += details.delta.dx * 0.3;
-                if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
-                if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
-              });
-              return;
-            } else {
-              _hapticGivenForCurrentEnd = false;
+          final draggingIntoBlockedEnd =
+              (blockedPositive && event.delta.dx > 0) || (blockedNegative && event.delta.dx < 0);
+          if (draggingIntoBlockedEnd) {
+            if (!_hapticGivenForCurrentEnd) {
+              HapticFeedback.lightImpact();
+              _hapticGivenForCurrentEnd = true;
             }
-          }
-          setState(() {
-            _dragDx += details.delta.dx;
-            _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
-          });
-        },
-        onHorizontalDragEnd: (details) {
-          _hapticGivenForCurrentEnd = false;
-          if (_attachments.length <= 1) return;
-          final velocity = details.primaryVelocity ?? 0;
-          final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
-          if (!commit) {
             setState(() {
-              _dragDx = 0;
+              _dragDx += event.delta.dx * 0.3;
+              if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
+              if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
             });
             return;
+          } else {
+            _hapticGivenForCurrentEnd = false;
           }
+        }
+        setState(() {
+          _dragDx += event.delta.dx;
+          _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
+        });
+      },
+      onPointerUp: (event) {
+        if (_activeDragPointer != event.pointer) return;
+        _activeDragPointer = null;
+        _hapticGivenForCurrentEnd = false;
+        final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+        _velocityTracker = null;
+        if (_attachments.length <= 1) return;
+        final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
+        if (!commit) {
+          setState(() {
+            _dragDx = 0;
+          });
+          return;
+        }
 
-          // Left drag / velocity → forward; right → back (same for sent and received).
-          final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
-          setState(() {
-            _advance(rawSign);
-            _dragDx = 0;
-          });
-        },
-        onHorizontalDragCancel: () {
-          _hapticGivenForCurrentEnd = false;
-          if (_attachments.length <= 1) return;
-          setState(() {
-            _dragDx = 0;
-          });
-        },
-        child: stackBody,
-      ),
+        // Left drag / velocity → forward; right → back (same for sent and received).
+        final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
+        setState(() {
+          _advance(rawSign);
+          _dragDx = 0;
+        });
+      },
+      onPointerCancel: (event) {
+        if (_activeDragPointer != event.pointer) return;
+        _activeDragPointer = null;
+        _velocityTracker = null;
+        _hapticGivenForCurrentEnd = false;
+        if (_attachments.length <= 1) return;
+        setState(() {
+          _dragDx = 0;
+        });
+      },
+      child: stackBody,
     );
   }
 

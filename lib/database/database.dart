@@ -327,9 +327,10 @@ class Database {
     Database.handles.removeAll();
     Database.messages.removeAll();
     Database.themes.removeAll();
+    Database.customGroups.removeAll();
   }
 
-  /// Wipes messaging-scoped data: attachments, chats, contactsV2, handles, and messages.
+  /// Wipes messaging-scoped data: attachments, chats, contactsV2, handles, messages, and custom groups.
   /// Leaves settings, themes, fcmData, and scheduledMessages untouched.
   static void resetMessagingData() {
     Database.runInTransaction(TxMode.write, () {
@@ -338,6 +339,7 @@ class Database {
       Database.contactsV2.removeAll();
       Database.handles.removeAll();
       Database.messages.removeAll();
+      Database.customGroups.removeAll();
     });
   }
 }

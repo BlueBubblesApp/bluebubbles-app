@@ -50,9 +50,9 @@ Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `Mess
 1. Animates `slide_to_reply.dart` indicator via the shared `replyOffset` `RxDouble`
 2. Sets `cvController.replyToMessage` with `MessageReplyContext` (optional `attachmentGuid` for per-attachment replies)
 
-Bubble-level: wraps the entire bubble Stack in `MessageHolder` (enabled only when resolved layout is stack; disabled for collage and grid).
+Bubble-level: wraps the entire bubble Stack in `MessageHolder` (disabled for all media collections — they own horizontal gestures).
 
-Per-card: `CollectionAttachmentCard` with `enableSwipeToReply: true` (collage only) wraps each card independently and passes `attachmentGuid` so the composer preview shows the swiped image. Grid cells do not use per-card swipe-to-reply.
+Per-card: `CollectionAttachmentCard` with `enableSwipeToReply: true` (collage only) wraps each card independently and passes `attachmentGuid` so the composer preview shows the swiped image. Stack and grid do not use per-card swipe-to-reply.
 
 ## Bubble Effects
 

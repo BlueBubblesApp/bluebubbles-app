@@ -53,7 +53,7 @@ class CustomGroupFilterChipRow extends StatelessWidget {
             final selected = current.contains(group.id);
             final unreadCount = unreadCounts[group.id] ?? 0;
             return Badge(
-              isLabelVisible: unreadCount > 0,
+              isLabelVisible: group.showUnreadBadge && unreadCount > 0,
               label: Text(unreadCount > 99 ? '99+' : unreadCount.toString()),
               backgroundColor: context.theme.colorScheme.primary,
               textColor: context.theme.colorScheme.onPrimary,
