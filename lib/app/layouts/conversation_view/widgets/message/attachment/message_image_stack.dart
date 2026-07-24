@@ -316,13 +316,17 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     }
 
     // Swipe direction matches on both sides: left = forward, right = back.
-    // Raw pointer tracking (instead of GestureDetector.onHorizontalDrag*) so this
-    // swipe never has to win a gesture-arena contest against a card's own recognizers —
-    // e.g. VideoPlayer registers onTap/onDoubleTap on the current card, and a
-    // DoubleTapGestureRecognizer holding the arena open was swallowing fast horizontal
-    // swipes over video attachments while images (no onDoubleTap) were unaffected.
-    // Listener never enters the arena, so it always sees the drag.
-    return Listener(
+    // Fan motion uses raw pointer tracking (Listener) so it never has to win a
+    // gesture-arena contest against a card's own recognizers — e.g. VideoPlayer
+    // registers onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer
+    // holding the arena open was swallowing fast horizontal swipes over video
+    // attachments while images (no onDoubleTap) were unaffected.
+    //
+    // Listener alone never enters the arena, so MessagesView's timestamp swipe
+    // (onHorizontalDrag*) would still win and pull timestamps out from the right.
+    // RawGestureDetector + [_EagerHorizontalDragRecognizer] claims the arena once
+    // motion is clearly horizontal; fan tracking stays on the Listener.
+    final listener = Listener(
       behavior: HitTestBehavior.translucent,
       onPointerSignal: (event) {
         if (event is PointerScrollEvent && _attachments.length > 1) {
@@ -415,6 +419,27 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
         });
       },
       child: stackBody,
+    );
+
+    if (_attachments.length <= 1) return listener;
+
+    return RawGestureDetector(
+      behavior: HitTestBehavior.translucent,
+      gestures: <Type, GestureRecognizerFactory>{
+        _EagerHorizontalDragRecognizer: GestureRecognizerFactoryWithHandlers<_EagerHorizontalDragRecognizer>(
+          () => _EagerHorizontalDragRecognizer(debugOwner: this),
+          (_EagerHorizontalDragRecognizer instance) {
+            // Non-null callbacks register the recognizer in the arena. Fan motion
+            // stays on [Listener]; these are intentionally no-ops.
+            instance
+              ..onStart = (_) {}
+              ..onUpdate = (_) {}
+              ..onEnd = (_) {}
+              ..onCancel = () {};
+          },
+        ),
+      },
+      child: listener,
     );
   }
 
@@ -544,5 +569,55 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
         ),
       ),
     );
+  }
+}
+
+/// Claims the gesture arena for clear horizontal drags so ancestor recognizers
+/// (notably MessagesView's timestamp swipe) lose, without owning fan motion.
+///
+/// Accepts as soon as movement is horizontally dominant and past a small
+/// threshold — earlier than the default drag touch-slop path — so we win before
+/// competing recognizers settle. Pure taps (no horizontal intent) are left alone
+/// so card / label taps still work.
+class _EagerHorizontalDragRecognizer extends HorizontalDragGestureRecognizer {
+  _EagerHorizontalDragRecognizer({super.debugOwner});
+
+  /// Below default touch slop (~18) so we beat MessagesView's horizontal drag.
+  static const double _eagerAcceptDistance = 8.0;
+
+  Offset? _initialPosition;
+  bool _claimed = false;
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    _initialPosition = event.position;
+    _claimed = false;
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    if (!_claimed && event is PointerMoveEvent && _initialPosition != null) {
+      final delta = event.position - _initialPosition!;
+      if (delta.dx.abs() > delta.dy.abs() && delta.dx.abs() >= _eagerAcceptDistance) {
+        _claimed = true;
+        resolve(GestureDisposition.accepted);
+      }
+    }
+    super.handleEvent(event);
+  }
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {
+    _initialPosition = null;
+    _claimed = false;
+    super.didStopTrackingLastPointer(pointer);
+  }
+
+  @override
+  void dispose() {
+    _initialPosition = null;
+    _claimed = false;
+    super.dispose();
   }
 }
