@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
@@ -10,8 +12,9 @@ import 'package:flutter/material.dart';
 /// Vertical overlapping collage for media attachment collections.
 ///
 /// Even indexes sit flush to the author side; odd indexes get a horizontal stagger.
-/// Lower cards overlap the ones above them. Each card is a [CollectionAttachmentCard]
-/// with its own popup gestures, per-attachment tapbacks, and swipe-to-reply.
+/// Cards alternate a slight ±0.75° tilt (odd right, even left). Lower cards overlap the
+/// ones above them. Each card is a [CollectionAttachmentCard] with its own popup
+/// gestures, per-attachment tapbacks, and swipe-to-reply.
 ///
 /// Card frames use each attachment's natural aspect ratio (mixed portrait/landscape
 /// allowed). Media cover-fills the locked frame so load no longer resizes cards.
@@ -33,6 +36,8 @@ class MessageImageCollage extends StatelessWidget {
 
   static const double _horizontalStagger = 20.0;
   static const double _verticalOverlap = 32.0;
+  /// Odd indexes tilt right, even indexes tilt left.
+  static const double _cardTiltRad = 0.75 * math.pi / 180;
 
   List<Attachment> get _attachments => messagePart.attachments;
 
@@ -98,18 +103,21 @@ class MessageImageCollage extends StatelessWidget {
   }
 
   Widget _buildCard(MessageState messageState, int index, double cardWidth, double cardHeight) {
-    return CollectionAttachmentCard(
-      controller: messageState,
-      cvController: cvController,
-      collectionPart: messagePart,
-      attachmentIndex: index,
-      collectionAttachments: _attachments,
-      isEditing: isEditing,
-      canSwipeToReply: canSwipeToReply,
-      enableSwipeToReply: true,
-      fillCard: true,
-      cardWidth: cardWidth,
-      cardHeight: cardHeight,
+    return Transform.rotate(
+      angle: index.isOdd ? _cardTiltRad : -_cardTiltRad,
+      child: CollectionAttachmentCard(
+        controller: messageState,
+        cvController: cvController,
+        collectionPart: messagePart,
+        attachmentIndex: index,
+        collectionAttachments: _attachments,
+        isEditing: isEditing,
+        canSwipeToReply: canSwipeToReply,
+        enableSwipeToReply: true,
+        fillCard: true,
+        cardWidth: cardWidth,
+        cardHeight: cardHeight,
+      ),
     );
   }
 }
