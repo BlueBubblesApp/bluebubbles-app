@@ -34,7 +34,7 @@ class MessageImageCollage extends StatelessWidget {
   final bool isEditing;
   final bool canSwipeToReply;
 
-  static const double _horizontalStagger = 20.0;
+  static const double _horizontalStagger = 28.0;
   static const double _verticalOverlap = 32.0;
   /// Odd indexes tilt right, even indexes tilt left.
   static const double _cardTiltRad = 0.75 * math.pi / 180;
@@ -92,14 +92,24 @@ class MessageImageCollage extends StatelessWidget {
 
     if (fromMe || !CollectionDownloadButton.isSupported) return collage;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        collage,
-        const SizedBox(width: CollectionDownloadButton.gap),
-        CollectionDownloadButton(attachments: _attachments),
-      ],
+    return SizedBox(
+      width: totalWidth + CollectionDownloadButton.gap + CollectionDownloadButton.size,
+      height: totalHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: totalWidth + CollectionDownloadButton.gap,
+            top: 0,
+            bottom: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: CollectionDownloadButton(attachments: _attachments),
+            ),
+          ),
+          collage,
+        ],
+      ),
     );
   }
 

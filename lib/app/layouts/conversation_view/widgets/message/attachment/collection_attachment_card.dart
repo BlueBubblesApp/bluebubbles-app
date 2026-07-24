@@ -180,9 +180,7 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
 
     return Obx(() {
       final isFromMe = widget.controller.isFromMe.value;
-      // Keep the card on a fixed SizedBox and let SlideToReply sit beside it
-      // (mainAxisSize.min). Putting Expanded inside a tight Positioned ate the
-      // chevron space and broke collage swipe-to-reply.
+      
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -194,9 +192,16 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
             cvController: widget.cvController,
             child: _buildCardContent(scopedPart),
           ),
-          SlideToReply(
-            width: _replyOffset.value.abs(),
-            isFromMe: isFromMe,
+          AnimatedPadding(
+            duration: Duration(milliseconds: _replyOffset.value == 0 ? 150 : 0),
+            padding: EdgeInsets.only(
+              left: isFromMe && _replyOffset.value != 0 ? 10 : 0,
+              right: !isFromMe && _replyOffset.value != 0 ? 10 : 0,
+            ),
+            child: SlideToReply(
+              width: _replyOffset.value.abs(),
+              isFromMe: isFromMe,
+            ),
           ),
         ].conditionalReverse(isFromMe),
       );

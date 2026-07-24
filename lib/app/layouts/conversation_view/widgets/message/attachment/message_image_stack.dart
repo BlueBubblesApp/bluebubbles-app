@@ -300,16 +300,27 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     );
 
     // Incoming iOS: download control to the right of the stack (matches collage).
+    // Stack (not Row) so the button paints behind fan cards — drag/swipe overflow
+    // into the gap would otherwise sit under the later Row sibling.
     final Widget stackBody;
     if (!alignEnd && CollectionDownloadButton.isSupported) {
-      stackBody = Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          stackColumn,
-          const SizedBox(width: CollectionDownloadButton.gap),
-          CollectionDownloadButton(attachments: _attachments),
-        ],
+      stackBody = SizedBox(
+        width: fanCanvasWidth + CollectionDownloadButton.gap + CollectionDownloadButton.size,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: fanCanvasWidth + CollectionDownloadButton.gap,
+              top: 0,
+              bottom: 0,
+              child: Align(
+                alignment: Alignment.center,
+                child: CollectionDownloadButton(attachments: _attachments),
+              ),
+            ),
+            stackColumn,
+          ],
+        ),
       );
     } else {
       stackBody = stackColumn;
