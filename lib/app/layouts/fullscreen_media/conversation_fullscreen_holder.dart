@@ -28,7 +28,8 @@ class ConversationFullscreenHolder extends StatefulWidget {
       this.initialAttachmentGuid,
       this.replyMessage,
       this.replyPartIndex,
-      this.galleryAttachments});
+      this.galleryAttachments,
+      this.showCollectionGridButton = true});
 
   final Chat? currentChat;
   final Attachment attachment;
@@ -42,6 +43,10 @@ class ConversationFullscreenHolder extends StatefulWidget {
   /// When non-null, the fullscreen carousel is limited to these attachments
   /// instead of all images in the chat. Used when opening from a gallery card.
   final List<Attachment>? galleryAttachments;
+
+  /// When false, hides the button that opens [CollectionMediaGridPage]
+  /// (e.g. fullscreen was already opened from that grid).
+  final bool showCollectionGridButton;
 
   @override
   ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
@@ -65,6 +70,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   late bool showAppBar = kIsDesktop || kIsWeb || !_isVideoAttachment;
   bool get _canReply => widget.replyMessage != null && widget.replyPartIndex != null && widget.currentChat != null;
   bool get _hasCollectionGrid =>
+      widget.showCollectionGridButton &&
       widget.galleryAttachments != null &&
       widget.galleryAttachments!.length > 1 &&
       widget.currentChat != null;

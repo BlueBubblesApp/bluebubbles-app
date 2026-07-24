@@ -136,6 +136,11 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
                   MediaGalleryCard(
                     attachment: attachment,
                     showSenderAvatar: widget.showSenderAvatar,
+                    chat: widget.chat,
+                    // Swipe through the filtered grid set (collection page or chat media).
+                    galleryAttachments: _filteredMedia,
+                    // Already in a grid — don't offer opening another one from fullscreen.
+                    showCollectionGridButton: false,
                   ),
                   if (widget.selected.contains(attachment.guid))
                     Container(
