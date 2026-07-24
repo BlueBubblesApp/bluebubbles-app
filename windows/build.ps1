@@ -141,6 +141,8 @@ if ($Phase -ne 'Build') {
         )
         if ($env:SIGNED_MSIX_IDENTITY) { $msixArgs += @('--identity-name', $env:SIGNED_MSIX_IDENTITY) }
         Invoke-Checked $dartCmd run msix:create @msixArgs
+        # fvm swallows the child exit code, so Invoke-Checked can't see a msix failure.
+        if (-not (Test-Path 'windows\bluebubbles.msix')) { throw "msix:create did not produce windows\bluebubbles.msix — see the output above." }
     }
 
     # Compile the Inno Setup installer
